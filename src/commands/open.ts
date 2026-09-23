@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV13,
+  ProductReportV14,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -29,14 +29,8 @@ import { validateProductLogo } from '../logo.js'
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 /* `method` is the one coverage field expansion rewrites: it states how the
    model was derived, which is a claim about origin, and a Blueprint carries
-   none. Both sentences below are origin claims — where the model came from and
-   that nobody has yet checked it against this repository — so both live here
-   and nowhere else. The author's `unmapped`, `limitations`, and `rationale`
-   pass through untouched. */
-const OPEN_COVERAGE_METHOD = [
-  'Opened from a portable Product Report; source-repository navigation was intentionally removed.',
-  'Implementation alignment has not been verified in this repository.'
-]
+   none. Authored descriptions pass through untouched. */
+const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; implementation alignment has not been verified in this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -57,7 +51,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV13['references']): Array<Record<string, string>> {
+function references(value: ProductReportV14['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -197,7 +191,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV14, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -220,19 +214,9 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
   write(
     join(root, 'coverage.md'),
     frontmatter({
-      status: report.coverage.status,
-      method: OPEN_COVERAGE_METHOD,
-      sourceAreas: [],
-      // Unmapped product areas explain model breadth and survive the
-      // source-free projection. Source paths live in sourceAreas, not here.
-      // The author's own account of what is unmapped, what the limitations are,
-      // and why — never rewritten. It describes the MODEL'S completeness rather
-      // than its origin, and it is exactly what a reader receiving a Blueprint
-      // needs. Only `method`, which is a claim about how the model was derived,
-      // is replaced: a Blueprint carries no claim about its own origin.
-      unmapped: report.coverage.unmapped,
-      limitations: [...report.coverage.limitations]
-    }) + body('Coverage', report.coverage.rationale, '', [], [])
+      ...report.coverage,
+      method: OPEN_COVERAGE_METHOD
+    }) + body('Coverage', '', '', [], [])
   )
 
   for (const productInterface of report.model.interfaces) {
@@ -391,8 +375,8 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV13['model']['capabilityScenarios'][number]
-      | ProductReportV13['model']['journeyScenarios'][number]
+      | ProductReportV14['model']['capabilityScenarios'][number]
+      | ProductReportV14['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -501,7 +485,7 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV13
+  report: ProductReportV14
   root: string
 }
 

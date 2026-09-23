@@ -1,5 +1,5 @@
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV13 } from '../core/portable.js'
+import type { ProductReportV14 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -8,7 +8,7 @@ import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV13Schema,
+  ProductReportV14Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV13 {
+): ProductReportV14 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -113,7 +113,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV13 = {
+  const report: ProductReportV14 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -322,33 +322,33 @@ export function compileReport(
       }))
     },
     coverage: {
-      status: model.coverage.status as 'complete' | 'partial' | 'draft',
+      scope: model.coverage.scope,
+      exclusions: model.coverage.exclusions,
       method: model.coverage.method,
-      sourceAreas: model.coverage.sourceAreas,
+      covered: model.coverage.covered,
       unmapped: model.coverage.unmapped,
-      limitations: model.coverage.limitations,
-      rationale: model.coverage.rationale
+      limitations: model.coverage.limitations
     }
   }
 
-  const parsed = ProductReportV13Schema.parse(report)
+  const parsed = ProductReportV14Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV13
+  report: ProductReportV14
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV13 {
+export function compileWorkspaceReport(cwd: string): ProductReportV14 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV13 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV14 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

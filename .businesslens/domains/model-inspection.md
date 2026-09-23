@@ -9,7 +9,7 @@ references:
 # Model inspection
 
 Looking at a Product Model without changing it: checking that it is structurally
-sound, and presenting it so a person can read what it says.
+sound and presenting it so a person can read what it says.
 
 ## Boundary
 

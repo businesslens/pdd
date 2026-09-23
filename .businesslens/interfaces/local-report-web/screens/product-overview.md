@@ -13,29 +13,32 @@ references:
 
 # Product overview
 
-Where the report opens, and the Product's own page. It answers "what is this
-product, and how much of it is modeled" before the reader goes looking for
-anything in particular, and it reads like every other surface: it is headed with
-the name of the rail row that opens it, qualified by the resource type it
-presents, and each further reading of the Product is a peer tab. It lists no
-collection of its own — Journeys, like every other collection, have a rail row, a
-page, and a count.
+Where the report opens, and the Product's own page. It introduces what the
+Product does, who uses it, why it exists, and the breadth of its model. About,
+Coverage, and References are its three readings. Its heading names the rail row
+that opens it and the resource type it presents.
 
 ## Information presented
 
 - The name of the open reading and the resource type it presents, above it
 - The Product's mark, name and summary, and the things that act on it
-- Its description, Intent, supporting sections, category, tags, licence, authors, and known limitations
-- How many resources of each kind the model authors, and the depth derived from them
-- Coverage status, rationale, method, source areas, unmapped areas, and limitations
+- The Product's full Description, Intent, Limitations, and additional authored sections under their original headings
+- Product ID, Category, Tags, License, and Authors with their URLs, as labeled details
+- Actors as a relation derived from the model
+- The declared Scope and, when recorded, the short Method note, together with the four category counts
+- Every Covered, Exclusions, Unmapped and Limitations description, each under every path it names and marked by its category's icon
+- Statements with no known repository location, readable below the tree
 - Every Reference in the model, including the Product's own, grouped by type with the resource that carries it
-- Which generator and schema version produced the report, and when
+- When the report was generated, or that it is live
 
 ## Available actions
 
 - Open Entities, Interfaces, Domains, Capabilities, Journeys, or Business Rules
-- Read About, Coverage or References, the Product's three readings
-- Expand Reference groups and local image previews
+- Read About, Coverage, or References
+- Filter statements through the four category cards; select an active card again to show every category
+- Find a recorded path by name
+- Read the statements recorded at a path in place, and restore that reading after refresh or Back navigation
+- Filter References by kind, find a path or link, and read which resources cite each location
 - Open the References reading of any resource that carries a reference
 - Open the page of a thing that acts on the Product
 - Read the documentation for the Product resource type
@@ -45,27 +48,47 @@ page, and a count.
 
 ### About open
 
-The Product itself, at full width: its mark, name and summary, who it is made
-for, what it says about itself, and how many resources the model authors.
+The Product's mark, name, Summary, Description, Intent, Limitations, and
+additional authored sections are readable immediately. Product details retain
+their field names and values; Actors identify a derived model relation.
 
 ### Coverage open
 
-The model's coverage status, rationale, method, source areas, unmapped areas and
-limitations.
+Coverage starts with one summary panel: Scope, then Method when recorded,
+then four cards counting Covered, Exclusions, Unmapped and Limitations,
+including statements without paths. It has no status or derived completeness
+badge. Selecting a card filters the tree and unlocated statements; selecting it
+again restores every category. Totals remain independent of filtering and search.
+
+Below the panel, the tree offers path search and expand/collapse controls. Each
+recorded location appears once, marked with the icon of every category recorded
+at exactly that path; a closed folder says how many statements are inside it,
+never file completeness or inherited meaning. Search matches paths by name,
+never statement prose, and opens the folders above what it found. No live
+inventory is added. Statements without paths remain readable below the tree;
+empty categories show zero in the cards.
+
+Selecting a path reads its statements in place; a statement recorded at several
+paths lists its other locations. Refresh and browser history retain the read
+path; expansion is remembered for the report. Narrow screens scroll the tree
+within its frame.
 
 ### References open
 
-All attached material appears once per attachment, grouped by reference type in
-an expandable tree with counts, roles, links and local image previews. Each item
-names its owner; a resource owner's link opens its own References reading while
-preserving this Product reading underneath. Groups start open, and expansion is
-remembered across reading changes, Back and refresh independently of resource
-References trees.
+All attached material is read by where it points: one card per reference type
+counts and filters citations, repository paths appear once each in a repository
+tree and external pages once each under their site and, on a code host, their
+repository, side by side where there is room, and each location discloses
+the resources that cite it with their roles and cited symbols or lines. A
+citing resource's link opens its own References reading while preserving this
+Product reading underneath. Search finds paths and links by name. Folders start
+open and citations closed, and expansion is remembered across reading changes,
+Back and refresh independently of resource References trees.
 
 ## Capability boundary
 
 Product identity and model breadth. It does not present any single resource's
-detail, it lists no resource collection of its own, it carries no named view of
-the whole model — the rail names every collection with its count, and a
-resource's connections belong to its page — and it makes no claim about whether
-the implementation matches.
+detail, it lists no resource collection or inventory of counts of its own, and
+it carries no named view of the whole model. The rail names every collection
+with its count, and a resource's connections belong to its page. Coverage states
+model breadth and known gaps, and makes no claim about whether the implementation matches.

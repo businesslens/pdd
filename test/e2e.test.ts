@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV13Schema } from '../src/core/portable.js'
+import { ProductReportV14Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,10 +41,10 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV13Schema.parse(output)
+    const parsed = ProductReportV14Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '13.0.0',
+      schemaVersion: '14.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -109,7 +109,7 @@ describe('end to end on a real git repo', () => {
     )].flat()
     expect(references.some(reference => reference.kind === 'code')).toBe(false)
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
-    expect(parsed.coverage.sourceAreas).toEqual([])
+    expect(parsed.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
     expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
       .toContainEqual({ type: 'entity', entityId: 'order', effect: 'changes', from: null, to: 'Confirmed', facts: [], contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
@@ -125,13 +125,25 @@ describe('end to end on a real git repo', () => {
     expect(JSON.stringify(second.report)).toBe(JSON.stringify(first.report))
   })
 
-  it('builds a draft planned model', () => {
-    const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-draft-'))
+  it('builds a planned model with known gaps and no status', () => {
+    const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-planned-'))
     try {
       cpSync(FIXTURE, isolated, { recursive: true })
       writeFileSync(
         join(isolated, '.businesslens/coverage.md'),
-        '---\nstatus: draft\nmethod: ["Planned before implementation"]\nsourceAreas: []\nunmapped: []\nlimitations: []\n---\n\n# Coverage\n\nPlanned map.\n'
+        `---
+scope: The intended Product behavior.
+exclusions: []
+method: Planned before implementation
+covered: []
+unmapped:
+  - description: Subscription purchases are not modeled.
+    paths: []
+limitations: []
+---
+
+# Coverage
+`
       )
       sh(isolated, 'git', 'init', '--initial-branch=main')
       sh(isolated, 'git', 'config', 'user.email', 'fixture@example.com')
@@ -139,7 +151,9 @@ describe('end to end on a real git repo', () => {
       sh(isolated, 'git', 'remote', 'add', 'origin', 'https://github.com/example/fixture-shop.git')
       sh(isolated, 'git', 'add', '.')
       sh(isolated, 'git', 'commit', '-m', 'fixture')
-      expect(buildProject(isolated).report.coverage.status).toBe('draft')
+      const { coverage } = buildProject(isolated).report
+      expect(coverage).not.toHaveProperty('status')
+      expect(coverage.unmapped).toEqual([{ description: 'Subscription purchases are not modeled.', paths: [] }])
     } finally {
       rmSync(isolated, { recursive: true, force: true })
     }

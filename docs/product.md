@@ -78,6 +78,9 @@ Unrecognized H2 sections are kept in order as structured supporting sections
 when the model is exported and expanded. A recognized H2 such as `## Intent`
 may appear only once.
 
+Product `limitations` are deliberate constraints of the Product itself; gaps
+and uncertainty in the model belong in [Coverage](./product-model.md#coverage).
+
 ## Visual identity
 
 Adding a logo expands the Product: move the manifest to

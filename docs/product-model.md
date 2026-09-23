@@ -13,7 +13,7 @@ terms:
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "How broadly the model has been authored, as draft, partial or complete, and why the known gaps remain."
+    definition: "The model's declared scope, what it covers, approved exclusions and known gaps."
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
@@ -74,7 +74,7 @@ sections it can contain.
 | [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary |
 | [Screen](./interfaces.md#screens) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
+| [Capability](./capabilities.md) | At least one | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true, and the only place that says who may act |
 
@@ -221,18 +221,17 @@ shared code, routes, packages, or protocols.
 ## Behavioral core
 
 Capabilities state what the Product can durably do. Capability Scenarios make
-each ability observable and verifiable. In a complete model, every Capability
+each ability observable and verifiable. Every Capability
 availability Context must be covered by at least one Capability Scenario;
 appearing in a Journey Scenario does not satisfy that local acceptance
-coverage. A complete model has at least one Capability.
+coverage. Every model has at least one Capability.
 
 Journeys are optional high-level goals. A Journey authors only the Actors, Goal,
 and Success criterion. Journey Scenarios own concrete Capability selection,
 order, branches, repetition, correlated context routes, and terminal results.
 Every Journey needs at least one achieved Journey Scenario using at least two
 distinct Capabilities, and every Journey Actor must appear in an achieved
-Scenario. A
-complete Product Model may have zero Journeys.
+Scenario. A Product Model may have zero Journeys.
 
 A Journey's primary Capabilities and Domains are derived from achieved Journey
 Scenario Steps. Capabilities found only in not-achieved paths are
@@ -296,39 +295,47 @@ Domain as the optional umbrella.
 
 ## Coverage
 
-`coverage.md` records how broadly the Product Model has been authored and why
-known gaps remain:
+`coverage.md` records the model's intended breadth and its known gaps:
 
 ```md
 ---
-status: partial
-method: ["Static inspection without executing target code"]
-sourceAreas: [src, server]
-unmapped: [deployment]
-limitations: ["Runtime-only billing policy was not established"]
+scope: Customer purchasing and order fulfillment.
+method: Static inspection of source and supporting documentation.
+covered:
+  - description: Customer checkout and order tracking.
+    paths: [src/checkout/, src/orders/]
+exclusions:
+  - description: Staff payroll is deliberately outside this model.
+    paths: [server/payroll/]
+unmapped:
+  - description: Background fulfillment jobs are not modeled.
+    paths: [server/jobs/]
+limitations:
+  - description: The retry policy for failed deliveries could not be established.
+    paths: [src/orders/]
 ---
 
 # Coverage
-
-The mapped breadth and why known gaps remain.
 ```
 
-| Status | Meaning |
+| Field | Meaning |
 | --- | --- |
-| `draft` | The model itself is still being authored or reviewed |
-| `partial` | Useful model with known unmapped areas |
-| `complete` | Intended Product breadth is modeled |
+| `scope` | The boundary the model intends to describe |
+| `method` | One short note on how the model was authored, or `""` |
+| `covered` | Behavior the model represents |
+| `exclusions` | Deliberate, approved omissions — never skipped work |
+| `unmapped` | Known behavior inside the scope that is not modeled yet |
+| `limitations` | What could not be established |
 
-`method` describes how the model was created or expanded. `sourceAreas` records
-inspected repository areas, `unmapped` names intentionally absent Product
-breadth, `limitations` states what could not be established, and the lead prose
-is the rationale. Coverage accepts no H2 sections. Coverage has no resource type
-counts or Reference-derived fields;
-resource totals are derived from the model itself.
+Every field is required and the body is only `# Coverage`. Each entry has a
+unique single-line `description` and its `paths`: repository-relative paths,
+directories ending in `/`, or `[]` when there is no known location. Paths cannot
+be absolute or URLs, or contain `..`, `*`, `?`, or `#` and line suffixes.
 
-Availability and Coverage do not claim implementation status. Every status may
-describe planned, implemented, or mixed behavior, and a complete model may have
-no References. `businesslens-verify` checks semantic alignment.
+There is no status. An empty `unmapped` list only means no gaps are recorded,
+and known gaps never relax the structural checks. Coverage makes no claim about
+implementation; `businesslens-verify` checks semantic alignment. Blueprints keep
+every description and drop the paths.
 
 Resource files, config, taxonomy, coverage, and orientation are committed.
 The model's `.gitignore` ignores `build/` and `cache/`, which are generated and

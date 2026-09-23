@@ -1,6 +1,6 @@
 ---
 id: businesslens
-summary: Keep a product's intended behavior in a Git-tracked Markdown model, install the agent skills that author and check it, and move that model between repositories as a Blueprint.
+summary: Keep intended product behavior in a reviewable model alongside the code.
 category: developer-tools
 tags: [product-model, coding-agents, developer-tools, specification]
 authors:
@@ -29,18 +29,17 @@ references:
 
 # BusinessLens
 
-Product-Driven Development for coding agents. BusinessLens keeps what a product
-is intended to do — who it serves, what they accomplish, what it keeps, what
-changes those things, and which rules must remain true, including who may act —
-in a plain-Markdown `.businesslens/` model that lives in the repository and is
-reviewed in pull requests. A command-line tool installs the agent skills that
-author and check that model, reads it back as a private local report, and moves
-it between repositories as a portable Blueprint.
+BusinessLens supports Product-Driven Development for coding agents through a
+Git-tracked, plain-Markdown `.businesslens/` Product Model. It describes who a
+product serves, what they accomplish, the things it keeps and changes, and the
+rules governing behavior and permission. Agent skills author the model and
+check its agreement with implementation. The command-line tool installs those
+skills, checks the model's structure, opens a private local report, and moves
+models between repositories as portable Blueprints. The report presents authored
+model scope and known gaps without claiming agreement with implementation.
 
 ## Intent
 
-Product intent normally survives only in tickets, chat, and the heads of the
-people who were there, so a coding agent works from whatever it can infer from
-code. BusinessLens gives that intent a durable, diffable home next to the code
-it governs, and keeps two claims strictly apart: that the model is well formed,
-and that the code currently agrees with it.
+Give teams and coding agents a durable, reviewable statement of intended
+behavior next to the code, so product decisions survive beyond tickets, chat,
+and individual memory.

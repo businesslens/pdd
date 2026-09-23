@@ -96,10 +96,8 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 - `references` optionally attach intent, implementation, or context artifacts
   to any semantic resource. They are navigation and supporting material, not
   proof or verification receipts.
-- `coverage.status` describes model breadth: `draft` while the model itself is
-  under review, `partial` with known unmapped areas, and `complete` when the
-  intended product breadth is modeled.
-- A complete model may contain zero References.
+- `coverage.md` describes model scope and known gaps; it has no status.
+- A model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.
 - Experiences are optional coherent usage contexts, each belonging to exactly

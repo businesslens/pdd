@@ -51,7 +51,8 @@ describe('stable Product Report', () => {
       id: report.id,
       title: report.title,
       description: report.description,
-      schemaVersion: report.schemaVersion
+      schemaVersion: report.schemaVersion,
+      supportingSections: report.supportingSections
     })
     // An Actor is an Entity that acts: a facet of one collection, not a collection.
     expect(workspace.actingEntities).toHaveLength(report.model.entities.filter(item => item.acts !== null).length)
@@ -699,7 +700,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV13')
+    expect(renderer).toContain('ProductReportV14')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -795,29 +796,6 @@ describe('stable Product Report', () => {
     expect(reportShell).not.toContain('surfaceHint')
     expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
     expect(source('app/utils/pageSections.ts')).not.toContain('hint')
-  })
-
-  /*
-    Coverage is one fact on two surfaces, so it is one component. It is drawn
-    in umber at every status: an amber partial and a green complete spent two
-    ramps this theme never chose, and told the reader that the honest
-    declaration the format asks for was a fault to clear.
-  */
-  it('reads coverage as one umber mark on both surfaces that carry it', () => {
-    const badge = source('app/components/BlrCoverageBadge.vue')
-    const shell = source('app/components/BlrReportShell.vue')
-    const overview = source('app/components/BlrOverview.vue')
-
-    expect(badge).toContain("color=\"neutral\"")
-    expect(badge).toContain('rounded-full')
-    expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
-    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
-    for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
-      expect(file, label).not.toContain('COVERAGE_TONE')
-      for (const offPalette of ["'warning'", "'success'", '"warning"', '"success"']) {
-        expect(file, `${label} ${offPalette}`).not.toContain(offPalette)
-      }
-    }
   })
 
   it('keeps Search and Vocabulary visible in the sidebar at every width', () => {

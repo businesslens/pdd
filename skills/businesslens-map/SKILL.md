@@ -176,10 +176,8 @@ Read before authoring:
 9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
    and `.gitignore`. Write current product meaning under the guardrails below.
-   Set coverage by model breadth:
-   - `draft` while the model itself still needs author review;
-   - `partial` when useful but known areas remain unmapped;
-   - `complete` only when the intended product breadth is modeled.
+   Record Coverage scope, covered behavior, approved exclusions, known
+   Unmapped areas and material limitations; never author a status.
 10. Run the bundled linter outside the untrusted target:
 
    ```bash

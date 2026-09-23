@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v13 renderer used by `businesslens view` and exported
+The stable Product Report v14 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -67,12 +67,36 @@ from a Scenario reading opens its parent's Connections tab. References stays
 scoped to the inspected resource: a Scenario's `rt=references` reads that
 Scenario's attachments under its own title.
 
-The Product Overview's References reading uses the same tree for every attachment
-in the model, including the Product's own. Each item names its owner, and resource
-owner links open that resource's References tab over the current reading. The
-catalog starts collapsed, with Expand all and Collapse all controls beside its
-count that also toggle image previews. It remembers its own expansion separately
-from individual resource trees.
+The Product Overview's References reading is read by where references point,
+not one row per attachment, because many resources cite the same file. It works
+like Coverage. One neutral card per kind of material the format defines counts
+its citations and is the only kind filter; a kind the model does not use reads
+zero rather than vanishing, and the kinds share one tone, since their icons tell
+them apart. Repository paths are drawn once each in a repository tree under
+**In this repository**, and external pages once each under their site under
+**External** — and on a code host such as github.com under their repository
+too, named by their title or their path within it. A repository file opens in
+this report and is left behind when a Blueprint is exported, while an external
+link opens in a new tab and travels with it. Each section counts its paths or
+links and its citations, and the two sit side by side where the reading has
+room for both.
+
+A location's row carries the icon of every kind cited at it and, when there are
+several, how many citations; those marks and the chevron are its one control,
+disclosing the citations in place. A closed folder or site says what opening it
+would find, faded, as a way in. Each citation names the resource that cites it,
+linking to that resource's References tab over the current reading, with its
+role and, when it points at a symbol, line or fragment, a link to exactly that.
+The whole location opens from its row. A title every citation shares is written
+once beside the location; otherwise citations sit under each distinct title.
+Search finds paths and links by name, never titles, and opens the folders above
+what it found. Folders and sites start open and citations closed; Expand all and
+Collapse all cover both, and the reading remembers its own expansion separately
+from resource trees.
+
+A resource's own References tab keeps a short list: it separates **In this
+repository** from **External**, each with its own count and grouped by kind. A
+section with nothing in it is not drawn. The Overview ends with its last reading.
 Local References always lead with the file path; a distinct authored title follows
 inline as muted context. External References use their authored title with the URL
 below it, or the URL alone when untitled. A title identical to the target is not repeated.
@@ -145,8 +169,11 @@ GitHub, with one divider above the whole group.
 Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
 `false` to omit the sidebar entry and its empty reference group. That header
 must keep the Vocabulary panel's tooltip controls available for report readers.
-The working view's header serves as its navbar: the heading shares it with
-coverage, report schema version and generation date, above a bottom divider. Status wraps onto a second line on narrow screens.
+The working view's header serves as its navbar: the heading shares it with the
+generation date, above a bottom divider. The report schema version is not shown;
+it identifies a data format, not anything a reader of the Product acts on. A
+host's `status` slot replaces the generation date with its live connection state. Header metadata wraps onto a second line
+on narrow screens.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
 utilities; both also appear in the mobile navigation drawer. The bundled local
 viewer places its version beside the brand in the sidebar header, followed by
@@ -179,7 +206,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV13` from `businesslens/report`. There is
+`report` must be a `ProductReportV14` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -195,18 +222,20 @@ where it left:
   v-model:scenario-route="scenarioRoute"
   v-model:route-columns="routeColumns"
   v-model:topology="topology"
+  v-model:coverage="coverage"
   :report="report"
 />
 ```
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
+| `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
 | `resourceTab` | resource reading: `overview`, `structure`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
+| `coverage` | `{ path: string \| null }` | No path |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
 Every one is optional; bind the ones the host wants in its URL. A Scenario key
@@ -214,8 +243,8 @@ selects that Scenario inside its parent reading, or its own References when
 requested, while the section stays on the originating working view.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
-It returns these seven models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
-keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
+It returns these eight models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
+key `cp` for Coverage, and `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
 `useBlrReportNavigation({ sectionKey: 'tab' })` for the catalog's section URLs.
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
 Navigation pushes history; reading filters and expansion replace the current entry.
@@ -404,6 +433,80 @@ Run `node scripts/check-comparison-tables.mjs <CLI viewer URL>` against this
 repository's report or fixture-shop to check badge-to-panel keyboard focus,
 bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
+### Coverage
+
+Coverage opens with one summary panel: **Scope**, then **Method** when
+recorded, under the model's own field names, then the four category cards as the
+panel's last row. Method is one short line by format, so it is read rather than
+disclosed. The search and the location tree follow the panel. There is no
+Coverage status badge or derived completeness indicator, in the navbar or the
+Coverage reading, and no separate Rationale or Mapping details.
+
+The reading takes the four authored lists as one set of statements whose
+category is an attribute. Four compact cards count Covered, Exclusions, Unmapped and Limitations,
+including entries with no location, and are the only category filter; selecting
+a card activates it, selecting it again restores every category. Card totals
+never change with search or filtering.
+
+Each category has one mark, drawn wherever the category appears — on its card,
+beside a path and on a statement's chip — and each has its own outline, so a
+category reads by shape as well as colour: Covered a checked circle, Exclusions
+a square with a minus, Unmapped a dashed circle and Limitations a warning
+triangle. Their colours keep the green, blue, orange and red families at
+saturations chosen to stay apart from one another at icon size.
+
+Every statement is written under the path it names, and there is no path panel.
+A row carries the mark of each category recorded at that **exact** path, beside
+how many statements that is when there are several — one mark already says
+there is one, so a lone `1` is not printed, though the control still names the
+count to a screen reader. Those marks, that count and the chevron are the row's one
+control: a row's own marks are what a reader reaches for to read it, and they
+exist exactly when it has something to disclose. The row's path is a larger
+pointer target for the same control, not a second tab stop. Selecting either
+reads its statements in place; selecting again puts them away. Selecting the
+path of a folder with nothing recorded at it opens or closes the folder.
+
+A folder never inherits meaning from beneath it, because a count of "entries at
+or below" presented as a folder's own annotation is neither files nor a share of
+what the folder contains. A **closed** folder additionally says how many
+distinct statements are recorded inside it, drawn as faded marks and a muted
+`N inside`. That is a way in, not a claim about the folder: it disappears when
+the folder opens, selecting it expands the folder rather than reading anything,
+and one statement recorded at three paths below counts once. Opening a folder
+reveals the paths inside it and nothing else, so structure stays browsable
+without the prose that would bury it.
+
+A statement recorded at several paths is written in full under each of them,
+with its other locations listed as **also recorded at** — one claim about
+several places, printed where each place is read. Recognizable Product Model
+icons and the `.businesslens` mark still mark authored model paths.
+
+Search finds recorded paths, as a file finder would: it keeps the paths whose
+name, as written, contains what was typed, and opens every folder above them —
+a hidden answer is not an answer. It never matches statement prose, and it
+narrows paths rather than statements, so a statement recorded at a matched path
+and elsewhere does not bring its other locations into the result; reading it
+still lists them. A matched path's explanation waits to be asked for like any
+other. The reveal does not rewrite remembered expansion: a folder put away
+during a search stays away until the search changes, and clearing the search
+restores the expansion the reader had. Expand all and Collapse all sit beside
+it and cover both axes: the folders and the explanations. A card filter or a
+search only narrows what is drawn: Expand all and Collapse all change what is on
+screen, and whatever the narrowing hides keeps its own state for when it
+returns. The References catalog shares this expansion. Expansion is
+remembered per report. Statements with no recorded location stay visible under
+**No location recorded**, narrowed by the same card filter and set aside while a
+search is active, since they have no path to match; this includes model-wide
+Limitations, which have no separate section of their own. Model References are not repeated here — they have their home in the
+Product Overview's own References reading. No live repository inventory is
+added.
+
+`coverage.path` is navigation state, encoded as `cp`, and deep-links one
+location: its ancestors open, its explanation is read, and the row is marked
+current — on a fresh load too, with no expansion remembered. Selecting that row
+again clears it. Tree expansion is
+remembered for the report. Narrow screens scroll the reading within its frame.
+
 ## Navigation regression checks
 
 Against a running built fixture-shop report, run
@@ -419,6 +522,7 @@ filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.
 `node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
 access, tooltips, saved state, utilities and the independent mobile drawer.
+
 
 Check the collection preview picker against a running local viewer with
 `node scripts/check-collection-views.mjs <viewer-url>`. This covers all six

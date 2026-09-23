@@ -1,10 +1,14 @@
 import { request } from 'node:http'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
-import type { ProductReportV13 } from '../src/core/portable.js'
+import type { ProductReportV14 } from '../src/core/portable.js'
+import { compileReport } from '../src/commands/export.js'
+import { loadModel } from '../src/core/model.js'
+
+const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 interface ResponseResult {
   body: string
@@ -126,13 +130,22 @@ function staticViewer(): string {
   return directory
 }
 
-function report(): ProductReportV13 {
-  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV13
+function report(): ProductReportV14 {
+  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV14
 }
 
 const logo = (color = '#80552b') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="${color}"/></svg>`
 
 describe('local Product Report server', () => {
+  it('does not expose Git history or comparison endpoints', async () => {
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
+    viewers.push(viewer)
+    for (const path of ['history', 'history/defaults', 'history/diff?base=head&target=working', 'state?state=head', 'review/file?base=head&target=working&path=README.md']) {
+      expect((await get(viewer.url, `/_businesslens/${path}`)).status).toBe(404)
+    }
+    expect((await get(viewer.url, '/_businesslens/report.json')).status).toBe(200)
+  })
+
   it('serves the static application and caches the compiled report', async () => {
     let compileCount = 0
     const root = staticViewer()
@@ -190,10 +203,10 @@ describe('local Product Report server', () => {
     }
   })
 
-  it('watches model sources and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
+  it.each(['product.md', 'coverage.md'])('watches %s and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async (filename) => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-model-'))
     directories.push(model)
-    const product = join(model, 'product.md')
+    const product = join(model, filename)
     writeFileSync(product, 'First title')
 
     const viewer = await startLocalViewer({
@@ -220,6 +233,30 @@ describe('local Product Report server', () => {
 
     expect(JSON.parse(updated.body).title).toBe('Updated title')
     expect(event).toMatch(/"revision":\d+/)
+  })
+
+  it('recovers when the retired Coverage file is removed and reports its return', { timeout: WATCH_TEST_TIMEOUT_MS * 2 }, async () => {
+    const root = mkdtempSync(join(tmpdir(), 'businesslens-retired-coverage-'))
+    directories.push(root)
+    cpSync(FIXTURE, root, { recursive: true })
+    const legacy = join(root, '.businesslens', 'coverage.json')
+    writeFileSync(legacy, '{}')
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      watchRoot: join(root, '.businesslens'),
+      debounceMs: 10,
+      compile: () => {
+        const model = loadModel(root)
+        if (model.issues.length) throw new Error(model.issues.join('\n'))
+        return compileReport(model, '2026-09-21')
+      }
+    })
+    viewers.push(viewer)
+    expect(viewer.status().error).toContain('coverage.json is not supported')
+    await eventAfter(viewer.url, 'report', () => rmSync(legacy), WATCH_TEST_TIMEOUT_MS - 500)
+    expect(viewer.status()).toEqual({ ready: true, error: undefined })
+    await eventAfter(viewer.url, 'compile-error', () => writeFileSync(legacy, '{}'), WATCH_TEST_TIMEOUT_MS - 500)
+    expect(viewer.status().error).toContain('coverage.json is not supported')
   })
 
   it('announces a valid logo edit even when the semantic report is unchanged', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
@@ -283,6 +320,27 @@ describe('local Product Report server', () => {
     const response = await fetch(viewer.url, { method: 'POST' })
     expect(response.status).toBe(405)
     expect(response.headers.get('allow')).toBe('GET, HEAD')
+
+    // A request target that is not a URL is answered, never a crash.
+    expect((await get(viewer.url, '//')).status).toBe(400)
+    expect((await get(viewer.url)).status).toBe(200)
+  })
+
+  it('drops the previous model on rebind, even when the new one does not compile', async () => {
+    const repository = mkdtempSync(join(tmpdir(), 'businesslens-rebind-'))
+    directories.push(repository)
+    writeFileSync(join(repository, 'notes.md'), '# Notes')
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, assetRoot: repository })
+    viewers.push(viewer)
+    expect((await get(viewer.url, '/_businesslens/report.json')).status).toBe(200)
+    expect((await get(viewer.url, '/_businesslens/file/notes.md')).status).toBe(200)
+
+    viewer.bind({ compile: () => { throw new Error('Lint failed: missing actor') } })
+    const rebound = await get(viewer.url, '/_businesslens/report.json')
+    expect(rebound.status).toBe(422)
+    expect(JSON.parse(rebound.body)).toEqual({ message: 'Lint failed: missing actor' })
+    // An omitted asset root is cleared, not inherited from the old binding.
+    expect((await get(viewer.url, '/_businesslens/file/notes.md')).status).toBe(404)
   })
 
   it('serves repository assets from the mount, and refuses everything else', async () => {
@@ -349,6 +407,39 @@ describe('local Product Report server', () => {
     expect((await get(viewer.url, '/_businesslens/file/package.json')).status).toBe(404)
   })
 
+  it('starts with no model, says so, and comes alive when one is bound', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      waitingMessage: 'No Product Model yet. Waiting for .businesslens/ to be created.'
+    })
+    viewers.push(viewer)
+
+    expect(viewer.status()).toEqual({ ready: false, error: 'No Product Model yet. Waiting for .businesslens/ to be created.' })
+    const waiting = await get(viewer.url, '/_businesslens/report.json')
+    expect(waiting.status).toBe(422)
+    expect(JSON.parse(waiting.body).message).toContain('Waiting for .businesslens/')
+    expect((await get(viewer.url)).status).toBe(200)
+
+    const model = mkdtempSync(join(tmpdir(), 'businesslens-late-model-'))
+    directories.push(model)
+    const product = join(model, 'product.md')
+    writeFileSync(product, 'Bound title')
+    const bound = await eventAfter(viewer.url, 'report', () => {
+      viewer.bind({
+        watchRoot: model,
+        compile: () => ({ ...report(), title: readFileSync(product, 'utf8') })
+      })
+    })
+    expect(bound).toContain('event: report')
+    expect(viewer.status().ready).toBe(true)
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/report.json')).body).title).toBe('Bound title')
+
+    // The binding's watcher is live: a later save recompiles as usual.
+    const edited = eventAfter(viewer.url, 'report', () => writeFileSync(product, 'Edited after binding'), WATCH_TEST_TIMEOUT_MS - 500)
+    expect(await edited).toContain('event: report')
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/report.json')).body).title).toBe('Edited after binding')
+  })
+
   it('returns a safe compile error without stopping the viewer', async () => {
     const viewer = await startLocalViewer({
       viewerRoot: staticViewer(),
@@ -361,4 +452,5 @@ describe('local Product Report server', () => {
     expect(JSON.parse(response.body)).toEqual({ message: 'Lint failed: missing actor' })
     expect((await get(viewer.url)).status).toBe(200)
   })
+
 })

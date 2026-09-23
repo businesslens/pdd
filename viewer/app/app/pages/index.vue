@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { ProductReportV13 } from 'businesslens/report'
+import type { ProductReportV14 } from 'businesslens/report'
 
-const { data, error, refresh, status } = await useFetch<ProductReportV13>(
+const { data, error, refresh, status } = await useFetch<ProductReportV14>(
   '/_businesslens/report.json',
   { server: false, cache: 'no-store' }
 )
@@ -10,6 +10,9 @@ const liveError = ref<string | null>(null)
 const logoSrc = ref<string | null>(null)
 let logoRevision = 0
 let events: EventSource | undefined
+
+/* The header's pulse: which revision is on screen, and when it arrived. */
+const live = useLocalLive()
 
 async function refreshLogo() {
   logoRevision += 1
@@ -22,11 +25,19 @@ async function refreshLogo() {
   }
 }
 
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation()
 onMounted(() => {
   void refreshLogo()
   events = new EventSource('/_businesslens/events')
-  events.addEventListener('report', () => {
+  events.addEventListener('open', () => { live.value = { ...live.value, connected: true }; void refresh() })
+  events.addEventListener('error', () => { live.value = { ...live.value, connected: false } })
+  events.addEventListener('report', (event) => {
     liveError.value = null
+    let revision = live.value.revision + 1
+    try {
+      revision = (JSON.parse((event as MessageEvent).data) as { revision?: number }).revision ?? revision
+    } catch { /* The count is a courtesy. */ }
+    live.value = { revision, updatedAt: Date.now(), connected: true }
     void refresh()
     void refreshLogo()
   })
@@ -40,14 +51,16 @@ onMounted(() => {
   })
 })
 
-onBeforeUnmount(() => events?.close())
+onBeforeUnmount(() => {
+  events?.close()
+})
 
 const errorMessage = computed(() => {
+  if (liveError.value) return liveError.value
   const failure = error.value as { data?: { message?: string }, message?: string } | null
   return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
 })
 
-const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation()
 </script>
 
 <template>
@@ -59,25 +72,27 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
       </div>
     </UContainer>
 
-    <UContainer v-else-if="error && !data" class="py-16">
+    <UContainer v-else-if="error && !data" class="min-h-0 flex-1 overflow-y-auto py-8">
       <UAlert
         icon="i-lucide-triangle-alert"
         color="error"
         variant="subtle"
         title="The Product Model is not ready to view."
         :description="errorMessage"
+        :ui="{ description: 'max-h-24 overflow-auto break-words' }"
         :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }]"
       />
     </UContainer>
 
     <template v-else-if="data">
-      <UContainer v-if="liveError" class="pt-6">
+      <UContainer v-if="liveError" class="shrink-0 pt-4">
         <UAlert
           icon="i-lucide-triangle-alert"
           color="warning"
           variant="subtle"
           title="The latest model edit is not valid yet."
           :description="liveError"
+          :ui="{ description: 'max-h-24 overflow-auto break-words' }"
         />
       </UContainer>
       <BusinessLensReportViewer
@@ -88,9 +103,14 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
         v-model:route-columns="routeColumns"
         v-model:topology="topology"
         :report="data"
+        v-model:coverage="coverage"
         :logo-src="logoSrc"
         class="businesslens-local-report min-h-0 flex-1"
       >
+        <!-- The pulse shows the local report's live connection state. -->
+        <template #status>
+          <LocalLivePulse />
+        </template>
         <template #sidebar-header="{ collapsed }"><LocalViewerBrand :collapsed="collapsed" /></template>
         <template #sidebar-footer="{ collapsed }"><LocalViewerTools :collapsed="collapsed" /></template>
       </BusinessLensReportViewer>

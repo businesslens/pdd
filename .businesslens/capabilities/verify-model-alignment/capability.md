@@ -23,6 +23,6 @@ every change is followed by a fresh inspection.
 
 One invocation should be enough. A person should not have to notice that a gap
 needs new product meaning and then go invoke a different workflow themselves.
-Findings are re-derived on every pass and never persisted: a stored verdict
+Current semantic findings are re-derived on every pass: a stored verdict
 would survive the code, runtime assumptions, and inspection method that produced
 it, and would imply a certainty the next commit has already ended.

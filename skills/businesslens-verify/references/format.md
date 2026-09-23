@@ -91,7 +91,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 8` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 9` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, H1, lead description, and optional `## Intent`.
   `summary` is one line of at most 400 characters, `category` is lowercase
@@ -120,8 +120,7 @@ not contain another H1 or H2.
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
   `entities` is refused. Every Capability needs a Capability Scenario for every
-  availability Context: a gap is an error at complete coverage and a warning
-  at draft or partial coverage.
+  availability Context: a gap is always an error.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
@@ -224,9 +223,37 @@ not contain another H1 or H2.
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`
   effect. An achieved Scenario traverses at least two distinct Capabilities.
-- `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
-  H1, and lead rationale with no H2 sections. Status is model breadth only:
-  `draft|partial|complete`. A complete model has at least one Capability.
+- `coverage.md`: frontmatter with exactly `scope`, `method`, `covered`,
+  `exclusions`, `unmapped` and `limitations`, and a body of only `# Coverage`.
+  There is no status.
+
+```markdown
+---
+scope: The intended Product behavior.
+method: Authored from discussion of intended behavior.
+covered:
+  - description: Customer checkout and order tracking.
+    paths: []
+exclusions: []
+unmapped: []
+limitations: []
+---
+
+# Coverage
+```
+
+`scope` is the model's intended breadth in one line; `method` is one short line
+on how it was authored, or `""`. `covered` is represented behavior,
+`exclusions` approved omissions (never turn skipped work into one), `unmapped`
+known behavior within scope that is not modeled, and `limitations` material
+uncertainty (not missing behavior, and not "code was not executed"). Each entry
+is `{ description, paths }`: a one-line description, unique across all four
+lists, of one coherent behavior with all its paths. Paths are repository-relative,
+directories end in `/`, and `[]` means no known location; no traversal, `*` or
+`?` wildcards, URLs, backslashes or fragment/line suffixes, while brackets, as
+in `pages/[id].vue`, are ordinary. An empty `unmapped` list never means complete,
+and known gaps never relax structural checks. Blueprints keep descriptions and
+drop paths.
 
 Both Scenario types have no lead prose, author `routes` and `steps` in
 frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
@@ -251,8 +278,8 @@ later Step's `from` for it must match. `reads` is a bare mention: no state,
 never a change, never enough to keep an Entity from being an orphan. Author
 the effects on the Step that performs them. After drafting, re-read every
 Step's `text` against the Entity list and complete its `entities`: a Step
-whose text names an Entity title it does not declare is a finding, graded by
-coverage status, exempting the Step's own `actor` and the phrase "The
+whose text names an Entity title it does not declare is an error,
+exempting the Step's own `actor` and the phrase "The
 Product". A Step performing an operation a Business Rule governs must have an
 actor with a possible grant, and a Step performing one a Rule closes with
 `permits: []` is an error. Optional `## Edge cases` is a non-empty single-line
@@ -376,7 +403,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 8 it
+Context is the single model concept for where behavior applies. In schema 9 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
@@ -435,8 +462,8 @@ Coverage, config, and taxonomies do not accept them.
 
 ## Verification edit boundaries
 
-Missing References are valid at every Coverage status. Product meaning may
-change only in `product.md`, taxonomies, coverage prose, and resource
+Missing References are valid. Product meaning may
+change only in `product.md`, taxonomies, Coverage descriptions, and resource
 prose/relationships after approval. A post-alignment navigation refresh may
 change only implementation References.
 

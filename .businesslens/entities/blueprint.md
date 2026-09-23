@@ -17,16 +17,16 @@ references:
 
 A Product Model as a single portable file: the Product Report that leaves the
 repository which authored it. It is what an export writes, what an open reads,
-what a catalog serves, and what a contribution proposes. It is regenerated
-rather than copied, so the one this repository exports and the one another
-repository pulls are byte-identical.
+what a catalog serves, and what a contribution proposes. Opening it regenerates
+a canonical model that preserves portable product meaning. Generation metadata
+can change, and the receiving model's Method describes its expansion.
 
 ## Information kept
 
 - **Schema version** — the report contract it was written under, which a reader refuses rather than migrates
 - **Product identity** — name, summary, category, tags, authors, and licence, as a catalog would list it
 - **Product meaning** — every resource of the model with its relations, Contexts, Scenarios, Steps, and Business Rules
-- **Coverage** — the model's status, method, unmapped areas, and limitations, without the source areas that only located files
+- **Coverage** — the declared Scope, Covered, Exclusion, Unmapped and Limitation descriptions, and Method; repository paths are removed
 
 ## States
 

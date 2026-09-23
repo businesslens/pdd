@@ -1,11 +1,13 @@
 import * as z from 'zod'
+import { undeclaredEntityMentions } from './entity-mentions.js'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading, statesAnExclusion } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
+import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '13.0.0'
+export const REPORT_SCHEMA_VERSION = '14.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -404,16 +406,10 @@ export const ReportBusinessRuleSchema = z.strictObject({
   ...ResourceContentSchema
 })
 
-export const ReportCoverageSchema = z.strictObject({
-  status: z.enum(['complete', 'partial', 'draft']),
-  method: z.array(z.string()),
-  sourceAreas: z.array(z.string()),
-  unmapped: z.array(z.string()),
-  limitations: z.array(z.string()),
-  rationale: MarkdownFragmentSchema
-})
+export const ReportUnmappedAreaSchema = CoverageAreaSchema
+export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV13Schema = z.strictObject({
+export const ProductReportV14Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -449,10 +445,10 @@ export const ProductReportV13Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV13Schema
+export const ProductReportSchema = ProductReportV14Schema
 
-export type ProductReportV13 = z.infer<typeof ProductReportV13Schema>
-export type ProductReport = ProductReportV13
+export type ProductReportV14 = z.infer<typeof ProductReportV14Schema>
+export type ProductReport = ProductReportV14
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -481,8 +477,9 @@ export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSchema>
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
+export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV13['model']
+export type ReportModel = ProductReportV14['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -491,7 +488,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV13Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV14Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -612,7 +609,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV13): string[] {
+export function validateProductReport(report: ProductReportV14): string[] {
   const issues: string[] = []
   const { model } = report
   /* An Actor is an Entity that acts. Every actor reference resolves here. */
@@ -946,6 +943,12 @@ export function validateProductReport(report: ProductReportV13): string[] {
         else if (entry.to !== null) instanceStates.set(instance, entry.to)
       }
 
+      for (const entity of undeclaredEntityMentions(
+        step.text, model.entities, step.entities.map(entry => entry.entityId), step.actorId
+      )) {
+        issues.push(`${stepLabel}: text names "${entity.title}" and "entities" does not declare it`)
+      }
+
       requireUniqueValues(issues, stepLabel, 'routeIds', step.contexts.map(context => context.routeId))
       if (!step.contexts.length) continue
       const contextualizedRouteIds = new Set(step.contexts.map(context => context.routeId))
@@ -1057,13 +1060,11 @@ export function validateProductReport(report: ProductReportV13): string[] {
       }
     }
   }
-  if (report.coverage.status === 'complete') {
-    for (const capability of model.capabilities) {
-      const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
-      for (const place of capabilityAvailability.get(capability.id) || []) {
-        if (!covered.has(place)) {
-          issues.push(`capability "${capability.id}": availability Context place "${place}" needs Capability Scenario coverage`)
-        }
+  for (const capability of model.capabilities) {
+    const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
+    for (const place of capabilityAvailability.get(capability.id) || []) {
+      if (!covered.has(place)) {
+        issues.push(`capability "${capability.id}": availability Context place "${place}" needs Capability Scenario coverage`)
       }
     }
   }
@@ -1553,8 +1554,8 @@ export function validateProductReport(report: ProductReportV13): string[] {
     })
   }))
 
-  if (report.coverage.status === 'complete' && model.capabilities.length === 0) {
-    issues.push('a complete model needs at least one capability')
+  if (model.capabilities.length === 0) {
+    issues.push('the model needs at least one capability')
   }
 
   const expectedCounts = {
@@ -1584,8 +1585,10 @@ export function validateProductReport(report: ProductReportV13): string[] {
   }
 
   if (report.referenceProfile === 'portable') {
-    if (report.coverage.sourceAreas.length) {
-      issues.push('referenceProfile is portable but coverage.sourceAreas names repository areas')
+    for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations'] as const) {
+      if (report.coverage[kind].some(area => area.paths.length)) {
+        issues.push(`referenceProfile is portable but coverage.${kind} paths name repository areas`)
+      }
     }
     const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
     for (const host of entryPointHosts) {
@@ -1639,7 +1642,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV13): ProductReportV13 {
+export function projectPortableReport(report: ProductReportV14): ProductReportV14 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1677,12 +1680,18 @@ export function projectPortableReport(report: ProductReportV13): ProductReportV1
       journeyScenarios: strip(report.model.journeyScenarios),
       businessRules: strip(report.model.businessRules)
     },
-    coverage: { ...report.coverage, sourceAreas: [] }
+    coverage: {
+      ...report.coverage,
+      covered: report.coverage.covered.map(area => ({ ...area, paths: [] })),
+      exclusions: report.coverage.exclusions.map(area => ({ ...area, paths: [] })),
+      unmapped: report.coverage.unmapped.map(area => ({ ...area, paths: [] })),
+      limitations: report.coverage.limitations.map(area => ({ ...area, paths: [] }))
+    }
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV13 {
-  const parsed = ProductReportV13Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV14 {
+  const parsed = ProductReportV14Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1708,44 +1717,14 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV13): string[] {
+export function validateBlueprintReport(report: ProductReportV14): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
   if (!report.authors.length) issues.push('at least one author is required for a public Blueprint')
   if (!report.license) issues.push('license is required for a public Blueprint')
-  if (!report.model.capabilities.length) issues.push('a public Blueprint needs at least one capability')
-  const covered = new Map<string, Set<string>>()
-  const screenIds = new Set(report.model.screens.map(item => item.id))
-  /* A Step on a Screen the Interface shares beside its Experiences is inside
-     every one of them, so it covers each — the same reading the validator and
-     the folder linter apply. */
-  const experienceIdsByInterface = new Map<string, string[]>()
-  for (const experience of report.model.experiences) {
-    for (const interfaceId of experience.interfaceIds) {
-      experienceIdsByInterface.set(interfaceId, [...(experienceIdsByInterface.get(interfaceId) || []), experience.id])
-    }
-  }
-  const availabilityPlaces = (placeId: string): string[] => {
-    const container = screenIds.has(placeId) ? parentPlace(placeId) || '' : placeId
-    const shared = experienceIdsByInterface.get(container)
-    return shared?.length ? shared : [container]
-  }
-  for (const scenario of report.model.capabilityScenarios) {
-    const places = covered.get(scenario.capabilityId) || new Set<string>()
-    for (const context of scenario.steps.flatMap(step => step.contexts)) {
-      for (const place of availabilityPlaces(context.placeId)) places.add(place)
-    }
-    covered.set(scenario.capabilityId, places)
-  }
-  for (const capability of report.model.capabilities) {
-    const coveredPlaces = covered.get(capability.id) || new Set<string>()
-    for (const context of capability.availability) {
-      if (!coveredPlaces.has(context.placeId)) {
-        issues.push(`capability "${capability.id}" availability Context place "${context.placeId}" needs Capability Scenario coverage for a public Blueprint`)
-      }
-    }
-  }
+  // Capability and Capability Scenario coverage bind every report, so the
+  // product-report validator has already refused a model without them.
   return issues
 }
 

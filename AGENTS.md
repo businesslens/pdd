@@ -257,6 +257,11 @@ costed already.
   set is many, names where it is one.
 - **A resource type's mark is reserved.** Chrome wears a kind's icon only where
   it names that kind; reach for an unreserved glyph otherwise.
+- **Coverage and References are read by location.** Each recorded path or
+  referenced location appears once in a tree and discloses its statements or
+  citations when asked; a folder never inherits meaning from beneath it. Their
+  category and kind cards are fixed sets that read zero, and search matches
+  paths and links, never prose.
 - **A teaching affordance can be turned off, and never hides the way back.**
   Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
   so the first paint is right.

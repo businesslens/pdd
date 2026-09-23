@@ -51,7 +51,7 @@ A Journey owns only its high-level Goal, Success criterion, and Actors. Concrete
 Capability selection, order, branches, repetition, and failure belong to its
 [Journey Scenario](#journey-scenarios) variations.
 
-Journeys are optional. A complete Product Model can contain none when its
+Journeys are optional. A Product Model can contain none when its
 behavior is better expressed as independently verifiable Capabilities.
 
 ## When you create one

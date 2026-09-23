@@ -100,7 +100,8 @@ relationships remain in Connections. Screens have no containment tab.
 ### References open
 
 The inspected resource's attached documents, designs, code references and images,
-grouped by reference type in an expandable tree with counts. Groups start open;
+separated into material in this repository and external links, each grouped by
+reference type in an expandable tree with counts. Groups start open;
 each attachment keeps its role, and local images expand into an inline preview.
 Local References lead with their file path, with any distinct authored title
 alongside it as context. External References keep their descriptive title and URL.

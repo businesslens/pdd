@@ -1,11 +1,12 @@
 ---
-status: complete
-method: ["Hand-authored golden fixture covering every source file."]
-sourceAreas: [src]
+scope: Customer shopping, checkout and staff order management.
+exclusions: []
+method: Hand-authored golden fixture for the toy shop.
+covered:
+  - description: Customer shopping, checkout and staff order management.
+    paths: [src/]
 unmapped: []
 limitations: []
 ---
 
 # Coverage
-
-The fixture map intentionally covers the whole toy codebase.

@@ -57,7 +57,7 @@ Check these before contributing:
   databases, or architecture.
 - **Generic shape:** model an archetype rather than a named third-party product.
 - **Portable content:** no code or implementation References, local Reference
-  targets, Coverage source areas, or repository-relative entry points.
+  targets, Coverage paths, or repository-relative entry points.
 
 The portability rules are enforced automatically. Author a greenfield model
 with [`businesslens-ideate`](./skill-businesslens-ideate.md), then test it by

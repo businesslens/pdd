@@ -78,15 +78,13 @@
 - Treat shared backend code as no evidence of web/mobile/API/CLI parity. Verify
   each declared availability Context independently.
 
-## Judge coverage
+## Describe coverage
 
-- `draft`: the model itself is still being authored or reviewed.
-- `partial`: the model is useful and known product areas remain unmapped.
-- `complete`: the intended product breadth is modeled.
-
-Coverage never states whether behavior is implemented or verified. List
-uninspected or ambiguous areas explicitly. A small, honest partial model is
-better than a broad model built from guesses.
+Record scope, covered behavior, approved exclusions, known Unmapped behavior
+and material Limitations. There is no status, and an empty Unmapped list never
+means complete. Coverage never states whether behavior is implemented or
+verified. A small, honest model with recorded gaps is better than a broad model
+built from guesses.
 
 ## Decide Entity granularity deliberately
 
@@ -149,7 +147,7 @@ implementation` for the code you traced, `role: intent` for the spec, PRD or
 proposal that states the behavior, `role: context` for background you read. For
 code targets, prefer `path#symbol` over line ranges and use only tracked files.
 A Reference records where a claim came from, never that it is verified, and none
-is required for any Coverage status — but a resource with nothing attached
+is required — but a resource with nothing attached
 should be one you can justify from inspection alone.
 
 Visual or research References may guide inspection. Keep their role honest,

@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -56,6 +56,7 @@ describe('cli help', () => {
       expect(result.stdout).toContain('install [options]')
       expect(result.stdout).toContain('update [options]')
       expect(result.stdout).toContain('lint [options]')
+      expect(result.stdout).not.toContain('checkpoint [label]')
       expect(result.stdout).toContain('view [options]')
       expect(result.stdout).toContain('blueprint')
       expect(result.stdout).toContain('-c, --cwd <path>')
@@ -132,6 +133,13 @@ describe('cli dispatch', () => {
     expect(output.branch).toBeUndefined()
   })
 
+  it('rejects the removed checkpoint command without creating a saved state', () => {
+    const result = cli(repo, process.env, 'checkpoint', 'Old command')
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('unknown command')
+    expect(existsSync(join(repo, '.businesslens/cache/checkpoints'))).toBe(false)
+  })
+
   it('accepts --cwd and -c before or after a command', () => {
     for (const args of [
       ['--cwd', repo, 'lint', '--json'],
@@ -155,7 +163,7 @@ describe('cli dispatch', () => {
         const result = cli(nested, process.env, ...args)
         expect(result.status, args.join(' ')).toBe(1)
         expect(JSON.parse(result.stdout).errors).toContain(
-          'config.yaml: schema 99 is not supported (expected 8)'
+          'config.yaml: schema 99 is not supported (expected 9)'
         )
       }
     } finally {
@@ -169,9 +177,9 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  // Fifteen real CLI processes can exceed the default 5s on a busy CI runner.
+  // Real CLI processes need room on busy CI runners.
   it('refuses removed commands and options as ordinary usage errors', () => {
-    for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate']) {
+    for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate', 'coverage']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
       expect(result.status, command).toBe(2)
       expect(result.stderr, command).toContain(`unknown command '${command}'`)
@@ -245,6 +253,22 @@ describe('cli dispatch', () => {
         expect(result.status, value).toBe(2)
         expect(result.stderr, value).toContain('expected an integer from 1 to 65535')
         expect(result.stderr, value).not.toContain('No .businesslens/')
+      }
+    } finally {
+      rmSync(empty, { recursive: true, force: true })
+    }
+  })
+
+  it('refuses a viewer --cwd that is not a directory instead of waiting for a model there', () => {
+    const empty = mkdtempSync(join(tmpdir(), 'bl-view-cwd-'))
+    try {
+      const file = join(empty, 'notes.txt')
+      writeFileSync(file, 'not a directory\n')
+      for (const target of [join(empty, 'missing'), file]) {
+        const result = cli(empty, process.env, 'view', '--no-open', '--cwd', target)
+        expect(result.status, target).toBe(2)
+        expect(result.stderr, target).toContain('is not a directory')
+        expect(result.stdout, target).not.toContain('Waiting for')
       }
     } finally {
       rmSync(empty, { recursive: true, force: true })

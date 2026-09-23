@@ -1,5 +1,6 @@
 <script setup lang="ts">
 provide('businesslens:viewer', useId())
+import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import { destinationForLocation } from '../utils/reportDestinations'
@@ -11,12 +12,12 @@ import { destinationForLocation } from '../utils/reportDestinations'
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReportV13 } from 'businesslens/report'
+import type { ProductReportV14 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
 const props = withDefaults(defineProps<{
-  report: ProductReportV13
+  report: ProductReportV14
   /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
   /** Other products available in this host; mark the current destination active. */
@@ -55,6 +56,7 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 
 /** `auto`, or the reader's preferred number of visible route columns. */
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const workspace = computed(() => projectReportWorkspace(props.report))
@@ -89,6 +91,7 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :section="location.section"
       :resource="location.resource"
       :tab="location.tab"
+      v-model:coverage="coverage"
       v-model:resource-tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
@@ -118,6 +121,9 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       </template>
       <template v-if="$slots.provenance" #provenance>
         <slot name="provenance" />
+      </template>
+      <template v-if="$slots.status" #status>
+        <slot name="status" />
       </template>
     </BlrReportShell>
   </article>

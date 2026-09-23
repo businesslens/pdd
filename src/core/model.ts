@@ -3,6 +3,7 @@ import { basename, join } from 'node:path'
 import { parse } from 'yaml'
 import type { CompactEntryPoint, Context, ResourceAsset, ResourceReference } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
+import { CoverageDocumentSchema, type CoverageDocument } from './coverage.js'
 import {
   assetsField,
   availabilityField,
@@ -19,7 +20,7 @@ import {
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
-  bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
+  bulletList, decisionPoints, parseMarkdown, screenStates, section
 } from './markdown.js'
 
 export interface ResourceFile {
@@ -359,14 +360,7 @@ export interface PddModel {
     references: ResourceReference[]
   }
   scenarioKinds: ScenarioKind[]
-  coverage: {
-    status: string
-    method: string[]
-    sourceAreas: string[]
-    unmapped: string[]
-    limitations: string[]
-    rationale: string
-  }
+  coverage: CoverageDocument
   interfaces: InterfaceResource[]
   experiences: ExperienceResource[]
   screens: ScreenResource[]
@@ -420,7 +414,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 8
+export const FOLDER_SCHEMA = 9
 
 /**
  * The two channels a model load reports into.
@@ -1030,7 +1024,7 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 8 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 9 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -1197,29 +1191,17 @@ export function loadModel(cwd: string): PddModel {
     issues.push('product.md is missing')
   }
 
-  let coverage: PddModel['coverage'] = {
-    status: 'draft', method: [], sourceAreas: [], unmapped: [], limitations: [], rationale: ''
+  let coverage: CoverageDocument = {
+    scope: '', exclusions: [], method: '', covered: [], unmapped: [], limitations: []
   }
   const coverageFile = join(root, 'coverage.md')
+  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 9)')
   if (existsSync(coverageFile)) {
-    const source = readFileSync(coverageFile, 'utf8')
-    const { data, body } = splitFrontmatter(source, issues, 'coverage.md')
-    const doc = parseMarkdown(body)
-    rejectUnknownKeys(data, ['status', 'method', 'sourceAreas', 'unmapped', 'limitations'], issues, 'coverage.md')
-    if (containsStructuralHeading(doc.lead)) {
-      issues.push('coverage.md: rationale must not contain an H1 or H2 heading')
-    }
-    for (const item of doc.sections) {
-      issues.push(`coverage.md: "## ${item.heading}" sections are not supported; keep the rationale in the lead paragraph`)
-    }
-    coverage = {
-      status: stringField(data, 'status', issues, 'coverage.md') || 'draft',
-      method: stringListField(data, 'method', issues, 'coverage.md'),
-      sourceAreas: stringListField(data, 'sourceAreas', issues, 'coverage.md'),
-      unmapped: stringListField(data, 'unmapped', issues, 'coverage.md'),
-      limitations: stringListField(data, 'limitations', issues, 'coverage.md'),
-      rationale: doc.lead
-    }
+    const { data, body } = splitFrontmatter(readFileSync(coverageFile, 'utf8'), issues, 'coverage.md')
+    if (body.trim() !== '# Coverage') issues.push('coverage.md: body must contain only "# Coverage"; put scope, reasons and limitations in frontmatter')
+    const parsed = CoverageDocumentSchema.safeParse(data)
+    if (parsed.success) coverage = parsed.data
+    else for (const issue of parsed.error.issues) issues.push(`coverage.md: ${issue.path.join('.') || 'document'}: ${issue.message}`)
   } else if (existsSync(root)) {
     issues.push('coverage.md is missing')
   }

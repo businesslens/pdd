@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV13,
+  ProductReportV14,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -512,6 +512,7 @@ export interface ReportIdentity {
   license: string | null
   intent: string
   supportingContent: string
+  supportingSections: ReportSupportingSection[]
   references: ReportReference[]
   referenceProfile: 'workspace' | 'portable'
   limitations: string[]
@@ -656,7 +657,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV13): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV14): ReportWorkspace {
   const model = report.model
   const interfaceOf = (interfaceId: string): ReportInterface => {
     const productInterface = model.interfaces.find(item => item.id === interfaceId)
@@ -1579,6 +1580,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       license: report.license,
       intent: report.intent,
       supportingContent: supportingMarkdown(report.supportingSections),
+      supportingSections: report.supportingSections,
       references: report.references,
       referenceProfile: report.referenceProfile,
       limitations: report.limitations,

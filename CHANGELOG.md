@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-23
+
+- Coverage now records scope, modeled behavior, approved exclusions, gaps and uncertainty instead of a completeness status. Existing models need the new Coverage format.
+- Read Coverage on one page: scope and method with a card per category, then every recorded path with its statements available in place.
+- Tell Coverage categories apart at a glance by icon and colour, filter by category, and find recorded paths by name.
+- Browse References by where they point: each file or external page appears once with the resources that cite it, repository files beside external links, with a card per kind to filter by and search by path or link.
+- See each resource's References split into repository files and external links.
+- Blueprints keep Coverage descriptions but leave repository paths behind; older Blueprint formats are no longer accepted.
+- Apply the same structural checks to every model, including those with known gaps.
+- Open the local report before a model exists and follow valid edits as they arrive, with visible connection status.
+- Recover the local report when a repository is initialized or referenced files are staged.
+- Reject Blueprint steps with undeclared Entities before importing the model.
+- Read clearer Product details and larger headings in About, under a simpler report header.
+
 ## [0.21.0] - 2026-09-21
 
 - Choose lists, graphs and comparisons from preview cards, keeping the same filters and counts.
@@ -810,7 +824,11 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/businesslens/pdd/compare/v0.21.0...v0.22.0
+[0.21.0]: https://github.com/businesslens/pdd/compare/v0.20.0...v0.21.0
+[0.20.0]: https://github.com/businesslens/pdd/compare/v0.19.0...v0.20.0
+[0.19.0]: https://github.com/businesslens/pdd/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/businesslens/pdd/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/businesslens/pdd/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/businesslens/pdd/compare/v0.15.0...v0.16.0

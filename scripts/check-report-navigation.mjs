@@ -221,20 +221,57 @@ try {
     if (width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
     await expect(page.locator('[data-report-sidebar]:visible').getByRole('button', { name: 'Overview', exact: true })).toHaveAttribute('aria-current', 'page')
     if (width < 1024) await page.getByRole('button', { name: 'Close report navigation', exact: true }).click()
-    /* The Product's page is a page: its readings are peer tabs, not disclosures. */
-    await expect(page.locator('.blr-disclosure')).toHaveCount(0)
-    /* About is the default reading and carries the Product's own name, so it
-       needs no tab parameter and nothing else repeats the identity. */
+    /* The Product's authored fields keep their names and remain visible in
+       the reading they belong to. Every field uses the available pane width. */
+    await expect(page.getByRole('tab', { name: 'Scope', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('tab')).toHaveCount(3)
+    const about = page.locator('[data-product-about]')
+    await expect(about.getByText('Model counts (authored)', { exact: true })).toHaveCount(0)
+    await expect(about.getByText('Depth (derived from the model)', { exact: true })).toHaveCount(0)
+    await expect(about.locator('details')).toHaveCount(0)
+    await expect(about.getByRole('heading', { name: 'Description', exact: true })).toBeVisible()
+    await expect(about.getByRole('heading', { name: 'Intent', exact: true })).toBeVisible()
+    const metadata = about.getByRole('complementary', { name: 'Product details' })
+    await expect(metadata.locator('dt')).toHaveText(['ID', 'Category', 'Tags', 'Authors', 'License'])
+    await expect(metadata.getByText(report.id, { exact: true }).first()).toBeVisible()
+    for (const author of report.authors) {
+      if (author.url) await expect(metadata.getByRole('link', { name: author.url, exact: true })).toBeVisible()
+    }
+    await expect(page.getByRole('region', { name: 'Coverage', exact: true })).toHaveCount(0)
+    expect(await about.evaluate(element => Math.abs(element.clientWidth - element.parentElement.clientWidth))).toBeLessThan(2)
+    await capture(page, `${width}-product-about`)
     await expect(page.getByRole('heading', { level: 2 }).first()).toContainText(report.title)
     for (const [label, mode] of [['Coverage', 'coverage'], ['References', 'references']]) {
       await tab(page, label).first().click()
       await expect(page).toHaveURL(new RegExp(`[?&]t=${mode}(?:&|$)`))
       await page.reload()
       await expect(tab(page, label).first()).toHaveAttribute('aria-selected', 'true')
+      if (mode === 'coverage') {
+        const coverage = page.getByRole('region', { name: 'Coverage', exact: true })
+        await expect(coverage).toBeVisible()
+        await expect(about).toHaveCount(0)
+        await expect(coverage.locator('details')).toHaveCount(0)
+        await expect(coverage.locator('[data-repository-tree]')).toBeVisible()
+        await expect(page.getByRole('dialog')).toHaveCount(0)
+        const details = page.locator('[data-coverage-details]')
+        await expect(details.getByRole('heading', { name: 'Scope', exact: true })).toBeVisible()
+        await expect(details.getByRole('region', { name: 'Status', exact: true })).toHaveCount(0)
+        await expect(coverage.getByRole('tab')).toHaveCount(0)
+        await expect(coverage.getByRole('combobox', { name: 'Filter coverage sources' })).toHaveCount(0)
+        for (const kind of ['covered', 'exclusions', 'unmapped']) {
+          await expect(coverage.locator(`[data-coverage-summary="${kind}"] [data-coverage-summary-count]`)).toHaveText(String(report.coverage[kind].length))
+        }
+        // Method is read, not disclosed, and absent when not recorded.
+        await expect(details.locator('[data-coverage-method]')).toHaveCount(report.coverage.method ? 1 : 0)
+
+      }
       await capture(page, `${width}-product-${mode}`)
     }
     await tab(page, 'About').first().click()
     await expect(page).not.toHaveURL(/[?&]t=/)
+    await page.goto(`${origin}/?t=coverage`)
+    await expect(tab(page, 'Coverage').first()).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('region', { name: 'Coverage', exact: true })).toBeVisible()
 
     const journey = report.model.journeys[0]
     if (journey) {

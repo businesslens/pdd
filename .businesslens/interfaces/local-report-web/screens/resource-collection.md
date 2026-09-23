@@ -54,7 +54,7 @@ group of their own, because a reader arrives asking who this is for.
 - Interface map's Product root, connected containment branches, and distinct Interface, Experience, and Screen nodes
 - For the view that asks what changes what, each Capability's creates, changes, and removes effects with supporting Scenarios
 - Collapsed group counts and the resources available when expanded
-- Which kinds a named view currently hides or filters
+- Which kinds a cross-collection comparison currently includes
 
 ## Available actions
 
@@ -62,10 +62,9 @@ group of their own, because a reader arrives asking who this is for.
 - Choose List, the named Graph, or the named Matrix from preview cards without changing the collection scope
 - Read Domain-classified Capabilities and Entities, including unassigned resources
 - Reach any Experience, Screen or Scenario through the collection that owns it
-- Read which Interfaces deliver each Capability and by what route, and compose every Journey's Scenarios side by side
+- Read which Interfaces deliver each Capability and the effects or attachments a named comparison derives
 - Narrow the collection or a named view by one axis at a time, and clear one value or all of them
-- Choose which resource types a named view draws, and focus one resource in it
-- Hide a kind, or focus one resource and read only its neighbourhood
+- Narrow a collection comparison with its shared relationship filters
 - Expand or collapse a group
 - Move through relationship targets while retaining readable titles
 - Read the documentation for this resource type
@@ -112,8 +111,8 @@ that has nothing in it.
 ## Capability boundary
 
 Finding resources through Entities, Interfaces, Domains, Capabilities, Journeys,
-and Business Rules, and reading the correlations the model already declares
-through the views each collection names. Experiences and Screens are reached
+and Business Rules, and reading modeled correlations through collection Graphs
+and the three named cross-collection comparisons. Experiences and Screens are reached
 through Interfaces; Scenarios through their Capability or Journey. It offers no
 view builder, opens onto no empty configuration screen, invents no relation the
 model does not author, and never edits the model.

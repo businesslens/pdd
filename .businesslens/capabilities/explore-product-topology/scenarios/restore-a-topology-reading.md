@@ -45,7 +45,7 @@ The Developer resumes the same reading after navigation, refresh, or a valid rec
 
 ## Edge cases
 
-- Journey Scenario reading mode and composition window survive browser Back, refresh, and valid model edits.
+- Scenario card expansion choices survive navigation and refresh within the browser session; selecting a Scenario by its address opens that card.
 - Expansion choices in the Experiences & Screens and Screens tabs survive opening a resource, returning, and refreshing.
 
 - Opening a resource preserves the selected collection or comparison, drawing, filters, expansion and viewport behind its reading.

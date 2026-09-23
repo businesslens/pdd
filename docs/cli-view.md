@@ -15,7 +15,7 @@ npx businesslens view owner/repo --pr 12
 
 `view` opens a Product Model as a read-only report on localhost. It does not
 alter the model, write `.businesslens/build/report.json`, or send report data
-to BusinessLens. The model must pass structural lint before the viewer opens.
+to BusinessLens.
 
 The server listens only on `127.0.0.1` and stops when the command exits.
 
@@ -35,6 +35,10 @@ The server listens only on `127.0.0.1` and stops when the command exits.
 Without a repository, `view` uses the model in the current directory, or at
 the Git repository root. Valid edits appear automatically while the viewer is
 open; a lint error keeps the last valid report on screen until it is fixed.
+With no model yet, or one that does not lint, the page waits and shows the
+report once there is a valid one.
+Initializing Git after opening the viewer, or staging referenced files, also
+updates the report without restarting it.
 See [Choosing the Product Model](./cli.md#choosing-the-product-model) for
 `--cwd`.
 
@@ -58,7 +62,8 @@ a fork shows the fork's content without naming the fork.
 
 The revision is fetched shallowly into a temporary directory and deleted when
 the command exits. Nothing from the repository runs. Private repositories use
-your own Git credentials. The report does not refresh; run the command again
+your own Git credentials. The model must pass structural lint before the viewer
+opens, and the report does not refresh; run the command again
 for a newer revision. `--cwd` does not apply.
 
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,

@@ -1,10 +1,10 @@
 import { spawn } from 'node:child_process'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
-import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
+import { lstatSync, readFileSync, watch, watchFile, unwatchFile, type FSWatcher, type Stats } from 'node:fs'
 import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
-import type { ProductReportV13 } from './portable.js'
+import type { ProductReportV14 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
@@ -65,14 +65,32 @@ export interface LocalViewer {
   port: number
   /** Compile immediately. Primarily useful to deterministic tests and recovery controls. */
   refresh: () => void
+  /** Whether a report is on screen, and otherwise why not. */
+  status: () => { ready: boolean, error?: string }
+  /**
+   * Attach a model after the server is up. A viewer started before
+   * `.businesslens/` exists waits with a message; binding gives it what to
+   * compile and watch, and the open page comes alive on the next event.
+   */
+  bind: (binding: LocalViewerBinding) => void
   close: () => Promise<void>
 }
 
+/** Everything about one model: what to compile, and where to watch and read. */
+export type LocalViewerBinding = Pick<LocalViewerOptions,
+  'compile' | 'initialReport' | 'watchRoot' | 'gitIndexFile' | 'logoFile' | 'assetRoot'>
+const BINDING_KEYS = ['compile', 'initialReport', 'watchRoot', 'gitIndexFile', 'logoFile', 'assetRoot'] as const
+
 export interface LocalViewerOptions {
   port?: number
-  compile: () => ProductReportV13
-  initialReport?: ProductReportV13
+  /** Absent until a model is bound: the viewer then serves the waiting message. */
+  compile?: () => ProductReportV14
+  /** What `report.json` and the stream say while no model is bound. */
+  waitingMessage?: string
+  initialReport?: ProductReportV14
   watchRoot?: string
+  /** Git's resolved index path, including a linked worktree's private index. */
+  gitIndexFile?: string
   debounceMs?: number
   viewerRoot?: string
   logoFile?: string
@@ -87,7 +105,7 @@ export interface LocalViewerOptions {
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV13
+  report?: ProductReportV14
   error?: string
   revision: number
 }
@@ -106,30 +124,77 @@ interface ReportEvent {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV13
+  private report?: ProductReportV14
   private serialized?: string
   private error?: string
   private revision = 0
   private timer?: ReturnType<typeof setTimeout>
   private watcher?: FSWatcher
+  private indexWatcher?: (current: Stats, previous: Stats) => void
   private readonly listeners = new Set<(event: ReportEvent) => void>()
 
   constructor(private readonly options: LocalViewerOptions) {
+    this.attach()
     if (options.initialReport) this.accept(options.initialReport, false)
     else this.refresh(false)
+  }
 
+  /**
+   * Bind a model to a running viewer, or rebind one.
+   *
+   * A binding replaces the previous one whole: a field it omits is cleared, not
+   * inherited, and the previous model's report is dropped, so a rebind that
+   * fails to compile never serves the old model or authorizes its references.
+   * The request handler reads the same options object, so the logo file and
+   * asset root it serves follow the binding too.
+   */
+  bind(binding: LocalViewerBinding): void {
+    this.detach()
+    for (const key of BINDING_KEYS) (this.options as Record<string, unknown>)[key] = binding[key]
+    this.report = undefined
+    this.serialized = undefined
+    this.error = undefined
+    this.attach()
+    if (binding.initialReport) this.accept(binding.initialReport, true)
+    else this.refresh(true)
+  }
+
+  private attach(): void {
+    const options = this.options
+    let forceNotify = false
+    const schedule = (force = false) => {
+      forceNotify ||= force
+      if (this.timer) clearTimeout(this.timer)
+      this.timer = setTimeout(() => {
+        const force = forceNotify
+        forceNotify = false
+        this.refresh(true, force)
+      }, options.debounceMs ?? 180)
+    }
     if (options.watchRoot) {
       this.watcher = watch(options.watchRoot, { recursive: true }, (_event, filename) => {
         if (!this.isModelSource(filename)) return
-        const forceNotify = this.isLogoSource(filename)
-        if (this.timer) clearTimeout(this.timer)
-        this.timer = setTimeout(
-          () => this.refresh(true, forceNotify),
-          options.debounceMs ?? 180
-        )
+        schedule(this.isLogoSource(filename))
       })
       this.watcher.on('error', error => this.reject(`File watching failed: ${error.message}`))
     }
+    if (options.gitIndexFile) {
+      // Git replaces its index atomically; stat polling follows replacements
+      // and also handles an unborn repository whose index does not exist yet.
+      this.indexWatcher = () => schedule()
+      watchFile(options.gitIndexFile, { interval: 500, persistent: false }, this.indexWatcher)
+    }
+  }
+
+  private detach(): void {
+    if (this.indexWatcher && this.options.gitIndexFile) {
+      unwatchFile(this.options.gitIndexFile, this.indexWatcher)
+    }
+    this.indexWatcher = undefined
+    if (this.timer) clearTimeout(this.timer)
+    this.timer = undefined
+    this.watcher?.close()
+    this.watcher = undefined
   }
 
   snapshot(): ReportSnapshot {
@@ -143,16 +208,20 @@ class LocalReportStore {
   }
 
   refresh(notify = true, forceNotify = false): void {
+    const compile = this.options.compile
+    if (!compile) {
+      this.reject(this.options.waitingMessage ?? 'No Product Model is bound to this viewer yet.', notify)
+      return
+    }
     try {
-      this.accept(this.options.compile(), notify, forceNotify)
+      this.accept(compile(), notify, forceNotify)
     } catch (error) {
       this.reject((error as Error).message, notify)
     }
   }
 
   close(): void {
-    if (this.timer) clearTimeout(this.timer)
-    this.watcher?.close()
+    this.detach()
     this.listeners.clear()
   }
 
@@ -164,6 +233,9 @@ class LocalReportStore {
     // macOS reports the watched directory's basename for some direct-child
     // changes when recursive mode is enabled, rather than the child filename.
     if (this.options.watchRoot && normalized === basename(this.options.watchRoot)) return true
+    // Its presence is a lint error, so adding or removing the retired Coverage
+    // file must refresh the report even when no Markdown changes.
+    if (normalized === 'coverage.json') return true
     return /\.(?:md|ya?ml|svg)$/i.test(normalized)
   }
 
@@ -175,7 +247,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV13, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV14, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
@@ -342,6 +414,8 @@ function referencePreview(
   void preview().then(result => {
     if (!response.destroyed) json(response, result.status, result.data, head)
   }).catch(() => {
+    // Previews answer a missing or refused target with their own 404; a throw is
+    // a server fault, and its raw text can carry absolute local paths.
     if (!response.destroyed) json(response, 500, { message: 'This reference could not be rendered.' }, head)
   })
 }
@@ -356,18 +430,25 @@ function requestHandler(
   return (request: IncomingMessage, response: ServerResponse): void => {
     securityHeaders(response)
     const head = request.method === 'HEAD'
+    if (!validHost(request, port)) {
+      json(response, 403, { message: 'The local viewer accepts loopback requests only.' }, head)
+      return
+    }
+    let url: URL
+    try {
+      url = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`)
+    } catch {
+      // A request target such as `//` is not a URL; answer it rather than crash.
+      json(response, 400, { message: 'Bad request.' }, head)
+      return
+    }
+    const pathname = url.pathname
     if (request.method !== 'GET' && !head) {
       response.setHeader('allow', 'GET, HEAD')
       json(response, 405, { message: 'Method not allowed.' }, false)
       return
     }
-    if (!validHost(request, port)) {
-      json(response, 403, { message: 'The local viewer accepts loopback requests only.' }, head)
-      return
-    }
 
-    const url = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`)
-    const pathname = url.pathname
     if (pathname === HEALTH_PATH) {
       json(response, 200, { ok: true }, head)
       return
@@ -462,6 +543,11 @@ export async function startLocalViewer(options: LocalViewerOptions): Promise<Loc
         port,
         url: `http://${LOOPBACK_HOST}:${port}`,
         refresh: () => store.refresh(),
+        status: () => {
+          const snapshot = store.snapshot()
+          return { ready: Boolean(snapshot.report), error: snapshot.error }
+        },
+        bind: binding => store.bind(binding),
         close: () => new Promise<void>((resolveClose, rejectClose) => {
           store.close()
           for (const stream of streams) stream.end()

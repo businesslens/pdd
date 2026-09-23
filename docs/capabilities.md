@@ -127,10 +127,9 @@ Steps rather than authored on the Journey.
 Capability Scenario coverage is the only direct acceptance coverage for a
 Capability. The union of its Capability Scenarios must cover every availability
 Context the Capability declares through its Step Contexts; use by a Journey Scenario
-does not satisfy that requirement. A missing Context is an error for a `complete`
-model, a warning for `partial` or `draft`, and an error when publishing a public
-Blueprint. A single-Capability goal remains local Capability behavior and never
-requires a Journey wrapper.
+does not satisfy that requirement. A missing Context is an error. A
+single-Capability goal remains local Capability behavior and never requires a
+Journey wrapper.
 
 ## Availability
 
@@ -171,9 +170,8 @@ Scenario owned by a Journey is a
 Scenario and no way for one Scenario to serve both parents.
 
 Capability Scenarios are part of the behavioral core and are the only direct
-acceptance coverage for a Capability. Missing coverage is an error for a
-`complete` model, a warning for `partial` or `draft`, and an error for a public
-Blueprint, whether or not the Product has any [Journeys](./journeys.md).
+acceptance coverage for a Capability. Missing coverage is an error, whether or
+not the Product has any [Journeys](./journeys.md).
 
 ## What a Step does to the Product's things
 
@@ -215,8 +213,8 @@ instance.
 **A read is a bare mention.** `reads` carries no state, is never counted as a
 change, and never saves an Entity from being an orphan. It exists so a Step
 whose text says *the Reader chooses a saved item* also says so where a tool can
-read it. A Step whose text names an Entity's title and declares it nowhere is a
-finding — an error in a `complete` model, a warning otherwise.
+read it. A Step whose text names an Entity's title and declares it nowhere is an
+error.
 
 **Ends with** is the last creation, change, or removal of each Entity instance
 in Step order. It includes the resulting State when
