@@ -70,7 +70,8 @@ const menuUi = computed(() => ({
       :ui="menuUi"
     >
       <template #list-leading>
-        <div data-report-overview-actions class="flex gap-1" :class="collapsed ? 'flex-col' : 'items-center'">
+        <!-- Overview is the Product's own page; a gap sets it apart from the collections below. -->
+        <div data-report-overview-actions class="mb-4 flex gap-1" :class="collapsed ? 'flex-col' : 'items-center'">
           <UNavigationMenu
             :items="overviewItems"
             :collapsed="collapsed"

@@ -29,7 +29,7 @@ that opens it and the resource type it presents.
 - Every Covered, Exclusions, Unmapped and Limitations description, each under every path it names and marked by its category's icon
 - Statements with no known repository location, readable below the tree
 - Every Reference in the model, including the Product's own, grouped by type with the resource that carries it
-- Which schema version produced the report, and when
+- When the report was generated, or that it is live
 
 ## Available actions
 

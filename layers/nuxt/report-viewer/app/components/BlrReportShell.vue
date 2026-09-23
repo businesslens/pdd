@@ -686,7 +686,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             </h1>
           </div>
           <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1">
-            <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
             <slot v-if="$slots.status" name="status" />
             <time v-else class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
           </div>

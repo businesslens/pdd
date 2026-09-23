@@ -96,8 +96,7 @@ from resource trees.
 
 A resource's own References tab keeps a short list: it separates **In this
 repository** from **External**, each with its own count and grouped by kind. A
-section with nothing in it is not drawn. The Overview ends with its last reading;
-generator and schema details stay in the header.
+section with nothing in it is not drawn. The Overview ends with its last reading.
 Local References always lead with the file path; a distinct authored title follows
 inline as muted context. External References use their authored title with the URL
 below it, or the URL alone when untitled. A title identical to the target is not repeated.
@@ -170,10 +169,10 @@ GitHub, with one divider above the whole group.
 Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
 `false` to omit the sidebar entry and its empty reference group. That header
 must keep the Vocabulary panel's tooltip controls available for report readers.
-The working view's header serves as its navbar: the heading shares it with
-report schema version and
-generation date, above a bottom divider. A host's `status` slot replaces the
-generation date with its live connection state. Header metadata wraps onto a second line
+The working view's header serves as its navbar: the heading shares it with the
+generation date, above a bottom divider. The report schema version is not shown;
+it identifies a data format, not anything a reader of the Product acts on. A
+host's `status` slot replaces the generation date with its live connection state. Header metadata wraps onto a second line
 on narrow screens.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
 utilities; both also appear in the mobile navigation drawer. The bundled local
