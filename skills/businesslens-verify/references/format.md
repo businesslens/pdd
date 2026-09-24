@@ -460,7 +460,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 9 it
+Context is the single model concept for where behavior applies. In schema 10 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 

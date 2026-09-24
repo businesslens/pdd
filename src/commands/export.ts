@@ -1,5 +1,5 @@
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV14 } from '../core/portable.js'
+import type { ProductReportV15 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -9,7 +9,7 @@ import { loadModel } from '../core/model.js'
 import { qualify } from '../core/ids.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV14Schema,
+  ProductReportV15Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -73,7 +73,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV14 {
+): ProductReportV15 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -113,7 +113,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV14 = {
+  const report: ProductReportV15 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -331,24 +331,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV14Schema.parse(report)
+  const parsed = ProductReportV15Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV14
+  report: ProductReportV15
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV14 {
+export function compileWorkspaceReport(cwd: string): ProductReportV15 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV14 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV15 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

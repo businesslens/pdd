@@ -702,7 +702,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV14')
+    expect(renderer).toContain('ProductReportV15')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -1429,12 +1429,12 @@ describe('composed lifecycle', () => {
 })
 
 /*
- * Product Report v14: a Screen presents facts, Screens nest, a container leads
+ * Product Report v15: a Screen presents facts, Screens nest, a container leads
  * with what it delivers, and navigation is a mark. The nested Screen is built by
  * hand on top of the fixture so the reading is pinned to the wire, not to
  * whichever fixture happens to nest today.
  */
-describe('Screens on the v14 wire', () => {
+describe('Screens on the v15 wire', () => {
   const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
   const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
   const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'

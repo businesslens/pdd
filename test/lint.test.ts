@@ -257,16 +257,16 @@ describe('lintModel', () => {
 
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
-    for (const schema of [5, 8, 10, 11]) {
+    for (const schema of [5, 8, 9, 11]) {
       writeFileSync(join(cwd, '.businesslens/config.yaml'), `schema: ${schema}\nsdd:\n  paths: []\n`)
-      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 9)`)
+      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 10)`)
     }
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 9)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 10)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {

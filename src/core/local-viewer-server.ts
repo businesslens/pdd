@@ -4,7 +4,7 @@ import { lstatSync, readFileSync, watch, watchFile, unwatchFile, type FSWatcher,
 import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
-import type { ProductReportV14 } from './portable.js'
+import type { ProductReportV15 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
@@ -84,10 +84,10 @@ const BINDING_KEYS = ['compile', 'initialReport', 'watchRoot', 'gitIndexFile', '
 export interface LocalViewerOptions {
   port?: number
   /** Absent until a model is bound: the viewer then serves the waiting message. */
-  compile?: () => ProductReportV14
+  compile?: () => ProductReportV15
   /** What `report.json` and the stream say while no model is bound. */
   waitingMessage?: string
-  initialReport?: ProductReportV14
+  initialReport?: ProductReportV15
   watchRoot?: string
   /** Git's resolved index path, including a linked worktree's private index. */
   gitIndexFile?: string
@@ -105,7 +105,7 @@ export interface LocalViewerOptions {
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV14
+  report?: ProductReportV15
   error?: string
   revision: number
 }
@@ -124,7 +124,7 @@ interface ReportEvent {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV14
+  private report?: ProductReportV15
   private serialized?: string
   private error?: string
   private revision = 0
@@ -247,7 +247,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV14, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV15, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
