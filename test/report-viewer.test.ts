@@ -1586,7 +1586,7 @@ describe('Screens on the v15 wire', () => {
     const experience = workspace.experiences.find((item: any) => item.id === 'customer-web::storefront')!
     const tree = structureChildren(workspace, experience)
     const parentNode = flatten(tree).find((node: any) => node.resource?.key === parent.key)!
-    expect(parentNode.children.filter((node: any) => node.resource.kind === 'screen').map((node: any) => node.resource.key)).toEqual([child.key])
+    expect(parentNode.children.filter((node: any) => node.resource?.kind === 'screen').map((node: any) => node.resource.key)).toEqual([child.key])
     expect(tree[0].children.some((node: any) => node.resource?.key === child.key)).toBe(false)
     const branch = interfaceProjection(workspace).find((item: any) => item.id === 'interface:customer-web')!
     const parentBranch = flatten(branch.children).find((node: any) => node.resource?.key === parent.key)!
@@ -1604,29 +1604,36 @@ describe('Screens on the v15 wire', () => {
   })
 
   it('reads a place\'s Delivery through the Scenarios placed exactly there, never on a nested place', async () => {
-    const { placeDelivery } = await import(placeReadingsModulePath)
+    const { placeDelivery, placeJourneys, stepsLabel } = await import(placeReadingsModulePath)
     const { report, scenario, step } = nestedReport()
     const workspace = projectReportWorkspace(report)
     const parent = workspace.screens.find((item: any) => item.id === PARENT)!
     const child = workspace.screens.find((item: any) => item.id === CHILD)!
-    const capabilityOf = (item: any, entry: any) => item.scenarioType === 'capability' ? item.capabilityId : entry.capabilityId
+    const placedOn = (item: any, screen: any) => item.steps.some((entry: any) => entry.contexts.some((context: any) => context.context.id === screen.id))
     for (const screen of [parent, child]) {
       const groups = placeDelivery(workspace, screen)
       expect(groups.map((group: any) => group.capability.id)).toEqual(screen.capabilityIds)
       for (const group of groups) {
-        /* Exactly the Scenarios with a Step for this Capability placed on this Screen, and those Steps. */
-        const expected = workspace.scenarios.filter((item: any) => item.steps.some((entry: any) =>
-          capabilityOf(item, entry) === group.capability.id && entry.contexts.some((context: any) => context.context.id === screen.id)))
+        /* Exactly the Capability's own Scenarios with a Step placed on this Screen, and those Steps. */
+        const expected = workspace.scenarios.filter((item: any) => item.scenarioType === 'capability' && item.capabilityId === group.capability.id && placedOn(item, screen))
         expect(new Set(group.scenarios.map((item: any) => item.key))).toEqual(new Set(expected.map((item: any) => item.key)))
         for (const item of group.scenarios) {
           for (const index of group.stepsHere[item.key]) expect(item.steps[index].contexts.some((context: any) => context.context.id === screen.id)).toBe(true)
         }
-        expect(group.total).toBeGreaterThanOrEqual(group.scenarios.length)
-        /* Capability Scenarios before Journey Scenarios. */
-        const types = group.scenarios.map((item: any) => item.scenarioType)
-        expect(types.indexOf('journey') === -1 || types.lastIndexOf('capability') < types.indexOf('journey')).toBe(true)
+      }
+      /* A Journey Scenario belongs to its Journey: it passes through the place once, under its Journey, with the Steps it takes there. */
+      const journeys = placeJourneys(workspace, screen)
+      const passing = workspace.scenarios.filter((item: any) => item.scenarioType === 'journey' && placedOn(item, screen))
+      expect(journeys.map((item: any) => item.journey.id)).toEqual(workspace.journeys.filter((journey: any) => passing.some((item: any) => item.journeyId === journey.id)).map((journey: any) => journey.id))
+      expect(journeys.flatMap((item: any) => item.scenarios.map(({ scenario: entry }: any) => entry.key)).sort()).toEqual(passing.map((item: any) => item.key).sort())
+      for (const { journey, scenarios } of journeys) {
+        for (const { scenario: item, steps } of scenarios) {
+          expect(item.journeyId).toBe(journey.id)
+          expect(steps).toEqual(item.steps.flatMap((entry: any, index: number) => entry.contexts.some((context: any) => context.context.id === screen.id) ? [index] : []))
+        }
       }
     }
+    expect([stepsLabel([1]), stepsLabel([0, 1, 2]), stepsLabel([0, 3, 4])]).toEqual(['Step 2', 'Steps 1–3', 'Steps 1, 4–5'])
     /* The Step moved to the child is read there, and no longer on the parent. */
     const index = scenario.steps.indexOf(step)
     const onChild = placeDelivery(workspace, child).find((group: any) => group.capability.id === scenario.capabilityId)!
@@ -1640,7 +1647,7 @@ describe('Screens on the v15 wire', () => {
     expect(body).not.toContain('data-screen-delivery')
     /* The tab is the Screen's own branch of the tree: each Capability holds those Scenarios as items. */
     const { structureChildren } = await import(collectionChildrenModulePath)
-    for (const node of structureChildren(workspace, child).filter((item: any) => item.resource.kind === 'capability')) {
+    for (const node of structureChildren(workspace, child).filter((item: any) => item.resource?.kind === 'capability')) {
       const group = placeDelivery(workspace, child).find((item: any) => item.capability.key === node.resource.key)!
       expect(node.children.map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
       expect(node.children.every((item: any) => item.id === `${node.id}>${item.resource.key}`)).toBe(true)
@@ -1661,7 +1668,7 @@ describe('Screens on the v15 wire', () => {
   })
 
   it('carries each place\'s own Capabilities where it sits in the tree and the delivery map', async () => {
-    const { placeCapabilities, placeDelivery } = await import(placeReadingsModulePath)
+    const { placeCapabilities, placeDelivery, placeJourneys, stepsLabel } = await import(placeReadingsModulePath)
     const { deliveryMapProjection } = await import(projectionsModulePath)
     const { structureChildren } = await import(collectionChildrenModulePath)
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
@@ -1687,15 +1694,25 @@ describe('Screens on the v15 wire', () => {
     /* The tree rows carry the same reading. */
     const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
     for (const node of flatten(structureChildren(workspace, customerWeb)).filter((item: any) => item.resource?.kind === 'screen')) {
-      const items = node.children.filter((item: any) => item.resource.kind === 'capability')
+      const items = node.children.filter((item: any) => item.resource?.kind === 'capability')
       expect(items.map((item: any) => item.resource.id)).toEqual(node.resource.capabilityIds)
       expect(items.every((item: any) => item.id === `${node.resource.key}>${item.resource.key}`
-        && item.children.every((scenario: any) => scenario.resource.kind.endsWith('-scenario')))).toBe(true)
-      /* Its own Capabilities come first, then the Screens nested inside it. */
+        && item.children.every((scenario: any) => scenario.resource.kind === 'capability-scenario'))).toBe(true)
+      /* Its own Capabilities come first, then the Journeys passing through, then the Screens nested inside it. */
       expect(node.children.slice(0, items.length)).toEqual(items)
+      const journeys = placeJourneys(workspace, node.resource)
+      const passing = node.children.slice(items.length, items.length + journeys.length)
+      expect(passing.map((item: any) => [item.id, item.resource.kind])).toEqual(journeys.map(({ journey }: any) => [`${node.resource.key}>${journey.key}`, 'journey']))
+      for (const [index, { scenarios }] of journeys.entries()) {
+        expect(passing[index].children.map((item: any) => [item.id, item.resource.kind, item.note])).toEqual(scenarios.map(({ scenario, steps }: any) =>
+          [`${passing[index].id}>${scenario.key}`, 'journey-scenario', `${stepsLabel(steps)} here`]))
+      }
+      expect(node.children.slice(items.length + journeys.length).every((item: any) => item.resource?.kind === 'screen')).toBe(true)
     }
+    /* A direct delivery is said once, as the group holding its Capabilities, never on each row. */
     const cliItems = structureChildren(workspace, cli)
-    expect(cliItems.map((item: any) => [item.resource.id, item.note])).toEqual(direct.capabilities.map((capability: any) => [capability.id, 'Delivered directly']))
+    expect(cliItems.map((item: any) => [item.id, item.title, item.groupKind])).toEqual([[`${cli.key}:direct`, 'Delivered directly', 'capability']])
+    expect(cliItems[0].children.map((item: any) => [item.resource.id, item.note])).toEqual(direct.capabilities.map((capability: any) => [capability.id, undefined]))
     /* The delivery map: a Screen's leaves are its own Capabilities, and an Interface with no Screens delivers directly. */
     const map = flatten([deliveryMapProjection(workspace)])
     for (const screen of webScreens) {
@@ -1706,9 +1723,14 @@ describe('Screens on the v15 wire', () => {
         const leaf = node.children.find((item: any) => item.resource?.key === group.capability.key)!
         expect(leaf.children.map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
       }
+      /* The Journeys passing through follow, each holding its Scenarios placed there. */
+      const journeys = node.children.filter((item: any) => item.resource?.kind === 'journey')
+      expect(journeys.map((item: any) => [item.resource.key, item.children.map((entry: any) => entry.resource.key)]))
+        .toEqual(placeJourneys(workspace, screen).map(({ journey, scenarios }: any) => [journey.key, scenarios.map(({ scenario }: any) => scenario.key)]))
     }
     const cliNode = map.find((item: any) => item.id === cli.key)!
-    expect(cliNode.children.every((item: any) => item.resource?.kind === 'capability' && item.note === 'Delivered directly')).toBe(true)
+    expect(cliNode.children.every((item: any) => item.resource?.kind === 'journey'
+      || (item.resource?.kind === 'capability' && item.note === 'Delivered directly'))).toBe(true)
     expect(source('app/components/BlrResourceTree.vue')).toContain('data-tree-note')
   })
 

@@ -2,7 +2,7 @@
 import type { AnyResourceView, CapabilityView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
-import { placeDelivery } from './placeReadings'
+import { placeDelivery, placeJourneys, stepsLabel } from './placeReadings'
 import type { TopologyAttachment } from './topologyTargets'
 import type { Diagram } from './diagram'
 
@@ -161,18 +161,27 @@ export function interfaceProjection(workspace: ReportWorkspace, delivery = false
  * Experience or Interface only what is available there yet on no Screen
  * inside it, which is a gap, or, for an Interface with no Screens, delivered
  * directly. A Capability is an occurrence, so one exposed on five Screens is a
- * leaf under each. Rooted at the Product, like the reach trees.
+ * leaf under each, holding its own Scenarios placed there. The Journeys
+ * passing through a place follow, each holding its Scenarios with a Step
+ * placed there, once each.
+ * Rooted at the Product, like the reach trees.
  */
 export function deliveryMapProjection(workspace: ReportWorkspace): TopologyBranch {
   const notes = { own: undefined, gap: 'Available here, on no Screen', direct: 'Delivered directly' } as const
-  /* A place's Capabilities, each with the Scenarios placed exactly there — the same reading as its tree branch. */
+  /* What happens at a place — the same reading as its tree branch. */
   const leaves = (item: TopologyBranch): TopologyBranch[] => {
     const place = item.resource
     if (!place || (place.kind !== 'screen' && place.kind !== 'experience' && place.kind !== 'interface')) return []
-    return placeDelivery(workspace, place).map(({ capability, note, scenarios }) => {
-      const id = `${item.id}${OCCURRENCE_SEPARATOR}${capability.key}`
-      return { ...occurrence(item.id, capability, scenarios.map(scenario => occurrence(id, scenario))), ...(notes[note] ? { note: notes[note] } : {}) }
-    })
+    return [
+      ...placeDelivery(workspace, place).map(({ capability, note, scenarios }) => {
+        const id = `${item.id}${OCCURRENCE_SEPARATOR}${capability.key}`
+        return { ...occurrence(item.id, capability, scenarios.map(scenario => occurrence(id, scenario))), ...(notes[note] ? { note: notes[note] } : {}) }
+      }),
+      ...placeJourneys(workspace, place).map(({ journey, scenarios }) => {
+        const id = `${item.id}${OCCURRENCE_SEPARATOR}${journey.key}`
+        return occurrence(item.id, journey, scenarios.map(({ scenario, steps }) => ({ ...occurrence(id, scenario), note: `${stepsLabel(steps)} here` })))
+      })
+    ]
   }
   const withLeaves = (item: TopologyBranch): TopologyBranch => ({
     ...item, references: [], referenceLabel: undefined,

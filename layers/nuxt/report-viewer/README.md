@@ -85,11 +85,18 @@ The Interfaces tree says what each place delivers, as ordinary items in its
 own branch, exactly as the Delivery map does: a Screen lists its own
 Capabilities first, never a child's, then the Screens nested inside it; an
 Experience or Interface lists only a gap, a Capability available there and
-exposed on no Screen of its own, noted “Available here, on no Screen”; an
-Interface with no Screens lists its Capabilities noted “Delivered directly”.
-Under each Capability sit the Scenarios with a Step for it placed exactly on
-that place — a Journey Scenario noted with its Journey — and they start folded.
-A nested place reads its own; nothing is summed. Every item opens its reading.
+exposed on no Screen of its own, in a group headed “Available here, on no
+Screen”; an Interface with no Screens lists its Capabilities in a group headed
+“Delivered directly”. Every Capability of one place shares that reading, so the
+group says it once and the rows do not repeat it.
+Under each Capability sit its own Capability Scenarios with a Step placed
+exactly on that place. A Journey Scenario belongs to its Journey, never to a
+Capability its Steps use, so it sits under its Journey instead: after the
+place's Capabilities come the Journeys passing through it, each holding its
+Scenarios with a Step placed there, once each, noted with the Steps taken
+there, such as “Steps 1–2 here”. Scenarios start folded, under a Capability or
+a Journey alike. A nested place reads its own; nothing is summed. Every item opens its
+reading.
 On the Interfaces collection the Capabilities filter marks the matching items.
 Interfaces, Experiences and Screens have a Delivery tab (`delivery`) after
 Overview: the place's own branch of that tree, with the collection's tree rows,
@@ -442,7 +449,13 @@ separate header. Their borderless tree rows fill each card's width and use the
 parent's background, with a subtle row highlight on hover. The Delivery tabs use the
 same component. Each group has its matching resource-type icon and a count beside
 its name: Experiences, Screens, Shared Screens, Capabilities or Entities. Resource
-roots have no mixed total. Expansion chevrons sit before the type icons. A nested
+roots have no mixed total while open. A closed row says what opening it would
+find, faded after its name, as a closed folder does in Coverage: the distinct
+resources anywhere below it, one type icon and count per kind in rail order,
+so a Capability exposed on two Screens counts once. A group names only what
+lies deeper than its own count. The summary disappears once the row opens,
+clicking it opens the row, and the chevron's label reads it aloud, so the row
+keeps one tab stop. Expansion chevrons sit before the type icons. A nested
 Screen sits directly under its parent Screen with no group between, and an
 always-reachable Screen carries its mark after its name.
 

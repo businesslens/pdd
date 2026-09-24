@@ -12,7 +12,7 @@ import type { AnyResourceView, ExperienceView, InterfaceView, ReportResourceKind
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
 import type { TopologyBranch } from './topologyProjections'
-import { placeDelivery } from './placeReadings'
+import { placeDelivery, placeJourneys, stepsLabel } from './placeReadings'
 
 export interface RowChild {
   resource: AnyResourceView
@@ -29,7 +29,7 @@ export interface TreeCardNode {
   groupKind?: ReportResourceKind
   /** An available Screen reference, not a child owned by this reading. */
   sharedFrom?: AnyResourceView
-  /** A short qualifier under the title, e.g. a Capability delivered directly. */
+  /** A short qualifier under the title, e.g. the Journey a Journey Scenario belongs to. */
   note?: string
   children: TreeCardNode[]
 }
@@ -64,24 +64,32 @@ export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView)
 }
 
 /**
- * What a place delivers, as items in its own branch: a Screen's own
- * Capabilities; an Experience's or Interface's gap, available there and on no
- * Screen of its own; or, for an Interface with no Screens, delivered directly.
- * Under each Capability sit the Scenarios with a Step for it placed exactly on
- * this place. Both are occurrences, so an id is the path of keys.
+ * What happens at a place, as items in its own branch. First what it
+ * delivers: a Screen's own Capabilities; an Experience's or Interface's gap,
+ * available there and on no Screen of its own; or, for an Interface with no
+ * Screens, delivered directly. Every Capability of one place carries the same
+ * one of those, so a gap or a direct delivery is said once, as the group
+ * holding them, never on each row. Under each Capability sit its own Scenarios
+ * with a Step placed exactly on this place. Then the Journeys passing through:
+ * a Journey Scenario belongs to its Journey, not to a Capability its Steps
+ * use, so it sits under its Journey, noted with the Steps taken here, and each
+ * appears once. All are occurrences, so an id is the path of keys.
  */
 function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): TreeCardNode[] {
-  return placeDelivery(workspace, place).map(({ capability, note, scenarios }) => {
+  const delivered = placeDelivery(workspace, place)
+  const leaves = delivered.map(({ capability, scenarios }) => {
     const id = `${place.key}>${capability.key}`
-    return {
-      ...leaf(capability, scenarios.map(scenario => ({
-        ...leaf(scenario), id: `${id}>${scenario.key}`,
-        ...(scenario.scenarioType === 'journey' ? { note: `Journey · ${scenario.journeyTitle}` } : {})
-      }))),
-      id,
-      ...(note === 'gap' ? { note: 'Available here, on no Screen' } : note === 'direct' ? { note: 'Delivered directly' } : {})
-    }
+    return { ...leaf(capability, scenarios.map(scenario => ({ ...leaf(scenario), id: `${id}>${scenario.key}` }))), id }
   })
+  const note = delivered[0]?.note
+  const journeys = placeJourneys(workspace, place).map(({ journey, scenarios }) => {
+    const id = `${place.key}>${journey.key}`
+    return { ...leaf(journey, scenarios.map(({ scenario, steps }) => ({ ...leaf(scenario), id: `${id}>${scenario.key}`, note: `${stepsLabel(steps)} here` }))), id }
+  })
+  return [
+    ...(!note || note === 'own' ? leaves : [{ ...group(`${place.key}:${note}`, 'capability', leaves), title: note === 'gap' ? 'Available here, on no Screen' : 'Delivered directly' }]),
+    ...journeys
+  ]
 }
 
 /** One hierarchy for collection cards and focused containment readings. */
@@ -110,10 +118,40 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
   return []
 }
 
-/** The same compact expansion defaults wherever a hierarchy is read. A Capability's Scenarios start folded. */
+export interface InsideCount {
+  kind: ReportResourceKind
+  count: number
+}
+
+const KIND_ORDER = Object.keys(ENTITY_KIND_META) as ReportResourceKind[]
+
+/**
+ * What opening a closed row would find: the distinct resources anywhere below
+ * it, counted by kind in rail order. It is navigation, never the row's own
+ * meaning, so a row draws it only while closed. A resource filed twice below —
+ * a Capability exposed on two Screens — counts once. A group already counts
+ * its own kind, so its summary names only what lies deeper.
+ */
+export function insideSummary(node: TreeCardNode): InsideCount[] {
+  const found = new Map<ReportResourceKind, Set<string>>()
+  const walk = (child: TreeCardNode) => {
+    const resource = child.resource
+    if (resource && resource.kind !== node.groupKind) found.set(resource.kind, (found.get(resource.kind) ?? new Set()).add(resource.key))
+    child.children.forEach(walk)
+  }
+  node.children.forEach(walk)
+  return KIND_ORDER.flatMap(kind => found.has(kind) ? [{ kind, count: found.get(kind)!.size }] : [])
+}
+
+/** The summary read aloud, as the expand control's label carries it. */
+export function insideLabel(summary: InsideCount[]): string {
+  return summary.map(({ kind, count }) => `${count} ${count === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural}`).join(', ')
+}
+
+/** The same compact expansion defaults wherever a hierarchy is read. Scenarios start folded, under a Capability or a Journey alike. */
 export function treeBranchKeys(nodes: TreeCardNode[], defaults = false): string[] {
   return nodes.flatMap(node => [
-    ...(node.children.length && (!defaults || (node.children.length <= 8 && node.resource?.kind !== 'capability')) ? [node.id] : []),
+    ...(node.children.length && (!defaults || (node.children.length <= 8 && node.resource?.kind !== 'capability' && node.resource?.kind !== 'journey')) ? [node.id] : []),
     ...treeBranchKeys(node.children, defaults)
   ])
 }

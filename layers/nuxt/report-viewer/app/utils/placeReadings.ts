@@ -12,6 +12,7 @@ import type {
   CapabilityView,
   ExperienceView,
   InterfaceView,
+  JourneyView,
   ReportWorkspace,
   ScenarioView,
   ScreenView
@@ -47,40 +48,72 @@ export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceVi
   return { note: 'gap', capabilities: available.filter(capability => !screens.some(screen => screen.capabilityIds.includes(capability.id))) }
 }
 
-/** One Capability a place delivers itself, read through the Scenarios that happen there. */
+/** One Capability a place delivers itself, read through its own Scenarios that happen there. */
 export interface PlaceDeliveryGroup {
   capability: CapabilityView
   note: PlaceCapabilities['note']
-  /** Scenarios with a Step for this Capability placed exactly on this place, Capability Scenarios first. */
+  /** The Capability's own Scenarios with a Step placed exactly on this place. */
   scenarios: ScenarioView[]
   /** Per Scenario key, the indexes of those Steps. */
   stepsHere: Record<string, number[]>
-  /** Every Scenario that exercises the Capability, wherever it happens. */
-  total: number
 }
+
+/** Which Steps of a Scenario are placed exactly on a place. */
+const stepsOn = (scenario: ScenarioView, place: InterfaceView | ExperienceView | ScreenView): number[] =>
+  scenario.steps.flatMap((step, index) => step.contexts.some(item => item.context.id === place.id) ? [index] : [])
 
 /**
  * A place's Delivery tab: each Capability it delivers itself (see
- * `placeCapabilities`), with only the Scenarios that have a Step for it placed
- * exactly on this place — never on a place nested inside, which reads its own.
- * A Step counts for the Capability its Scenario belongs to or, in a Journey
- * Scenario, the Capability the Step names.
+ * `placeCapabilities`), with only the Capability Scenarios it owns that have a
+ * Step placed exactly on this place — never on a place nested inside, which
+ * reads its own. A Journey Scenario belongs to its Journey, not to any
+ * Capability its Steps use, so it is read on the place (see `placeJourneys`).
  */
 export function placeDelivery(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceDeliveryGroup[] {
   const { capabilities, note } = placeCapabilities(workspace, place)
-  const capabilityOf = (scenario: ScenarioView, step: ScenarioView['steps'][number]) =>
-    scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId
   return capabilities.map((capability) => {
     const stepsHere: Record<string, number[]> = {}
-    let total = 0
     const scenarios = workspace.scenarios.filter((scenario) => {
-      const exercised = scenario.steps.some(step => capabilityOf(scenario, step) === capability.id)
-      if (exercised) total++
-      const here = scenario.steps.flatMap((step, index) => capabilityOf(scenario, step) === capability.id
-        && step.contexts.some(item => item.context.id === place.id) ? [index] : [])
+      if (scenario.scenarioType !== 'capability' || scenario.capabilityId !== capability.id) return false
+      const here = stepsOn(scenario, place)
       if (here.length) stepsHere[scenario.key] = here
       return here.length > 0
-    }).sort((a, b) => Number(a.scenarioType === 'journey') - Number(b.scenarioType === 'journey'))
-    return { capability, note, scenarios, stepsHere, total }
+    })
+    return { capability, note, scenarios, stepsHere }
   })
+}
+
+/** A Journey that passes through a place: its Scenarios with a Step placed there, and those Steps. */
+export interface PlaceJourney {
+  journey: JourneyView
+  scenarios: Array<{ scenario: ScenarioView, steps: number[] }>
+}
+
+/**
+ * The Journeys passing through a place, in model order, each holding its
+ * Scenarios with a Step placed exactly on this place — once each, whatever
+ * Capabilities those Steps use, and never on a place nested inside, which
+ * reads its own.
+ */
+export function placeJourneys(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceJourney[] {
+  return workspace.journeys.flatMap((journey) => {
+    const scenarios = workspace.scenarios.flatMap((scenario) => {
+      if (scenario.scenarioType !== 'journey' || scenario.journeyId !== journey.id) return []
+      const steps = stepsOn(scenario, place)
+      return steps.length ? [{ scenario, steps }] : []
+    })
+    return scenarios.length ? [{ journey, scenarios }] : []
+  })
+}
+
+/** Step indexes as a reader counts them: "Step 2", "Steps 1–3", "Steps 1, 4". */
+export function stepsLabel(steps: number[]): string {
+  const runs: number[][] = []
+  for (const step of steps) {
+    const last = runs.at(-1)
+    if (last && step === last.at(-1)! + 1) last.push(step)
+    else runs.push([step])
+  }
+  const text = runs.map(run => run.length > 1 ? `${run[0]! + 1}–${run.at(-1)! + 1}` : `${run[0]! + 1}`).join(', ')
+  return `${steps.length === 1 ? 'Step' : 'Steps'} ${text}`
 }

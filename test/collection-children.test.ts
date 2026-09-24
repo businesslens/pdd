@@ -5,7 +5,7 @@ import { loadModel } from '../src/core/model.js'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { rowChildren, treeCards, structureChildren, treeBranchKeys, TREE_CARD_KINDS } = await utility('collectionChildren')
+const { rowChildren, treeCards, structureChildren, treeBranchKeys, insideSummary, insideLabel, TREE_CARD_KINDS } = await utility('collectionChildren')
 const { tabsFor } = await utility('pageSections')
 const { interfaceProjection } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../blueprints/content-feed-reader')), '2026-09-12'))
@@ -115,7 +115,7 @@ describe('collection rows that expand', () => {
     for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
       /* With no place inside, what is left is what it delivers directly. */
       const children = structureChildren(empty, resource)
-      expect(children.every((node: any) => node.resource?.kind === 'capability')).toBe(true)
+      expect(children.every((node: any) => node.groupKind === 'capability' && node.children.every((item: any) => item.resource.kind === 'capability'))).toBe(true)
       expect(tabsFor(empty, resource).map((tab: any) => tab.id).includes('delivery')).toBe(children.length > 0)
     }
   })
@@ -130,5 +130,31 @@ describe('collection rows that expand', () => {
       expect(rows.filter((row: any) => row.resource.kind === 'entity').map((row: any) => row.resource.id))
         .toEqual(workspace.entities.filter((item: any) => item.domainId === domain.id).map((item: any) => item.id))
     }
+  })
+
+  it('says what a closed row would find: distinct resources below it, by kind, in rail order', () => {
+    const order = ['experience', 'screen', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
+    for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
+      for (const node of flatten([{ id: card.key, title: card.title, resource: card.resource, children: card.children }])) {
+        const summary = insideSummary(node)
+        const below = flatten(node.children).filter((item: any) => item.resource && item.resource.kind !== node.groupKind)
+        expect(summary.map((entry: any) => entry.kind)).toEqual(order.filter(kind => below.some((item: any) => item.resource.kind === kind)))
+        for (const entry of summary) {
+          expect(entry.count).toBe(new Set(below.filter((item: any) => item.resource.kind === entry.kind).map((item: any) => item.resource.key)).size)
+        }
+        if (!node.children.length) expect(summary).toEqual([])
+      }
+    }
+    /* A Capability exposed on two Screens of one Experience counts once there. */
+    const experience = workspace.experiences.find((item: any) => item.id === 'reader-web::personal-library')
+    const node = { id: experience.key, title: experience.title, resource: experience, children: structureChildren(workspace, experience) }
+    const occurrences = flatten(node.children).filter((item: any) => item.resource?.kind === 'capability')
+    const capabilities = insideSummary(node).find((entry: any) => entry.kind === 'capability')
+    expect(capabilities.count).toBe(new Set(occurrences.map((item: any) => item.resource.key)).size)
+    expect(capabilities.count).toBeLessThan(occurrences.length)
+    /* A group already counts its own kind, so it names only what lies deeper. */
+    const screens = node.children.find((item: any) => item.groupKind === 'screen')
+    expect(insideSummary(screens).some((entry: any) => entry.kind === 'screen')).toBe(false)
+    expect(insideLabel([{ kind: 'screen', count: 1 }, { kind: 'capability', count: 3 }])).toBe('1 Screen, 3 Capabilities')
   })
 })
