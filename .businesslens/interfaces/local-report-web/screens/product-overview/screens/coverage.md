@@ -1,11 +1,16 @@
 ---
 entities:
-  - { entity: product-model, facts: [Coverage, Inspection] }
+  - { entity: product-model, facts: [Coverage, Method] }
 capabilities: [view-product-model]
 ---
 
 # Coverage
 
-How much of the Product the model claims to hold: its coverage status and
-rationale, the method that produced it, the source areas it read, the areas it
-leaves unmapped, and its limitations.
+How much of the Product the model covers, read by location: the declared
+Scope and, when recorded, the Method note, then four cards counting Covered,
+Exclusions, Unmapped and Limitations, with no status or derived completeness
+badge. Selecting a card filters the tree. Each recorded path appears once in a
+tree marked with the categories recorded at exactly that path; a folder never
+inherits meaning from beneath it. Search matches paths, never prose, and a
+path's statements read in place. Statements with no known location stay
+readable below the tree.

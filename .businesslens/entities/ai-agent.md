@@ -13,7 +13,7 @@ references:
 
 # AI agent
 
-A coding-agent harness that loads a BusinessLens skill and acts inside the
+A coding agent that loads a BusinessLens skill and acts inside the
 repository on the Developer's behalf. It initiates: it chooses what to inspect,
 reads source and documentation, runs the structural check, and drafts the model
 change it believes the evidence supports. It never holds a grant to write

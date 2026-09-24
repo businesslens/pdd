@@ -322,12 +322,12 @@ export function compileReport(
       }))
     },
     coverage: {
-      status: model.coverage.status as 'complete' | 'partial' | 'draft',
+      scope: model.coverage.scope,
+      exclusions: model.coverage.exclusions,
       method: model.coverage.method,
-      sourceAreas: model.coverage.sourceAreas,
+      covered: model.coverage.covered,
       unmapped: model.coverage.unmapped,
-      limitations: model.coverage.limitations,
-      rationale: model.coverage.rationale
+      limitations: model.coverage.limitations
     }
   }
 

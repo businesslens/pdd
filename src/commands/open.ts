@@ -29,14 +29,8 @@ import { validateProductLogo } from '../logo.js'
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 /* `method` is the one coverage field expansion rewrites: it states how the
    model was derived, which is a claim about origin, and a Blueprint carries
-   none. Both sentences below are origin claims — where the model came from and
-   that nobody has yet checked it against this repository — so both live here
-   and nowhere else. The author's `unmapped`, `limitations`, and `rationale`
-   pass through untouched. */
-const OPEN_COVERAGE_METHOD = [
-  'Opened from a portable Product Report; source-repository navigation was intentionally removed.',
-  'Implementation alignment has not been verified in this repository.'
-]
+   none. Authored descriptions pass through untouched. */
+const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; implementation alignment has not been verified in this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -231,19 +225,9 @@ function writeReport(root: string, report: ProductReportV14, hasLogo: boolean): 
   write(
     join(root, 'coverage.md'),
     frontmatter({
-      status: report.coverage.status,
-      method: OPEN_COVERAGE_METHOD,
-      sourceAreas: [],
-      // Unmapped product areas explain model breadth and survive the
-      // source-free projection. Source paths live in sourceAreas, not here.
-      // The author's own account of what is unmapped, what the limitations are,
-      // and why — never rewritten. It describes the MODEL'S completeness rather
-      // than its origin, and it is exactly what a reader receiving a Blueprint
-      // needs. Only `method`, which is a claim about how the model was derived,
-      // is replaced: a Blueprint carries no claim about its own origin.
-      unmapped: report.coverage.unmapped,
-      limitations: [...report.coverage.limitations]
-    }) + body('Coverage', report.coverage.rationale, '', [], [])
+      ...report.coverage,
+      method: OPEN_COVERAGE_METHOD
+    }) + body('Coverage', '', '', [], [])
   )
 
   const experienceIds = new Set(report.model.experiences.map(experience => experience.id))

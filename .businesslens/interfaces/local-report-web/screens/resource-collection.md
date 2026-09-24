@@ -1,17 +1,17 @@
 ---
 entities:
-  - product-model
-  - product
-  - interface
-  - experience
-  - screen
-  - domain
-  - entity
-  - capability
-  - capability-scenario
-  - journey
-  - journey-scenario
-  - business-rule
+  - { entity: product-model, facts: [Product] }
+  - { entity: product, facts: [Identity] }
+  - { entity: interface, facts: [Type, Actors] }
+  - { entity: experience, facts: [Container, Audience] }
+  - { entity: screen, facts: [Exposure, Nesting] }
+  - { entity: domain, facts: [Region] }
+  - { entity: entity, facts: [Kept information, Acts, Kind, States] }
+  - { entity: capability, facts: [Purpose, Availability, Domain] }
+  - { entity: capability-scenario, facts: [Classification] }
+  - { entity: journey, facts: [Goal, Actors] }
+  - { entity: journey-scenario, facts: [Result, Classification] }
+  - { entity: business-rule, facts: [Assertion, Reach] }
 capabilities: [view-product-model, explore-product-topology]
 entryPoints:
   - local-report-web: /?s=capability

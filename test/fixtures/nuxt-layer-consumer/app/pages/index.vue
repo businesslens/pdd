@@ -2,7 +2,7 @@
 import type { ProductReportV14 } from 'businesslens/report'
 
 const route = useRoute()
-const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
 const report: ProductReportV14 = {
   schemaVersion: '14.0.0',
@@ -72,12 +72,12 @@ const report: ProductReportV14 = {
     businessRules: []
   },
   coverage: {
-    status: 'complete',
-    method: ['Static packed-artifact smoke fixture.'],
-    sourceAreas: [],
+    scope: 'The fixture Product.',
+    exclusions: [],
+    method: 'Static packed-artifact smoke fixture.',
+    covered: [],
     unmapped: [],
-    limitations: [],
-    rationale: 'The fixture exercises package resolution, not a Product claim.'
+    limitations: []
   }
 }
 // Opt in to comparison data without changing the graph/lifecycle smoke fixture.
@@ -100,6 +100,6 @@ if (route.query.matrices === '1') {
 
 <template>
   <div>
-    <BusinessLensReportViewer v-for="index in route.query.multi === '1' ? 2 : 1" :key="index" v-model:section="section" v-model:resource="resource" v-model:tab="tab" v-model:resource-tab="resourceTab" v-model:scenario-route="scenarioRoute" v-model:route-columns="routeColumns" v-model:topology="topology" :report="report" />
+    <BusinessLensReportViewer v-for="index in route.query.multi === '1' ? 2 : 1" :key="index" v-model:section="section" v-model:resource="resource" v-model:tab="tab" v-model:resource-tab="resourceTab" v-model:scenario-route="scenarioRoute" v-model:route-columns="routeColumns" v-model:topology="topology" v-model:coverage="coverage" :report="report" />
   </div>
 </template>

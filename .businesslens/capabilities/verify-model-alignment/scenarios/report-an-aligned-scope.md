@@ -45,7 +45,8 @@ says, after a change or before a release.
 ## Outcome
 
 The Developer knows exactly which contracts were checked and that they hold.
-Nothing was written, and no receipt of this run survives it.
+No product meaning or implementation changed. Findings remain within the
+invocation and are re-derived from current evidence on the next run.
 
 ## Edge cases
 

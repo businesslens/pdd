@@ -1,8 +1,8 @@
 ---
 entities:
-  - interface
-  - experience
-  - screen
+  - { entity: interface, facts: [Type, Navigation] }
+  - { entity: experience, facts: [Navigation] }
+  - { entity: screen, facts: [Exposure, Presents, Nesting] }
 capabilities: [view-product-model]
 ---
 

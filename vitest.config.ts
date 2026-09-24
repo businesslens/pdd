@@ -7,6 +7,10 @@ export default defineConfig({
     // that surfaced as `dev-link` getting exit 1 from a CLI that existed a
     // moment earlier. Build once, before any file runs.
     globalSetup: ['./test/global-setup.ts'],
+    // These suites spawn real Git and CLI processes. Serialize files and allow
+    // subprocess startup overhead without turning host contention into failures.
+    fileParallelism: false,
+    testTimeout: 30_000,
     // Claude worktrees are separate repositories and may intentionally carry
     // uncommitted experiments. Do not discover their tests from the parent.
     exclude: [...configDefaults.exclude, '.claude/worktrees/**']

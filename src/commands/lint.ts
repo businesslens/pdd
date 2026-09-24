@@ -1,3 +1,4 @@
+import { undeclaredEntityMentions } from '../core/entity-mentions.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import type {
@@ -26,16 +27,11 @@ export interface LintResult {
 }
 
 const ACCESS_MODES = new Set(['public', 'authenticated', 'restricted'])
-const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
 const JOURNEY_RESULTS = new Set(['achieved', 'not-achieved'])
 const INTERFACE_TYPE_SET = new Set<string>(INTERFACE_TYPES)
 
 function sameSet(left: Set<string>, right: Set<string>): boolean {
   return left.size === right.size && [...left].every(value => right.has(value))
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
@@ -131,10 +127,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
   const productLanguages = new Set(model.product.languages)
 
-  if (!COVERAGE_STATUSES.has(model.coverage.status)) {
-    errors.push(`coverage.md: status "${model.coverage.status}" must be complete|partial|draft`)
-  }
-  const complete = model.coverage.status === 'complete'
+  // Coverage scope and description uniqueness are the schema's to report, once,
+  // when the model loads; a Coverage that failed to parse has nothing to recheck.
 
   const collections: Array<[string, Array<{ id: string }>]> = [
     ...Object.entries(resourceCollections(model)),
@@ -624,8 +618,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           errors.push(`${screen.file}: "${fact}" is not a fact of entity "${entry.entity}"`)
         }
       }
-      if (entry.facts === undefined && complete && entity.informationKept.length) {
-        errors.push(`${screen.file}: presents "${entry.entity}" without naming its facts; a complete model says which facts are on screen`)
+      if (entry.facts === undefined && entity.informationKept.length) {
+        errors.push(`${screen.file}: presents "${entry.entity}" without naming its facts; a Screen says which facts are on screen`)
       }
     }
   }
@@ -931,28 +925,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
        * actor is exempt, and so is "The Product", which every Product Step opens
        * with by convention.
        */
-      const declared = new Set(step.entities.map(entry => entry.entity))
-      const scrubbed = step.text.replace(/\bthe Product\b/gi, ' ')
-      const titleSpans = (title: string): Array<[number, number]> => {
-        const pattern = new RegExp(`(?:^|[^a-z0-9])(${escapeRegExp(title)}(?:'s|s)?)(?=$|[^a-z0-9])`, 'gi')
-        return [...scrubbed.matchAll(pattern)].map(match => {
-          const start = match.index + match[0].length - match[1]!.length
-          return [start, start + match[1]!.length]
-        })
-      }
-      /* A declared title that contains the match covers it: "Product Model"
-         declared says nothing about "Product". */
-      const covered = model.entities
-        .filter(entity => entity.doc.title && (declared.has(entity.id) || entity.id === step.actor))
-        .flatMap(entity => titleSpans(entity.doc.title))
-      for (const entity of model.entities) {
-        if (!entity.doc.title || declared.has(entity.id) || entity.id === step.actor) continue
-        const exposed = titleSpans(entity.doc.title).some(([start, end]) =>
-          !covered.some(([from, to]) => from <= start && end <= to))
-        if (!exposed) continue
-        const finding = `${label}: text names "${entity.doc.title}" and "entities" does not declare it`
-        if (model.coverage.status === 'complete') errors.push(finding)
-        else warnings.push(finding)
+      for (const entity of undeclaredEntityMentions(
+        step.text,
+        model.entities.map(entity => ({ id: entity.id, title: entity.doc.title })),
+        step.entities.map(entry => entry.entity),
+        step.actor
+      )) {
+        errors.push(`${label}: text names "${entity.title}" and "entities" does not declare it`)
       }
 
       const capabilityId = implicitCapability || step.capability
@@ -1131,8 +1110,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     for (const place of required) {
       if (covered.has(place)) continue
       const finding = `${capability.file}: availability Context place "${place}" needs Capability Scenario coverage`
-      if (model.coverage.status === 'complete') errors.push(finding)
-      else warnings.push(finding)
+      errors.push(finding)
     }
   }
 
@@ -1249,16 +1227,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     /*
      * The authored `capabilities` list is the positive claim; the Steps placed
      * here are what make it honest. An ability with no Scenario behind it is
-     * not a product commitment, so a complete model is refused and a partial
-     * one told where its coverage stops.
+     * not a product commitment, so the model is refused.
      */
     const placed = stepsOnScreen.get(screen.id) || []
     for (const capabilityId of screen.capabilities) {
       if (!capabilityIds.has(capabilityId)) continue
       if (placed.some(item => item.capabilityId === capabilityId)) continue
       const finding = `${screen.file}: exposes capability "${capabilityId}", and no Step is placed on this Screen for it`
-      if (complete) errors.push(finding)
-      else warnings.push(finding)
+      errors.push(finding)
     }
     /*
      * What an Actor reads here, the Screen shows here, and a fact a Step cites
@@ -1301,8 +1277,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         && (screen.containerId === place || (experiencesById.has(place) && screen.containerId === interfaceOf(place))))
       if (exposed) continue
       const finding = `${capability.file}: availability Context place "${place}" exposes it on no Screen`
-      if (complete) errors.push(finding)
-      else warnings.push(finding)
+      errors.push(finding)
     }
   }
 
@@ -1430,8 +1405,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
               entry.entity === target.id && entry.facts?.includes(fact))))
             if (shown || cited) continue
             const finding = `${label}: governs "${fact}" of "${target.id}", which no Screen presents and no Step cites`
-            if (complete) errors.push(finding)
-            else warnings.push(finding)
+            errors.push(finding)
           }
         }
         const seenEntityContextPlaces: string[] = []
@@ -1736,8 +1710,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }))
 
   if (model.interfaces.length === 0) errors.push('interfaces/: the model needs at least one interface')
-  if (model.coverage.status === 'complete' && model.capabilities.length === 0) {
-    errors.push('capabilities/: a complete model needs at least one capability')
+  if (model.capabilities.length === 0) {
+    errors.push('capabilities/: the model needs at least one capability')
   }
 
   const resources = allResources(model)

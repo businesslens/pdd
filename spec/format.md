@@ -126,7 +126,7 @@ representative model can therefore look like this:
 .businesslens/
 ├── config.yaml              # tool config (committed)
 ├── taxonomies.yaml          # scenario kinds (committed)
-├── coverage.md              # coverage assessment (committed)
+├── coverage.md              # model scope and known gaps (committed)
 ├── product.md               # compact Product when it has no logo
 ├── product/                 # expanded Product alternative
 │   ├── product.md
@@ -396,8 +396,7 @@ future format revision, but Context is not an arbitrary metadata bag.
   they cannot be represented as report list items.
 - **Set-valued lists are unique.** Product `tags` and every frontmatter relation
   list contain no duplicate value. Ordered content lists such as Scenario
-  `steps` and Coverage prose are not relation
-  sets and may repeat when the meaning calls for it.
+  `steps` are not relation sets and may repeat when the meaning calls for it.
 - Scenario IDs are globally unique across every `scenarios/` folder.
 
 ## References
@@ -455,7 +454,7 @@ design, so a light and a dark capture of one condition are two references on
 the same resource, told apart by `title`.
 
 References connect the self-contained Product Model to material maintained
-outside it. A model may contain no references at any Coverage status.
+outside it. A model may contain no references.
 The deterministic CLI does not copy, download, generate, execute, or assess
 referenced content. BusinessLens skills may follow curated References as leads,
 but the artifact remains evidence to assess rather than proof to trust.
@@ -470,12 +469,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 8                          # folder-format version
+schema: 9                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 8 is the only supported folder format.
+`config.yaml` has no other keys. Schema 9 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -524,6 +523,8 @@ a redesign cannot drop German. The vocabulary is closed, so `verify` can hold
 it against the repository's i18n configuration. An Interface may narrow the
 list; Experiences and Screens never carry one, because a language is a fact
 about a surface, not about a context or a view inside it.
+Product `limitations` are deliberate constraints of the Product; gaps and
+uncertainty in the model belong in [`coverage.md`](#coveragemd).
 
 The compact form is `.businesslens/product.md`. Adding a Product logo expands
 it to `.businesslens/product/product.md`, with the identity asset at
@@ -1175,9 +1176,8 @@ optional Experience relations. Business Rules own their applicability, so Capabi
 files do not duplicate Rule IDs. Capability Scenario files own the acceptance
 relation, so Capability files do not duplicate Scenario IDs. A Capability
 Scenario is the only direct acceptance coverage for a Capability; Journey
-Scenario use does not satisfy that coverage rule. Missing coverage is an error
-when `coverage.md` is `complete`, a warning when it is `partial` or `draft`, and
-always a publication error for a public Blueprint.
+Scenario use does not satisfy that coverage rule. Missing coverage is always an
+error.
 
 A Capability is the smallest durable behavior that remains independently
 meaningful, not necessarily the smallest UI action or code operation. Capability
@@ -1331,8 +1331,8 @@ Rule governs information — a derivation, or field-level visibility — not an
 operation. `contexts` scopes the Rule to places; an Entity has no availability,
 so the selector must name a Screen that presents the Entity, or an ancestor of
 one. On a fact-scoped target the Screen must present one of the governed
-facts — its `entities` entry lists it, or is bare while the model is not
-`complete` — or the selector names an ancestor of such a Screen.
+facts — its `entities` entry lists it, or is bare because the Entity names no
+facts — or the selector names an ancestor of such a Screen.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
@@ -1555,7 +1555,7 @@ Structure — errors unless marked:
 - **Warning:** a target `from`, or a grant `state` condition, that every Step
   the target selects already satisfies.
 
-Rules against Steps and Screens — errors, ungraded by `coverage.status`:
+Rules against Steps and Screens — errors:
 
 - A Step performing an operation a Rule closes with `permits: []`, naming the
   Rule.
@@ -1571,12 +1571,11 @@ Rules against Steps and Screens — errors, ungraded by `coverage.status`:
 `reads` or absent — is checked against Screen facts and Step facts, never
 against Entity presence alone. A Screen is selected when its `entities` entry
 for that Entity lists a governed fact, and the check above then runs on it; a
-bare entry, one with no `facts`, is never selected, which is why a `complete`
-model may not write one for an Entity with named facts. A Step whose `entities`
+bare entry, one with no `facts`, is never selected, which is why a model may
+not write one for an Entity with named facts. A Step whose `entities`
 entry cites a governed fact is selected like any other governed operation and
 needs an actor with a possible grant. A read Rule governing a fact that no
-Screen presents and no Step cites is a `lint` finding graded by
-`coverage.status` — a warning, and an error for a `complete` model — because a
+Screen presents and no Step cites is a `lint` error, because a
 visibility claim about information nobody is shown governs nothing. The rest
 is `verify`'s. A derivation is prose plus `facts`; there is no
 machine-readable arithmetic, because one would need defined behaviour for types,
@@ -1638,24 +1637,23 @@ containing the Screen — for a Screen an Interface shares beside its
 `experiences/`, one for every Experience of that Interface. **A Screen lists
 only the Capabilities its own Steps use.** Capabilities flow neither up nor
 down a nest of Screens: a child lists what its own Steps use and the parent
-does not repeat it; a report shows each Screen's own list at its place in the tree. The list stays authored rather
-than derived because a partial model needs the claim before coverage exists,
-and coverage is what keeps it honest: a Capability a Screen exposes with no
-Step placed exactly on that Screen is a `lint` finding graded by
-`coverage.status` — an error for a `complete` model, a warning otherwise. The
-converse holds one level up: a Capability available on an Interface or
-Experience that owns Screens, which no Screen there exposes, is graded the
-same way. There is no cheaper encoding of *this ability exists here* than a
-Step, an export button included, because a second spelling of one claim is two
-valid encodings. A partial model's map is islands, which is a visible absence.
+does not repeat it; a report shows each Screen's own list at its place in the
+tree. The list stays authored rather than derived because it is the claim, and
+the Steps are what keep it honest: a Capability a Screen exposes with no Step
+placed exactly on that Screen is a `lint` error. The converse holds one level
+up: a Capability available on an Interface or Experience that owns Screens,
+which no Screen there exposes, is an error too. There is no cheaper encoding of
+*this ability exists here* than a Step, an export button included, because a
+second spelling of one claim is two valid encodings. What the model does not
+yet map is Coverage's to record as Unmapped, never a Screen left half-claimed.
 
 `entities` is optional and names the Entities the Screen presents. Each entry
 is `{ entity, facts }` or a bare Entity id. `facts` is a non-empty unique list
 of that Entity's `## Information kept` names, cited exactly as a Business
 Rule's `facts` target cites them; a name that does not resolve is a `lint`
-error. **A bare id is allowed only while `coverage.status` is not `complete`**:
-in a complete model a bare id for an Entity that has named facts is a `lint`
-error, and an Entity with no named facts is always cited bare. A bare id never
+error. **A bare id is allowed only for an Entity with no named facts**, which
+is always cited bare; a bare id for an Entity that has named facts is a `lint`
+error. A bare id never
 means *all facts* — that would be two spellings of one claim. **"Presents"
 means the fact is on screen**, whether the Actor reads it or enters it: a
 sign-up form lists `{ entity: account, facts: [Email, Password] }`, and the
@@ -1795,9 +1793,9 @@ cross-Interface hand-off is how a product usually earns one, but none is
 required, and a merely plausible sequence of independent Product actions has
 no achieved Scenario and is not a Journey. A wizard is not evidence either
 way: it is nested Screens on the structure axis, and the Scenario walking it
-is a Journey Scenario only where it crosses Capabilities. Whether the repository implements
-the Journey is `coverage.status`'s claim and `verify`'s finding, never the
-Journey's own. The number of Journey Scenario variations does not define it;
+is a Journey Scenario only where it crosses Capabilities. Whether the
+repository implements the Journey is `verify`'s finding, never the Journey's
+own. The number of Journey Scenario variations does not define it;
 one achieved variation provides valid coverage. A goal with no achieved
 multi-Capability path belongs to Capability behavior.
 
@@ -2017,8 +2015,7 @@ and a Capability's Entities are derived from its Scenarios' Steps: a Capability
 declares nothing about Entities itself.
 
 **A Step whose `text` names a known Entity title and declares it nowhere** is a
-`lint` finding graded by `coverage.status` — an error for a `complete` model, a
-warning otherwise. The Step's own `actor` is exempt, and so is the phrase *"the
+`lint` error. The Step's own `actor` is exempt, and so is the phrase *"the
 Product"*, which every Product Step opens with by convention. A title inside a
 longer title the Step declares is covered by it: with `product-model` declared,
 *Product Model* in the text says nothing about an Entity titled *Product*.
@@ -2178,43 +2175,56 @@ applicability, so Journey Scenarios do not duplicate Rule IDs.
 
 ```markdown
 ---
-status: partial                    # complete | partial | draft
-method: ["Static review of the pinned revision without executing code"]
-sourceAreas: [src, server]
-unmapped: ["deployment/"]
-limitations: ["Background jobs not yet mapped"]
+scope: Customer purchasing and order fulfillment.
+method: Static inspection of source and supporting documentation.
+covered:
+  - description: Customer checkout and order tracking.
+    paths: [src/checkout/, src/orders/]
+exclusions:
+  - description: Staff payroll is deliberately outside this model's scope.
+    paths: [server/payroll/]
+unmapped:
+  - description: Background fulfillment jobs are not modeled.
+    paths: [server/jobs/]
+limitations:
+  - description: The retry policy for failed deliveries could not be established.
+    paths: [src/orders/]
 ---
 
 # Coverage
-
-Free prose rationale retained with the coverage assessment.
 ```
 
-The coverage frontmatter (`status`, `method`, `sourceAreas`, `unmapped`,
-`limitations`) and the prose rationale are authored from the inspection that
-created or expanded the model. Resource totals in a Product Report belong to its
-Summary, not Coverage. Coverage has no reference counts and is never inferred
-from `references`. The linter checks authored resources and relationships; it
-does not compile, publish, or semantically verify the model.
+Every key is required and unknown keys are errors. The body is only
+`# Coverage`; `coverage.json` is not accepted.
 
-Coverage accepts one H1 and its lead rationale only. It has no H2 sections;
-put structured assessment data in the defined frontmatter fields.
+- `scope` — the intended breadth of the model: non-empty single-line Markdown.
+- `method` — one short single-line note on how the model was authored, or `""`.
+- `covered` — behavior the model represents.
+- `exclusions` — approved omissions. An oversight or unfinished inspection never
+  becomes an exclusion without approval.
+- `unmapped` — known behavior within scope that is not modeled.
+- `limitations` — material uncertainty in what could be established. Missing
+  behavior belongs in `unmapped`, and not executing code belongs in `method`.
 
-`status` describes **model breadth**, never implementation or verification:
+Each entry is exactly `description` and `paths`. Descriptions are non-empty
+single-line Markdown without an H1 or H2, unique across all four lists. Paths
+are unique repository-relative POSIX paths, directories ending in `/`, or `[]`
+when no location is known. Absolute paths, URLs, backslashes, `*` and `?`
+wildcards, `.` or `..` segments, empty segments, surrounding whitespace, control
+characters, and fragment or line suffixes are invalid; brackets and braces are
+ordinary file-name characters, as in `pages/[id].vue`. A missing workspace path
+is not an error. Descriptions survive the portable projection; paths do not.
 
-- `draft` — the model itself is still being authored or reviewed.
-- `partial` — the model is useful and has known unmapped areas.
-- `complete` — the intended product breadth is modeled.
+Coverage has no status. An empty `unmapped` list means only that no gaps are
+recorded, and known gaps never relax the structural requirements: every model
+has at least one Capability, every Capability availability Context is selected
+by at least one Capability Scenario, and every Journey Actor appears in at least
+one achieved Journey Scenario. Coverage, References and silence never establish
+file-level completeness or implementation alignment.
 
-A complete model has at least one Capability. Every Capability availability
-Context is selected by at least one Capability Scenario, and every
-Journey Actor appears in at least one achieved Journey Scenario. Draft and
-partial models warn for uncovered Capability Contexts; public Blueprints require
-the same complete behavioral coverage regardless of Coverage status.
-
-All three statuses may be exported. A complete model may describe planned,
-implemented, or mixed behavior and may contain zero references. Proposing it as a
-catalog Blueprint is a separate, explicit action; public listing remains an
+A model may describe planned, implemented or mixed behavior, contain zero
+References, and be exported with known gaps. Proposing it as a catalog
+Blueprint is a separate, explicit action; public listing remains an
 administrator decision.
 
 ## Serialization

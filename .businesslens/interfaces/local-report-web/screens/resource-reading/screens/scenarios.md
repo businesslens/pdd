@@ -1,9 +1,9 @@
 ---
 entities:
-  - capability
-  - journey
-  - capability-scenario
-  - journey-scenario
+  - { entity: capability, facts: [Purpose] }
+  - { entity: journey, facts: [Goal] }
+  - { entity: capability-scenario, facts: [Trigger and outcome, Steps, Routes and Contexts, Classification] }
+  - { entity: journey-scenario, facts: [Result, Trigger and outcome, Steps, Routes and Contexts, Classification] }
 capabilities: [view-product-model]
 ---
 

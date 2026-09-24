@@ -21,7 +21,7 @@ to them.
 
 ## Information kept
 
-- **Exposure** — the Capabilities it exposes and the Entities it presents
-- **Content** — what information the view shows, and what can be done from it
-- **View states** — the states the view itself can be in
-- **Addresses** — where it answers, and what it deliberately does not expose
+- **Exposure** — the Capabilities its own Steps use
+- **Presents** — the Entities it presents and the facts of each that are on screen
+- **Nesting** — the parent it sits in and the Screens nested inside it
+- **Addresses** — where it answers, and whether it is reachable from every place in its container

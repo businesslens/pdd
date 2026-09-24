@@ -144,6 +144,11 @@ invalid. The report is expanded straight into an authored folder, so a report
 that carries an edge the folder rules reject would produce a `.businesslens/`
 that fails `lint` on arrival.
 
+Validation also rejects Step text naming an Entity title without declaring it
+in `entities`, using the folder rule's same title matching and exceptions:
+the Step's own Actor, “the Product”, and a title contained within a longer
+declared Entity or Actor title do not require another declaration.
+
 Two Entities declaring relations at each other is **not** refused here. It is
 usually one relationship written twice, and sometimes two genuinely different
 relationships between one pair, and nothing structural tells those apart.
@@ -252,7 +257,7 @@ Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it
 removes every `kind: code` reference, every `role: implementation` reference,
 every repository-relative reference, every repository-relative entry point,
-and `coverage.sourceAreas`. It also contains no repository URL, branch, commit,
+and every Coverage entry's `paths`. It also contains no repository URL, branch, commit,
 catalog listing state, pricing, or entitlement data. A report that has been
 through `export` is a Blueprint.
 
@@ -352,6 +357,12 @@ operator can tell a CLI pull from a page view. The two response headers a report
 must carry, the logo endpoint, and the status codes are documented for catalog
 operators in [`docs/cli-pull.md`](../docs/cli-pull.md#catalog-contract).
 
+## Coverage
+
+`coverage` carries the fields of [`coverage.md`](./format.md#coveragemd) with the
+same strict validation. Expansion writes them back unchanged except `method`,
+which records the model's origin.
+
 ## Portable projection
 
 Several report fields name the origin repository rather than the product. That
@@ -369,7 +380,7 @@ serve(projectPortableReport(report))
 | --- | --- |
 | `references` | only HTTP(S) intent/context references kept |
 | `entryPoints` | repository paths and `file:` URLs dropped; routes, HTTP(S) URLs, non-file mobile deep links, and commands kept |
-| `coverage.sourceAreas` | emptied |
+| `coverage` entry `paths` | emptied; descriptions kept |
 | `referenceProfile` | set to `portable` |
 
 Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
@@ -380,8 +391,8 @@ and is also kept. Repository-relative references are dropped. HTTP(S)
 intent/context references are kept. A value with no path separator at all,
 such as a CLI entry point, is not a path and is kept.
 
-Author-written prose — `unmapped`, `limitations`, `rationale`, `intent`, and
-each `supportingSections[].content` value — is never rewritten, by the
+Author-written prose — Coverage descriptions, `intent`, and each
+`supportingSections[].content` value — is never rewritten, by the
 projection or by expansion. It describes the **model's own completeness** rather
 than its origin, it is exactly what a reader receiving a Blueprint needs in
 order to know what they are getting, and it belongs to the author.
@@ -397,7 +408,7 @@ framework and the catalog apply this same exported function, contributors and
 the server cannot disagree about what a delivered report exposes.
 `validateProductReport` rejects a report that declares `referenceProfile:
 portable` while still carrying a code reference, implementation reference,
-repository-relative reference, or Coverage source area.
+repository-relative reference, or Coverage path.
 
 `blueprint export` writes the portable report. Contribution applies
 the same idempotent projection before opening a public pull request. `open` and

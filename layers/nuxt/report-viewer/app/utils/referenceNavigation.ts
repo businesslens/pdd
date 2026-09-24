@@ -2,6 +2,7 @@ import type { InjectionKey, Ref } from 'vue'
 import type { ReportReference } from 'businesslens/report'
 
 export const isExternalReference = (target: string) => /^https?:\/\//i.test(target)
+
 export const referenceFileHref = (target: string) => `/_businesslens/file/${target.split('/').map(encodeURIComponent).join('/')}`
 export const referenceHref = (reference: ReportReference) => isExternalReference(reference.target)
   ? reference.target : reference.kind === 'code'

@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import {
   chmodSync,
   mkdirSync,
@@ -191,5 +191,11 @@ console.log(${JSON.stringify(cli)})
     expect(recorded.cwd).toContain('businesslens-cli-')
     expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'lint', '--json'])
     expect(recorded.apiKey).toBeNull()
+  })
+  it.each(LINT_RUNNERS)('$name rejects removed accounting commands', ({ file }) => {
+    const repo = temporary('bl-runner-repo-')
+    const result = spawnSync(process.execPath, [file, '--root', repo, 'coverage', 'start'], { encoding: 'utf8' })
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('supports only lint')
   })
 })

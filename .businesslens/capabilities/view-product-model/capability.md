@@ -20,6 +20,10 @@ resources by kind, opens any resource’s reading, reads a thing's lifecycle as 
 Steps compose it, searches by name, and keeps their place across a save and a
 reload.
 
+Coverage in Overview explains current breadth,
+exclusions and known gaps directly, with recorded paths linking to related
+context and References. Reading never records inspection or changes the repository.
+
 ## Intent
 
 A model that is only read as a file diff is read once. This is somewhere to

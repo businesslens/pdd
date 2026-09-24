@@ -135,20 +135,18 @@ Steps rather than authored on the Journey.
 Capability Scenario coverage is the only direct acceptance coverage for a
 Capability. The union of its Capability Scenarios must cover every availability
 Context the Capability declares through its Step Contexts; use by a Journey Scenario
-does not satisfy that requirement. A missing Context is an error for a `complete`
-model, a warning for `partial` or `draft`, and an error when publishing a public
-Blueprint. A single-Capability goal remains local Capability behavior and never
-requires a Journey wrapper. A wizard is
+does not satisfy that requirement. A missing Context is an error. A
+single-Capability goal remains local Capability behavior and never requires a
+Journey wrapper. A wizard is
 [nested Screens](./interfaces.md#screens-nest) on the structure side, and the
 Scenario walking its steps is a Capability Scenario unless it crosses
 Capabilities, which makes it a [Journey Scenario](./journeys.md#journey-scenarios).
 
-**Every ability has a Scenario.** A complete model has a Step behind every
-Capability a [Screen](./interfaces.md#screens) exposes, an export button
-included; a Screen's `capabilities` with no Step placed exactly on that Screen
-is a warning, and an error when Coverage is `complete`. There is no cheaper
-encoding of "this ability exists here", because that would be two valid
-spellings of one claim.
+**Every ability has a Scenario.** Every Capability a
+[Screen](./interfaces.md#screens) exposes, an export button included, has a
+Step behind it; a Screen's `capabilities` with no Step placed exactly on that
+Screen is an error. There is no cheaper encoding of "this ability exists here",
+because that would be two valid spellings of one claim.
 
 ## Availability
 
@@ -189,9 +187,8 @@ Scenario owned by a Journey is a
 Scenario and no way for one Scenario to serve both parents.
 
 Capability Scenarios are part of the behavioral core and are the only direct
-acceptance coverage for a Capability. Missing coverage is an error for a
-`complete` model, a warning for `partial` or `draft`, and an error for a public
-Blueprint, whether or not the Product has any [Journeys](./journeys.md).
+acceptance coverage for a Capability. Missing coverage is an error, whether or
+not the Product has any [Journeys](./journeys.md).
 
 ## What a Step does to the Product's things
 
@@ -233,8 +230,8 @@ instance.
 **A read is a bare mention.** `reads` carries no state, is never counted as a
 change, and never saves an Entity from being an orphan. It exists so a Step
 whose text says *the Reader chooses a saved item* also says so where a tool can
-read it. A Step whose text names an Entity's title and declares it nowhere is a
-finding — an error in a `complete` model, a warning otherwise.
+read it. A Step whose text names an Entity's title and declares it nowhere is an
+error.
 
 **A Step cites the facts it uses.** A `reads` or `changes` entry may carry
 `facts`, naming the Entity's [named facts](./entities.md#named-facts) exactly:

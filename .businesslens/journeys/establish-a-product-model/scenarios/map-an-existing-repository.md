@@ -21,7 +21,7 @@ steps:
     contexts:
       adoption:
         place: agent-skills
-  - text: The AI agent inspects established behavior without executing anything and proposes the model, its coverage, and its judgement calls
+  - text: The AI agent inspects established behavior without executing anything and proposes the model, its scope, exclusions, gaps and judgement calls
     kind: actor
     actor: ai-agent
     capability: map-established-behavior
@@ -59,4 +59,6 @@ to be.
 ## Outcome
 
 The Journey goal is achieved: the repository holds an approved, structurally
-sound model of the behavior it already has, with its unmapped areas named.
+sound model of the behavior it already has, with its scope, explicit exclusions
+and known gaps named. Supporting References attach the evidence used to describe
+the behavior.

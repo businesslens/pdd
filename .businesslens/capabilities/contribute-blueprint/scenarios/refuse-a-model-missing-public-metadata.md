@@ -19,7 +19,7 @@ steps:
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product lists everything that is missing and opens nothing
+  - text: The Product reports the failed metadata checks or missing logo and opens nothing
     kind: product
     entities: []
     contexts:
@@ -36,5 +36,6 @@ Blueprint.
 
 ## Outcome
 
-No pull request was opened, and the Developer holds the complete list of what to
-add before trying again.
+No pull request was opened, and the Developer knows which public requirements
+blocked this attempt. The logo is checked after the other publication metadata
+passes, so another attempt can reveal a missing logo.

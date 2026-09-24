@@ -348,22 +348,19 @@ what the Screen presents. Reading versus entering is design.
 A fact is cited by the exact name its Entity declares under
 `## Information kept`, the way a [Business Rule](./business-rules.md)'s `facts`
 target and a [Step](./capabilities.md#what-a-step-does-to-the-products-things)'s
-`facts` cite it. An Entity with no named facts is always cited bare. A bare id
-for an Entity that has named facts is allowed only while
-[Coverage](./product-model.md#coverage) is not `complete`; a complete model
-names the facts, because a bare id would otherwise be a second spelling of
-"all of them".
+`facts` cite it. An Entity with no named facts is always cited bare; one that
+has named facts is always cited with them, because a bare id would otherwise be
+a second spelling of "all of them".
 
 A Rule that governs who may read a fact is checked against who reaches every
 Screen presenting it, and a Rule scoped to a place must name a Screen
 presenting that fact, or an ancestor of one.
 
 **Each Screen lists only the Capabilities its own Steps use.** A Capability a
-Screen exposes with no Step placed exactly on that Screen is a `lint` warning,
-and an error in a `complete` model. There is no cheaper encoding of "this
-ability exists here" than a Scenario, an export button included; a partial
-model's Screens are islands until their Scenarios are written, which is a
-visible absence.
+Screen exposes with no Step placed exactly on that Screen is a `lint` error.
+There is no cheaper encoding of "this ability exists here" than a Scenario, an
+export button included; what is not yet mapped belongs in
+[Coverage](./product-model.md#coverage) as Unmapped.
 
 ### Screens nest
 
@@ -579,17 +576,15 @@ read by a Rule — the same shape as a flag. There is no cohort concept.
   shared one — is an error.
 - A fact named on a Screen's `entities` entry that the Entity does not declare
   is an error; so is an empty `facts` list.
-- A Capability a Screen exposes with no Step placed exactly on that Screen is a
-  warning, and an error when Coverage is `complete`.
+- A Capability a Screen exposes with no Step placed exactly on that Screen is an
+  error.
 - An `actor` Step placed on a Screen that `reads` an Entity the Screen does
   not present is an error, and so is a Step citing a fact on a Screen whose
   entry for that Entity lists facts without it. Product and condition Steps,
   and reads of an Entity that acts, are not checked.
 - A Capability available in an Interface or Experience that owns Screens, which
-  no Screen there exposes, is a warning, and an error when Coverage is
-  `complete`.
-- A bare Entity id on a Screen in a `complete` model, where the Entity has
-  named facts, is an error.
+  no Screen there exposes, is an error.
+- A bare Entity id on a Screen, where the Entity has named facts, is an error.
 - A `languages` entry that is not a well-formed tag, an Interface language the
   Product does not declare, or an Interface listing languages while the Product
   declares none, is an error.

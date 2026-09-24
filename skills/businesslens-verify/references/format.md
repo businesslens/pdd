@@ -97,7 +97,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 8` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 9` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, `languages`, H1, lead description, and optional
   `## Intent`. `summary` is one line of at most 400 characters, `category` is
@@ -148,8 +148,7 @@ not contain another H1 or H2.
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
   `entities` is refused. Every Capability needs a Capability Scenario for every
-  availability Context: a gap is an error at complete coverage and a warning
-  at draft or partial coverage.
+  availability Context: a gap is always an error.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
@@ -212,8 +211,8 @@ not contain another H1 or H2.
   facts on screen by their exact `## Information kept` name. "Presents" means
   on screen, read or entered alike: a sign-up form presents
   `{ entity: account, facts: [Email, Password] }` and the Step that creates the
-  Account cites nothing. A bare id is allowed only while coverage is not
-  `complete`; an Entity with no named facts is always bare. No `availability`
+  Account cites nothing. A bare id is allowed only for an Entity with no named
+  facts, which is always bare. No `availability`
   — its path is its place; optional Interface-keyed Product entry points; H1,
   lead, and optional `## Intent`. `## Information presented`,
   `## Available actions`, `## View states` and `## Capability boundary` are
@@ -235,8 +234,8 @@ not contain another H1 or H2.
   keys their `entities` entry carries (`from` with `changes|removes`, `to` with
   `creates|changes`, neither with `reads`); `facts` names the facts it governs;
   `contexts` names a Screen presenting the Entity, or an ancestor of one — for
-  a fact-scoped target, a Screen presenting that fact, or bare while coverage
-  is not `complete`. A fact-scoped read target (`facts` with `effect: reads`
+  a fact-scoped target, a Screen presenting that fact, or bare because the
+  Entity names no facts. A fact-scoped read target (`facts` with `effect: reads`
   or no effect) selects every Screen whose entry lists a governed fact and
   every Step whose entry cites one, never a bare Screen entry; a read Rule
   governing a fact no Screen presents and no Step cites is a warning, an error
@@ -276,9 +275,37 @@ not contain another H1 or H2.
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`
   effect. An achieved Scenario traverses at least two distinct Capabilities.
-- `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
-  H1, and lead rationale with no H2 sections. Status is model breadth only:
-  `draft|partial|complete`. A complete model has at least one Capability.
+- `coverage.md`: frontmatter with exactly `scope`, `method`, `covered`,
+  `exclusions`, `unmapped` and `limitations`, and a body of only `# Coverage`.
+  There is no status.
+
+```markdown
+---
+scope: The intended Product behavior.
+method: Authored from discussion of intended behavior.
+covered:
+  - description: Customer checkout and order tracking.
+    paths: []
+exclusions: []
+unmapped: []
+limitations: []
+---
+
+# Coverage
+```
+
+`scope` is the model's intended breadth in one line; `method` is one short line
+on how it was authored, or `""`. `covered` is represented behavior,
+`exclusions` approved omissions (never turn skipped work into one), `unmapped`
+known behavior within scope that is not modeled, and `limitations` material
+uncertainty (not missing behavior, and not "code was not executed"). Each entry
+is `{ description, paths }`: a one-line description, unique across all four
+lists, of one coherent behavior with all its paths. Paths are repository-relative,
+directories end in `/`, and `[]` means no known location; no traversal, `*` or
+`?` wildcards, URLs, backslashes or fragment/line suffixes, while brackets, as
+in `pages/[id].vue`, are ordinary. An empty `unmapped` list never means complete,
+and known gaps never relax structural checks. Blueprints keep descriptions and
+drop paths.
 
 Both Scenario types have no lead prose, author `routes` and `steps` in
 frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
@@ -308,8 +335,8 @@ later Step's `from` for it must match. `reads` is a bare mention: no state,
 never a change, never enough to keep an Entity from being an orphan. Author
 the effects on the Step that performs them. After drafting, re-read every
 Step's `text` against the Entity list and complete its `entities`: a Step
-whose text names an Entity title it does not declare is a finding, graded by
-coverage status, exempting the Step's own `actor` and the phrase "The
+whose text names an Entity title it does not declare is an error,
+exempting the Step's own `actor` and the phrase "The
 Product". A Step performing an operation a Business Rule governs must have an
 actor with a possible grant, and a Step performing one a Rule closes with
 `permits: []` is an error. Optional `## Edge cases` is a non-empty single-line
@@ -433,7 +460,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 8 it
+Context is the single model concept for where behavior applies. In schema 9 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
@@ -505,7 +532,7 @@ Beside the checks stated above, `lint` reports:
 - a fact named on a Screen entry or Step entry that is not a fact of that
   Entity — error;
 - a Capability a Screen exposes with no Step placed exactly on that Screen —
-  warning; error at `complete`;
+  error;
 - an `actor` Step placed on a Screen that `reads` an Entity the Screen does not
   present — error; Product and condition Steps, and reads of an Entity that
   acts, are not checked;
@@ -514,11 +541,9 @@ Beside the checks stated above, `lint` reports:
 - a fact-scoped read Rule checked against Screen facts and Step facts, never
   Entity presence alone;
 - a Capability available in an Interface or Experience that owns Screens which
-  no Screen there exposes — warning; error at `complete`;
-- a read Rule governing a fact no Screen presents and no Step cites — warning;
-  error at `complete`;
-- a bare Entity id on a Screen in a `complete` model where the Entity has named
-  facts — error;
+  no Screen there exposes — error;
+- a read Rule governing a fact no Screen presents and no Step cites — error;
+- a bare Entity id on a Screen where the Entity has named facts — error;
 - a malformed `languages` tag, or an Interface list that is not a subset of the
   Product's — error;
 - `version` where fewer than two Experiences of one Interface carry distinct
@@ -532,8 +557,8 @@ Beside the checks stated above, `lint` reports:
 
 ## Verification edit boundaries
 
-Missing References are valid at every Coverage status. Product meaning may
-change only in `product.md`, taxonomies, coverage prose, and resource
+Missing References are valid. Product meaning may
+change only in `product.md`, taxonomies, Coverage descriptions, and resource
 prose/relationships after approval. A post-alignment navigation refresh may
 change only implementation References.
 

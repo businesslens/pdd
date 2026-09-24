@@ -1,17 +1,17 @@
 ---
 entities:
-  - product-model
-  - product
-  - interface
-  - experience
-  - screen
-  - domain
-  - entity
-  - capability
-  - capability-scenario
-  - journey
-  - journey-scenario
-  - business-rule
+  - { entity: product-model, facts: [Product] }
+  - { entity: product, facts: [Identity, Catalog identity, Limitations] }
+  - { entity: interface, facts: [Type, Actors, Entry points, Navigation, Languages] }
+  - { entity: experience, facts: [Container, Audience, Entry points, Version] }
+  - { entity: screen, facts: [Exposure, Presents, Addresses] }
+  - { entity: domain, facts: [Region, Boundary, Colour] }
+  - { entity: entity, facts: [Kept information, Acts, Kind, Relations] }
+  - { entity: capability, facts: [Purpose, Availability, Domain] }
+  - { entity: capability-scenario, facts: [Trigger and outcome] }
+  - { entity: journey, facts: [Goal, Success criterion, Actors] }
+  - { entity: journey-scenario, facts: [Result, Trigger and outcome] }
+  - { entity: business-rule, facts: [Assertion, Reach, Permission, Rationale] }
 capabilities: [view-product-model]
 ---
 

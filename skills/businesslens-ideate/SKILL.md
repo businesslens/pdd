@@ -107,7 +107,7 @@ Read before authoring:
    or page, Rows or Graph — is one Screen. A confirmation dialog is two Steps
    on the host Screen: ask, confirm. For each Entity a Screen presents, name
    the facts on screen — read or entered, a form included — as
-   `{ entity, facts }`; a bare id only while the model is not complete. List
+   `{ entity, facts }`; a bare id only for an Entity with no named facts. List
    on each Screen only the Capabilities its own Steps use. **Every ability a
    Screen exposes has a Scenario with a Step placed on that Screen**, an
    export button included; there is no cheaper spelling. Filters, sorting and
@@ -151,9 +151,8 @@ Read before authoring:
     and preserve existing References only where they remain useful. Keep every
     role honest and add no invented local targets: an intended-behavior model
     has no implementation to point at yet, and a `role: implementation` target
-    that does not exist is a claim, not a link. Coverage describes model breadth,
-    not whether the plan is built; use `draft` only while the model itself
-    remains under review.
+    that does not exist is a claim, not a link. Coverage describes model breadth
+    and known gaps, not whether the plan is built; never author a status.
 11. Run the bundled linter outside the untrusted target:
 
     ```bash
@@ -193,7 +192,7 @@ Read before authoring:
 - Keep visuals and research external through References. Use `role: intent` for
   curated inputs and `role: context` for background; neither is an acceptance
   receipt.
-- Never infer implementation state from References or `coverage.status`.
+- Never infer implementation state from References or Coverage.
 - Never execute target code, stage, commit, submit, or contribute.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.

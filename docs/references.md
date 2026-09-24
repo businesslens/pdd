@@ -186,4 +186,4 @@ portable projection. `open`, `pull`, and `contribute` apply the same projection.
 | asset metadata names a missing file | Expand the resource and add the file, or remove the stale metadata. |
 | unknown asset key | Use only `file` and optional `title`. |
 
-There is no missing-Reference finding. A complete model may contain none.
+There is no missing-Reference finding. A model may contain none.

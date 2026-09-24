@@ -30,7 +30,7 @@ steps:
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product names where it installed, which skills it installed, and any retired BusinessLens skills it removed
+  - text: The Product names where it installed, which skills it installed, and the chosen scope
     kind: product
     entities: []
     contexts:
@@ -53,5 +53,6 @@ nothing was sent anywhere.
 
 ## Edge cases
 
-- A session with no interactive terminal is asked to state the harnesses and scope explicitly instead of being prompted.
+- A session with no interactive terminal supplies harnesses and scope explicitly, or uses `--yes` to accept detected harnesses and project scope.
+- A managed installation's retired BusinessLens skills are removed during replacement; unrelated skills remain.
 - A harness name the Product does not support stops the run and lists the ones it does.

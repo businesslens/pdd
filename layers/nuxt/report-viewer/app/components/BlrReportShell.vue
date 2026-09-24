@@ -31,6 +31,7 @@ import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
+import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -56,6 +57,7 @@ const pageTab = defineModel<string>('tab', { default: 'overview' })
 const resourceTab = defineModel<string>('resourceTab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const activeKind = ref<ReportResourceKind>('product')
@@ -684,9 +686,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             </h1>
           </div>
           <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1">
-            <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
-            <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
-            <time class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
+            <slot v-if="$slots.status" name="status" />
+            <time v-else class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
           </div>
         </header>
 
@@ -770,6 +771,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
+            v-model:coverage="coverage"
             v-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"

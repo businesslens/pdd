@@ -541,6 +541,7 @@ export interface ReportIdentity {
   license: string | null
   intent: string
   supportingContent: string
+  supportingSections: ReportSupportingSection[]
   references: ReportReference[]
   referenceProfile: 'workspace' | 'portable'
   /** The languages the Product is delivered in; empty when the model says nothing. */
@@ -1707,6 +1708,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       license: report.license,
       intent: report.intent,
       supportingContent: supportingMarkdown(report.supportingSections),
+      supportingSections: report.supportingSections,
       references: report.references,
       referenceProfile: report.referenceProfile,
       languages: report.languages,

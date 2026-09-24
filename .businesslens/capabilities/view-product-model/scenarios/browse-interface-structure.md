@@ -13,7 +13,7 @@ steps:
     contexts:
       local:
         place: local-report-web::resource-collection
-  - text: The Developer selects Experiences & Screens on an Interface or Screens on an Experience to inspect its children and shared Screen references
+  - text: The Developer selects Delivery on an Interface, Experience or Screen to inspect what it holds, what it delivers and through which Scenarios
     kind: actor
     actor: developer
     entities:
@@ -22,14 +22,14 @@ steps:
       - { entity: screen, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-reading::structure
+        place: local-report-web::resource-reading::delivery
   - text: The Product uses the same tree rows and group counts, identifying shared references by their owning Interface
     kind: product
     entities:
       - { entity: interface, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-reading::structure
+        place: local-report-web::resource-reading::delivery
 ---
 
 # Browse Interface structure
@@ -41,15 +41,15 @@ Experience or Screen.
 
 ## Outcome
 
-The collection and the Experiences & Screens and Screens tabs use the same
-hierarchy and expansion controls. Resource names open readings; chevrons only expand and collapse.
+The collection and every Delivery tab use the same hierarchy and expansion
+controls, with each place's Capabilities and their Scenarios as items. Resource names open readings; chevrons only expand and collapse.
 Returning restores expansion, and the working collection stays in place.
 
 ## Edge cases
 
 - Shared Screens appear once under their Interface in the full tree. An Experience's shared references show “From” with a link to that Interface.
-- Each containment tab starts with children because the inspected resource is already named in the header.
+- Each Delivery tab starts with children because the inspected resource is already named in the header.
 - Group counts name Experiences, Screens or Shared Screens; empty groups and mixed resource totals are absent.
-- A resource with no children still opens by its name. Screens have no containment tab.
-- The Experiences & Screens and Screens tabs show containment and availability. Audience is read in Overview; capability exposure is read in Connections.
+- A resource with no children still opens by its name. A Capability's Scenarios start folded.
+- A nested place reads its own Delivery; nothing is summed. Audience is read in Overview.
 - Tab changes, related-resource navigation, refresh and valid recompilation preserve expansion choices.

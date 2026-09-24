@@ -8,8 +8,8 @@ order: 30
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v13, apply the portable projection, then
-expand it into a canonical folder schema 8 `.businesslens/` directory:
+Parse and validate a Product Report v14, apply the portable projection, then
+expand it into a canonical folder schema 9 `.businesslens/` directory:
 
 ```bash
 npx businesslens blueprint open ./report.json
@@ -47,10 +47,9 @@ Capability projections, structured supporting sections, Product routes,
 commands, non-file deep links, and portable References are preserved.
 Repository-specific navigation is removed.
 
-Coverage status, unmapped Product areas, and limitations are preserved. The
-expanded model records that implementation alignment must be verified in its
-new repository. See [Coverage](./product-model.md#coverage) for what the status
-means.
+Coverage is preserved without its repository paths. The expanded model records
+that implementation alignment must be verified in its new repository. See
+[Coverage](./product-model.md#coverage).
 
 ## Existing targets
 

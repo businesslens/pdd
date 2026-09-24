@@ -18,8 +18,8 @@
 - Partial implementation is a gap, not alignment.
 - For Screens, compare places against the view's code: for each Entity listed,
   the facts the view renders or collects are exactly the facts named (a bare
-  id claims only presence, and is a finding in a `complete` model when the
-  Entity has named facts); each Capability listed is one a Step placed on that
+  id claims only presence, and is a finding when the Entity has named
+  facts); each Capability listed is one a Step placed on that
   Screen uses; each child Screen's content depends on an act inside its
   parent, and a region that does is not folded into the parent; each
   `navigation` Screen is reachable from every place in its container. Do not

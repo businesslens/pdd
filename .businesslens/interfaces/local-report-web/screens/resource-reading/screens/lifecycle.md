@@ -1,8 +1,8 @@
 ---
 entities:
-  - entity
-  - capability
-  - business-rule
+  - { entity: entity, facts: [Kind, States] }
+  - { entity: capability, facts: [Purpose] }
+  - { entity: business-rule, facts: [Assertion, Permission] }
 capabilities: [view-product-model]
 ---
 

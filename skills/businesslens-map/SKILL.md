@@ -127,11 +127,10 @@ Read before authoring:
    drawn differently — modal or page, Rows or Graph — is one Screen. A
    confirmation dialog is two Steps on the host Screen: ask, confirm. For each
    Entity a Screen presents, name the facts on screen — read or entered, a
-   form included — as `{ entity, facts }`; a bare id only while the model is
-   not complete. List on each Screen only the Capabilities its own Steps use.
+   form included — as `{ entity, facts }`; a bare id only for an Entity with
+   no named facts. List on each Screen only the Capabilities its own Steps use.
    **Every ability a Screen exposes has a Scenario with a Step placed on that
-   Screen**, an export button included; a complete model has no cheaper
-   spelling. Filters, sorting and search are Scenarios of the Capability that
+   Screen**, an export button included; there is no cheaper spelling. Filters, sorting and search are Scenarios of the Capability that
    presents the set, the facts they use cited as `facts` on the `reads` Step;
    search that presents a set nothing else does is a Capability. A wizard is a
    parent Screen with one child per step and a Scenario walking them, a
@@ -209,10 +208,8 @@ Read before authoring:
 9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
    and `.gitignore`. Write current product meaning under the guardrails below.
-   Set coverage by model breadth:
-   - `draft` while the model itself still needs author review;
-   - `partial` when useful but known areas remain unmapped;
-   - `complete` only when the intended product breadth is modeled.
+   Record Coverage scope, covered behavior, approved exclusions, known
+   Unmapped areas and material limitations; never author a status.
 10. Run the bundled linter outside the untrusted target:
 
    ```bash

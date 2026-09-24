@@ -28,7 +28,7 @@ Lint is deterministic and read-only. It checks:
   Rule is an error;
 - Capability Scenario ownership, named routes, typed Actor/Product/condition
   Steps, most-specific Context places, and direct coverage for every Capability,
-  warning for gaps in `draft` or `partial` and failing them in `complete`;
+  failing any gap;
 - a Goal and Success criterion plus achieved multi-Capability Scenario coverage
   for every Journey Actor;
 - Journey Scenario results, ordered typed Steps, complete named routes,

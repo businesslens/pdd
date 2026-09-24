@@ -133,8 +133,8 @@ test:
   Scenario; the two axes are independent.
 - Every ability a Screen exposes has a Scenario with a Step placed exactly on
   that Screen — an export button included. There is no cheaper spelling of
-  "this ability exists here"; a partial model's map is islands, which is a
-  visible absence. Write the Scenario, or leave the Capability off the Screen.
+  "this ability exists here". Write the Scenario, or leave the Capability off
+  the Screen and record the behavior as Unmapped in Coverage.
 - Filters, sorting and search are Scenarios of the Capability that presents
   the set, never Capabilities of their own; cite the facts they use as `facts`
   on the `reads` Step. Search that presents a set nothing else does — one
@@ -156,15 +156,13 @@ test:
   is a fact on the Actor or tenant Entity read by a Rule. Historical versions
   are never modeled; Git is the history.
 
-## Judge coverage
+## Describe coverage
 
-- `draft`: the model itself is still being authored or reviewed.
-- `partial`: the model is useful and known product areas remain unmapped.
-- `complete`: the intended product breadth is modeled.
-
-Coverage never states whether behavior is implemented or verified. List
-uninspected or ambiguous areas explicitly. A small, honest partial model is
-better than a broad model built from guesses.
+Record scope, covered behavior, approved exclusions, known Unmapped behavior
+and material Limitations. There is no status, and an empty Unmapped list never
+means complete. Coverage never states whether behavior is implemented or
+verified. A small, honest model with recorded gaps is better than a broad model
+built from guesses.
 
 ## Decide Entity granularity deliberately
 
@@ -228,7 +226,7 @@ implementation` for the code you traced, `role: intent` for the spec, PRD or
 proposal that states the behavior, `role: context` for background you read. For
 code targets, prefer `path#symbol` over line ranges and use only tracked files.
 A Reference records where a claim came from, never that it is verified, and none
-is required for any Coverage status — but a resource with nothing attached
+is required — but a resource with nothing attached
 should be one you can justify from inspection alone.
 
 Visual or research References may guide inspection. Keep their role honest,

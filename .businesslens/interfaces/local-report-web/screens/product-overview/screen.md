@@ -1,7 +1,7 @@
 ---
 entities:
-  - product-model
-  - product
+  - { entity: product-model, facts: [Product] }
+  - { entity: product, facts: [Identity] }
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /
