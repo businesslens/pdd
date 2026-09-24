@@ -23,10 +23,10 @@ function activate(data: { resourceKey?: string, inspectionKey?: string }) {
   </g>
   <EdgeLabelRenderer v-if="data?.labelBox && !data?.quiet && !data?.dimmed">
     <component :is="data.inspectionKey || data.resourceKey ? 'button' : 'div'" :type="data.inspectionKey || data.resourceKey ? 'button' : undefined"
-      class="blr-flow-edge-label nodrag nopan" :class="(data.inspectionKey || data.resourceKey) && 'blr-flow-edge-button'" :data-edge-id="id" :title="data.note"
+      class="blr-flow-edge-label nodrag nopan" :class="[(data.inspectionKey || data.resourceKey) && 'blr-flow-edge-button', { 'blr-flow-edge-label--badges': data.badges?.length }]" :data-edge-id="id" :title="data.note"
       :aria-label="data.resourceKey ? `Open ${data.label}` : data.inspectionKey ? `Inspect ${data.inspectionLabel || data.label}` : undefined" :aria-pressed="data.inspectionKey ? Boolean(data.selected) : undefined"
       :style="{ position: 'absolute', transform: `translate(${data.labelBox.x}px, ${data.labelBox.y}px)`, width: `${data.labelBox.width}px`, minHeight: `${data.labelBox.height}px` }"
-      @click.stop="activate(data)">{{ data.label }}</component>
+      @click.stop="activate(data)"><BlrFlowEdgeLabel :edge="data" /></component>
   </EdgeLabelRenderer>
 </template>
 
@@ -35,4 +35,8 @@ function activate(data: { resourceKey?: string, inspectionKey?: string }) {
 .blr-flow-edge-button { pointer-events: all; cursor: pointer; text-align: start; }
 .blr-flow-edge-button:hover, .blr-flow-edge-button[aria-pressed='true'] { color: var(--ui-text-highlighted); box-shadow: 0 0 0 1px var(--ui-primary); }
 .blr-flow-edge-button:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+/* A label of badges has no box of its own to ring: hover and selection mark the badges themselves. */
+.blr-flow-edge-button.blr-flow-edge-label--badges:hover, .blr-flow-edge-button.blr-flow-edge-label--badges[aria-pressed='true'] { box-shadow: none; }
+.blr-flow-edge-button.blr-flow-edge-label--badges:hover :deep(.blr-flow-edge-badge),
+.blr-flow-edge-button.blr-flow-edge-label--badges[aria-pressed='true'] :deep(.blr-flow-edge-badge) { border-color: var(--ui-primary); }
 </style>

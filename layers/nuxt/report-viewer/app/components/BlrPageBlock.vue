@@ -81,6 +81,10 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
     />
   </div>
 
+  <BlrAttachedRules v-else-if="id === 'rules'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+
+  <BlrRuleScope v-else-if="id === 'rule-scope' && resource.kind === 'rule'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+
   <BlrResourceStructure v-else-if="id === 'structure'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
 
   <div v-else-if="id === 'connections'" data-resource-connections class="space-y-2.5">

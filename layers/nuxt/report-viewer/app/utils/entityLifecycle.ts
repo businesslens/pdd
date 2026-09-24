@@ -1,7 +1,7 @@
 /** The Entity's state machine, composed from everything the model holds. */
 import type { EntityArcView, EntityStateView, EntityView, ReportWorkspace } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
-import type { Diagram, DiagramNode, DiagramEdge } from './diagram'
+import type { Diagram, DiagramNode, DiagramEdge, DiagramEdgeBadge } from './diagram'
 
 interface LifecycleState { name: string, reached: boolean, terminal: 'start' | 'end' | null }
 
@@ -55,6 +55,9 @@ export function lifecycleArcLabel(workspace: ReportWorkspace, entity: EntityView
     forbidden: arc.forbiddenByRuleIds.length > 0
   }
 }
+
+/** A change no one may make is marked, not attributed: no Capability draws it. */
+const FORBIDDEN_BADGE: DiagramEdgeBadge = { icon: 'i-lucide-ban', text: 'Forbidden' }
 
 /** The one word the canvas carries for a restriction, and how many Rules stand behind it when more than one does. */
 export function lifecycleRestrictionMarker(label: LifecycleArcLabel): string {
@@ -117,6 +120,15 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     const marker = lifecycleRestrictionMarker(label)
     return marker ? `${capabilities} · ${marker}` : capabilities
   }
+  /* The same words as badges: the Capabilities that draw the change and the Rules restricting it, each wearing its type's mark. */
+  const badges = (label: LifecycleArcLabel): DiagramEdgeBadge[] => {
+    if (label.forbidden) return [FORBIDDEN_BADGE]
+    const [first, ...rest] = label.capabilities
+    return [
+      ...(first ? [{ kind: 'capability' as const, text: rest.length ? `${first} +${rest.length}` : first }] : []),
+      ...(label.rules.length ? [{ kind: 'rule' as const, text: `${label.rules.length} ${label.rules.length === 1 ? 'Rule' : 'Rules'}` }] : [])
+    ]
+  }
   entity.arcs.forEach((arc, index) => {
     const label = lifecycleArcLabel(workspace, entity, index)
     const source = arc.effect === 'creates' ? LIFECYCLE_START : stateNodeId(entity.id, arc.from)
@@ -128,7 +140,7 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (arc.effect === 'creates') hasStart = true
     if (arc.effect === 'removes') hasEnd = true
     edges.push({
-      source, target, label: caption(label),
+      source, target, label: caption(label), badges: badges(label),
       id: lifecycleArcEdgeId(entity.id, arc),
       inspectionKey: lifecycleArcEdgeId(entity.id, arc),
       inspectionLabel: lifecycleArcTitle(arc),
@@ -148,7 +160,7 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (source === LIFECYCLE_START) hasStart = true
     if (target === LIFECYCLE_END) hasEnd = true
     edges.push({
-      source, target, label: 'forbidden',
+      source, target, label: 'forbidden', badges: [FORBIDDEN_BADGE],
       id: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
       inspectionKey: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
       inspectionLabel: `Forbidden: ${prohibition.from || 'Created'} → ${prohibition.to || 'Removed'}`,

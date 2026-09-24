@@ -32,7 +32,10 @@ const props = withDefaults(defineProps<{
   expandable?: boolean
   open?: boolean
   count?: number
-}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0 })
+  /** False where the row is read from another resource's side, and the
+      resource's own reach would describe it rather than the relation. */
+  metrics?: boolean
+}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0, metrics: true })
 
 const navigation = inject(resourceNavigationKey, null)
 const href = computed(() => props.expandable ? undefined : navigation?.href(props.resource.key))
@@ -45,7 +48,8 @@ function activate(event: MouseEvent) {
 
 const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [resource: AnyResourceView] }>()
 const presentation = computed(() => {
-  const own = resourceCardPresentation(props.workspace, props.resource)
+  const card = resourceCardPresentation(props.workspace, props.resource)
+  const own = props.metrics ? card : { ...card, metrics: [] }
   return props.hook ? { ...own, hookLabel: props.hookLabel ?? own.hookLabel, hook: props.hook } : own
 })
 const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)

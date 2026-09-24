@@ -33,11 +33,21 @@ export function diagramResource(resource: AnyResourceView): DiagramNode {
     scenarioType: resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario' ? resource.scenarioType : null }
 }
 
+/** One badge in an edge label: a resource type's mark and a name, or a plain mark such as Forbidden. */
+export interface DiagramEdgeBadge {
+  kind?: ReportResourceKind
+  icon?: string
+  text: string
+}
+
 export interface DiagramEdge {
   id: string
   source: string
   target: string
+  /** The label's text; with badges it is their text alternative and what layout reserves room for. */
   label: string
+  /** Drawn in place of the text where the label names resources, so each wears its type's mark. */
+  badges?: DiagramEdgeBadge[]
   forbidden?: boolean
   /** Drawn lighter and dotted: present, but not the drawing's subject. */
   faint?: boolean

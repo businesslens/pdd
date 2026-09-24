@@ -197,7 +197,8 @@ describe('stable Product Report', () => {
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
     // Lifecycle is specific to things with States; Connections remains a separate reading.
-    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'connections'])
+    /* The Rules that name an Entity are a tab of their own, before Connections. */
+    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'rules', 'connections'])
     expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview', 'connections'])
 
     // A Screen is relations only: it has no view states of its own to count.
@@ -1037,9 +1038,22 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('@select="openResourcePage"')
     expect(page).toContain('<BlrPageBlock')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrResourceBody')
-    for (const marker of ['stepMatrix.steps', 'data-screen-presents', 'asRule.statement']) {
+    for (const marker of ['stepMatrix.steps', 'data-screen-presents', 'asRule.rationale']) {
       expect(body, marker).toContain(marker)
     }
+    /* A Rule's lead is its statement, read once, with who may beside it; what it applies to is its Applies to tab. */
+    expect(body).not.toContain('asRule.statement')
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrRuleScope')
+    expect(source('app/components/BlrRuleScope.vue')).toContain('<BlrResourceTree')
+    expect(source('app/components/BlrRuleScope.vue')).not.toContain('data-rule-grants')
+    expect(body).toContain('data-rule-grants')
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrAttachedRules')
+    /* The tab lists Rules as the collection does, without the Rule's own reach metrics. */
+    expect(source('app/components/BlrAttachedRules.vue')).toContain(':metrics="false"')
+    /* A fact a Rule governs names each Rule on a chip of its own, on a line under the fact. */
+    expect(body).toContain('data-fact-rules')
+    expect(body).toContain('v-for="id in fact.ruleIds"')
+    expect(body).toContain('{{ factRuleTitles([id]) }}</span>')
   })
 
   it('keeps Context where it answers an Overview question', () => {
@@ -1082,11 +1096,12 @@ describe('stable Product Report', () => {
     expect(block).toContain("props.resource.kind === 'journey' ? props.resource.entryPoints : []")
 
     /* Scenario Context belongs to its route cells; a Rule selector belongs to
-       the authored applicability binding rather than a generic roll-up. */
+       the authored applicability target in the Rule's Applies to tree rather
+       than a generic roll-up. */
     expect(body).toContain('<BlrStepContext')
-    expect(body).toContain('Every supported Context')
-    expect(body).toContain('<BlrContextPlace')
-    expect(body).toContain('Only in')
+    const scope = source('app/utils/collectionChildren.ts')
+    expect(scope).toContain('Every supported Context')
+    expect(scope).toContain('Only in')
   })
 
 
@@ -1118,7 +1133,8 @@ describe('stable Product Report', () => {
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
   })
 
-  it('keeps Connections after Overview and the resource’s behavior reading', () => {
+  it('keeps Connections after Overview and the resource’s behavior reading', async () => {
+    const { attachedRules } = await import(join(VIEWER, 'app/utils/topologyTargets.ts'))
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
@@ -1126,7 +1142,9 @@ describe('stable Product Report', () => {
     for (const resource of [...workspace.capabilities, ...workspace.journeys]) {
       const tabs = tabsFor(workspace, resource)
       expect(tabs.map((tab: any) => [tab.id, tab.label])).toEqual([
-        ['overview', 'Overview'], ['scenarios', 'Scenarios'], ['connections', 'Connections'],
+        ['overview', 'Overview'], ['scenarios', 'Scenarios'],
+        ...(attachedRules(workspace, resource).length ? [['rules', 'Business Rules']] : []),
+        ['connections', 'Connections'],
         ...(resource.references.length ? [['references', 'References']] : [])
       ])
       const children = resource.kind === 'capability'
@@ -1373,6 +1391,16 @@ describe('composed lifecycle', () => {
     expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
       .toMatchObject({ label: 'Order cancellation · restricted' })
     expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
+    /* On the canvas the label is badges, each wearing its type's mark; the text stays its alternative. */
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded').badges)
+      .toEqual([{ kind: 'capability', text: 'Order management' }, { kind: 'rule', text: '2 Rules' }])
+    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled').badges)
+      .toEqual([{ kind: 'capability', text: 'Order cancellation' }, { kind: 'rule', text: '1 Rule' }])
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending').badges).toEqual([{ kind: 'capability', text: 'Checkout' }])
+    for (const edge of edges.filter((item: any) => item.forbidden)) expect(edge.badges).toEqual([{ icon: 'i-lucide-ban', text: 'Forbidden' }])
+    /* The measuring copy and the canvas draw the same label, so the reserved box is the drawn box. */
+    expect(source('app/components/BlrDiagram.vue')).toContain('<BlrFlowEdgeLabel :edge="edge" />')
+    expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain('<BlrFlowEdgeLabel :edge="data" />')
 
     /* Both drawings use the same detail, retaining each Rule and how they compose. */
     const component = source('app/components/BlrLifecycleChangeDetails.vue')

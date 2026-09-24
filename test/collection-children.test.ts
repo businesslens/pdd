@@ -5,9 +5,12 @@ import { loadModel } from '../src/core/model.js'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { rowChildren, treeCards, structureChildren, treeBranchKeys, insideSummary, insideLabel, TREE_CARD_KINDS } = await utility('collectionChildren')
+const { rowChildren, treeCards, structureChildren, treeBranchKeys, insideSummary, insideLabel, ruleScope, TREE_CARD_KINDS } = await utility('collectionChildren')
+const { resourceFacts } = await utility('resourceFacts')
+const { resourceAncestors } = await utility('reportDestinations')
+const { attachedRules } = await utility('topologyTargets')
 const { tabsFor } = await utility('pageSections')
-const { interfaceProjection } = await utility('topologyProjections')
+const { interfaceProjection, placesOf } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../blueprints/content-feed-reader')), '2026-09-12'))
 const flatten = (rows: any[]): any[] => rows.flatMap(row => [row, ...flatten(row.children)])
 
@@ -156,5 +159,77 @@ describe('collection rows that expand', () => {
     const screens = node.children.find((item: any) => item.groupKind === 'screen')
     expect(insideSummary(screens).some((entry: any) => entry.kind === 'screen')).toBe(false)
     expect(insideLabel([{ kind: 'screen', count: 1 }, { kind: 'capability', count: 3 }])).toBe('1 Screen, 3 Capabilities')
+  })
+
+  it('draws what a Rule applies to as a tree: targets by kind, holding only the places the Rule names', () => {
+    const rule = workspace.rules.find((item: any) => item.id === 'collection-membership-does-not-control-saving')
+    const tree = ruleScope(workspace, rule)
+    expect(tree.map((group: any) => [group.title, group.groupKind, group.children.length])).toEqual([['Capabilities', 'capability', 2], ['Journeys', 'journey', 1]])
+    /* No Context named: the target's own places are read on its page, not drawn here. */
+    for (const node of tree.flatMap((group: any) => group.children)) expect([node.note, node.children]).toEqual(['Every supported Context', []])
+    /* An Entity target notes its operation, and holds places only where the Rule narrows it, each saying where it sits. */
+    const narrowed = workspace.rules.find((item: any) => item.id === 'public-addresses-are-the-owners')
+    const [entities] = ruleScope(workspace, narrowed)
+    expect(entities.children.map((node: any) => [node.resource.key, node.note, node.children.length])).toEqual([['entity:collection', 'reads · Public address · Only in 1 place', 1]])
+    const [place] = entities.children[0].children
+    expect(place.id).toBe(`${entities.children[0].id}>${place.resource.key}`)
+    expect(place.note).toBe(resourceAncestors(workspace, place.resource).map((item: any) => item.title).join(' · ') || undefined)
+    const open = workspace.rules.find((item: any) => item.id === 'unlisting-revokes-anonymous-access')
+    expect(ruleScope(workspace, open)[0].children.map((node: any) => [node.note, node.children.length])).toEqual([['reads', 0]])
+    /* A Context target is the place itself; a narrowed behaviour holds only the places named. Groups follow rail order. */
+    const screen = workspace.screens.find((item: any) => item.id === 'reader-web::personal-library::source-list')
+    const capability = workspace.capabilities.find((item: any) => item.id === 'follow-source')
+    const synthetic = { ...rule, appliesTo: [
+      { type: 'capability', id: capability.id, contexts: [{ placeId: screen.id }] },
+      { type: 'context', context: { placeId: screen.id } }
+    ] }
+    expect(ruleScope(workspace, synthetic).map((group: any) => [group.title, group.children.map((node: any) => [node.resource.key, node.note, node.children.map((child: any) => child.resource.key)])])).toEqual([
+      ['Screens', [[screen.key, 'Everything done here', []]]],
+      ['Capabilities', [[capability.key, 'Only in 1 place', [screen.key]]]]
+    ])
+  })
+
+  it('reads every edge of a Rule\'s Applies to tree at its other end', () => {
+    const rule = workspace.rules.find((item: any) => item.id === 'collection-membership-does-not-control-saving')
+    const saving = workspace.capabilities.find((item: any) => item.id === 'save-item')
+    expect(attachedRules(workspace, saving).filter((item: any) => item.rule.key === rule.key).map((item: any) => [item.hookLabel, item.hook])).toEqual([['Where', 'Every supported Context']])
+    /* The Rules that name it are a tab of their own, before Connections, never Overview blocks. */
+    const tabs = tabsFor(workspace, saving)
+    expect(tabs.find((tab: any) => tab.id === 'rules')).toMatchObject({ label: 'Business Rules', count: attachedRules(workspace, saving).length, blocks: ['rules'] })
+    expect(tabs.map((tab: any) => tab.id).slice(-2)).toEqual(['rules', 'connections'])
+    expect(tabs[0].blocks).not.toContain('rules')
+    /* Reach is not naming: a place the Capability is available in does not list the Rule. */
+    for (const context of saving.contexts) {
+      const place = placesOf(workspace, [context])[0]
+      expect(attachedRules(workspace, place).some((item: any) => item.rule.key === rule.key)).toBe(false)
+    }
+    const narrowed = workspace.rules.find((item: any) => item.id === 'public-addresses-are-the-owners')
+    const collection = workspace.entities.find((item: any) => item.id === 'collection')
+    const [named] = ruleScope(workspace, narrowed)[0].children[0].children
+    expect(attachedRules(workspace, collection).find((item: any) => item.rule.key === narrowed.key)).toMatchObject({ hookLabel: 'Selects', hook: `reads · Public address · Only in ${named.resource.title}` })
+    expect(attachedRules(workspace, named.resource).find((item: any) => item.rule.key === narrowed.key)).toMatchObject({ hookLabel: 'Here, for', hook: 'Collection · reads · Public address' })
+    expect(tabsFor(workspace, named.resource).map((tab: any) => tab.id)).toContain('rules')
+    /* A Context target and a Scenario target are read at their other end too. */
+    const screen = workspace.screens.find((item: any) => item.id === 'reader-web::personal-library::source-list')
+    const scenario = workspace.scenarios.find((item: any) => item.scenarioType === 'capability' && item.capabilityId === 'follow-source')
+    const synthetic = { ...rule, appliesTo: [
+      { type: 'context', context: { placeId: screen.id } },
+      { type: 'capability-scenario', id: scenario.id, contexts: [] }
+    ] }
+    const withSynthetic = { ...workspace, rules: [synthetic] }
+    expect(attachedRules(withSynthetic, screen).map((item: any) => [item.hookLabel, item.hook])).toEqual([['Where', 'Everything done here']])
+    const follow = workspace.capabilities.find((item: any) => item.id === 'follow-source')
+    expect(attachedRules(withSynthetic, follow).map((item: any) => [item.hookLabel, item.hook])).toEqual([['On', scenario.title]])
+  })
+
+  it('reads a Rule as its statement and who may, then an Applies to tab', () => {
+    for (const rule of workspace.rules) {
+      const tabs = tabsFor(workspace, rule)
+      expect(tabs.map((tab: any) => tab.id).slice(0, 2)).toEqual(['overview', 'applies-to'])
+      expect(tabs[1]).toMatchObject({ label: 'Applies to', count: rule.appliesTo.length, blocks: ['rule-scope'] })
+      /* The count is the tab's; the Overview does not repeat it. */
+      expect(resourceFacts(workspace, rule)).toEqual([])
+      expect(tabs[0].blocks.includes('detail')).toBe(Boolean(rule.rationale || rule.intent || rule.permits !== null))
+    }
   })
 })

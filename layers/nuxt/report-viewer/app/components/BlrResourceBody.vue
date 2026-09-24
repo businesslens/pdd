@@ -4,9 +4,7 @@ import type {
   AnyResourceView,
   CapabilityView,
   JourneyView,
-  ContextView,
   ReportWorkspace,
-  ReportResourceKind,
   RuleView,
   ScenarioStepCell,
   ScenarioStepRow,
@@ -247,56 +245,24 @@ const stepActor = (actorId: string | undefined): EntityView | undefined => {
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
   context.screenTitle || context.experienceTitle || context.interfaceTitle
 
-type RuleTargetKind = Extract<ReportResourceKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario' | 'entity'>
-
-interface RuleBinding {
-  key: string
-  targetKind: RuleTargetKind | null
-  targetId: string
-  /** What an Entity target selects: the operation, or the facts it governs. */
-  selector: string
-  contexts: ContextView[]
-}
-
-const ruleBindings = computed<RuleBinding[]>(() => {
-  if (props.resource.kind !== 'rule') return []
-  const contextByPlace = new Map(props.workspace.contexts.map(context => [context.placeId, context]))
-  const resolve = (contexts: Array<{ placeId: string }>) => contexts
-    .map(context => contextByPlace.get(context.placeId))
-    .filter((context): context is ContextView => Boolean(context))
-  return asRule.value.appliesTo.map((target, index) => {
-    if (target.type === 'context') {
-      const context = contextByPlace.get(target.context.placeId)
-      return {
-        key: `context:${target.context.placeId}:${index}`,
-        targetKind: null,
-        targetId: '',
-        selector: '',
-        contexts: context ? [context] : []
-      }
-    }
-    if (target.type === 'entity') {
-      const operation = [
-        target.effect ?? 'every operation',
-        target.from ? `from ${target.from}` : '',
-        target.to ? `to ${target.to}` : ''
-      ].filter(Boolean).join(' ')
-      return {
-        key: `entity:${target.entityId}:${index}`,
-        targetKind: 'entity' as const,
-        targetId: target.entityId,
-        selector: target.facts.length ? `${operation} · ${target.facts.join(', ')}` : operation,
-        contexts: resolve(target.contexts)
-      }
-    }
-    return {
-      key: `${target.type}:${target.id}:${index}`,
-      targetKind: target.type,
-      targetId: target.id,
-      selector: '',
-      contexts: resolve(target.contexts)
-    }
-  })
+/**
+ * The operation a permission's grants permit, where the Rule selects exactly
+ * one: "change Collection to Published". Otherwise the heading stays "Who may"
+ * and the Applies to tab says what is selected.
+ */
+const permittedOperation = computed(() => {
+  if (props.resource.kind !== 'rule' || asRule.value.appliesTo.length !== 1) return ''
+  const [target] = asRule.value.appliesTo
+  if (target?.type !== 'entity') return ''
+  const verbs: Record<string, string> = { creates: 'create', changes: 'change', removes: 'remove', reads: 'read' }
+  const entity = resolveResource(props.workspace, 'entity', target.entityId)
+  return [
+    target.effect ? verbs[target.effect] ?? target.effect : 'act on',
+    entity?.title ?? target.entityId,
+    target.facts.length ? `(${target.facts.join(', ')})` : '',
+    target.from ? `from ${target.from}` : '',
+    target.to ? `to ${target.to}` : ''
+  ].filter(Boolean).join(' ')
 })
 
 /** True when this component would render nothing at all. One predicate, shared
@@ -306,76 +272,36 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
 <template>
   <div v-if="!empty" class="space-y-10">
-    <section v-if="resource.kind === 'rule'" class="space-y-3">
-      <h2 class="blr-page-heading">Rule statement</h2>
-      <div class="rounded-xl border-s-3 border-primary bg-elevated/45 p-5">
-        <BlrProse :text="asRule.statement" size="base" />
-      </div>
-      <div v-if="asRule.rationale" class="space-y-2">
-        <h3 class="text-sm font-semibold text-highlighted">Rationale</h3>
-        <BlrProse :text="asRule.rationale" />
-      </div>
+    <!--
+      A Rule's lead is its statement; what it applies to is its own tab.
+      Permission is a kind of Rule, and its grants restate the statement in
+      structured form, so they follow it here under a heading naming the
+      operation they permit. They are read back as sentences so a reader who
+      never saw the format can tell one is wrong; an empty list is a claim of
+      its own, and says so.
+    -->
+    <section v-if="resource.kind === 'rule' && asRule.permits !== null" class="space-y-2" data-rule-grants>
+      <h2 class="blr-page-heading"><BlrTerm slug="who-may" :text="permittedOperation ? `Who may ${permittedOperation}` : undefined" /></h2>
+      <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
+        <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
+        Nobody. This operation is forbidden to everyone.
+      </p>
+      <ul v-else class="space-y-1.5">
+        <li
+          v-for="(grant, index) in asRule.grants"
+          :key="index"
+          class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default"
+        >
+          <UIcon name="i-lucide-key-round" class="mt-0.5 size-4 shrink-0 text-muted" />
+          <span>{{ grant.sentence }}</span>
+        </li>
+      </ul>
+      <p v-if="asRule.grants.length > 1" class="blr-meta">Any one grant permits it. Every Rule selecting the same operation must also permit it.</p>
+    </section>
 
-      <div class="space-y-2 pt-2">
-        <h3 class="text-sm font-semibold text-highlighted"><BlrTerm slug="applies-to" /></h3>
-        <div class="space-y-2">
-          <article
-            v-for="binding in ruleBindings"
-            :key="binding.key"
-            class="space-y-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-3"
-          >
-            <BlrLinks
-              v-if="binding.targetKind"
-              :workspace="workspace"
-              :ids="[binding.targetId]"
-              :kind="binding.targetKind"
-              interactive
-              @select="emit('select', $event)"
-            />
-            <p v-if="binding.selector" class="blr-meta">{{ binding.selector }}</p>
-            <p v-if="binding.targetKind && binding.targetKind !== 'entity' && !binding.contexts.length" class="blr-meta">
-              Every supported Context
-            </p>
-            <div v-else-if="binding.contexts.length" class="space-y-1.5">
-              <p v-if="binding.targetKind" class="blr-field"><BlrTerm slug="context" text="Only in" /></p>
-              <p v-else class="blr-field"><BlrTerm slug="context" /></p>
-              <div class="flex flex-wrap gap-1.5">
-                <BlrContextPlace
-                  v-for="context in binding.contexts"
-                  :key="context.key"
-                  :workspace="workspace"
-                  :context="context"
-                  @select="emit('select', $event)"
-                />
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <!--
-        Permission is a kind of Rule. The grants are read back as sentences so a
-        reader who never saw the format can tell one is wrong; an empty list is
-        a claim of its own, and says so.
-      -->
-      <div v-if="asRule.permits !== null" class="space-y-2 pt-2">
-        <h3 class="text-sm font-semibold text-highlighted"><BlrTerm slug="who-may" /></h3>
-        <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
-          <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
-          Nobody. This operation is forbidden to everyone.
-        </p>
-        <ul v-else class="space-y-1.5">
-          <li
-            v-for="(grant, index) in asRule.grants"
-            :key="index"
-            class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default"
-          >
-            <UIcon name="i-lucide-key-round" class="mt-0.5 size-4 shrink-0 text-muted" />
-            <span>{{ grant.sentence }}</span>
-          </li>
-        </ul>
-        <p v-if="asRule.grants.length > 1" class="blr-meta">Any one grant permits it. Every Rule selecting the same operation must also permit it.</p>
-      </div>
+    <section v-if="resource.kind === 'rule' && asRule.rationale" class="space-y-2">
+      <h2 class="blr-page-heading">Rationale</h2>
+      <BlrProse :text="asRule.rationale" class="max-w-3xl" />
     </section>
 
     <section v-if="resource.intent" class="space-y-2">
@@ -912,20 +838,30 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <li
             v-for="fact in asEntity.informationKept"
             :key="fact.name"
-            class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            class="flex flex-col gap-1.5 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           >
-            <span class="font-medium text-highlighted">{{ fact.name }}</span>
-            <span class="text-default">{{ fact.description }}</span>
-            <!-- A fact a Rule governs says so here and nothing more; the Rule page is the reading. -->
-            <BlrResourceLink
-              v-if="fact.ruleIds.length"
-              :resource-key="`rule:${fact.ruleIds[0]!}`"
-              class="blr-chip ms-auto"
-              :title="factRuleTitles(fact.ruleIds)"
-              @open="openRule(fact.ruleIds[0]!)"
-            >
-              <UIcon name="i-lucide-scale" class="size-3.5" />{{ fact.ruleIds.length }} {{ fact.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
-            </BlrResourceLink>
+            <p class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="font-medium text-highlighted">{{ fact.name }}</span>
+              <span class="text-default">{{ fact.description }}</span>
+            </p>
+            <!--
+              A fact a Rule governs names each Rule on a chip of its own, on
+              its own line under the fact and nothing more; the Rule page is
+              the reading. Several Rules wrap as several chips, all named.
+            -->
+            <div v-if="fact.ruleIds.length" class="flex flex-wrap gap-1.5" data-fact-rules>
+              <BlrResourceLink
+                v-for="id in fact.ruleIds"
+                :key="id"
+                :resource-key="`rule:${id}`"
+                class="blr-chip"
+                :aria-label="`Business Rule: ${factRuleTitles([id])}`"
+                data-fact-rule
+                @open="openRule(id)"
+              >
+                <BlrKind kind="rule" :labelled="false" size="xs" class="shrink-0" /><span class="min-w-0 truncate">{{ factRuleTitles([id]) }}</span>
+              </BlrResourceLink>
+            </div>
           </li>
         </ul>
       </section>

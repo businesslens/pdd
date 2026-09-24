@@ -108,6 +108,31 @@ Interfaces, Experiences and Screens have a UI map tab (`ui-map`): the derived
 map of Scenario moves, focused on that place — what it holds and the places one
 move in or out. Movement is read one place at a time; the collection Graph does
 not draw it.
+A Business Rule's Overview is its statement, read once as the lead. Where the
+Rule is a permission, Who may follows it, headed with the operation it permits
+where the Rule selects exactly one (“Who may change Collection to
+Published”), because the grants restate the statement in structured form. Its
+Rationale and Intent close the Overview. An Applies to tab (`applies-to`)
+follows, counting the Rule's targets, drawn with the same tree rows: targets
+grouped by type in rail order. A target holds only the places the Rule itself
+names — the Contexts it narrows the target to, noted “Only in”, each noted with
+the Interface and Experience it sits in because places repeat titles across
+Interfaces. A target the Rule does not narrow is noted “Every supported
+Context” and holds nothing: those places are the target's own, read on its
+page. An Entity target notes its operation and governed facts; a Context target
+is the place itself. Groups start open and targets folded.
+Every edge that tree draws is read at its other end. A Capability, Journey,
+Entity, Interface, Experience or Screen has a Business Rules tab (`rules`)
+before Connections, counting the Rules that name it — by targeting it or one of
+its Scenarios, or, for a place, by narrowing a target to it or targeting it as
+a Context. Each is the Business Rules collection's row — name and statement —
+whose hook line says how it names the resource: Where, Selects, On, or Here,
+for. The row carries no metrics: the Rule's reach is its own reading's. A
+place's Connections list the same Rules. On an
+Entity, a fact a Rule governs names that Rule on a chip on its own line under
+the fact in Information kept; several Rules are several chips, all named. Reach through targets is not naming, so a Rule on a Capability is not
+listed on every place that Capability is available in; the Rule reach graph
+draws that.
 An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
@@ -115,7 +140,10 @@ Each State carries its definition, including States with no outgoing changes.
 Creation and changes without a starting State have separate groups. Groups and
 changes expand and collapse individually or together, with expansion remembered.
 Rows expand each change's Capabilities, Rules, co-effects and supporting
-Scenarios. Graph nodes and edges open those details in a local inspector;
+Scenarios. A Graph edge's label is a row of badges, each the report's chip
+wearing its type's mark — the Capabilities that draw the change, then the
+number of Rules restricting it, or a Forbidden mark — wrapping beneath one
+another at the text label's width. Graph nodes and edges open those details in a local inspector;
 selecting a State explains it and lists the Scenarios that leave the Entity
 there. Changes without specified states remain accessible beside the graph.
 The inspector sits below the drawing in a narrow panel and beside it when
@@ -300,7 +328,7 @@ where it left:
 | `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `delivery`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `ui-map`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `applies-to`, `delivery`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `ui-map`, `scenarios`, `lifecycle`, `rules`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `coverage` | `{ path: string \| null }` | No path |

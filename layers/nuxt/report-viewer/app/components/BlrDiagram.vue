@@ -125,7 +125,7 @@ onBeforeUnmount(() => { mounted = false; requestId++; stopWorker(); observer?.di
       <div v-for="node in diagram.nodes" :key="node.id" :data-measure="`node:${node.id}`" :style="node.group ? { width: 'max-content', maxWidth: '320px' } : { width: node.terminal ? '132px' : '236px' }">
         <BlrFlowNodeContent :node="node" />
       </div>
-      <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label">{{ edge.label }}</div>
+      <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label" :class="{ 'blr-flow-edge-label--badges': edge.badges?.length }"><BlrFlowEdgeLabel :edge="edge" /></div>
     </div>
     <div v-if="layout" class="blr-diagram-canvas">
       <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" :selected="selected" @open="emit('open', $event)" @inspect="emit('inspect', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />

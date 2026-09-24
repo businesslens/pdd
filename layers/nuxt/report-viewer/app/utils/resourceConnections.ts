@@ -14,6 +14,7 @@ import type {
   ScreenView
 } from './reportWorkspace'
 import { topologyRelations } from './topologyRelations'
+import { attachedRules } from './topologyTargets'
 
 export interface RelationRow {
   label: string
@@ -30,6 +31,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
   const row = (label: string, kind: ReportResourceKind, ids: string[], derived: boolean, direction?: RelationRow['direction']): RelationRow =>
     ({ label, kind, ids, derived, direction: direction ?? (resource.kind === 'domain' || (resource.kind !== 'rule' && incomingLabels.has(label)) ? 'Incoming' : 'Outgoing') })
   const all: RelationRow[] = []
+  /* A place a Rule names — as a Context target or by narrowing a target to it — lists that Rule. */
+  const namingRules = () => row('Business Rules naming it', 'rule', attachedRules(workspace, resource).map(item => item.rule.id), false, 'Incoming')
   switch (resource.kind) {
     case 'interface': {
       const item = resource as InterfaceView
@@ -38,7 +41,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Experiences within', 'experience', item.experienceIds, true),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
-        row('Journeys available', 'journey', item.journeyIds, true)
+        row('Journeys available', 'journey', item.journeyIds, true),
+        namingRules()
       )
       break
     }
@@ -49,7 +53,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Interfaces', 'interface', item.interfaceIds, false),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
-        row('Journeys available', 'journey', item.journeyIds, true)
+        row('Journeys available', 'journey', item.journeyIds, true),
+        namingRules()
       )
       break
     }
@@ -61,7 +66,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Capability Scenarios', 'capability-scenario', screen.capabilityScenarioIds, false),
         row('Journey Scenarios', 'journey-scenario', screen.journeyScenarioIds, false),
         row('Journeys via linked Journey Scenarios', 'journey', screen.scenarioJourneyIds, true),
-        row('Journeys via exposed Capabilities', 'journey', screen.capabilityJourneyIds, true)
+        row('Journeys via exposed Capabilities', 'journey', screen.capabilityJourneyIds, true),
+        namingRules()
       )
       break
     }

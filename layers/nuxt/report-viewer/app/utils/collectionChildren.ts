@@ -8,9 +8,11 @@
  * Every other collection lists plain rows; a Capability's or Journey's
  * Scenarios are read on its page.
  */
-import type { AnyResourceView, ExperienceView, InterfaceView, ReportResourceKind, ReportWorkspace, ScreenView } from './reportWorkspace'
+import type { AnyResourceView, ExperienceView, InterfaceView, ReportResourceKind, ReportWorkspace, RuleView, ScreenView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
+import { entityOperation, ruleAttachments } from './topologyTargets'
+import { resourceAncestors } from './reportDestinations'
 import type { TopologyBranch } from './topologyProjections'
 import { placeDelivery, placeJourneys, stepsLabel } from './placeReadings'
 
@@ -116,6 +118,35 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
   /* A Screen's own branch, as it sits in its container's tree. */
   if (resource.kind === 'screen') return screenLeaf(resource).children
   return []
+}
+
+/**
+ * What a Business Rule applies to, as a tree: its targets grouped by kind in
+ * rail order. A target holds only the places the Rule itself names — the
+ * Contexts it narrows the target to, each noted with where it sits because
+ * places repeat titles across Interfaces. A target the Rule does not narrow is
+ * noted "Every supported Context" and holds nothing: those places are the
+ * target's, read on its own page, where the Rule is listed too. An Entity
+ * target notes its operation; a Context target is the place itself. Every
+ * edge drawn here is read at its other end (see `attachedRules`).
+ */
+export function ruleScope(workspace: ReportWorkspace, rule: RuleView): TreeCardNode[] {
+  const targets = ruleAttachments(workspace, rule).map(({ id, resource, target, contexts: narrowed }): TreeCardNode => {
+    if (target.type === 'context') return { ...leaf(resource), id, note: 'Everything done here' }
+    const where = narrowed.length
+      ? `Only in ${narrowed.length} ${narrowed.length === 1 ? 'place' : 'places'}`
+      : target.type === 'entity' ? '' : 'Every supported Context'
+    const note = [target.type === 'entity' ? entityOperation(target) : '', where].filter(Boolean).join(' · ')
+    const placeLeaf = (place: AnyResourceView): TreeCardNode => {
+      const within = resourceAncestors(workspace, place).map(item => item.title).join(' · ')
+      return { ...leaf(place), id: `${id}>${place.key}`, ...(within ? { note: within } : {}) }
+    }
+    return { ...leaf(resource, narrowed.map(placeLeaf)), id, ...(note ? { note } : {}) }
+  })
+  return KIND_ORDER.flatMap((kind) => {
+    const members = targets.filter(node => node.resource?.kind === kind)
+    return members.length ? [group(`${rule.key}:${kind}`, kind, members)] : []
+  })
 }
 
 export interface InsideCount {

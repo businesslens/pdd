@@ -16,7 +16,6 @@ import type {
   JourneyView,
   ReportResourceKind,
   ReportWorkspace,
-  RuleView,
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
@@ -124,12 +123,6 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         scenario.result
           ? { label: 'Result', value: scenario.result, term: 'result' }
           : { label: 'Screens', value: String(scenario.screenIds.length), term: KIND_TERM.screen }
-      ]
-    }
-    case 'rule': {
-      const rule = resource as RuleView
-      return [
-        { label: 'Applies to', value: String(rule.appliesTo.length), term: 'applies-to' }
       ]
     }
     default:

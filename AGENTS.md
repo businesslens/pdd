@@ -223,6 +223,11 @@ costed already.
   changes without a starting State have separate groups. This supersedes placing
   State definitions in Overview or stacking separate State cards below the graph.
   Changes without specified states remain accessible beside the graph.
+  A Business Rule reads its statement once, as the Overview lead, with Who may
+  beneath it where the Rule is a permission; an Applies to tab follows with its
+  targets as a tree, each holding only the places the Rule names. Every edge
+  that tree draws is read at its other end: a resource the Rules name has a
+  Business Rules tab before Connections, each Rule with how it names it.
   Connections
   follows when relationships exist and includes the complete relationship
   list, including links also explained in Overview. References comes last when
