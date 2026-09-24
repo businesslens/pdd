@@ -33,6 +33,7 @@ try {
     server.stdout.on('data', chunk => { output += chunk })
     server.stderr.on('data', chunk => { output += chunk })
     const context = await browser.newContext()
+    const browserLog = []
     try {
       await expect.poll(async () => {
         if (server.exitCode !== null) throw new Error(output)
@@ -40,8 +41,11 @@ try {
       }, { timeout: 15000 }).toBe(200)
       const page = await context.newPage()
       const workers = []
-      page.on('pageerror', error => errors.push({ consumer, message: error.message }))
-      page.on('console', message => { if (/hydration/i.test(message.text())) errors.push({ consumer, message: message.text() }) })
+      page.on('pageerror', error => { browserLog.push(`pageerror: ${error.message}`); errors.push({ consumer, message: error.message }) })
+      page.on('console', message => {
+        browserLog.push(`${message.type()}: ${message.text()}`)
+        if (/hydration/i.test(message.text())) errors.push({ consumer, message: message.text() })
+      })
       page.on('request', request => { if (request.url().includes('diagram.worker')) workers.push(request.url()) })
       /* A named drawing belongs to its collection and keeps that heading. */
       await page.goto(`${origin}/?s=domain&t=graph`)
@@ -90,12 +94,19 @@ try {
         await page.goto(url)
         const legends = page.getByRole('button', { name: 'Legend', exact: true })
         await expect(legends).toHaveCount(2)
-        await legends.first().click()
-        await expect(page.getByRole('list', { name: 'Badge color legend' })).toBeVisible()
+        const legend = page.getByRole('list', { name: 'Badge color legend' })
+        // A click that lands before hydration is lost; retry until the popover answers.
+        await expect(async () => {
+          if (!await legend.isVisible()) await legends.first().click()
+          await expect(legend).toBeVisible({ timeout: 1000 })
+        }).toPass({ timeout: 15000 })
         await page.keyboard.press('Escape')
         await expect(legends.first()).toBeFocused()
       }
       console.log(`Passed ${consumer}: SSR, hydration, lazy worker, multiple instances, navigation, isolated States and comparison legends.`)
+    } catch (error) {
+      console.error(`Browser log for ${consumer}:\n${browserLog.join('\n') || '(empty)'}\nServer log:\n${output || '(empty)'}`)
+      throw error
     } finally {
       await context.close()
       server.kill('SIGTERM')
