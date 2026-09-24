@@ -12,7 +12,7 @@ import type { AnyResourceView, ExperienceView, InterfaceView, ReportResourceKind
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
 import type { TopologyBranch } from './topologyProjections'
-import { placeCapabilities } from './placeReadings'
+import { placeDelivery } from './placeReadings'
 
 export interface RowChild {
   resource: AnyResourceView
@@ -44,9 +44,9 @@ export interface TreeCard {
 const leaf = (resource: AnyResourceView, children: TreeCardNode[] = []): TreeCardNode => ({ id: resource.key, title: resource.title, resource, children })
 const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, children })
 
-/** Name the contained resource types in tabs and accessible tree labels. */
-export function structureLabel(resource: AnyResourceView): string {
-  return resource.kind === 'interface' ? 'Experiences & Screens' : 'Screens'
+/** Name a place's own tree in its tab and accessible label. */
+export function structureLabel(_resource: AnyResourceView): string {
+  return 'Delivery'
 }
 
 /** A Screen's nested Screens, resolved in authored order. */
@@ -67,14 +67,21 @@ export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView)
  * What a place delivers, as items in its own branch: a Screen's own
  * Capabilities; an Experience's or Interface's gap, available there and on no
  * Screen of its own; or, for an Interface with no Screens, delivered directly.
- * A Capability is an occurrence, so its id is the place's and its own.
+ * Under each Capability sit the Scenarios with a Step for it placed exactly on
+ * this place. Both are occurrences, so an id is the path of keys.
  */
 function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): TreeCardNode[] {
-  const { capabilities, note } = placeCapabilities(workspace, place)
-  return capabilities.map(capability => ({
-    ...leaf(capability), id: `${place.key}>${capability.key}`,
-    ...(note === 'gap' ? { note: 'Available here, on no Screen' } : note === 'direct' ? { note: 'Delivered directly' } : {})
-  }))
+  return placeDelivery(workspace, place).map(({ capability, note, scenarios }) => {
+    const id = `${place.key}>${capability.key}`
+    return {
+      ...leaf(capability, scenarios.map(scenario => ({
+        ...leaf(scenario), id: `${id}>${scenario.key}`,
+        ...(scenario.scenarioType === 'journey' ? { note: `Journey · ${scenario.journeyTitle}` } : {})
+      }))),
+      id,
+      ...(note === 'gap' ? { note: 'Available here, on no Screen' } : note === 'direct' ? { note: 'Delivered directly' } : {})
+    }
+  })
 }
 
 /** One hierarchy for collection cards and focused containment readings. */
@@ -98,13 +105,15 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
       screensOf(iface).map(screen => ({ ...screenLeaf(screen), sharedFrom: iface })))
     return [...deliveryLeaves(workspace, resource), ...[screenGroup(resource), { ...group(`${resource.key}:shared-screens`, 'screen', shared), title: 'Shared Screens' }].filter(node => node.children.length)]
   }
+  /* A Screen's own branch, as it sits in its container's tree. */
+  if (resource.kind === 'screen') return screenLeaf(resource).children
   return []
 }
 
-/** The same compact expansion defaults wherever a hierarchy is read. */
+/** The same compact expansion defaults wherever a hierarchy is read. A Capability's Scenarios start folded. */
 export function treeBranchKeys(nodes: TreeCardNode[], defaults = false): string[] {
   return nodes.flatMap(node => [
-    ...(node.children.length && (!defaults || node.children.length <= 8) ? [node.id] : []),
+    ...(node.children.length && (!defaults || (node.children.length <= 8 && node.resource?.kind !== 'capability')) ? [node.id] : []),
     ...treeBranchKeys(node.children, defaults)
   ])
 }

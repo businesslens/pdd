@@ -187,9 +187,9 @@ try {
       await expect(page.locator('[data-resource-heading]')).toContainText(screen.title)
       await expect(page.locator('[data-resource-panel]')).toContainText('Screen')
       await capture(page, `${width}-screen-page`)
-      /* One tab switches nothing, so no strip renders — and the ways out stay. */
-      await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
-      await page.getByRole('button', { name: 'Interface map', exact: true }).click()
+      /* A Screen reads its own Delivery, and the way out to the Delivery map stays. */
+      await expect(page.locator('[data-resource-panel]').getByRole('tab', { name: 'Delivery', exact: true })).toHaveCount(1)
+      await page.getByRole('button', { name: 'Delivery map', exact: true }).click()
       await expect(page).toHaveURL(/s=interface.*t=graph/)
     }
     await choose(page, 'Capabilities')
@@ -296,7 +296,7 @@ try {
     }
     const iface = report.model.interfaces.find(item => report.model.experiences.some(experience => experience.id.startsWith(`${item.id}::`))) ?? report.model.interfaces[0]
     if (iface) {
-      await page.goto(resourceUrl('interface', iface.id, '&rt=structure'))
+      await page.goto(resourceUrl('interface', iface.id, '&rt=delivery'))
       await expect(page.locator('[data-resource-structure]')).toBeVisible()
       await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
       const toggle = page.locator('[data-resource-structure] button[aria-expanded]').first()
@@ -309,7 +309,7 @@ try {
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
       }
       await capture(page, `${width}-interface-structure`)
-      await page.getByRole('button', { name: 'Interface map', exact: true }).click()
+      await page.getByRole('button', { name: 'Delivery map', exact: true }).click()
       await expect(page).toHaveURL(/s=interface.*t=graph.*tf=interface/)
       await expect(page.locator('[data-flow-ready=true]')).toBeVisible()
       await page.goBack()
@@ -332,7 +332,7 @@ try {
     if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
-    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Experiences & Screens.`)
+    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Delivery.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

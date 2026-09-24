@@ -134,11 +134,11 @@ describe('Container Sketch', () => {
     }
   })
 
-  it('offers the Sketch tab after Overview on Screens and on containers with something to draw', () => {
+  it('offers the Sketch tab after Overview, and a place\'s own Delivery, on Screens and on containers with something to draw', () => {
     const ids = (resource: any) => tabsFor(shop, resource).map((tab: any) => tab.id)
-    expect(ids(shop.byKey.get('screen:customer-web::storefront::product-record')).slice(0, 2)).toEqual(['overview', 'sketch'])
-    expect(ids(shop.byKey.get('interface:customer-web')).slice(0, 3)).toEqual(['overview', 'sketch', 'structure'])
-    expect(ids(shop.byKey.get('experience:customer-web::storefront')).slice(0, 3)).toEqual(['overview', 'sketch', 'structure'])
+    expect(ids(shop.byKey.get('screen:customer-web::storefront::product-record')).slice(0, 3)).toEqual(['overview', 'delivery', 'sketch'])
+    expect(ids(shop.byKey.get('interface:customer-web')).slice(0, 3)).toEqual(['overview', 'delivery', 'sketch'])
+    expect(ids(shop.byKey.get('experience:customer-web::storefront')).slice(0, 3)).toEqual(['overview', 'delivery', 'sketch'])
     expect(ids(shop.byKey.get('interface:operator-cli'))).toContain('sketch')
     expect(ids(shop.byKey.get('entity:order'))).not.toContain('sketch')
     expect(hasContainerSketch({ screenIds: [], capabilityIds: [] })).toBe(false)

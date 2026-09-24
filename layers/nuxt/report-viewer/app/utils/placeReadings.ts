@@ -13,13 +13,10 @@ import type {
   ExperienceView,
   InterfaceView,
   ReportWorkspace,
-  ScenarioStepEntityView,
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
-import type { EntityEffectLike } from './entityEffectPhrase'
-import { joinStateMoves } from './entityEffectPhrase'
 
 /**
  * The Capabilities a place carries where it sits in the tree. A Screen carries
@@ -50,62 +47,40 @@ export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceVi
   return { note: 'gap', capabilities: available.filter(capability => !screens.some(screen => screen.capabilityIds.includes(capability.id))) }
 }
 
-export type ScreenEffect = EntityEffectLike & { entityId: string }
-
-/** One Capability a Screen exposes, read on that Screen alone. */
-export interface ScreenDeliveryRow {
+/** One Capability a place delivers itself, read through the Scenarios that happen there. */
+export interface PlaceDeliveryGroup {
   capability: CapabilityView
-  /**
-   * What the Steps placed exactly on this Screen do to each Entity, merged
-   * across them: an instance alias folds into its Entity, a change outranks a
-   * read of the same Entity, and moves that meet join into one run.
-   */
-  effects: ScreenEffect[]
-  /** The Scenarios with a Step here, Capability Scenarios first. */
+  note: PlaceCapabilities['note']
+  /** Scenarios with a Step for this Capability placed exactly on this place, Capability Scenarios first. */
   scenarios: ScenarioView[]
-  /** How many Steps are placed here for this Capability. */
-  steps: number
+  /** Per Scenario key, the indexes of those Steps. */
+  stepsHere: Record<string, number[]>
+  /** Every Scenario that exercises the Capability, wherever it happens. */
+  total: number
 }
 
 /**
- * A Screen's own Delivery: each Capability it lists, with what happens on this
- * Screen for it — never on a nested Screen, which reads its own. A Step counts
- * for the Capability its Scenario belongs to, or, in a Journey Scenario, the
- * Capability the Step names.
+ * A place's Delivery tab: each Capability it delivers itself (see
+ * `placeCapabilities`), with only the Scenarios that have a Step for it placed
+ * exactly on this place — never on a place nested inside, which reads its own.
+ * A Step counts for the Capability its Scenario belongs to or, in a Journey
+ * Scenario, the Capability the Step names.
  */
-export function screenDelivery(workspace: ReportWorkspace, screen: ScreenView): ScreenDeliveryRow[] {
-  return screen.capabilityIds.flatMap((capabilityId) => {
-    const capability = workspace.byKey.get(resourceKey('capability', capabilityId))
-    if (capability?.kind !== 'capability') return []
-    const scenarios: ScenarioView[] = []
-    const mentions: ScenarioStepEntityView[] = []
-    let steps = 0
-    for (const scenario of workspace.scenarios) {
-      const here = scenario.steps.filter(step =>
-        (scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId) === capabilityId
-        && step.contexts.some(item => item.context.id === screen.id))
-      if (!here.length) continue
-      scenarios.push(scenario)
-      steps += here.length
-      mentions.push(...here.flatMap(step => step.entities))
-    }
-    scenarios.sort((a, b) => Number(a.scenarioType === 'journey') - Number(b.scenarioType === 'journey'))
-    return [{ capability, effects: mergeEffects(mentions), scenarios, steps }]
-  })
-}
-
-function mergeEffects(mentions: ScenarioStepEntityView[]): ScreenEffect[] {
-  const byEntity = new Map<string, ScenarioStepEntityView[]>()
-  for (const mention of mentions) byEntity.set(mention.entityId, [...byEntity.get(mention.entityId) ?? [], mention])
-  return [...byEntity].flatMap(([entityId, all]) => {
-    const changes = all.filter(item => item.effect !== 'reads')
-    if (!changes.length) return [{ entityId, effect: 'reads' as const, from: '', to: '' }]
-    const seen = new Set<string>()
-    const distinct = changes.filter((item) => {
-      const key = `${item.effect}|${item.from}|${item.to}`
-      return !seen.has(key) && Boolean(seen.add(key))
-    })
-    return joinStateMoves(distinct.map(item => ({ effect: item.effect, from: item.from, to: item.to })))
-      .map(effect => ({ ...effect, entityId }))
+export function placeDelivery(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceDeliveryGroup[] {
+  const { capabilities, note } = placeCapabilities(workspace, place)
+  const capabilityOf = (scenario: ScenarioView, step: ScenarioView['steps'][number]) =>
+    scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId
+  return capabilities.map((capability) => {
+    const stepsHere: Record<string, number[]> = {}
+    let total = 0
+    const scenarios = workspace.scenarios.filter((scenario) => {
+      const exercised = scenario.steps.some(step => capabilityOf(scenario, step) === capability.id)
+      if (exercised) total++
+      const here = scenario.steps.flatMap((step, index) => capabilityOf(scenario, step) === capability.id
+        && step.contexts.some(item => item.context.id === place.id) ? [index] : [])
+      if (here.length) stepsHere[scenario.key] = here
+      return here.length > 0
+    }).sort((a, b) => Number(a.scenarioType === 'journey') - Number(b.scenarioType === 'journey'))
+    return { capability, note, scenarios, stepsHere, total }
   })
 }

@@ -2,6 +2,7 @@
 import type { AnyResourceView, CapabilityView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
+import { placeDelivery } from './placeReadings'
 import type { TopologyAttachment } from './topologyTargets'
 import type { Diagram } from './diagram'
 
@@ -163,17 +164,20 @@ export function interfaceProjection(workspace: ReportWorkspace, delivery = false
  * leaf under each. Rooted at the Product, like the reach trees.
  */
 export function deliveryMapProjection(workspace: ReportWorkspace): TopologyBranch {
-  const leaves = (parent: string, capabilities: CapabilityView[], note?: string) =>
-    capabilities.map(capability => ({ ...occurrence(parent, capability), ...(note ? { note } : {}) }))
-  const withLeaves = (item: TopologyBranch): TopologyBranch => {
-    const resource = item.resource
-    const own = resource?.kind === 'screen'
-      ? leaves(item.id, workspace.capabilities.filter(capability => resource.capabilityIds.includes(capability.id)))
-      : leaves(item.id, item.references as CapabilityView[], resource?.kind === 'interface' ? 'Delivered directly' : 'Available here, on no Screen')
-    const places = item.children.filter(child => child.resource?.kind !== 'capability').map(withLeaves)
-    const direct = item.children.filter(child => child.resource?.kind === 'capability').map(child => ({ ...occurrence(item.id, child.resource!), note: 'Delivered directly' }))
-    return { ...item, references: [], referenceLabel: undefined, children: [...own, ...direct, ...places] }
+  const notes = { own: undefined, gap: 'Available here, on no Screen', direct: 'Delivered directly' } as const
+  /* A place's Capabilities, each with the Scenarios placed exactly there — the same reading as its tree branch. */
+  const leaves = (item: TopologyBranch): TopologyBranch[] => {
+    const place = item.resource
+    if (!place || (place.kind !== 'screen' && place.kind !== 'experience' && place.kind !== 'interface')) return []
+    return placeDelivery(workspace, place).map(({ capability, note, scenarios }) => {
+      const id = `${item.id}${OCCURRENCE_SEPARATOR}${capability.key}`
+      return { ...occurrence(item.id, capability, scenarios.map(scenario => occurrence(id, scenario))), ...(notes[note] ? { note: notes[note] } : {}) }
+    })
   }
+  const withLeaves = (item: TopologyBranch): TopologyBranch => ({
+    ...item, references: [], referenceLabel: undefined,
+    children: [...leaves(item), ...item.children.filter(child => child.resource?.kind !== 'capability').map(withLeaves)]
+  })
   const trees = interfaceProjection(workspace, true).map(item => withLeaves({ ...item, references: [] }))
   return productRoot(workspace, trees)
 }

@@ -80,14 +80,14 @@ describe('collection rows that expand', () => {
     }
   })
 
-  it('uses the identical containment tree in an Interface card and its Experiences & Screens tab', () => {
+  it('uses the identical containment tree in an Interface card and its Delivery tab', () => {
     for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
       expect(structureChildren(workspace, card.resource)).toEqual(card.children)
       const nodes = flatten(card.children)
       expect(nodes.some(node => node.sharedFrom)).toBe(false)
       expect(new Set(nodes.map(node => node.id)).size).toBe(nodes.length)
       expect(treeBranchKeys(card.children)).toEqual(nodes.filter(node => node.children.length).map(node => node.id))
-      expect(tabsFor(workspace, card.resource).map((tab: any) => tab.id).includes('structure')).toBe(card.children.length > 0)
+      expect(tabsFor(workspace, card.resource).map((tab: any) => tab.id).includes('delivery')).toBe(card.children.length > 0)
     }
   })
 
@@ -104,17 +104,19 @@ describe('collection rows that expand', () => {
     const canonical = flatten(structureChildren(workspace, owner)).filter((node: any) => node.resource?.key === shared.resource.key)
     expect(canonical).toHaveLength(1)
     expect(canonical[0].sharedFrom).toBeUndefined()
-    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'sketch', 'structure', 'ui-map', 'connections'])
-    expect(structureChildren(workspace, shared.resource)).toEqual([])
-    expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).not.toContain('structure')
+    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'delivery', 'sketch', 'ui-map', 'connections'])
+    /* A Screen's own Delivery tab is its branch of the tree: its Capabilities with their Scenarios. */
+    expect(structureChildren(workspace, shared.resource).map((node: any) => node.resource.key)).toEqual(shared.children.map((node: any) => node.resource.key))
+    expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).toContain('delivery')
   })
 
   it('omits containment tabs and their empty groups on childless places', () => {
     const empty = { ...workspace, experiences: [], screens: [] }
     for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
       /* With no place inside, what is left is what it delivers directly. */
-      expect(structureChildren(empty, resource).every((node: any) => node.resource?.kind === 'capability' && !node.children.length)).toBe(true)
-      expect(tabsFor(empty, resource).map((tab: any) => tab.id)).not.toContain('structure')
+      const children = structureChildren(empty, resource)
+      expect(children.every((node: any) => node.resource?.kind === 'capability')).toBe(true)
+      expect(tabsFor(empty, resource).map((tab: any) => tab.id).includes('delivery')).toBe(children.length > 0)
     }
   })
 

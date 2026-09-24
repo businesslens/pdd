@@ -1,7 +1,7 @@
 /** Resource readings separate explanation, behavior, relationships and references. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
-import { structureChildren, structureLabel } from './collectionChildren'
+import { structureChildren } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
 import { hasContainerSketch } from './sketch'
 
@@ -17,7 +17,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'sketch' | 'scenarios' | 'lifecycle' | 'structure' | 'ui-map' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'delivery' | 'sketch' | 'scenarios' | 'lifecycle' | 'ui-map' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -62,6 +62,9 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
     blocks: overviewBlocks
   }]
 
+  /* Delivery: the place's own branch of the Interfaces tree — its Capabilities with the Scenarios that happen there, then what it holds. */
+  if (structureChildren(workspace, resource).length) tabs.push({ id: 'delivery', label: 'Delivery', blocks: ['structure'] })
+
   /* The derived drawing of a place: every Screen has one; a container has one where it holds Screens or Capabilities. */
   if (resource.kind === 'screen' || ((resource.kind === 'interface' || resource.kind === 'experience') && hasContainerSketch(resource))) {
     tabs.push({ id: 'sketch', label: 'Sketch', blocks: [] })
@@ -74,8 +77,6 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
-  /* A containment tab holds places; Capabilities delivered directly with no place to sit in are counted in Overview. */
-  if (structureChildren(workspace, resource).some(node => node.resource?.kind !== 'capability')) tabs.push({ id: 'structure', label: structureLabel(resource), blocks: ['structure'] })
   /* Movement is read one place at a time: this place, what it holds, and the places one move in or out. */
   if (resource.kind === 'interface' || resource.kind === 'experience' || resource.kind === 'screen') tabs.push({ id: 'ui-map', label: 'UI map', blocks: [] })
   if (resourceConnectionRows(workspace, resource).length) {

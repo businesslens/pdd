@@ -1059,7 +1059,7 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('@select="openResourcePage"')
     expect(page).toContain('<BlrPageBlock')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrResourceBody')
-    for (const marker of ['stepMatrix.steps', 'data-screen-presents', 'data-screen-delivery', 'asRule.statement']) {
+    for (const marker of ['stepMatrix.steps', 'data-screen-presents', 'asRule.statement']) {
       expect(body, marker).toContain(marker)
     }
   })
@@ -1515,7 +1515,7 @@ describe('Screens on the v14 wire', () => {
     expect(chip).toContain("'border-dashed border-muted")
     const body = source('app/components/BlrResourceBody.vue')
     /* Presents, What it changes and its reads row, the Step Actor. */
-    const presents = body.slice(body.indexOf('data-screen-presents'), body.indexOf('data-screen-delivery'))
+    const presents = body.slice(body.indexOf('data-screen-presents'), body.indexOf('<!-- ENTITY:'))
     expect(presents).toContain('<BlrEntityChip v-if="entry.entity" :entity="entry.entity"')
     const changes = body.slice(body.indexOf('text="What it changes"'), body.indexOf('<!-- SCENARIO:'))
     expect(changes).toContain('<BlrEntityChip v-if="entityChip(line.entityId)"')
@@ -1625,39 +1625,65 @@ describe('Screens on the v14 wire', () => {
     expect(node('interface:customer-web').parent).toBeUndefined()
   })
 
-  it('reads a Screen\'s Delivery on that Screen alone, never on the Screens nested inside it', async () => {
-    const { screenDelivery } = await import(placeReadingsModulePath)
+  it('reads a place\'s Delivery through the Scenarios placed exactly there, never on a nested place', async () => {
+    const { placeDelivery } = await import(placeReadingsModulePath)
     const { report, scenario, step } = nestedReport()
     const workspace = projectReportWorkspace(report)
     const parent = workspace.screens.find((item: any) => item.id === PARENT)!
     const child = workspace.screens.find((item: any) => item.id === CHILD)!
-    /* Exactly the Steps placed on the Screen itself, for each Capability it lists. */
-    const placedOn = (screen: any) => workspace.scenarios.reduce((total: number, item: any) => total + item.steps.filter((entry: any) =>
-      screen.capabilityIds.includes(item.scenarioType === 'capability' ? item.capabilityId : entry.capabilityId)
-      && entry.contexts.some((context: any) => context.context.id === screen.id)).length, 0)
+    const capabilityOf = (item: any, entry: any) => item.scenarioType === 'capability' ? item.capabilityId : entry.capabilityId
     for (const screen of [parent, child]) {
-      const rows = screenDelivery(workspace, screen)
-      expect(rows.map((row: any) => row.capability.id)).toEqual(screen.capabilityIds)
-      expect(rows.reduce((total: number, row: any) => total + row.steps, 0)).toBe(placedOn(screen))
+      const groups = placeDelivery(workspace, screen)
+      expect(groups.map((group: any) => group.capability.id)).toEqual(screen.capabilityIds)
+      for (const group of groups) {
+        /* Exactly the Scenarios with a Step for this Capability placed on this Screen, and those Steps. */
+        const expected = workspace.scenarios.filter((item: any) => item.steps.some((entry: any) =>
+          capabilityOf(item, entry) === group.capability.id && entry.contexts.some((context: any) => context.context.id === screen.id)))
+        expect(new Set(group.scenarios.map((item: any) => item.key))).toEqual(new Set(expected.map((item: any) => item.key)))
+        for (const item of group.scenarios) {
+          for (const index of group.stepsHere[item.key]) expect(item.steps[index].contexts.some((context: any) => context.context.id === screen.id)).toBe(true)
+        }
+        expect(group.total).toBeGreaterThanOrEqual(group.scenarios.length)
+        /* Capability Scenarios before Journey Scenarios. */
+        const types = group.scenarios.map((item: any) => item.scenarioType)
+        expect(types.indexOf('journey') === -1 || types.lastIndexOf('capability') < types.indexOf('journey')).toBe(true)
+      }
     }
-    const onChild = screenDelivery(workspace, child)[0]!
-    expect(onChild.scenarios.map((item: any) => item.id)).toContain(scenario.id)
-    expect(onChild.effects.some((effect: any) => effect.effect !== 'reads')).toBe(true)
-    /* An Entity is named once per Capability: a change outranks a read of it, and aliases fold. */
-    for (const row of [...screenDelivery(workspace, parent), onChild]) {
-      const reads = row.effects.filter((effect: any) => effect.effect === 'reads').map((effect: any) => effect.entityId)
-      expect(new Set(reads).size).toBe(reads.length)
-      expect(reads.some((id: string) => row.effects.some((effect: any) => effect.entityId === id && effect.effect !== 'reads'))).toBe(false)
-    }
-    expect(step.contexts.some((context: any) => context.placeId === PARENT)).toBe(false)
+    /* The Step moved to the child is read there, and no longer on the parent. */
+    const index = scenario.steps.indexOf(step)
+    const onChild = placeDelivery(workspace, child).find((group: any) => group.capability.id === scenario.capabilityId)!
+    expect(onChild.stepsHere[`capability-scenario:${scenario.id}`]).toContain(index)
+    const onParent = placeDelivery(workspace, parent).find((group: any) => group.capability.id === scenario.capabilityId)
+    expect(onParent?.stepsHere[`capability-scenario:${scenario.id}`] ?? []).not.toContain(index)
+    /* A tab, after Overview, where a place delivers itself. */
+    expect(tabsFor(workspace, child).map((tab: any) => tab.id).slice(0, 2)).toEqual(['overview', 'delivery'])
     const body = source('app/components/BlrResourceBody.vue')
-    expect(body).toContain('data-screen-children')
     expect(body).not.toContain('Changes made here')
-    expect(body).not.toContain('data-delivery-row')
+    expect(body).not.toContain('data-screen-delivery')
+    /* The tab is the Screen's own branch of the tree: each Capability holds those Scenarios as items. */
+    const { structureChildren } = await import(collectionChildrenModulePath)
+    for (const node of structureChildren(workspace, child).filter((item: any) => item.resource.kind === 'capability')) {
+      const group = placeDelivery(workspace, child).find((item: any) => item.capability.key === node.resource.key)!
+      expect(node.children.map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
+      expect(node.children.every((item: any) => item.id === `${node.id}>${item.resource.key}`)).toBe(true)
+    }
+  })
+
+  it('gives an Interface with no Screens a Delivery tab of what it delivers directly', async () => {
+    const { placeDelivery } = await import(placeReadingsModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const cli = workspace.interfaces.find((item: any) => item.id === 'operator-cli')!
+    const groups = placeDelivery(workspace, cli)
+    expect(groups.length).toBeGreaterThan(0)
+    expect(groups.every((group: any) => group.note === 'direct' && group.scenarios.length > 0)).toBe(true)
+    expect(tabsFor(workspace, cli).map((tab: any) => tab.id)).toContain('delivery')
+    /* A place with Screens reads its Delivery through its tree, whether or not it delivers anything itself. */
+    const web = workspace.interfaces.find((item: any) => item.id === 'customer-web')!
+    expect(tabsFor(workspace, web).map((tab: any) => tab.id)).toContain('delivery')
   })
 
   it('carries each place\'s own Capabilities where it sits in the tree and the delivery map', async () => {
-    const { placeCapabilities } = await import(placeReadingsModulePath)
+    const { placeCapabilities, placeDelivery } = await import(placeReadingsModulePath)
     const { deliveryMapProjection } = await import(projectionsModulePath)
     const { structureChildren } = await import(collectionChildrenModulePath)
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
@@ -1685,7 +1711,8 @@ describe('Screens on the v14 wire', () => {
     for (const node of flatten(structureChildren(workspace, customerWeb)).filter((item: any) => item.resource?.kind === 'screen')) {
       const items = node.children.filter((item: any) => item.resource.kind === 'capability')
       expect(items.map((item: any) => item.resource.id)).toEqual(node.resource.capabilityIds)
-      expect(items.every((item: any) => item.id === `${node.resource.key}>${item.resource.key}` && !item.children.length)).toBe(true)
+      expect(items.every((item: any) => item.id === `${node.resource.key}>${item.resource.key}`
+        && item.children.every((scenario: any) => scenario.resource.kind.endsWith('-scenario')))).toBe(true)
       /* Its own Capabilities come first, then the Screens nested inside it. */
       expect(node.children.slice(0, items.length)).toEqual(items)
     }
@@ -1696,6 +1723,11 @@ describe('Screens on the v14 wire', () => {
     for (const screen of webScreens) {
       const node = map.find((item: any) => item.id === screen.key)!
       expect(node.children.filter((item: any) => item.resource?.kind === 'capability').map((item: any) => item.resource.id)).toEqual(screen.capabilityIds)
+      /* Each Capability leaf holds the Scenarios placed exactly on this Screen, as its tree branch does. */
+      for (const group of placeDelivery(workspace, screen)) {
+        const leaf = node.children.find((item: any) => item.resource?.key === group.capability.key)!
+        expect(leaf.children.map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
+      }
     }
     const cliNode = map.find((item: any) => item.id === cli.key)!
     expect(cliNode.children.every((item: any) => item.resource?.kind === 'capability' && item.note === 'Delivered directly')).toBe(true)

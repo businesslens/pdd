@@ -42,11 +42,7 @@ Languages to an Interface that narrows the Product's list and Version to an
 Experience that carries one; the Product Overview's About reading lists the
 Product's languages.
 A Screen Overview has a Presents block — each Entity with the facts on screen
-as chips, or the Entity alone for a bare entry — and a Delivery block: one row
-per Capability the Screen lists, with what the Steps placed exactly on this
-Screen do (merged per Entity, a change outranking a read) and the Scenarios
-that pass through, Journey Scenarios marked. A nested Screen reads its own
-Delivery, so a parent only names its children under “Also inside”. A Screen's facts strip counts what it
+as chips, or the Entity alone for a bare entry. A Screen's facts strip counts what it
 presents and the Capabilities it exposes. There are no Information presented,
 Available actions, View states or Capability boundary readings, and References
 carry no state badge.
@@ -79,25 +75,28 @@ and the report's primary as the storyboard's one accent. Miniatures are the
 same markup at a smaller font. Each Sketch states its derivation in the About
 this view note below the drawing.
 Screens nest. A nested Screen appears as a child of its parent Screen in the
-Experiences & Screens and Screens tabs, in the Interfaces tree card and inside
+Delivery tabs, in the Interfaces tree card and inside
 its parent's frame on the UI map; its header trail names the parent Screens
 after the container. A Screen named in its container's `navigation` wears an
 Always reachable mark — a small anchor badge, an unreserved glyph — in those
 trees, on its map node, in its own header and in its facts strip. Navigation is
 never drawn as an edge.
-Interfaces have an Experiences & Screens tab; Experiences have a Screens tab.
-Both use the collection's tree rows, chevrons, resource links and expansion
-controls. The selected resource is already named in the header, so each tree
-starts with its children. Shared Screens occur once under their Interface in the
-full tree; an Experience's Screens tab shows shared references with “From” and
-an owner link. What a place delivers is an ordinary item in its own branch, as
-in the Delivery map: a Screen lists its own Capabilities first, never a
-child's, then the Screens nested inside it; an Experience or Interface lists
-only a gap, a Capability available there and exposed on no Screen of its own,
-noted “Available here, on no Screen”; an Interface with no Screens lists its
-Capabilities noted “Delivered directly”. A containment tab appears only where
-there are places to hold. On the Interfaces collection the Capabilities filter
-marks the matching items. Screens have no containment tab.
+The Interfaces tree says what each place delivers, as ordinary items in its
+own branch, exactly as the Delivery map does: a Screen lists its own
+Capabilities first, never a child's, then the Screens nested inside it; an
+Experience or Interface lists only a gap, a Capability available there and
+exposed on no Screen of its own, noted “Available here, on no Screen”; an
+Interface with no Screens lists its Capabilities noted “Delivered directly”.
+Under each Capability sit the Scenarios with a Step for it placed exactly on
+that place — a Journey Scenario noted with its Journey — and they start folded.
+A nested place reads its own; nothing is summed. Every item opens its reading.
+On the Interfaces collection the Capabilities filter marks the matching items.
+Interfaces, Experiences and Screens have a Delivery tab (`delivery`) after
+Overview: the place's own branch of that tree, with the collection's tree rows,
+chevrons, resource links and expansion controls. The selected resource is
+already named in the header, so each tree starts with its children. Shared
+Screens occur once under their Interface in the full tree; an Experience's
+Delivery tab shows shared references with “From” and an owner link.
 Interfaces, Experiences and Screens have a UI map tab (`ui-map`): the derived
 map of Scenario moves, focused on that place — what it holds and the places one
 move in or out. Movement is read one place at a time; the collection Graph does
@@ -266,7 +265,7 @@ where it left:
 | `section` | `overview`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `structure`, `ui-map`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `delivery`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `ui-map`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
@@ -411,7 +410,7 @@ page and graph toolbars.
 
 Domain and Interface cards are trees inside translucent containers, without a
 separate header. Their borderless tree rows fill each card's width and use the
-parent's background, with a subtle row highlight on hover. The Experiences & Screens and Screens tabs use the
+parent's background, with a subtle row highlight on hover. The Delivery tabs use the
 same component. Each group has its matching resource-type icon and a count beside
 its name: Experiences, Screens, Shared Screens, Capabilities or Entities. Resource
 roots have no mixed total. Expansion chevrons sit before the type icons. A nested

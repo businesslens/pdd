@@ -84,9 +84,9 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     id: 'delivery-map',
     diagramType: 'Delivery map',
     name: 'Delivery map',
-    question: 'Which Capabilities does each Screen deliver, inside which Experience and Interface?',
-    note: 'Each Interface branches into its Experiences and Screens, nested as authored, and each Screen into the Capabilities it lists — its own, never a child\'s, so a Capability exposed on five Screens is a leaf under each. A Capability available in an Experience or Interface that no Screen there exposes is marked as a gap under that place; an Interface with no Screens delivers its Capabilities directly.',
-    kinds: ['product', 'interface', 'experience', 'screen', 'capability']
+    question: 'Which Capabilities does each Screen deliver, through which Scenarios, inside which Experience and Interface?',
+    note: 'Each Interface branches into its Experiences and Screens, nested as authored, and each Screen into the Capabilities it lists — its own, never a child\'s, so a Capability exposed on five Screens is a leaf under each — and each Capability into the Scenarios with a Step for it placed exactly on that place. A Capability available in an Experience or Interface that no Screen there exposes is marked as a gap under that place; an Interface with no Screens delivers its Capabilities directly.',
+    kinds: ['product', 'interface', 'experience', 'screen', 'capability', 'capability-scenario', 'journey-scenario']
   },
   /* The UI map is derived, and the Rows tree already draws containment; the
      map draws movement inside it. */
