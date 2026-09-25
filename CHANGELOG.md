@@ -7,27 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Screens now say which Entity facts are on screen instead of describing them in prose, and lint checks those facts against Entities, Steps and Business Rules.
-- Screens can nest inside Screens, so tabs, panels, wizard steps and detail views have a place of their own.
-- Interfaces and Experiences can name the Screens reachable from everywhere, the languages they serve, and which of two concurrently served versions they are.
-- Scenario Steps can cite the facts they read or edit.
-- The Information presented, Available actions, View states and Capability boundary sections are gone, along with screenshot state labels.
-- The report shows what each Screen presents and delivers, puts each Capability and its Scenarios under the Screen that delivers them in the Interfaces tree and its Delivery map, and draws nested Screens in trees.
-- Interfaces, Experiences and Screens have a Delivery tab: their own branch of the Interfaces tree, with each Capability and the Scenarios that happen there.
-- A closed branch of an Interfaces or Domains tree shows how many of each kind of resource it holds, and a place that delivers Capabilities directly or leaves them on no Screen says so once instead of on every row.
-- In the Interfaces tree and Delivery map, each place lists the Journeys passing through it, with the Journey Scenarios and Steps taken there, instead of repeating Journey Scenarios under every Capability they use.
-- A Business Rule shows its statement once with Who may beneath it, and a new Applies to tab lists what it governs; every Capability, Journey, Entity and place it names has a Business Rules tab listing it.
-- A fact a Business Rule governs names that Rule, and the Lifecycle graph labels each change with a badge for the Capability that makes it.
-- Business Rules on an Entity now show on the Steps they govern, and on those Steps' Scenarios, Capabilities and Journeys; the Lifecycle shows only what makes each change, plus the Rule behind a forbidden one.
-- Hovering a change on the Lifecycle graph highlights it and the two states it joins, and fades the rest.
-- The Lifecycle shows changes and states with the same state badges as a Capability's changes and a Scenario's steps.
-- A Capability's What it changes lists each change on its own row with the number of Scenarios making it, instead of chaining changes into a sequence no Scenario describes, and each opens that change in the Entity's Lifecycle.
-- A permission's Who may shows each operation and grant with Entity chips and state badges instead of a sentence, including Rules that cover several Entities.
-- A fact governed by a Business Rule carries a badge for the kind of claim — read or change restricted, never allowed, or a constraint — that opens who alone may do it, where, or the rule it must satisfy; facts look the same in Steps, Screens and Rules.
-- The mapping and ideation skills title a Business Rule with what it asserts — for a permission, the operation and who may perform it — instead of a consequence or a feature.
-- Product Reports are now version 15 and models use folder schema 10; existing models and reports need exporting again.
-- The report says what happens to an Entity the same way everywhere: the Entity, what happened to it, then its State.
-- Resource headers take one short line to say where a resource belongs: its type, the nearest place holding it, and its Domains.
+- Model nested Screens, always-reachable destinations, supported languages and Experience versions.
+- Declare the Entity facts each Screen presents and each Scenario Step reads or changes, with validation against Entities and Business Rules.
+- Explore each place's Delivery: its Capabilities, Scenarios and passing Journeys, with clearer nested trees and summaries of collapsed branches.
+- Read what a Business Rule governs in Applies to, and find applicable Rules from the resources they govern.
+- Read permissions as operations and grants. Badges on governed facts explain restrictions and open the relevant Rule.
+- Follow each Capability's state changes and supporting Scenarios into the Entity's Lifecycle, with consistent state badges and clearer graph highlighting.
+- Recognize a resource's type, ownership and Domains in a compact header.
+- Updated skills, documentation and the example Blueprint explain product behavior separately from visual design, and name Business Rules by what they assert.
+- Retired the Information presented, Available actions, View states and Capability boundary sections, along with screenshot state labels.
+- **Compatibility:** existing models must be updated to folder schema 10, then their reports re-exported as Product Report version 15. Older formats are no longer accepted.
 
 ## [0.22.0] - 2026-09-23
 
