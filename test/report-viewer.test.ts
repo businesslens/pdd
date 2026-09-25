@@ -1418,6 +1418,13 @@ describe('composed lifecycle', () => {
     expect(details).toContain('Forbidden by')
     expect(details).not.toContain('Who may make this change')
     expect(details).not.toContain('arc.rules')
+    /* A change reads as it does in a Capability and a Step, and a State wears the same badge wherever it stands. */
+    expect(lifecycle).toContain('<BlrEntityEffect v-else-if="selectedArc" :mention="selectedArc"')
+    expect(lifecycle).toContain('<BlrEntityEffect :mention="arc.rowMention" />')
+    expect(lifecycle).toContain('<BlrEntityEffect :mention="arc" />')
+    expect(lifecycle).toContain('<BlrEntityState v-if="group.state" :name="group.state.name" />')
+    expect(lifecycle).toContain('<BlrEntityState v-if="selectedState" :name="selectedState.name" />')
+    expect(source('app/components/BlrEntityEffect.vue')).toContain('<BlrEntityState v-else :name="part.text" :from="part.from" />')
     /* Where the governed change happens: each Step names the Rules selecting it, in both Steps drawings. */
     expect(source('app/components/BlrScenarioStep.vue')).toContain('data-step-rules')
     expect(source('app/components/BlrResourceBody.vue')).toContain('label="Governed by"')

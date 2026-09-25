@@ -152,6 +152,13 @@ Each State carries its definition, including States with no outgoing changes.
 Creation and changes without a starting State have separate groups. Groups and
 changes expand and collapse individually or together, with expansion remembered.
 Rows expand each change's Capabilities, co-effects and supporting Scenarios.
+A change reads as it does in a Capability's What it changes and a Step's
+Entity effects — `changed [Unlisted] → [Published]` through the same component
+— in the details heading and under Changes involving this state. A Rows change
+sits under the State it leaves, so it names only where it goes (`changed
+[Published]`, `created [Private]`), with its Capabilities as chips. A State
+wears the same badge wherever it stands: in a change, heading its Rows group,
+and heading its details.
 A change is read by what makes it: the Rules governing it are read on the Steps
 they select, never on the transition. A change no Rule permits anyone to make
 is the exception, since no Capability makes it: it is drawn dashed and names

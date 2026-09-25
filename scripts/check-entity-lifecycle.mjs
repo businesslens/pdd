@@ -74,8 +74,12 @@ try {
     await edge.focus()
     await page.keyboard.press('Enter')
     await expect(inspector.getByRole('heading', { name: 'Confirmed → Cancelled', exact: true })).toBeVisible()
-    await expect(inspector.getByRole('heading', { name: 'Who may make this change' })).toBeVisible()
-    await expect(inspector.locator('a[data-resource-key="rule:who-may-change-an-order"]')).toBeVisible()
+    // A change is read by what makes it; its Rules are read on the Steps they select.
+    await expect(inspector.getByRole('heading', { name: 'Made through' })).toBeVisible()
+    await expect(inspector.locator('a[data-resource-key^="capability:"]')).toBeVisible()
+    await expect(inspector.getByRole('heading', { name: 'Who may make this change' })).toHaveCount(0)
+    // The heading reads the change as every other change does: its States wear their badges.
+    await expect(inspector.getByRole('heading', { name: 'Confirmed → Cancelled', exact: true }).locator('[data-effect-state]')).toHaveCount(2)
     await expect(inspector.locator('a[data-resource-key^="capability-scenario:"]')).not.toHaveCount(0)
     if (width >= 768) {
       const before = await panel.boundingBox()
@@ -118,9 +122,10 @@ try {
     await expect(rows.getByRole('button', { name: 'Expand Confirmed, 2 changes', exact: true })).toBeVisible()
     await rows.getByRole('button', { name: 'Expand Confirmed, 2 changes', exact: true }).click()
     await expect(rows.getByRole('button', { name: /Confirmed → Cancelled/ })).toHaveAttribute('aria-expanded', 'true')
-    await expect(rows.locator('[data-lifecycle-change-details]')).toContainText('Who may change an order')
-    await rows.locator('a[data-resource-key="rule:who-may-change-an-order"]').click()
-    await expect(panel.locator('[data-resource-heading]')).toContainText('Who may change an order')
+    await expect(rows.locator('[data-lifecycle-change-details]')).toContainText('Made through')
+    await expect(rows.locator('[data-state="Confirmed"] [data-group-header] [data-effect-state]')).toHaveText('Confirmed')
+    await rows.locator('[data-lifecycle-change-details] a[data-resource-key^="capability:"]').first().click()
+    await expect(panel.locator('[data-resource-heading]')).toContainText('Order cancellation')
     await panel.getByRole('button', { name: 'Back to Order', exact: true }).click()
     await expect(panel.getByRole('button', { name: 'Draw as rows', exact: true })).toHaveAttribute('aria-pressed', 'true')
     await expect(rows.getByRole('button', { name: /Confirmed → Cancelled/ })).toHaveAttribute('aria-expanded', 'true')

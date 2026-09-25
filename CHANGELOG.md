@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A fact a Business Rule governs names that Rule, and the Lifecycle graph labels each change with a badge for the Capability that makes it.
 - Business Rules on an Entity now show on the Steps they govern, and on those Steps' Scenarios, Capabilities and Journeys; the Lifecycle shows only what makes each change, plus the Rule behind a forbidden one.
 - Hovering a change on the Lifecycle graph highlights it and the two states it joins, and fades the rest.
+- The Lifecycle shows changes and states with the same state badges as a Capability's changes and a Scenario's steps.
 - The mapping and ideation skills title a Business Rule with what it asserts — for a permission, the operation and who may perform it — instead of a consequence or a feature.
 - Product Reports are now version 15 and models use folder schema 10; existing models and reports need exporting again.
 - Every Screen, Interface and Experience has a Sketch, a rough view derived from the model, and every Scenario route can be read as a Storyboard of Sketches.
