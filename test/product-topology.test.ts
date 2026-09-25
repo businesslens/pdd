@@ -422,7 +422,7 @@ describe('named topology semantics', () => {
       { ...source, key: 'journey-scenario:read-only', steps: [step('export-blueprint', 'reads', '')] }
     ]
     const capability = workspace.capabilities.find((item: any) => item.id === 'export-blueprint')
-    capability.entityEffects.find((item: any) => item.entityId === 'blueprint').effects.push({ effect: 'creates', from: '', to: 'Proposed' })
+    capability.entityEffects.find((item: any) => item.entityId === 'blueprint').effects.push({ effect: 'creates', from: '', to: 'Proposed', scenarioIds: ['shared'] })
     const cell = projections.mutationProjection(workspace).cells.find((item: any) => item.id === 'entity:blueprint->capability:export-blueprint')
     const variants = cell.mutations[0].variants
     expect(variants.map((item: any) => item.to)).toEqual(['Exported', 'Proposed'])

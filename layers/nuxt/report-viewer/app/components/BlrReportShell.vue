@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { destinationForSection, destinationForLocation, graphForCollection, matrixForCollection, collectionKindFor } from '../utils/reportDestinations'
-import { resourceNavigationKey } from '../utils/resourceNavigation'
+import { resourceNavigationKey, resourceOpenerKey } from '../utils/resourceNavigation'
 import { referenceNavigationKey, localReferenceHref } from '../utils/referenceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
@@ -576,18 +576,25 @@ function openResourceKey(key: string, tab = 'overview') {
 }
 
 /** Inspection preserves the working view, including a graph's drawing and focus. */
-function openResourcePage(resource: AnyResourceView) {
+function openResourcePage(resource: AnyResourceView, tab = 'overview') {
   reference.value = null
   localReferenceTrail.value = []
-  if (resource.key === openResource.value) return
+  if (resource.key === openResource.value) {
+    if (tab !== 'overview') resourceTab.value = tab
+    return
+  }
   mobileNavOpen.value = false
   if (!openResource.value) returnFocus.value = document.activeElement as HTMLElement | null
   else if (!navigation) localTrail.value.push({ key: openResource.value, tab: resourceTab.value })
   openResource.value = resource.key
-  resourceTab.value = 'overview'
+  resourceTab.value = tab
   scenarioRoute.value = null
   routeColumns.value = 'auto'
 }
+provide(resourceOpenerKey, (key, tab) => {
+  const resource = resolveResourceKey(props.workspace, key)
+  if (resource) openResourcePage(resource, tab)
+})
 
 function openSurfaceTab(id: string) {
   mobileNavOpen.value = false

@@ -354,7 +354,7 @@ where it left:
 | `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `applies-to`, `delivery`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `ui-map`, `scenarios`, `lifecycle`, `rules`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `applies-to`, `delivery`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `ui-map`, `scenarios`, `lifecycle` (or `lifecycle/<change>` to select one change), `rules`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `coverage` | `{ path: string \| null }` | No path |
@@ -459,8 +459,13 @@ Changes made here and a Capability's What it changes — reads Entity first: the
 Entity chip, a plain verb, then each State as a badge, as in
 `[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]` or
 `[Collection] read`. An ending names where the thing rests: `[Item] in [Unread]`.
-What it changes joins a Capability's moves where one ends and the next begins,
-so no State is named twice in a row: `[Item] changed [Unread] → [Read] → [Unread]`.
+What it changes names each Entity once and each distinct move on a row of its
+own, with the number of Scenarios making it; moves are never joined into a
+run, since two moves that meet are made by different Scenarios and a chain
+would tell a story none of them tells. The moves read in the Entity's Lifecycle
+Rows order — creation, then by starting State in declared order — and each
+opens that change in the Entity's Lifecycle (`rt=lifecycle/<change>`), selected
+in whichever drawing is on screen.
 The facts a Step cites on a read or change follow the phrase; the terminal
 reading names none.
 Scenario titles use 16px semibold text, section labels 13px semibold, and body

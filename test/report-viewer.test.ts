@@ -396,12 +396,18 @@ describe('stable Product Report', () => {
     expect(workspace.capabilities.find((item: any) => item.id === 'place-order')!.entityIds)
       .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
 
-    // A Capability page reads one aggregate line per Entity, never a lifecycle fragment each.
+    // A Capability page reads one group per Entity, each distinct move once with the Scenarios making it.
     const settle = workspace.capabilities.find((item: any) => item.id === 'settle-payment')!
-    expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects, line.scenarioIds.length])).toEqual([
-      ['order', [{ effect: 'changes', from: 'Pending', to: 'Confirmed' }], 3],
-      ['refund', [{ effect: 'changes', from: 'Requested', to: 'Settled' }], 1]
+    expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects.map((move: any) => [move.effect, move.from, move.to, move.scenarioIds.length]), line.scenarioIds.length])).toEqual([
+      ['order', [['changes', 'Pending', 'Confirmed', 3]], 3],
+      ['refund', [['changes', 'Requested', 'Settled', 1]], 1]
     ])
+    for (const capability of workspace.capabilities) {
+      for (const line of capability.entityEffects) {
+        for (const move of line.effects) expect(move.scenarioIds.every((id: string) => line.scenarioIds.includes(id))).toBe(true)
+        expect(new Set(line.effects.flatMap((move: any) => move.scenarioIds))).toEqual(new Set(line.scenarioIds))
+      }
+    }
   })
 
   it('derives backlinks without mutating the canonical report', () => {
@@ -1208,9 +1214,10 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('v-model:tab="resourceTab"')
     expect(page).toContain("defineModel<string>('tab'")
     expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
-    /* Opening a page opens its Overview; the tab is reset in the same tick as
-       the page, so one gesture is one history entry. */
-    expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = 'overview'")
+    /* Opening a page opens its Overview unless a reading was asked for; the tab
+       is set in the same tick as the page, so one gesture is one history entry. */
+    expect(reportShell).toContain("function openResourcePage(resource: AnyResourceView, tab = 'overview')")
+    expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = tab")
   })
 
   /*
@@ -1591,16 +1598,20 @@ describe('Screens on the v15 wire', () => {
     expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }, true))).toBe('removed')
     expect(words(entityEffectParts({ effect: 'reads', from: '', to: '' }))).toBe('read')
     expect(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }).filter((part: any) => part.from)).toHaveLength(1)
-    expect(words(entityEffectParts({ effect: 'changes', from: 'Unread', to: 'Unread', path: ['Unread', 'Read', 'Unread'] }))).toBe('changed [Unread] → [Read] → [Unread]')
-    /* A Capability's moves join where one ends and the next begins. */
-    const { joinStateMoves } = await import(entityEffectPhraseModulePath)
-    const run = (effects: any[]) => joinStateMoves(effects).map((item: any) => item.path ? item.path.join('→') : `${item.effect}:${item.from}→${item.to}`)
+    /* A Capability's moves are never joined into a run: each is one row, in its Entity's Lifecycle Rows order. */
+    const lifecycleUtility = '../layers/nuxt/report-viewer/app/utils/entityLifecycle.ts'
+    const { lifecycleRowOrder, lifecycleChangeAddress } = await import(lifecycleUtility)
     const move = (from: string, to: string) => ({ effect: 'changes', from, to })
-    expect(run([move('Unread', 'Read'), move('Read', 'Unread')])).toEqual(['Unread→Read→Unread'])
-    expect(run([move('Read', 'Archived'), move('Unread', 'Read')])).toEqual(['Unread→Read→Archived'])
-    expect(run([{ effect: 'creates', from: '', to: 'Draft' }, move('Draft', 'Live'), move('Draft', 'Gone')]))
-      .toEqual(['creates:→Draft', 'changes:Draft→Live', 'changes:Draft→Gone'])
-    expect(run([move('A', 'B')])).toEqual(['changes:A→B'])
+    const entity = { states: [{ name: 'Draft' }, { name: 'Live' }, { name: 'Gone' }], arcs: [move('Live', 'Draft'), move('Draft', 'Gone'), move('Draft', 'Live')] }
+    const order = (moves: any[]) => lifecycleRowOrder(entity, moves).map((item: any) => `${item.effect}:${item.from}→${item.to}`)
+    expect(order([move('Draft', 'Live'), move('Live', 'Draft'), { effect: 'creates', from: '', to: 'Draft' }, move('Draft', 'Gone'), move('', 'Live'), move('Unknown', 'Live')]))
+      .toEqual(['creates:→Draft', 'changes:Draft→Gone', 'changes:Draft→Live', 'changes:Live→Draft', 'changes:→Live', 'changes:Unknown→Live'])
+    expect(lifecycleChangeAddress(move('Private', 'Published'))).toBe('changes~Private~Published')
+    const body = source('app/components/BlrResourceBody.vue')
+    expect(body).not.toContain('joinStateMoves')
+    expect(body).toContain('lifecycleRowOrder(entity, line.effects)')
+    expect(body).toContain(':tab="`lifecycle/${lifecycleChangeAddress(effect)}`"')
+    expect(source('app/components/BlrResourcePage.vue')).toContain(':change="tabDetail"')
     /* Every surface that says what happened to an Entity draws this one phrase. */
     expect(source('app/components/BlrScenarioStep.vue')).not.toContain('in state')
     expect(source('app/components/BlrScenarioSummary.vue')).not.toContain('Created in')

@@ -71,6 +71,30 @@ export interface LifecycleRowGroup<T extends EntityArcView = EntityArcView> {
 }
 
 /** A change belongs to its starting State exactly once. Creation is not a State. */
+/**
+ * Moves in the order the Entity's Lifecycle Rows reads them — creation, then
+ * by starting State in declared order, then changes naming no starting State,
+ * then those naming an undeclared one — and, within a group, as the Entity
+ * lists its changes. A Capability's What it changes follows it, so the same
+ * moves read in the same order on both pages whatever order Steps were written in.
+ */
+export function lifecycleRowOrder<T extends Pick<EntityArcView, 'effect' | 'from' | 'to'>>(entity: Pick<EntityView, 'states' | 'arcs'>, moves: T[]): T[] {
+  const states = entity.states.map(state => state.name)
+  const group = (move: T) => {
+    if (move.effect === 'creates') return 0
+    if (!move.from) return states.length + 1
+    const index = states.indexOf(move.from)
+    return index >= 0 ? index + 1 : states.length + 2
+  }
+  const listed = (move: T) => entity.arcs.findIndex(arc => arc.effect === move.effect && arc.from === move.from && arc.to === move.to)
+  return [...moves].sort((a, b) => group(a) - group(b) || listed(a) - listed(b))
+}
+
+/** A change's address inside its Entity's Lifecycle reading: `lifecycle/<address>` selects it. */
+export function lifecycleChangeAddress(move: Pick<EntityArcView, 'effect' | 'from' | 'to'>): string {
+  return [move.effect, move.from, move.to].join('~')
+}
+
 export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<EntityView, 'id' | 'states'>, arcs: T[]): LifecycleRowGroup<T>[] {
   const states: LifecycleRowGroup<T>[] = entity.states.map(state => ({
     key: stateNodeId(entity.id, state.name), title: state.name, state, arcs: []

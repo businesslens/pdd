@@ -2,10 +2,15 @@
 /** Rows nests outgoing changes under their starting States; Graph inspects the same lifecycle. */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
-import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle } from '../utils/entityLifecycle'
+import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle, lifecycleChangeAddress } from '../utils/entityLifecycle'
 
-const props = defineProps<{ workspace: ReportWorkspace, resource: EntityView }>()
-const emit = defineEmits<{ open: [resource: AnyResourceView], ready: [] }>()
+const props = defineProps<{
+  workspace: ReportWorkspace
+  resource: EntityView
+  /** A change asked for by address (`lifecycle/<change>`), shown once in the drawing on screen. */
+  change?: string
+}>()
+const emit = defineEmits<{ open: [resource: AnyResourceView], ready: [], 'update:change': [address: string] }>()
 const lifecycle = computed(() => buildEntityLifecycle(props.workspace, props.resource))
 const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, 'lifecycle', props.resource.key]))
 const { element: rowsPane, save, restore } = useBlrTopologyScroll(scrollKey)
@@ -129,6 +134,22 @@ function openRule(id: string) {
 }
 watch(() => props.workspace, () => { save(); void restore() }, { flush: 'pre' })
 onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
+
+/* A change asked for from another reading — a Capability's move — is shown in
+   whichever drawing is on screen, then the address is let go: the reading
+   keeps the selection from there, as it does for one chosen here. */
+watch(() => props.change, (address) => {
+  if (!address) return
+  const arc = arcs.value.find(item => lifecycleChangeAddress(item) === address)
+  emit('update:change', '')
+  if (!arc) return
+  if (reading.value.drawing === 'graph') { inspect(arc.id); return }
+  const group = groups.value.find(item => item.arcs.some(other => other.id === arc.id))
+  if (group) reading.value.closedGroups = reading.value.closedGroups.filter(key => key !== group.key)
+  if (!reading.value.expandedChanges.includes(arc.id)) reading.value.expandedChanges = [...reading.value.expandedChanges, arc.id]
+  reading.value.selected = arc.id
+  void nextTick(() => rowsPane.value?.querySelector(`[data-occurrence-id="${CSS.escape(arc.id)}"]`)?.scrollIntoView({ block: 'nearest' }))
+}, { immediate: true })
 </script>
 
 <template>

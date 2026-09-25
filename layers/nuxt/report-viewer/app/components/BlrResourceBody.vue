@@ -14,7 +14,8 @@ import type {
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
-import { joinStateMoves } from '../utils/entityEffectPhrase'
+import { lifecycleChangeAddress, lifecycleRowOrder } from '../utils/entityLifecycle'
+import { resourceOpenerKey } from '../utils/resourceNavigation'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
@@ -75,15 +76,30 @@ function openRule(id: string) {
 const factRuleTitles = (ruleIds: string[]) =>
   ruleIds.map(id => resolveResource(props.workspace, 'rule', id)?.title ?? id).join(', ')
 
-/* One line per Entity a Capability touches, never a lifecycle fragment each. */
+/*
+ * One group per Entity a Capability touches, one row per distinct move with
+ * the Scenarios making it. Moves are never joined into a run: two moves that
+ * meet are made by different Scenarios, and a chain would tell a story no
+ * Scenario tells. They read in the Entity's Lifecycle Rows order, and each
+ * opens that change in the Lifecycle.
+ */
 const capabilityEffects = computed(() => props.resource.kind !== 'capability'
   ? []
-  : asCapability.value.entityEffects.map(line => ({
-      ...line,
-      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId,
-      /* Moves that meet join into one run, so no State is named twice in a row. */
-      effects: joinStateMoves(line.effects)
-    })))
+  : asCapability.value.entityEffects.map((line) => {
+      const entity = resolveResource(props.workspace, 'entity', line.entityId)
+      return {
+        ...line,
+        title: entity?.title ?? line.entityId,
+        effects: entity?.kind === 'entity' ? lifecycleRowOrder(entity, line.effects) : line.effects,
+        lifecycle: entity?.kind === 'entity' && entity.states.length > 0
+      }
+    }))
+const openResource = inject(resourceOpenerKey, null)
+function openChange(entityId: string, move: { effect: 'creates' | 'changes' | 'removes', from: string, to: string }) {
+  const key = `entity:${entityId}`
+  if (openResource) openResource(key, `lifecycle/${lifecycleChangeAddress(move)}`)
+  else { const entity = props.workspace.byKey.get(key); if (entity) emit('select', entity) }
+}
 
 /* The Entities a Capability only reads, as one row beneath the changes; and
    how many of its Scenarios — its own, or a Journey's Steps naming it — read
@@ -337,15 +353,27 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <li
           v-for="line in capabilityEffects"
           :key="line.entityId"
-          class="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          class="blr-capability-effect rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          data-capability-effect
         >
-          <BlrEntityChip v-if="entityChip(line.entityId)" :entity="entityChip(line.entityId)!" @select="emit('select', $event)" />
-          <span v-else class="text-default">{{ line.title }}</span>
-          <template v-for="(effect, index) in line.effects" :key="`${effect.effect}-${(effect.path ?? [effect.from, effect.to]).join('>')}`">
-            <span v-if="index" aria-hidden="true" class="text-dimmed">·</span>
-            <BlrEntityEffect :mention="effect" />
-          </template>
-          <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
+          <span class="blr-capability-effect-entity">
+            <BlrEntityChip v-if="entityChip(line.entityId)" :entity="entityChip(line.entityId)!" @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ line.title }}</span>
+          </span>
+          <ul class="blr-capability-effect-moves">
+            <li v-for="effect in line.effects" :key="`${effect.effect}-${effect.from}-${effect.to}`" class="blr-capability-effect-move" data-capability-move>
+              <BlrResourceLink
+                v-if="line.lifecycle"
+                :resource-key="`entity:${line.entityId}`"
+                :tab="`lifecycle/${lifecycleChangeAddress(effect)}`"
+                class="-mx-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-elevated/60 focus-visible:outline-2 focus-visible:outline-primary"
+                :aria-label="`Open this change in the ${line.title} Lifecycle`"
+                @open="openChange(line.entityId, effect)"
+              ><BlrEntityEffect :mention="effect" /></BlrResourceLink>
+              <BlrEntityEffect v-else :mention="effect" />
+              <span class="blr-meta ms-auto shrink-0">{{ effect.scenarioIds.length }} {{ effect.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
+            </li>
+          </ul>
         </li>
         <!-- Reads share the list's shape: one left edge, the chips first, the
              reading where the changes put theirs. Dashed, so a row of reads
@@ -892,6 +920,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 </template>
 
 <style scoped>
+/* The Entity once, then each of its moves on a row of its own, the counts on one right edge. */
+.blr-capability-effect { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0.25rem 0.75rem; }
+.blr-capability-effect-moves { display: grid; gap: 0.375rem; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.blr-capability-effect-move { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; min-width: 0; }
+@container (max-width: 30rem) {
+  .blr-capability-effect { grid-template-columns: minmax(0, 1fr); }
+}
 .blr-page-heading {
   font-size: 1rem;
   font-weight: 650;

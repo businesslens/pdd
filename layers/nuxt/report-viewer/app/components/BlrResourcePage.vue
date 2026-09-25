@@ -144,6 +144,8 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         v-else-if="current?.id === 'lifecycle' && subject.kind === 'entity'"
         :workspace="workspace"
         :resource="(subject as EntityView)"
+        :change="tabDetail"
+        @update:change="tab = 'lifecycle'"
         @open="emit('open', $event)"
         @ready="emit('ready')"
       />

@@ -362,7 +362,8 @@ export interface EntityView extends ResourceBase {
 /** What one Capability does to one Entity, aggregated over its Scenarios. */
 export interface CapabilityEntityEffectView {
   entityId: string
-  effects: Array<{ effect: 'creates' | 'changes' | 'removes', from: string, to: string }>
+  /** Each distinct move once, with the Scenarios whose Steps make it — never joined into a run no Scenario tells. */
+  effects: Array<{ effect: 'creates' | 'changes' | 'removes', from: string, to: string, scenarioIds: string[] }>
   scenarioIds: string[]
 }
 
@@ -1382,9 +1383,12 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
           continue
         }
         const line = effects.get(entry.entityId) ?? { entityId: entry.entityId, effects: [], scenarioIds: [] }
-        if (!line.effects.some(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))) {
-          line.effects.push({ effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '' })
+        let move = line.effects.find(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))
+        if (!move) {
+          move = { effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '', scenarioIds: [] }
+          line.effects.push(move)
         }
+        if (!move.scenarioIds.includes(scenario.id)) move.scenarioIds.push(scenario.id)
         if (!line.scenarioIds.includes(scenario.id)) line.scenarioIds.push(scenario.id)
         effects.set(entry.entityId, line)
       }
