@@ -589,6 +589,16 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     interactive
                     @select="emit('select', $event)"
                   />
+                  <BlrLinks
+                    v-if="step.ruleIds.length"
+                    :workspace="workspace"
+                    :ids="step.ruleIds"
+                    kind="rule"
+                    label="Governed by"
+                    interactive
+                    data-step-rules
+                    @select="emit('select', $event)"
+                  />
                   </div>
                   </div>
                 </th>
@@ -688,6 +698,16 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 kind="capability"
                 label="Capability"
                 interactive
+                @select="emit('select', $event)"
+              />
+              <BlrLinks
+                v-if="step.ruleIds.length"
+                :workspace="workspace"
+                :ids="step.ruleIds"
+                kind="rule"
+                label="Governed by"
+                interactive
+                data-step-rules
                 @select="emit('select', $event)"
               />
               </div>

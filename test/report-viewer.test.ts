@@ -159,10 +159,11 @@ describe('stable Product Report', () => {
       .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
 
     // The lifecycle is composed from Steps: every arc names the Capability
-    // whose Step draws it, the Rules that constrain it, and its co-effects.
+    // whose Step draws it and its co-effects. The Rules governing it are read
+    // on the Steps they select.
     const arc = (from: string, to: string) => order.arcs.find((item: any) => item.from === from && item.to === to)
     expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['settle-payment'])
-    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'], ruleIds: ['refunds-need-an-operator', 'who-may-change-an-order'] })
+    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'] })
     expect(arc('Confirmed', 'Refunded').coEffects).toEqual([{ entityId: 'refund', effect: 'creates', to: 'Requested' }])
     expect(order.arcs.find((item: any) => item.effect === 'creates').to).toBe('Pending')
     expect(order.states.every((state: any) => state.reached)).toBe(true)
@@ -1293,7 +1294,8 @@ describe('composed lifecycle', () => {
   const addStep = (report: any, capabilityId: string, entities: Array<Record<string, unknown>>) => {
     const scenario = report.model.capabilityScenarios.find((item: any) => item.capabilityId === capabilityId)!
     const template = scenario.steps[scenario.steps.length - 1]
-    scenario.steps.push({ ...structuredClone(template), text: 'The test moves it.', entities })
+    /* A wire entry always carries its cited facts, empty when it cites none. */
+    scenario.steps.push({ ...structuredClone(template), text: 'The test moves it.', entities: entities.map(entry => ({ facts: [], ...entry })) })
   }
 
   it('draws terminals for a thing that is created and removed, and a self-transition as a loop', async () => {
@@ -1325,7 +1327,7 @@ describe('composed lifecycle', () => {
     const index = arcOf(order, 'Cancelled', '', 'removes')
 
     expect(order.arcs[index].forbiddenByRuleIds).toEqual(['orders-are-never-deleted'])
-    expect(lifecycleArcLabel(workspace, order, index)).toMatchObject({ forbidden: true, rules: [] })
+    expect(lifecycleArcLabel(workspace, order, index)).toMatchObject({ forbidden: true })
     const edge = buildEntityLifecycle(workspace, order).edges.find((item: any) => item.target === LIFECYCLE_END)
     expect(edge).toMatchObject({ label: 'forbidden', forbidden: true })
   })
@@ -1350,68 +1352,78 @@ describe('composed lifecycle', () => {
   })
 
   /*
-   * Grants within a Rule are OR; Rules selecting one operation are AND. The
-   * fixture's Confirmed → Cancelled is selected by one Rule whose four grants
-   * mostly hold only while Pending, so "Shopper or admin or gateway or
-   * schedule" was three grants wider than the truth. Each Rule is read apart,
-   * with every grant's conditions, and the canvas carries only the marker.
+   * A change is drawn by what makes it. The Rules governing it are read on the
+   * Steps they select — a target selects Steps — and so on those Steps'
+   * Scenarios and Capabilities, never on the transition. Only a change no one
+   * may make keeps its Rule, since no Capability makes it.
    */
-  it('reads restrictions per Rule with each grant in full, never flattened across Rules', async () => {
-    const { buildEntityLifecycle, lifecycleArcLabel, lifecycleRestrictionMarker } = await import(lifecycleModulePath)
+  it('draws a change by its Capability and reads its governing Rules on the Steps they select', async () => {
+    const { buildEntityLifecycle, lifecycleArcLabel } = await import(lifecycleModulePath)
+    const { attachedRules } = await import(join(VIEWER, 'app/utils/topologyTargets.ts'))
     const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
     const order = entityOf(workspace, 'order')
 
     const cancel = lifecycleArcLabel(workspace, order, arcOf(order, 'Confirmed', 'Cancelled'))
-    expect(cancel).not.toHaveProperty('restriction')
-    expect(cancel.rules).toEqual([{
-      id: 'who-may-change-an-order',
-      title: 'Who may change an order',
-      grants: [
-        'the Shopper related by owns while Pending',
-        'Store admin',
-        'Payment gateway while Pending',
-        "the Product's own schedule while Pending"
-      ]
-    }])
-    expect(cancel.rules[0].grants.filter((grant: string) => grant.includes('Pending'))).toHaveLength(3)
-    expect(lifecycleRestrictionMarker(cancel)).toBe('restricted')
+    expect(cancel).not.toHaveProperty('rules')
+    expect(order.arcs.every((arc: any) => !('ruleIds' in arc))).toBe(true)
 
-    const refund = lifecycleArcLabel(workspace, order, arcOf(order, 'Confirmed', 'Refunded'))
-    expect(refund.rules.map((rule: any) => rule.id)).toEqual(['refunds-need-an-operator', 'who-may-change-an-order'])
-    expect(refund.rules[0].grants).toEqual([
+    const edges = buildEntityLifecycle(workspace, order).edges
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded')).toMatchObject({ label: 'Order management' })
+    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
+      .toMatchObject({ label: 'Order cancellation' })
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
+    /* On the canvas the label is a badge wearing the Capability's mark; the text stays its alternative. */
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded').badges).toEqual([{ kind: 'capability', text: 'Order management' }])
+    expect(edges.every((edge: any) => edge.badges.every((badge: any) => badge.kind !== 'rule'))).toBe(true)
+    for (const edge of edges.filter((item: any) => item.forbidden)) expect(edge.badges).toEqual([{ icon: 'i-lucide-ban', text: 'Forbidden' }])
+
+    /* The Rules that restricted the transition govern the Steps making it, and so their Scenarios and Capability. */
+    const refunding = workspace.scenarios.flatMap((scenario: any) => scenario.steps.map((step: any) => ({ scenario, step })))
+      .filter(({ step }: any) => step.entities.some((entry: any) => entry.entityId === 'order' && entry.from === 'Confirmed' && entry.to === 'Refunded'))
+    expect(refunding.length).toBeGreaterThan(0)
+    for (const { scenario, step } of refunding) {
+      expect(step.governedBy.map((item: any) => item.ruleId)).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
+      expect(scenario.stepRuleIds).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
+      for (const item of step.governedBy) expect(item.entries.every((index: number) => step.entities[index])).toBe(true)
+    }
+    const manage = workspace.capabilities.find((item: any) => item.id === 'manage-orders')
+    expect(manage.stepRuleIds).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
+    expect(attachedRules(workspace, manage).find((item: any) => item.rule.id === 'refunds-need-an-operator'))
+      .toMatchObject({ hookLabel: 'Governs its Steps', hook: 'changes Order to Refunded' })
+    const rule = workspace.rules.find((item: any) => item.id === 'refunds-need-an-operator')
+    expect(rule.stepCapabilityIds).toContain('manage-orders')
+    /* The grants are the Rule's own reading, each in full. */
+    expect(rule.grants.map((grant: any) => grant.sentence)).toEqual([
       'Store admin when Total charged at most 100',
       'whoever Store settings configures when Total charged over the Store settings threshold'
     ])
-    expect(refund.rules[1].grants).toHaveLength(4)
-    expect(lifecycleRestrictionMarker(refund)).toBe('restricted by 2 Rules')
 
-    const edges = buildEntityLifecycle(workspace, order).edges
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded'))
-      .toMatchObject({ label: 'Order management · restricted by 2 Rules' })
-    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
-      .toMatchObject({ label: 'Order cancellation · restricted' })
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
-    /* On the canvas the label is badges, each wearing its type's mark; the text stays its alternative. */
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded').badges)
-      .toEqual([{ kind: 'capability', text: 'Order management' }, { kind: 'rule', text: '2 Rules' }])
-    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled').badges)
-      .toEqual([{ kind: 'capability', text: 'Order cancellation' }, { kind: 'rule', text: '1 Rule' }])
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending').badges).toEqual([{ kind: 'capability', text: 'Checkout' }])
-    for (const edge of edges.filter((item: any) => item.forbidden)) expect(edge.badges).toEqual([{ icon: 'i-lucide-ban', text: 'Forbidden' }])
     /* The measuring copy and the canvas draw the same label, so the reserved box is the drawn box. */
     expect(source('app/components/BlrDiagram.vue')).toContain('<BlrFlowEdgeLabel :edge="edge" />')
     expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain('<BlrFlowEdgeLabel :edge="data" />')
 
-    /* Both drawings use the same detail, retaining each Rule and how they compose. */
-    const component = source('app/components/BlrLifecycleChangeDetails.vue')
-    expect(component).toContain('v-for="rule in arc.rules"')
-    expect(component).toContain("@open=\"open('rule', rule.id)\"")
-    expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')
-    expect(component).toContain('Each Rule must permit it; within a Rule, any one grant does.')
-    expect(component).not.toContain('arc.restriction')
+    /* A clicked badge says which part of the change it reached for; the details head each part, in the badges' order and marks. */
+    expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain("closest?.('[data-edge-badge]')")
+    /* Hovering or focusing a label lights its context, as a node does. */
+    expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain(`@mouseenter="emit('hover', id)"`)
+    expect(source('app/components/BlrFlowCanvas.vue')).toContain('diagramEdgeContext(props.layout, activeEdge.value)')
+    expect(source('app/components/BlrFlowCanvas.vue')).toContain("emit('inspect', key, part)")
+    expect(source('app/components/BlrDiagram.vue')).toContain("emit('inspect', key, part)")
+    const lifecycle = source('app/components/BlrEntityLifecycle.vue')
+    expect(lifecycle).toContain(':highlight="highlight"')
+    expect(lifecycle).toContain('[data-change-part="${highlight.value}"]')
+    expect(lifecycle).not.toContain('arc.marker')
+    const details = source('app/components/BlrLifecycleChangeDetails.vue')
+    expect(details).toContain('Made through')
+    expect(details).toContain('Forbidden by')
+    expect(details).not.toContain('Who may make this change')
+    expect(details).not.toContain('arc.rules')
+    /* Where the governed change happens: each Step names the Rules selecting it, in both Steps drawings. */
+    expect(source('app/components/BlrScenarioStep.vue')).toContain('data-step-rules')
+    expect(source('app/components/BlrResourceBody.vue')).toContain('label="Governed by"')
   })
 
-  it('does not restrict the machine by a Rule scoped to a place', async () => {
+  it('does not restrict the machine by a Rule scoped to a place, and governs only the Steps it selects there', async () => {
     const { lifecycleArcLabel } = await import(lifecycleModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const template = report.model.businessRules.find((rule: any) => rule.id === 'refunds-need-an-operator')!
@@ -1429,10 +1441,18 @@ describe('composed lifecycle', () => {
     const order = entityOf(workspace, 'order')
     const index = arcOf(order, 'Pending', 'Confirmed')
 
-    expect(order.arcs[index].ruleIds).toEqual(['who-may-change-an-order'])
-    expect(lifecycleArcLabel(workspace, order, index).rules.map((rule: any) => rule.id)).toEqual(['who-may-change-an-order'])
-    /* It still reaches the Entity page as a Rule relation; only the machine leaves it off. */
+    expect(lifecycleArcLabel(workspace, order, index)).not.toHaveProperty('rules')
+    /* It still reaches the Entity page as a Rule relation. */
     expect(order.ruleIds).toContain('operators-settle-at-the-console')
+    /* A place-scoped Rule governs only the Steps it selects there: a confirmation elsewhere is not its business. */
+    const confirming = workspace.scenarios.flatMap((scenario: any) => scenario.steps)
+      .filter((step: any) => step.entities.some((entry: any) => entry.entityId === 'order' && entry.from === 'Pending' && entry.to === 'Confirmed'))
+    expect(confirming.length).toBeGreaterThan(0)
+    const governed = (step: any) => step.governedBy.some((item: any) => item.ruleId === 'operators-settle-at-the-console')
+    for (const step of confirming) {
+      if (step.contexts.length && !step.contexts.some((item: any) => item.context.id.startsWith('admin-web::order-detail'))) expect(governed(step)).toBe(false)
+    }
+    expect(confirming.some((step: any) => !governed(step))).toBe(true)
   })
 
   it('draws the same machine from the same report every time', async () => {

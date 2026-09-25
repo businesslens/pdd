@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
-const { diagramBounds, diagramContext } = await utility('diagramInteraction')
+const { diagramBounds, diagramContext, diagramEdgeContext } = await utility('diagramInteraction')
 
 const node = (id: string, resourceKey = id) => ({ id, title: id, resourceKey })
 const edge = (source: string, target: string) => ({ id: `${source}->${target}`, source, target, label: '' })
@@ -85,5 +85,19 @@ describe('diagram centering bounds', () => {
 
   it('handles an empty layout', () => {
     expect(diagramBounds({ nodes: [] })).toEqual({ x: 0, y: 0, width: 0, height: 0 })
+  })
+
+  it('lights only the hovered edge and the nodes it joins, never another edge naming the same Capability', () => {
+    const badged = (source: string, target: string) => ({ ...edge(source, target), badges: [{ kind: 'capability', text: 'Collection publication' }] })
+    const machine = {
+      nodes: ['created', 'private', 'published', 'unlisted'].map(id => node(id)),
+      edges: [badged('created', 'private'), badged('private', 'published'), badged('published', 'unlisted'), badged('unlisted', 'published')]
+    }
+    const context = diagramEdgeContext(machine, 'private->published')
+    expect([...context.edges]).toEqual(['private->published'])
+    expect([...context.nodes].sort()).toEqual(['private', 'published'])
+    expect(context.occurrences.size).toBe(0)
+    expect(diagramEdgeContext(machine, null)).toBeNull()
+    expect(diagramEdgeContext(machine, 'missing')).toBeNull()
   })
 })

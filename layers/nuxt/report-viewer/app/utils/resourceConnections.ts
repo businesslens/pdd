@@ -24,7 +24,7 @@ export interface RelationRow {
   direction: 'Incoming' | 'Outgoing'
 }
 
-const incomingLabels = new Set(['Actors', 'Experiences within', 'Capabilities available', 'Screens available', 'Journeys available', 'Journeys via linked Journey Scenarios', 'Journeys via exposed Capabilities', 'Changed by', 'Read by', 'Presented on', 'Governed by', 'Journeys reached', 'Screens reached', 'Rules', 'Exercised by Journey Scenarios', 'Used by Journeys', 'Exposed by Screens', 'Constrained by Rules', 'Shown on Screens'])
+const incomingLabels = new Set(['Actors', 'Experiences within', 'Capabilities available', 'Screens available', 'Journeys available', 'Journeys via linked Journey Scenarios', 'Journeys via exposed Capabilities', 'Changed by', 'Read by', 'Presented on', 'Governed by', 'Journeys reached', 'Screens reached', 'Rules', 'Exercised by Journey Scenarios', 'Used by Journeys', 'Exposed by Screens', 'Constrained by Rules', 'Shown on Screens', 'Governing its Steps'])
 const notation = { 'one-to-one': '1:1', 'one-to-many': '1:N', 'many-to-many': 'M:N' }
 
 export function resourceConnectionRows(workspace: ReportWorkspace, resource: AnyResourceView): RelationRow[] {
@@ -113,7 +113,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Exercised by Journey Scenarios', 'journey-scenario', capability.journeyScenarioIds, true),
         row('Used by Journeys', 'journey', capability.journeyIds, true),
         row('Exposed by Screens', 'screen', capability.screenIds, true),
-        row('Constrained by Rules', 'rule', capability.ruleIds, true)
+        row('Constrained by Rules', 'rule', capability.ruleIds, true),
+        row('Governing its Steps', 'rule', capability.stepRuleIds.filter(id => !capability.ruleIds.includes(id)), true)
       )
       break
     }
@@ -127,7 +128,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Changes', 'entity', journey.entityIds, true),
         row('Scenarios', 'journey-scenario', journey.scenarioIds, true),
         row('Screens', 'screen', journey.screenIds, true),
-        row('Constrained by Rules', 'rule', journey.ruleIds, true)
+        row('Constrained by Rules', 'rule', journey.ruleIds, true),
+        row('Governing its Steps', 'rule', journey.stepRuleIds.filter(id => !journey.ruleIds.includes(id)), true)
       )
       break
     }
@@ -142,7 +144,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
           ? row('Capability', 'capability', [scenario.capabilityId], false)
           : row('Journey', 'journey', [scenario.journeyId], false),
         row('Shown on Screens', 'screen', scenario.screenIds, true),
-        row('Constrained by Rules', 'rule', scenario.ruleIds, true)
+        row('Constrained by Rules', 'rule', scenario.ruleIds, true),
+        row('Governing its Steps', 'rule', scenario.stepRuleIds.filter(id => !scenario.ruleIds.includes(id)), true)
       )
       break
     }
@@ -163,7 +166,12 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Domains through targets', 'domain', rule.domainIds, true),
         row('Parent Capabilities', 'capability', rule.derivedCapabilityIds, true),
         row('Parent Journeys', 'journey', rule.derivedJourneyIds, true),
-        row('Screens reached', 'screen', derivedScreens, true)
+        row('Screens reached', 'screen', derivedScreens, true),
+        /* What its Entity targets govern: the owners of the Steps they select. */
+        row('Capabilities through selected Steps', 'capability', rule.stepCapabilityIds.filter(id => !reachedCapabilities.has(id)), true),
+        row('Journeys through selected Steps', 'journey', rule.stepJourneyIds.filter(id => !reachedJourneys.has(id)), true),
+        row('Capability Scenarios through selected Steps', 'capability-scenario', rule.stepCapabilityScenarioIds.filter(id => !rule.capabilityScenarioIds.includes(id)), true),
+        row('Journey Scenarios through selected Steps', 'journey-scenario', rule.stepJourneyScenarioIds.filter(id => !rule.journeyScenarioIds.includes(id)), true)
       )
       break
     }

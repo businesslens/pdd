@@ -133,17 +133,36 @@ Entity, a fact a Rule governs names that Rule on a chip on its own line under
 the fact in Information kept; several Rules are several chips, all named. Reach through targets is not naming, so a Rule on a Capability is not
 listed on every place that Capability is available in; the Rule reach graph
 draws that.
+An Entity target selects Steps — the format's own reading, decided by the
+selector lint and the report validator share — so a Rule also governs the
+Steps doing its operation, in their own places or, where a Step names none, in
+its Scenario's. Each such Step names its Rules under Governed by, in both Steps
+drawings. A Capability lists the Rule in its Business Rules tab when it owns a
+governed Step — its Capability Scenarios' Steps and the Journey Steps naming it
+— and a Journey when one of its Journey Scenarios does, with the hook Governs
+its Steps and the Rule's selectors that select them: “changes Collection”,
+“reads Collection · Public address · Only in Collection workspace”. Their
+Connections list these Rules as Governing its Steps, and a Rule's Connections
+list what owns the Steps it selects, all marked derived. An Entity target
+without an operation selects every Step touching the Entity.
 An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
 Each State carries its definition, including States with no outgoing changes.
 Creation and changes without a starting State have separate groups. Groups and
 changes expand and collapse individually or together, with expansion remembered.
-Rows expand each change's Capabilities, Rules, co-effects and supporting
-Scenarios. A Graph edge's label is a row of badges, each the report's chip
-wearing its type's mark — the Capabilities that draw the change, then the
-number of Rules restricting it, or a Forbidden mark — wrapping beneath one
-another at the text label's width. Graph nodes and edges open those details in a local inspector;
+Rows expand each change's Capabilities, co-effects and supporting Scenarios.
+A change is read by what makes it: the Rules governing it are read on the Steps
+they select, never on the transition. A change no Rule permits anyone to make
+is the exception, since no Capability makes it: it is drawn dashed and names
+its forbidding Rule. A Graph edge's label is a badge, the report's chip wearing
+the Capability's mark, or a Forbidden mark. Hovering or focusing a label or
+its line dims what is unrelated, as hovering a State does: it lights that one
+change and the two States it joins, never another change the same Capability
+makes. Clicking a label selects its
+change; the details head each part in the badge's order and marks — Made
+through its Capabilities, or Forbidden by its Rule — and briefly mark the part
+whose badge was clicked, scrolling it into view. Graph nodes and edges open those details in a local inspector;
 selecting a State explains it and lists the Scenarios that leave the Entity
 there. Changes without specified states remain accessible beside the graph.
 The inspector sits below the drawing in a narrow panel and beside it when

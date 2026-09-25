@@ -228,8 +228,13 @@ not contain another H1 or H2.
 - Business Rule: a durable constraint, derivation, or permission — H1 and lead
   assertion, optional `## Intent` and `## Rationale`, and a non-empty
   `appliesTo` list of typed `capability`, `capability-scenario`, `journey`,
-  `journey-scenario`, direct `context`, or `entity` targets. An Entity target
-  is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`: **a target
+  `journey-scenario`, direct `context`, or `entity` targets. The H1 states the
+  assertion about what the targets select: a permission names the operation
+  and who may perform it ("Only the owner reads an unpublished collection"), an
+  invariant what always holds. A consequence, a feature, or the mechanism
+  behind the Rule belongs in the lead or `## Rationale`, never the title; from
+  the title and `appliesTo` alone, the grants' who is no surprise. An Entity
+  target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`: **a target
   selects; a grant conditions.** `effect`, `from` and `to` select Steps by the
   keys their `entities` entry carries (`from` with `changes|removes`, `to` with
   `creates|changes`, neither with `reads`); `facts` names the facts it governs;

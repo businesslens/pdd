@@ -30,6 +30,10 @@
       "types": "./dist/report-digest.d.ts",
       "default": "./dist/report-digest.js"
     },
+    "./report/selectors": {
+      "types": "./dist/report-selectors.d.ts",
+      "default": "./dist/report-selectors.js"
+    },
     "./logo": {
       "types": "./dist/logo.d.ts",
       "default": "./dist/logo.js"

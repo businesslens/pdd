@@ -5,7 +5,7 @@ import { diagramLayoutInput, diagramLayoutResult } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
 
 const props = defineProps<{ diagram: Diagram, title: string, viewportKey?: string, selected?: string | null }>()
-const emit = defineEmits<{ open: [key: string], inspect: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
+const emit = defineEmits<{ open: [key: string], inspect: [key: string, part?: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const branches = computed(() => props.diagram.nodes.some(node => node.branch))
 const measure = ref<HTMLElement>()
 const layout = shallowRef<DiagramLayout | null>(null)
@@ -128,7 +128,7 @@ onBeforeUnmount(() => { mounted = false; requestId++; stopWorker(); observer?.di
       <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label" :class="{ 'blr-flow-edge-label--badges': edge.badges?.length }"><BlrFlowEdgeLabel :edge="edge" /></div>
     </div>
     <div v-if="layout" class="blr-diagram-canvas">
-      <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" :selected="selected" @open="emit('open', $event)" @inspect="emit('inspect', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
+      <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" :selected="selected" @open="emit('open', $event)" @inspect="(key, part) => emit('inspect', key, part)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
     </div>
     <div v-else class="blr-diagram-fallback">
       <p class="text-sm text-muted" role="status">{{ failed ? 'Diagram layout is unavailable. Items are listed below.' : 'Arranging diagram…' }}</p>

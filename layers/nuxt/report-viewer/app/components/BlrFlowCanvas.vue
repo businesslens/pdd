@@ -3,10 +3,10 @@ import { VueFlow, MarkerType, Position, getTransformForBounds, useVueFlow } from
 import { Background } from '@vue-flow/background'
 import type { Node, Edge, ViewportTransform } from '@vue-flow/core'
 import type { DiagramLayout, DiagramNode } from '../utils/diagram'
-import { diagramBounds, diagramContext } from '../utils/diagramInteraction'
+import { diagramBounds, diagramContext, diagramEdgeContext } from '../utils/diagramInteraction'
 
 const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, branches?: boolean, selected?: string | null }>()
-const emit = defineEmits<{ open: [key: string], inspect: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
+const emit = defineEmits<{ open: [key: string], inspect: [key: string, part?: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const id = useId()
 const viewerId = inject<string>('businesslens:viewer', '')
 const shell = ref<HTMLElement>()
@@ -14,6 +14,10 @@ const ready = ref(false)
 const active = ref<string | null>(null)
 let hovered: string | null = null
 let focused: string | null = null
+/* An edge lights its context the way a node does; a node under the pointer wins. */
+const activeEdge = ref<string | null>(null)
+let hoveredEdge: string | null = null
+let focusedEdge: string | null = null
 const { zoomIn, zoomOut, viewport, setViewport, onNodesInitialized, onViewportChangeStart, onViewportChangeEnd } = useVueFlow(id)
 let resize: ResizeObserver | undefined
 let width = 0, height = 0
@@ -26,7 +30,8 @@ let centering = false
 let centerRequest = 0
 const signature = computed(() => JSON.stringify([props.viewportKey, props.layout.nodes.map(node => [node.id, node.x, node.y, node.width, node.height])]))
 const storageKey = () => `businesslens:flow:${location.pathname}:${viewerId}:${props.viewportKey}`
-const context = computed(() => diagramContext({ ...props.layout, layout: props.tree ? 'tree' : undefined }, active.value))
+const context = computed(() => diagramContext({ ...props.layout, layout: props.tree ? 'tree' : undefined }, active.value)
+  ?? diagramEdgeContext(props.layout, activeEdge.value))
 const nodes = computed<Node<DiagramNode & { dimmed: boolean, highlighted: boolean }>[]>(() => {
   /* Frames sit under their contents by depth; every leaf and edge sits above every frame. */
   const parents = new Map(props.layout.nodes.map(node => [node.id, node.parent]))
@@ -52,6 +57,14 @@ function hoverNode(id: string | null) {
 function focusNode(id: string | null) {
   focused = id
   active.value = id ?? hovered
+}
+function hoverEdge(id: string | null) {
+  hoveredEdge = id
+  activeEdge.value = id ?? focusedEdge
+}
+function focusEdge(id: string | null) {
+  focusedEdge = id
+  activeEdge.value = id ?? hoveredEdge
 }
 function toggle(id: string, open: boolean) {
   save()
@@ -168,7 +181,7 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
       :prevent-scrolling="true" @node-mouse-enter="hoverNode($event.node.id)" @node-mouse-leave="hoverNode(null)">
       <template #node-blr="nodeProps"><BlrFlowNode v-bind="nodeProps" @open="save(); emit('open', $event)" @inspect="save(); emit('inspect', $event)" @toggle="toggle" @focus="focusNode" /></template>
       <template #node-blr-group="nodeProps"><BlrFlowGroup v-bind="nodeProps" @open="save(); emit('open', $event)" @inspect="save(); emit('inspect', $event)" @toggle="toggle" @focus="focusNode" /></template>
-      <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" @open="save(); emit('open', $event)" @inspect="save(); emit('inspect', $event)" /></template>
+      <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" @open="save(); emit('open', $event)" @inspect="(key, part) => { save(); emit('inspect', key, part) }" @hover="hoverEdge" @focus="focusEdge" /></template>
       <Background :gap="30" :size="1.5" variant="dots" pattern-color="var(--blr-flow-dot)" />
     </VueFlow>
     <UFieldGroup class="blr-flow-controls bg-default" orientation="vertical" size="sm" role="group" aria-label="Map controls">

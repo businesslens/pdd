@@ -3,11 +3,16 @@ import { EdgeLabelRenderer } from '@vue-flow/core'
 import type { EdgeProps } from '@vue-flow/core'
 import type { DiagramLayout } from '../utils/diagram'
 defineProps<EdgeProps<DiagramLayout['edges'][number] & { dimmed?: boolean, quiet?: boolean, selected?: boolean }>>()
-const emit = defineEmits<{ open: [key: string], inspect: [key: string] }>()
-/* The label opens what the edge stands for: a Capability page, or a local inspection. */
-function activate(data: { resourceKey?: string, inspectionKey?: string }) {
+const emit = defineEmits<{ open: [key: string], inspect: [key: string, part?: string], hover: [id: string | null], focus: [id: string | null] }>()
+/* The label opens what the edge stands for: a Capability page, or a local
+   inspection — which also says which badge was reached for, so the reading
+   can show that part of it. */
+function activate(data: { resourceKey?: string, inspectionKey?: string }, event?: Event) {
   if (data.resourceKey) emit('open', data.resourceKey)
-  else if (data.inspectionKey) emit('inspect', data.inspectionKey)
+  else if (data.inspectionKey) {
+    const badge = (event?.target as Element | null)?.closest?.('[data-edge-badge]')?.getAttribute('data-edge-badge') ?? undefined
+    emit('inspect', data.inspectionKey, badge)
+  }
 }
 </script>
 <template>
@@ -18,7 +23,7 @@ function activate(data: { resourceKey?: string, inspectionKey?: string }) {
     <template v-if="data?.inspectionKey || data?.resourceKey">
       <path v-for="(points, index) in data.paths" :key="`hit:${index}`" class="blr-flow-edge-hit nodrag nopan"
         :d="points.map((point, i) => `${i ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')"
-        fill="none" stroke="transparent" stroke-width="16" @click.stop="activate(data)"><title v-if="data.note">{{ data.note }}</title></path>
+        fill="none" stroke="transparent" stroke-width="16" @click.stop="activate(data)" @mouseenter="emit('hover', id)" @mouseleave="emit('hover', null)"><title v-if="data.note">{{ data.note }}</title></path>
     </template>
   </g>
   <EdgeLabelRenderer v-if="data?.labelBox && !data?.quiet && !data?.dimmed">
@@ -26,7 +31,7 @@ function activate(data: { resourceKey?: string, inspectionKey?: string }) {
       class="blr-flow-edge-label nodrag nopan" :class="[(data.inspectionKey || data.resourceKey) && 'blr-flow-edge-button', { 'blr-flow-edge-label--badges': data.badges?.length }]" :data-edge-id="id" :title="data.note"
       :aria-label="data.resourceKey ? `Open ${data.label}` : data.inspectionKey ? `Inspect ${data.inspectionLabel || data.label}` : undefined" :aria-pressed="data.inspectionKey ? Boolean(data.selected) : undefined"
       :style="{ position: 'absolute', transform: `translate(${data.labelBox.x}px, ${data.labelBox.y}px)`, width: `${data.labelBox.width}px`, minHeight: `${data.labelBox.height}px` }"
-      @click.stop="activate(data)"><BlrFlowEdgeLabel :edge="data" /></component>
+      @click.stop="activate(data, $event)" @mouseenter="emit('hover', id)" @mouseleave="emit('hover', null)" @focus="emit('focus', id)" @blur="emit('focus', null)"><BlrFlowEdgeLabel :edge="data" /></component>
   </EdgeLabelRenderer>
 </template>
 

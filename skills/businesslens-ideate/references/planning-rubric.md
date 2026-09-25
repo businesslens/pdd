@@ -46,7 +46,10 @@
   operation on a thing (`effect`, `from`, `to`) or the facts it governs; who may
   perform it is a `permits` grant — `actors`, `related`, `self`, `unattended`,
   `configuredBy`, each optionally conditioned by `when` — and permission claims
-  live only here, never in Scenario prose. Derive Domain backlinks instead of
+  live only here, never in Scenario prose. Title a Rule with its assertion
+  about what it selects — a permission names the operation and who may perform
+  it — never with a consequence, a feature, or the mechanism behind it; those
+  go in the lead or `## Rationale`. Derive Domain backlinks instead of
   targeting Domains.
 - Capability Scenarios express observable acceptance for one Capability with
   typed Actor/Product/condition Steps and named Context place routes. Every Capability needs at least one; cover primary,

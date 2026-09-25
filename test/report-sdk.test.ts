@@ -17,7 +17,7 @@ const packageJson = JSON.parse(
 ) as { exports?: Record<string, unknown>, dependencies?: Record<string, string> }
 
 describe('report SDK entry point', () => {
-  it('is exposed as the ./report and ./report/digest subpath exports', () => {
+  it('is exposed as the ./report, ./report/digest and ./report/selectors subpath exports', async () => {
     expect(packageJson.exports?.['./report']).toEqual({
       types: './dist/report.d.ts',
       default: './dist/report.js'
@@ -26,6 +26,13 @@ describe('report SDK entry point', () => {
       types: './dist/report-digest.d.ts',
       default: './dist/report-digest.js'
     })
+    /* The Step selector alone, so a browser bundle takes it without the report schemas. */
+    expect(packageJson.exports?.['./report/selectors']).toEqual({
+      types: './dist/report-selectors.d.ts',
+      default: './dist/report-selectors.js'
+    })
+    const selectors = await import('../src/report-selectors.js')
+    expect(Object.keys(selectors).sort()).toEqual(['operationPlaces', 'permissionTargetSelectsOperation'])
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {

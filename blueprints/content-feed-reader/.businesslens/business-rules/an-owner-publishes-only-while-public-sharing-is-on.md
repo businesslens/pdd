@@ -9,7 +9,7 @@ permits:
     when: [{ entity: reader-settings, fact: Public sharing enabled, is: true }]
 ---
 
-# Public sharing can be switched off
+# An owner publishes only while public sharing is on
 
 A collection becomes published only while public sharing is enabled for the
 Product. While it is switched off, an owner who tries to publish is told that

@@ -21,6 +21,7 @@ import type {
   ReportScreen,
   ReportSupportingSection
 } from 'businesslens/report'
+import { operationPlaces, permissionTargetSelectsOperation } from 'businesslens/report/selectors'
 
 /** Split an authored `cardinality` into its two ends. */
 export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {
@@ -307,8 +308,6 @@ export interface EntityArcView {
   capabilityIds: string[]
   capabilityScenarioIds: string[]
   journeyScenarioIds: string[]
-  /** Rules with grants that select this operation. */
-  ruleIds: string[]
   /** A Rule closing this operation to everyone; the arc is drawn as forbidden. */
   forbiddenByRuleIds: string[]
   coEffects: Array<{ entityId: string, effect: 'creates' | 'changes' | 'removes', to: string }>
@@ -383,6 +382,8 @@ export interface CapabilityView extends ResourceBase {
   journeyIds: string[]
   screenIds: string[]
   ruleIds: string[]
+  /** Rules governing Steps it owns — its Scenarios' and the Journey Steps naming it — through an Entity target. Derived. */
+  stepRuleIds: string[]
   interfaceIds: string[]
   experienceIds: string[]
 }
@@ -403,6 +404,8 @@ export interface JourneyView extends ResourceBase {
   leavesBehind: ScenarioStepEntityView[]
   screenIds: string[]
   ruleIds: string[]
+  /** Rules governing its Scenarios' Steps through an Entity target. Derived. */
+  stepRuleIds: string[]
   interfaceIds: string[]
   experienceIds: string[]
   /** Total steps across the Journey's Scenarios — a rough weight for layout. */
@@ -453,6 +456,8 @@ export interface ScenarioView extends ResourceBase {
       routeId: string
       context: ResolvedContextView
     }>
+    /** The Rules whose Entity targets select this Step, each with the entries it selects. Derived. */
+    governedBy: StepRuleView[]
   }>
   decisionPoints: ReportDecisionPoint[]
   outcome: string
@@ -460,6 +465,17 @@ export interface ScenarioView extends ResourceBase {
   result: 'achieved' | 'not-achieved' | ''
   screenIds: string[]
   ruleIds: string[]
+  /** Rules governing any of its Steps through an Entity target. Derived. */
+  stepRuleIds: string[]
+}
+
+/** A Rule governing one Step: which of the Step's Entity entries its targets select. */
+export interface StepRuleView {
+  ruleId: string
+  /** Indexes into the Step's `entities`. */
+  entries: number[]
+  /** Indexes into the Rule's `appliesTo`: the targets selecting those entries. */
+  targets: number[]
 }
 
 export interface ResolvedContextView {
@@ -514,6 +530,11 @@ export interface RuleView extends ResourceBase {
   scenarioIds: string[]
   derivedCapabilityIds: string[]
   derivedJourneyIds: string[]
+  /** What owns the Steps its Entity targets select. Derived. */
+  stepCapabilityIds: string[]
+  stepJourneyIds: string[]
+  stepCapabilityScenarioIds: string[]
+  stepJourneyScenarioIds: string[]
   contexts: ContextView[]
   appliesTo: ReportBusinessRuleTarget[]
 }
@@ -1109,7 +1130,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
   const scenariosByState = new Map<string, { capability: string[], journey: string[] }>()
   const changedBy = new Map<string, Set<string>>()
   const readBy = new Map<string, Set<string>>()
-  type ArcAccumulator = Omit<EntityArcView, 'capabilityIds' | 'capabilityScenarioIds' | 'journeyScenarioIds' | 'ruleIds' | 'forbiddenByRuleIds' | 'coEffects'> & {
+  type ArcAccumulator = Omit<EntityArcView, 'capabilityIds' | 'capabilityScenarioIds' | 'journeyScenarioIds' | 'forbiddenByRuleIds' | 'coEffects'> & {
     capabilityIds: Set<string>
     capabilityScenarioIds: Set<string>
     journeyScenarioIds: Set<string>
@@ -1172,6 +1193,56 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
   }
 
 
+  /*
+   * The Steps each Rule's Entity targets select — the format's own reading ("a
+   * target selects; a grant conditions"), decided by the selector lint and the
+   * report validator share. A Step happens in its own places, or in its
+   * Scenario's where it names none. Every Rule is read, not only permissions:
+   * an invariant on a thing governs every Step that touches it the same way.
+   */
+  const stepRuleKey = (scenario: ReportCapabilityScenario | ReportJourneyScenario, index: number) =>
+    `${isCapabilityScenario(scenario) ? 'capability' : 'journey'}\u0000${scenario.id}\u0000${index}`
+  const governedSteps = new Map<string, StepRuleView[]>()
+  type StepOwners = { capabilityIds: Set<string>, journeyIds: Set<string>, capabilityScenarioIds: Set<string>, journeyScenarioIds: Set<string> }
+  const stepOwnersByRule = new Map<string, StepOwners>()
+  const entityTargetsByRule = model.businessRules.map(rule => ({
+    id: rule.id,
+    targets: rule.appliesTo.flatMap((target, index) => target.type === 'entity' ? [{
+      index,
+      entityId: target.entityId,
+      effect: target.effect,
+      from: target.from,
+      to: target.to,
+      facts: target.facts,
+      contextPlaces: target.contexts.map(context => context.placeId)
+    }] : [])
+  })).filter(rule => rule.targets.length)
+  for (const scenario of allReportScenarios) {
+    const places = [...new Set(scenario.steps.flatMap(step => step.contexts.map(context => context.placeId)))]
+    scenario.steps.forEach((step, index) => {
+      const operations = step.entities.map(entry => ({
+        label: '', actorId: step.actorId ?? null, unattended: false, entityId: entry.entityId, alias: entry.as ?? null,
+        effect: entry.effect, from: entry.from ?? null, to: entry.to ?? null, facts: entry.facts,
+        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places)
+      }))
+      for (const rule of entityTargetsByRule) {
+        const selecting = rule.targets.filter(target => operations.some(operation => permissionTargetSelectsOperation(target, operation)))
+        if (!selecting.length) continue
+        const entries = operations.flatMap((operation, entry) => selecting.some(target => permissionTargetSelectsOperation(target, operation)) ? [entry] : [])
+        const key = stepRuleKey(scenario, index)
+        governedSteps.set(key, [...(governedSteps.get(key) ?? []), { ruleId: rule.id, entries, targets: selecting.map(target => target.index) }])
+        const owners = stepOwnersByRule.get(rule.id) ?? { capabilityIds: new Set(), journeyIds: new Set(), capabilityScenarioIds: new Set(), journeyScenarioIds: new Set() }
+        const owner = scenarioOwner(scenario, step)
+        if (owner) owners.capabilityIds.add(owner)
+        if (isCapabilityScenario(scenario)) owners.capabilityScenarioIds.add(scenario.id)
+        else { owners.journeyScenarioIds.add(scenario.id); owners.journeyIds.add(scenario.journeyId) }
+        stepOwnersByRule.set(rule.id, owners)
+      }
+    })
+  }
+  const rulesOwning = (has: (owners: StepOwners) => boolean) =>
+    entityTargetsByRule.filter(rule => { const owners = stepOwnersByRule.get(rule.id); return owners ? has(owners) : false }).map(rule => rule.id)
+
   const targetSelects = (
     target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>,
     entityId: string,
@@ -1184,9 +1255,10 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     && (target.effect === null || target.effect === effect)
     && (target.from === null || target.from === from)
     && (target.to === null || target.to === to)
-  const rulesSelecting = (entityId: string, effect: string, from: string, to: string, closed: boolean) =>
+  /* A Rule closing an operation to everyone: the arc is drawn as forbidden, since no Capability may make it. */
+  const rulesForbidding = (entityId: string, effect: string, from: string, to: string) =>
     model.businessRules
-      .filter(rule => rule.permits !== null && (closed ? rule.permits.length === 0 : rule.permits.length > 0)
+      .filter(rule => rule.permits !== null && rule.permits.length === 0
         && rule.appliesTo.some(target => target.type === 'entity' && targetSelects(target, entityId, effect, from, to)))
       .map(rule => rule.id)
 
@@ -1200,8 +1272,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       capabilityIds: [...arc.capabilityIds].sort(),
       capabilityScenarioIds: [...arc.capabilityScenarioIds],
       journeyScenarioIds: [...arc.journeyScenarioIds],
-      ruleIds: rulesSelecting(entity.id, arc.effect, arc.from, arc.to, false),
-      forbiddenByRuleIds: rulesSelecting(entity.id, arc.effect, arc.from, arc.to, true),
+      forbiddenByRuleIds: rulesForbidding(entity.id, arc.effect, arc.from, arc.to),
       coEffects: [...arc.coEffects.values()]
     }))
     const produced = new Set(arcs.map(arc => arc.to).filter(Boolean))
@@ -1338,6 +1409,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       journeyIds: journeysByCapability.get(capability.id) || [],
       screenIds: screensByCapability.get(capability.id) || [],
       ruleIds: rulesByCapability.get(capability.id) || [],
+      stepRuleIds: rulesOwning(owners => owners.capabilityIds.has(capability.id)),
       interfaceIds: unique(contexts.map(context => context.interfaceId)),
       experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean))
     }
@@ -1358,7 +1430,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
   const scenarioSteps = (
     scenario: ReportCapabilityScenario | ReportJourneyScenario
   ): ScenarioView['steps'] =>
-    scenario.steps.map(step => ({
+    scenario.steps.map((step, index) => ({
       text: step.text,
       stepKind: step.kind,
       actorId: step.actorId ?? '',
@@ -1374,7 +1446,8 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       contexts: step.contexts.map(context => ({
         routeId: context.routeId,
         context: placeOf(context.placeId)
-      }))
+      })),
+      governedBy: governedSteps.get(stepRuleKey(scenario, index)) ?? []
     }))
 
   const journeys: JourneyView[] = model.journeys.map((journey: ReportJourney) => {
@@ -1414,6 +1487,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
         ...(rulesByJourney.get(journey.id) || []),
         ...scenarioIds.flatMap(id => rulesByScenario.get(id) || [])
       ]),
+      stepRuleIds: rulesOwning(owners => owners.journeyIds.has(journey.id)),
       interfaceIds: unique(contexts.map(context => context.interfaceId)),
       experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean)),
       stepCount: journeyScenarios.reduce((total, scenario) => total + scenario.steps.length, 0)
@@ -1454,7 +1528,8 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       edgeCases: scenario.edgeCases,
       result: '',
       screenIds: screensByScenario.get(scenario.id) || [],
-      ruleIds: rulesByScenario.get(scenario.id) || []
+      ruleIds: rulesByScenario.get(scenario.id) || [],
+      stepRuleIds: unique(steps.flatMap(step => step.governedBy.map(item => item.ruleId)))
     }
   })
 
@@ -1492,7 +1567,8 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       edgeCases: scenario.edgeCases,
       result: scenario.result,
       screenIds: screensByScenario.get(scenario.id) || [],
-      ruleIds: rulesByScenario.get(scenario.id) || []
+      ruleIds: rulesByScenario.get(scenario.id) || [],
+      stepRuleIds: unique(steps.flatMap(step => step.governedBy.map(item => item.ruleId)))
     }
   })
 
@@ -1577,6 +1653,10 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       journeyScenarioIds: relations.journeyScenarioIds,
       scenarioIds: [...relations.capabilityScenarioIds, ...relations.journeyScenarioIds],
       derivedCapabilityIds: relations.derivedCapabilityIds,
+      stepCapabilityIds: [...(stepOwnersByRule.get(rule.id)?.capabilityIds ?? [])],
+      stepJourneyIds: [...(stepOwnersByRule.get(rule.id)?.journeyIds ?? [])],
+      stepCapabilityScenarioIds: [...(stepOwnersByRule.get(rule.id)?.capabilityScenarioIds ?? [])],
+      stepJourneyScenarioIds: [...(stepOwnersByRule.get(rule.id)?.journeyScenarioIds ?? [])],
       derivedJourneyIds: relations.derivedJourneyIds,
       contexts: relations.contexts,
       appliesTo: rule.appliesTo
@@ -1819,6 +1899,8 @@ export interface ScenarioStepRow {
   routeNeutral: boolean
   /** One cell per route, in authored route order. */
   cells: ScenarioStepCell[]
+  /** The Rules whose Entity targets select this Step. */
+  ruleIds: string[]
 }
 
 export interface ScenarioStepMatrix {
@@ -1851,7 +1933,8 @@ export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
       capabilityId: step.capabilityId,
       mentions: step.entities,
       routeNeutral: step.contexts.length === 0,
-      cells
+      cells,
+      ruleIds: step.governedBy.map(item => item.ruleId)
     }
   })
   return { routes: scenario.routes, steps }

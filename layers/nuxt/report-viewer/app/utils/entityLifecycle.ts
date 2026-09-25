@@ -22,19 +22,16 @@ function stateNode(entity: EntityView, data: LifecycleState): DiagramNode {
   }
 }
 
-/** One Rule with grants selecting an arc, read the way the Rule's own page reads it. */
-export interface LifecycleArcRule {
-  id: string
-  title: string
-  /** Each grant as a full sentence, its `when` conditions included — never the bare who, which reads "the Shopper" where the Rule says "the Shopper while Pending". */
-  grants: string[]
-}
-
+/*
+ * A change is drawn by what makes it — its Capabilities. The Rules that govern
+ * it are read on the Steps they select, and so on those Steps' Scenarios and
+ * Capabilities, never on the transition: a Rule governs Steps, and an arc is
+ * only where some of them land. A change no one may make is the exception: no
+ * Capability makes it, so its forbidding Rule is all there is to draw.
+ */
 export interface LifecycleArcLabel {
   /** The Capabilities whose Steps draw the arc, by title. */
   capabilities: string[]
-  /** Every Rule with grants selecting the arc, each kept apart. */
-  rules: LifecycleArcRule[]
   /** "also creates Refund" — what the same Steps do to other things. */
   coEffects: string[]
   forbidden: boolean
@@ -43,14 +40,9 @@ export interface LifecycleArcLabel {
 /** The words an arc carries, shared by the canvas edge and the list under it. */
 export function lifecycleArcLabel(workspace: ReportWorkspace, entity: EntityView, arcIndex: number): LifecycleArcLabel {
   const arc = entity.arcs[arcIndex]!
-  const titleOf = (kind: 'capability' | 'entity' | 'rule', id: string) => resolveResource(workspace, kind, id)?.title ?? id
-  const rules = arc.ruleIds.flatMap((id) => {
-    const rule = resolveResource(workspace, 'rule', id)
-    return rule?.kind === 'rule' ? [{ id, title: rule.title, grants: rule.grants.map(grant => grant.sentence) }] : []
-  })
+  const titleOf = (kind: 'capability' | 'entity', id: string) => resolveResource(workspace, kind, id)?.title ?? id
   return {
     capabilities: arc.capabilityIds.map(id => titleOf('capability', id)),
-    rules,
     coEffects: arc.coEffects.map(co => `also ${co.effect} ${titleOf('entity', co.entityId)}${co.to ? ` → ${co.to}` : ''}`),
     forbidden: arc.forbiddenByRuleIds.length > 0
   }
@@ -58,12 +50,6 @@ export function lifecycleArcLabel(workspace: ReportWorkspace, entity: EntityView
 
 /** A change no one may make is marked, not attributed: no Capability draws it. */
 const FORBIDDEN_BADGE: DiagramEdgeBadge = { icon: 'i-lucide-ban', text: 'Forbidden' }
-
-/** The one word the canvas carries for a restriction, and how many Rules stand behind it when more than one does. */
-export function lifecycleRestrictionMarker(label: LifecycleArcLabel): string {
-  if (!label.rules.length) return ''
-  return label.rules.length > 1 ? `restricted by ${label.rules.length} Rules` : 'restricted'
-}
 
 /** The canvas edge drawn for one arc, so the list under the machine can tell a listed arc from a drawn one. */
 export function lifecycleArcEdgeId(entityId: string, arc: Pick<EntityArcView, 'key'>): string {
@@ -116,18 +102,13 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
   const caption = (label: LifecycleArcLabel): string => {
     if (label.forbidden) return 'forbidden'
     const [first = '', ...rest] = label.capabilities
-    const capabilities = rest.length ? `${first} +${rest.length}` : first
-    const marker = lifecycleRestrictionMarker(label)
-    return marker ? `${capabilities} · ${marker}` : capabilities
+    return rest.length ? `${first} +${rest.length}` : first
   }
-  /* The same words as badges: the Capabilities that draw the change and the Rules restricting it, each wearing its type's mark. */
+  /* The same words as a badge wearing the Capability's mark. */
   const badges = (label: LifecycleArcLabel): DiagramEdgeBadge[] => {
     if (label.forbidden) return [FORBIDDEN_BADGE]
     const [first, ...rest] = label.capabilities
-    return [
-      ...(first ? [{ kind: 'capability' as const, text: rest.length ? `${first} +${rest.length}` : first }] : []),
-      ...(label.rules.length ? [{ kind: 'rule' as const, text: `${label.rules.length} ${label.rules.length === 1 ? 'Rule' : 'Rules'}` }] : [])
-    ]
+    return first ? [{ kind: 'capability', text: rest.length ? `${first} +${rest.length}` : first }] : []
   }
   entity.arcs.forEach((arc, index) => {
     const label = lifecycleArcLabel(workspace, entity, index)

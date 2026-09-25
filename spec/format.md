@@ -1267,8 +1267,14 @@ Total charged always equals Subtotal plus Tax minus Discount.
 ```
 
 The lead paragraph is the rule statement; `## Intent` and `## Rationale` are
-optional prose. Rationale explains the current condition or consequence that
-makes the constraint necessary; it never recounts alternative designs or why
+optional prose. The H1 states the assertion itself, about what the targets
+select: a permission names the operation and who may perform it ("Only the
+owner reads an unpublished collection"), an invariant names what always holds
+("Total charged"). A consequence of the Rule, a feature, or the mechanism that
+motivates it is not its title; it belongs in the lead or the Rationale. Read
+with only the title and `appliesTo`, the grants' who should be no surprise.
+Rationale explains the current condition or consequence that makes the
+constraint necessary; it never recounts alternative designs or why
 they were rejected. `appliesTo` is a required non-empty list of typed targets, and
 targets are additive: the Rule governs their union. Business Rule owns these
 relations; consumers derive every backlink.

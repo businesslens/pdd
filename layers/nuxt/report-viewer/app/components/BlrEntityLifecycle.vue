@@ -2,7 +2,7 @@
 /** Rows nests outgoing changes under their starting States; Graph inspects the same lifecycle. */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
-import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle, lifecycleRestrictionMarker } from '../utils/entityLifecycle'
+import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle } from '../utils/entityLifecycle'
 
 const props = defineProps<{ workspace: ReportWorkspace, resource: EntityView }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], ready: [] }>()
@@ -40,7 +40,7 @@ const arcs = computed(() => props.resource.arcs.map((arc, index) => {
   const label = lifecycleArcLabel(props.workspace, props.resource, index)
   return { ...arc, id: lifecycleArcEdgeId(props.resource.id, arc), title: lifecycleArcTitle(arc),
     destination: arc.effect === 'removes' ? 'Removed' : arc.to ? arc.to === arc.from ? 'State unchanged' : arc.to : 'Information changed',
-    capabilities: label.capabilities.join(', '), marker: lifecycleRestrictionMarker(label),
+    capabilities: label.capabilities.join(', '),
     drawn: drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc)) }
 }))
 const groups = computed(() => groupEntityLifecycle(props.resource, arcs.value))
@@ -63,11 +63,26 @@ const inspectorHeading = useTemplateRef('inspectorHeading')
 const inspectorPane = useTemplateRef('inspectorPane')
 let returnFocus: HTMLElement | null = null
 
-function inspect(key: string) {
+/* The part of a change the reader reached for from its graph label: its Capability, or — from a Forbidden mark — the Rule forbidding it. */
+const highlight = ref<'capability' | 'rule' | null>(null)
+let highlightTimer: ReturnType<typeof setTimeout> | undefined
+function inspect(key: string, badge?: string) {
   if (!inspectorPane.value?.contains(document.activeElement)) returnFocus = document.activeElement as HTMLElement | null
   reading.value.selected = key
-  void nextTick(() => { inspectorPane.value?.scrollTo(0, 0); inspectorHeading.value?.focus({ preventScroll: true }) })
+  clearTimeout(highlightTimer)
+  highlight.value = badge === 'capability' ? 'capability' : badge === 'mark' ? 'rule' : null
+  void nextTick(() => {
+    const pane = inspectorPane.value
+    pane?.scrollTo(0, 0)
+    inspectorHeading.value?.focus({ preventScroll: true })
+    pane?.scrollIntoView({ block: 'nearest' })
+    const part = highlight.value && pane?.querySelector(`[data-change-part="${highlight.value}"]`)
+    if (!part) { highlight.value = null; return }
+    part.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    highlightTimer = setTimeout(() => { highlight.value = null }, 1600)
+  })
 }
+onBeforeUnmount(() => clearTimeout(highlightTimer))
 function closeInspector() {
   reading.value.selected = null
   if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
@@ -181,7 +196,6 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
                         <span class="min-w-0 flex-1">
                           <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span class="text-[15px] font-semibold tracking-tight text-highlighted">{{ arc.destination }}</span>
-                            <span v-if="arc.marker" class="text-xs text-muted">{{ arc.marker }}</span>
                             <span v-if="arc.forbiddenByRuleIds.length" class="text-xs text-primary">forbidden by Rule</span>
                           </span>
                           <span v-if="!reading.expandedChanges.includes(arc.id) && arc.capabilities" class="mt-1 flex items-center gap-1.5 text-sm text-muted">
@@ -206,7 +220,7 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
           <h3 ref="inspectorHeading" tabindex="-1" class="pt-1 text-sm font-semibold text-highlighted outline-none">{{ selectedState?.name ?? selectedArc?.title ?? 'Forbidden change' }}</h3>
           <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close lifecycle details" @click="closeInspector" />
         </div>
-        <BlrLifecycleChangeDetails v-if="selectedArc" :workspace="workspace" :resource="resource" :change="selectedArc" @open="emit('open', $event)" />
+        <BlrLifecycleChangeDetails v-if="selectedArc" :workspace="workspace" :resource="resource" :change="selectedArc" :highlight="highlight" @open="emit('open', $event)" />
         <div v-else-if="selectedState" class="space-y-4">
           <BlrProse :text="selectedState.content" />
           <p v-if="!selectedState.reached" class="text-sm text-muted">No Scenario leaves it in this state.</p>

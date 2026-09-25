@@ -216,7 +216,8 @@ costed already.
   carries the resource's explanation and contextual links, including an Entity's
   Information kept. Scenarios follows for a Capability or
   Journey, Lifecycle for an Entity with States. Lifecycle switches between Rows
-  and Graph; selecting a change reads its Rules and supporting Scenarios, and
+  and Graph; selecting a change reads what makes it and its supporting
+  Scenarios — the Rules governing it are read on the Steps they select — and
   selecting a State reads its definition and the Scenarios that leave it there.
   Rows uses the collection list's parent/child styling: each State contains its
   definition and outgoing changes, including States with none. Creation and

@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
+      "businesslens/report/selectors": ["./src/report-selectors.ts"],
       "businesslens/report": ["./src/report.ts"]
     },
     "lib": ["ES2022"],

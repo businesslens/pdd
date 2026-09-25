@@ -11,6 +11,10 @@ const actor = computed(() => {
   return resource?.kind === 'entity' ? resource : undefined
 })
 const capability = computed(() => stepCapability(props.workspace, props.scenario, props.step))
+const rules = computed(() => props.step.governedBy.flatMap(({ ruleId }) => {
+  const rule = props.workspace.byKey.get(`rule:${ruleId}`)
+  return rule?.kind === 'rule' ? [rule] : []
+}))
 const open = (key: string) => { const resource = props.workspace.byKey.get(key); if (resource) emit('open', resource) }
 </script>
 
@@ -61,6 +65,16 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
       <div v-if="capability" class="blr-guided-field">
         <dt>Capability</dt>
         <dd><BlrTopologyResource :resource="capability" @open="open" /></dd>
+      </div>
+
+      <!-- The Rules whose Entity targets select this Step: where the governed change actually happens. -->
+      <div v-if="rules.length" class="blr-guided-field" data-step-rules>
+        <dt>Governed by</dt>
+        <dd class="flex flex-wrap gap-1.5">
+          <BlrResourceLink v-for="rule in rules" :key="rule.key" :resource-key="rule.key" class="blr-chip" :aria-label="`Business Rule: ${rule.title}`" @open="open(rule.key)">
+            <BlrKind kind="rule" :labelled="false" size="xs" class="shrink-0" /><span class="min-w-0 truncate">{{ rule.title }}</span>
+          </BlrResourceLink>
+        </dd>
       </div>
     </dl>
   </div>

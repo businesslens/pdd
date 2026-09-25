@@ -87,7 +87,7 @@ own act, and the threshold is the store's decision rather than the Product's.
 | `appliesTo` | yes | Give at least one target. A behavioral target's `type` is `capability`, `capability-scenario`, `journey`, or `journey-scenario` with an `id`; a direct target's is `context`; an Entity target's is `entity` with an `id`. |
 | `permits` | no | Omit to make no authorization claim; `[]` to forbid the selected operation to everyone; a list of grants to permit it through any one of them. Valid only when every target is an Entity target. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 and lead paragraph | yes | Name the Rule and state its durable assertion. |
+| H1 and lead paragraph | yes | Title the Rule with its assertion about what it selects — for a permission, the operation and who may perform it; for an invariant, what always holds. A consequence, a feature, or the mechanism behind the Rule belongs in the lead or `## Rationale`, never the title. The lead states the durable assertion. |
 | `## Intent` | no | Explain the outcome the Rule protects. |
 | `## Rationale` | no | Explain the current condition or consequence that makes the constraint necessary. Do not recount alternative designs or why they were rejected. |
 

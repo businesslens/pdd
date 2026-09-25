@@ -174,7 +174,7 @@ describe('collection rows that expand', () => {
     const [place] = entities.children[0].children
     expect(place.id).toBe(`${entities.children[0].id}>${place.resource.key}`)
     expect(place.note).toBe(resourceAncestors(workspace, place.resource).map((item: any) => item.title).join(' · ') || undefined)
-    const open = workspace.rules.find((item: any) => item.id === 'unlisting-revokes-anonymous-access')
+    const open = workspace.rules.find((item: any) => item.id === 'only-the-owner-reads-an-unpublished-collection')
     expect(ruleScope(workspace, open)[0].children.map((node: any) => [node.note, node.children.length])).toEqual([['reads', 0]])
     /* A Context target is the place itself; a narrowed behaviour holds only the places named. Groups follow rail order. */
     const screen = workspace.screens.find((item: any) => item.id === 'reader-web::personal-library::source-list')
