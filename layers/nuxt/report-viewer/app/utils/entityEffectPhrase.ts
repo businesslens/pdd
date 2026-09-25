@@ -32,3 +32,32 @@ export function entityEffectParts(mention: EntityEffectLike, outcome = false): E
   if (from && to) return [verb('changed'), state(from, true), { t: 'arrow' }, state(to)]
   return [verb('changed'), ...(to ? [state(to)] : [])]
 }
+
+/** What a Rule's Entity target selects: an operation, not yet done, so no tense of its own. */
+export interface EntitySelectorLike {
+  effect: EntityEffectLike['effect'] | '' | null
+  from: string | null
+  to: string | null
+}
+
+/**
+ * A Rule's selector in the words a Step's effect uses, in the present — "change
+ * to [Published]", "change [Confirmed] → [Refunded]", "read" — with the same
+ * State badges, so an operation a Rule governs reads like the Steps doing it.
+ */
+export function entitySelectorParts(selector: EntitySelectorLike): EntityEffectPart[] {
+  const from = selector.from ?? ''
+  const to = selector.to ?? ''
+  const state = (text: string, isFrom = false): EntityEffectPart => isFrom ? { t: 'state', text, from: true } : { t: 'state', text }
+  const verb = (text: string): EntityEffectPart => ({ t: 'verb', text })
+  const moves = (lead: string): EntityEffectPart[] => from && to
+    ? [verb(lead), state(from, true), { t: 'arrow' }, state(to)]
+    : to ? [verb(`${lead} to`), state(to)] : from ? [verb(`${lead} from`), state(from, true)] : [verb(lead)]
+  switch (selector.effect) {
+    case 'creates': return [verb('create'), ...(to ? [verb('as'), state(to)] : [])]
+    case 'removes': return [verb('remove'), ...(from ? [verb('from'), state(from, true)] : [])]
+    case 'reads': return [verb('read')]
+    case 'changes': return moves('change')
+    default: return from || to ? moves('any operation') : [verb('any operation')]
+  }
+}

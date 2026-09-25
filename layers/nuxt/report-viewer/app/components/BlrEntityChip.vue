@@ -18,6 +18,7 @@
  * lines up with the name rather than with the bottom of an icon.
  */
 import type { EntityView } from '../utils/reportWorkspace'
+import BlrResourceLink from './BlrResourceLink.vue'
 import { entityFacetOf } from '../utils/reportWorkspace'
 
 const props = defineProps<{
@@ -26,6 +27,8 @@ const props = defineProps<{
   label?: string
   /** Dashed and lighter: the Entity is only read here. */
   muted?: boolean
+  /** Drawn as the chip without being a link, inside a row that is itself one. */
+  static?: boolean
 }>()
 
 const emit = defineEmits<{ select: [entity: EntityView] }>()
@@ -34,13 +37,14 @@ const text = computed(() => props.label ?? props.entity.title)
 </script>
 
 <template>
-  <BlrResourceLink
-    :resource-key="entity.key"
+  <component
+    :is="static ? 'span' : BlrResourceLink"
+    :resource-key="static ? undefined : entity.key"
     class="inline-flex max-w-full items-baseline gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs leading-[1.125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     :class="muted
       ? 'border-dashed border-muted bg-transparent font-normal text-muted hover:border-default hover:text-default'
       : 'border-default bg-elevated/60 font-medium text-highlighted hover:border-accented hover:bg-elevated'"
-    :aria-label="`Open Entity ${text}`"
+    :aria-label="static ? undefined : `Open Entity ${text}`"
     data-entity-chip
     :data-muted="muted || undefined"
     @open="emit('select', entity)"
@@ -54,5 +58,5 @@ const text = computed(() => props.label ?? props.entity.title)
     />
     <span class="min-w-0 truncate">{{ text }}</span>
     <slot />
-  </BlrResourceLink>
+  </component>
 </template>

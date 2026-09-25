@@ -18,7 +18,7 @@ const rules = computed(() => attachedRules(props.workspace, props.resource))
 <template>
   <div v-if="rules.length" class="space-y-2" data-attached-rules>
     <BlrResourceCard
-      v-for="{ rule, hookLabel, hook } in rules"
+      v-for="{ rule, hookLabel, hook, parts } in rules"
       :key="rule.key"
       :workspace="workspace"
       :resource="rule"
@@ -26,6 +26,25 @@ const rules = computed(() => attachedRules(props.workspace, props.resource))
       :hook="hook"
       :metrics="false"
       @open="emit('open', $event)"
-    />
+    >
+      <!-- An operation reads with its Entity chip and State badges, as the Rule's own Who may draws it. -->
+      <template v-if="parts.some(part => part.operations.length)" #hook>
+        <template v-for="(part, index) in parts" :key="index">
+          <span v-if="index" class="text-dimmed">{{ part.label.toLowerCase() }}</span>
+          <template v-if="part.operations.length">
+            <BlrRuleOperation
+              v-for="(operation, position) in part.operations"
+              :key="position"
+              :workspace="workspace"
+              :target="operation.target"
+              :places="operation.places"
+              :entity="operation.entity"
+              static
+            />
+          </template>
+          <span v-else>{{ part.text }}</span>
+        </template>
+      </template>
+    </BlrResourceCard>
   </div>
 </template>

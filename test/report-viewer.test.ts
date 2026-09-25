@@ -1054,13 +1054,27 @@ describe('stable Product Report', () => {
     expect(source('app/components/BlrRuleScope.vue')).toContain('<BlrResourceTree')
     expect(source('app/components/BlrRuleScope.vue')).not.toContain('data-rule-grants')
     expect(body).toContain('data-rule-grants')
+    /* Who may lists each operation as an Entity chip with State badges, and each grant from its parts. */
+    expect(body).toContain('<BlrRuleOperation :workspace="workspace" :target="target"')
+    expect(body).toContain('<BlrRuleGrant :workspace="workspace" :grant="grant"')
+    expect(body).not.toContain('grant.sentence')
+    const grant = source('app/components/BlrRuleGrant.vue')
+    for (const part of ['grant.actorIds', 'grant.related', 'grant.self', 'grant.unattended', 'grant.configuredByEntityId', '<BlrEntityState v-if="item.condition.state !== null"']) expect(grant).toContain(part)
+    expect(source('app/components/BlrAttachedRules.vue')).toContain('<BlrRuleOperation')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrAttachedRules')
     /* The tab lists Rules as the collection does, without the Rule's own reach metrics. */
     expect(source('app/components/BlrAttachedRules.vue')).toContain(':metrics="false"')
-    /* A fact a Rule governs names each Rule on a chip of its own, on a line under the fact. */
+    /* A fact a Rule governs carries one badge per Rule naming the kind of claim; the claim opens from it. */
     expect(body).toContain('data-fact-rules')
     expect(body).toContain('v-for="id in fact.ruleIds"')
-    expect(body).toContain('{{ factRuleTitles([id]) }}</span>')
+    expect(body).toContain('<BlrFactRuleBadge v-if="factRule(id)"')
+    expect(body).not.toContain('col-span-2')
+    const badge = source('app/components/BlrFactRuleBadge.vue')
+    for (const part of ['<UPopover', '<BlrFactRule ', "'Constraint'", '`${NOUNS[effect.value]} restricted`', '`Never ${PAST[effect.value]}`']) expect(badge).toContain(part)
+    const factRule = source('app/components/BlrFactRule.vue')
+    for (const part of ['only by', 'Never', 'rule.statement', '<BlrRuleGrant', '<BlrContextPlace', 'resource-key="rule.key"']) expect(factRule).toContain(part)
+    /* A fact reads as one tag wherever it stands: a Step cites it, a Screen presents it, a Rule governs it. */
+    for (const component of ['BlrStepEntity.vue', 'BlrResourceBody.vue', 'BlrRuleOperation.vue']) expect(source(`app/components/${component}`)).toContain('<BlrFactTag')
   })
 
   it('keeps Context where it answers an Overview question', () => {
@@ -1598,6 +1612,15 @@ describe('Screens on the v15 wire', () => {
     expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }, true))).toBe('removed')
     expect(words(entityEffectParts({ effect: 'reads', from: '', to: '' }))).toBe('read')
     expect(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }).filter((part: any) => part.from)).toHaveLength(1)
+    /* A Rule's selector reads in the present, with the same badges, never as a string naming an Entity and a State. */
+    const { entitySelectorParts } = await import(entityEffectPhraseModulePath)
+    expect(words(entitySelectorParts({ effect: 'changes', from: null, to: 'Published' }))).toBe('change to [Published]')
+    expect(words(entitySelectorParts({ effect: 'changes', from: 'Confirmed', to: 'Refunded' }))).toBe('change [Confirmed] → [Refunded]')
+    expect(words(entitySelectorParts({ effect: 'changes', from: 'Cancelled', to: null }))).toBe('change from [Cancelled]')
+    expect(words(entitySelectorParts({ effect: 'creates', from: null, to: 'Pending' }))).toBe('create as [Pending]')
+    expect(words(entitySelectorParts({ effect: 'removes', from: null, to: null }))).toBe('remove')
+    expect(words(entitySelectorParts({ effect: 'reads', from: null, to: null }))).toBe('read')
+    expect(words(entitySelectorParts({ effect: null, from: null, to: null }))).toBe('any operation')
     /* A Capability's moves are never joined into a run: each is one row, in its Entity's Lifecycle Rows order. */
     const lifecycleUtility = '../layers/nuxt/report-viewer/app/utils/entityLifecycle.ts'
     const { lifecycleRowOrder, lifecycleChangeAddress } = await import(lifecycleUtility)

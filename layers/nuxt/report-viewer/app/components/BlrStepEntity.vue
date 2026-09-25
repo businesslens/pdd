@@ -81,7 +81,7 @@ const factsDescription = computed(() => facts.value.length
       <BlrEntityEffect :mention="mention" :outcome="outcome" />
       <template v-if="facts.length">
         <span aria-hidden="true" class="text-dimmed">·</span>
-        <span v-for="fact in facts" :key="fact" class="blr-step-entity-fact" data-step-fact>{{ fact }}</span>
+        <BlrFactTag v-for="fact in facts" :key="fact" :name="fact" data-step-fact />
       </template>
     </span>
   </UTooltip>
@@ -89,5 +89,4 @@ const factsDescription = computed(() => facts.value.length
 
 <style scoped>
 .blr-step-entity { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.375rem; min-width: 0; max-width: 100%; font-family: var(--font-sans); }
-.blr-step-entity-fact { border-radius: 0.125rem; background: var(--ui-bg-muted); padding: 0 0.25rem; font-size: 0.75rem; color: var(--ui-text-muted); }
 </style>

@@ -46,11 +46,27 @@ export function entityOperation(target: Extract<ReportBusinessRuleTarget, { type
   return target.facts.length ? `${operation} · ${target.facts.join(', ')}` : operation
 }
 
+/** An Entity target as a hook draws it: the operation with its badges, and where it is narrowed to. */
+export interface HookOperation {
+  target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>
+  places: string[]
+  /** False where the page already is that Entity. */
+  entity: boolean
+}
+
+/** One way a Rule names a resource: its label, its text, and the operations it draws where it names one. */
+export interface AttachedRulePart {
+  label: string
+  text: string
+  operations: HookOperation[]
+}
+
 /** A Rule read from a resource it names, with how it names it. */
 export interface AttachedRule {
   rule: RuleView
   hookLabel: string
   hook: string
+  parts: AttachedRulePart[]
 }
 
 /**
@@ -66,39 +82,45 @@ export interface AttachedRule {
 export function attachedRules(workspace: ReportWorkspace, resource: AnyResourceView): AttachedRule[] {
   const titles = (places: AnyResourceView[]) => places.map(place => place.title).join(', ')
   return workspace.rules.flatMap((rule) => {
-    const found: Array<[string, string]> = []
+    const found: AttachedRulePart[] = []
+    const part = (label: string, text: string, operations: HookOperation[] = []) => found.push({ label, text, operations })
     for (const { resource: target, target: selector, contexts } of ruleAttachments(workspace, rule)) {
       const operation = selector.type === 'entity' ? entityOperation(selector) : ''
       if (target.key === resource.key) {
-        if (selector.type === 'context') found.push(['Where', 'Everything done here'])
-        else if (selector.type === 'entity') found.push(['Selects', contexts.length ? `${operation} · Only in ${titles(contexts)}` : operation])
-        else found.push(['Where', contexts.length ? `Only in ${titles(contexts)}` : 'Every supported Context'])
+        if (selector.type === 'context') part('Where', 'Everything done here')
+        else if (selector.type === 'entity') {
+          part('Selects', contexts.length ? `${operation} · Only in ${titles(contexts)}` : operation,
+            [{ target: selector, places: contexts.map(place => place.title), entity: false }])
+        } else part('Where', contexts.length ? `Only in ${titles(contexts)}` : 'Every supported Context')
       } else if ((target.kind === 'capability-scenario' || target.kind === 'journey-scenario')
         && (resource.kind === 'capability' ? target.capabilityId === resource.id && target.scenarioType === 'capability'
           : resource.kind === 'journey' && target.journeyId === resource.id && target.scenarioType === 'journey')) {
-        found.push(['On', contexts.length ? `${target.title} · Only in ${titles(contexts)}` : target.title])
+        part('On', contexts.length ? `${target.title} · Only in ${titles(contexts)}` : target.title)
       } else if (contexts.some(place => place.key === resource.key)) {
-        found.push(['Here, for', operation ? `${target.title} · ${operation}` : target.title])
+        part('Here, for', operation ? `${target.title} · ${operation}` : target.title,
+          selector.type === 'entity' ? [{ target: selector, places: [], entity: true }] : [])
       }
     }
     /* Through its Steps: an Entity target selects the Steps doing its operation, and a Capability or Journey owns those Steps. */
-    const governed = governedOperations(workspace, resource, rule.id)
-    if (governed.length) found.push(['Governs its Steps', governed.join(', ')])
+    const governed = governedTargets(workspace, resource, rule.id)
+    if (governed.length) {
+      part('Governs its Steps', governed.map(target => selectorPhrase(workspace, target)).join(', '),
+        governed.map(target => ({ target, places: target.contexts.flatMap(context => { const place = topologyPlace(workspace, context.placeId); return place ? [place.title] : [] }), entity: true })))
+    }
     if (!found.length) return []
     /* One row per Rule: the first way it names the resource leads, any other is spelled out. */
-    const [[hookLabel]] = found as [[string, string]]
-    return [{ rule, hookLabel, hook: found.map(([label, text]) => label === hookLabel ? text : `${label.toLowerCase()} ${text}`).join('; ') }]
+    const hookLabel = found[0]!.label
+    return [{ rule, hookLabel, hook: found.map(item => item.label === hookLabel ? item.text : `${item.label.toLowerCase()} ${item.text}`).join('; '), parts: found }]
   })
 }
 
 /**
- * What a Rule governs in the Steps a Capability or Journey owns — its
- * Capability Scenarios' Steps and the Journey Steps naming it, or its Journey
- * Scenarios' Steps — read as the Rule's own selectors that select them, each
- * once: "changes Collection", "reads Collection · Public address". The Steps
- * themselves are on its Scenarios.
+ * The Rule's Entity targets that select Steps a Capability or Journey owns —
+ * its Capability Scenarios' Steps and the Journey Steps naming it, or its
+ * Journey Scenarios' Steps — each once, in authored order: what the Rule
+ * governs there, read as its own selectors. The Steps are on its Scenarios.
  */
-export function governedOperations(workspace: ReportWorkspace, resource: AnyResourceView, ruleId: string): string[] {
+export function governedTargets(workspace: ReportWorkspace, resource: AnyResourceView, ruleId: string): Array<Extract<ReportBusinessRuleTarget, { type: 'entity' }>> {
   if (resource.kind !== 'capability' && resource.kind !== 'journey') return []
   const rule = workspace.byKey.get(resourceKey('rule', ruleId))
   if (rule?.kind !== 'rule') return []
@@ -108,7 +130,7 @@ export function governedOperations(workspace: ReportWorkspace, resource: AnyReso
   const indexes = [...new Set(owned.flatMap(step => step.governedBy.filter(item => item.ruleId === ruleId).flatMap(item => item.targets)))].sort((a, b) => a - b)
   return indexes.flatMap((index) => {
     const target = rule.appliesTo[index]
-    return target?.type === 'entity' ? [selectorPhrase(workspace, target)] : []
+    return target?.type === 'entity' ? [target] : []
   })
 }
 

@@ -109,10 +109,19 @@ map of Scenario moves, focused on that place — what it holds and the places on
 move in or out. Movement is read one place at a time; the collection Graph does
 not draw it.
 A Business Rule's Overview is its statement, read once as the lead. Where the
-Rule is a permission, Who may follows it, headed with the operation it permits
-where the Rule selects exactly one (“Who may change Collection to
-Published”), because the grants restate the statement in structured form. Its
-Rationale and Intent close the Overview. An Applies to tab (`applies-to`)
+Rule is a permission, Who may follows it, because the grants restate the
+statement in structured form. It lists each operation the Rule selects, one row
+per Entity target — the Entity's chip, then the operation in the present with
+the Steps' State badges (`[Collection] change to [Published]`), then its governed
+facts as fact tags and its places as a Step's Where breadcrumb — and then each grant from its parts, alternatives joined by a
+visible or: acting Entities as chips; a `related` path as words over one hop
+(`[Reader] who owns it`) and in the format's own arrows past it; the thing
+itself; the Product's own schedule; whoever a settings Entity configures; and
+each condition as while and a State badge, or when, the Entity's chip, the
+fact, the operator and the value — a threshold as its settings Entity's chip.
+A permission may target several Entities; a grant that needs one “it” — a
+`related` path, a State condition, the target's own fact — needs exactly one.
+Its Rationale and Intent close the Overview. An Applies to tab (`applies-to`)
 follows, counting the Rule's targets, drawn with the same tree rows: targets
 grouped by type in rail order. A target holds only the places the Rule itself
 names — the Contexts it narrows the target to, noted “Only in”, each noted with
@@ -127,10 +136,18 @@ before Connections, counting the Rules that name it — by targeting it or one o
 its Scenarios, or, for a place, by narrowing a target to it or targeting it as
 a Context. Each is the Business Rules collection's row — name and statement —
 whose hook line says how it names the resource: Where, Selects, On, or Here,
-for. The row carries no metrics: the Rule's reach is its own reading's. A
+for — an operation drawn as Who may draws it, the Entity left out where the page
+is that Entity. The row carries no metrics: the Rule's reach is its own reading's. A
 place's Connections list the same Rules. On an
-Entity, a fact a Rule governs names that Rule on a chip on its own line under
-the fact in Information kept; several Rules are several chips, all named. Reach through targets is not naming, so a Rule on a Capability is not
+Entity, a fact a Rule governs keeps its place in the Information kept grid and
+carries one small badge per Rule naming the kind of claim — Read restricted,
+Change restricted, Never read or changed, or Constraint for a Rule that grants
+nothing. Clicking the badge opens the claim: who alone may read or change it and
+where (`Read only by [Reader] who owns it in [Personal library › Collection
+workspace]`), that no one may, or the Rule's statement, with the Rule's chip as
+its source. The Overview signals; the Rule and the Business Rules tab explain.
+A fact reads as one tag wherever it stands: a Step cites it, a Screen presents
+it, a Rule governs it. Reach through targets is not naming, so a Rule on a Capability is not
 listed on every place that Capability is available in; the Rule reach graph
 draws that.
 An Entity target selects Steps — the format's own reading, decided by the

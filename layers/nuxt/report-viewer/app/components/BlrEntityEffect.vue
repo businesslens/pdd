@@ -4,15 +4,22 @@
  * a `BlrEntityState` badge. See `entityEffectParts` for the phrasing; the
  * Lifecycle reads its changes through this same component.
  */
-import type { EntityEffectLike } from '../utils/entityEffectPhrase'
-import { entityEffectParts } from '../utils/entityEffectPhrase'
+import type { EntityEffectLike, EntitySelectorLike } from '../utils/entityEffectPhrase'
+import { entityEffectParts, entitySelectorParts } from '../utils/entityEffectPhrase'
 
-const props = defineProps<{ mention: EntityEffectLike, outcome?: boolean }>()
-const parts = computed(() => entityEffectParts(props.mention, props.outcome))
+const props = defineProps<{
+  mention: EntityEffectLike | EntitySelectorLike
+  outcome?: boolean
+  /** A Rule's selector: the operation it governs, in the present, with the same badges. */
+  selector?: boolean
+}>()
+const parts = computed(() => props.selector
+  ? entitySelectorParts(props.mention as EntitySelectorLike)
+  : entityEffectParts(props.mention as EntityEffectLike, props.outcome))
 </script>
 
 <template>
-  <span class="blr-entity-effect" :data-effect="mention.effect">
+  <span class="blr-entity-effect" :data-effect="mention.effect || 'any'">
     <template v-for="(part, index) in parts" :key="index">
       <span v-if="part.t === 'verb'" class="blr-entity-effect-verb">{{ part.text }}</span>
       <UIcon v-else-if="part.t === 'arrow'" name="i-lucide-arrow-right" class="blr-entity-effect-arrow" aria-label="to" />

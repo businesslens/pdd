@@ -124,7 +124,9 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
         <!-- The discriminating fact. Absent rather than empty when there is none. -->
         <span v-if="presentation.hook" class="mt-1 flex min-w-0 items-baseline gap-1.5">
           <span class="shrink-0 text-xs text-dimmed">{{ presentation.hookLabel }}</span>
-          <span class="truncate text-xs font-medium text-muted">{{ presentation.hook }}</span>
+          <!-- A surface may draw the hook itself, e.g. an operation with its badges; the text stays the fallback. -->
+          <span v-if="$slots.hook" class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 text-xs font-medium text-muted"><slot name="hook" /></span>
+          <span v-else class="truncate text-xs font-medium text-muted">{{ presentation.hook }}</span>
         </span>
         <!-- Stacked: the same metrics, under the title, where a narrow column
              has no room beside it. -->

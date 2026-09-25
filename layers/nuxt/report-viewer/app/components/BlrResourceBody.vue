@@ -69,12 +69,10 @@ const presents = computed(() => props.resource.kind !== 'screen'
     })))
 
 
-function openRule(id: string) {
+const factRule = (id: string) => {
   const rule = resolveResource(props.workspace, 'rule', id)
-  if (rule) emit('select', rule)
+  return rule?.kind === 'rule' ? rule : null
 }
-const factRuleTitles = (ruleIds: string[]) =>
-  ruleIds.map(id => resolveResource(props.workspace, 'rule', id)?.title ?? id).join(', ')
 
 /*
  * One group per Entity a Capability touches, one row per distinct move with
@@ -261,25 +259,6 @@ const stepActor = (actorId: string | undefined): EntityView | undefined => {
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
   context.screenTitle || context.experienceTitle || context.interfaceTitle
 
-/**
- * The operation a permission's grants permit, where the Rule selects exactly
- * one: "change Collection to Published". Otherwise the heading stays "Who may"
- * and the Applies to tab says what is selected.
- */
-const permittedOperation = computed(() => {
-  if (props.resource.kind !== 'rule' || asRule.value.appliesTo.length !== 1) return ''
-  const [target] = asRule.value.appliesTo
-  if (target?.type !== 'entity') return ''
-  const verbs: Record<string, string> = { creates: 'create', changes: 'change', removes: 'remove', reads: 'read' }
-  const entity = resolveResource(props.workspace, 'entity', target.entityId)
-  return [
-    target.effect ? verbs[target.effect] ?? target.effect : 'act on',
-    entity?.title ?? target.entityId,
-    target.facts.length ? `(${target.facts.join(', ')})` : '',
-    target.from ? `from ${target.from}` : '',
-    target.to ? `to ${target.to}` : ''
-  ].filter(Boolean).join(' ')
-})
 
 /** True when this component would render nothing at all. One predicate, shared
     with the page composer, so the two can never disagree about a kind again. */
@@ -296,21 +275,27 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       never saw the format can tell one is wrong; an empty list is a claim of
       its own, and says so.
     -->
-    <section v-if="resource.kind === 'rule' && asRule.permits !== null" class="space-y-2" data-rule-grants>
-      <h2 class="blr-page-heading"><BlrTerm slug="who-may" :text="permittedOperation ? `Who may ${permittedOperation}` : undefined" /></h2>
+    <section v-if="resource.kind === 'rule' && asRule.permits !== null" class="space-y-3" data-rule-grants>
+      <h2 class="blr-page-heading"><BlrTerm slug="who-may" /></h2>
+      <!-- What may be done: each operation the Rule selects, as the Entity chip and the Steps' State badges. -->
+      <ul class="space-y-1.5" data-rule-operations>
+        <li v-for="(target, index) in asRule.entityTargets" :key="index" class="text-sm">
+          <BlrRuleOperation :workspace="workspace" :target="target" :contexts="target.contexts" @select="emit('select', $event)" />
+        </li>
+      </ul>
       <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
         <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
         Nobody. This operation is forbidden to everyone.
       </p>
+      <!-- Who may: each grant from its parts, alternatives joined by a visible "or". -->
       <ul v-else class="space-y-1.5">
-        <li
-          v-for="(grant, index) in asRule.grants"
-          :key="index"
-          class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default"
-        >
-          <UIcon name="i-lucide-key-round" class="mt-0.5 size-4 shrink-0 text-muted" />
-          <span>{{ grant.sentence }}</span>
-        </li>
+        <template v-for="(grant, index) in asRule.permits" :key="index">
+          <li v-if="index" aria-hidden="true" class="ps-3.5 text-xs text-muted">or</li>
+          <li class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default">
+            <UIcon name="i-lucide-key-round" class="mt-1 size-4 shrink-0 text-muted" />
+            <BlrRuleGrant :workspace="workspace" :grant="grant" :target-id="asRule.entityTargets.length === 1 ? asRule.entityTargets[0]!.entityId : ''" @select="emit('select', $event)" />
+          </li>
+        </template>
       </ul>
       <p v-if="asRule.grants.length > 1" class="blr-meta">Any one grant permits it. Every Rule selecting the same operation must also permit it.</p>
     </section>
@@ -859,7 +844,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             <BlrEntityChip v-if="entry.entity" :entity="entry.entity" @select="emit('select', $event)" />
             <span v-else class="text-default">{{ entry.title }}</span>
             <template v-if="entry.facts">
-              <UBadge v-for="fact in entry.facts" :key="fact" color="neutral" variant="outline" size="sm" class="font-normal" data-screen-fact>{{ fact }}</UBadge>
+              <BlrFactTag v-for="fact in entry.facts" :key="fact" :name="fact" data-screen-fact />
             </template>
             <span v-else class="blr-meta">no facts named</span>
           </li>
@@ -893,22 +878,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
               <span class="text-default">{{ fact.description }}</span>
             </p>
             <!--
-              A fact a Rule governs names each Rule on a chip of its own, on
-              its own line under the fact and nothing more; the Rule page is
-              the reading. Several Rules wrap as several chips, all named.
+              A fact a Rule governs carries one badge per Rule, naming the kind
+              of claim; the claim itself opens from it. The list stays a list.
             -->
             <div v-if="fact.ruleIds.length" class="flex flex-wrap gap-1.5" data-fact-rules>
-              <BlrResourceLink
-                v-for="id in fact.ruleIds"
-                :key="id"
-                :resource-key="`rule:${id}`"
-                class="blr-chip"
-                :aria-label="`Business Rule: ${factRuleTitles([id])}`"
-                data-fact-rule
-                @open="openRule(id)"
-              >
-                <BlrKind kind="rule" :labelled="false" size="xs" class="shrink-0" /><span class="min-w-0 truncate">{{ factRuleTitles([id]) }}</span>
-              </BlrResourceLink>
+              <template v-for="id in fact.ruleIds" :key="id">
+                <BlrFactRuleBadge v-if="factRule(id)" :workspace="workspace" :entity-id="asEntity.id" :fact="fact.name" :rule="factRule(id)!" @select="emit('select', $event)" />
+              </template>
             </div>
           </li>
         </ul>
