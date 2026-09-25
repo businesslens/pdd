@@ -138,7 +138,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 
 <style scoped>
 .blr-resource-panel { container-type: inline-size; }
-.blr-pane:has([data-lifecycle], [data-place-map]) { overflow: hidden; }
+.blr-pane:has([data-lifecycle]) { overflow: hidden; }
 
 /* Only a populated strip splits the header from the reading. Single-reading
    resources keep their one header border, with no empty tab row. */

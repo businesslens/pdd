@@ -10,9 +10,7 @@
  *
  * Entities draw their authored relations, Interfaces the delivery map —
  * containment with each place's Capabilities as leaves — and every other
- * collection a reach tree rooted at the Product. The UI map, places as nested
- * frames with Scenario moves as arrows, is drawn here too, but only inside a
- * place's own reading, focused on it.
+ * collection a reach tree rooted at the Product.
  */
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { resourceKey } from '../utils/reportWorkspace'
@@ -20,11 +18,10 @@ import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { ProductTopologyViewId } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
-import { deliveryMapProjection, entityRelationsProjection, filterBranches, reachTreeProjection, uiMapProjection } from '../utils/topologyProjections'
+import { deliveryMapProjection, entityRelationsProjection, filterBranches, reachTreeProjection } from '../utils/topologyProjections'
 import type { ReachKind, TopologyBranch } from '../utils/topologyProjections'
 import { diagramResource } from '../utils/diagram'
 import { topologyNeighbourhood } from '../utils/topologyFocus'
-import { uiMapDiagram, uiMapGroupIds } from '../utils/uiMap'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -48,19 +45,12 @@ const keepSubjects = (branches: TopologyBranch[]): TopologyBranch[] => branches
   .filter(item => item.resource ? inSet(item.resource) : !(item.id === 'unassigned' && props.narrowed))
   .map(item => ({ ...item, children: keepSubjects(item.children) }))
 
-const isMap = computed(() => view.value.id === 'ui-map')
-const isTree = computed(() => !isMap.value && view.value.id !== 'what-it-keeps')
+const isTree = computed(() => view.value.id !== 'what-it-keeps')
 const tree = computed(() => !isTree.value ? null
   : keepSubjects([view.value.id === 'delivery-map' ? deliveryMapProjection(props.workspace) : reachTreeProjection(props.workspace, props.kind as ReachKind)])[0]!)
-const map = computed(() => isMap.value ? uiMapProjection(props.workspace) : null)
-const places = computed(() => map.value ? keepSubjects(map.value.places) : [])
-/* Focus on the map keeps the places one move away as well as the subtree. */
-const neighbourhood = computed(() => topologyNeighbourhood(props.workspace, reading.value.focus, tree.value ? [tree.value] : places.value,
-  map.value?.moves.map(move => ({ source: move.from.key, target: move.to.key })) ?? []))
+const neighbourhood = computed(() => topologyNeighbourhood(props.workspace, reading.value.focus, tree.value ? [tree.value] : []))
 const visible = (resource: AnyResourceView) => inSet(resource) && (!neighbourhood.value || neighbourhood.value.has(resource.key))
 const shown = computed(() => tree.value ? filterBranches([tree.value], visible)[0] : undefined)
-const mapDiagram = computed(() => map.value ? uiMapDiagram(filterBranches(places.value, visible), map.value, reading.value) : null)
-const groupIds = computed(() => uiMapGroupIds(places.value))
 const diagram = computed(() => {
   const base = entityRelationsProjection(props.workspace)
   const nodes = base.nodes.filter(node => visible(props.workspace.byKey.get(node.id)!)).map(node => ({ ...diagramResource(props.workspace.byKey.get(node.id)!), ...node }))
@@ -89,8 +79,7 @@ function toggleAll(open: boolean, ids: string[]) {
 <template>
   <div class="blr-product-topology" data-collection-graph>
     <div ref="pane" class="blr-topology-reading blr-topology-reading--graph" @scroll.capture.passive="save">
-      <template v-if="isMap"><BlrDiagram v-if="mapDiagram && mapDiagram.nodes.length" :diagram="mapDiagram" :title="`${workspace.identity.title} UI map`" :viewport-key="scrollKey" @open="open" @toggle="toggle" @toggle-all="toggleAll($event, groupIds)" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
-      <template v-else-if="isTree"><BlrTopologyTree v-if="shown && shown.children.length" :tree="shown" :reading="reading" :viewport-key="scrollKey" :label="view.name" :relation="view.id === 'delivery-map' ? 'Inside' : 'Reached from'" @open="open" @toggle="toggle" @toggle-all="toggleAll" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
+      <template v-if="isTree"><BlrTopologyTree v-if="shown && shown.children.length" :tree="shown" :reading="reading" :viewport-key="scrollKey" :label="view.name" :relation="view.id === 'delivery-map' ? 'Inside' : 'Reached from'" @open="open" @toggle="toggle" @toggle-all="toggleAll" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
       <template v-else><BlrDiagram v-if="diagram.nodes.length" :diagram="diagram" title="Entity relationships" :viewport-key="scrollKey" @open="open" @ready="restore" /><p v-else class="blr-topology-empty">No Entities in this scope.</p></template>
       <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.question }}</strong></p><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
     </div>

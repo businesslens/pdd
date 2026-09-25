@@ -25,9 +25,8 @@ have no separate Screen or Scenario filter. Attached to combines exact targets a
 whole resource types in one searchable picker, with OR within the picker and AND
 with other filters. Context restrictions and inherited reach are not attachments.
 With no relationship selection, subjects without relationships remain visible. The rail lists Overview and the six collections.
-There is no view of the
-whole model: the rail names every collection with its count, and a resource's
-own connections belong to its page. Each Graph states the question it answers
+The rail names every collection with its count, and a resource's own connections
+belong to its reading. Each Graph states the question it answers
 and explains its derivation. The Developer can expand branches, narrow the
 visible resources, inspect a resource’s incoming and outgoing connections, and
 open any included resource’s reading. The selected drawing survives returning

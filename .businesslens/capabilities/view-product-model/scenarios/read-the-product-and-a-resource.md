@@ -57,14 +57,14 @@ steps:
     contexts:
       local:
         place: local-report-web::resource-reading::references
-  - text: The Developer opens a Screen that delivers it and reads its Sketch
+  - text: The Developer opens a Screen that delivers it and reads its presented facts and available Capabilities
     kind: actor
     actor: developer
     entities:
-      - { entity: screen, effect: reads, facts: [Exposure, Presents, Nesting] }
+      - { entity: screen, effect: reads, facts: [Exposure, Presents] }
     contexts:
       local:
-        place: local-report-web::resource-reading::sketch
+        place: local-report-web::resource-reading::overview
 ---
 
 # Read the Product and one resource through their readings
@@ -78,8 +78,8 @@ and a place that delivers it, without leaving the report.
 
 Each reading answers one question about the resource on screen — what it is,
 how much is covered, what is attached, what it does, what it relates to, and
-how a place that delivers it is drawn — and every link opens the next reading
-while the working view stays underneath.
+what a place that delivers it presents and makes available. Resource inspection
+preserves the working view.
 
 ## Edge cases
 

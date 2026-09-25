@@ -14,8 +14,6 @@ const props = defineProps<{
   revealSelected?: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
-/* The route a Storyboard draws, as the host keeps it. */
-const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
 
@@ -76,7 +74,7 @@ const rowGrid = computed(() => props.columns > 1
           @toggle="toggleScenario(scenario)"
           @open="emit('open', $event)"
         >
-          <BlrScenarioSteps v-model:scenario-route="scenarioRoute" :workspace="workspace" :scenario="scenario" @open="emit('open', $event)" />
+          <BlrScenarioSteps :workspace="workspace" :scenario="scenario" @open="emit('open', $event)" />
           <template #details><BlrScenarioDetails :scenario="scenario" /></template>
         </BlrScenarioSummary>
       </div>

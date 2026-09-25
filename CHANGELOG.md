@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scenario Steps can cite the facts they read or edit.
 - The Information presented, Available actions, View states and Capability boundary sections are gone, along with screenshot state labels.
 - The report shows what each Screen presents and delivers, puts each Capability and its Scenarios under the Screen that delivers them in the Interfaces tree and its Delivery map, and draws nested Screens in trees.
-- Each Interface, Experience and Screen has its own UI map, showing only the moves in and out of it.
 - Interfaces, Experiences and Screens have a Delivery tab: their own branch of the Interfaces tree, with each Capability and the Scenarios that happen there.
 - A closed branch of an Interfaces or Domains tree shows how many of each kind of resource it holds, and a place that delivers Capabilities directly or leaves them on no Screen says so once instead of on every row.
 - In the Interfaces tree and Delivery map, each place lists the Journeys passing through it, with the Journey Scenarios and Steps taken there, instead of repeating Journey Scenarios under every Capability they use.
@@ -27,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A fact governed by a Business Rule carries a badge for the kind of claim — read or change restricted, never allowed, or a constraint — that opens who alone may do it, where, or the rule it must satisfy; facts look the same in Steps, Screens and Rules.
 - The mapping and ideation skills title a Business Rule with what it asserts — for a permission, the operation and who may perform it — instead of a consequence or a feature.
 - Product Reports are now version 15 and models use folder schema 10; existing models and reports need exporting again.
-- Every Screen, Interface and Experience has a Sketch, a rough view derived from the model, and every Scenario route can be read as a Storyboard of Sketches.
 - The report says what happens to an Entity the same way everywhere: the Entity, what happened to it, then its State.
 - Resource headers take one short line to say where a resource belongs: its type, the nearest place holding it, and its Domains.
 

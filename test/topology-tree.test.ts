@@ -56,7 +56,7 @@ function verifyTree(tree: any) {
   expect(layoutTopologyTree(tree, sizes)).toEqual(graph)
 }
 
-/* The containment tree behind the Rows drawing and the UI map's frames, rooted at the Product for the layout. */
+/* The containment tree behind the Rows and Graph drawings, rooted at the Product for the layout. */
 const containmentTree = (workspace: any) => ({ id: `product:${workspace.identity.id}`, title: workspace.identity.title, children: interfaceProjection(workspace), references: [] })
 
 describe('connected containment tree', () => {

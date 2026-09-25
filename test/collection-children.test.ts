@@ -107,7 +107,7 @@ describe('collection rows that expand', () => {
     const canonical = flatten(structureChildren(workspace, owner)).filter((node: any) => node.resource?.key === shared.resource.key)
     expect(canonical).toHaveLength(1)
     expect(canonical[0].sharedFrom).toBeUndefined()
-    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'delivery', 'sketch', 'ui-map', 'connections'])
+    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'delivery', 'connections'])
     /* A Screen's own Delivery tab is its branch of the tree: its Capabilities with their Scenarios. */
     expect(structureChildren(workspace, shared.resource).map((node: any) => node.resource.key)).toEqual(shared.children.map((node: any) => node.resource.key))
     expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).toContain('delivery')

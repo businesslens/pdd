@@ -10,6 +10,12 @@ the fixtures: L4 checks `actor` Steps only and ignores Entities that act, since 
 Product or condition Step reads what the Product consults and a read of an
 Actor names a participant, not something on screen.
 
+**Scope update, 2026-09-25:** retain the branch's Product Model, validation,
+Delivery, Business Rule, permission and Lifecycle work. Remove Sketch, UI Map
+and Storyboard from the report and defer interface visualization. Earlier
+visualization proposals below are historical context, not remaining work for
+this branch. Collection graphs, matrices and Lifecycle readings remain.
+
 ## Why
 
 User experience is part of any product model, and the format already has three

@@ -236,18 +236,6 @@ costed already.
   including a Scenario's own attachments. This supersedes the limit
   of one peer tab. A view comparing resources belongs to the collection, never
   to one of them.
-- **A Sketch is derived, never authored.** A Screen, Interface or Experience
-  reading carries a Sketch tab after Overview: the same wireframe skeleton for
-  every place, drawn from what the model already says — the frame from the
-  Interface type, always-reachable Screens as the strip, presented facts as
-  placeholders grouped by Entity, facts a Step edits there as fields, exposed
-  Capabilities as actions, child Screens as tabs. A Scenario's Steps drawing
-  offers a Storyboard: one frame per Step that names a place, that place's
-  Sketch with the Step's facts and Capability lit. Both state their derivation
-  on the drawing and arrange nothing the model does not say; relative
-  placement, emphasis and grouping beyond Entity are design and are not drawn.
-  `spec/report.md` binds the derivation. Nothing about a Sketch is configurable
-  or written back.
 - **The Product's page is the report Overview** — headed `Overview` like the
   rail row that opens it and qualified by
   `Product`. Its readings are About, Coverage and References, and it never

@@ -48,5 +48,4 @@ flowchart TD
 ```
 
 Frames are containment; a wizard's arrow is its order. Movement between
-Screens is derived from Scenario Steps and drawn by the report's UI map, so
-none is drawn here.
+Screens is recorded by Scenario Steps; this reference shows containment.

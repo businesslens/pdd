@@ -25,7 +25,6 @@ export type ProductTopologyViewId =
   | 'journey-reach'
   | 'rule-reach'
   | 'delivery-map'
-  | 'ui-map'
   | 'what-it-keeps'
   | 'delivery-by-interface'
   | 'rule-attachments'
@@ -79,7 +78,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   },
   /* The Interfaces collection's Graph: containment, like the Rows tree, with
      what each place delivers as leaves, rooted at the Product like the reach
-     trees. Movement is not drawn here; it is each place's own UI map. */
+     trees. */
   {
     id: 'delivery-map',
     diagramType: 'Delivery map',
@@ -87,16 +86,6 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     question: 'Which Capabilities does each Screen deliver, through which Scenarios, inside which Experience and Interface?',
     note: 'Each Interface branches into its Experiences and Screens, nested as authored, and each Screen into the Capabilities it lists — its own, never a child\'s, so a Capability exposed on five Screens is a leaf under each — and each Capability into its own Scenarios with a Step placed exactly on that place. The Journeys passing through a place follow its Capabilities, each holding its Scenarios with a Step placed there, once, whatever Capabilities those Steps use. A Capability available in an Experience or Interface that no Screen there exposes is marked as a gap under that place; an Interface with no Screens delivers its Capabilities directly.',
     kinds: ['product', 'interface', 'experience', 'screen', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
-  },
-  /* The UI map is derived, and the Rows tree already draws containment; the
-     map draws movement inside it. */
-  {
-    id: 'ui-map',
-    diagramType: 'UI map',
-    name: 'UI map',
-    question: 'Where do Scenario Steps move between places, and what arrives from outside?',
-    note: 'Frames are containment: every Screen sits inside its parent Screen, Experience or Interface, and an Interface with no Screens is a single node. An arrow is a place change between consecutive Steps of one Scenario route that both name a place, labelled with the Capability of the Step that arrives; Steps with no Context are skipped, and the arrow names every Scenario that walks it. Entry points arrive from the Entry node outside the Product. Always reachable Screens carry a mark, never an arrow. A place no Scenario walks stays an island.',
-    kinds: ['product', 'interface', 'experience', 'screen']
   },
   {
     id: 'what-it-keeps',

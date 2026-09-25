@@ -46,40 +46,11 @@ as chips, or the Entity alone for a bare entry. A Screen's facts strip counts wh
 presents and the Capabilities it exposes. There are no Information presented,
 Available actions, View states or Capability boundary readings, and References
 carry no state badge.
-A Screen reading has a Sketch tab after Overview, and so do an Interface and an
-Experience with Screens or Capabilities to draw. A Sketch is the same skeleton
-for every Screen: the frame comes from the Interface type, always-reachable
-Screens form the strip, presented facts are placeholders grouped by Entity,
-facts a Step edits here are fields, exposed Capabilities are actions, child
-Screens are tabs. It arranges nothing the model does not say. The frame is a
-browser window for `web`, a window with a side rail for `desktop-app`, a phone
-for `mobile-app`, a terminal for `cli`, a request pane for `api`, an inbound
-request pane for `webhook`, a transcript for `messaging`, `agent` and `voice`,
-and a panel with a display for `device`; its entry line carries the entry point
-paths, and the strip lists the container's `navigation` sorted by title with
-the current Screen marked. A fact draws as a field only when a Step placed
-exactly on that Screen changes it; a bare entry is one unlabelled bar noted
-"facts not named". Hovering an action names the actor Steps placed on the
-Screen for it, and a Capability with no Step placed there draws dashed. Tabs
-follow the first Scenario route that walks two children in sequence, else the
-report's order; selecting one draws that child's own Sketch in the same
-reading, `rt=sketch/<child Screen id>` addresses it, and a trail above the
-drawing leads back. A container's Sketch is a wall of miniature Screen
-Sketches — shared Screens first on an Interface, then one group per
-Experience — each opening its Screen, with nested Screens as tabs on their
-parent's miniature; a container with no Screens lists the Capabilities
-available there as the frame would list them, inventing no command, path or
-payload. The wireframe draws only from theme tokens: hairlines in the line
-token, bars in the muted token, bordered fields and pills, underlined tabs,
-and the report's primary as the storyboard's one accent. Miniatures are the
-same markup at a smaller font. Each Sketch states its derivation in the About
-this view note below the drawing.
 Screens nest. A nested Screen appears as a child of its parent Screen in the
-Delivery tabs, in the Interfaces tree card and inside
-its parent's frame on the UI map; its header trail names the parent Screens
+Delivery tabs and the Interfaces tree card; its header trail names the parent Screens
 after the container. A Screen named in its container's `navigation` wears an
 Always reachable mark — a small anchor badge, an unreserved glyph — in those
-trees, on its map node, in its own header and in its facts strip. Navigation is
+trees, in its own header and in its facts strip. Navigation is
 never drawn as an edge.
 The Interfaces tree says what each place delivers, as ordinary items in its
 own branch, exactly as the Delivery map does: a Screen lists its own
@@ -104,10 +75,6 @@ chevrons, resource links and expansion controls. The selected resource is
 already named in the header, so each tree starts with its children. Shared
 Screens occur once under their Interface in the full tree; an Experience's
 Delivery tab shows shared references with “From” and an owner link.
-Interfaces, Experiences and Screens have a UI map tab (`ui-map`): the derived
-map of Scenario moves, focused on that place — what it holds and the places one
-move in or out. Movement is read one place at a time; the collection Graph does
-not draw it.
 A Business Rule's Overview is its statement, read once as the lead. Where the
 Rule is a permission, Who may follows it, because the grants restate the
 statement in structured form. It lists each operation the Rule selects, one row
@@ -371,7 +338,7 @@ where it left:
 | `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `applies-to`, `delivery`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `ui-map`, `scenarios`, `lifecycle` (or `lifecycle/<change>` to select one change), `rules`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `applies-to`, `delivery`, `scenarios`, `lifecycle` (or `lifecycle/<change>` to select one change), `rules`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `coverage` | `{ path: string \| null }` | No path |
@@ -490,24 +457,10 @@ text 14px regular. Step cards use the selected Guided flow layout: visible label
 Action or Condition, Who, Entity effects, Where and Capability. Where reuses the original Context breadcrumbs — Interface,
 Experience and Screen — without route-name prefixes. The Step card variant
 selector has been retired.
-Beside the Steps of an expanded Scenario, a Steps / Storyboard selector changes
-how the same Steps are drawn, with the route selector beside it when the
-Scenario has more than one route (`r`). A Storyboard is one route of one
-Scenario: one frame per Step that names a place, that place's Sketch with the
-Step's facts and Capability lit. Storyboard adds the route's frames above the
-Steps list; the set on screen is unchanged. A Step with no Context on the
-route is a narrow interstitial card carrying its text, a condition Step a note
-frame; a Step on a Screen-less place is that container's frame with the Step as
-a transcript line, `$` for an actor and output for the Product; a Product
-Step's frame wears a Product badge and lights the Entities it changes.
-Consecutive Steps on one place repeat the frame with different lighting. The
-caption is the Step's index and text, with the Capability above it on a
-Journey Scenario. Selecting a frame scrolls the Steps list to that Step, and a
-Step's number scrolls the storyboard to its frame; both honour reduced motion.
-The drawing and the selected Step are remembered per Scenario in session
-storage, as Lifecycle remembers its drawing, so they survive refresh, Back and
-route changes. The Storyboard states its derivation in the About this view
-note below the frames.
+Scenario Steps are read in authored order, with their Actors, Entity effects,
+places, Capabilities and governing Rules. Decisions, edge cases and attachments
+remain inside the Scenario reading.
+
 Resource readings and the Product Overview share Nuxt UI's link-style tabs on a
 transparent header. The slideover places the resource tab strip above its scroll
 pane, with a subtle upper divider and a full-width lower separator aligned with
@@ -575,29 +528,9 @@ leaf under an Experience or Interface for a Capability available there and on
 no Screen of its own, and an Interface with no Screens delivering directly.
 A Capability exposed on five Screens is a leaf under each.
 
-A place's UI map tab draws the UI map, and it is derived: nothing in the model
-draws it. Its frames are containment — every Screen sits inside its parent
-Screen, Experience or Interface, and an Interface with no Screens, a CLI or a
-webhook, is a single node. Its arrows come from exactly two sources. A move is
-a place change between two consecutive Steps of one Scenario route that both
-name a place, labelled with the Capability of the Step that arrives — the
-Capability Scenario's own, or the Journey Step's; a Step with no Context on that
-route is skipped rather than counted as a change, the same change walked by
-several Scenarios is one arrow whose tooltip names them all, and the label opens
-the Capability. Entry points arrive from an Entry node outside the Product,
-labelled with their paths. `navigation` is never an arrow: an always-reachable
-Screen carries its anchor mark on the node instead. A place no Scenario walks
-stays an island, which is a visible absence. Hovering a frame reads every
-arrow in or out of what it holds; a frame closes into one node that stands in
-for its contents, and the Rows tree remains the containment drawing.
-Vue Flow provides its canvas, resource styling, zoom, and pan. Collapsed branches
-show corner count badges, with the expansion choice preserved in the URL.
-Expansion, collapse, and Fit smoothly centre the visible graph after layout;
-centering is immediate when the reader prefers reduced motion.
 The renderer never runs Diagram Design or generates model-controlled HTML.
 HTML readings remain available while graph geometry loads. A locally bundled
-ELK worker arranges Entity relationships, Lifecycle and the UI map — the map as
-a hierarchy, frames sized around their contents; it loads on demand and
+ELK worker arranges Entity relationships and Lifecycle; it loads on demand and
 its returned routes and label positions are drawn by Vue Flow. Layout uses the
 measured dimensions of the rendered cards and labels. Hover never rearranges the
 graph; resizing preserves zoom, and Back and refresh restore the viewport.

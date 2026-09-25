@@ -3,7 +3,7 @@
  * Scenarios remain inside their parent; Lifecycle belongs to an Entity.
  * The host places tabs above the scrolling reading and owns navigation.
  */
-import type { AnyResourceView, EntityView, ExperienceView, InterfaceView, ReportWorkspace, ScreenView } from '../utils/reportWorkspace'
+import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 import { COLUMN_CHOICES, type ColumnChoice } from '../composables/useColumns'
@@ -38,7 +38,7 @@ const tabs = computed(() => tabsFor(props.workspace, props.resource))
 const tab = defineModel<string>('tab', { default: 'overview' })
 const active = ref<PageTabId>('overview')
 const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id === id)
-/* A tab may carry a detail after a slash: `sketch/<child Screen id>` draws that child's Sketch. */
+/* Lifecycle may carry its selected change after a slash. */
 const tabId = (value: string) => value.split('/')[0] ?? value
 const tabDetail = computed(() => tab.value.includes('/') ? tab.value.slice(tab.value.indexOf('/') + 1) : '')
 
@@ -52,10 +52,6 @@ watch([tabs, requestedChild, tab], () => {
   const requested = tabId(tab.value)
   active.value = isTab(requested) ? requested : 'overview'
 }, { immediate: true })
-
-function setSketchChild(child: string) {
-  tab.value = child ? `sketch/${child}` : 'sketch'
-}
 
 function select(id: string) {
   if (!isTab(id)) return
@@ -73,7 +69,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
 </script>
 
 <template>
-  <div class="min-w-0" :class="(current?.id === 'lifecycle' || current?.id === 'ui-map') && 'flex h-full min-h-0 flex-col'">
+  <div class="min-w-0" :class="current?.id === 'lifecycle' && 'flex h-full min-h-0 flex-col'">
     <!-- The host places the strip above the scrolling reading. It needs no
          painted sticky backdrop, and standalone use keeps it in normal flow. -->
     <Teleport :to="tabsTarget || 'body'" :disabled="!tabsTarget">
@@ -111,32 +107,15 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
       </BlrPageTabs>
     </Teleport>
 
-    <div class="min-w-0" :class="current?.id === 'lifecycle' || current?.id === 'ui-map' ? 'min-h-0 flex-1' : 'space-y-5'">
+    <div class="min-w-0" :class="current?.id === 'lifecycle' ? 'min-h-0 flex-1' : 'space-y-5'">
       <BlrScenariosList
         v-if="current?.id === 'scenarios'"
         ref="scenariosList"
-        v-model:scenario-route="scenarioRoute"
         :workspace="workspace"
         :resource="subject"
         :columns="scenarioColumns"
         :selected-key="requestedChild"
         :reveal-selected="!restorePosition"
-        @open="emit('open', $event)"
-      />
-
-      <BlrSketchReading
-        v-else-if="current?.id === 'sketch' && (subject.kind === 'screen' || subject.kind === 'interface' || subject.kind === 'experience')"
-        :workspace="workspace"
-        :resource="(subject as ScreenView | InterfaceView | ExperienceView)"
-        :child="tabDetail"
-        @update:child="setSketchChild"
-        @open="emit('open', $event)"
-      />
-
-      <BlrPlaceMap
-        v-else-if="current?.id === 'ui-map'"
-        :workspace="workspace"
-        :resource="subject"
         @open="emit('open', $event)"
       />
 

@@ -18,6 +18,13 @@ export interface TopologyBranch {
   note?: string
 }
 
+/** Name a homogeneous collection of children without repeating its resource type. */
+export function branchChildrenLabel(children: TopologyBranch[]): string {
+  const kind = children[0]?.resource?.kind
+  if (!kind || children.some(child => child.resource?.kind !== kind)) return 'branches'
+  return children.length === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural
+}
+
 export function branch(resource: AnyResourceView, children: TopologyBranch[] = []): TopologyBranch {
   return { id: resource.key, title: resource.title, resource, children, references: [] }
 }
@@ -236,62 +243,6 @@ export function deliveryMatrixProjection(workspace: ReportWorkspace): TopologyMa
     columns: workspace.interfaces,
     cells
   }
-}
-
-/** One place change, and every Scenario whose route walks it. */
-export interface UiMapMove {
-  id: string
-  from: AnyResourceView
-  to: AnyResourceView
-  capabilityId: string
-  capability?: CapabilityView
-  scenarios: ScenarioView[]
-}
-/** A place addressable from outside, with the paths that reach it. */
-export interface UiMapEntry { place: AnyResourceView, paths: string[] }
-export interface UiMap { places: TopologyBranch[], moves: UiMapMove[], entries: UiMapEntry[] }
-
-/**
- * The UI map is derived: nothing in the model draws it.
- *
- * Places are the containment tree — every Screen inside its parent Screen,
- * Experience or Interface. A move is a place change between two consecutive
- * Steps of one Scenario route that both name a place; a Step with no Context
- * on that route is skipped, not a change, so a condition Step between two
- * placed Steps does not break the walk. The move carries the Capability of the
- * Step that arrives — the Capability Scenario's own, or the Journey Step's —
- * and the same change walked by several Scenarios is one move that names them
- * all. Entry points say what is addressable from outside. `navigation` is a
- * mark on the Screen and never a move, so a place no Scenario walks is an
- * island, which is a visible absence.
- */
-export function uiMapProjection(workspace: ReportWorkspace): UiMap {
-  const moves = new Map<string, UiMapMove>()
-  for (const scenario of workspace.scenarios) {
-    const routeIds = [...new Set([...scenario.routes.map(route => route.id), ...scenario.steps.flatMap(step => step.contexts.map(context => context.routeId))])]
-    for (const routeId of routeIds) {
-      let previous: AnyResourceView | undefined
-      for (const step of scenario.steps) {
-        const context = step.contexts.find(item => item.routeId === routeId)
-        if (!context) continue
-        const place = topologyPlace(workspace, context.context.id)
-        if (!place) continue
-        if (previous && previous.key !== place.key) {
-          const capabilityId = scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId
-          const id = `${previous.key}->${place.key}:${capabilityId}`
-          const capability = workspace.byKey.get(resourceKey('capability', capabilityId))
-          const move = moves.get(id) ?? { id, from: previous, to: place, capabilityId, capability: capability?.kind === 'capability' ? capability : undefined, scenarios: [] }
-          if (!move.scenarios.includes(scenario)) move.scenarios.push(scenario)
-          moves.set(id, move)
-        }
-        previous = place
-      }
-    }
-  }
-  const entries = [...workspace.interfaces, ...workspace.experiences, ...workspace.screens]
-    .filter(place => place.entryPoints.length)
-    .map(place => ({ place, paths: [...new Set(place.entryPoints.map(point => point.path))] }))
-  return { places: interfaceProjection(workspace), moves: [...moves.values()], entries }
 }
 
 export interface TopologyMutation {

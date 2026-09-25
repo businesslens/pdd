@@ -19,8 +19,6 @@ const { topologyRelations } = await utility('topologyRelations')
 const state = await utility('topologyState')
 const { PRODUCT_TOPOLOGY_VIEWS } = await utility('productTopologyViews')
 const { MAIN_RESOURCE_KINDS, collectionKindFor } = await utility('reportDestinations')
-const { uiMapDiagram, uiMapGroupIds, UI_MAP_ENTRY } = await utility('uiMap')
-const { topologyNeighbourhood } = await utility('topologyFocus')
 const teachingRoot = join(__dirname, '..', 'blueprints', 'content-feed-reader')
 const shopRoot = join(__dirname, 'fixtures', 'fixture-shop')
 const reportOf = (root = teachingRoot) => compileReport(loadModel(root), '2026-09-07')
@@ -148,7 +146,7 @@ describe('named topology semantics', () => {
   })
 
   it('keeps ten questions with explicit diagram types and stable view IDs', () => {
-    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'delivery-map', 'ui-map', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
+    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'delivery-map', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
     expect(PRODUCT_TOPOLOGY_VIEWS.every((view: any) => view.question.endsWith('?') && view.diagramType && view.note)).toBe(true)
   })
 
@@ -463,126 +461,9 @@ describe('named topology semantics', () => {
   })
 })
 
-/*
-  The UI map is derived (plan D6): frames are containment, arrows are place
-  changes between consecutive placed Steps of one Scenario route, labelled with
-  the Capability of the Step that arrives, plus entry points from outside.
-  `navigation` marks a node and never draws an arrow, so an unwalked place is
-  an island — a visible absence, not a drawing defect.
-*/
-describe('derived UI map', () => {
-  const workspace = workspaceOf(shopRoot)
-  const map = projections.uiMapProjection(workspace)
-  const move = (from: string, to: string, capabilityId: string) => map.moves.find((item: any) => item.from.key === from && item.to.key === to && item.capabilityId === capabilityId)
-  const WEB_CATALOG = 'screen:customer-web::catalog'
-  const WEB_PRODUCT = 'screen:customer-web::storefront::product-record'
-  const WEBHOOK = 'interface:payment-webhook'
-  const ADMIN_ORDER = 'screen:admin-web::order-detail'
-
-  it('draws every place as the containment tree, nested, with a Screenless Interface as one node', () => {
-    expect(map.places).toEqual(projections.interfaceProjection(workspace))
-    const diagram = uiMapDiagram(map.places, map, state.defaultTopologyReading())
-    const keys = [...workspace.byKey.values()].filter((item: any) => ['interface', 'experience', 'screen'].includes(item.kind)).map((item: any) => item.key)
-    expect(diagram.nodes.filter((node: any) => node.id !== UI_MAP_ENTRY).map((node: any) => node.id).sort()).toEqual([...keys].sort())
-    for (const screen of workspace.screens) {
-      const node = diagram.nodes.find((item: any) => item.id === screen.key)
-      expect(node.parent).toBe(screen.parentScreenId ? `screen:${screen.parentScreenId}` : screen.contexts[0].experienceId ? `experience:${screen.contexts[0].experienceId}` : `interface:${screen.contexts[0].interfaceId}`)
-      expect(node.navigation).toBe(screen.alwaysReachable || undefined)
-    }
-    for (const node of diagram.nodes.filter((item: any) => item.id !== UI_MAP_ENTRY)) {
-      expect(node.group, node.id).toBe(diagram.nodes.some((item: any) => item.parent === node.id) || undefined)
-    }
-    expect(diagram.nodes.find((node: any) => node.id === 'interface:operator-cli')).toMatchObject({ group: undefined, parent: undefined })
-    expect(uiMapGroupIds(map.places).sort()).toEqual(diagram.nodes.filter((node: any) => node.group).map((node: any) => node.id).sort())
-  })
-
-  it('moves where a Scenario route changes place, labelled with the arriving Step\'s Capability, and never where it stays', () => {
-    const browse = move(WEB_CATALOG, WEB_PRODUCT, 'browse-catalog')
-    expect(browse.scenarios.map((item: any) => item.key)).toContain('capability-scenario:browse-catalog')
-    expect(browse.capability.title).toBe('Catalog browsing')
-    // The Journey's third Step arrives at the webhook by settling payment.
-    const settle = move(WEB_PRODUCT, WEBHOOK, 'settle-payment')
-    expect(settle.scenarios.map((item: any) => item.id)).toContain('cancel-an-order-before-fulfilment')
-    expect(move(WEB_PRODUCT, WEBHOOK, 'place-order')).toBeUndefined()
-    // A condition Step with no Context is skipped, not a change: the walk continues to the admin Screen.
-    expect(move(WEBHOOK, ADMIN_ORDER, 'cancel-order').scenarios.map((item: any) => item.id)).toContain('cancel-an-order-before-fulfilment')
-    // The mobile route of the same Scenario stays on one Screen, so it draws nothing.
-    expect(map.moves.filter((item: any) => item.scenarios.some((scenario: any) => scenario.key === 'capability-scenario:browse-catalog'))).toEqual([browse])
-    expect(map.moves.some((item: any) => item.from.key === item.to.key)).toBe(false)
-    // One move per (from, to, Capability), naming every Scenario that walks it.
-    expect(new Set(map.moves.map((item: any) => item.id)).size).toBe(map.moves.length)
-    expect(settle.scenarios.length).toBeGreaterThan(1)
-    for (const item of map.moves) expect(new Set(item.scenarios).size).toBe(item.scenarios.length)
-  })
-
-  it('draws moves as arrows that open the Capability and read their Scenarios, and entry points from outside', () => {
-    const diagram = uiMapDiagram(map.places, map, state.defaultTopologyReading())
-    const arrow = diagram.edges.find((edge: any) => edge.source === WEB_CATALOG && edge.target === WEB_PRODUCT)
-    expect(arrow).toMatchObject({ label: 'Catalog browsing', resourceKey: 'capability:browse-catalog' })
-    expect(arrow.note).toContain('Browse the catalog')
-    expect(diagram.edges.filter((edge: any) => edge.source !== UI_MAP_ENTRY)).toHaveLength(map.moves.length)
-    const entry = diagram.nodes.find((node: any) => node.id === UI_MAP_ENTRY)
-    expect(entry).toMatchObject({ terminal: 'start', title: 'Entry' })
-    expect(diagram.nodes[0]).toBe(entry)
-    const entered = diagram.edges.filter((edge: any) => edge.source === UI_MAP_ENTRY)
-    expect(entered.map((edge: any) => edge.target).sort()).toEqual(map.entries.map((item: any) => item.place.key).sort())
-    expect(entered.find((edge: any) => edge.target === WEB_CATALOG).label).toBe('/')
-    expect(entered.find((edge: any) => edge.target === 'interface:operator-cli').label).toBe('fixture-shop admin')
-    for (const edge of diagram.edges) expect(diagram.nodes.some((node: any) => node.id === edge.source) && diagram.nodes.some((node: any) => node.id === edge.target), edge.id).toBe(true)
-  })
-
-  it('marks an always-reachable Screen and keeps an unwalked place as an island', () => {
-    const report = reportOf(shopRoot)
-    const catalog = report.model.screens.find(screen => screen.id === 'customer-web::catalog')!
-    report.model.screens.push({ ...catalog, id: 'customer-web::help', title: 'Help', capabilityIds: [], capabilityScenarioIds: [], journeyScenarioIds: [], entryPoints: [], references: [] })
-    report.model.interfaces.find(item => item.id === 'customer-web')!.navigation.push('customer-web::help')
-    const edited = projectReportWorkspace(report)
-    const help = edited.screens.find((screen: any) => screen.id === 'customer-web::help')
-    expect(help.alwaysReachable).toBe(true)
-    const derived = projections.uiMapProjection(edited)
-    expect(derived.moves.some((item: any) => item.from.key === help.key || item.to.key === help.key)).toBe(false)
-    const diagram = uiMapDiagram(derived.places, derived, state.defaultTopologyReading())
-    expect(diagram.nodes.find((node: any) => node.id === help.key)).toMatchObject({ navigation: true, parent: 'interface:customer-web' })
-    expect(diagram.edges.some((edge: any) => edge.source === help.key || edge.target === help.key)).toBe(false)
-    // Every move is a Step's doing: a place no Step names is drawn and touched by nothing.
-    const named = new Set(edited.scenarios.flatMap((scenario: any) => scenario.steps.flatMap((step: any) => step.contexts.map((context: any) => context.context.id))))
-    const islands = diagram.nodes.filter((node: any) => node.resourceKey && !named.has(node.resourceKey.replace(/^[a-z]+:/, '')))
-    expect(islands.length).toBeGreaterThan(1)
-    for (const island of islands) expect(diagram.edges.some((edge: any) => edge.source !== UI_MAP_ENTRY && (edge.source === island.id || edge.target === island.id)), island.id).toBe(false)
-    expect(derived.moves).toEqual(map.moves.map((item: any) => expect.objectContaining({ id: item.id })))
-  })
-
-  it('closes a frame into one node that stands in for its contents, once per Capability', () => {
-    const closed = { ...state.defaultTopologyReading(), collapsed: ['interface:customer-web'] }
-    const diagram = uiMapDiagram(map.places, map, closed)
-    expect(diagram.nodes.some((node: any) => node.parent === 'interface:customer-web' || node.id.startsWith('screen:customer-web::') || node.id === 'experience:customer-web::storefront')).toBe(false)
-    expect(diagram.nodes.find((node: any) => node.id === 'interface:customer-web')).toMatchObject({ group: undefined, branch: expect.objectContaining({ open: false }) })
-    const settled = diagram.edges.filter((edge: any) => edge.source === 'interface:customer-web' && edge.target === WEBHOOK)
-    expect(settled).toHaveLength(1)
-    expect(settled[0].label).toBe('Payment settlement')
-    // A move inside the closed frame is not drawn; the Scenarios that walked in are still named.
-    expect(diagram.edges.some((edge: any) => edge.source === edge.target)).toBe(false)
-    expect(diagram.edges.find((edge: any) => edge.source === UI_MAP_ENTRY && edge.target === 'interface:customer-web').label.split(' · ').sort()).toEqual(['/', '/orders/:id', '/products/:id'])
-    const open = uiMapDiagram(map.places, map, state.defaultTopologyReading())
-    expect(open.nodes.find((node: any) => node.id === 'interface:customer-web').branch).toMatchObject({ open: true, childrenLabel: 'branches' })
-  })
-
-  it('keeps the focus neighbourhood one move wide as well as one subtree deep', () => {
-    const focus = topologyNeighbourhood(workspace, [WEBHOOK], map.places, map.moves.map((item: any) => ({ source: item.from.key, target: item.to.key })))
-    expect(focus.has(WEB_PRODUCT)).toBe(true)
-    expect(focus.has(ADMIN_ORDER)).toBe(true)
-    expect(focus.has(WEB_CATALOG)).toBe(false)
-    const shown = projections.filterBranches(map.places, (resource: any) => focus.has(resource.key))
-    const diagram = uiMapDiagram(shown, map, state.defaultTopologyReading())
-    expect(diagram.nodes.map((node: any) => node.id)).toContain('experience:customer-web::storefront')
-    expect(diagram.nodes.map((node: any) => node.id)).not.toContain(WEB_CATALOG)
-    for (const edge of diagram.edges) expect(diagram.nodes.some((node: any) => node.id === edge.source) && diagram.nodes.some((node: any) => node.id === edge.target), edge.id).toBe(true)
-  })
-})
-
 describe('topology reading state', () => {
   it('round trips qualified IDs as repeated query values without delimiter ambiguity', () => {
-    const reading = { ...state.defaultTopologyReading(), view: 'ui-map', focus: ['screen:a::b::c', 'entity:a,b'], expanded: ['kind:entity'], collapsed: ['kind:rule'] }
+    const reading = { ...state.defaultTopologyReading(), view: 'delivery-map', focus: ['screen:a::b::c', 'entity:a,b'], expanded: ['kind:entity'], collapsed: ['kind:rule'] }
     expect(state.topologyFromQuery(state.topologyToQuery(reading))).toEqual(reading)
     expect(Object.values(state.topologyToQuery(state.defaultTopologyReading())).every(value => value === undefined)).toBe(true)
     expect(state.topologyFromQuery({ tv: 'made-up', th: ['not-a-kind'] })).toEqual(state.defaultTopologyReading())
@@ -608,7 +489,7 @@ describe('topology reading state', () => {
   })
   it('pushes navigation and replaces filter/group-only changes', () => {
     const before = state.defaultTopologyReading()
-    expect(state.topologyPushesHistory(before, { ...before, view: 'ui-map' })).toBe(true)
+    expect(state.topologyPushesHistory(before, { ...before, view: 'delivery-map' })).toBe(true)
     expect(state.topologyPushesHistory(before, { ...before, focus: ['entity:order'] })).toBe(true)
     expect(state.topologyPushesHistory(before, { ...before, hiddenKinds: ['entity'] })).toBe(false)
     expect(state.topologyPushesHistory(before, { ...before, expanded: ['kind:entity'] })).toBe(false)

@@ -1515,8 +1515,6 @@ describe('Screens on the v15 wire', () => {
   const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
   const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'
   const destinationsModulePath = '../layers/nuxt/report-viewer/app/utils/reportDestinations.ts'
-  const uiMapModulePath = '../layers/nuxt/report-viewer/app/utils/uiMap.ts'
-  const topologyStateModulePath = '../layers/nuxt/report-viewer/app/utils/topologyState.ts'
   const PARENT = 'customer-web::storefront::product-record'
   const CHILD = `${PARENT}::reviews`
 
@@ -1654,9 +1652,7 @@ describe('Screens on the v15 wire', () => {
 
   it('files a nested Screen under its parent Screen in every containment reading', async () => {
     const { structureChildren, childScreens } = await import(collectionChildrenModulePath)
-    const { interfaceProjection, uiMapProjection } = await import(projectionsModulePath)
-    const { uiMapDiagram } = await import(uiMapModulePath)
-    const { defaultTopologyReading } = await import(topologyStateModulePath)
+    const { interfaceProjection } = await import(projectionsModulePath)
     const { resourceAncestors } = await import(destinationsModulePath)
     const workspace = projectReportWorkspace(nestedReport().report)
     const child = workspace.screens.find((item: any) => item.id === CHILD)!
@@ -1680,16 +1676,7 @@ describe('Screens on the v15 wire', () => {
     const branch = interfaceProjection(workspace).find((item: any) => item.id === 'interface:customer-web')!
     const parentBranch = flatten(branch.children).find((node: any) => node.resource?.key === parent.key)!
     expect(parentBranch.children.map((node: any) => node.resource.key)).toEqual([child.key])
-    /* On the UI map the child sits inside its parent's frame, and the parent inside the Experience's. */
-    const map = uiMapProjection(workspace)
-    expect(flatten(map.places).filter((node: any) => node.resource?.key === child.key)).toHaveLength(1)
-    const diagram = uiMapDiagram(map.places, map, defaultTopologyReading())
-    const node = (key: string) => diagram.nodes.find((item: any) => item.id === key)!
-    expect(node(child.key).parent).toBe(parent.key)
-    expect(node(parent.key)).toMatchObject({ group: true, parent: experience.key, navigation: undefined })
-    expect(node(child.key)).toMatchObject({ group: undefined, navigation: true })
-    expect(node(experience.key)).toMatchObject({ group: true, parent: 'interface:customer-web' })
-    expect(node('interface:customer-web').parent).toBeUndefined()
+
   })
 
   it('reads a place\'s Delivery through the Scenarios placed exactly there, never on a nested place', async () => {
@@ -1844,15 +1831,8 @@ describe('Screens on the v15 wire', () => {
     expect(source('nuxt.config.ts')).toContain("'lucide:anchor'")
     expect(source('app/components/BlrResourceTree.vue')).toContain('<BlrNavigationMark')
     expect(source('app/components/BlrResourceHeading.vue')).toContain('<BlrNavigationMark')
-    for (const file of ['app/utils/topologyProjections.ts', 'app/utils/placeReadings.ts', 'app/utils/uiMap.ts']) expect(source(file)).not.toContain('navigationIds')
-    /* The map marks the node and draws no arrow for it. */
-    expect(source('app/components/BlrFlowNodeContent.vue')).toContain('<BlrNavigationMark v-if="node.navigation"')
-    const { uiMapProjection } = await import(projectionsModulePath)
-    const map = uiMapProjection(workspace)
-    const walks = (place: string) => map.moves.filter((move: any) => move.from.key === place || move.to.key === place)
-    for (const place of [catalog, nested]) for (const move of walks(place.key)) {
-      expect(move.scenarios.every((scenario: any) => scenario.steps.some((step: any) => step.contexts.some((item: any) => item.context.id === place.id))), move.id).toBe(true)
-    }
+    for (const file of ['app/utils/topologyProjections.ts', 'app/utils/placeReadings.ts']) expect(source(file)).not.toContain('navigationIds')
+
   })
 
   it('reads languages and versions where the model states them', () => {

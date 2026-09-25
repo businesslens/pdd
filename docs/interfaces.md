@@ -496,14 +496,6 @@ place.
 | Copy, tone, and the words of any message | yes | never |
 | Gestures versus buttons, breakpoints, loading and hover states, navigation chrome | yes | never |
 
-The report can still show you a rough view of any Screen. Its Sketch is
-derived, never authored: the same wireframe skeleton for every place, drawn
-from the frame the Interface type implies, the Screens always reachable, the
-facts presented and entered, the Capabilities offered, and the child Screens as
-tabs. A Storyboard draws a Scenario route as a sequence of them. Because the
-skeleton is identical everywhere, a Sketch cannot be mistaken for a design, and
-nothing in the model says where anything sits.
-
 One test decides every case:
 
 > Rebuild a view with a different component library, layout, typography,

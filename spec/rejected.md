@@ -161,10 +161,9 @@ exists.
 **Authored mockups, wireframes or layout hints on a Screen** — an ASCII
 sketch, a `layout` key, "the price sits on the left". Layout is design by the
 redesign test: two mappers would draw it differently, lint could say nothing,
-and a pull-request diff cannot review a picture. Design files already attach
-as `visual` References. The rough view a reader wants is derived instead — the
-report's Sketch and Storyboard, bound in `report.md` — with the same skeleton
-for every Screen so it is never read as a proposal.
+and a pull-request diff cannot review a picture. Design files attach
+as `visual` References; the model records presented facts, available
+Capabilities and Scenario behavior independently of those designs.
 
 **A `presentation: page | overlay` field on Screens.** Design vocabulary; the
 product fact — the parent's state survives — is a Scenario Outcome.

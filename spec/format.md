@@ -628,9 +628,9 @@ restricted Experience cannot be reachable from a public one, so an entry that
 names one is a `lint` error. Entries are unique, and **order carries no
 meaning**: `lint` ignores it, and a report sorts these Screens as it sorts
 everything else. `navigation` is **structure, not a relation**, in the same
-sense as folder containment: it states a fact about the container, and the
-derived UI map draws it as an always-reachable mark on the Screen, never as
-edges. It therefore creates no relation and narrows none, which keeps the rule
+sense as folder containment: it states that a Screen is always reachable
+inside its container, without asserting a transition. It therefore creates no
+relation and narrows none, which keeps the rule
 that an authored list only ever narrows a derived relation. It is the one
 thing a Step cannot say — a Step says where behavior moves, not what is
 reachable from everywhere — and the only navigation the model authors: menus,
@@ -1724,12 +1724,11 @@ counterparts, distinguished by their path. They may share purpose, facts and
 Capabilities, and stating each one separately is what makes a divergence
 between them visible instead of silent.
 
-**Places are authored; transitions are derived.** Screens are the places. The
-UI map is Scenario Steps projected onto places, exactly as an Entity's
-lifecycle is Steps projected onto one Entity: its edges are the place changes
-between consecutive contextualized Steps, labelled with their Capability, plus
-the entry points from outside, and an edge no Scenario walks is not a product
-commitment. The two things Steps cannot say are authored on the structure
+**Places are authored; transitions are derived.** Screens are the places. A
+transition is a place change between consecutive contextualized Steps on a
+Scenario route. Entry points separately state where an Actor can arrive from
+outside. A transition no Scenario records is not a product commitment. The two
+things Steps cannot say are authored on the structure
 side — what is always reachable, through `navigation`, and which views sit
 inside which, through nesting — and those are the only structural additions.
 Screens therefore never author a sitemap, a transition graph, a `next`, a
@@ -2041,11 +2040,10 @@ Context on at least one Step.
 
 Two routes cannot repeat the same place sequence. A place change between
 consecutive contextualized Steps is an explicit transition, including
-Screen-to-Screen movement inside one Experience, and **these transitions are
-the derived UI map**: its nodes are the Screens, nested as their paths nest;
-its edges are every such place change in any Scenario, labelled with the
-Step's Capability, plus the entry points from outside; `navigation` is a mark
-on a node, never an edge. Conditions such as empty, unauthorized or blocked
+Screen-to-Screen movement inside one Experience. Nesting records containment,
+entry points record arrival from outside, and `navigation` records global
+reachability within a container; none asserts a Scenario transition. Conditions
+such as empty, unauthorized or blocked
 are `condition` Steps and Rule outcomes, and appear as the Scenario branch
 that meets them. Step Contexts own Scenario
 participation; Screens do not duplicate Scenario ids.

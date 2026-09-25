@@ -4,7 +4,7 @@ import type { TopologyReading } from '../utils/topologyState'
 import type { Diagram } from '../utils/diagram'
 import { diagramResource } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
-import { branchChildrenLabel } from '../utils/uiMap'
+import { branchChildrenLabel } from '../utils/topologyProjections'
 const props = withDefaults(defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string, label?: string, relation?: string }>(), { label: 'reach', relation: 'Reached from' })
 const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean, ids: string[]], ready: [] }>()
 const isOpen = (node: TopologyBranch) => {
