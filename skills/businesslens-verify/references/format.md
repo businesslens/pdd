@@ -97,7 +97,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 9` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 10` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, `languages`, H1, lead description, and optional
   `## Intent`. `summary` is one line of at most 400 characters, `category` is
@@ -129,21 +129,14 @@ not contain another H1 or H2.
   outbound connection the Product opens is not an Interface: model it in the
   calling Capability, give that Capability an availability Context for where
   the Actor observes the result, and make its failure a Capability Scenario.
-- Experience: at least one `actors` entry, each an Entity that `acts` and
-  supported by the owning Interface; `access`
-  (`public|authenticated|restricted`); optional Interface-keyed `entryPoints`;
-  optional `navigation`, the same rule relative to the Experience, naming
-  nested Screens by path; optional single-line `version`; H1, lead
-  description, and optional `## Intent`. `## Capability boundary` is an error.
-  `version` is valid only where at least one other Experience of the same
-  Interface carries a different `version` — a single version is never written
-  — and two Experiences with distinct versions is the third reason an
-  Interface must divide, beside more than one `access` value and disjoint
-  Actor sets. A version with its own entry point (`/api/v2`, a separate app)
-  is an Interface of its own; who sees which version is a fact on the Actor or
-  tenant Entity read by a Rule `when`; historical versions are never modeled.
-  The collection is optional. For every Interface using Experiences, their
-  Actor union covers all Interface Actors.
+- Experience: non-empty `actors` supported by the owning Interface; required
+  `access` (`public|authenticated|restricted`); optional Interface-keyed
+  `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
+  There is no `version` or `capabilityBoundary`. Disjoint audiences require
+  division; distinct access modes or counterparts justify existing Experiences.
+  Their Actor union equals the Interface's Actors. Versions do not decide
+  containment: independently supported contracts may be Interfaces, while other
+  behavior differences belong in Scenario conditions and outcomes.
 - Capability: at least one `availability` Context; optional singular `domain`;
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
@@ -205,26 +198,19 @@ not contain another H1 or H2.
   as an actor somewhere, or read by a Business Rule as a condition's `entity`
   or a `configuredBy`; a Step's read never counts, and neither does a relation
   from another Entity.
-- Screen: at least one `capabilities` relation — only the Capabilities its own
-  Steps use, never a child's or its parent's; the report shows each list at its place in the tree.
-  Optional `entities`, each a bare Entity id or `{ entity, facts }` naming the
-  facts on screen by their exact `## Information kept` name. "Presents" means
-  on screen, read or entered alike: a sign-up form presents
-  `{ entity: account, facts: [Email, Password] }` and the Step that creates the
-  Account cites nothing. A bare id is allowed only for an Entity with no named
-  facts, which is always bare. No `availability`
-  — its path is its place; optional Interface-keyed Product entry points; H1,
-  lead, and optional `## Intent`. `## Information presented`,
-  `## Available actions`, `## View states` and `## Capability boundary` are
-  errors: a fact is `entities[].facts` or a Rule derivation, an action is a
-  Step placed on the Screen, a view state is a condition Step, an Edge case, a
-  Rule outcome or a child Screen. An expanded Screen may hold `screens/`, to
-  any depth. A child Screen is a region whose content depends on an act inside
-  its parent — picking a row, choosing a tab, advancing a step; whether it is
-  visible at the same time or has its own address does not decide it, and the
-  same content drawn differently is one Screen. A parent Screen is a place of
-  its own: a Step placed on it is on the parent, not in any child. The whole
-  collection is optional.
+- Screen: optional `entities`, Interface-keyed `entryPoints`, H1, lead and
+  optional `## Intent`; no authored `capabilities` or `availability`.
+  Capabilities derive from Steps placed exactly here (the owner for a Capability
+  Scenario, the Step's `capability` for a Journey Scenario); at least one is
+  required. Parent and child sets remain separate. Each Entity entry is a bare
+  id only for an Entity without named facts, or `{ entity, shows?, collects? }`
+  with at least one non-empty list of unique exact fact names. `shows` is
+  disclosure; `collects` is Actor input, not read permission. Both may name a
+  prefilled editable value. Nest Screens only to subdivide a parent's persistent
+  working context; merely opening a destination never makes it a child. Shared
+  destinations belong once at their common Interface or Experience container.
+  `## Information presented`, `## Available actions`, `## View states` and
+  `## Capability boundary` are invalid; other H2s are supporting content.
 - Business Rule: a durable constraint, derivation, or permission — H1 and lead
   assertion, optional `## Intent` and `## Rationale`, and a non-empty
   `appliesTo` list of typed `capability`, `capability-scenario`, `journey`,
@@ -238,13 +224,13 @@ not contain another H1 or H2.
   selects; a grant conditions.** `effect`, `from` and `to` select Steps by the
   keys their `entities` entry carries (`from` with `changes|removes`, `to` with
   `creates|changes`, neither with `reads`); `facts` names the facts it governs;
-  `contexts` names a Screen presenting the Entity, or an ancestor of one — for
-  a fact-scoped target, a Screen presenting that fact, or bare because the
-  Entity names no facts. A fact-scoped read target (`facts` with `effect: reads`
-  or no effect) selects every Screen whose entry lists a governed fact and
-  every Step whose entry cites one, never a bare Screen entry; a read Rule
-  governing a fact no Screen presents and no Step cites is a warning, an error
-  at complete coverage. A `from` that
+  `contexts` resolves to existing places. Without `permits`, each place must
+  present the Entity and a governed fact when fact-scoped, or contain a Screen
+  that does. Permission Rules need no matching disclosure or operation.
+  A fact-scoped read target selects
+  Screens that `shows` a governed fact and Steps that read it. Collected inputs
+  are not disclosure. A Rule may govern a fact nobody currently reads; a
+  prohibition never requires an example of its violation. A `from` that
   every selected Step already leaves from is a warning — the minimal selector
   is canonical. Optional `permits`: omitted means no authorization claim, `[]`
   means forbidden to everyone, a list means permitted through any one grant.
@@ -261,11 +247,12 @@ not contain another H1 or H2.
   `entity` to read another Entity's fact, or `{ state: X }` for the instance's
   current state (valid on every target but `creates`, needed because reads and
   information changes carry no state to select by). A value is a scalar or
-  `{ configuredBy: <entity-id> }`. Permission claims appear only here. A feature
-  flag, A/B test or dynamic configuration that changes what an Actor can do is
-  a fact on a settings Entity read by a grant's `when`; the experiment behind
-  it — cohorts, assignment, metrics — is not modeled, and one that changes
-  only looks is design. A Rule
+  `{ configuredBy: <entity-id> }`. Permission claims appear only here. A flag
+  gating an Entity operation may condition a grant; other behavior variations
+  use Scenario conditions and outcomes, or Rules spanning behaviors. No
+  structured `when` exists on Capability targets. Experiments and messages may
+  be ordinary Product Entities and behavior when that is the Product's purpose.
+  A Rule
   on exactly one behavioral target with no `contexts` is a warning; Entity and
   Context targets are always valid. Rationale explains the current condition or
   consequence that makes the constraint necessary; it never recounts alternative
@@ -324,14 +311,12 @@ with no actor Step needs an unattended trigger: a first `condition` Step with
 on every Step** and `[]` when it touches nothing; silence is impossible. Each
 entry is `{ entity, as?, effect, from?, to?, facts? }`: `effect` is
 `creates|changes|removes|reads`, defaulting to `changes`; `creates` takes
-`to`, `removes` takes `from`, `changes` takes both or neither (neither is an
-information change — a rename), `reads` takes none; every state named is one
-the Entity declares, and there is no wildcard `from`. `facts` is a non-empty
-unique list of the Entity's fact names the Step reads or changes, valid only on
-`reads` and `changes` — an error on `creates` and `removes`, because what a
-creation collects is presented by the Screen. A `reads` Step placed on a Screen
-must be on one presenting that Entity, and a Step citing a fact on a Screen
-whose entry for that Entity lists facts without it is an error. One observable act can
+`to`, `removes` takes `from`, `changes` takes both or neither, `reads` neither.
+Every state resolves. `facts` is required on reads, changes and creation: the
+exhaustive unique list of named Product facts affected, including defaults on
+creation. `[]` explicitly names no facts, never unspecified. Removal has no
+authored `facts`. An Actor read on a Screen must occur in that Screen's `shows`;
+Product and condition Steps may consult undisplayed facts. A Step can
 move several things, so a Step lists as many as it changes, one entry per
 `(entity, as)` pair. `as` is a scenario-local instance alias for two instances
 of one Entity in one Scenario; once aliased anywhere in the Scenario, aliased
@@ -375,14 +360,14 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection, effect: creates, to: Private }
+      - { entity: collection, effect: creates, to: Private, facts: [Name, Item order] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The empty collection is ready to edit
     kind: condition
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
@@ -428,7 +413,7 @@ A person who browses the catalog and buys products.
 ```
 
 A Business Rule with an Entity target and grants, in full. The target selects
-every Step carrying `{ entity: order, effect: changes, to: Refunded }`; the
+every Step carrying `{ entity: order, effect: changes, to: Refunded, facts: [] }`; the
 grants say who may perform it, and `when` conditions the grant it sits in:
 
 ```markdown
@@ -459,7 +444,7 @@ Entity through `entity`, or `{ state: X }` for the instance's current state; a
 `state` condition cannot be combined with `entity` and is invalid on a `creates`
 target. `permits: []` says nobody may. The lifecycle the Rule governs is
 composed from Steps, not declared on Order: a Step's
-`{ entity: order, effect: changes, from: Confirmed, to: Refunded }` is what
+`{ entity: order, effect: changes, from: Confirmed, to: Refunded, facts: [] }` is what
 puts Refunded on the machine. `lint` composes every Scenario and warns on an
 **unreached state** — a state other than the first that no Step leaves anything
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
@@ -498,10 +483,10 @@ backlinks, not authored targets.
 
 Each Scenario route maps a stable kebab-case id to a human name. A placed Step
 maps every route id to its most-specific Context; a Step without `contexts` is
-shared by all routes and has no Context. When its parent owns Screens, the
-Context place must name a Screen at any depth — a parent Screen is a place, and
-a Step there is on the parent, not in a child; otherwise it names the leaf
-Experience or Interface. Every route is placed at least once and no two routes repeat one
+shared by all routes and has no Context. Name the Screen when the Step occurs
+on one, otherwise the leaf Experience or undivided Interface even if other
+behavior there has Screens. A parent Screen is a place of its own; a Step
+there is on the parent, not in a child. Every route is placed at least once and no two routes repeat one
 place sequence. A place change between
 consecutive placed Steps is a Context place transition.
 
@@ -509,13 +494,9 @@ Scenario Actors, Entities, availability places, Screen participation, and
 backlinks derive from Steps. Every Actor must be supported by at least one
 selected Context place and every derived availability place must support a
 Scenario Actor. A Capability-bearing Context place must be inside that
-Capability's availability, and a Screen place must expose it. The claim runs
-both ways: every Capability a Screen exposes has at least one Step placed
-exactly on that Screen, and a Capability available in an Interface or
-Experience that owns Screens is exposed by some Screen there — each a warning,
-an error at complete coverage. There is no cheaper spelling of "this ability
-exists here" than a Scenario. Transitions are never authored: a place change
-between consecutive placed Steps is the map. Every Journey
+Capability's availability. A Screen's Capabilities derive from placed Steps;
+there is no independent claim to reconcile. A Capability need not have a Screen.
+Transitions derive from consecutive contextualized Steps. Every Journey
 route begins its Actor-owned
 placed Steps with a Journey Actor. Screens never author Scenario ids.
 
@@ -528,35 +509,17 @@ resource are invalid, and neither References nor `assets` carry a `state` key.
 References are attachments, never proof or lifecycle state.
 Coverage, config, and taxonomies do not accept them.
 
-## Findings on places, facts and variation
+## Findings on places and facts
 
-Beside the checks stated above, `lint` reports:
-
-- a `navigation` entry that does not resolve to a Screen inside its container
-  — error;
-- a fact named on a Screen entry or Step entry that is not a fact of that
-  Entity — error;
-- a Capability a Screen exposes with no Step placed exactly on that Screen —
-  error;
-- an `actor` Step placed on a Screen that `reads` an Entity the Screen does not
-  present — error; Product and condition Steps, and reads of an Entity that
-  acts, are not checked;
-- a Step citing a fact on a Screen whose entry for that Entity lists facts
-  without it — error;
-- a fact-scoped read Rule checked against Screen facts and Step facts, never
-  Entity presence alone;
-- a Capability available in an Interface or Experience that owns Screens which
-  no Screen there exposes — error;
-- a read Rule governing a fact no Screen presents and no Step cites — error;
-- a bare Entity id on a Screen where the Entity has named facts — error;
-- a malformed `languages` tag, or an Interface list that is not a subset of the
-  Product's — error;
-- `version` where fewer than two Experiences of one Interface carry distinct
-  values — error;
-- `screens:` on an Interface or Experience, `state` on a Reference or asset,
-  `facts` on a `creates` or `removes` entry, or `## Information presented`,
-  `## Available actions`, `## View states` or `## Capability boundary` anywhere
-  — error.
+All structural checks apply regardless of Coverage. Lint rejects unresolved
+navigation, Entity or fact references, duplicate entries, a Screen without any
+placed Capability, and an Actor read of information its Screen does not show.
+Product and condition reads are not display claims. Named facts require
+shows/collects on Screens. Step facts are required on reads, changes and creates,
+and forbidden on removal. Language lists must be valid Product subsets.
+`version` on an Experience, authored Screen `capabilities`, `screens` on a
+container, reference/asset `state`, and removed Screen prose sections are errors.
+A prohibition is valid with no example of the prohibited behavior.
 
 `.gitignore` contains `build/` and `cache/`.
 

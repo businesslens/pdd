@@ -22,6 +22,6 @@ to them.
 ## Information kept
 
 - **Exposure** — the Capabilities its own Steps use
-- **Presents** — the Entities it presents and the facts of each that are on screen
+- **Presents** — the Entities it presents, with disclosed facts distinguished from collected inputs
 - **Nesting** — the parent it sits in and the Screens nested inside it
 - **Addresses** — where it answers, and whether it is reachable from every place in its container

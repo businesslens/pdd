@@ -7,8 +7,8 @@ steps:
     kind: actor
     actor: visitor
     entities:
-      - { entity: collection, effect: reads }
-      - { entity: item, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
+      - { entity: item, effect: reads, facts: [Title, Published at] }
     contexts:
       web:
         place: reader-web::item-reader
@@ -16,8 +16,8 @@ steps:
     kind: product
     actor: visitor
     entities:
-      - { entity: item, effect: reads }
-      - { entity: source, effect: reads }
+      - { entity: item, effect: reads, facts: [Title, Published at] }
+      - { entity: source, effect: reads, facts: [Name] }
     contexts:
       web:
         place: reader-web::item-reader

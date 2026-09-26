@@ -1,11 +1,8 @@
 ---
 entities:
-  - { entity: item, facts: [Title, Published at, Saved at] }
-  - { entity: source, facts: [Name] }
-  - { entity: collection, facts: [Name] }
-capabilities:
-  - read-content
-  - save-item
+  - { entity: item, shows: [Title, Published at, Saved at] }
+  - { entity: source, shows: [Name] }
+  - { entity: collection, shows: [Name] }
 entryPoints:
   - reader-web: /saved
 ---

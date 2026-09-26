@@ -68,9 +68,7 @@ that is a subset of the Product's and empty when the Interface narrows
 nothing, and `navigation`, an array of full qualified Screen ids — the
 folder's Interface-relative paths resolved — each naming a Screen whose
 nearest Interface-or-Experience container is that Interface. An Experience
-record carries `navigation` under the same resolution and a nullable
-`version`, non-null only where another Experience of the same Interface
-carries a different one. Neither record carries a `capabilityBoundary`.
+record carries `navigation` under the same resolution and no `version`. Neither record carries a `capabilityBoundary`.
 
 A Domain record carries `id`, `name`, `description`, a required `boundary`, and
 an optional `colorSlot`. `boundary` is the region the Domain owns stated by what
@@ -85,12 +83,14 @@ whose `acts` is non-null. Interface and Experience `actorIds` say who uses the
 surface; a permission claim appears only on a Business Rule record.
 
 The edges an Entity takes part in are authored elsewhere and resolved here. A
-Screen record carries `entities`, an array of `{ entityId, facts }` records
-for the Entities it presents, where `facts` is an array of that Entity's fact
-names or `null` for a bare entry; a Screen record has no `entityIds`,
-`information`, `actions`, `states`, or `capabilityBoundary`. Its `id` still
-carries the whole placement, and its parent is `parentPlace(id)`, which may be
-a Screen. A Capability
+Screen record carries `entities`, an array of `{ entityId, shows, collects }`
+records. Both fact arrays are required on the wire, unique, and empty when that
+aspect is absent. Both empty means presence of an Entity with no named facts.
+Read Rules select only `shows`; inputs are not disclosure. A Screen's
+`capabilityIds` is the exact set derived from Steps placed on it, never authored
+in the folder. Screen records have no `entityIds`, `information`, `actions`,
+`states`, or `capabilityBoundary`. The parent is `parentPlace(id)` and may be a
+Screen. A Capability
 record carries no Entity list: what it changes is derived from its Scenarios'
 steps. Every Scenario step carries an `entities` array, empty when the step
 touches nothing, of `{ entityId, as, effect, from, to, facts }` records: `as` is a
@@ -98,7 +98,8 @@ nullable scenario-local instance alias, `effect` is `creates`, `changes`,
 `removes`, or `reads` — resolved on the wire rather than defaulted, so a reader
 never has to know which value the folder omits — `from` and `to` are
 nullable state names, and `facts` is an array of fact names, empty when the
-step cites none and always empty on a `creates` or `removes` record. One step never carries two records for one
+step affects no named facts and always empty on a `removes` record. It is an
+exhaustive claim for reads, changes and creation, not an unspecified subset. One step never carries two records for one
 `(entityId, as)` pair, and a read never counts as a change for the rule that an
 Entity nothing changes, no Screen presents, nothing names as an actor, and no
 Rule reads through a condition's `entityId` or a `configuredByEntityId` is
@@ -126,16 +127,13 @@ name one that `acts`; a relation never reads `many-to-one`; a step record's `fro
 states of the named Entity and follow its effect — `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither; every
 fact a Screen record or step record names is in that Entity's
-`informationKept`, a Screen record's `facts` is non-empty when non-null, and a
-step record's `facts` is empty on `creates` and `removes`; every `navigation`
-id names a Screen inside its container; an Interface's `languages` is a subset
-of the Product's; an Experience's `version` is non-null only beside a sibling
-carrying a different one; in a report whose coverage is `complete`, every
-Capability a Screen lists has a step placed exactly on that Screen, every
-Capability available where its Interface owns Screens is exposed on a Screen
-there, every governed read fact is presented by a Screen record or cited by a
-step record, and no Screen record names an Entity with named facts bare; a
-Rule's `from`, `to`, `facts` and condition `state` and `fact` values resolve on
+`informationKept`; step facts are empty on removal; every navigation id names
+a Screen inside its container; an Interface's languages are a subset of the
+Product's. Every Screen's capabilityIds equals its placed-Step derivation and
+is non-empty, and a Screen names shows or collects for an Entity with named
+facts. These are unconditional checks; Coverage never relaxes them. A read
+Rule may govern a fact nobody currently reads, including an explicit
+prohibition. A Rule's `from`, `to`, `facts` and condition `state` and `fact` values resolve on
 the targeted Entity; a `related` path walks declared relations and their
 inverses one unambiguous hop at a time and ends on an Entity that `acts`; and an
 Entity no step changes, no Screen presents, nothing names as an actor, and no
@@ -272,7 +270,8 @@ Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Scenario
 Actors, Capabilities, route ids, and Context places resolve to existing
 resources, every contextualized Step assigns every route, every Scenario Context
-uses the most-specific available place, no two routes repeat the same place sequence,
+uses the most-specific place where the Step occurs (a container remains valid
+for behavior without a Screen even when other behavior has Screens), no two routes repeat the same place sequence,
 every achieved Journey Scenario uses at least two distinct Capabilities, every
 actor reference names an Entity that `acts`, every step's `entities` records
 and every Rule's targets and grants resolve, and Interface, Experience, Screen,
@@ -383,9 +382,9 @@ npx businesslens blueprint open ./report.json
 `open` validates the report and expands it into canonical Markdown/YAML under
 `.businesslens/`. Leaf resources are written compactly as `<id>.md`; a resource
 is written as `<id>/<type>.md` only when report content gives it child resources.
-A Screen is expanded exactly when it has child Screens or assets: each child
+A Screen expands when it has child Screens: each child
 whose `parentPlace(id)` is that Screen is written under its `screens/`, one
-directory level per id segment, and a Screen's `navigation` entries are
+directory level per id segment, and the Interface's or Experience's `navigation` entries are
 written back as paths relative to the container that carries the list.
 A Product pulled with a separate `logo.svg` similarly expands from `product.md`
 to `product/product.md`. `npx businesslens blueprint pull <blueprint-slug>` anonymously

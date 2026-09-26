@@ -1,10 +1,7 @@
 ---
-capabilities:
-  - track-order
-  - cancel-order
 entities:
-  - { entity: order, facts: [Items ordered, Total charged] }
-  - { entity: refund, facts: [Amount] }
+  - { entity: order, shows: [Items ordered, Total charged] }
+  - { entity: refund, shows: [Amount] }
 entryPoints:
   - customer-mobile: fixture-shop://orders/:id
 ---

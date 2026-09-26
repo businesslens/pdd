@@ -1,8 +1,6 @@
 ---
 entities:
-  - { entity: source, facts: [Feed address] }
-capabilities:
-  - follow-source
+  - { entity: source, collects: [Feed address] }
 ---
 
 # Feed address

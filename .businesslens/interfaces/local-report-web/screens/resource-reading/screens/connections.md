@@ -1,18 +1,17 @@
 ---
 entities:
-  - { entity: product-model, facts: [Product] }
-  - { entity: product, facts: [Identity] }
-  - { entity: interface, facts: [Actors] }
-  - { entity: experience, facts: [Container, Audience] }
-  - { entity: screen, facts: [Exposure, Nesting] }
-  - { entity: domain, facts: [Region] }
-  - { entity: entity, facts: [Relations] }
-  - { entity: capability, facts: [Availability, Domain] }
-  - { entity: capability-scenario, facts: [Routes and Contexts] }
-  - { entity: journey, facts: [Actors] }
-  - { entity: journey-scenario, facts: [Routes and Contexts] }
-  - { entity: business-rule, facts: [Reach] }
-capabilities: [view-product-model]
+  - { entity: product-model, shows: [Product] }
+  - { entity: product, shows: [Identity] }
+  - { entity: interface, shows: [Actors] }
+  - { entity: experience, shows: [Container, Audience] }
+  - { entity: screen, shows: [Exposure, Nesting] }
+  - { entity: domain, shows: [Region] }
+  - { entity: entity, shows: [Relations] }
+  - { entity: capability, shows: [Availability, Domain] }
+  - { entity: capability-scenario, shows: [Routes and Contexts] }
+  - { entity: journey, shows: [Actors] }
+  - { entity: journey-scenario, shows: [Routes and Contexts] }
+  - { entity: business-rule, shows: [Reach] }
 ---
 
 # Connections

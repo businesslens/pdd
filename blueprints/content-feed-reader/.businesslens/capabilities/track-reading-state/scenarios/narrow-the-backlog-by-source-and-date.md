@@ -3,7 +3,6 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
-  mobile-next: Mobile (next)
 steps:
   - text: The Reader narrows the unread items to one source and a span of publication dates
     kind: actor
@@ -16,31 +15,25 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The Product presents only the unread items that match
     kind: product
     actor: reader
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [Title, Published at] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The unread count still counts the whole backlog, and no item's reading state changes
     kind: condition
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Narrow the backlog by source and date

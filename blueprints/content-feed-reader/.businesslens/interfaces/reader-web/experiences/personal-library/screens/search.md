@@ -1,10 +1,8 @@
 ---
 entities:
-  - { entity: item, facts: [Title, Published at] }
-  - { entity: source, facts: [Name] }
-  - { entity: collection, facts: [Name] }
-capabilities:
-  - search-whole-library
+  - { entity: item, shows: [Title, Published at] }
+  - { entity: source, shows: [Name] }
+  - { entity: collection, shows: [Name] }
 entryPoints:
   - reader-web: /search
 ---

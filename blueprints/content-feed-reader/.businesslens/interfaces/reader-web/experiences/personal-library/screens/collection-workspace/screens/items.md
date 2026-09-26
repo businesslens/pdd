@@ -1,9 +1,7 @@
 ---
 entities:
-  - { entity: collection, facts: [Name, Item order] }
-  - { entity: item, facts: [Title, Saved at] }
-capabilities:
-  - organize-collection
+  - { entity: collection, shows: [Name, Item order] }
+  - { entity: item, shows: [Title, Saved at] }
 entryPoints:
   - reader-web: /collections/:collectionId
 ---

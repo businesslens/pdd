@@ -139,10 +139,11 @@ Steps by the keys their `entities` entry already carries: `from` is valid with
 in some state *when the operation happens* is a condition and lives in a grant's
 `when`. `facts` names facts of the Entity by exact name; a fact-scoped Rule
 governs information — a derivation, or field-level visibility — not an
-operation. `contexts` scopes the Rule to places; an Entity has no availability,
-so the selector must name a Screen that presents the Entity, or an ancestor of
-one — and for a fact-scoped Rule, a Screen presenting that fact, or one citing
-the Entity bare while Coverage is not `complete`.
+operation. `contexts` scopes the Rule to existing places. Without `permits`,
+a selected place must present the Entity and at least one governed fact when
+fact-scoped, or contain a Screen that does. Permission Rules require resolvable
+places; neither a grant nor a prohibition needs an existing disclosure or
+operation as evidence of applicability.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
@@ -304,7 +305,9 @@ the same shape, a flag read by a Rule, while one that changes only looks is
 design and not modeled. Dynamic configuration is the same shape again: the
 setting is a fact, and the Rule that reads it says what it changes. Who is in
 which cohort is a fact on the Actor or tenant Entity read the same way; the
-experiment itself — assignment, cohorts, metrics — is never modeled.
+experiment machinery is normally outside the model, unless the Product itself
+manages experiments. Grants encode Entity-operation permissions; other behavior
+variation belongs in Scenario conditions/outcomes and cross-behavior Rules.
 `state` says *the instance is in state X when the
 operation happens*: it must be a state of the targeted Entity, it is valid on
 every target but `creates`, and it cannot be combined with `entity`. It exists
@@ -363,8 +366,7 @@ Structure — errors unless marked:
   Entity, sits on a `creates` target, or is combined with `entity`.
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
-  `removes` or `reads` target; a `contexts` place that presents the Entity
-  nowhere — or, on a fact-scoped target, presents none of its facts.
+  `removes` or `reads` target; a `contexts` place that does not resolve.
 - A behavioral target resolving to exactly one resource with no `contexts` —
   a warning naming the Capability that should own it.
 - **Warning:** two permission Rules with identical target selectors.
@@ -383,15 +385,13 @@ Rules against Steps and Screens — errors:
 - A Screen presenting an Entity whose reads are governed, where no Actor using
   the Screen's container has a possible grant.
 
-A fact-scoped read Rule — an Entity target with `facts` and effect `reads` or
-none — is checked against the facts Screens present and Steps cite, never
-against Entity presence alone. A [Screen](./interfaces.md#what-a-screen-presents)
-whose entry for the Entity lists a governed fact must have an Actor of its
-container with a possible grant; a bare entry, naming the Entity without facts,
-is never selected by a fact-scoped target; and a
-[Step](./capabilities.md#what-a-step-does-to-the-products-things) whose entry
-cites a governed fact is selected like any operation. A read Rule governing a
-fact that no Screen presents and no Step cites is a warning, and an error when
-Coverage is `complete`: it governs information the model says nobody meets.
-Whether a value is actually shown is `verify`'s. A derivation is prose plus
-`facts`; there is no machine-readable arithmetic.
+A fact-scoped read Rule selects Screens whose `shows` lists a governed fact
+and Steps that read it. Collected input is not disclosure. Existing matching
+behavior must satisfy the grants; a Rule may govern a fact nobody currently
+reads. In particular, `permits: []` never requires an example of its violation.
+Coverage does not change these checks.
+
+A derivation is prose plus fact targets; there is no machine-readable arithmetic.
+Ordinary copy is external design. When exact wording is contractual, state that
+requirement in the Rule and identify its authoritative Reference. Verification
+checks the wording, or reports it unverifiable when the source is unavailable.

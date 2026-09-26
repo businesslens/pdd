@@ -7,7 +7,7 @@ steps:
     actor: reader
     capability: publish-collection
     entities:
-      - { entity: collection, from: Private, to: Published }
+      - { entity: collection, from: Private, to: Published, facts: [Public address] }
     contexts:
       publish-on-web:
         place: reader-web::personal-library::collection-workspace::settings::sharing
@@ -26,8 +26,8 @@ steps:
     kind: product
     actor: visitor
     entities:
-      - { entity: collection, effect: reads }
-      - { entity: item, effect: reads }
+      - { entity: collection, effect: reads, facts: [Name, Item order] }
+      - { entity: item, effect: reads, facts: [Title, Published at] }
 routes:
   publish-on-web: Publish On Web
 ---

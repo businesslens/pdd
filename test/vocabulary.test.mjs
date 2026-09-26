@@ -87,7 +87,7 @@ describe('vocabulary lookup', () => {
     expect(pages.find(page => page.page === 'entities').items.map(item => item.slug))
       .toEqual(expect.arrayContaining(['actor', 'entity-kind', 'state', 'arc']))
     expect(pages.find(page => page.page === 'interfaces').items.map(item => item.slug))
-      .toEqual(expect.arrayContaining(['experience', 'access-mode', 'screen', 'navigation', 'version', 'child-screen']))
+      .toEqual(expect.arrayContaining(['experience', 'access-mode', 'screen', 'navigation', 'child-screen']))
     expect(pages.find(page => page.page === 'capabilities').items.map(item => item.slug))
       .toContain('capability-scenario-trigger')
     expect(pages.find(page => page.page === 'journeys').items.map(item => item.slug))

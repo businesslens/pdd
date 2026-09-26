@@ -185,8 +185,8 @@ Screen:
 The use of the Context determines how specific its place must be. A Capability
 availability Context names an undivided Interface or an Experience. A Scenario
 Context is a concrete occurrence and names the most-specific available place:
-a Screen, at any depth, when the container owns Screens, otherwise the leaf
-Experience or Interface. A parent Screen is a place of its own: a Step placed
+a Screen, at any depth, when the Step occurs on one; otherwise the leaf
+Experience or undivided Interface, even if it also contains Screens. A parent Screen is a place of its own: a Step placed
 there occurs on the parent and in none of its children. A Business Rule
 Context is a selector and may name any of the three; an Interface, Experience,
 or parent Screen selector includes its descendant places.
@@ -203,19 +203,17 @@ A Capability that is available through an Interface divided into Experiences
 names the intended Experiences explicitly; an undivided Interface names itself.
 
 **Whether an Interface is divided is derived, never judged.** An Interface must
-hold Experiences when any of the following is true of it, and must not when
+hold Experiences when either of the following is true of it, and must not when
 none is:
 
 - it serves more than one `access` value; or
 - it serves two or more Actor sets whose Capability coverage is disjoint — no
-  Capability available there lists Actors from both sets; or
-- it serves two or more versions at once — Experiences carrying distinct
-  `version` values.
+  Capability available there lists Actors from both sets.
 
-Every input is already authored: `actors` on the Interface, `access` and
-`version` on the Experience, and `availability` on each Capability. `lint`
-therefore decides the question, and an author never applies a prose test to it.
-An Interface serving one audience through one access mode, in one version, is
+The inputs are `actors` on the Interface, `access` on an Experience, and
+`availability` on each Capability. Disjoint audiences require division; access
+modes justify Experiences already authored, because Interfaces declare no
+access mode. An Interface serving one audience through one access mode is
 one coherent context and takes direct Interface availability.
 
 "Disjoint" is read over the whole Interface, not Capability by Capability: the
@@ -469,7 +467,7 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 9                          # folder-format version
+schema: 10                         # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
@@ -712,21 +710,11 @@ inside the Experience. The same rules hold: entries resolve or are a `lint`
 error, they are unique, order carries no meaning, and the list is structure
 rather than a relation.
 
-`version` is an optional single-line string naming which of several
-concurrently served versions this Experience is. It is valid only where at
-least one other Experience of the same Interface carries a different `version`;
-a single version is never written, and a `version` with no differing sibling
-is a `lint` error. Versions that differ in what an Actor can do are places: a
-version with its own entry point — `/api/v2`, a separate app — is its own
-Interface, and versions sharing an entry point are Experiences under one
-Interface, each carrying `version`. That is the third reason an Interface must
-divide. A Screen both versions serve with the same Capabilities is shared
-beside `experiences/`, as any Screen every Experience of an Interface serves
-is; a Screen that differs between versions is written under each, as
-counterparts are, and the duplication is the visible cost of two things being
-live at once. Who
-sees which version is a fact on the Actor or tenant Entity read by a Rule's
-`when`, exactly like a flag; there is no cohort concept.
+There is no Experience `version` field. Concurrent versions justify separate
+Interfaces only when they are independently supported interaction contracts;
+a different address or header alone does not decide it. Behavior differences
+within one contract belong in Scenario conditions and outcomes, with Business
+Rules for constraints spanning behaviors. Historical versions remain in Git.
 
 ### Availability
 
@@ -776,16 +764,17 @@ system and design files, attached as `kind: visual` References with
 `role: intent`.
 
 **Text.** The model says that an Actor is told something and under which
-condition — a Step, an Edge case, or a Rule outcome. It never says the words.
-Legally required text is a Business Rule (*consent is captured before
-creation*) whose wording lives in a Reference. There is no carve-out.
+condition — a Step, an Edge case, or a Rule outcome. Ordinary copy stays outside the model. When exact wording is contractual, a
+Business Rule identifies the authoritative Reference and explicitly requires
+that wording. Verification compares it; an unavailable Reference makes that
+requirement unverifiable, not satisfied.
 
 An outbound message — a confirmation email, a push, an SMS — is a Product Step
-that `reads` what it carries, and its content beyond those facts is copy. A
-feature flag or A/B test that changes what an Actor can do is a fact on a
-settings Entity read by a Rule's `when`, as the Business Rule section states;
-one that changes only looks is design, and the experiment itself is not
-modeled.
+that `reads` what it carries, and its content beyond those facts is copy. A flag that gates an Entity operation may be a settings fact read by a
+permission grant. Other behavior variation belongs in Scenario conditions and
+outcomes. Experiment infrastructure is outside the model unless managing
+experiments is itself Product behavior; messages likewise may have a lifecycle
+when the Product manages them.
 
 ### `domains/<id>.md` or `domains/<id>/domain.md`
 
@@ -1190,9 +1179,10 @@ configure, archive, and delete behaviors with distinct contracts. Splitting it
 does not create a need for a Domain: those four Capabilities were already about
 the Repositories subject region before the split, and a Domain that exists only
 to re-gather them is a folder, not a region. The split runs the other way too:
-filtering, sorting and searching a set a Capability presents share its purpose
-and outcome, so they are its Scenarios, never Capabilities of their own — the
-Scenario sections say how they cite what they use.
+ordinary filtering, sorting and searching within a browsing ability belong
+to its Scenarios. Apply the same split test when their purpose, permissions,
+availability or outcomes form an independently meaningful contract; the result
+set alone does not decide it.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
@@ -1334,11 +1324,11 @@ Steps by the keys their `entities` entry already carries: `from` is valid with
 in some state *when the operation happens* is a condition and lives in a grant's
 `when`. `facts` names facts of this Entity by their exact name; a fact-scoped
 Rule governs information — a derivation, or field-level visibility — not an
-operation. `contexts` scopes the Rule to places; an Entity has no availability,
-so the selector must name a Screen that presents the Entity, or an ancestor of
-one. On a fact-scoped target the Screen must present one of the governed
-facts — its `entities` entry lists it, or is bare because the Entity names no
-facts — or the selector names an ancestor of such a Screen.
+operation. `contexts` scopes the Rule to existing places. For a Rule without
+`permits`, each selected place must be a Screen presenting the Entity (and at
+least one governed fact when fact-scoped), or an ancestor of one. Permission
+Rules need only resolvable Contexts: neither a grant nor a prohibition requires
+a matching operation or Screen disclosure to exist.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
@@ -1497,14 +1487,13 @@ nor `to`. *Anyone may read a Published collection* and *the shopper edits
 delivery details only while Pending* are both `when` state conditions. A
 defaulted `fact` or a `state` needs exactly one Entity target to resolve against.
 
-**Flags, A/B tests and dynamic configuration are this condition and nothing
-more.** A settings Entity holds the flag as a fact, and a Rule reads it through
-`entity` and `fact` while targeting the Entity operation or Capability the flag
-gates — the `Approval required` line above. An A/B test that changes what an
-Actor can do is a flag; one that changes only looks is design. Who is in the
-cohort is a fact on the Actor or tenant Entity, read the same way. The
-experiment itself — assignment, cohorts, metrics — is not modeled: it is how
-the Product decides, not what an Actor can do, and no Step runs on it.
+**Flags and dynamic configuration.** A flag deciding who may perform an Entity
+operation is a settings fact read by a permission grant's `when`. There is no
+structured `when` on a Capability-targeting Rule. Other variations in behavior
+are Scenario conditions and outcomes; a Business Rule states constraints shared
+by several behaviors. Experiment assignment and metrics are usually mechanisms,
+but are modeled with ordinary Entities and Capabilities when managing
+experiments is the Product's purpose.
 
 **A modelled product's own RBAC** is product behaviour, not this layer. A fixed,
 shipped set of roles is a closed vocabulary: Entities that act, and
@@ -1555,8 +1544,8 @@ Structure — errors unless marked:
   `creates` target, or combined with `entity`.
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
-  `removes` or `reads` target; a `contexts` place that presents the Entity
-  nowhere, or, on a fact-scoped target, presents none of its governed facts.
+  `removes` or `reads` target. Permission Contexts need not contain a
+  matching operation or disclosure: a prohibition can describe absence.
 - **Warning:** two permission Rules with identical target selectors.
 - **Warning:** a target `from`, or a grant `state` condition, that every Step
   the target selects already satisfies.
@@ -1576,13 +1565,14 @@ Rules against Steps and Screens — errors:
 **A fact-scoped read Rule** — an Entity target with `facts` whose `effect` is
 `reads` or absent — is checked against Screen facts and Step facts, never
 against Entity presence alone. A Screen is selected when its `entities` entry
-for that Entity lists a governed fact, and the check above then runs on it; a
-bare entry, one with no `facts`, is never selected, which is why a model may
+for that Entity `shows` a governed fact, and the check above then runs on it; a
+bare entry, one with no named facts, is never selected, which is why a model may
 not write one for an Entity with named facts. A Step whose `entities`
 entry cites a governed fact is selected like any other governed operation and
-needs an actor with a possible grant. A read Rule governing a fact that no
-Screen presents and no Step cites is a `lint` error, because a
-visibility claim about information nobody is shown governs nothing. The rest
+needs an actor with a possible grant. A Rule may govern a fact no Screen shows and no Step cites. In particular,
+a prohibition never requires an example of the prohibited behavior. References
+must resolve, and existing matching behavior is checked; absence is not a
+contradiction. The rest
 is `verify`'s. A derivation is prose plus `facts`; there is no
 machine-readable arithmetic, because one would need defined behaviour for types,
 units, money, rounding, collections, missing values and time.
@@ -1596,10 +1586,9 @@ The whole `screens/` collection is optional so non-visual products remain valid.
 
 ```markdown
 ---
-capabilities: [browse-catalog, place-order]
 entities:
-  - { entity: catalog-product, facts: [Name, Price, Availability] }
-  - { entity: cart, facts: [Item count] }
+  - { entity: catalog-product, shows: [Name, Price, Availability] }
+  - { entity: cart, shows: [Item count] }
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: acme-shop://products/:id
@@ -1619,58 +1608,37 @@ Shows what a shopper needs to evaluate one product.
 Help a shopper decide whether to add the product to the cart.
 ```
 
-**A Screen is relations only.** Its frontmatter says which Capabilities it
-exposes, which Entities and facts it presents, and where it is entered; its
-body is the H1, the lead description, and an optional `## Intent`. Nothing
-else about a view is the model's — the section above says where the model
-stops — so the four prose sections a Screen once carried are gone, and each is
-a `lint` error naming the resource type when still authored:
+**A Screen declares its information; its behavior is derived.** Its body is
+an H1, lead description and optional `## Intent`. `## Information presented`,
+`## Available actions`, `## View states` and `## Capability boundary` are
+invalid: information is in `entities`, behavior in Steps, and conditions in
+Scenarios and Rules. Other H2 sections remain supporting content.
 
-| Removed | Now lives in |
-| --- | --- |
-| `## Information presented` | `entities[].facts` — a fact of an Entity the Screen presents, or a Rule derivation, or not product |
-| `## Available actions` | `capabilities`, plus the Steps placed on the Screen |
-| `## View states` | `condition` Steps, Edge cases, Rule outcomes, or a child Screen |
-| `## Capability boundary` | nothing; `capabilities` is already the positive claim, and Steps settle the rest |
+A Screen never authors `capabilities`. Its Capabilities are the distinct
+Capabilities exercised by Steps placed exactly on that Screen, across both
+Scenario kinds. A Capability Scenario's owner supplies its Step Capability;
+a Journey Step names its own. A Screen needs at least one such Capability.
+Capabilities do not flow up or down the Screen hierarchy. The wire carries
+this derived set and validates equality with the Steps. Each derived Capability
+must be available in the containing Interface or Experience (every Experience
+for a shared Screen). A Capability need not have a Screen: nonvisual behavior
+and coverage gaps do not become contradictions when another Screen is modeled.
 
-Each of those connected to nothing, so two lint-clean models of one product
-diverged there silently. What replaces them is checkable.
+`entities` is optional. Each entry is a bare Entity id, only for an Entity with
+no named facts, or `{ entity, shows?, collects? }`. Each present list is unique,
+non-empty, and names that Entity's `## Information kept` facts. A structured
+entry needs at least one list. `shows` means information disclosed by the
+Product; `collects` means input supplied by the Actor. A prefilled editable
+value can appear in both. A fact with input but no disclosure belongs only in
+`collects`; read-permission checks apply only to `shows`. Collecting a value
+never grants permission to read an existing value.
 
-`capabilities` is required and needs at least one item. A Screen has no
-`availability` field: its path names its containing Interface or Experience,
-and every referenced Capability must declare an availability Context
-containing the Screen — for a Screen an Interface shares beside its
-`experiences/`, one for every Experience of that Interface. **A Screen lists
-only the Capabilities its own Steps use.** Capabilities flow neither up nor
-down a nest of Screens: a child lists what its own Steps use and the parent
-does not repeat it; a report shows each Screen's own list at its place in the
-tree. The list stays authored rather than derived because it is the claim, and
-the Steps are what keep it honest: a Capability a Screen exposes with no Step
-placed exactly on that Screen is a `lint` error. The converse holds one level
-up: a Capability available on an Interface or Experience that owns Screens,
-which no Screen there exposes, is an error too. There is no cheaper encoding of
-*this ability exists here* than a Step, an export button included, because a
-second spelling of one claim is two valid encodings. What the model does not
-yet map is Coverage's to record as Unmapped, never a Screen left half-claimed.
-
-`entities` is optional and names the Entities the Screen presents. Each entry
-is `{ entity, facts }` or a bare Entity id. `facts` is a non-empty unique list
-of that Entity's `## Information kept` names, cited exactly as a Business
-Rule's `facts` target cites them; a name that does not resolve is a `lint`
-error. **A bare id is allowed only for an Entity with no named facts**, which
-is always cited bare; a bare id for an Entity that has named facts is a `lint`
-error. A bare id never
-means *all facts* — that would be two spellings of one claim. **"Presents"
-means the fact is on screen**, whether the Actor reads it or enters it: a
-sign-up form lists `{ entity: account, facts: [Email, Password] }`, and the
-Step that creates the Account cites nothing. Reading versus entering is design.
-A Screen has no acceptance surface, so its `entities` list is authored, where
-a Capability's is derived; a Step placed on the Screen is held to it — an
-`actor` Step that `reads` an Entity the Screen does not present, and a Step
-citing a fact on a Screen whose entry for that Entity lists facts without it,
-are `lint` errors. A Product or condition Step reads what the Product
-consults, and a read of an Entity that acts names a participant; neither is a
-claim about what is on screen, so neither is checked.
+An Actor Step reading named facts on a Screen must name them in that Screen's
+`shows`. A presence-only read (`facts: []`) requires a Screen entry; a bare
+Actor mention is exempt. Product and condition Steps may consult facts that
+are not on screen. Creates and changes describe the operation's initialized
+or changed facts; they are not inferred from Screen input fields, because
+operations may initialize defaults or run without any Screen.
 
 `entryPoints` is optional; entry-point keys must name the Interface containing
 the Screen. Scenario participation is derived from Scenario Step Contexts whose
@@ -1693,27 +1661,29 @@ is unlimited because the rule is the same at every level. A Screen has one
 structural parent — an Interface, an Experience, or a Screen — and it is the
 folder that holds it.
 
-**What is a child Screen is decidable**: a region whose content depends on an
-act inside its parent — picking a row, choosing a tab, advancing a step.
-Whether it is visible at the same time as the parent, and whether it has an
-address of its own, do not decide it: the first flips with the breakpoint and
-the second is routing. A region with the same content drawn differently is
-design. The test reads from code without judging layout.
+**Screen ownership follows a persistent working context, not an opening
+act.** Nest a Screen when it subdivides the same selected subject or process
+as its parent and changing that parent context also changes or ends the child.
+Tabs within one resource reading and stages within one wizard are examples.
+A destination that establishes its own subject and can be opened from several
+working views belongs once at their common Interface or Experience container;
+opening it over another view does not make that view its owner. Selection,
+co-visibility, URLs, modal versus page, and component boundaries alone decide
+nothing. A different drawing of the same information remains one Screen.
 
-**A parent Screen is a place.** A Step placed on the parent occurs on the
-parent and in none of its children, so the list of a master-detail and the
-shell of a wizard have Steps of their own.
+A parent Screen is itself a place: a Step placed there is on the parent, not
+in a child. Confirmation is behavior on its host unless the confirmation
+establishes a distinct working context; visual presentation is not the test.
+Preserving the underlying view on close is a Scenario Outcome.
 
-| Case | Modeling |
-| --- | --- |
-| Confirmation dialog | two Steps on the host Screen: ask, confirm |
-| Slideover or panel with its own facts | a child Screen of the view it opens over |
-| Tabs showing different facts | child Screens |
-| Rows / Graph drawing of one set | design; one Screen |
-| Wizard | one parent Screen, one child per step, a Scenario walking them in order |
-| Master-detail | detail is a child Screen of the list |
-| Overlay preserving the parent's state | a Scenario Outcome, not structure |
-| Modal versus page versus inline | design; not modeled |
+This boundary must be assessed through independent mapping of the same
+product. Do not claim determinism from the wording or structural lint alone.
+
+Choose the nearest qualifying persistent context as the parent. A generic
+settings/category selector is not itself a selected subject or an in-progress
+process. A process stage requires its own Actor decision or input while retaining
+the same draft or operation; a completion message, generated credential reveal
+or read-only result alone is an Outcome on that process Screen, not a child.
 
 A wizard is nested Screens on the structure axis and says nothing about
 Journeys: the Scenario walking it is a Journey Scenario only where it crosses
@@ -1821,8 +1791,8 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: cart, effect: reads }
-      - { entity: catalog-product, effect: reads }
+      - { entity: cart, effect: reads, facts: [Quantity chosen] }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1831,7 +1801,7 @@ steps:
   - text: The Product validates current stock
     kind: product
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1931,16 +1901,16 @@ be reviewed, linted, and contradicted by code. Each entry is
   kind: actor
   actor: reader
   entities:
-    - { entity: collection, as: source, effect: changes }
-    - { entity: collection, as: target, effect: changes }
-    - { entity: item,                   effect: reads   }
+    - { entity: collection, as: source, effect: changes, facts: [Item order] }
+    - { entity: collection, as: target, effect: changes, facts: [Item order] }
+    - { entity: item,                   effect: reads, facts: [] }
 
 - text: The Product refunds the order
   kind: product
   actor: store-admin
   entities:
-    - { entity: order,  effect: changes, from: Confirmed, to: Refunded }
-    - { entity: refund, effect: creates, to: Requested }
+    - { entity: order,  effect: changes, from: Confirmed, to: Refunded, facts: [] }
+    - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
 ```
 
 `effect` is `creates`, `changes`, `removes`, or `reads`, defaulting to
@@ -1982,12 +1952,15 @@ alternative was a Step whose text says *the Reader chooses a saved item and an
 owned collection* while the model says nothing at all, leaving a reader to parse
 English to learn what the Step is about.
 
-**A `reads` or `changes` entry may cite `facts`**: a non-empty unique list of
-that Entity's `## Information kept` names, each of which must exist — a name
-that does not resolve is a `lint` error. `creates` and `removes` entries may
-not carry `facts`, and one that does is an error: what a creation collects is
-presented by the Screen the Step is placed on, and a second home for that claim
-would be two spellings of one thing.
+**`facts` is required on `reads`, `changes` and `creates`.** It is the
+exhaustive unique list of named Product facts read, changed or initialized by
+that operation, including product-defined defaults on creation. Every name
+resolves to the Entity's `## Information kept`. `[]` explicitly claims no
+named facts (for example, an existence check or state-only move); it never
+means unspecified or all facts. Internal storage fields and incidental logging
+are not Product facts. `removes` carries no authored `facts`: it removes the
+whole Entity; clearing one fact is a change. The wire uses an empty array for
+removal. Verification checks that every named Product fact affected is listed.
 
 ```yaml
 - text: The shopper narrows the catalog by category and price
@@ -1999,21 +1972,15 @@ would be two spellings of one thing.
     web: { place: customer-web::storefront::catalog }
 ```
 
-**Filters, sorting and search are Scenarios of the Capability that presents
-the set**, never Capabilities of their own, and the facts they use are cited on
-the Step as above. Which filters exist is product; how they are drawn is not.
-Search that presents a set nothing else does — a global search returning
-products, orders and customers at once — is a Capability, because its purpose
-differs from every presenting Capability's. Fact-scoped read Rules are checked
-against these Steps as well as against Screens.
+Ordinary filtering, sorting and search within a browsing ability belong to its
+Scenarios. Split only when the general Capability test establishes an
+independently meaningful purpose, permission, availability or outcome contract.
+Returning the same or a different set alone does not decide it.
 
-**Every ability has a Scenario.** A complete model has a Step behind every
-Capability a Screen exposes; the Screen section grades the check. A Step
-placed on a Screen is also held to what that Screen presents: an `actor`
-Step that `reads` an Entity the Screen does not present, and a Step citing a
-fact on a Screen whose entry for that Entity lists facts without it, are
-`lint` errors; Product and condition Steps, and reads of an Entity that acts,
-are not checked.
+A Screen's Capabilities derive from the Steps placed there. An Actor read on a
+Screen is checked against `shows`; Product and condition reads are not display
+claims. Screen inputs and operation effects are distinct claims, not duplicate
+spellings of one relationship.
 
 A Scenario's Entity set is derived from its Steps, exactly as its Actor set is,
 and a Capability's Entities are derived from its Scenarios' Steps: a Capability
@@ -2027,9 +1994,9 @@ longer title the Step declares is covered by it: with `product-model` declared,
 
 A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,
-or Screen where that Step occurs. When an Interface or Experience owns Screens,
-the place must name a Screen, at any depth; otherwise it names the leaf
-Experience or Interface. A parent Screen is a place of its own, and a Step
+or Screen where that Step occurs. Name the Screen when the Step happens there;
+otherwise name the leaf Experience or undivided Interface. Other behavior
+having Screens does not force this Step to have one. A parent Screen is a place of its own, and a Step
 placed there occurs on the parent and in none of its children. A Step on a
 Screen the Interface shares beside its `experiences/`
 names that Screen, `interface::screen`, and is inside a Capability's
@@ -2076,7 +2043,7 @@ steps:
     actor: shopper
     capability: browse-catalog
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -2087,7 +2054,7 @@ steps:
     actor: shopper
     capability: checkout
     entities:
-      - { entity: cart, effect: changes }
+      - { entity: cart, effect: changes, facts: [Quantity chosen] }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -2096,13 +2063,13 @@ steps:
   - text: The Product validates stock and charges payment
     kind: product
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
   - text: The Product persists and confirms the order
     kind: product
     actor: shopper
     capability: checkout
     entities:
-      - { entity: order, effect: creates, to: Confirmed }
+      - { entity: order, effect: creates, to: Confirmed, facts: [Items ordered, Total charged] }
       - { entity: cart, effect: removes }
 references:
   - kind: code

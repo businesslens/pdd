@@ -5,37 +5,32 @@ steps:
   - text: Unread items are shown in newest-first order
     kind: product
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [Title, Published at] }
   - text: The Reader opens and reads an item
     kind: actor
     actor: reader
     capability: read-content
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [Title, Published at] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The item is marked read
     kind: product
     actor: reader
     capability: track-reading-state
     entities:
-      - { entity: item, from: Unread, to: Read }
+      - { entity: item, from: Unread, to: Read, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
 routes:
   web: Web
   mobile: Mobile
-  mobile-next: Mobile (next)
 ---
 
 # Work through the unread backlog

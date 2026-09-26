@@ -17,46 +17,78 @@
 - Tests corroborate source; they do not replace inspecting implementation.
 - Partial implementation is a gap, not alignment.
 - For Screens, compare places against the view's code: for each Entity listed,
-  the facts the view renders or collects are exactly the facts named (a bare
+  the facts disclosed match shows and inputs match collects (a bare
   id claims only presence, and is a finding when the Entity has named
-  facts); each Capability listed is one a Step placed on that
-  Screen uses; each child Screen's content depends on an act inside its
-  parent, and a region that does is not folded into the parent; each
+  facts); each derived Capability is one a Step placed on that
+  Screen uses; each child Screen subdivides its parent’s persistent working context; each
   `navigation` Screen is reachable from every place in its container. Do not
-  require component, layout, theme, copy, viewport, or screenshot similarity:
+  require component, layout, theme, ordinary copy, viewport, or screenshot similarity:
   the model claims none of it, and a finding about looks is not a finding.
-- For Steps, confirm each `facts` list is what the code reads or changes at
-  that place, and that an `actor` Step's `reads` sits on a Screen presenting
-  the Entity (Product and condition Steps, and reads of an Actor, are exempt).
+- For Steps, confirm each `facts` list exhaustively names what the code reads, changes
+  or initializes at that place, and that an `actor` Step's `reads` sits on a Screen presenting
+  the Entity (Product and condition Steps, and fact-free mentions of an Actor, are exempt).
 - For a fact-scoped Rule, confirm the code at every Screen presenting the fact
   and every Step citing it — never Entity presence alone.
 - For `languages`, confirm the Product's list against the locales the code
   serves and each Interface's list against what that surface loads.
 - Do not claim deployed configuration, external systems, or live data state from
   source code.
-- External visuals and research are context. Do not capture or fetch them as a
-  verification workflow, and never treat their existence as proof.
+- External visuals and research are context; their existence is never proof.
+  Inspect an authoritative text Reference when a Rule requires exact wording;
+  if it cannot be accessed, report that requirement as unverifiable.
 
 ## The border
 
-A finding is about what an Actor can reach, see, do and trigger at each place,
-never how it looks or is built. Decide with the redesign test:
+The model records what an Actor can reach, see, supply, do and trigger. Layout,
+styling and ordinary copy remain external design References. When exact wording
+is a product requirement, a Business Rule identifies its authoritative Reference;
+verify that wording, or report it unverifiable when the source is unavailable.
 
-> Rebuild a view with a different component library, layout, typography,
-> colors, spacing, icons, motion and copy. Everything that would still have to
-> be true is the model's: who can reach the view, what facts it shows, what
-> abilities it offers, what conditions change that, and what happens next.
-> Everything the redesign is free to change is design's, and the model says
-> nothing about it.
+- A Screen's `entities` distinguish `shows` (Product disclosure) from `collects`
+  (Actor input). Each is a non-empty list of named Entity facts when present.
+  A prefilled editable fact can occur in both. A bare Entity id is only for an
+  Entity without named facts. Read permissions apply only to `shows`.
+- Never author Screen `capabilities`: derive them from Capabilities exercised by
+  Steps placed exactly there, including both Scenario kinds. Parent and child
+  Screens have separate sets. A Screen needs at least one placed Capability.
+- On every `reads`, `changes` and `creates` Entity entry, write `facts`: the
+  exhaustive named Product facts read, changed or initialized, including
+  product-defined defaults. `[]` means no named facts, never unspecified.
+  Removal names the whole Entity and has no authored `facts`. Do not infer
+  operation effects from form fields or include incidental implementation data.
+- A child Screen subdivides its parent's persistent selected subject or process;
+  changing that parent context also changes or ends the child. Tabs within a
+  resource reading and wizard stages qualify. Opening a destination from a view
+  alone does not establish ownership: a shared resource panel belongs once at
+  the common Interface or Experience container of its launch sites. URLs,
+  co-visibility and modal/page presentation do not decide ownership. Different
+  drawings of the same information remain one Screen. Confirmation normally
+  stays behavior on its host; preserving the underlying view is an Outcome.
+  Treat ambiguous ownership as an authoring question, never claim that lint
+  establishes semantic determinism.
+Choose the nearest qualifying persistent context as the parent. A generic
+settings/category selector is not itself a selected subject or an in-progress
+process. A process stage requires its own Actor decision or input while retaining
+the same draft or operation; a completion message, generated credential reveal
+or read-only result alone is an Outcome on that process Screen, not a child.
 
-Component libraries, theming, layout, typography, color, iconography, motion,
-microcopy and tone, gestures versus buttons, breakpoints, loading and hover
-states, navigation chrome, the order of navigation items, and quality
-attributes that do not change what an Actor can do are never compared; they
-live in `visual` References with `role: intent`. Wording is not a claim: the
-model says an Actor is told something under a condition — a Step, an Edge
-case, a Rule outcome — and legally required text is a Rule whose wording is a
-Reference, so compare the condition and the fact of telling, not the words.
+- A wizard is a Journey only when its Scenario crosses Capabilities.
+- Ordinary filtering, sorting and searching are browsing Scenarios. Split them
+  when the general Capability test establishes an independent purpose,
+  permission, availability or outcome; returning the same set is not decisive.
+- A view condition belongs in Scenario conditions, Edge cases or Rule outcomes.
+  Attach a condition's capture to its Scenario, not to a new Screen state key.
+- `navigation` lists Screens reachable from every place in its Interface or
+  Experience. Entry points describe arrival; Steps describe movement.
+- Languages belong to the Product, optionally narrowed by Interface. There is no
+  Experience `version` field. Independently supported contracts may be separate
+  Interfaces; addresses and headers alone never decide. Other variation belongs
+  in Scenario conditions/outcomes or cross-behavior Rules. A permission flag may
+  be a grant's `when` on an Entity operation, never a Capability target.
+- A Rule can prohibit a fact nobody reads. Require resolvable references, not an
+  example of prohibited behavior. Experiments and messages can be ordinary
+  Product Entities and behavior when the Product manages them.
+
 
 ## Separate scope from authority
 
@@ -99,26 +131,7 @@ area. Inspect it like adoption mapping, draft honest coverage and necessary
 relationships, and get approval before writing. Do not silently remap trusted
 areas.
 
-Screens it drafts are places, never designs. A Screen lists the Capabilities
-its own Steps use and, for each Entity it presents, the facts on screen —
-read or entered alike, so a form presents what it collects — as
-`{ entity, facts }`, bare only while the model is not `complete`. A child
-Screen is a region whose content depends on an act inside its parent — picking
-a row, choosing a tab, advancing a step; co-visibility and an own address do
-not decide it, and the same content drawn differently is one Screen. A
-confirmation dialog is two Steps on the host Screen; a slideover, tab or
-detail pane with its own facts is a child; a wizard is a parent with one child
-per step and a Scenario walking them, a Journey only where it crosses
-Capabilities. Every ability a Screen exposes gets a Scenario with a Step placed
-on that Screen. Filters, sorting and search are Scenarios of the Capability
-that presents the set, facts cited on the Step; search presenting a set nothing
-else does is a Capability. `navigation` names only Screens reachable from every
-place in an Interface or Experience; nothing else about navigation is authored.
-`languages` sit on the Product, narrowed on an Interface; a flag that changes
-what an Actor can do is a settings Entity fact read by a Rule `when`, the
-experiment itself unmodeled; versions served at once are places — own entry
-point an Interface, shared one Experiences carrying `version`; historical
-versions are never modeled.
+Apply the border above to scoped mapping as well as verification.
 
 ## Stop safely
 

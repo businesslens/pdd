@@ -177,7 +177,6 @@ export function compileReport(
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
         navigation: sorted(experience.navigation.map(entry => qualify(experience.id, entry))),
-        version: experience.version ?? null,
         ...resourceContent(experience, [], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
@@ -187,7 +186,7 @@ export function compileReport(
         capabilityIds: sorted(screen.capabilities),
         entities: [...screen.entities]
           .sort((left, right) => left.entity.localeCompare(right.entity))
-          .map(entry => ({ entityId: entry.entity, facts: entry.facts ?? null })),
+          .map(entry => ({ entityId: entry.entity, shows: sorted(entry.shows), collects: sorted(entry.collects) })),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,

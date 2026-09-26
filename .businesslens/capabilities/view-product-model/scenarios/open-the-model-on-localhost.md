@@ -7,26 +7,34 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: businesslens-cli
   - text: The Product checks the model's structure, serves it on the local machine, prints the address, and opens a browser
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       local:
         place: businesslens-cli
-  - text: The Developer reads what the Product is and how much of it is modeled
+  - text: The Developer reads what the Product is
     kind: actor
     actor: developer
     entities:
-      - { entity: product, effect: reads }
-      - { entity: product-model, effect: reads }
+      - { entity: product, effect: reads, facts: [Identity] }
+      - { entity: product-model, effect: reads, facts: [Product] }
     contexts:
       local:
         place: local-report-web::product-overview
+  - text: The Developer opens Coverage to read how much is modeled and how it was produced
+    kind: actor
+    actor: developer
+    entities:
+      - { entity: product-model, effect: reads, facts: [Coverage, Method] }
+    contexts:
+      local:
+        place: local-report-web::product-overview::coverage
   - text: The Developer moves to a kind's collection and opens the resource they came for
     kind: actor
     actor: developer

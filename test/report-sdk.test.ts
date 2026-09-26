@@ -514,7 +514,7 @@ describe('projectPortableReport', () => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
       ['references missing entity "ghost"', (value) => {
-        value.model.screens[0]!.entities = [{ entityId: 'ghost', facts: null }]
+        value.model.screens[0]!.entities = [{ entityId: 'ghost', shows: [], collects: [] }]
       }],
       ['no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it', (value) => {
         const entity = cart(value)

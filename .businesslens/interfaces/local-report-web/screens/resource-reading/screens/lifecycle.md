@@ -1,9 +1,8 @@
 ---
 entities:
-  - { entity: entity, facts: [Kind, States] }
-  - { entity: capability, facts: [Purpose] }
-  - { entity: business-rule, facts: [Assertion, Permission] }
-capabilities: [view-product-model]
+  - { entity: entity, shows: [Kind, States] }
+  - { entity: capability, shows: [Purpose] }
+  - { entity: business-rule, shows: [Assertion, Permission] }
 ---
 
 # Lifecycle

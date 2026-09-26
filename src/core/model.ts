@@ -70,11 +70,6 @@ export interface ExperienceResource extends ResourceFile {
   entryPoints: CompactEntryPoint[]
   /** Screens reachable from every place inside this Experience, as paths relative to it. */
   navigation: string[]
-  /**
-   * Which concurrently served version of the context this is. Written only
-   * where another Experience of the same Interface carries a different one.
-   */
-  version?: string
 }
 
 export interface DomainResource extends ResourceFile {
@@ -153,16 +148,11 @@ export interface EntityResource extends ResourceFile {
   states: ReturnType<typeof namedStates>
 }
 
-/**
- * One Entity a Screen presents, and which of its facts are on screen.
- *
- * `facts` names the Entity's `## Information kept` facts by exact name, read or
- * entered. Absent, the Screen claims presence only — allowed while the model is
- * not complete, and always the spelling for an Entity with no named facts.
- */
+/** Information disclosed and inputs collected are separate product claims. */
 export interface ScreenEntity {
   entity: string
-  facts?: string[]
+  shows: string[]
+  collects: string[]
 }
 
 export interface ScreenResource extends ResourceFile {
@@ -237,12 +227,8 @@ export interface ScenarioStepEntity {
   effect?: ScenarioStepEffect
   from?: string
   to?: string
-  /**
-   * The Entity's facts this Step reads or edits, by exact name. Valid on
-   * `reads` and `changes` only: what a creation collects is what the Screen
-   * presents.
-   */
-  facts?: string[]
+  /** Exhaustive named facts affected; empty for presence/state-only operations and removal. */
+  facts: string[]
 }
 
 export interface ScenarioStep {
@@ -780,36 +766,18 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       issues.push(`${entryLabel}: a "changes" entry carries both "from" and "to", or neither`)
       continue
     }
-    /* A fact is something read or edited; a creation collects what the Screen
-       presents, and a removal touches no fact in particular. */
-    const facts = factsField(item, issues, entryLabel)
-    if (facts !== undefined && resolved !== 'reads' && resolved !== 'changes') {
-      issues.push(`${entryLabel}: "facts" is valid on a "reads" or "changes" entry only`)
-      continue
+    const facts = uniqueStringListField(item, 'facts', issues, entryLabel)
+    if (resolved === 'removes') {
+      if (item.facts !== undefined) issues.push(`${entryLabel}: a "removes" entry carries no "facts"`)
+    } else if (!Array.isArray(item.facts)) {
+      issues.push(`${entryLabel}: "facts" is required as a list, including [] when no named facts are affected`)
     }
     entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts })
   }
   return entries
 }
 
-/**
- * An optional `facts` list: absent, or a non-empty unique list of fact names.
- * Whether each is a fact of the Entity is a model-wide question `lint` answers.
- */
-function factsField(item: Record<string, unknown>, issues: string[], label: string): string[] | undefined {
-  if (item.facts === undefined || item.facts === null) return undefined
-  const facts = uniqueStringListField(item, 'facts', issues, label)
-  if (!facts.length) {
-    issues.push(`${label}: "facts" is a non-empty list when present; an Entity presented without facts is written as its bare id`)
-    return undefined
-  }
-  return facts
-}
-
-/**
- * A Screen's `entities`: bare ids, or `{ entity, facts }` naming what is on
- * screen. One entry per Entity — two would be two authorities for one claim.
- */
+/** Screen entries use named disclosures and inputs; a bare id claims presence only. */
 function screenEntitiesField(data: Record<string, unknown>, issues: string[], label: string): ScreenEntity[] {
   const value = data.entities
   if (value === undefined || value === null) return []
@@ -823,18 +791,26 @@ function screenEntitiesField(data: Record<string, unknown>, issues: string[], la
     const entryLabel = `${label}: entity ${index + 1}`
     let entry: ScreenEntity | undefined
     if (typeof raw === 'string') {
-      entry = { entity: raw }
+      entry = { entity: raw, shows: [], collects: [] }
     } else if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
       const item = raw as Record<string, unknown>
-      rejectUnknownKeys(item, ['entity', 'facts'], issues, entryLabel)
+      rejectUnknownKeys(item, ['entity', 'shows', 'collects'], issues, entryLabel)
       const entity = stringField(item, 'entity', issues, entryLabel) || ''
       if (!entity) {
         issues.push(`${entryLabel}: needs an "entity"`)
         continue
       }
-      entry = { entity, facts: factsField(item, issues, entryLabel) }
+      const shows = uniqueStringListField(item, 'shows', issues, entryLabel)
+      const collects = uniqueStringListField(item, 'collects', issues, entryLabel)
+      for (const key of ['shows', 'collects'] as const) {
+        if (item[key] !== undefined && (!Array.isArray(item[key]) || !(item[key] as unknown[]).length)) {
+          issues.push(`${entryLabel}: "${key}" must be a non-empty list when present`)
+        }
+      }
+      if (!shows.length && !collects.length) issues.push(`${entryLabel}: needs shows or collects; write an Entity with no named facts as its bare id`)
+      entry = { entity, shows, collects }
     } else {
-      issues.push(`${entryLabel}: must be an Entity id or { entity, facts }`)
+      issues.push(`${entryLabel}: must be an Entity id or { entity, shows?, collects? }`)
       continue
     }
     if (seen.has(entry.entity)) {
@@ -1328,7 +1304,7 @@ export function loadModel(cwd: string): PddModel {
     for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`, ['screens'])) {
       const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
-        ['capabilities', 'entities', 'entryPoints'],
+        ['entities', 'entryPoints'],
         issues
       )
       const id = qualify(parentId, location.id)
@@ -1343,7 +1319,7 @@ export function loadModel(cwd: string): PddModel {
         assetMeta,
         containerId,
         parentId,
-        capabilities: uniqueStringListField(data, 'capabilities', issues, location.file),
+        capabilities: [],
         entryPoints: entryPointsField(data, issues, location.file)
       })
       if (location.expanded) readScreens(location.directory, containerId, id, `${label}/screens/${location.id}`)
@@ -1387,11 +1363,7 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation', 'version'], issues)
-      const version = stringField(parsed.data, 'version', issues, location.file)
-      if (version !== undefined && (!version.trim() || /[\r\n]/.test(version))) {
-        issues.push(`${location.file}: "version" must be a non-empty single line`)
-      }
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -1404,8 +1376,7 @@ export function loadModel(cwd: string): PddModel {
         interface: productInterface.id,
         access: stringField(parsed.data, 'access', issues, location.file) || '',
         entryPoints: entryPointsField(parsed.data, issues, location.file),
-        navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file),
-        version: version === undefined ? undefined : version.trim()
+        navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file)
       })
       readScreens(location.directory, experienceId, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
@@ -1626,6 +1597,20 @@ export function loadModel(cwd: string): PddModel {
       rationale: section(doc, 'Rationale') || ''
     }
   })
+
+  // One authority: both Scenario kinds contribute the Capabilities exercised here.
+  const screensById = new Map(screens.map(screen => [screen.id, screen]))
+  for (const scenario of [...capabilityScenarios, ...journeyScenarios]) {
+    for (const step of scenario.steps) {
+      const capability = 'capability' in scenario ? scenario.capability : step.capability
+      if (!capability) continue
+      for (const context of Object.values(step.contexts)) {
+        const screen = screensById.get(context.place)
+        if (screen && !screen.capabilities.includes(capability)) screen.capabilities.push(capability)
+      }
+    }
+  }
+  for (const screen of screens) screen.capabilities.sort()
 
   return {
     root,

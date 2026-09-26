@@ -1,5 +1,9 @@
 # Experience in the model, design out of it
 
+> This branch design was revised during review. The implementation review artifact
+> in `artifacts/experience-border-review.html` records the current decisions and
+> before/after changes; superseded proposals below are not authoring guidance.
+
 > Plan, not a contract. `spec/format.md` and `spec/report.md` bind; this file
 > records what we intend to change in them and why, so the review can happen
 > against one page. Delete it once it has shipped, as earlier plans were.

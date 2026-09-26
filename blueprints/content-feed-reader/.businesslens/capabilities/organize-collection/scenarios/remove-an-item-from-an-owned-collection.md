@@ -7,8 +7,8 @@ steps:
     kind: actor
     actor: reader
     entities:
-      - { entity: item, effect: reads }
-      - { entity: collection, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
@@ -16,7 +16,7 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
@@ -24,15 +24,15 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection }
-      - { entity: item, effect: reads }
+      - { entity: collection, facts: [Item order] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
   - text: The remaining item order and the item's saved state are preserved
     kind: condition
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items

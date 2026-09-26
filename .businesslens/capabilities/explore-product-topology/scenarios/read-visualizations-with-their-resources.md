@@ -7,17 +7,17 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: journey, effect: reads }
+      - { entity: journey, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading
   - text: The Product presents the Scenario's Steps in order, showing each Step's Capability and location breadcrumbs
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: journey, effect: reads }
-      - { entity: journey-scenario, effect: reads }
-      - { entity: capability, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
+      - { entity: journey, effect: reads, facts: [] }
+      - { entity: journey-scenario, effect: reads, facts: [Steps, Routes and Contexts] }
+      - { entity: capability, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading
@@ -25,15 +25,15 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: interface, effect: reads }
+      - { entity: interface, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading
   - text: The Product presents the Interface's delivery and Connections without repeating the same relation in both readings
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: interface, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
+      - { entity: interface, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading

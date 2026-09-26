@@ -1,11 +1,8 @@
 ---
-capabilities:
-  - browse-catalog
-  - place-order
 entities:
-  - { entity: catalog-product, facts: [Name and description, Price, Stock remaining] }
-  - { entity: cart, facts: [Quantity chosen] }
-  - { entity: shopper, facts: [Delivery address] }
+  - { entity: catalog-product, shows: [Name and description, Price, Stock remaining] }
+  - { entity: cart, shows: [Quantity chosen] }
+  - { entity: shopper, shows: [Delivery address] }
 entryPoints:
   - customer-web: /products/:id
 references:

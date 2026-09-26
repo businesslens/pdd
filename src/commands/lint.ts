@@ -306,16 +306,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     requireTitle(experience.file, experience.doc.title, experience.doc.lead)
     validateSections(experience.file, experience.doc, ['Intent'], ['Capability boundary'])
     validateNavigation(experience.file, experience.id, experience.navigation, false)
-    /* A version is a fact only beside another one: a single version is the
-       product, and writing it would state nothing a reader could contradict. */
-    if (experience.version !== undefined) {
-      const rival = model.experiences.some(other =>
-        other.interface === experience.interface && other.id !== experience.id
-        && other.version !== undefined && other.version !== experience.version)
-      if (!rival) {
-        errors.push(`${experience.file}: "version" needs another Experience of "${experience.interface}" with a different version; a single version is never written`)
-      }
-    }
     if (!ACCESS_MODES.has(experience.access)) {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
@@ -436,9 +426,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const components = new Set([...root.keys()].map(find)).size
     const disjointAudiences = components > 1
     const accessModes = new Set(owned.map(experience => experience.access).filter(Boolean))
-    /* Two versions served at once are two contexts by construction. */
-    const versions = new Set(owned.map(experience => experience.version).filter(version => version !== undefined))
-    const mustDivide = accessModes.size > 1 || disjointAudiences || versions.size > 1
+    const mustDivide = accessModes.size > 1 || disjointAudiences
 
     /*
      * Counterpart symmetry is the one exception, and the spec states it: when
@@ -613,13 +601,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       /* A Screen names the facts on screen by the Entity's own names, so the
          claim is checkable against the Entity and against every Rule and Step
          that cites the same fact. */
-      for (const fact of entry.facts ?? []) {
+      for (const fact of [...entry.shows, ...entry.collects]) {
         if (!entity.informationKept.some(item => item.name === fact)) {
           errors.push(`${screen.file}: "${fact}" is not a fact of entity "${entry.entity}"`)
         }
       }
-      if (entry.facts === undefined && entity.informationKept.length) {
-        errors.push(`${screen.file}: presents "${entry.entity}" without naming its facts; a Screen says which facts are on screen`)
+      if (!entry.shows.length && !entry.collects.length && entity.informationKept.length) {
+        errors.push(`${screen.file}: presents "${entry.entity}" without naming its facts; a Screen says which facts it shows or collects`)
       }
     }
   }
@@ -753,13 +741,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     return productInterface ? new Set(productInterface.actors) : undefined
   }
 
-  const screensByContainer = new Map<string, typeof model.screens>()
-  for (const screen of model.screens) {
-    const siblings = screensByContainer.get(screen.containerId) || []
-    siblings.push(screen)
-    screensByContainer.set(screen.containerId, siblings)
-  }
-
   /*
    * A Screen beside `experiences/` is shared: it is inside every Experience of
    * its Interface. Containment, Scenario coverage, and Step Contexts therefore
@@ -787,17 +768,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (screen) return { place: placeId, containerId: screen.containerId, screen }
     const experience = experiencesById.get(placeId)
     if (experience) {
-      if ((screensByContainer.get(placeId) || []).length) {
-        errors.push(`${label}: Experience "${placeId}" owns Screens, so the Context must name one of its Screens`)
-      }
       return { place: placeId, containerId: placeId, screen: undefined }
     }
     const productInterface = interfacesById.get(placeId)
     if (productInterface) {
       if (experienceScopedInterfaces.has(placeId)) {
         errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them, one of their Screens, or a Screen it shares`)
-      } else if ((screensByContainer.get(placeId) || []).length) {
-        errors.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
       return { place: placeId, containerId: placeId, screen: undefined }
     }
@@ -1224,62 +1200,25 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       new Set([interfaceOf(screen.containerId)])
     )
 
-    /*
-     * The authored `capabilities` list is the positive claim; the Steps placed
-     * here are what make it honest. An ability with no Scenario behind it is
-     * not a product commitment, so the model is refused.
-     */
     const placed = stepsOnScreen.get(screen.id) || []
-    for (const capabilityId of screen.capabilities) {
-      if (!capabilityIds.has(capabilityId)) continue
-      if (placed.some(item => item.capabilityId === capabilityId)) continue
-      const finding = `${screen.file}: exposes capability "${capabilityId}", and no Step is placed on this Screen for it`
-      errors.push(finding)
-    }
-    /*
-     * What an Actor reads here, the Screen shows here, and a fact a Step cites
-     * here is one the Screen lists for that Entity. Creating or changing an
-     * Entity says what the Product does when the Actor acts, a Product or
-     * condition Step reads what the Product consults, and a read of an Entity
-     * that acts names a participant — none is a claim about what is on
-     * screen, so none is checked against `entities`.
-     */
     const presented = new Map(screen.entities.map(entry => [entry.entity, entry]))
     for (const { label, step } of placed) {
       for (const entry of step.entities) {
+        if (step.kind !== 'actor' || (entry.effect ?? 'changes') !== 'reads' || (actorIds.has(entry.entity) && !entry.facts.length)) continue
         const shown = presented.get(entry.entity)
-        if ((entry.effect ?? 'changes') === 'reads' && !shown && step.kind === 'actor' && !actorIds.has(entry.entity)) {
+        if (!shown) {
           errors.push(`${label}: reads "${entry.entity}" on Screen "${screen.id}", which does not present it`)
           continue
         }
-        if (!shown?.facts) continue
-        for (const fact of entry.facts ?? []) {
-          if (!shown.facts.includes(fact)) {
-            errors.push(`${label}: cites "${fact}" of "${entry.entity}" on Screen "${screen.id}", which presents it without that fact`)
+        for (const fact of entry.facts) {
+          if (!shown.shows.includes(fact)) {
+            errors.push(`${label}: reads "${fact}" of "${entry.entity}" on Screen "${screen.id}", which does not show that fact`)
           }
         }
       }
     }
   }
 
-  /*
-   * A Capability available somewhere that owns Screens, and exposed on none of
-   * them, is either headless or a gap. The report calls it out; so does lint,
-   * since a contradiction between two authored lists should not be visible in
-   * one place only. A container with no Screens at all is not asked.
-   */
-  const ownsScreens = (interfaceId: string) => model.screens.some(screen => interfaceOf(screen.containerId) === interfaceId)
-  for (const capability of model.capabilities) {
-    for (const place of capabilityAvailability.get(capability.id) || []) {
-      if (!ownsScreens(interfaceOf(place))) continue
-      const exposed = model.screens.some(screen =>
-        screen.capabilities.includes(capability.id)
-        && (screen.containerId === place || (experiencesById.has(place) && screen.containerId === interfaceOf(place))))
-      if (exposed) continue
-      const finding = `${capability.file}: availability Context place "${place}" exposes it on no Screen`
-      errors.push(finding)
-    }
-  }
 
   /*
    * A `related` path starts at the Rule's one Entity target and walks declared
@@ -1392,22 +1331,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
            with the governed fact, where the Rule names one — or an ancestor. */
         const presenting = model.screens.filter(screen => screen.entities.some(entry =>
           entry.entity === target.id
-          && (!target.facts.length || entry.facts === undefined || entry.facts.some(fact => target.facts.includes(fact)))
+          && (!target.facts.length || [...entry.shows, ...entry.collects].some(fact => target.facts.includes(fact)))
         )).map(screen => screen.id)
-        /* A governed fact nothing shows and nothing cites leaves the Rule with
-           nothing to be checked against, which is the omission a reviewer
-           should see. */
-        if (target.facts.length && (target.effect === undefined || target.effect === 'reads')) {
-          for (const fact of target.facts) {
-            const shown = model.screens.some(screen => screen.entities.some(entry =>
-              entry.entity === target.id && entry.facts?.includes(fact)))
-            const cited = allScenarios.some(scenario => scenario.steps.some(step => step.entities.some(entry =>
-              entry.entity === target.id && entry.facts?.includes(fact))))
-            if (shown || cited) continue
-            const finding = `${label}: governs "${fact}" of "${target.id}", which no Screen presents and no Step cites`
-            errors.push(finding)
-          }
-        }
         const seenEntityContextPlaces: string[] = []
         for (const [contextIndex, context] of target.contexts.entries()) {
           const contextLabel = `${label}: Context ${contextIndex + 1}`
@@ -1420,7 +1345,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
             errors.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
           }
           seenEntityContextPlaces.push(place)
-          if (placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
+          if (rule.permits === undefined && placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
             errors.push(`${contextLabel}: Context place "${place}" presents entity "${target.id}" nowhere`)
           }
         }
@@ -1704,7 +1629,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       label: screen.file,
       id: screen.id,
       containerId: screen.containerId,
-      entities: screen.entities.map(entry => ({ entityId: entry.entity, facts: entry.facts ?? null })),
+      entities: screen.entities.map(entry => ({ entityId: entry.entity, shows: entry.shows, collects: entry.collects })),
       actorIds: [...(supportedActorsForContainer(screen.containerId) ?? [])]
     }))
   }))

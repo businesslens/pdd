@@ -13,7 +13,7 @@ steps:
   - text: The Product presents the view with the question it answers, readable resource titles, and its available derivation
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection

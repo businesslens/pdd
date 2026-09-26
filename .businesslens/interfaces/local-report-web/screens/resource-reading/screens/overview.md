@@ -1,18 +1,17 @@
 ---
 entities:
-  - { entity: product-model, facts: [Product] }
-  - { entity: product, facts: [Identity, Catalog identity, Limitations] }
-  - { entity: interface, facts: [Type, Actors, Entry points, Navigation, Languages] }
-  - { entity: experience, facts: [Container, Audience, Entry points, Version] }
-  - { entity: screen, facts: [Exposure, Presents, Addresses] }
-  - { entity: domain, facts: [Region, Boundary, Colour] }
-  - { entity: entity, facts: [Kept information, Acts, Kind, Relations] }
-  - { entity: capability, facts: [Purpose, Availability, Domain] }
-  - { entity: capability-scenario, facts: [Trigger and outcome] }
-  - { entity: journey, facts: [Goal, Success criterion, Actors] }
-  - { entity: journey-scenario, facts: [Result, Trigger and outcome] }
-  - { entity: business-rule, facts: [Assertion, Reach, Permission, Rationale] }
-capabilities: [view-product-model]
+  - { entity: product-model, shows: [Product] }
+  - { entity: product, shows: [Identity, Catalog identity, Limitations] }
+  - { entity: interface, shows: [Type, Actors, Entry points, Navigation, Languages] }
+  - { entity: experience, shows: [Container, Audience, Entry points] }
+  - { entity: screen, shows: [Exposure, Presents, Addresses] }
+  - { entity: domain, shows: [Region, Boundary, Colour] }
+  - { entity: entity, shows: [Kept information, Acts, Kind, Relations] }
+  - { entity: capability, shows: [Purpose, Availability, Domain] }
+  - { entity: capability-scenario, shows: [Trigger and outcome] }
+  - { entity: journey, shows: [Goal, Success criterion, Actors] }
+  - { entity: journey-scenario, shows: [Result, Trigger and outcome] }
+  - { entity: business-rule, shows: [Assertion, Reach, Permission, Rationale] }
 ---
 
 # Overview

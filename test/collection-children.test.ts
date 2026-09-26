@@ -97,7 +97,7 @@ describe('collection rows that expand', () => {
   it('shows an Experience’s own Screens and shared references without changing ownership', () => {
     const experience = workspace.experiences.find((item: any) => item.id === 'reader-web::personal-library')
     const groups = structureChildren(workspace, experience)
-    expect(groups.map((group: any) => [group.title, group.children.length])).toEqual([['Screens', 6], ['Shared Screens', 1]])
+    expect(groups.map((group: any) => [group.title, group.children.length])).toEqual([['Screens', 7], ['Shared Screens', 1]])
     expect(groups[0].children.every((node: any) => !node.sharedFrom)).toBe(true)
     const shared = groups[1].children[0]
     expect(shared.resource.title).toBe('Item reader')

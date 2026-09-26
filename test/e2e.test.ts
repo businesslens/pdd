@@ -89,7 +89,7 @@ describe('end to end on a real git repo', () => {
       journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment']
     })
     // A Screen names the facts on screen; the wire carries them by Entity.
-    expect(screen?.entities.find(entry => entry.entityId === 'catalog-product')?.facts).toEqual(
+    expect(screen?.entities.find(entry => entry.entityId === 'catalog-product')?.shows).toEqual(
       expect.arrayContaining(['Price'])
     )
     expect(parsed.model.capabilities.find(item => item.id === 'place-order')?.availability).toEqual([

@@ -9,7 +9,7 @@ steps:
     actor: developer
     capability: install-agent-skills
     entities:
-      - { entity: skill-installation, effect: creates }
+      - { entity: skill-installation, effect: creates, facts: [Provider, Scope, Version, Skills, Installed at] }
     contexts:
       adoption:
         place: businesslens-cli
@@ -34,7 +34,7 @@ steps:
     actor: developer
     capability: map-established-behavior
     entities:
-      - { entity: product-model, effect: creates }
+      - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       adoption:
         place: agent-skills
@@ -43,7 +43,7 @@ steps:
     actor: developer
     capability: lint-product-model
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       adoption:
         place: businesslens-cli

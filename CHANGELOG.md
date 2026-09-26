@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Model nested Screens, always-reachable destinations, supported languages and Experience versions.
-- Declare the Entity facts each Screen presents and each Scenario Step reads or changes, with validation against Entities and Business Rules.
+- Model nested Screens, always-reachable destinations and supported languages.
+- Distinguish what Screens show from what they collect, and validate the facts Scenario Steps read, change or create.
 - Explore each place's Delivery: its Capabilities, Scenarios and passing Journeys, with clearer nested trees and summaries of collapsed branches.
 - Read what a Business Rule governs in Applies to, and find applicable Rules from the resources they govern.
 - Read permissions as operations and grants. Badges on governed facts explain restrictions and open the relevant Rule.
@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recognize a resource's type, ownership and Domains in a compact header.
 - Updated skills, documentation and the example Blueprint explain product behavior separately from visual design, and name Business Rules by what they assert.
 - Retired the Information presented, Available actions, View states and Capability boundary sections, along with screenshot state labels.
-- **Compatibility:** existing models must be updated to folder schema 10, then their reports re-exported as Product Report version 15. Older formats are no longer accepted.
 
 ## [0.22.0] - 2026-09-23
 

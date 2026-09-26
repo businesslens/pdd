@@ -1,8 +1,6 @@
 ---
-capabilities:
-  - browse-catalog
 entities:
-  - { entity: catalog-product, facts: [Name and description, Price] }
+  - { entity: catalog-product, shows: [Name and description, Price] }
 entryPoints:
   - customer-web: /
 references:

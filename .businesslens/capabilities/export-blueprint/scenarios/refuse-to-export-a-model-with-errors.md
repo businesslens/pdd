@@ -7,14 +7,14 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The model does not pass its structural check
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       terminal:
         place: businesslens-cli

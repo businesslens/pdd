@@ -1,9 +1,6 @@
 ---
 entities:
-  - { entity: source, facts: [Name, Last read] }
-capabilities:
-  - follow-source
-  - synchronize-feeds
+  - { entity: source, shows: [Name, Last read] }
 entryPoints:
   - reader-web: /sources
 ---

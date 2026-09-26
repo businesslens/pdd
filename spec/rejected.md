@@ -150,73 +150,43 @@ therefore the point rather than a lossy compromise.
 
 ## Interfaces, Experiences and Screens
 
-**Keeping View states, derived from a new Step context dimension.** A lot of
-machinery for a screenshot label; every view state already has a home — a
-`condition` Step, an Edge case, a Rule outcome, or a child Screen.
+**Authored transitions beside Scenario Steps.** A separate `next` or transition
+list would repeat movement already expressed by consecutive contextualized
+Steps. Entry points and always-reachable destinations state different facts.
 
-**Authored transitions on Screens** — `next`, `parent`, `over`. Unbounded, a
-second encoding of what Steps already say, and the reason the sitemap ban
-exists.
+**Visual layout fields on Screens.** Layout, styling and presentation belong
+in visual References. The model records displayed facts, collected inputs and
+behavior independently of those designs. Contractual wording remains an
+explicit Rule with an authoritative Reference and is verified when required.
 
-**Authored mockups, wireframes or layout hints on a Screen** — an ASCII
-sketch, a `layout` key, "the price sits on the left". Layout is design by the
-redesign test: two mappers would draw it differently, lint could say nothing,
-and a pull-request diff cannot review a picture. Design files attach
-as `visual` References; the model records presented facts, available
-Capabilities and Scenario behavior independently of those designs.
+**A bare Entity id meaning all facts.** Bare Screen entries mean only presence
+of an Entity without named facts. Named facts use explicit shows/collects lists.
 
-**A `presentation: page | overlay` field on Screens.** Design vocabulary; the
-product fact — the parent's state survives — is a Scenario Outcome.
+**Authored Screen capabilities beside placed Steps.** The current contract
+requires supporting behavior, so the list has no valid independent meaning.
+Derive it from placed Steps instead; missing behavior belongs in Coverage.
 
-**Co-visibility or addressability as the child-Screen test.** The first flips
-with the breakpoint; the second is routing. Selection-dependence is decidable
-from code alone.
+**Counterpart inheritance for twin Screens — deferred.** Separate authored
+information makes divergence visible. A shared declaration needs a precise
+rule for overrides before it could replace that property.
 
-**Filters as Capabilities.** Same purpose and outcome as the presenting
-Capability, so a Scenario by the format's own split rule.
-
-**A cheaper positive claim for abilities without a Scenario.** Two valid
-spellings of *this ability exists here*; a partial model's map is islands, and
-that absence is visible.
-
-**`creates` Steps citing facts.** The Screen presents what a form collects; a
-second home for the same claim.
-
-**A bare Entity id meaning "all facts".** Two spellings for one claim, and the
-bare form would lint clean while saying nothing.
-
-**Renaming Experience.** The name invites design talk, but the border sentence
-uses it well — who is there and what they can do — and the churn is large.
-
-**Deriving Screen `capabilities` from Steps.** A partial model needs the claim
-before coverage exists; the coverage check makes the authored list honest
-instead.
-
-**Capability boundary kept on Interfaces and Experiences.** The argument that
-removes it from Screens applies one level up: `availability` is already the
-positive claim, and a prose boundary beside it is a second authority.
-
-**Meaningful `navigation` order.** An author might reasonably want it either
-way, which argues against modeling it.
-
-**Counterpart inheritance for twin Screens.** A Screen served by two versions,
-or on two Interfaces, is written twice. An existing cost of counterparts, not
-one nesting or versions introduced, and inheritance would hide where they
-diverge.
-
-**A `messages/` collection for outbound messages — deferred, not rejected.** A
-confirmation email, push or SMS is a Product Step that `reads` what it
-carries, and its content beyond those facts is copy. No Step runs *on* a
-message, so none of the place-and-transition machinery applies to one.
+**A dedicated messages collection — deferred.** Ordinary notifications can be
+Product Steps. When messages are things the Product schedules, sends, retries
+or revokes, model them with ordinary Entities and Capabilities. There is no
+claim that messages cannot have behavior or a lifecycle.
 
 ## Variation
 
-**A variant dimension on Contexts** for flags and experiments. Doubles every
-Context check for a mechanism a Rule's `when` fact condition already covers.
+**Dedicated Experience versions and version-driven containment — deferred.**
+Addresses and headers do not decide independently supported contracts. Use
+Interfaces for those contracts and Scenario conditions for behavior variation;
+a dedicated dimension needs demonstrated meaning beyond these resources.
 
-**A Product-level version registry with a `version` key on Contexts.**
-Versions that differ in what an Actor can do are places; containment and
-counterparts already draw them.
+**A general variation dimension — deferred.** Permission grants handle gates
+on Entity operations, not arbitrary behavior selection. Scenario conditions
+and outcomes describe other variations; this is not a claim that every flag
+can be represented by a grant or that experiments cannot be Product behavior.
 
-**A cohort concept on Experiences.** Who is in the beta is a fact on an Entity,
-read by a Rule.
+**Cohorts as a dedicated resource type — deferred.** Actor or tenant facts can
+record membership. Experiment-management Products can model assignment and
+measurement using ordinary Entities, Capabilities and Scenarios.

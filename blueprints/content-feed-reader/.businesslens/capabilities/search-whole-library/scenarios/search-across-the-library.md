@@ -38,7 +38,7 @@ steps:
   - text: Nothing in the library changes by being found
     kind: condition
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::search

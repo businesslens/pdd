@@ -8,7 +8,7 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: cart, effect: reads }
+      - { entity: cart, effect: reads, facts: [Quantity chosen] }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -26,9 +26,10 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The cart is validated against the catalog
     kind: product
+    actor: shopper
     entities:
-      - { entity: cart, effect: reads }
-      - { entity: catalog-product, effect: reads }
+      - { entity: cart, effect: reads, facts: [Quantity chosen] }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -38,7 +39,7 @@ steps:
     kind: product
     actor: shopper
     entities:
-      - { entity: payment-gateway, effect: reads }
+      - { entity: payment-gateway, effect: reads, facts: [] }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -48,7 +49,7 @@ steps:
     kind: product
     actor: shopper
     entities:
-      - { entity: order, effect: creates, to: Pending }
+      - { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }
       - { entity: cart, effect: removes }
     contexts:
       web:

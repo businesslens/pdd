@@ -1,6 +1,4 @@
 ---
-capabilities:
-  - follow-source
 entryPoints:
   - reader-web: /sources/new
 ---

@@ -269,7 +269,7 @@ describe('stable Product Report', () => {
     // The row the page renders carries changes and reads together, told apart.
     const row = scenarioStepMatrix(browse).steps[0]!
     expect(row.mentions).toEqual([
-      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '', facts: [] }
+      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '', facts: ['Name and description', 'Price', 'Stock remaining'] }
     ])
 
     // "What can alter this thing" keeps its answer: browsing is not in it.
@@ -1533,7 +1533,7 @@ describe('Screens on the v15 wire', () => {
       title: 'Reviews',
       description: 'What other shoppers said about the product.',
       capabilityIds: [scenario.capabilityId],
-      entities: [{ entityId: 'catalog-product', facts: null }],
+      entities: [{ entityId: 'catalog-product', shows: [], collects: [] }],
       capabilityScenarioIds: [scenario.id],
       journeyScenarioIds: [],
       entryPoints: [],
@@ -1546,7 +1546,7 @@ describe('Screens on the v15 wire', () => {
   it('reads what a Screen presents as Entities with the facts on screen', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
     const screen = workspace.screens.find((item: any) => item.id === 'customer-web::catalog')!
-    expect(screen.entities).toEqual([{ entityId: 'catalog-product', facts: ['Name and description', 'Price'] }])
+    expect(screen.entities).toEqual([{ entityId: 'catalog-product', shows: ['Name and description', 'Price'], collects: [] }])
     expect(screen.entityIds).toEqual(['catalog-product'])
     expect(workspace.entities.find((item: any) => item.id === 'catalog-product')!.presentedOnIds).toContain(screen.id)
     const body = source('app/components/BlrResourceBody.vue')
@@ -1644,7 +1644,7 @@ describe('Screens on the v15 wire', () => {
     const cited = workspace.scenarios.flatMap((scenario: any) => scenario.steps.flatMap((step: any) => step.entities))
       .filter((entry: any) => entry.facts.length)
     expect(cited.length).toBeGreaterThan(0)
-    expect(cited.every((entry: any) => entry.effect === 'reads' || entry.effect === 'changes')).toBe(true)
+    expect(cited.every((entry: any) => entry.effect === 'reads' || entry.effect === 'changes' || entry.effect === 'creates')).toBe(true)
     const chip = source('app/components/BlrStepEntity.vue')
     expect(chip).toContain('data-step-fact')
     expect(chip).toContain("props.outcome ? [] : props.mention.facts")
@@ -1835,13 +1835,11 @@ describe('Screens on the v15 wire', () => {
 
   })
 
-  it('reads languages and versions where the model states them', () => {
+  it('reads languages without exposing version metadata', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-09-21')
     report.languages = ['en', 'de-DE']
     report.model.interfaces.find(item => item.id === 'customer-web')!.languages = ['en']
-    const [storefront, other] = report.model.experiences
-    storefront!.version = 'v2'
-    other!.version = 'v1'
+    const [storefront] = report.model.experiences
     const workspace = projectReportWorkspace(report)
     expect(workspace.identity.languages).toEqual(['en', 'de-DE'])
     expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'customer-web')).map((fact: any) => fact.label))
@@ -1849,7 +1847,7 @@ describe('Screens on the v15 wire', () => {
     expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'admin-web')).map((fact: any) => fact.label))
       .toEqual(['Type', 'Experiences', 'Screens', 'Capabilities'])
     expect(resourceFacts(workspace, workspace.experiences.find((item: any) => item.id === storefront!.id)).map((fact: any) => [fact.label, fact.value]))
-      .toContainEqual(['Version', 'v2'])
+      .not.toContainEqual(['Version', 'v2'])
     expect(workspace.counts).not.toHaveProperty('screenStates')
   })
 })

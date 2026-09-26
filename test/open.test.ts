@@ -148,7 +148,7 @@ describe('open report', () => {
       .toContain('## Teaching note')
     // A Screen comes back as relations only: the facts on screen travel by Entity.
     expect(readFileSync(join(target, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), 'utf8'))
-      .toMatch(/  - entity: catalog-product\n    facts:/)
+      .toMatch(/  - entity: catalog-product\n    shows:/)
   })
 
   it('round-trips nested Screens and container-relative navigation', async () => {

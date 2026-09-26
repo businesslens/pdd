@@ -1,18 +1,17 @@
 ---
 entities:
-  - { entity: product-model, facts: [Product] }
-  - { entity: product, facts: [Identity] }
-  - { entity: interface, facts: [Type, Actors] }
-  - { entity: experience, facts: [Container, Audience] }
-  - { entity: screen, facts: [Exposure, Nesting] }
-  - { entity: domain, facts: [Region] }
-  - { entity: entity, facts: [Kept information, Acts, Kind, States] }
-  - { entity: capability, facts: [Purpose, Availability, Domain] }
-  - { entity: capability-scenario, facts: [Classification] }
-  - { entity: journey, facts: [Goal, Actors] }
-  - { entity: journey-scenario, facts: [Result, Classification] }
-  - { entity: business-rule, facts: [Assertion, Reach] }
-capabilities: [view-product-model, explore-product-topology]
+  - { entity: product-model, shows: [Product] }
+  - { entity: product, shows: [Identity] }
+  - { entity: interface, shows: [Type, Actors] }
+  - { entity: experience, shows: [Container, Audience] }
+  - { entity: screen, shows: [Exposure, Nesting] }
+  - { entity: domain, shows: [Region] }
+  - { entity: entity, shows: [Kept information, Acts, Kind, States] }
+  - { entity: capability, shows: [Purpose, Availability, Domain] }
+  - { entity: capability-scenario, shows: [Classification] }
+  - { entity: journey, shows: [Goal, Actors] }
+  - { entity: journey-scenario, shows: [Result, Classification] }
+  - { entity: business-rule, shows: [Assertion, Reach] }
 entryPoints:
   - local-report-web: /?s=capability
 references:

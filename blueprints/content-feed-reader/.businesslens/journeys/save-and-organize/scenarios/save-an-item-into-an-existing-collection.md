@@ -7,45 +7,38 @@ steps:
     actor: reader
     capability: save-item
     entities:
-      - { entity: item }
+      - { entity: item, facts: [Saved at] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile-to-web:
         place: reader-mobile::personal-library::unread-library
-      mobile-next-to-web:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The Reader selects an owned collection
     kind: actor
     actor: reader
     capability: organize-collection
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [Name] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
       mobile-to-web:
-        place: reader-web::personal-library::collection-workspace
-      mobile-next-to-web:
         place: reader-web::personal-library::collection-workspace
   - text: The saved item is added at the chosen position
     kind: product
     actor: reader
     capability: organize-collection
     entities:
-      - { entity: collection }
-      - { entity: item, effect: reads }
+      - { entity: collection, facts: [Item order] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
       mobile-to-web:
         place: reader-web::personal-library::collection-workspace::items
-      mobile-next-to-web:
-        place: reader-web::personal-library::collection-workspace::items
 routes:
   web: Web
   mobile-to-web: Mobile to web
-  mobile-next-to-web: Mobile (next) to web
 ---
 
 # Save an item into an existing collection

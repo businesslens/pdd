@@ -1,18 +1,17 @@
 ---
 entities:
-  - { entity: product-model, facts: [Product] }
-  - { entity: product, facts: [Identity] }
-  - { entity: interface, facts: [Type] }
-  - { entity: experience, facts: [Container] }
-  - { entity: screen, facts: [Nesting] }
-  - { entity: domain, facts: [Region] }
-  - { entity: entity, facts: [Kind] }
-  - { entity: capability, facts: [Domain] }
-  - { entity: capability-scenario, facts: [Classification] }
-  - { entity: journey, facts: [Actors] }
-  - { entity: journey-scenario, facts: [Classification] }
-  - { entity: business-rule, facts: [Reach] }
-capabilities: [view-product-model, explore-product-topology]
+  - { entity: product-model, shows: [Product] }
+  - { entity: product, shows: [Identity] }
+  - { entity: interface, shows: [Type] }
+  - { entity: experience, shows: [Container] }
+  - { entity: screen, shows: [Nesting] }
+  - { entity: domain, shows: [Region] }
+  - { entity: entity, shows: [Kind] }
+  - { entity: capability, shows: [Domain] }
+  - { entity: capability-scenario, shows: [Classification] }
+  - { entity: journey, shows: [Actors] }
+  - { entity: journey-scenario, shows: [Classification] }
+  - { entity: business-rule, shows: [Reach] }
 entryPoints:
   - local-report-web: /?s=capability&e=capability:lint-product-model
 references:

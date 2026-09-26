@@ -234,9 +234,8 @@ each side as the separator, and non-empty prose after it. Names are unique
 within the Entity and are cited by exact match, from three places: a
 [Business Rule](./business-rules.md)'s `facts` target and its `when` condition,
 a [Screen](./interfaces.md#what-a-screen-presents)'s `entities` entry naming
-the facts it presents, and a
-[Step](./capabilities.md#what-a-step-does-to-the-products-things)'s `reads` or
-`changes` entry naming the facts it uses. A name none of them can resolve is an
+the facts it shows and collects, and a
+[Step](./capabilities.md#what-a-step-does-to-the-products-things)'s `reads`, `changes` or `creates` entry naming the exhaustive facts it affects. A name none of them can resolve is an
 error. It is the idiom `## States` already uses, where an H3 titled `Pending`
 is cited as `from: Pending`.
 
@@ -401,7 +400,7 @@ use it declare the relationship, and every backlink is derived.
 | --- | --- |
 | **Scenario Step** | declares what it does to the Entity in `entities` — creates, changes, removes, or reads — the states it leaves and lands in, and the facts a read or change uses |
 | **Capability** | nothing; what it changes is derived from its Scenarios' Steps |
-| **Screen** | declares the Entities it presents, and which of their facts, in `entities` |
+| **Screen** | declares the Entity facts it shows and collects, separately, in `entities` |
 | **Another Entity** | related by a declared edge with a verb and both cardinality ends; the inverse is derived |
 | **Interface, Experience, Journey** | name it in `actors` when it acts |
 | **Business Rule** | targets an operation on it, cites one of its facts, walks its relations to find who may, or reads a settings Entity's fact as a condition |

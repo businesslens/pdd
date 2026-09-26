@@ -6,7 +6,7 @@ steps:
   - text: A Business Rule grants an operation on a thing to some Actors, and the code in scope lets anyone perform it
     kind: condition
     entities:
-      - { entity: business-rule, effect: reads }
+      - { entity: business-rule, effect: reads, facts: [Assertion, Reach, Permission] }
     contexts:
       harness:
         place: agent-skills

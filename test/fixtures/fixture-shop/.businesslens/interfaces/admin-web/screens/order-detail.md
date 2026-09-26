@@ -1,10 +1,7 @@
 ---
-capabilities:
-  - manage-orders
-  - cancel-order
 entities:
-  - { entity: order, facts: [Items ordered, Subtotal, Tax, Discount, Total charged, Margin] }
-  - { entity: refund, facts: [Amount, Reason] }
+  - { entity: order, shows: [Items ordered, Subtotal, Tax, Discount, Total charged, Margin] }
+  - { entity: refund, shows: [Amount, Reason] }
 entryPoints:
   - admin-web: /admin/orders/:id
 references:

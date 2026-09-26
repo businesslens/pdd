@@ -7,7 +7,7 @@ steps:
     actor: reader
     capability: publish-collection
     entities:
-      - { entity: collection, from: Private, to: Published }
+      - { entity: collection, from: Private, to: Published, facts: [Public address] }
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace::settings::sharing
@@ -16,7 +16,7 @@ steps:
     actor: reader
     capability: publish-collection
     entities:
-      - { entity: collection, from: Published, to: Unlisted }
+      - { entity: collection, from: Published, to: Unlisted, facts: [] }
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace::settings::sharing
@@ -32,7 +32,7 @@ steps:
     kind: product
     actor: visitor
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
 routes:
   unlist-on-web: Unlist On Web
 ---

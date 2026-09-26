@@ -1,9 +1,7 @@
 ---
 entities:
-  - { entity: collection, facts: [Name, Item order] }
-  - { entity: item, facts: [Title, Published at] }
-capabilities:
-  - read-public-collection
+  - { entity: collection, shows: [Name, Item order] }
+  - { entity: item, shows: [Title, Published at] }
 entryPoints:
   - reader-web: /collections/:collectionSlug
 ---

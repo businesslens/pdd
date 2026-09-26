@@ -75,15 +75,13 @@ the diff.
    implementation flag, and that each declared relation and its cardinality
    hold. Confirm every Step's `entities`: the code performs each declared effect
    on that thing, moves it between exactly the states the Step names, and
-   touches nothing the Step leaves out, and reads or changes exactly the `facts`
-   it cites. Confirm each Screen against the view's code: it renders or
-   collects exactly the facts named for each Entity it lists, each Capability
-   it lists is one a Step placed there uses, each child Screen's content
-   depends on an act inside its parent, and every `navigation` Screen is
+   touches nothing the Step leaves out, and reads, changes or initializes exactly the `facts`
+   it cites. Confirm each Screen against the view's code: its disclosures match `shows` and its inputs match `collects`, each Capability
+   derived from it is one a Step placed there uses, each child Screen belongs to its parent’s persistent working context, and every `navigation` Screen is
    reachable from every place in its container; confirm `languages` against
    the locales the code serves. An overstatement either way is a `code-right`
    finding like any other. Looks are never a finding — components, layout,
-   theme, copy, viewport — because the model claims none of it; the rubric's
+   theme, ordinary copy, viewport — because the model claims none of it; the rubric's
    redesign test decides which side a difference falls on.
 
    Verify who may. For each Business Rule with `permits`, confirm the code lets
@@ -164,8 +162,7 @@ the diff.
      and necessary relationships, state coverage and uncertainty, and get
      approval before writing. This branch is mapping, so it faces every call
      mapping faces. Screens it drafts are places — reach, facts on screen,
-     abilities, conditions — nested where a region's content depends on an act
-     inside its parent, never design; every ability a Screen exposes gets a
+     abilities, conditions — nested by a persistent working context, never design; every ability a Screen exposes gets a
      Scenario with a Step placed on it. The rubric's scoped-mapping section
      carries the rest.
    - Write the approved delta, then return to step 4.
@@ -222,8 +219,9 @@ the diff.
   do and trigger at each place, never how it looks or is built; component
   libraries, theming, layout, typography, color, iconography, motion, copy,
   gestures, breakpoints, loading and hover states, navigation chrome and
-  order belong in `visual` References with `role: intent` and are never
-  compared.
+  order belong in `visual` References with `role: intent`. Compare exact
+  wording only when a Rule explicitly requires the authoritative Reference;
+  report unavailable wording as unverifiable.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.

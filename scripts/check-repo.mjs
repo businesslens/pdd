@@ -300,6 +300,17 @@ for (const skill of expectedSkills) {
   }
 }
 
+// Installed authoring instructions and the parser must name the same folder schema.
+const modelSource = await readFile(resolve(root, 'src/core/model.ts'), 'utf8')
+const folderSchema = modelSource.match(/export const FOLDER_SCHEMA = (\d+)/)?.[1]
+for (const file of ['spec/format.md', ...expectedSkills.map(skill => `skills/${skill}/references/format.md`)]) {
+  const source = await readFile(resolve(root, file), 'utf8')
+  const declarations = [...source.matchAll(/schema: (\d+)/g)].map(match => match[1])
+  if (!folderSchema || !declarations.length || declarations.some(version => version !== folderSchema)) {
+    errors.push(`${file} must teach folder schema ${folderSchema}`)
+  }
+}
+
 // Every workflow that can create a model carries the same orientation text.
 // Skills are installed independently, so their copies must be self-contained;
 // this check prevents those necessary copies from drifting from the CLI writer.

@@ -6,7 +6,7 @@ steps:
   - text: The target directory already holds a Product Model
     kind: condition
     entities:
-      - { entity: product-model, effect: reads, as: previous }
+      - { entity: product-model, effect: reads, as: previous, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
@@ -14,7 +14,7 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: blueprint, effect: reads }
+      - { entity: blueprint, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
@@ -30,8 +30,8 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: blueprint, effect: reads }
-      - { entity: product-model, effect: creates, as: incoming }
+      - { entity: blueprint, effect: reads, facts: [] }
+      - { entity: product-model, effect: creates, as: incoming, facts: [Product, Coverage, Method] }
     contexts:
       terminal:
         place: businesslens-cli

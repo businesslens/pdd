@@ -17,7 +17,7 @@ steps:
     actor: ai-agent
     capability: verify-model-alignment
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       branch:
         place: agent-skills

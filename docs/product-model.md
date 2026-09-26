@@ -73,7 +73,7 @@ sections it can contain.
 | [Entity](./entities.md) | At least one that acts, because every Interface names an Actor | A thing the Product keeps or reasons about — what it holds about it, the states it moves through, and whether it acts on the Product |
 | [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
 | [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, defined by who is there, what they can do, and its access mode |
-| [Screen](./interfaces.md#screens) | Optional | A place where an Actor meets facts and abilities: the Capabilities exposed and the Entity facts presented there, nested where a region depends on an act in its parent; non-visual Products do not need one |
+| [Screen](./interfaces.md#screens) | Optional | A place where an Actor meets facts and abilities: the Capabilities exposed and the Entity facts presented there, nested where a region subdivides its parent’s persistent working context; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
 | [Capability](./capabilities.md) | At least one | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
@@ -195,9 +195,10 @@ requires:
 - Capability `availability` lists Contexts whose places are undivided
   Interfaces or Experiences. These are the durable availability boundaries.
 - Scenario `steps[].contexts` maps every route to a Context. Its place is the
-  most-specific occurrence: a Screen when the boundary contains Screens — a
+  most-specific occurrence: a Screen when the Step happens there — a
   parent Screen is a place of its own, meaning on it and in none of its
-  children — otherwise the leaf Experience or Interface.
+  children — otherwise the leaf Experience or undivided Interface, even if
+  other behavior in that container has Screens.
 - Business Rule Context selectors may name an Interface, Experience, or
   Screen. An ancestor place includes its descendants, so an Interface selector
   can deliberately cover Contexts beneath that Interface.
@@ -272,7 +273,7 @@ one. Where a rule can be computed, an author never has to argue it.
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no resource type. |
 | Acts, or dependency? | Direction decides. An external system acts only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
 | Screen, or Entity state? | A condition of a **view** — empty, unauthorized, caught-up — is the `condition` Step, Edge case, or Rule outcome of the Scenario that meets it there. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
-| Screen, or Child Screen? | A region is a [Child Screen](./interfaces.md#screens-nest) when its content depends on an act inside its parent — picking a row, choosing a tab, advancing a step. The same content drawn differently is design, and one Screen. |
+| Screen, or Child Screen? | A region is a [Child Screen](./interfaces.md#screens-nest) when it subdivides its parent’s persistent working context. Opening a destination alone does not establish ownership. The same content drawn differently is design, and one Screen. |
 | Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing changes, presents, names as an actor, or reads by Rule is an error. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, a Context independent of any behavior, or an operation on a thing — and it is the only place permission is said. Anything else true of exactly one Capability is a `condition` Step or its Outcome. |
 | Domain, or no grouping? | A Domain states a `## Boundary` naming what it does **not** own, and holds at least two Capabilities. Otherwise it is a folder. |

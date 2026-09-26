@@ -18,15 +18,15 @@ steps:
       - { entity: source, effect: reads, facts: [Name, Feed address, Last read] }
     contexts:
       web:
-        place: reader-web::personal-library::source-list::source-detail
+        place: reader-web::personal-library::source-detail
   - text: The source's items and their reading state are untouched
     kind: condition
     entities:
-      - { entity: source, effect: reads }
-      - { entity: item, effect: reads }
+      - { entity: source, effect: reads, facts: [] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::source-list::source-detail
+        place: reader-web::personal-library::source-detail
 ---
 
 # Inspect a followed source

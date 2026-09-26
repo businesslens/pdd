@@ -58,14 +58,16 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         { label: 'Interface', value: one('interface', item.interfaceIds), wide: true, term: KIND_TERM.interface },
         { label: 'Access mode', value: item.accessMode, term: 'access-mode' },
         { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen },
-        { label: 'Capabilities', value: String(item.capabilityIds.length), term: KIND_TERM.capability },
-        ...(item.version !== null ? [{ label: 'Version', value: item.version, term: 'version' as const }] : [])
+        { label: 'Capabilities', value: String(item.capabilityIds.length), term: KIND_TERM.capability }
       ]
     }
     case 'screen': {
       const screen = resource as ScreenView
+      const presents = screen.entities.filter(entry => entry.shows.length || !entry.collects.length).length
+      const collects = screen.entities.filter(entry => entry.collects.length).length
       return [
-        { label: 'Presents', value: String(screen.entityIds.length), term: KIND_TERM.entity },
+        ...(presents ? [{ label: 'Presents', value: String(presents), term: KIND_TERM.entity }] : []),
+        ...(collects ? [{ label: 'Collects', value: String(collects), term: KIND_TERM.entity }] : []),
         { label: 'Capabilities', value: String(screen.capabilityIds.length), term: KIND_TERM.capability },
         /* The navigation mark, in words: the strip is where a reader asks what it means. */
         ...(screen.alwaysReachable ? [{ label: 'Navigation', value: 'Always reachable', term: 'navigation' as const }] : [])

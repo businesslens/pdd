@@ -14,7 +14,7 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       harness:
         place: agent-skills
@@ -29,7 +29,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: product-model, effect: changes }
+      - { entity: product-model, effect: changes, facts: [Coverage, Method] }
     contexts:
       harness:
         place: agent-skills

@@ -5,6 +5,7 @@ appliesTo:
     effect: reads
     facts: [Feed address]
 permits:
+  - unattended: true
   - related: [{ verb: follows, entity: reader }]
 ---
 
@@ -12,7 +13,7 @@ permits:
 
 Where a source's feed is read from is shown only to the Reader who follows it.
 The source's name may appear beside items anyone can read; its feed address
-may not.
+may not. The Product may read it unattended to synchronize that Reader’s feed.
 
 ## Rationale
 

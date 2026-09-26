@@ -7,9 +7,9 @@ steps:
     kind: actor
     actor: reader
     entities:
-      - { entity: collection, as: source, effect: reads }
-      - { entity: collection, as: target, effect: reads }
-      - { entity: item, effect: reads }
+      - { entity: collection, as: source, effect: reads, facts: [Name] }
+      - { entity: collection, as: target, effect: reads, facts: [Name] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
@@ -17,8 +17,8 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection, as: source, effect: reads }
-      - { entity: collection, as: target, effect: reads }
+      - { entity: collection, as: source, effect: reads, facts: [] }
+      - { entity: collection, as: target, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
@@ -26,16 +26,16 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection, as: source }
-      - { entity: collection, as: target }
-      - { entity: item, effect: reads }
+      - { entity: collection, as: source, facts: [Item order] }
+      - { entity: collection, as: target, facts: [Item order] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items
   - text: The item's saved state and reading state are untouched
     kind: condition
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::items

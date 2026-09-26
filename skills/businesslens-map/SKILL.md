@@ -95,11 +95,10 @@ Read before authoring:
    are evidence, not automatic Interfaces. Create an Interface only for a
    supported Product interaction contract, and do not infer cross-Interface
    parity from shared implementation. Whether an Interface is divided into
-   Experiences is derived, never judged, from three inputs: divide it when it
+   Experiences follows audience and access: divide it when it
    serves more than one `access` value, when its Actors split into groups no
    Capability available there bridges (a Capability bridges the Actors its
-   Scenario Steps name), or when it serves two or more versions at once through
-   one entry point, each Experience carrying `version`. Otherwise it holds no
+   Scenario Steps name). Otherwise it holds no
    Experiences and availability names the Interface directly. `lint` decides
    and reports a violation as an error; the one exception is an Experience
    whose name also exists under
@@ -117,35 +116,14 @@ Read before authoring:
    A resource you can attach nothing to is a claim resting on inspection alone —
    say so in the delta rather than leaving it unexplained.
 
-   **Screens are places, never designs.** The model says what an Actor can
-   reach, see, do and trigger at each place, never how it looks or is built;
-   the rubric's redesign test decides which side a fact falls on. A Screen is a
-   stable view an Actor reaches — not every route, component, viewport or
-   visual variant. Nest a child Screen for a region whose content depends on
-   an act inside its parent (picking a row, choosing a tab, advancing a wizard
-   step); co-visibility and an own URL do not decide it, and the same content
-   drawn differently — modal or page, Rows or Graph — is one Screen. A
-   confirmation dialog is two Steps on the host Screen: ask, confirm. For each
-   Entity a Screen presents, name the facts on screen — read or entered, a
-   form included — as `{ entity, facts }`; a bare id only for an Entity with
-   no named facts. List on each Screen only the Capabilities its own Steps use.
-   **Every ability a Screen exposes has a Scenario with a Step placed on that
-   Screen**, an export button included; there is no cheaper spelling. Filters, sorting and search are Scenarios of the Capability that
-   presents the set, the facts they use cited as `facts` on the `reads` Step;
-   search that presents a set nothing else does is a Capability. A wizard is a
-   parent Screen with one child per step and a Scenario walking them, a
-   Journey only where it crosses Capabilities. Author `navigation` on an
-   Interface or Experience only for Screens reachable from every place inside
-   it — a cart, a global search; nothing else about navigation is authored.
-   Never write the words an Actor is told: model that they are told and under
-   which condition — a Step, an Edge case, a Rule outcome — and make legally
-   required text a Rule whose wording is a Reference. Record `languages` on
-   the Product, narrowed on an Interface. A flag or A/B test that changes what
-   an Actor can do is a fact on a settings Entity read by a Rule `when`; the
-   experiment itself is not modeled. Versions served at once are places: an
-   own entry point is an Interface, a shared one is Experiences carrying
-   `version`; who sees which is a fact on the Actor or tenant Entity; historical
-   versions are never modeled.
+   **Apply the rubric's product/design border.** Screen entities separate
+   `shows` from `collects`; Capabilities derive from placed Steps. Step facts
+   are exhaustive for reads, changes and creation. Screen ownership follows a
+   persistent working context, never merely the act of opening a destination.
+   Use Scenario conditions for behavior variation and grants only for Entity
+   permissions. Keep ordinary copy external; verify exact wording when a Rule
+   makes it contractual. Consult the rubric for the boundary cases.
+
 7. **Put what the repository cannot settle to the author, in rounds, before
    writing anything.** Inspection establishes what the code does. It cannot
    establish what the Product *means*, and two defensible readings routinely

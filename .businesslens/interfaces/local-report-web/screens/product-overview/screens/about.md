@@ -1,8 +1,7 @@
 ---
 entities:
-  - { entity: product, facts: [Identity, Catalog identity, Limitations] }
-  - { entity: product-model, facts: [Product] }
-capabilities: [view-product-model]
+  - { entity: product, shows: [Identity, Catalog identity, Limitations] }
+  - { entity: product-model, shows: [Product] }
 ---
 
 # About

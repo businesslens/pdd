@@ -1,9 +1,6 @@
 ---
 entities:
-  - { entity: collection, facts: [Name] }
-capabilities:
-  - create-collection
-  - organize-collection
+  - { entity: collection, shows: [Name] }
 entryPoints:
   - reader-web: /collections
 ---

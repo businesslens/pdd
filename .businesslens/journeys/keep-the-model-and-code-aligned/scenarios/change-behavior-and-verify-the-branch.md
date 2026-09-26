@@ -17,8 +17,8 @@ steps:
     actor: ai-agent
     capability: decide-intended-behavior
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: capability, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
+      - { entity: capability, effect: reads, facts: [] }
     contexts:
       branch:
         place: agent-skills
@@ -27,7 +27,7 @@ steps:
     actor: developer
     capability: decide-intended-behavior
     entities:
-      - { entity: product-model, effect: changes }
+      - { entity: product-model, effect: changes, facts: [Coverage, Method] }
     contexts:
       branch:
         place: agent-skills
@@ -50,7 +50,7 @@ steps:
     actor: ai-agent
     capability: verify-model-alignment
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       branch:
         place: agent-skills

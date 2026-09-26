@@ -7,7 +7,7 @@ steps:
   - text: The catalog is listed
     kind: product
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web:
         place: customer-web::catalog
@@ -17,7 +17,7 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web:
         place: customer-web::storefront::product-record

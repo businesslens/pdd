@@ -6,7 +6,7 @@ steps:
   - text: Inspection finds approved model meaning the current code does not support
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       harness:
         place: agent-skills

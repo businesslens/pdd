@@ -23,16 +23,13 @@ terms:
   - term: Access mode
     anchor: experience-file
     definition: "Who may enter an Experience: public, authenticated, or restricted."
-  - term: Version
-    anchor: variation
-    definition: "Which of several concurrent versions an Experience serves. Written only where its Interface serves more than one at once."
   - term: Screen
     anchor: screens
     definition: "A place inside an Interface or Experience, named in the Product's own words, where an Actor meets facts and abilities."
   - term: Child Screen
     aliases: [Nested Screen]
     anchor: screens-nest
-    definition: "A Screen inside another Screen, whose content depends on an act in its parent: picking a row, choosing a tab, advancing a step."
+    definition: "A Screen that subdivides its parent’s persistent working context, such as a selected resource or a wizard process."
 ---
 
 # Interfaces
@@ -157,7 +154,7 @@ and when existing Experiences are justified.
 ### When to create an Experience
 
 **Whether an Interface is divided into Experiences is derived, never judged.**
-`lint` computes it from `actors`, `access`, `version`, each Capability's
+`lint` computes it from `actors`, `access`, each Capability's
 `availability`, and its Scenarios' Steps, so the author never applies a prose
 test. Two rules decide it, one in each direction:
 
@@ -165,16 +162,14 @@ test. Two rules decide it, one in each direction:
   no Capability available there bridges. Holding none is a `lint` **error**:
   those groups are separate contexts, not one.
 - **An Interface that holds Experiences must justify them.** Its Experiences
-  differ in `access`, or its audiences are disjoint, or they serve distinct
-  [versions](#variation) of one context at once, or one is a counterpart —
+  differ in `access`, or its audiences are disjoint, or one is a counterpart —
   an Experience whose name also exists under another Interface, the same context
   on another platform, which justifies itself because flattening it would make
-  two views of one context look unrelated. None of the four, and it is a
+  two views of one context look unrelated. None of the three, and it is a
   `lint` **error**: use direct Interface availability instead.
 
-Disjoint audiences is the only input that *requires* division. `access` and
-`version` only justify Experiences that already exist, because an Interface
-declares neither of its own — the values live on each Experience.
+Disjoint audiences is the only input that *requires* division. `access` only justifies Experiences that already exist, because an Interface
+declares no access mode of its own.
 
 The rule protects one thing: an Experience is a context that stays meaningful
 when routes, commands, or navigation are reorganized, because it is defined by
@@ -213,7 +208,6 @@ Where authorized operators manage the Product and its users.
 | `access` | yes | Use `public`, `authenticated`, or `restricted`. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `navigation` | no | List this Experience's own Screens reachable from every place inside it, each as a path relative to the Experience, nested ones by their child path. Unique values; order carries no meaning. See [Navigation](#navigation). |
-| `version` | no | A single-line name for the version this Experience serves. Valid only when another Experience of the same Interface carries a different one; see [Variation](#variation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Experience. |
 | Lead paragraph | yes | Describe the coherent usage context. |
@@ -269,13 +263,8 @@ itself is left out of the model. A repository rule that every implemented route
 must appear somewhere is a documentation rule, not a Product Model rule; do not
 satisfy it by inventing a Capability the view does not have.
 
-**A region inside a view is a Screen of its own when its content depends on an
-act inside its parent** — picking a row, choosing a tab, advancing a step. That
-is the whole test, and it is decidable from code without judging layout.
-Whether the region is visible at the same time as its parent, and whether it
-has its own address, do not decide it. The same content drawn differently — a
-Rows and a Graph drawing of one set — is design, and one Screen. Such a region
-is a [Child Screen](#screens-nest).
+A [Child Screen](#screens-nest) subdivides a persistent parent working
+context. An opening action alone does not establish ownership.
 
 > **Experience vs Screen.** An [Experience](./interfaces.md#experiences) is a coherent
 > context inside one Interface. A Screen is one place inside that context, or
@@ -298,10 +287,9 @@ Screen collection is optional.
 
 ```md [screens/product-record.md]
 ---
-capabilities: [browse-catalog, place-order]
 entities:
-  - { entity: catalog-product, facts: [Name, Price, Availability] }
-  - { entity: cart, facts: [Item count] }
+  - { entity: catalog-product, shows: [Name, Price, Availability] }
+  - { entity: cart, shows: [Item count] }
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: shop://products/:id
@@ -318,93 +306,80 @@ Shows what a shopper needs to evaluate one product.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `capabilities` | yes | Name at least one unique existing Capability that a Step placed on this Screen uses; each must declare an availability Context for the Interface or Experience containing this Screen. A Screen shared beside `experiences/` needs one for every Experience of its Interface, and `lint` names the Experiences a Capability is missing from. |
-| `entities` | no | Name the [Entities](./entities.md) this Screen presents, each as `{ entity, facts }` or a bare id. `facts` names the Entity's [named facts](./entities.md#named-facts) exactly, is non-empty when present, and every name must exist. |
+| `entities` | no | A bare Entity id only when it has no named facts; otherwise `{ entity, shows?, collects? }`, with at least one non-empty unique list of exact [fact names](./entities.md#named-facts). |
 | `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
 | `## Intent` | no | Explain the outcome this place protects. |
 
-That is the whole shape. What a Screen presents is its `entities`; what it
-offers is its `capabilities` and the Steps placed on it; the conditions it
-meets are the Scenarios' `condition` Steps, Edge cases and Rule outcomes; and
-its boundary is the positive claim `capabilities` already makes. Other H2
-sections are kept as supporting sections.
+A Screen does not author `capabilities` or `availability`. Its placement is
+its folder; its Capabilities derive from the Steps placed exactly there. A
+Capability Scenario supplies its owning Capability, while a Journey Step names
+one explicitly. At least one placed Capability is needed for a Screen. The
+same Steps supply Scenario backlinks. Parent and child Screens retain separate
+Capability sets.
 
-Screens do not declare availability and do not list Scenarios. Their folder
-path is already authoritative for their containing Interface or Experience. A
-Scenario participates in a Screen when one of its Step Contexts names that
-Screen as its most-specific `place`. When that Step names a Capability, the
-Screen must expose it. Consumers derive both Capability Scenario and Journey
-Scenario backlinks from those Step Contexts.
+Other H2 sections are supporting content, except the removed `Information
+presented`, `Available actions`, `View states` and `Capability boundary`
+sections. Conditions belong in Scenarios and Rules.
 
 ### What a Screen presents
 
-**"Presents" means the fact is on screen, whether the Actor reads it or enters
-it.** A sign-up form lists `{ entity: account, facts: [Email, Password] }`, and
-the Step that creates the Account cites nothing: what a creation collects is
-what the Screen presents. Reading versus entering is design.
+**Displaying information and collecting input are different product claims.**
+`shows` records information the Product discloses; `collects` records values
+supplied by the Actor. Both refer to the Entity's named facts. A prefilled
+editable field may occur in both lists.
 
-A fact is cited by the exact name its Entity declares under
-`## Information kept`, the way a [Business Rule](./business-rules.md)'s `facts`
-target and a [Step](./capabilities.md#what-a-step-does-to-the-products-things)'s
-`facts` cite it. An Entity with no named facts is always cited bare; one that
-has named facts is always cited with them, because a bare id would otherwise be
-a second spelling of "all of them".
+```yaml
+entities:
+  - entity: account
+    shows: [Email]
+    collects: [Password]
+```
 
-A Rule that governs who may read a fact is checked against who reaches every
-Screen presenting it, and a Rule scoped to a place must name a Screen
-presenting that fact, or an ancestor of one.
+Collecting a password does not disclose an existing one. Read-permission Rules
+apply to `shows`, never to an input merely because the form collects it.
+An Entity without named facts is cited bare; one with named facts needs at
+least one shows/collects list. Each present list is non-empty and unique.
 
-**Each Screen lists only the Capabilities its own Steps use.** A Capability a
-Screen exposes with no Step placed exactly on that Screen is a `lint` error.
-There is no cheaper encoding of "this ability exists here" than a Scenario, an
-export button included; what is not yet mapped belongs in
-[Coverage](./product-model.md#coverage) as Unmapped.
+An Actor Step reading named facts on a Screen must find them in that Screen's
+`shows`. Product and condition Steps may consult information that is not
+shown. Creation and change Steps record the named facts their operations affect,
+including Product defaults; these are not inferred from what a form collects.
 
 ### Screens nest
 
-An expanded Screen may hold `screens/` of its own. A Screen's id grows one
-segment per level — `customer-web::storefront::onboarding::choose-plan` — and
-depth is unlimited, because the rule is the same at every level:
+An expanded Screen can contain its own `screens/` directory. Its child's id
+adds a segment, such as `customer-web::onboarding::choose-plan`. A Step on a
+child is inside its ancestors; a Step placed directly on the parent is on the
+parent itself. Rule selectors on a parent include descendants.
 
-```text
-interfaces/customer-web/experiences/storefront/screens/
-└── onboarding/
-    ├── screen.md
-    └── screens/
-        ├── choose-plan.md
-        └── enter-details.md
-```
-
-Containment keeps its meaning everywhere. A Step on a Child Screen is inside
-the parent; a Rule selector on the parent covers the child; `navigation` may
-name a nested Screen by its child path; and the map consumers derive is
-hierarchical.
-
-**A parent Screen is a place.** A Step placed on it means *on the parent, not in
-any child*. The list of a master-detail and the shell of a wizard have Steps of
-their own.
-
-**Capabilities do not flow up or down.** A Child Screen lists what its own
-Steps use; the parent does not repeat it. The report shows each Screen's own list at its place in the tree.
+**Ownership follows a persistent working context.** A child subdivides the same
+selected subject or process as its parent; changing that parent context also
+changes or ends the child. Tabs within a resource reading and stages of a
+wizard are examples. Merely opening a view from another view is not ownership.
+A resource panel available from search, a collection and related resources
+belongs once at their common Interface or Experience container.
 
 | Case | Modeling |
 | --- | --- |
-| Confirmation dialog | two Steps on the host Screen: ask, confirm |
-| Slideover or panel with its own facts | a Child Screen of the view it opens over |
-| Tabs showing different facts | Child Screens |
-| Rows / Graph drawing of one set | design; one Screen |
-| Wizard | one parent Screen, one child per step, a Scenario walking them in order |
-| Master-detail | the detail is a Child Screen of the list |
-| Overlay preserving the parent's state | a Scenario Outcome, not structure |
-| Modal versus page versus inline | design; not modeled |
+| Tabs subdividing one resource reading | Child Screens of that reading |
+| Wizard stages | Child Screens of the wizard's working context |
+| Shared resource panel opened from several views | One Screen at their common container |
+| Confirmation without a distinct working context | Steps on its host |
+| Rows and Graph showing the same information | One Screen |
+| Preserving the underlying view on close | A Scenario Outcome |
+| Modal, page, inline, URL or breakpoint | Does not determine ownership |
 
-A wizard is nested Screens on the structure side. The Scenario walking it is a
-[Journey Scenario](./journeys.md#journey-scenarios) only where it crosses
-Capabilities, and otherwise a
-[Capability Scenario](./capabilities.md#capability-scenarios); the two axes are
-independent.
+Choose the nearest qualifying persistent context as the parent. A generic
+settings/category selector is not itself a selected subject or an in-progress
+process. A process stage requires its own Actor decision or input while retaining
+the same draft or operation; a completion message, generated credential reveal
+or read-only result alone is an Outcome on that process Screen, not a child.
+
+A wizard is a Journey only when its Scenario crosses Capabilities. Ownership
+is a semantic authoring decision assessed against this rule, not something
+structural lint can establish from a folder tree alone.
 
 ### Screens shared across Experiences
 
@@ -419,7 +394,7 @@ across Interfaces.
 A shared Screen is inside every Experience of its Interface. Its id is
 `interface-id::screen-id`, every Capability it exposes must be available in
 each Experience, and a Scenario Step on it counts as coverage for each. That is
-the test for whether a view is really shared: if its Capabilities differ by
+the test for whether a view is really shared: if its displayed facts, inputs, Capabilities or behavior differ by
 Experience, it is two Screens, one under each Experience, which are
 counterparts. A Screen that belongs to one Experience belongs inside it.
 
@@ -447,15 +422,13 @@ else is: `navigation`, and [nesting](#screens-nest).
 `navigation` names the Screens an Actor can reach from every place inside an
 Interface or Experience — a cart, a search, a home. It is structure, not a
 relation, in the same sense as folder containment: it states a fact about the
-container, and the report draws it as an always-reachable mark on the Screen,
-never as edges. Each entry is a Screen path relative to the container,
+container, and it states reachability, not a Scenario transition. Each entry is a Screen path relative to the container,
 `catalog` or `library::by-source`. On an undivided Interface any of its
 Screens qualifies. On a divided Interface only a
 [shared Screen](#screens-shared-across-experiences) or a descendant of one
 does, because a Screen inside a restricted Experience cannot be reachable from
 a public one; an Experience's own `navigation` names its own Screens. Order
-carries no meaning: `lint` ignores it and the report sorts as it sorts
-everything else.
+carries no meaning: `lint` ignores it.
 
 Parent, next and back links, menus, route trees, the order of navigation items,
 and XML sitemaps do not belong in the Product Model: entry points say what is
@@ -473,7 +446,7 @@ command syntax in CLI help and endpoint schemas in the API contract; model the
 durable Capabilities, both observable Scenario types, optional Journeys, and
 Rules they expose.
 
-### Screens in the Product Report
+### Screen ownership
 
 A Screen belongs to its actual Interface and optional Experience, and a shared
 Screen belongs to one of them canonically. Containment says what holds what; it
@@ -493,7 +466,8 @@ place.
 | What is always reachable, and where behavior moves between places | | **yes** |
 | The conditions and outcomes an Actor meets, and who may act | | **yes** |
 | Layout, components, typography, color, spacing, icons, motion | yes | never |
-| Copy, tone, and the words of any message | yes | never |
+| Ordinary copy and tone | yes | no |
+| Exact wording explicitly required by a Rule | | **yes, by Reference** |
 | Gestures versus buttons, breakpoints, loading and hover states, navigation chrome | yes | never |
 
 One test decides every case:
@@ -518,11 +492,11 @@ buttons, breakpoints, loading and hover states, navigation chrome, the order of
 navigation items, and quality attributes such as accessibility or performance
 unless they change what an Actor can do.
 
-**Text follows the same line.** The model says that an Actor is told something
-and under which condition — a Step, an Edge case, or a Rule outcome. It never
-says the words. Legally required text is a [Business Rule](./business-rules.md)
-("consent is captured before creation") whose wording lives in a Reference.
-There is no carve-out.
+**Ordinary copy is design; contractual wording is a requirement.** The model
+normally records what an Actor must be told and under which condition. When
+exact words are required, a Business Rule identifies the authoritative Reference
+and says exactness is required. Verification checks the words; an unavailable
+source makes that requirement unverifiable.
 
 Everything on the design side lives in a design system and design files.
 Attach them to the Interface, Experience or Screen they shape as `visual`
@@ -540,51 +514,33 @@ Screens never carry one. A redesign cannot drop German, so it is product; the
 vocabulary is closed, and `businesslens-verify` can check it against i18n
 configuration.
 
-**Flags, A/B tests and dynamic configuration.** A settings Entity holds the
-flag as a fact, and a [Business Rule](./business-rules.md#grant-keys) reads it
-with `when`, targeting an Entity operation or a Capability. An A/B test that
-changes what an Actor can do is a flag; one that changes looks is design. The
-experiment itself — cohorts, assignment, metrics — is not modeled.
+**Flags and behavior variation.** A flag governing who may perform an Entity
+operation can condition a permission grant. Other variation belongs in Scenario
+conditions and outcomes, with Business Rules for constraints spanning behaviors.
+There is no structured `when` on a Capability-targeting Rule. Experiment
+infrastructure is usually outside the model, but managing experiments is Product
+behavior when that is the Product's purpose.
 
-**Concurrent versions are places.** A version with its own entry point — an
-`/api/v2`, a separate app — is its own Interface. Versions sharing an entry
-point are Experiences under one Interface, each carrying `version`, and serving
-distinct versions at once is the third reason an Interface divides, beside
-distinct access modes and disjoint audiences. `version` is valid only where two
-or more Experiences of one Interface carry distinct values, so a
-single-version Product never writes it. A Screen both versions serve with the same Capabilities is a shared Screen
-beside `experiences/`; one that differs between versions is written under
-each, as counterparts are.
-
-**Who sees which version or flag** is a fact on the Actor or tenant Entity,
-read by a Rule — the same shape as a flag. There is no cohort concept.
-
-**Historical versions are never modeled.** Git is the model's history.
+**Concurrent contracts.** Independently supported interaction contracts may be
+separate Interfaces. A different URL or header alone does not decide this.
+Otherwise, describe behavior variation through Scenarios and Rules. There is no
+Experience `version` field or version-driven division rule. Git preserves
+historical models.
 
 ## Findings `lint` reports
 
-- A `navigation` entry that does not resolve to a Screen inside its container
-  by path — on a divided Interface, a Screen that is not shared or below a
-  shared one — is an error.
-- A fact named on a Screen's `entities` entry that the Entity does not declare
-  is an error; so is an empty `facts` list.
-- A Capability a Screen exposes with no Step placed exactly on that Screen is an
-  error.
-- An `actor` Step placed on a Screen that `reads` an Entity the Screen does
-  not present is an error, and so is a Step citing a fact on a Screen whose
-  entry for that Entity lists facts without it. Product and condition Steps,
-  and reads of an Entity that acts, are not checked.
-- A Capability available in an Interface or Experience that owns Screens, which
-  no Screen there exposes, is an error.
-- A bare Entity id on a Screen, where the Entity has named facts, is an error.
-- A `languages` entry that is not a well-formed tag, an Interface language the
-  Product does not declare, or an Interface listing languages while the Product
-  declares none, is an error.
-- A `version` on an Experience with no sibling carrying a different one is an
-  error.
-- An Interface that must divide and holds no Experiences, or one whose
-  Experiences none of the four reasons justifies, is an error.
-- A `## Capability boundary`, `## Information presented`,
-  `## Available actions` or `## View states` section, a `screens` key on an
-  Interface or Experience, or a `languages` key on an Experience or Screen, is
-  an error.
+- A navigation entry must resolve inside its container.
+- Screen shows/collects must name existing Entity facts; present lists are
+  non-empty and unique. Bare entries are only for Entities without named facts.
+- A Screen needs a Capability derived from a Step placed exactly there. An
+  authored `capabilities` list is an unknown key.
+- Actor reads must be shown by their Screen. Product and condition reads are
+  not display claims; fact-free reads naming an Actor as a participant are exempt.
+- Languages must be valid and an Interface's list a subset of the Product's.
+- Experiences must follow the audience/access/counterpart rules; `version` is
+  an unknown key.
+- Removed Screen sections, `screens` on a container and `languages` on an
+  Experience or Screen are errors.
+
+Coverage does not relax these checks. A Capability can have no Screen; a Rule
+can prohibit behavior for which there is no example.

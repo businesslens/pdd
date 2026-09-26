@@ -1,5 +1,5 @@
 ---
-capabilities: [view-product-model]
+{}
 ---
 
 # Product references

@@ -13,7 +13,7 @@ steps:
   - text: The Product restores the selected reading and its scroll position or graph zoom and pan
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -27,7 +27,7 @@ steps:
   - text: The Product retains surviving selections and explicit group choices and clears references to resources removed by the edit
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection

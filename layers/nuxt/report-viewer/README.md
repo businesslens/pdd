@@ -38,12 +38,14 @@ there, never a sum of the places nested inside it. An Interface or Experience
 Overview carries no Delivery list; its facts strip counts the Capabilities
 available inside it, and where each is delivered reads in its containment tree.
 The facts strip adds
-Languages to an Interface that narrows the Product's list and Version to an
-Experience that carries one; the Product Overview's About reading lists the
+Languages to an Interface that narrows the Product's list; the Product Overview's About reading lists the
 Product's languages.
-A Screen Overview has a Presents block — each Entity with the facts on screen
-as chips, or the Entity alone for a bare entry. A Screen's facts strip counts what it
-presents and the Capabilities it exposes. There are no Information presented,
+A Screen Overview separates Presents (facts the Product shows) from Collects
+(input the Actor supplies), grouping each by Entity and omitting empty sections.
+A prefilled editable fact appears in both; a bare Entity entry appears only in
+Presents. Section counts name Entities, not facts. A Screen's facts strip counts
+Entities under Presents and Collects separately, omitting empty groups, and the
+Capabilities it exposes. There are no Information presented,
 Available actions, View states or Capability boundary readings, and References
 carry no state badge.
 Screens nest. A nested Screen appears as a child of its parent Screen in the
@@ -450,7 +452,7 @@ would tell a story none of them tells. The moves read in the Entity's Lifecycle
 Rows order — creation, then by starting State in declared order — and each
 opens that change in the Entity's Lifecycle (`rt=lifecycle/<change>`), selected
 in whichever drawing is on screen.
-The facts a Step cites on a read or change follow the phrase; the terminal
+The facts a Step cites on a read, change or creation follow the phrase; the terminal
 reading names none.
 Scenario titles use 16px semibold text, section labels 13px semibold, and body
 text 14px regular. Step cards use the selected Guided flow layout: visible labels for

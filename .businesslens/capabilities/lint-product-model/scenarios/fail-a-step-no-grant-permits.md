@@ -7,15 +7,15 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
   - text: A Step does something to a thing that a Business Rule forbids to everyone, or that no grant of the Rules governing it could permit the Step's actor
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: business-rule, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
+      - { entity: business-rule, effect: reads, facts: [Assertion, Reach, Permission] }
     contexts:
       terminal:
         place: businesslens-cli

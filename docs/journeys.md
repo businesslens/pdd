@@ -209,7 +209,7 @@ steps:
     actor: repository-contributor
     capability: publish-repository-changes
     entities:
-      - { entity: branch, effect: creates }
+      - { entity: branch, effect: creates, facts: [] }
     contexts:
       git-to-web:
         place: git-transport
@@ -217,7 +217,7 @@ steps:
     kind: actor
     actor: repository-contributor
     entities:
-      - { entity: branch, effect: reads }
+      - { entity: branch, effect: reads, facts: [] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::branch-comparison
@@ -226,7 +226,7 @@ steps:
     actor: repository-contributor
     capability: propose-code-change
     entities:
-      - { entity: pull-request, effect: creates, to: Open }
+      - { entity: pull-request, effect: creates, to: Open, facts: [] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::pull-request
@@ -256,7 +256,7 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
 | `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`; optional on a `product` or `condition` Step, where it says who the Step is attributable to. |
 | `steps[].entities` | yes | List what this Step does to the Product's things, exactly as on a [Capability Scenario Step](./capabilities.md#what-a-step-does-to-the-products-things), or `[]`. A Step whose effect is anything but a read must name the `capability` it exercises, because a Journey Step that changes a thing on its own would be behavior no Capability owns. |
-| `steps[].entities[].facts` | no | As on a Capability Scenario Step: the Entity's named facts a `reads` or `changes` entry uses, by exact name, and never on `creates` or `removes`. |
+| `steps[].entities[].facts` | on reads, changes and creates | As on a Capability Scenario Step: the exhaustive named facts a `reads`, `changes` or `creates` entry affects, including `[]` for none; forbidden on `removes`. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
@@ -290,7 +290,7 @@ steps:
     actor: repository-contributor
     capability: publish-repository-changes
     entities:
-      - { entity: branch, effect: creates }
+      - { entity: branch, effect: creates, facts: [] }
     contexts:
       git-to-web:
         place: git-transport
@@ -298,7 +298,7 @@ steps:
     kind: actor
     actor: repository-contributor
     entities:
-      - { entity: branch, effect: reads }
+      - { entity: branch, effect: reads, facts: [] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::branch-comparison
@@ -307,7 +307,7 @@ steps:
     actor: repository-contributor
     capability: propose-code-change
     entities:
-      - { entity: pull-request, effect: creates, to: Open }
+      - { entity: pull-request, effect: creates, to: Open, facts: [] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::pull-request
@@ -328,8 +328,9 @@ local acceptance case into a reusable operation resource.
 
 Every contextualized Step declares the same route-id set. Matching keys
 correlate the complete paths. The Context `place` is the most-specific
-Interface, Experience, or Screen where the Step occurs. When an availability
-boundary owns Screens, `place` names one of them. The containing Interface or
+Interface, Experience, or Screen where the Step occurs. Name a Screen only
+when the Step occurs there; other behavior having Screens does not force this
+Step to have one. The containing Interface or
 Experience is derived from that place and must appear in the Step Capability's
 availability when the Step names a Capability; a Screen must also expose that
 Capability.

@@ -7,9 +7,9 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: interface, effect: reads }
-      - { entity: experience, effect: reads }
-      - { entity: screen, effect: reads }
+      - { entity: interface, effect: reads, facts: [Type, Actors] }
+      - { entity: experience, effect: reads, facts: [Container, Audience] }
+      - { entity: screen, effect: reads, facts: [Exposure, Nesting] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -17,16 +17,16 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: interface, effect: reads }
-      - { entity: experience, effect: reads }
-      - { entity: screen, effect: reads }
+      - { entity: interface, effect: reads, facts: [Type] }
+      - { entity: experience, effect: reads, facts: [Container] }
+      - { entity: screen, effect: reads, facts: [Exposure, Nesting] }
     contexts:
       local:
         place: local-report-web::resource-reading::delivery
   - text: The Product uses the same tree rows and group counts, identifying shared references by their owning Interface
     kind: product
     entities:
-      - { entity: interface, effect: reads }
+      - { entity: interface, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading::delivery

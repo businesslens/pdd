@@ -7,16 +7,16 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: entity, effect: reads }
+      - { entity: entity, effect: reads, facts: [States] }
     contexts:
       local:
         place: local-report-web::resource-reading::lifecycle
   - text: The Product draws its states as one machine composed from every Step that creates, moves, or removes it, labels each arc with the Capability whose Step draws it, and marks the arcs a Business Rule restricts or forbids
     kind: product
     entities:
-      - { entity: entity, effect: reads }
-      - { entity: capability, effect: reads }
-      - { entity: business-rule, effect: reads }
+      - { entity: entity, effect: reads, facts: [States] }
+      - { entity: capability, effect: reads, facts: [] }
+      - { entity: business-rule, effect: reads, facts: [Assertion, Reach, Permission] }
     contexts:
       local:
         place: local-report-web::resource-reading::lifecycle

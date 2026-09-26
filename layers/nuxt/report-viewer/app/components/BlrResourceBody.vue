@@ -59,15 +59,16 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'route' | 'decision-point' |
    model holds it once — availability on the Capability, capabilities on the
    Screen — and this is the same fact read from the place's side. */
 
-/* PRESENTS: each Entity with the facts on screen. A bare entry names the Entity alone. */
-const presents = computed(() => props.resource.kind !== 'screen'
+/* Screen disclosure and input have separate sections. Bare entries state presence. */
+const screenEntities = computed(() => props.resource.kind !== 'screen'
   ? []
   : asScreen.value.entities.map(entry => ({
       ...entry,
       entity: entityChip(entry.entityId),
       title: resolveResource(props.workspace, 'entity', entry.entityId)?.title ?? entry.entityId
     })))
-
+const presents = computed(() => screenEntities.value.filter(entry => entry.shows.length || !entry.collects.length))
+const collects = computed(() => screenEntities.value.filter(entry => entry.collects.length))
 
 const factRule = (id: string) => {
   const rule = resolveResource(props.workspace, 'rule', id)
@@ -822,13 +823,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
     </template>
 
-    <!-- SCREEN: what it presents, and what changes here. -->
+    <!-- SCREEN: what the Product presents and what the Actor supplies. -->
     <template v-if="resource.kind === 'screen'">
-      <!--
-        "Presents" means the fact is on screen, read or entered. The Entity is
-        named before its facts so the list reads as the narrower thing it is:
-        what this Screen shows of the thing, never what the Product keeps.
-      -->
       <section v-if="presents.length" class="space-y-2" data-screen-presents>
         <h2 class="blr-page-heading">
           Presents
@@ -843,10 +839,27 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           >
             <BlrEntityChip v-if="entry.entity" :entity="entry.entity" @select="emit('select', $event)" />
             <span v-else class="text-default">{{ entry.title }}</span>
-            <template v-if="entry.facts">
-              <BlrFactTag v-for="fact in entry.facts" :key="fact" :name="fact" data-screen-fact />
-            </template>
-            <span v-else class="blr-meta">no facts named</span>
+            <BlrFactTag v-for="fact in entry.shows" :key="fact" :name="fact" data-screen-fact />
+            <span v-if="!entry.shows.length" class="blr-meta">no facts named</span>
+          </li>
+        </ul>
+      </section>
+
+      <section v-if="collects.length" class="space-y-2" data-screen-collects>
+        <h2 class="blr-page-heading">
+          Collects
+          <span class="blr-meta ms-1">{{ collects.length }}</span>
+        </h2>
+        <ul class="space-y-1.5">
+          <li
+            v-for="entry in collects"
+            :key="entry.entityId"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            :data-entity-id="entry.entityId"
+          >
+            <BlrEntityChip v-if="entry.entity" :entity="entry.entity" @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ entry.title }}</span>
+            <BlrFactTag v-for="fact in entry.collects" :key="fact" :name="fact" data-screen-input />
           </li>
         </ul>
       </section>

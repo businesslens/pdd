@@ -26,7 +26,7 @@ steps:
   - text: The Product installs the three skills into each chosen harness and marks the installation as its own
     kind: product
     entities:
-      - { entity: skill-installation, effect: creates }
+      - { entity: skill-installation, effect: creates, facts: [Provider, Scope, Version, Skills, Installed at] }
     contexts:
       terminal:
         place: businesslens-cli

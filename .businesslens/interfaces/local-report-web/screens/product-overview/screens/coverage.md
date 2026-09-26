@@ -1,7 +1,6 @@
 ---
 entities:
-  - { entity: product-model, facts: [Coverage, Method] }
-capabilities: [view-product-model]
+  - { entity: product-model, shows: [Coverage, Method] }
 ---
 
 # Coverage

@@ -208,8 +208,6 @@ export interface ExperienceView extends ResourceBase {
   entryPoints: EntryPointView[]
   /** Screens reachable from every place inside, by full id. A mark, never an edge. */
   navigationIds: string[]
-  /** Non-null only where another Experience of the Interface carries a different one. */
-  version: string | null
   capabilityIds: string[]
   /** Every Screen inside, nested ones included. */
   screenIds: string[]
@@ -221,7 +219,8 @@ export interface ExperienceView extends ResourceBase {
 /** One Entity a Screen presents; `facts` is null for a bare entry. */
 export interface ScreenEntityView {
   entityId: string
-  facts: string[] | null
+  shows: string[]
+  collects: string[]
 }
 
 export interface ScreenView extends ResourceBase {
@@ -1073,7 +1072,6 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       accessMode: item.accessMode,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
       navigationIds: item.navigation,
-      version: item.version,
       capabilityIds,
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
       journeyIds: model.journeys.filter(j => journeyContexts(j.id).some(context => context.experienceId === item.id)).map(j => j.id),
@@ -1097,7 +1095,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     return {
       key: resourceKey('screen', screen.id),
       entityIds: screen.entities.map(entry => entry.entityId),
-      entities: screen.entities.map(entry => ({ entityId: entry.entityId, facts: entry.facts })),
+      entities: screen.entities.map(entry => ({ entityId: entry.entityId, shows: entry.shows, collects: entry.collects })),
       id: screen.id,
       kind: 'screen',
       title: screen.title,

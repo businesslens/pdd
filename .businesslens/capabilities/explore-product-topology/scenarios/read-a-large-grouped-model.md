@@ -7,14 +7,14 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product, effect: reads }
+      - { entity: product, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
   - text: The Product shows each branch with its count and makes larger branches explicitly expandable
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -28,7 +28,7 @@ steps:
   - text: The Product presents that resource with its incoming and outgoing connections, and keeps disconnected resources reachable in the view behind it
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading

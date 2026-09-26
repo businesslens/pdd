@@ -1,8 +1,6 @@
 ---
 entities:
-  - { entity: source, facts: [Name, Feed address] }
-capabilities:
-  - follow-source
+  - { entity: source, shows: [Name, Feed address] }
 ---
 
 # Confirm

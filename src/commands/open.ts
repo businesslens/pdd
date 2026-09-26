@@ -120,13 +120,15 @@ function compactRecord(input: Record<string, unknown>): Record<string, unknown> 
  * an author would have written.
  */
 function stepEntities(step: ReportScenarioStep): Array<Record<string, unknown>> {
-  return step.entities.map(entry => compactRecord({
-    entity: entry.entityId,
-    as: entry.as ?? undefined,
-    effect: entry.effect === 'changes' ? undefined : entry.effect,
-    from: entry.from ?? undefined,
-    to: entry.to ?? undefined,
-    facts: entry.facts
+  return step.entities.map(entry => ({
+    ...compactRecord({
+      entity: entry.entityId,
+      as: entry.as ?? undefined,
+      effect: entry.effect === 'changes' ? undefined : entry.effect,
+      from: entry.from ?? undefined,
+      to: entry.to ?? undefined
+    }),
+    ...(entry.effect === 'removes' ? {} : { facts: entry.facts })
   }))
 }
 
@@ -311,7 +313,6 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
       frontmatter(compactRecord({
         actors: experience.actorIds,
         access: experience.accessMode,
-        version: experience.version ?? undefined,
         entryPoints: entryPoints(experience.entryPoints),
         navigation: relativeNavigation(experience.id, experience.navigation),
         references: references(experience.references)
@@ -328,9 +329,8 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
     write(
       screenPath(root, screen.id, experienceIds, parentScreenIds),
       frontmatter(compactRecord({
-        capabilities: screen.capabilityIds,
         entities: screen.entities.length
-          ? screen.entities.map(entry => entry.facts ? { entity: entry.entityId, facts: entry.facts } : entry.entityId)
+          ? screen.entities.map(entry => entry.shows.length || entry.collects.length ? compactRecord({ entity: entry.entityId, shows: entry.shows, collects: entry.collects }) : entry.entityId)
           : undefined,
         entryPoints: entryPoints(screen.entryPoints),
         references: references(screen.references)

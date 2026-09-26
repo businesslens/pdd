@@ -7,7 +7,7 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::settings
@@ -23,7 +23,7 @@ steps:
     actor: reader
     entities:
       - { entity: collection, facts: [Name] }
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace::settings

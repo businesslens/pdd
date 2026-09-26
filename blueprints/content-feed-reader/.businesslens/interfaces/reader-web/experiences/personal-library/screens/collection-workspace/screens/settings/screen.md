@@ -1,8 +1,6 @@
 ---
 entities:
-  - { entity: collection, facts: [Name, Public address] }
-capabilities:
-  - rename-collection
+  - { entity: collection, shows: [Name, Public address] }
 entryPoints:
   - reader-web: /collections/:collectionId/settings
 ---

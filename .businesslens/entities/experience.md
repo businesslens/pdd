@@ -29,4 +29,3 @@ sees.
 - **Audience** — the acting Entities it serves and the access it requires
 - **Entry points** — its own addresses
 - **Navigation** — the Screens reachable from every place inside it
-- **Version** — which of two concurrently served versions it is, where it is one

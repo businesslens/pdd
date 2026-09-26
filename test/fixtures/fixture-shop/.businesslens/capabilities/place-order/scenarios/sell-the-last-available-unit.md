@@ -8,8 +8,8 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: cart, effect: reads }
-      - { entity: catalog-product, effect: reads }
+      - { entity: cart, effect: reads, facts: [Quantity chosen] }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -19,8 +19,8 @@ steps:
     kind: product
     actor: shopper
     entities:
-      - { entity: order, effect: creates, to: Pending }
-      - { entity: catalog-product, effect: changes, from: Available, to: Unavailable }
+      - { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }
+      - { entity: catalog-product, effect: changes, from: Available, to: Unavailable, facts: [Stock remaining] }
       - { entity: cart, effect: removes }
     contexts:
       web:
@@ -29,8 +29,9 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The product stays browsable and explains that it cannot be bought
     kind: condition
+    actor: shopper
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web:
         place: customer-web::storefront::product-record

@@ -1,12 +1,7 @@
 ---
 entities:
-  - { entity: item, facts: [Title, Published at, Saved at] }
-  - { entity: source, facts: [Name] }
-capabilities:
-  - read-content
-  - track-reading-state
-  - save-item
-  - synchronize-feeds
+  - { entity: item, shows: [Title, Published at, Saved at] }
+  - { entity: source, shows: [Name] }
 entryPoints:
   - reader-web: /unread
 assets:

@@ -9,7 +9,7 @@ steps:
     actor: developer
     capability: pull-blueprint
     entities:
-      - { entity: blueprint, effect: reads }
+      - { entity: blueprint, effect: reads, facts: [] }
     contexts:
       catalog:
         place: businesslens-cli
@@ -18,8 +18,8 @@ steps:
     actor: developer
     capability: pull-blueprint
     entities:
-      - { entity: blueprint, effect: reads }
-      - { entity: product-model, effect: creates }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       catalog:
         place: businesslens-cli
@@ -28,7 +28,7 @@ steps:
     actor: developer
     capability: lint-product-model
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       catalog:
         place: businesslens-cli

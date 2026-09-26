@@ -7,12 +7,12 @@ steps:
   - text: Self-service cancellation is switched on for the store
     kind: condition
     entities:
-      - { entity: store-settings, effect: reads }
+      - { entity: store-settings, effect: reads, facts: [Self-service cancellation] }
   - text: The shopper cancels an order that has not been paid
     kind: actor
     actor: shopper
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [] }
     contexts:
       web:
         place: customer-web::storefront::order-status
@@ -22,7 +22,7 @@ steps:
     kind: product
     actor: shopper
     entities:
-      - { entity: order, effect: changes, from: Pending, to: Cancelled }
+      - { entity: order, effect: changes, from: Pending, to: Cancelled, facts: [] }
     contexts:
       web:
         place: customer-web::storefront::order-status

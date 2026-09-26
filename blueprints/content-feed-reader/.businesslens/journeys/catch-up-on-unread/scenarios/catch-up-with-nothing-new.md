@@ -12,25 +12,21 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
     capability: synchronize-feeds
     entities:
-      - { entity: source, effect: reads }
+      - { entity: source, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
-      mobile-next:
-        place: reader-mobile::personal-library-next::source-list
   - text: No feed returns an item the library does not already hold
     kind: condition
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
   - text: The unread library still presents the caught-up state
     kind: condition
     capability: track-reading-state
@@ -40,12 +36,9 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
 routes:
   web: Web
   mobile: Mobile
-  mobile-next: Mobile (next)
 ---
 
 # Catch up when nothing new arrived

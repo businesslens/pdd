@@ -42,10 +42,11 @@ export interface PermissionOperation {
   contextPlaces: string[]
 }
 
-/** One Entity a Screen presents. `facts` is null for a bare entry. */
+/** Named facts a Screen discloses or collects; both lists are empty for a bare Entity. */
 export interface PermissionScreenEntity {
   entityId: string
-  facts: string[] | null
+  shows: string[]
+  collects: string[]
 }
 
 export interface PermissionScreen {
@@ -129,7 +130,8 @@ function targetSelectsScreen(target: PermissionTarget, entity: PermissionScreenE
   // fact-scoped target governs a Screen only where the Screen says it shows
   // that fact; a bare entry claims presence alone and is never selected.
   if (target.entityId !== entity.entityId) return false
-  if (target.facts.length && (entity.facts === null || !target.facts.some(fact => entity.facts!.includes(fact)))) return false
+  if (!entity.shows.length && entity.collects.length) return false
+  if (target.facts.length && (!target.facts.some(fact => entity.shows.includes(fact)))) return false
   return (target.effect === null || target.effect === 'reads')
     && target.from === null
     && target.to === null
@@ -178,7 +180,7 @@ export function validatePermissionBehavior(behavior: PermissionBehavior): string
       for (const rule of behavior.rules) {
         const targets = rule.targets.filter(target => targetSelectsScreen(target, entity, screen.id))
         if (!targets.length) continue
-        const governed = targets.flatMap(target => target.facts).filter(fact => entity.facts?.includes(fact))
+        const governed = targets.flatMap(target => target.facts).filter(fact => entity.shows.includes(fact))
         const what = governed.length ? `"${entity.entityId}" facts "${[...new Set(governed)].join('", "')}"` : `"${entity.entityId}"`
         if (!rule.grants.length) {
           issues.push(`${screen.label}: presents ${what}, which rule "${rule.id}" forbids anyone to read`)

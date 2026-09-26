@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       harness:
         place: agent-skills

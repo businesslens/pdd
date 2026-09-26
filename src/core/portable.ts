@@ -152,8 +152,6 @@ export const ReportExperienceSchema = z.strictObject({
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
   navigation: z.array(QualifiedIdSchema),
-  /** Non-null only where another Experience of the Interface carries a different one. */
-  version: SingleLineTextSchema.nullable(),
   ...ResourceContentSchema
 })
 
@@ -233,12 +231,13 @@ export const ReportCapabilitySchema = z.strictObject({
 
 /**
  * One Entity a Screen presents and the facts on screen, read or entered.
- * `facts` is null for a bare entry — presence claimed, no fact named — which a
- * model never carries for an Entity that has named facts.
+ * Both lists empty is a bare entry for an Entity with no named facts.
+ * Inputs never imply disclosure or read permission.
  */
 export const ReportScreenEntitySchema = z.strictObject({
   entityId: IdSchema,
-  facts: z.array(SingleLineTextSchema).min(1).nullable()
+  shows: z.array(SingleLineTextSchema),
+  collects: z.array(SingleLineTextSchema)
 })
 
 /**
@@ -303,7 +302,7 @@ export const ReportScenarioStepEntitySchema = z.strictObject({
   effect: z.enum(STEP_EFFECTS),
   from: SingleLineTextSchema.nullable(),
   to: SingleLineTextSchema.nullable(),
-  /** The facts this Step reads or edits; `reads` and `changes` only, empty when none cited. */
+  /** The exhaustive facts read, changed or initialized; empty on removal. */
   facts: z.array(SingleLineTextSchema)
 })
 
@@ -755,14 +754,6 @@ export function validateProductReport(report: ProductReportV15): string[] {
       ['Intent', 'Capability boundary']
     )
     validateNavigation(`experience "${experience.id}"`, experience.id, experience.navigation)
-    if (experience.version !== null) {
-      const rival = model.experiences.some(other =>
-        other.id !== experience.id && other.interfaceIds[0] === parentInterfaceId
-        && other.version !== null && other.version !== experience.version)
-      if (!rival) {
-        issues.push(`experience "${experience.id}": version needs another Experience of "${parentInterfaceId}" with a different version`)
-      }
-    }
     requireActing(`experience "${experience.id}"`, experience.actorIds)
     missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
     for (const interfaceId of experience.interfaceIds) {
@@ -818,7 +809,6 @@ export function validateProductReport(report: ProductReportV15): string[] {
     return productInterface ? new Set(productInterface.actorIds) : undefined
   }
 
-  const screensByContainer = new Map<string, ReportScreen[]>()
   /*
    * A Screen beside `experiences/` is shared: it is inside every Experience of
    * its Interface. Containment, Scenario coverage, and Step Contexts therefore
@@ -840,28 +830,16 @@ export function validateProductReport(report: ProductReportV15): string[] {
   const insideEvery = (supported: Set<string>, containerId: string) =>
     availabilityPlacesOf(containerId).every(place => supported.has(place))
 
-  for (const screen of model.screens) {
-    const container = containerForScreen(screen)
-    const siblings = screensByContainer.get(container) || []
-    siblings.push(screen)
-    screensByContainer.set(container, siblings)
-  }
-
   const resolveScenarioContext = (label: string, placeId: string) => {
     const screen = screensById.get(placeId)
     if (screen) return { place: placeId, containerId: containerForScreen(screen), screen }
     const experience = experiencesById.get(placeId)
     if (experience) {
-      if ((screensByContainer.get(placeId) || []).length) {
-        issues.push(`${label}: Experience "${placeId}" owns Screens, so the Context must name one of its Screens`)
-      }
       return { place: placeId, containerId: placeId, screen: undefined }
     }
     if (interfacesById.has(placeId)) {
       if (experienceScopedInterfaces.has(placeId)) {
         issues.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them, one of their Screens, or a Screen it shares`)
-      } else if ((screensByContainer.get(placeId) || []).length) {
-        issues.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
       return { place: placeId, containerId: placeId, screen: undefined }
     }
@@ -955,8 +933,8 @@ export function validateProductReport(report: ProductReportV15): string[] {
         }
         aliasModes.set(entry.entityId, mode)
         requireUniqueValues(issues, stepLabel, 'facts', entry.facts)
-        if (entry.facts.length && entry.effect !== 'reads' && entry.effect !== 'changes') {
-          issues.push(`${stepLabel}: facts are valid on a "reads" or "changes" entry only`)
+        if (entry.facts.length && entry.effect === 'removes') {
+          issues.push(`${stepLabel}: a "removes" entry carries no facts`)
         }
         for (const fact of entry.facts) {
           if (!entity.informationKept.some(item => item.name === fact)) {
@@ -1222,14 +1200,15 @@ export function validateProductReport(report: ProductReportV15): string[] {
         issues.push(`${label}: references missing entity "${entry.entityId}"`)
         continue
       }
-      requireUniqueValues(issues, label, `facts of "${entry.entityId}"`, entry.facts ?? [])
-      for (const fact of entry.facts ?? []) {
+      requireUniqueValues(issues, label, `shows of "${entry.entityId}"`, entry.shows)
+      requireUniqueValues(issues, label, `collects of "${entry.entityId}"`, entry.collects)
+      for (const fact of [...entry.shows, ...entry.collects]) {
         if (!entity.informationKept.some(item => item.name === fact)) {
           issues.push(`${label}: "${fact}" is not a fact of entity "${entry.entityId}"`)
         }
       }
-      if (entry.facts === null && entity.informationKept.length) {
-        issues.push(`${label}: presents "${entry.entityId}" without naming its facts; a Screen says which facts are on screen`)
+      if (!entry.shows.length && !entry.collects.length && entity.informationKept.length) {
+        issues.push(`${label}: presents "${entry.entityId}" without naming its facts; a Screen says which facts it shows or collects`)
       }
     }
     validateSupportingSections(
@@ -1267,43 +1246,28 @@ export function validateProductReport(report: ProductReportV15): string[] {
     if (!sameIds(screen.journeyScenarioIds, expectedJourneyScenarios)) {
       issues.push(`${label}: journeyScenarioIds must equal the Scenario Step Screen backlinks`)
     }
-    /* The authored list is the claim; the Steps placed here make it honest. */
     const placed = stepsOnScreen.get(screen.id) || []
-    for (const capabilityId of screen.capabilityIds) {
-      if (!capabilityIds.has(capabilityId)) continue
-      if (placed.some(item => item.step.capabilityId === capabilityId)) continue
-      issues.push(`${label}: exposes capability "${capabilityId}", and no Step is placed on this Screen for it`)
+    const expectedCapabilities = [...new Set(placed.flatMap(item => item.step.capabilityId ? [item.step.capabilityId] : []))]
+    if (!sameIds(screen.capabilityIds, expectedCapabilities)) {
+      issues.push(`${label}: capabilityIds must equal the Capabilities derived from placed Steps`)
     }
     const presented = new Map(screen.entities.map(entry => [entry.entityId, entry]))
     for (const { label: stepLabel, step } of placed) {
       for (const entry of step.entities) {
+        if (step.kind !== 'actor' || entry.effect !== 'reads' || (actorIds.has(entry.entityId) && !entry.facts.length)) continue
         const shown = presented.get(entry.entityId)
-        if (entry.effect === 'reads' && !shown && step.kind === 'actor' && !actorIds.has(entry.entityId)) {
+        if (!shown) {
           issues.push(`${stepLabel}: reads "${entry.entityId}" on Screen "${screen.id}", which does not present it`)
           continue
         }
-        if (!shown?.facts) continue
         for (const fact of entry.facts) {
-          if (!shown.facts.includes(fact)) {
-            issues.push(`${stepLabel}: cites "${fact}" of "${entry.entityId}" on Screen "${screen.id}", which presents it without that fact`)
+          if (!shown.shows.includes(fact)) {
+            issues.push(`${stepLabel}: reads "${fact}" of "${entry.entityId}" on Screen "${screen.id}", which does not show that fact`)
           }
         }
       }
     }
   }
-  const ownsScreens = (interfaceId: string) => model.screens.some(screen => interfaceOf(containerForScreen(screen)) === interfaceId)
-  for (const capability of model.capabilities) {
-    for (const place of capabilityAvailability.get(capability.id) || []) {
-      if (!ownsScreens(interfaceOf(place))) continue
-      const exposed = model.screens.some(screen => {
-        const containerId = containerForScreen(screen)
-        return screen.capabilityIds.includes(capability.id)
-          && (containerId === place || (experiencesById.has(place) && containerId === interfaceOf(place)))
-      })
-      if (!exposed) issues.push(`capability "${capability.id}": availability Context place "${place}" exposes it on no Screen`)
-    }
-  }
-
   /*
    * Entity semantics, resolved exactly as Interface relations are. A report is
    * expanded straight into an authored folder, so an edge the folder rules
@@ -1461,27 +1425,15 @@ export function validateProductReport(report: ProductReportV15): string[] {
         }
         const presenting = model.screens.filter(screen => screen.entities.some(entry =>
           entry.entityId === target.entityId
-          && (!target.facts.length || entry.facts === null || entry.facts.some(fact => target.facts.includes(fact)))
+          && (!target.facts.length || [...entry.shows, ...entry.collects].some(fact => target.facts.includes(fact)))
         )).map(screen => screen.id)
-        if (target.facts.length && (target.effect === null || target.effect === 'reads')) {
-          for (const fact of target.facts) {
-            const shown = model.screens.some(screen => screen.entities.some(entry =>
-              entry.entityId === target.entityId && entry.facts?.includes(fact)))
-            const cited = [...model.capabilityScenarios, ...model.journeyScenarios].some(scenario =>
-              scenario.steps.some(step => step.entities.some(entry =>
-                entry.entityId === target.entityId && entry.facts.includes(fact))))
-            if (!shown && !cited) {
-              issues.push(`${targetLabel}: governs "${fact}" of "${target.entityId}", which no Screen presents and no Step cites`)
-            }
-          }
-        }
         const seenEntityPlaces: string[] = []
         for (const [contextIndex, context] of target.contexts.entries()) {
           const contextLabel = `${targetLabel}: Context ${contextIndex + 1}`
           const place = validateContextPlace(issues, contextLabel, context, placeIds)
           if (seenEntityPlaces.includes(place)) issues.push(`${contextLabel}: duplicate Context place "${place}"`)
           seenEntityPlaces.push(place)
-          if (placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
+          if (rule.permits === null && placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
             issues.push(`${contextLabel}: Context place "${place}" presents entity "${target.entityId}" nowhere`)
           }
         }

@@ -1,8 +1,6 @@
 ---
 entities:
-  - { entity: collection, facts: [Public address] }
-capabilities:
-  - publish-collection
+  - { entity: collection, shows: [Public address] }
 ---
 
 # Sharing

@@ -14,9 +14,9 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: capability, effect: reads }
-      - { entity: journey, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
+      - { entity: capability, effect: reads, facts: [] }
+      - { entity: journey, effect: reads, facts: [] }
     contexts:
       harness:
         place: agent-skills

@@ -3,32 +3,27 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
-  mobile-next: Mobile (next)
 steps:
   - text: The Reader marks the item read
     kind: actor
     actor: reader
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The Product updates the item's private reading state
     kind: product
     actor: reader
     entities:
-      - { entity: item, from: Unread, to: Read }
+      - { entity: item, from: Unread, to: Read, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
   - text: The unread count decreases
     kind: condition
     entities: []
@@ -37,8 +32,6 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-      mobile-next:
-        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Mark an item read

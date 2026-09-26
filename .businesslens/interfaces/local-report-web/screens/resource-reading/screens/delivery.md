@@ -1,11 +1,10 @@
 ---
 entities:
-  - { entity: interface, facts: [Type] }
-  - { entity: experience, facts: [Container] }
-  - { entity: screen, facts: [Exposure, Nesting] }
-  - { entity: capability, facts: [Availability] }
-  - { entity: capability-scenario, facts: [Classification] }
-capabilities: [view-product-model]
+  - { entity: interface, shows: [Type] }
+  - { entity: experience, shows: [Container] }
+  - { entity: screen, shows: [Exposure, Nesting] }
+  - { entity: capability, shows: [Availability] }
+  - { entity: capability-scenario, shows: [Classification] }
 ---
 
 # Delivery
