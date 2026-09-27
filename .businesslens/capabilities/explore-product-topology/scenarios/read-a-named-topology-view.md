@@ -50,7 +50,7 @@ page.
 - A delayed or unavailable diagram arrangement leaves the complete resource and relationship reading available.
 
 - A Graph states its question once, below the drawing: the collection heading names the subject and the switch names the drawing, so the reading never titles itself a third time. Switching back to Rows keeps the filters and the count.
-- Matrix is the third drawing in Capabilities for Compare delivery, Entities for What changes what, and Business Rules for Rule attachments. The rail lists Overview and the six collections.
+- Matrix is the third drawing in Capabilities for Compare delivery, Entities for What changes what, and Business Rules for Rule attachments. The rail lists Overview and the seven collections.
 - Switching drawings preserves the collection heading, count, filters and selections. Shared relationship filters select matching subjects in every drawing and the Matrix columns. With no relationship filter, resources without relationships remain visible.
 - Each Matrix keeps only the collection heading. A dropdown presents each available drawing as a named preview card with a short explanatory subtitle. It has no separate help button or About section, and stays in place when the legend appears. One toolbar offers Changed by, Available in or Attached to in every drawing. Attached to combines whole resource types and individual exact targets with OR, and other axes with AND.
 - A contextual comparison link from an Interface opens Compare delivery in Capabilities, narrowed to that Interface's column.

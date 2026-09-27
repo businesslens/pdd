@@ -18,6 +18,6 @@ anything in particular. It is headed with the name of the rail row that opens
 it, qualified by the resource type it presents, and each further reading of the
 Product is a child view. It lists no collection of its own: Journeys, like every
 other collection, have a rail row, a page, and a count. From here the Developer
-opens any of the six collections, the page of a thing that acts on the Product,
+opens any of the seven collections, the page of a thing that acts on the Product,
 the documentation for the Product resource type, or a search of the whole model
 by name.
