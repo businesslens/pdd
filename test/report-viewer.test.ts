@@ -509,10 +509,11 @@ describe('stable Product Report', () => {
     expect(body).toContain('scenarioRouteColumnCount')
     expect(body).toContain('visibleRouteWindow.start + 1')
     expect(body).toContain('aria-label="Number of route columns"')
-    /* A named route is one way a Scenario can run, not a Journey, so it does
-       not wear the Journey's mark. */
-    expect(body).toContain("icon: 'i-lucide-split'")
+    /* A named route is one way a Scenario can run — neither a Journey nor a
+       Variation — so it wears neither type's reserved mark. */
+    expect(body).toContain("icon: 'i-lucide-signpost'")
     expect(body).not.toContain('i-lucide-route')
+    expect(body).not.toContain('i-lucide-split')
     expect(body.match(/aria-label="Show previous route"/g)).toHaveLength(2)
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')

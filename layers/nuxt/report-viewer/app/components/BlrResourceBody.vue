@@ -164,7 +164,7 @@ const selectedCell = (step: ScenarioStepRow): ScenarioStepCell | undefined => vi
 const routeItems = computed(() => (stepMatrix.value?.routes ?? []).map(route => ({
   label: route.name,
   value: route.id,
-  icon: 'i-lucide-split'
+  icon: 'i-lucide-signpost'
 })))
 
 const routeWindowItems = computed(() => {
@@ -174,7 +174,7 @@ const routeWindowItems = computed(() => {
   return routes.slice(0, lastStart + 1).map((route, index) => ({
     value: route.id,
     label: routes.slice(index, index + count).map(item => item.name).join(' · '),
-    icon: 'i-lucide-split'
+    icon: 'i-lucide-signpost'
   }))
 })
 
@@ -443,7 +443,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 value-key="value"
                 size="sm"
                 variant="outline"
-                icon="i-lucide-split"
+                icon="i-lucide-signpost"
                 class="min-w-44 max-w-full"
                 aria-label="Route to show"
                 @update:model-value="setRouteWindow(String($event))"
@@ -480,7 +480,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   value-key="value"
                   size="sm"
                   variant="outline"
-                  icon="i-lucide-split"
+                  icon="i-lucide-signpost"
                   class="w-48 max-w-full"
                   aria-label="Visible route window"
                   @update:model-value="setRouteWindow(String($event))"
@@ -536,7 +536,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 >
                   <div class="flex min-w-0 items-center gap-2">
                     <UTooltip text="Named route — one way this Scenario can run" :delay-duration="150">
-                      <UIcon name="i-lucide-split" class="size-3.5 shrink-0 text-dimmed" />
+                      <UIcon name="i-lucide-signpost" class="size-3.5 shrink-0 text-dimmed" />
                     </UTooltip>
                     <span class="truncate text-xs font-medium text-default" :title="route.name">{{ route.name }}</span>
                   </div>

@@ -116,6 +116,7 @@ export default defineNuxtConfig({
         'lucide:scan',
         'lucide:search',
         'lucide:shapes',
+        'lucide:signpost',
         'lucide:smartphone',
         'lucide:split',
         'lucide:table',
