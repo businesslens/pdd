@@ -172,7 +172,16 @@ export interface EntryPointView {
   key: string
 }
 
+export interface VariationView {
+  anchorId: string
+  kind: 'experiment' | 'configuration' | 'version'
+  usage: NonNullable<ReportInterface['variationUsage']>
+}
+
 interface ResourceBase {
+  /** Present only for a member of a validated Variation set. */
+  variation?: VariationView
+
   key: ReportResourceKey
   id: string
   kind: ReportResourceKind
@@ -1023,6 +1032,13 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     for (const entityId of relations.entityIds) push(rulesByEntity, entityId, rule.id)
   }
 
+  const variationOf = (resource: ReportInterface | ReportExperience | ReportScreen | ReportEntity | ReportCapability | ReportJourney | ReportBusinessRule, collection: { id: string, variationKind: VariationView['kind'] | null }[]): VariationView | undefined => {
+    if (resource.variationUsage === null) return undefined
+    const anchorId = resource.variantOfId ?? resource.id
+    const kind = collection.find(item => item.id === anchorId)?.variationKind
+    return kind ? { anchorId, kind, usage: resource.variationUsage } : undefined
+  }
+
   const interfaces: InterfaceView[] = model.interfaces.map((item: ReportInterface) => {
     const experienceIds = experiencesByInterface.get(item.id) || []
     const declares = (contexts: ReportContext[]) =>
@@ -1030,6 +1046,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
       key: resourceKey('interface', item.id),
+      variation: variationOf(item, model.interfaces),
       id: item.id,
       kind: 'interface',
       title: item.title,
@@ -1060,6 +1077,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const capabilityIds = model.capabilities.filter(c => declares(c.availability)).map(c => c.id)
     return {
       key: resourceKey('experience', item.id),
+      variation: variationOf(item, model.experiences),
       id: item.id,
       kind: 'experience',
       title: item.title,
@@ -1094,6 +1112,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       .sort(byIndex(journeyIndex))
     return {
       key: resourceKey('screen', screen.id),
+      variation: variationOf(screen, model.screens),
       entityIds: screen.entities.map(entry => entry.entityId),
       entities: screen.entities.map(entry => ({ entityId: entry.entityId, shows: entry.shows, collects: entry.collects })),
       id: screen.id,
@@ -1257,7 +1276,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
   /* A Rule closing an operation to everyone: the arc is drawn as forbidden, since no Capability may make it. */
   const rulesForbidding = (entityId: string, effect: string, from: string, to: string) =>
     model.businessRules
-      .filter(rule => rule.permits !== null && rule.permits.length === 0
+      .filter(rule => rule.variationUsage === null && rule.permits !== null && rule.permits.length === 0
         && rule.appliesTo.some(target => target.type === 'entity' && targetSelects(target, entityId, effect, from, to)))
       .map(rule => rule.id)
 
@@ -1276,7 +1295,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     }))
     const produced = new Set(arcs.map(arc => arc.to).filter(Boolean))
     const prohibitions: EntityProhibitionView[] = model.businessRules
-      .filter(rule => rule.permits !== null && rule.permits.length === 0)
+      .filter(rule => rule.variationUsage === null && rule.permits !== null && rule.permits.length === 0)
       .flatMap(rule => rule.appliesTo
         .filter((target): target is Extract<ReportBusinessRuleTarget, { type: 'entity' }> =>
           target.type === 'entity' && target.entityId === entity.id)
@@ -1286,6 +1305,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       .map(rule => rule.id)
     return {
       key: resourceKey('entity', entity.id),
+      variation: variationOf(entity, model.entities),
       id: entity.id,
       kind: 'entity' as const,
       title: entity.title,
@@ -1394,6 +1414,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const entityIds = [...effects.keys()].sort()
     return {
       key: resourceKey('capability', capability.id),
+      variation: variationOf(capability, model.capabilities),
       id: capability.id,
       entityIds,
       readEntityIds: [...readIds].filter(id => !effects.has(id)).sort(),
@@ -1458,6 +1479,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
       key: resourceKey('journey', journey.id),
+      variation: variationOf(journey, model.journeys),
       id: journey.id,
       kind: 'journey',
       title: journey.title,
@@ -1639,6 +1661,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       grants: (rule.permits ?? []).map(grant => describeGrant(grant, targetId)),
       prohibits: rule.permits !== null && rule.permits.length === 0,
       key: resourceKey('rule', rule.id),
+      variation: variationOf(rule, model.businessRules),
       id: rule.id,
       kind: 'rule',
       title: rule.title,

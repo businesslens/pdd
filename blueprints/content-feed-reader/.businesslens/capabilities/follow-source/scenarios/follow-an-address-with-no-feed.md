@@ -3,6 +3,7 @@ kind: validation
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 steps:
   - text: The Reader starts following a new feed
     kind: actor
@@ -13,6 +14,8 @@ steps:
         place: reader-web::personal-library::add-source
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The Reader enters an address that does not return a supported feed
     kind: actor
     actor: reader
@@ -22,6 +25,8 @@ steps:
         place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The Product inspects the submitted address
     kind: product
     entities: []
@@ -30,6 +35,8 @@ steps:
         place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: No supported feed is found
     kind: condition
     entities: []
@@ -38,6 +45,8 @@ steps:
         place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The Product explains that the address cannot be followed
     kind: product
     entities: []
@@ -46,6 +55,8 @@ steps:
         place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
 ---
 
 # Reject an address with no readable feed

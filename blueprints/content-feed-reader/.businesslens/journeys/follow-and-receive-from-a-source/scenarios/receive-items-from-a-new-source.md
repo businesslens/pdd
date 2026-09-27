@@ -7,12 +7,14 @@ steps:
     actor: reader
     capability: follow-source
     entities:
-      - { entity: source, effect: creates, to: Reachable, facts: [Name, Feed address, Last read] }
+      - { entity: source, effect: creates, to: Reachable, facts: [ Name, Feed address, Last read ] }
     contexts:
       web:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
@@ -24,13 +26,15 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The Product reads the followed feed and collects its available new items
     kind: product
     actor: reader
     capability: synchronize-feeds
     entities:
-      - { entity: source, effect: reads, facts: [Feed address] }
-      - { entity: item, effect: creates, to: Unread, facts: [Title, Published at] }
+      - { entity: source, effect: reads, facts: [ Feed address ] }
+      - { entity: item, effect: creates, to: Unread, facts: [ Title, Published at ] }
   - text: The new items enter the Reader's private library
     kind: condition
     actor: reader
@@ -39,6 +43,7 @@ steps:
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 ---
 
 # Receive items from a new source

@@ -1,0 +1,120 @@
+[
+  {
+    "id": "entities",
+    "title": "Entities collection",
+    "kind": "move",
+    "url": "?s=entity",
+    "sample": [
+      "entities",
+      "cart"
+    ],
+    "key": "entity:cart"
+  },
+  {
+    "id": "capabilities",
+    "title": "Capabilities collection",
+    "kind": "move",
+    "url": "?s=capability",
+    "sample": [
+      "capabilities",
+      "cancel-order"
+    ],
+    "key": "capability:cancel-order"
+  },
+  {
+    "id": "journeys",
+    "title": "Journeys collection",
+    "kind": "move",
+    "url": "?s=journey",
+    "sample": [
+      "journeys",
+      "browse-and-buy"
+    ],
+    "key": "journey:browse-and-buy"
+  },
+  {
+    "id": "rules",
+    "title": "Business Rules collection",
+    "kind": "move",
+    "url": "?s=rule",
+    "key": "rule:refund-review-standard"
+  },
+  {
+    "id": "attached",
+    "title": "A resource’s Business Rules tab",
+    "kind": "move",
+    "url": "?s=capability&e=capability:manage-orders&rt=rules",
+    "key": "rule:refund-review-standard",
+    "dialog": true
+  },
+  {
+    "id": "also-on",
+    "title": "Overview → Also on",
+    "kind": "hide",
+    "url": "?s=interface&e=screen:customer-mobile::storefront::product-record",
+    "key": "screen:customer-web::storefront::product-record",
+    "dialog": true
+  },
+  {
+    "id": "interfaces",
+    "title": "Interfaces collection tree",
+    "kind": "tree",
+    "url": "?s=interface",
+    "target": "[data-card-key=\"interface:payment-webhook\"]"
+  },
+  {
+    "id": "domains",
+    "title": "Domains collection tree",
+    "kind": "tree",
+    "url": "?s=domain",
+    "sample": [
+      "entities",
+      "cart"
+    ],
+    "target": "[data-card-key=\"domain:ordering\"]"
+  },
+  {
+    "id": "delivery",
+    "title": "Resource → Delivery tree",
+    "kind": "tree",
+    "url": "?s=interface&e=experience:customer-web::storefront&rt=delivery",
+    "target": "[data-resource-structure]",
+    "dialog": true
+  },
+  {
+    "id": "applies-to",
+    "title": "Business Rule → Applies to tree",
+    "kind": "hide",
+    "url": "?s=rule&e=rule:a-refund-is-visible-to-its-shopper&rt=applies-to",
+    "sample": [
+      "entities",
+      "refund"
+    ],
+    "target": "[data-rule-scope]",
+    "dialog": true
+  },
+  {
+    "id": "overview",
+    "title": "Resource → Overview → When used",
+    "kind": "keep",
+    "url": "?s=rule&e=rule:refund-review-standard",
+    "target": "[data-when-used]",
+    "dialog": true
+  },
+  {
+    "id": "tab",
+    "title": "Resource tab bar",
+    "kind": "keep",
+    "url": "?s=rule&e=rule:refund-review-standard&rt=variations",
+    "target": "[role=\"tablist\"]",
+    "dialog": true
+  },
+  {
+    "id": "variation-set",
+    "title": "Inside the Variations tab",
+    "kind": "keep",
+    "url": "?s=rule&e=rule:refund-review-standard&rt=variations",
+    "target": "[data-variations]",
+    "dialog": true
+  }
+]

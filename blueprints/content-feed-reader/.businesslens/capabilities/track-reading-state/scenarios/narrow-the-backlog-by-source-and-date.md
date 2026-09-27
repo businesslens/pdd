@@ -3,28 +3,33 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 steps:
   - text: The Reader narrows the unread items to one source and a span of publication dates
     kind: actor
     actor: reader
     entities:
-      - { entity: item, effect: reads, facts: [Published at] }
-      - { entity: source, effect: reads, facts: [Name] }
+      - { entity: item, effect: reads, facts: [ Published at ] }
+      - { entity: source, effect: reads, facts: [ Name ] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: The Product presents only the unread items that match
     kind: product
     actor: reader
     entities:
-      - { entity: item, effect: reads, facts: [Title, Published at] }
+      - { entity: item, effect: reads, facts: [ Title, Published at ] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: The unread count still counts the whole backlog, and no item's reading state changes
     kind: condition
     entities:
@@ -34,6 +39,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
 ---
 
 # Narrow the backlog by source and date

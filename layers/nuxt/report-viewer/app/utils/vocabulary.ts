@@ -111,25 +111,28 @@ export interface VocabularyPage {
   items: VocabularyItem[]
 }
 
-/** Browsing groups model-wide terms under Product; documentation links keep their owner. */
+const VARIATION_TERMS = new Set<VocabularySlug>(['variation', 'experiment', 'configuration', 'version', 'when-used'])
+
+/** Browsing groups related terms independently of their documentation owner. */
 export function vocabularySection(slug: VocabularySlug): string {
+  if (VARIATION_TERMS.has(slug)) return 'variations'
   const page = VOCABULARY[slug].page
   return page === 'product-model' ? 'product' : page
 }
 
 /**
- * Browsing follows documentation order, with Model overview folded into Product.
- * Product leads that combined section; all other sections retain their page lead.
+ * Browsing follows documentation order. Model overview supplies Product terms
+ * and a separate Variations group, since Variations span resource types.
  *
  * Search does not group. A reader who typed a word wants that word ranked, so
  * the flat list keeps every term as a row, leads included.
  */
 export const VOCABULARY_PAGES: VocabularyPage[] = [...new Set(VOCABULARY_ITEMS.map(item => vocabularySection(item.slug)))]
   .map((page) => {
-    const lead = VOCABULARY_LEADS[page]!
+    const lead = page === 'variations' ? 'variation' : VOCABULARY_LEADS[page]!
     return {
       page,
-      title: VOCABULARY[lead].pageTitle,
+      title: page === 'variations' ? 'Variations' : VOCABULARY[lead].pageTitle,
       lead: termItem(lead),
       items: VOCABULARY_ITEMS.filter(item => vocabularySection(item.slug) === page && item.slug !== lead)
     }

@@ -133,10 +133,10 @@ not contain another H1 or H2.
   `access` (`public|authenticated|restricted`); optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
   There is no `version` or `capabilityBoundary`. Disjoint audiences require
-  division; distinct access modes or counterparts justify existing Experiences.
-  Their Actor union equals the Interface's Actors. Versions do not decide
-  containment: independently supported contracts may be Interfaces, while other
-  behavior differences belong in Scenario conditions and outcomes.
+  division; distinct access modes, counterparts or valid Variation links justify
+  existing Experiences. Variations follow the shared contract below and may
+  link Experiences across Interfaces without changing ownership.
+  Their Actor union equals the Interface's Actors.
 - Capability: at least one `availability` Context; optional singular `domain`;
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
@@ -564,3 +564,84 @@ intended product behavior.
 
 Documentation: https://businesslens.io
 ```
+
+## Variations
+
+A Variation is a currently supported alternative form of an Interface,
+Experience, Screen, Entity, Capability, Journey or Business Rule. Product,
+Domain and both Scenario types do not support Variation metadata.
+
+The anchor declares `variationKind: experiment | configuration | version` and
+has at least one incoming `variantOf`. Every other member declares `variantOf`
+naming that anchor in the same resource collection, using full qualified place
+ids. Linked members do not repeat the subtype. No self-links, chains, cycles,
+missing targets, cross-type links or orphan metadata are allowed.
+
+Every member, including the anchor, declares `variationUsage`. This replaces
+`## When used`; that heading is reserved and rejected on all resources. The
+usage block is the sole owner of applicability. It is forbidden outside a set.
+Its required shared fields are non-empty Markdown fragments without H1/H2:
+
+| Field | Meaning |
+| --- | --- |
+| `selectedWhen` | Eligibility and the choice selecting this member, including missing/unsupported choices, defaults and precedence where relevant |
+| `takesEffect` | When selection is made or re-evaluated, including changes during use |
+| `stability` | How long the choice remains fixed and what happens to existing clients, sessions or records when it changes |
+
+The resolved subtype determines the additional fields. Unknown or wrong-subtype
+keys are errors. A fact reference is exactly `{ entity: <id>, fact: <name> }`:
+it must resolve to an Entity and one of its Information kept facts.
+
+| Subtype | Additional fields |
+| --- | --- |
+| `experiment` | Required `assignmentUnit`: `{ entity: <id> }` for an existing Entity, otherwise `{ description: <non-empty explanation> }` for an unmodeled unit such as a session. Required `assignmentMethod` explains allocation/assignment. Optional `assignmentFact` references a kept assignment fact. Optional `allocation` describes a known allocation promise. |
+| `configuration` | Optional non-empty `settings` list of distinct fact references naming the effective settings used for selection. When selection uses unrecorded context instead, omit it and identify that context in `selectedWhen`. |
+| `version` | Required non-empty `label`, unique across the set ignoring case. Optional `discriminator` references the kept fact identifying the selected version. Header/path selection is explained in `selectedWhen`; do not invent an Entity to hold it. |
+
+Use a reference whenever the relevant Entity or fact is already modeled. For
+Experiment, the assignment unit is the thing receiving the choice; the assignment
+fact may be held by a different Entity. Neither field asserts an instance-level
+relationship. Do not create Entities solely to populate usage fields. Assignment
+units need not act: a Workspace or Order may receive a variation. Existing Actor
+relationships and permission Rules continue to answer who may use the resource;
+variation usage neither duplicates nor grants permission.
+
+```yaml
+# Source-focused library Experience
+variantOf: reader-mobile::personal-library
+variationUsage:
+  settings: [{ entity: reader, fact: Library assignment }]
+  selectedWhen: Source-focused. Classic or unset selects Personal library; unknown values are rejected.
+  takesEffect: At session start; assignment changes take effect in the next session.
+  stability: Fixed until the session ends.
+```
+
+The subtype states why alternatives coexist: Experiment evaluates outcomes;
+Configuration selects through a setting or operating context; Version keeps
+contracts/forms live together. Versions selected by a setting remain Version;
+experiments enabled by a setting remain Experiment. Combined mechanisms belong
+in the appropriate usage explanations, not multiple subtypes.
+
+Do not repeat usage in another When used section, selection Rule or descriptive
+paragraph. Constraints shared across behavior remain Business Rules. References
+in usage explain selection only: they imply no availability, containment,
+inheritance, permission, paired children or automatic runtime selection.
+
+A Business Rule Variation applies only under its usage conditions. Its grants
+and constraints govern only then. A grant's `when` still conditions an Entity
+operation; it cannot select a whole Rule. Lint validates structure and references,
+but does not evaluate applicability or treat all Rule alternatives as applicable.
+
+All members are independently complete and currently supported. The anchor is
+not a default, parent or historical version. Do not create alternatives for every
+parameter value, Scenario outcome or visual treatment. Remove metadata when a
+set has only one member left; preserve still-relevant meaning in ordinary content.
+
+Do not invent settings, allocations, defaults or timing. Unknown behavior stays
+explicitly unresolved and is recorded in Coverage. Structural checks cannot
+prove conditions exhaustive, resolve conflicts in prose, verify promised
+allocation, or establish deterministic resource granularity. No condition engine,
+experiment infrastructure, historical archive or dedicated Cohort type is added.
+
+An Entity used as a typed assignment unit or selection fact source is not an
+orphan: the usage reference supplies a concrete role in Product behavior.

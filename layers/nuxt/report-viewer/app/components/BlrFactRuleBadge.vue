@@ -15,6 +15,7 @@ const effect = computed(() => (props.rule.entityTargets.find(item => item.entity
 const NOUNS: Record<string, string> = { reads: 'Read', changes: 'Change', creates: 'Creation', removes: 'Removal' }
 const PAST: Record<string, string> = { reads: 'read', changes: 'changed', creates: 'created', removes: 'removed' }
 const badge = computed(() => {
+  if (props.rule.variation) return { icon: 'i-lucide-sliders-horizontal', label: 'Conditional Rule' }
   if (props.rule.permits === null) return { icon: 'i-lucide-shield-check', label: 'Constraint' }
   if (props.rule.prohibits) return { icon: 'i-lucide-ban', label: PAST[effect.value] ? `Never ${PAST[effect.value]}` : 'Never touched' }
   return { icon: 'i-lucide-lock', label: NOUNS[effect.value] ? `${NOUNS[effect.value]} restricted` : 'Restricted' }

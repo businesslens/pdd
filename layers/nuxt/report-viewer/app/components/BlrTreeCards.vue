@@ -36,7 +36,7 @@ const setExpanded = (card: TreeCard, values: string[]) => {
     data-tree-card
     :data-card-key="card.key"
   >
-    <BlrResourceTree
+    <BlrResourceTree :workspace="workspace"
       :nodes="[{ id: card.key, title: card.title, resource: card.resource, children: card.children }]"
       :label="card.title"
       :root-key="card.key"

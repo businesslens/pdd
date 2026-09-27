@@ -5,12 +5,14 @@ routes:
   web-unread-library: Web — Unread library
   mobile-saved-items: Mobile — Saved items
   mobile-unread-library: Mobile — Unread library
+  mobile-saved-items-source-focused: Mobile — Saved items — source-focused
+  mobile-unread-library-source-focused: Mobile — Unread library — source-focused
 steps:
   - text: The Reader removes the item's saved state
     kind: actor
     actor: reader
     entities:
-      - { entity: item, facts: [Saved at] }
+      - { entity: item, facts: [ Saved at ] }
     contexts:
       web-saved-items:
         place: reader-web::personal-library::saved-items
@@ -20,6 +22,10 @@ steps:
         place: reader-mobile::personal-library::saved-items
       mobile-unread-library:
         place: reader-mobile::personal-library::unread-library
+      mobile-saved-items-source-focused:
+        place: reader-mobile::source-focused-library::saved-items
+      mobile-unread-library-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: The Product preserves the item's reading state
     kind: product
     entities:
@@ -33,6 +39,10 @@ steps:
         place: reader-mobile::personal-library::saved-items
       mobile-unread-library:
         place: reader-mobile::personal-library::unread-library
+      mobile-saved-items-source-focused:
+        place: reader-mobile::source-focused-library::saved-items
+      mobile-unread-library-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: Collection membership is left for the Reader to change separately
     kind: condition
     actor: reader
@@ -47,6 +57,10 @@ steps:
         place: reader-mobile::personal-library::saved-items
       mobile-unread-library:
         place: reader-mobile::personal-library::unread-library
+      mobile-saved-items-source-focused:
+        place: reader-mobile::source-focused-library::saved-items
+      mobile-unread-library-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
 ---
 
 # Remove a saved item

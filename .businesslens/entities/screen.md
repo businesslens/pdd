@@ -25,3 +25,5 @@ to them.
 - **Presents** — the Entities it presents, with disclosed facts distinguished from collected inputs
 - **Nesting** — the parent it sits in and the Screens nested inside it
 - **Addresses** — where it answers, and whether it is reachable from every place in its container
+
+- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability

@@ -1,3 +1,4 @@
+import { VariationUsageSchema, type VariationFields } from './variations.js'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
@@ -45,7 +46,9 @@ export interface ResourceFile {
   assetMeta: ResourceAsset[]
 }
 
-export interface InterfaceResource extends ResourceFile {
+export interface VariationResource extends ResourceFile, VariationFields {}
+
+export interface InterfaceResource extends VariationResource {
   type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
@@ -62,7 +65,7 @@ export interface InterfaceResource extends ResourceFile {
   navigation: string[]
 }
 
-export interface ExperienceResource extends ResourceFile {
+export interface ExperienceResource extends VariationResource {
   actors: string[]
   /** The one Interface that owns it, read from the path. Never authored. */
   interface: string
@@ -77,7 +80,7 @@ export interface DomainResource extends ResourceFile {
   boundary: string
 }
 
-export interface CapabilityResource extends ResourceFile {
+export interface CapabilityResource extends VariationResource {
   domain?: string
   availability: Context[]
 }
@@ -132,7 +135,7 @@ export interface EntityRelation {
  * The Entity declares its states and nothing about the moves between them: the
  * lifecycle is composed from Scenario Steps.
  */
-export interface EntityResource extends ResourceFile {
+export interface EntityResource extends VariationResource {
   domain?: string
   /** Named single-line facts the Product keeps about the thing. Never how it is stored. */
   informationKept: EntityFact[]
@@ -155,7 +158,7 @@ export interface ScreenEntity {
   collects: string[]
 }
 
-export interface ScreenResource extends ResourceFile {
+export interface ScreenResource extends VariationResource {
   /** The Entities this view presents, with the facts on screen. */
   entities: ScreenEntity[]
   /**
@@ -262,13 +265,13 @@ export interface JourneyScenarioResource extends ScenarioResource {
   result: string
 }
 
-export interface JourneyResource extends ResourceFile {
+export interface JourneyResource extends VariationResource {
   actors: string[]
   goal: string
   successCriterion: string
 }
 
-export interface BusinessRuleResource extends ResourceFile {
+export interface BusinessRuleResource extends VariationResource {
   appliesTo: BusinessRuleTarget[]
   /**
    * Absent: the Rule makes no authorization claim. `[]`: the selected operation
@@ -1304,11 +1307,12 @@ export function loadModel(cwd: string): PddModel {
     for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`, ['screens'])) {
       const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
-        ['entities', 'entryPoints'],
+        ['entities', 'entryPoints', 'variantOf', 'variationKind', 'variationUsage'],
         issues
       )
       const id = qualify(parentId, location.id)
       screens.push({
+        ...variationFields(data, issues, location.file),
         entities: screenEntitiesField(data, issues, location.file),
         id,
         file: location.file,
@@ -1335,7 +1339,7 @@ export function loadModel(cwd: string): PddModel {
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readResource(
       productInterface,
-      ['type', 'actors', 'entryPoints', 'languages', 'navigation'],
+      ['type', 'actors', 'entryPoints', 'languages', 'navigation', 'variantOf', 'variationKind', 'variationUsage'],
       issues
     )
     interfaces.push({
@@ -1346,6 +1350,7 @@ export function loadModel(cwd: string): PddModel {
       directory,
       assets,
       assetMeta,
+      ...variationFields(data, issues, productInterface.file),
       type: stringField(data, 'type', issues, productInterface.file) || '',
       actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
       entryPoints: entryPointsField(data, issues, productInterface.file),
@@ -1363,7 +1368,7 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation'], issues)
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation', 'variantOf', 'variationKind', 'variationUsage'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -1375,6 +1380,7 @@ export function loadModel(cwd: string): PddModel {
         actors: uniqueStringListField(parsed.data, 'actors', issues, location.file),
         interface: productInterface.id,
         access: stringField(parsed.data, 'access', issues, location.file) || '',
+        ...variationFields(parsed.data, issues, location.file),
         entryPoints: entryPointsField(parsed.data, issues, location.file),
         navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file)
       })
@@ -1404,7 +1410,7 @@ export function loadModel(cwd: string): PddModel {
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } =
-        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions'], issues)
+        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions', 'variantOf', 'variationKind', 'variationUsage'], issues)
       /* The lifecycle is composed from Steps. A list that restated it was the
          second authority the format removed, and the message names the first. */
       if (data.transitions !== undefined) {
@@ -1476,6 +1482,7 @@ export function loadModel(cwd: string): PddModel {
          loaded rather than this parser asking it one Entity file at a time. */
       return {
         id, file, doc, references, directory, assets, assetMeta,
+        ...variationFields(data, issues, file),
         domain: stringField(data, 'domain', issues, file),
         informationKept,
         kind,
@@ -1494,7 +1501,7 @@ export function loadModel(cwd: string): PddModel {
     'capabilities',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['domain', 'entities', 'availability'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['domain', 'entities', 'availability', 'variantOf', 'variationKind', 'variationUsage'], issues)
     /* What a Capability changes is what its Steps say it changes. A list here
        restated that from the other side, and the message names the replacement. */
     if (data.entities !== undefined) {
@@ -1508,6 +1515,7 @@ export function loadModel(cwd: string): PddModel {
       directory,
       assets,
       assetMeta,
+      ...variationFields(data, issues, location.file),
       domain: stringField(data, 'domain', issues, location.file),
       availability: availabilityField(data, issues, location.file)
     })
@@ -1544,7 +1552,7 @@ export function loadModel(cwd: string): PddModel {
     'journeys',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['actors'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['actors', 'variantOf', 'variationKind', 'variationUsage'], issues)
     journeys.push({
       id: location.id,
       file: location.file,
@@ -1554,6 +1562,7 @@ export function loadModel(cwd: string): PddModel {
       assets,
       assetMeta,
       actors: uniqueStringListField(data, 'actors', issues, location.file),
+      ...variationFields(data, issues, location.file),
       goal: section(doc, 'Goal') || '',
       successCriterion: section(doc, 'Success criterion') || ''
     })
@@ -1589,9 +1598,10 @@ export function loadModel(cwd: string): PddModel {
     'business-rules'
   ).map((location) => {
     const { id, file } = location
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo', 'permits'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo', 'permits', 'variantOf', 'variationKind', 'variationUsage'], issues)
     return {
       id, file, doc, references, directory, assets, assetMeta,
+      ...variationFields(data, issues, file),
       appliesTo: businessRuleTargetsField(data, issues, file),
       permits: businessRulePermitsField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
@@ -1630,5 +1640,15 @@ export function loadModel(cwd: string): PddModel {
     journeyScenarios,
     issues,
     notices
+  }
+}
+
+function variationFields(data: Record<string, unknown>, issues: string[], label: string): VariationFields {
+  const usage = data.variationUsage === undefined ? null : VariationUsageSchema.safeParse(data.variationUsage)
+  if (usage && !usage.success) issues.push(`${label}: invalid variationUsage: ${usage.error.message}`)
+  return {
+    variantOf: stringField(data, 'variantOf', issues, label) ?? null,
+    variationKind: stringField(data, 'variationKind', issues, label) ?? null,
+    variationUsage: usage?.success ? usage.data : null
   }
 }

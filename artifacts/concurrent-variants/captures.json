@@ -1,0 +1,51 @@
+{
+  "implementationBaseline": "7dab301ddac94b6242717ebf1b6716691770ebd5",
+  "beforePresentation": {
+    "files": [
+      "experience-links-before.png",
+      "alternatives-page-before.png"
+    ],
+    "note": "Real screenshots of the earlier uncommitted presentation, retained unchanged to show the UI revision."
+  },
+  "after": {
+    "source": "Uncommitted working tree",
+    "model": "blueprints/content-feed-reader",
+    "origin": "http://127.0.0.1:43213",
+    "viewport": {
+      "width": 1120,
+      "height": 760,
+      "deviceScaleFactor": 2
+    },
+    "mobileViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "files": [
+      "experience-after.png",
+      "interface-list-after.png",
+      "interface-delivery-after.png",
+      "selection-rule-after.png",
+      "interface-list-mobile.png",
+      "vocabulary-after.png"
+    ],
+    "vocabularyViewport": {
+      "width": 1120,
+      "height": 900
+    }
+  },
+  "method": "Chromium browser screenshots of the built local report; no image generation or pixel editing.",
+  "checks": [
+    "No dedicated Alternatives drawing",
+    "Inline peer navigation",
+    "Matching Variations and Also on cards",
+    "Peer links in Interface Delivery",
+    "Selection Rule visible from Experience",
+    "Close preserves collection expansion",
+    "Mobile has no document overflow",
+    "No browser page errors",
+    "Variation is grouped under Interfaces after Experience",
+    "Variations heading opens its definition",
+    "Plural search finds Variation first"
+  ],
+  "capturedAt": "2026-09-26T12:56:20.178732+00:00"
+}

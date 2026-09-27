@@ -23,7 +23,7 @@ const expanded = useBlrStructureExpansion(scope, keys, defaults)
       <BlrDrawingRowTools :columns="1" :expands-anything="keys.length > 0" compact @toggle-all="expanded = $event ? [...keys] : []" />
     </div>
     <div class="overflow-hidden rounded-xl border border-default bg-elevated/20 px-3 py-2">
-      <BlrResourceTree v-model:expanded="expanded" :nodes="nodes" :label="`${resource.title}: Applies to`" @open="emit('open', $event)" />
+      <BlrResourceTree :workspace="workspace" v-model:expanded="expanded" :nodes="nodes" :label="`${resource.title}: Applies to`" @open="emit('open', $event)" />
     </div>
   </section>
 </template>

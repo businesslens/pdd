@@ -177,15 +177,25 @@ claim that messages cannot have behavior or a lifecycle.
 
 ## Variation
 
-**Dedicated Experience versions and version-driven containment — deferred.**
-Addresses and headers do not decide independently supported contracts. Use
-Interfaces for those contracts and Scenario conditions for behavior variation;
-a dedicated dimension needs demonstrated meaning beyond these resources.
+**Historical version archives and version-driven containment — deferred.**
+Historical snapshots and version labels that dictate containment remain outside
+the model. Current alternatives now use the shared Variation contract: same-type
+`variantOf`, one anchor-owned `variationKind` (Experiment, Configuration or
+Version), and each member's typed `variationUsage`. This supersedes the Experience-only
+relationship and the deferral of a general variation relationship. Automatic
+inheritance, runtime selection and a condition language remain outside the model.
+Older contracts still used by current clients or records are supported behavior,
+not historical snapshots. Addresses and headers alone do not determine resource
+boundaries.
 
-**A general variation dimension — deferred.** Permission grants handle gates
-on Entity operations, not arbitrary behavior selection. Scenario conditions
-and outcomes describe other variations; this is not a claim that every flag
-can be represented by a grant or that experiments cannot be Product behavior.
+**Free-form applicability as the only encoding — superseded.** Typed usage
+fields and Entity/fact references now own selection, timing and stability.
+Separate When used prose would duplicate that meaning and is rejected.
+
+**A general experiment/configuration engine — deferred.** Variations state
+Product meaning and applicability. They do not run allocations, combine flags,
+negotiate versions or persist experiment results. Permission grants keep their
+Entity-operation meaning; they cannot stand in for selecting whole resources.
 
 **Cohorts as a dedicated resource type — deferred.** Actor or tenant facts can
 record membership. Experiment-management Products can model assignment and

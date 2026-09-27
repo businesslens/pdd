@@ -37,6 +37,10 @@ Capabilities, Journeys, their Scenarios, direct Contexts, or an operation on an
 constraint remains reusable and reviewable instead of drifting across several
 files.
 
+This resource family supports [Variations](./product-model.md#variations):
+`variationKind` on the anchor, `variantOf` on other alternatives, and a
+`variationUsage` block on every member.
+
 ## When you create one
 
 **A Rule governs two or more behaviors, a Context independent of any single

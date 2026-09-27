@@ -18,3 +18,5 @@ A visitor who browses the catalog and buys products.
 ## Information kept
 
 - **Delivery address** — where their orders are sent unless an order says otherwise
+
+- **Product presentation assignment** — the named product-detail experiment arm assigned to this shopper

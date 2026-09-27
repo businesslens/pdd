@@ -12,6 +12,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
@@ -23,6 +25,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: No feed returns an item the library does not already hold
     kind: condition
     entities:
@@ -36,9 +40,12 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 ---
 
 # Catch up when nothing new arrived

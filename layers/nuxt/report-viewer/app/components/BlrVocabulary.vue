@@ -340,6 +340,7 @@ onBeforeUnmount(() => {
                 <span v-else aria-hidden="true" class="size-4 shrink-0" />
                 <span aria-hidden="true" class="flex size-4 shrink-0 items-center justify-center">
                   <BlrKind v-if="pageKinds[page.page]" :kind="pageKinds[page.page]!" :labelled="false" size="xs" />
+                  <UIcon v-else-if="page.page === 'variations'" name="i-lucide-split" class="size-4 text-dimmed" />
                   <BlrReferenceIcon v-else-if="page.page === 'references'" class="size-4" />
                 </span>
                 <span class="text-[15px] font-semibold">{{ page.title }}</span>

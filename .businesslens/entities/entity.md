@@ -33,3 +33,5 @@ creates, changes, or removes it.
 - **Kind** — person or system, for the ones that act
 - **States** — the states it can be in, each one a Step somewhere leaves it in
 - **Relations** — the other Entities it relates to, with a verb and both cardinality ends
+
+- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability

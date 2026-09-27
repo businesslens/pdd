@@ -2,18 +2,18 @@
 kind: edge
 routes:
   web: Web
-  mobile: Mobile
+  mobile: Mobile source-focused
 steps:
   - text: The Reader selects the source in the unread library
     kind: actor
     actor: reader
     entities:
-      - { entity: source, effect: reads, facts: [Name] }
+      - { entity: source, effect: reads, facts: [ Name ] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
-        place: reader-mobile::personal-library::unread-library
+        place: reader-mobile::source-focused-library::source-backlog
   - text: The Product shows how many items will be marked read
     kind: product
     entities:
@@ -22,7 +22,7 @@ steps:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
-        place: reader-mobile::personal-library::unread-library
+        place: reader-mobile::source-focused-library::source-backlog
   - text: The Reader confirms the bulk action
     kind: actor
     actor: reader
@@ -32,7 +32,7 @@ steps:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
-        place: reader-mobile::personal-library::unread-library
+        place: reader-mobile::source-focused-library::source-backlog
 ---
 
 # Mark one source read in bulk

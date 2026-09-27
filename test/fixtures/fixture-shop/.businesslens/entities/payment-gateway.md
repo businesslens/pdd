@@ -11,3 +11,7 @@ references:
 
 The processor the store charges, which posts settlement and refund results back
 to the Product.
+
+## Information kept
+
+- **Settlement contract** — the supported settlement payload version selected for this gateway integration

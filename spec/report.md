@@ -68,7 +68,29 @@ that is a subset of the Product's and empty when the Interface narrows
 nothing, and `navigation`, an array of full qualified Screen ids — the
 folder's Interface-relative paths resolved — each naming a Screen whose
 nearest Interface-or-Experience container is that Interface. An Experience
-record carries `navigation` under the same resolution and no `version`. Neither record carries a `capabilityBoundary`.
+record carries `navigation` under the same resolution. Neither record carries
+`version` or `capabilityBoundary`.
+
+Interface, Experience, Screen, Entity, Capability, Journey and Business Rule
+records carry required nullable `variantOfId`, `variationKind` and
+`variationUsage`. Outside a set all three are null. Anchors have null
+`variantOfId` and one subtype; linked members have an anchor id and null subtype.
+Every member has its own non-null `variationUsage`, with the exact fields and
+subtype constraints in the folder contract. Entity/fact references retain their
+`entity` and `fact` keys on the wire. Version labels are unique within a set,
+ignoring case. Referenced Entities and facts must exist.
+
+Compilation maps authored `variantOf` to `variantOfId` and preserves
+`variationKind` and `variationUsage`. Expansion writes non-null fields into
+frontmatter. Usage never appears in `supportingSections`; `When used` remains a
+reserved, rejected H2. There is no `whenUsed` wire field. Product, Domain and
+Scenario records reject these fields. Targets must exist in the same collection
+and be unlinked; self-links, chains, cycles and orphan metadata are rejected.
+
+Selection references do not imply instance identity, inheritance, permissions,
+availability or runtime selection. Consumers disclose each Rule Variation's
+usage and must not evaluate descriptive conditions or treat all alternatives as
+unconditionally applicable.
 
 A Domain record carries `id`, `name`, `description`, a required `boundary`, and
 an optional `colorSlot`. `boundary` is the region the Domain owns stated by what

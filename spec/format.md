@@ -223,13 +223,13 @@ Capabilities, an edge wherever a Capability's Scenario Steps name the Actor.
 An admin-only Capability beside a shopper-only one does not divide an Interface
 that also offers a Capability both use.
 
-**Counterparts are the one exception.** An Experience whose name also exists
+**Counterparts and Variations justify existing Experiences.** An Experience whose name also exists
 under another Interface is the same context on another platform —
 `customer-web::storefront` and `customer-mobile::storefront` — and keeps its
 Experience even where the derivation alone would flatten it, because two views
 of one context must not look unrelated. Both findings are `lint` errors: an
 Interface that must divide and does not, and one that holds Experiences it
-must not, with no counterpart.
+must not, with neither a counterpart nor a valid Variation relationship.
 
 An Interface holds `experiences/`, or `screens/`, or **both** — the last when a
 Screen is genuinely shared across its Experiences rather than belonging to one.
@@ -396,6 +396,84 @@ future format revision, but Context is not an arbitrary metadata bag.
   list contain no duplicate value. Ordered content lists such as Scenario
   `steps` are not relation sets and may repeat when the meaning calls for it.
 - Scenario IDs are globally unique across every `scenarios/` folder.
+
+## Variations
+
+A Variation is a currently supported alternative form of an Interface,
+Experience, Screen, Entity, Capability, Journey or Business Rule. Product,
+Domain and both Scenario types do not support Variation metadata.
+
+The anchor declares `variationKind: experiment | configuration | version` and
+has at least one incoming `variantOf`. Every other member declares `variantOf`
+naming that anchor in the same resource collection, using full qualified place
+ids. Linked members do not repeat the subtype. No self-links, chains, cycles,
+missing targets, cross-type links or orphan metadata are allowed.
+
+Every member, including the anchor, declares `variationUsage`. This replaces
+`## When used`; that heading is reserved and rejected on all resources. The
+usage block is the sole owner of applicability. It is forbidden outside a set.
+Its required shared fields are non-empty Markdown fragments without H1/H2:
+
+| Field | Meaning |
+| --- | --- |
+| `selectedWhen` | Eligibility and the choice selecting this member, including missing/unsupported choices, defaults and precedence where relevant |
+| `takesEffect` | When selection is made or re-evaluated, including changes during use |
+| `stability` | How long the choice remains fixed and what happens to existing clients, sessions or records when it changes |
+
+The resolved subtype determines the additional fields. Unknown or wrong-subtype
+keys are errors. A fact reference is exactly `{ entity: <id>, fact: <name> }`:
+it must resolve to an Entity and one of its Information kept facts.
+
+| Subtype | Additional fields |
+| --- | --- |
+| `experiment` | Required `assignmentUnit`: `{ entity: <id> }` for an existing Entity, otherwise `{ description: <non-empty explanation> }` for an unmodeled unit such as a session. Required `assignmentMethod` explains allocation/assignment. Optional `assignmentFact` references a kept assignment fact. Optional `allocation` describes a known allocation promise. |
+| `configuration` | Optional non-empty `settings` list of distinct fact references naming the effective settings used for selection. When selection uses unrecorded context instead, omit it and identify that context in `selectedWhen`. |
+| `version` | Required non-empty `label`, unique across the set ignoring case. Optional `discriminator` references the kept fact identifying the selected version. Header/path selection is explained in `selectedWhen`; do not invent an Entity to hold it. |
+
+Use a reference whenever the relevant Entity or fact is already modeled. For
+Experiment, the assignment unit is the thing receiving the choice; the assignment
+fact may be held by a different Entity. Neither field asserts an instance-level
+relationship. Do not create Entities solely to populate usage fields. Assignment
+units need not act: a Workspace or Order may receive a variation. Existing Actor
+relationships and permission Rules continue to answer who may use the resource;
+variation usage neither duplicates nor grants permission.
+
+```yaml
+# Source-focused library Experience
+variantOf: reader-mobile::personal-library
+variationUsage:
+  settings: [{ entity: reader, fact: Library assignment }]
+  selectedWhen: Source-focused. Classic or unset selects Personal library; unknown values are rejected.
+  takesEffect: At session start; assignment changes take effect in the next session.
+  stability: Fixed until the session ends.
+```
+
+The subtype states why alternatives coexist: Experiment evaluates outcomes;
+Configuration selects through a setting or operating context; Version keeps
+contracts/forms live together. Versions selected by a setting remain Version;
+experiments enabled by a setting remain Experiment. Combined mechanisms belong
+in the appropriate usage explanations, not multiple subtypes.
+
+Do not repeat usage in another When used section, selection Rule or descriptive
+paragraph. Constraints shared across behavior remain Business Rules. References
+in usage explain selection only: they imply no availability, containment,
+inheritance, permission, paired children or automatic runtime selection.
+
+A Business Rule Variation applies only under its usage conditions. Its grants
+and constraints govern only then. A grant's `when` still conditions an Entity
+operation; it cannot select a whole Rule. Lint validates structure and references,
+but does not evaluate applicability or treat all Rule alternatives as applicable.
+
+All members are independently complete and currently supported. The anchor is
+not a default, parent or historical version. Do not create alternatives for every
+parameter value, Scenario outcome or visual treatment. Remove metadata when a
+set has only one member left; preserve still-relevant meaning in ordinary content.
+
+Do not invent settings, allocations, defaults or timing. Unknown behavior stays
+explicitly unresolved and is recorded in Coverage. Structural checks cannot
+prove conditions exhaustive, resolve conflicts in prose, verify promised
+allocation, or establish deterministic resource granularity. No condition engine,
+experiment infrastructure, historical archive or dedicated Cohort type is added.
 
 ## References
 
@@ -710,11 +788,11 @@ inside the Experience. The same rules hold: entries resolve or are a `lint`
 error, they are unique, order carries no meaning, and the list is structure
 rather than a relation.
 
-There is no Experience `version` field. Concurrent versions justify separate
-Interfaces only when they are independently supported interaction contracts;
-a different address or header alone does not decide it. Behavior differences
-within one contract belong in Scenario conditions and outcomes, with Business
-Rules for constraints spanning behaviors. Historical versions remain in Git.
+#### Experience Variations
+
+Experiences participate in the shared [Variation contract](#variations). A valid
+link justifies existing Experiences even when their audiences and access modes
+coincide. The relationship can cross Interfaces; ownership remains the file path.
 
 ### Availability
 
@@ -1113,6 +1191,8 @@ a `configuredBy`, which is how a settings Entity earns its place. A Step's read
 never counts, and neither does a relation. An Entity nothing points at is a
 `lint` error: it is either unused vocabulary or a relation somebody forgot to
 declare.
+A typed Variation usage reference also counts as use: the Entity supplies an
+assignment unit or a fact used in selecting a supported resource alternative.
 
 An Entity never declares Capabilities, Screens, availability, or who may act on
 it. Steps say what changes it, a Screen says what presents it, a Business Rule

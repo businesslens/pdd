@@ -72,6 +72,7 @@ Lead.
 ## Information kept
 
 - **Delivery address** — where their orders are sent
+- **Product presentation assignment** — the named product-detail experiment arm assigned to this shopper
 `
 }
 
@@ -193,16 +194,16 @@ describe('lintModel', () => {
     expect(result.warnings).toEqual([])
     expect(result.ok).toBe(true)
     expect(result.counts).toEqual({
-      interfaces: 5,
+      interfaces: 6,
       experiences: 2,
-      screens: 6,
+      screens: 10,
       domains: 1,
       entities: 8,
       capabilities: 6,
-      capabilityScenarios: 12,
+      capabilityScenarios: 14,
       journeys: 1,
       journeyScenarios: 2,
-      businessRules: 12
+      businessRules: 14
     })
   })
 
@@ -410,7 +411,7 @@ Lead.
 - **Weight** — how heavy it is
 `)
     expect(run(cwd).errors.join('\n')).toContain(
-      'ghost-thing.md: no Step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it'
+      'ghost-thing.md: no Step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation usage references it'
     )
   })
 
@@ -447,9 +448,12 @@ Lead.
     compactResource(join(bl, 'interfaces/admin-web/interface.md'), join(bl, 'interfaces/admin-web.md'))
     walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8')
       .replaceAll('customer-web::catalog', 'customer-web::storefront')
-      .replaceAll('::product-record', '')
+      .replace(/::product-record(?:-(?:summary|price-first|stock-first|guided))?/g, '')
       .replaceAll('::order-status', '')
       .replaceAll('admin-web::order-detail', 'admin-web')))
+    // The experiment's routes differ only by Screen; without Screens the
+    // existing browse Scenario already covers their single remaining place.
+    unlinkSync(join(bl, 'capabilities/browse-catalog/scenarios/read-an-experiment-product-presentation.md'))
     /* With no Screen anywhere, nothing is reachable from everywhere, and a
        governed fact is checkable only where a Step cites it. */
     const web = join(bl, 'interfaces/customer-web/interface.md')
@@ -1328,7 +1332,7 @@ Both have looked at the same order record.
     }
     walk(bl)
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability')
+    expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability')
     expect(errors).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
   })
 
@@ -2014,7 +2018,7 @@ What other shoppers said, opened from the product record.
       ))
       const result = run(cwd)
       expect(result.errors).toEqual([])
-      expect(result.counts.screens).toBe(7)
+      expect(result.counts.screens).toBe(11)
 
       /* A selector on the parent covers the child. */
       writeRule(cwd, 'reviews-are-public', `appliesTo:

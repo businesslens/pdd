@@ -193,6 +193,7 @@ describe('projectPortableReport', () => {
     }
     for (const screen of direct.model.screens) {
       screen.id = directScreenIds.get(screen.id)!
+      if (screen.variantOfId) screen.variantOfId = directScreenIds.get(screen.variantOfId)!
     }
 
     expect(sdk.validateProductReport(direct)).toEqual([])
@@ -516,7 +517,7 @@ describe('projectPortableReport', () => {
       ['references missing entity "ghost"', (value) => {
         value.model.screens[0]!.entities = [{ entityId: 'ghost', shows: [], collects: [] }]
       }],
-      ['no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it', (value) => {
+      ['no step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation usage references it', (value) => {
         const entity = cart(value)
         for (const screen of value.model.screens) {
           screen.entities = screen.entities.filter(entry => entry.entityId !== entity.id)

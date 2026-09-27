@@ -8,5 +8,5 @@ defineProps<{ name: string }>()
 </script>
 
 <template>
-  <UBadge color="neutral" variant="outline" size="sm" class="max-w-full font-normal" data-fact>{{ name }}</UBadge>
+  <UBadge color="neutral" variant="outline" size="md" class="max-w-full font-normal" data-fact>{{ name }}</UBadge>
 </template>

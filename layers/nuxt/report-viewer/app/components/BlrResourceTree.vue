@@ -8,12 +8,13 @@
  * the chevron, which carries it in its label, so a row keeps one tab stop.
  */
 import type { TreeItem } from '@nuxt/ui'
-import type { AnyResourceView } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { entityFacetOf } from '../utils/reportWorkspace'
 import type { InsideCount, TreeCardNode } from '../utils/collectionChildren'
 import { insideLabel, insideSummary } from '../utils/collectionChildren'
 
 const props = defineProps<{
+  workspace: ReportWorkspace
   nodes: TreeCardNode[]
   label: string
   rootKey?: string
@@ -118,6 +119,7 @@ const items = computed(() => props.nodes.map(toNode))
           />
         </span>
       </span>
+      <BlrVariationLink v-if="item.source.resource?.variation" :workspace="workspace" :resource="item.source.resource" class="font-normal" @keydown.stop @open="emit('open', $event)" />
       <span v-if="item.source.note" class="block whitespace-normal text-xs font-normal text-muted" data-tree-note>{{ item.source.note }}</span>
       <span v-if="item.source.sharedFrom" class="block whitespace-normal text-xs font-normal text-muted">
         From <BlrResourceLink :resource-key="item.source.sharedFrom.key" @keydown.stop @open="emit('open', item.source.sharedFrom)">{{ item.source.sharedFrom.title }}</BlrResourceLink>

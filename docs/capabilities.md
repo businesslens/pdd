@@ -59,6 +59,10 @@ Capabilities and their observable
 the Product Model. A Capability does not need a Journey, but it does need at
 least one Capability Scenario covering every availability Context.
 
+This resource family supports [Variations](./product-model.md#variations):
+`variationKind` on the anchor, `variantOf` on other alternatives, and a
+`variationUsage` block on every member.
+
 ## When you create one
 
 Create a Capability when an ability is reusable across goals or independently

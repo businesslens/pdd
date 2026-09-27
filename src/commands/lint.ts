@@ -1,3 +1,4 @@
+import { variationIssues, variationEntityReferences, VARIATION_COLLECTIONS } from '../core/variations.js'
 import { undeclaredEntityMentions } from '../core/entity-mentions.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
@@ -85,6 +86,18 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${label}: "## ${heading}" must contain only single-line ${kind}-list items`)
     }
   }
+
+  for (const collection of VARIATION_COLLECTIONS) {
+    const resources = model[collection]
+    for (const issue of variationIssues(resources, model.entities)) {
+      errors.push(`${resources.find(resource => resource.id === issue.id)!.file}: ${issue.message}`)
+    }
+    for (const resource of resources) validateSections(resource.file, resource.doc, [], ['When used'])
+  }
+  for (const resource of [...model.domains, ...model.capabilityScenarios, ...model.journeyScenarios]) {
+    validateSections(resource.file, resource.doc, [], ['When used'])
+  }
+  validateSections('product.md', model.product.doc, [], ['When used'])
 
   if (model.product.id && !isId(model.product.id)) errors.push('product.md: id must be lowercase kebab-case')
   if (model.product.id.length > 64) errors.push('product.md: id must be at most 64 characters')
@@ -429,7 +442,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const mustDivide = accessModes.size > 1 || disjointAudiences
 
     /*
-     * Counterpart symmetry is the one exception, and the spec states it: when
+     * Counterparts and Variations justify existing Experiences: when
      * the same Experience name exists under another Interface, the two are
      * counterparts by construction — the same context on two platforms — and
      * forcing one to flatten would make two views of one context look
@@ -441,9 +454,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         other => other.interface !== productInterface.id && other.id.split('::').pop() === localId
       )
     })
-    if (owned.length && !mustDivide && !hasCounterpart) {
+    if (owned.length && !mustDivide && !hasCounterpart && !owned.some(item => item.variantOf !== null)) {
       errors.push(
-        `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability`
+        `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability`
       )
     }
     if (!owned.length && disjointAudiences) {
@@ -613,6 +626,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
   /* A settings or policy Entity that only Rules read is still in use: a
      condition reads a fact of it, or a grant is gated by it. */
+  const citedByVariation = new Set(VARIATION_COLLECTIONS.flatMap(collection =>
+    model[collection].flatMap(resource => variationEntityReferences(resource.variationUsage))))
   const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
     ...(grant.configuredBy ? [grant.configuredBy] : []),
     ...grant.when.flatMap(condition => [
@@ -717,8 +732,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // somebody forgot to declare, and both are worth an error. A read never
     // counts; acting does.
     if (!changedEntities.has(entity.id) && !(presentedOn.get(entity.id) || []).length
-      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id)) {
-      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it`)
+      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id) && !citedByVariation.has(entity.id)) {
+      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation usage references it`)
     }
   }
 
@@ -1504,8 +1519,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * the Step's origin where it has one. A fact-scoped Rule selects the Steps
    * that cite one of its facts and the Screens that list one.
    */
+  for (const rule of model.businessRules) {
+    if (rule.variationUsage !== null && rule.permits !== undefined) warnings.push(`${rule.file}: permission applicability is stated in variationUsage; verify selection and permissions against implementation or approved intent (lint cannot evaluate this prose)`)
+  }
   const permissionRuleResources = model.businessRules.filter(
-    rule => rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
+    rule => rule.variationUsage === null && rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
   )
   const permissionTarget = (target: BusinessRuleEntityTarget): PermissionTarget => ({
     entityId: target.id,

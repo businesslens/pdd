@@ -2,16 +2,16 @@
 entities:
   - { entity: product-model, shows: [Product] }
   - { entity: product, shows: [Identity] }
-  - { entity: interface, shows: [Type, Actors] }
-  - { entity: experience, shows: [Container, Audience] }
-  - { entity: screen, shows: [Exposure, Nesting] }
+  - { entity: interface, shows: [Type, Actors, Variation] }
+  - { entity: experience, shows: [Container, Audience, Variation] }
+  - { entity: screen, shows: [Exposure, Nesting, Variation] }
   - { entity: domain, shows: [Region] }
-  - { entity: entity, shows: [Kept information, Acts, Kind, States] }
-  - { entity: capability, shows: [Purpose, Availability, Domain] }
+  - { entity: entity, shows: [Kept information, Acts, Kind, States, Variation] }
+  - { entity: capability, shows: [Purpose, Availability, Domain, Variation] }
   - { entity: capability-scenario, shows: [Classification] }
-  - { entity: journey, shows: [Goal, Actors] }
+  - { entity: journey, shows: [Goal, Actors, Variation] }
   - { entity: journey-scenario, shows: [Result, Classification] }
-  - { entity: business-rule, shows: [Assertion, Reach] }
+  - { entity: business-rule, shows: [Assertion, Reach, Variation] }
 entryPoints:
   - local-report-web: /?s=capability
 references:

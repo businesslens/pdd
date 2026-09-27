@@ -54,6 +54,10 @@ Capability selection, order, branches, repetition, and failure belong to its
 Journeys are optional. A Product Model can contain none when its
 behavior is better expressed as independently verifiable Capabilities.
 
+This resource family supports [Variations](./product-model.md#variations):
+`variationKind` on the anchor, `variantOf` on other alternatives, and a
+`variationUsage` block on every member.
+
 ## When you create one
 
 Create a Journey only when all of these are true:

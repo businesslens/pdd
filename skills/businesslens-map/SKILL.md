@@ -100,10 +100,11 @@ Read before authoring:
    Capability available there bridges (a Capability bridges the Actors its
    Scenario Steps name). Otherwise it holds no
    Experiences and availability names the Interface directly. `lint` decides
-   and reports a violation as an error; the one exception is an Experience
-   whose name also exists under
-   another Interface, a counterpart that justifies itself. Do not apply a prose
-   test of your own. Screens are places, authored under the paragraph below.
+   and reports a violation as an error. Counterparts across Interfaces and
+   valid Variation (`variantOf`) relationships also justify Experiences. For A/B
+   and other Variations, follow the shared format reference: one subtype per set,
+   typed variationUsage on every member, and no inherited content. Use Scenarios for
+   variation in one ability and visual References for design-only alternatives. Screens are places, authored under the paragraph below.
    Preserve valid existing meaning in a scoped expansion. **Attach what you
    actually read.**
    `references` is optional in the format, and leaving it empty is the most

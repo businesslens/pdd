@@ -4,7 +4,7 @@ references:
   - kind: code
     role: implementation
     target: src/services/payments.ts#PaymentGateway
-availability: [{ place: payment-webhook }]
+availability: [{ place: payment-webhook }, { place: payment-webhook-v2 }]
 ---
 
 # Payment settlement

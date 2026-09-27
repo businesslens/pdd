@@ -33,3 +33,5 @@ expensive to correct later.
 - **Entry points** — the product-facing addresses it answers on
 - **Navigation** — the Screens reachable from every place inside it
 - **Languages** — the language tags it serves, narrowing the Product's
+
+- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability

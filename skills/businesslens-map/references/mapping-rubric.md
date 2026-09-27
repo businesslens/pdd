@@ -39,9 +39,8 @@
   Actors split into groups no Capability available there bridges (a Capability
   bridges the Actors its Scenario Steps name ).
   Otherwise it holds no Experiences and availability names the Interface
-  directly. `lint` decides and reports a violation as an error; the one
-  exception is an Experience whose name also exists under
-  another Interface — a counterpart, which justifies itself. Do not equate an
+  directly. `lint` decides and reports a violation as an error; exceptions are a valid Variation (`variantOf`) relationship and an Experience
+  whose name also exists under another Interface — a counterpart. Do not equate an
   Experience with a page, command group, route tree, API, or CLI.
 - Screens are optional stable views an Actor reaches: places, decided under
   "Places, not designs" below — not components, layouts, routes mechanically
@@ -128,8 +127,15 @@ or read-only result alone is an Outcome on that process Screen, not a child.
   Experience. Entry points describe arrival; Steps describe movement.
 - Languages belong to the Product, optionally narrowed by Interface. There is no
   Experience `version` field. Independently supported contracts may be separate
-  Interfaces; addresses and headers alone never decide. Other variation belongs
-  in Scenario conditions/outcomes or cross-behavior Rules. A permission flag may
+  Interfaces; addresses and headers alone never decide. Variations apply across supported
+  resource types, following the shared format reference. Keep one anchor-owned
+  subtype (Experiment, Configuration or Version), typed variationUsage on every
+  member, and complete independent content. Link existing selection Entities and
+  facts; never invent Entities to populate usage fields. Check eligibility, selection,
+  defaults, overrides and stability as relevant to the subtype. Selection prose
+  is not executable; report missing evidence or unresolved conditions. Ordinary
+  outcomes stay Scenarios and visual-only differences stay References. Do not
+  claim deterministic granularity from lint alone. A permission flag may
   be a grant's `when` on an Entity operation, never a Capability target.
 - A Rule can prohibit a fact nobody reads. Require resolvable references, not an
   example of prohibited behavior. Experiments and messages can be ordinary

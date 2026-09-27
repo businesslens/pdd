@@ -183,7 +183,7 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
     if (relation.source !== resource.key && relation.target !== resource.key) continue
     const direction = relation.source === resource.key ? 'Outgoing' : 'Incoming'
     const other = workspace.byKey.get(direction === 'Outgoing' ? relation.target : relation.source)!
-    if (all.some(item => item.kind === other.kind && item.ids.includes(other.id))) continue
+    if (!relation.label.startsWith('variation ') && all.some(item => item.kind === other.kind && item.ids.includes(other.id))) continue
     const key = JSON.stringify([direction, other.kind, relation.label])
     const existing = additional.get(key)
     if (existing) { if (!existing.ids.includes(other.id)) existing.ids.push(other.id) }

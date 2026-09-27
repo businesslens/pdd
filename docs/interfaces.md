@@ -48,6 +48,10 @@ Inside an Interface, the model says what an Actor can reach, see, do and
 trigger at each place. It never says how that looks or is built — see
 [Is this a design spec?](#is-this-a-design-spec).
 
+This resource family supports [Variations](./product-model.md#variations):
+`variationKind` on the anchor, `variantOf` on other alternatives, and a
+`variationUsage` block on every member.
+
 ## When you create one
 
 Create an Interface when Actors can interact with the Product through it and
@@ -162,10 +166,11 @@ test. Two rules decide it, one in each direction:
   no Capability available there bridges. Holding none is a `lint` **error**:
   those groups are separate contexts, not one.
 - **An Interface that holds Experiences must justify them.** Its Experiences
-  differ in `access`, or its audiences are disjoint, or one is a counterpart —
+  differ in `access`, or its audiences are disjoint, or have a valid
+  [Variation](./product-model.md#variations) relationship, or one is a counterpart —
   an Experience whose name also exists under another Interface, the same context
   on another platform, which justifies itself because flattening it would make
-  two views of one context look unrelated. None of the three, and it is a
+  two views of one context look unrelated. None of these, and it is a
   `lint` **error**: use direct Interface availability instead.
 
 Disjoint audiences is the only input that *requires* division. `access` only justifies Experiences that already exist, because an Interface
@@ -206,6 +211,7 @@ Where authorized operators manage the Product and its users.
 | --- | --- | --- |
 | `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
 | `access` | yes | Use `public`, `authenticated`, or `restricted`. |
+| `variantOf` | no | Full qualified id of another Experience; see [Variations](./product-model.md#variations). No self-links or chains. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `navigation` | no | List this Experience's own Screens reachable from every place inside it, each as a path relative to the Experience, nested ones by their child path. Unique values; order carries no meaning. See [Navigation](#navigation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -503,7 +509,7 @@ Attach them to the Interface, Experience or Screen they shape as `visual`
 [References](./references.md) with `role: intent`, which says *helped define
 it, never is it*.
 
-## Variation
+## Other forms of variation
 
 A Product varies along a few axes without leaving the model, and each already
 has a home.
@@ -523,9 +529,9 @@ behavior when that is the Product's purpose.
 
 **Concurrent contracts.** Independently supported interaction contracts may be
 separate Interfaces. A different URL or header alone does not decide this.
-Otherwise, describe behavior variation through Scenarios and Rules. There is no
-Experience `version` field or version-driven division rule. Git preserves
-historical models.
+Resource Variations use `variantOf`; differences within one
+ability use Scenarios and Rules. There is no Experience `version` field or
+version-driven division rule. Git preserves historical models.
 
 ## Findings `lint` reports
 
@@ -537,7 +543,9 @@ historical models.
 - Actor reads must be shown by their Screen. Product and condition reads are
   not display claims; fact-free reads naming an Actor as a participant are exempt.
 - Languages must be valid and an Interface's list a subset of the Product's.
-- Experiences must follow the audience/access/counterpart rules; `version` is
+- `variantOf` must resolve to another Experience. Variation fields and usage follow the [shared rules](./product-model.md#variations).
+  Self-links, chains and cycles are errors; anchors have no `variantOf`.
+- Experiences must follow the audience/access/counterpart/variant rules; `version` is
   an unknown key.
 - Removed Screen sections, `screens` on a container and `languages` on an
   Experience or Screen are errors.

@@ -1,3 +1,4 @@
+import { VariationUsageSchema, variationIssues, variationEntityReferences, VARIATION_COLLECTIONS, VARIATION_KINDS } from './variations.js'
 import * as z from 'zod'
 import { undeclaredEntityMentions } from './entity-mentions.js'
 import { parseCodeTarget } from './coderefs.js'
@@ -75,6 +76,12 @@ export const ReportSupportingSectionSchema = z.strictObject({
   content: MarkdownFragmentSchema
 })
 
+const VariationContentSchema = {
+  variantOfId: QualifiedIdSchema.nullable(),
+  variationKind: z.enum(VARIATION_KINDS).nullable(),
+  variationUsage: VariationUsageSchema.nullable()
+}
+
 const ResourceContentSchema = {
   intent: MarkdownFragmentSchema,
   supportingSections: z.array(ReportSupportingSectionSchema),
@@ -126,6 +133,7 @@ export const ReportContextSchema = z.strictObject({
 export const LanguageTagSchema = z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/)
 
 export const ReportInterfaceSchema = z.strictObject({
+  ...VariationContentSchema,
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -144,6 +152,7 @@ export const ReportInterfaceSchema = z.strictObject({
 })
 
 export const ReportExperienceSchema = z.strictObject({
+  ...VariationContentSchema,
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -205,6 +214,7 @@ export const ReportEntityRelationSchema = z.strictObject({
  * two are never merged.
  */
 export const ReportEntitySchema = z.strictObject({
+  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -221,6 +231,7 @@ export const ReportEntitySchema = z.strictObject({
 })
 
 export const ReportCapabilitySchema = z.strictObject({
+  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -245,6 +256,7 @@ export const ReportScreenEntitySchema = z.strictObject({
  * entered. Its id carries its whole placement, and a parent may be a Screen.
  */
 export const ReportScreenSchema = z.strictObject({
+  ...VariationContentSchema,
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -257,6 +269,7 @@ export const ReportScreenSchema = z.strictObject({
 })
 
 export const ReportJourneySchema = z.strictObject({
+  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   goal: RequiredMarkdownFragmentSchema,
@@ -411,6 +424,7 @@ export const ReportGrantSchema = z.strictObject({
 })
 
 export const ReportBusinessRuleSchema = z.strictObject({
+  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   statement: RequiredMarkdownFragmentSchema,
@@ -559,7 +573,7 @@ function validateSupportingSections(
   sections: ReportSupportingSection[],
   reservedHeadings: string[]
 ): void {
-  const reserved = new Set(reservedHeadings.map(heading => heading.toLowerCase()))
+  const reserved = new Set([...reservedHeadings, 'When used'].map(heading => heading.toLowerCase()))
   for (const item of sections) {
     if (reserved.has(item.heading.trim().toLowerCase())) {
       issues.push(`${label}: supporting section "${item.heading}" conflicts with a structured section`)
@@ -665,6 +679,10 @@ export function validateProductReport(report: ProductReportV15): string[] {
   requireUniqueValues(issues, 'product', 'tags', report.tags)
   requireUniqueValues(issues, 'product', 'languages', report.languages)
   const productLanguages = new Set(report.languages)
+  for (const collection of VARIATION_COLLECTIONS) {
+    const resources = model[collection].map(item => ({ ...item, variantOf: item.variantOfId }))
+    for (const issue of variationIssues(resources, model.entities)) issues.push(`${collection} "${issue.id}": ${issue.message}`)
+  }
   validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
 
   const collections: Array<[string, string[]]> = [
@@ -1293,6 +1311,8 @@ export function validateProductReport(report: ProductReportV15): string[] {
       ...(grant.related.length ? [grant.related[grant.related.length - 1]!.entityId] : [])
     ]))
   ])
+  const citedByVariation = new Set(VARIATION_COLLECTIONS.flatMap(collection =>
+    model[collection].flatMap(resource => variationEntityReferences(resource.variationUsage))))
   const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
     ...(grant.configuredByEntityId ? [grant.configuredByEntityId] : []),
     ...grant.when.flatMap(condition => [
@@ -1341,8 +1361,8 @@ export function validateProductReport(report: ProductReportV15): string[] {
     // points at itself is still vocabulary no behaviour uses. Acting does, and
     // so does a Rule reading a settings Entity.
     if (!entityChanged.has(entity.id) && !entityPresentedOn.has(entity.id)
-      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id)) {
-      issues.push(`${label}: no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it`)
+      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id) && !citedByVariation.has(entity.id)) {
+      issues.push(`${label}: no step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation usage references it`)
     }
   }
 
@@ -1588,7 +1608,7 @@ export function validateProductReport(report: ProductReportV15): string[] {
      accepting a report cannot defer a contradiction until expansion. */
   issues.push(...validatePermissionBehavior({
     rules: model.businessRules
-      .filter(rule => rule.permits !== null
+      .filter(rule => rule.variationUsage === null && rule.permits !== null
         && rule.appliesTo.length > 0
         && rule.appliesTo.every(target => target.type === 'entity'))
       .map(rule => ({

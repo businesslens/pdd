@@ -81,6 +81,18 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
     />
   </div>
 
+  <section v-else-if="id === 'when-used' && resource.variation" class="space-y-2" data-when-used>
+    <p class="blr-block-heading"><BlrTerm slug="when-used" />
+      <span class="ms-2 font-normal text-dimmed"><BlrTerm :slug="resource.variation.kind" /></span>
+    </p>
+    <div class="space-y-3 rounded-lg border border-default p-4" data-variation-overview>
+      <BlrVariationUsage :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+      <BlrVariationLink :workspace="workspace" :resource="resource" overview @open="emit('open', $event)" />
+    </div>
+  </section>
+
+  <BlrVariations v-else-if="id === 'variants'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+
   <BlrAttachedRules v-else-if="id === 'rules'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
 
   <BlrRuleScope v-else-if="id === 'rule-scope' && resource.kind === 'rule'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />

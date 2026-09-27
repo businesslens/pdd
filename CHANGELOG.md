@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Describe experiments, configuration alternatives and live versions across resources, with linked selection facts and explicit conditions, timing and stability. Explore them in a Variations tab reached from compact list links.
 - Model nested Screens, always-reachable destinations and supported languages.
 - Distinguish what Screens show from what they collect, and validate the facts Scenario Steps read, change or create.
 - Explore each place's Delivery: its Capabilities, Scenarios and passing Journeys, with clearer nested trees and summaries of collapsed branches.

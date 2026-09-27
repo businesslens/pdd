@@ -1,4 +1,5 @@
-import type { ResourceFile, PddModel } from '../core/model.js'
+import type { VariationKind } from '../core/variations.js'
+import type { ResourceFile, VariationResource, PddModel } from '../core/model.js'
 import type { ProductReportV15 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
@@ -48,7 +49,7 @@ function assetReferences(resource: ResourceFile, modelRoot: string) {
 function resourceContent(resource: ResourceFile, recognized: string[], modelRoot: string) {
   return {
     intent: section(resource.doc, 'Intent') || '',
-    supportingSections: supportingSections(resource.doc, ['Intent', ...recognized]),
+    supportingSections: supportingSections(resource.doc, ['Intent', 'When used', ...recognized]),
     references: [...assetReferences(resource, modelRoot), ...resource.references].map(reference => ({
       kind: reference.kind,
       role: reference.role,
@@ -166,6 +167,7 @@ export function compileReport(
         entryPoints: productInterface.entryPoints,
         languages: sorted(productInterface.languages),
         navigation: sorted(productInterface.navigation.map(entry => qualify(productInterface.id, entry))),
+        ...variationContent(productInterface),
         ...resourceContent(productInterface, [], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
@@ -177,6 +179,7 @@ export function compileReport(
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
         navigation: sorted(experience.navigation.map(entry => qualify(experience.id, entry))),
+        ...variationContent(experience),
         ...resourceContent(experience, [], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
@@ -190,6 +193,7 @@ export function compileReport(
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
+        ...variationContent(screen),
         ...resourceContent(screen, [], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
@@ -212,6 +216,7 @@ export function compileReport(
           entityId: relation.entity, verb: relation.verb, cardinality: relation.cardinality
         })),
         states: entity.states.map(state => ({ name: state.title, content: state.description })),
+        ...variationContent(entity),
         ...resourceContent(entity, ['Information kept', 'States'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
@@ -220,6 +225,7 @@ export function compileReport(
         description: capability.doc.lead,
         ...(capability.domain ? { domainId: capability.domain } : {}),
         availability: contexts(capability.availability),
+        ...variationContent(capability),
         ...resourceContent(capability, [], assetBase)
       })),
       capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
@@ -259,6 +265,7 @@ export function compileReport(
           capabilityIds: sorted([...achievedCapabilityIds]),
           failureOnlyCapabilityIds: sorted(failureOnlyCapabilityIds),
           domainIds: sorted([...new Set(domainIds)]),
+          ...variationContent(journey),
           ...resourceContent(journey, ['Goal', 'Success criterion'], assetBase)
         }
       }),
@@ -317,6 +324,7 @@ export function compileReport(
           unattended: grant.unattended === true,
           configuredByEntityId: grant.configuredBy ?? null
         })),
+        ...variationContent(rule),
         ...resourceContent(rule, ['Rationale'], assetBase)
       }))
     },
@@ -385,5 +393,13 @@ export function runExport(cwd: string): number {
   } catch (error) {
     console.error((error as Error).message)
     return 1
+  }
+}
+
+function variationContent(resource: VariationResource) {
+  return {
+    variantOfId: resource.variantOf,
+    variationKind: resource.variationKind as VariationKind | null,
+    variationUsage: resource.variationUsage
   }
 }

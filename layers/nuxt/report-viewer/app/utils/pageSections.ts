@@ -3,6 +3,7 @@ import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
 import { structureChildren } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
+import { variationMembers } from './variations'
 import { attachedRules } from './topologyTargets'
 
 export type PageBlockId =
@@ -12,6 +13,8 @@ export type PageBlockId =
   | 'contexts'
   | 'detail'
   | 'counterparts'
+  | 'variants'
+  | 'when-used'
   | 'connections'
   | 'structure'
   | 'rule-scope'
@@ -19,7 +22,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'applies-to' | 'delivery' | 'scenarios' | 'lifecycle' | 'rules' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'applies-to' | 'delivery' | 'scenarios' | 'lifecycle' | 'rules' | 'variations' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -54,6 +57,8 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   const hasEntryPoints = resource.kind === 'journey' && resource.entryPoints.length > 0
   if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')
 
+  if (resource.variation) overviewBlocks.push('when-used')
+
   if (hasAuthoredBody(resource)) overviewBlocks.push('detail')
 
   if (counterpartsOf(workspace, resource).length) overviewBlocks.push('counterparts')
@@ -81,6 +86,8 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   /* The Rules that name it, each saying how: its own reading, so a reader who asks "what constrains this?" finds it by name. */
   const rules = attachedRules(workspace, resource)
   if (rules.length) tabs.push({ id: 'rules', label: 'Business Rules', count: rules.length, blocks: ['rules'] })
+  const members = variationMembers(workspace, resource)
+  if (members.length > 1) tabs.push({ id: 'variations', label: 'Variations', count: members.length, blocks: ['variants'] })
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }

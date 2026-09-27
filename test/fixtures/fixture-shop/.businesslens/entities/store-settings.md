@@ -7,3 +7,5 @@ decides who may do what.
 
 - **Refund approval threshold** — the amount above which a refund needs the store's configured approver
 - **Self-service cancellation** — whether shoppers may cancel their own unpaid orders
+
+- **Refund review mode** — Standard or Strict review of refunds, independent of who is permitted to issue one

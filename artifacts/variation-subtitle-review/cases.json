@@ -1,0 +1,50 @@
+[
+  {
+    "id": "entities",
+    "title": "Entities collection",
+    "kind": "move",
+    "url": "?s=entity",
+    "sample": [
+      "entities",
+      "cart"
+    ],
+    "key": "entity:cart"
+  },
+  {
+    "id": "capabilities",
+    "title": "Capabilities collection",
+    "kind": "move",
+    "url": "?s=capability",
+    "sample": [
+      "capabilities",
+      "cancel-order"
+    ],
+    "key": "capability:cancel-order"
+  },
+  {
+    "id": "journeys",
+    "title": "Journeys collection",
+    "kind": "move",
+    "url": "?s=journey",
+    "sample": [
+      "journeys",
+      "browse-and-buy"
+    ],
+    "key": "journey:browse-and-buy"
+  },
+  {
+    "id": "rules",
+    "title": "Business Rules collection",
+    "kind": "move",
+    "url": "?s=rule",
+    "key": "rule:refund-review-standard"
+  },
+  {
+    "id": "attached",
+    "title": "A resource’s Business Rules tab",
+    "kind": "move",
+    "url": "?s=capability&e=capability:manage-orders&rt=rules",
+    "key": "rule:refund-review-standard",
+    "dialog": true
+  }
+]

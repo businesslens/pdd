@@ -52,6 +52,10 @@ Capabilities name the Product's **verbs**. Entities name its **nouns**,
 including the people and systems that act on it: one resource type for things,
 and the ones that act carry one more field.
 
+This resource family supports [Variations](./product-model.md#variations):
+`variationKind` on the anchor, `variantOf` on other alternatives, and a
+`variationUsage` block on every member.
+
 ## When you create one
 
 Apply the naming test: **a thing an Actor would call "this one"**.
@@ -404,6 +408,7 @@ use it declare the relationship, and every backlink is derived.
 | **Another Entity** | related by a declared edge with a verb and both cardinality ends; the inverse is derived |
 | **Interface, Experience, Journey** | name it in `actors` when it acts |
 | **Business Rule** | targets an operation on it, cites one of its facts, walks its relations to find who may, or reads a settings Entity's fact as a condition |
+| **Variation usage** | names an assignment unit or references a fact used for selection |
 | **Domain** | optional and single, authored on the Entity itself |
 
 An Entity never declares Capabilities, Screens, availability, or who may act on
@@ -415,7 +420,8 @@ says who may.
 An Entity must be changed by a Step, presented by a Screen, named as an actor —
 on a Step, an Interface, an Experience, a Journey, or a Business Rule grant — or
 read by a Business Rule, as a condition's `entity` or a `configuredBy`, which is
-how a settings Entity earns its place. **A Step's read never counts, and neither
+how a settings Entity earns its place. A typed Variation usage reference also
+counts: the Entity supplies an assignment unit or a selection fact. **A Step's read never counts, and neither
 does a relation** — a cluster of Entities referencing each other while no
 behaviour touches any of them is still vocabulary nobody uses. An Entity nothing
 points at is a `lint` error: it is either vocabulary nobody uses, or a

@@ -89,6 +89,10 @@ describe('open report', () => {
       'customer-mobile::storefront::product-record',
       'customer-web::storefront::order-status',
       'customer-web::storefront::product-record',
+      'customer-web::storefront::product-record-guided',
+      'customer-web::storefront::product-record-price-first',
+      'customer-web::storefront::product-record-stock-first',
+      'customer-web::storefront::product-record-summary',
       'customer-web::catalog'
     ])
     // A Screen shared beside experiences/ comes back beside them, on the Interface.
@@ -159,6 +163,8 @@ describe('open report', () => {
       const parent = report.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
       report.model.screens.push({
         ...structuredClone(parent),
+        variationKind: null,
+        variationUsage: null,
         id: 'customer-web::storefront::product-record::reviews',
         title: 'Reviews',
         description: 'What other shoppers said.',
@@ -261,7 +267,10 @@ describe('open report', () => {
           }
         }
       }
-      for (const screen of report.model.screens) screen.id = directScreenIds.get(screen.id)!
+      for (const screen of report.model.screens) {
+        screen.id = directScreenIds.get(screen.id)!
+        if (screen.variantOfId) screen.variantOfId = directScreenIds.get(screen.variantOfId)!
+      }
       const file = join(fresh, 'direct-report.json')
       writeFileSync(file, JSON.stringify(report))
 

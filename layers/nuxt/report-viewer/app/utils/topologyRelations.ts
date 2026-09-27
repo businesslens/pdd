@@ -1,5 +1,6 @@
 /** Resolved relations behind a focused reading, with explicit derivation verbs. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
+import { variationUsageReferences } from './variations'
 import { resourceKey } from './reportWorkspace'
 import { ruleAttachments } from './topologyTargets'
 
@@ -19,6 +20,12 @@ function directRelations(workspace: ReportWorkspace, resource: AnyResourceView):
     }
   }
 
+  if (resource.variation && resource.variation.anchorId !== resource.id) {
+    push(resource.key, resourceKey(resource.kind, resource.variation.anchorId), 'variation of')
+  }
+  for (const ref of variationUsageReferences(resource)) {
+    push(resource.key, resourceKey('entity', ref.entity), `variation ${ref.label.toLowerCase()}${ref.fact ? ': ' + ref.fact : ''}`)
+  }
   switch (resource.kind) {
     case 'interface': {
       for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'enters')

@@ -88,24 +88,30 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
 <template>
   <div class="relative">
   <component
-    :is="href ? 'a' : 'button'"
-    :href="href"
-    :type="href ? undefined : 'button'"
+    :is="resource.variation ? 'div' : href ? 'a' : 'button'"
+    :href="resource.variation ? undefined : href"
+    :type="resource.variation || href ? undefined : 'button'"
     :data-resource-key="resource.key"
     class="blr-resource-row group relative flex w-full items-center gap-4 overflow-hidden rounded-[0.625rem] border bg-default px-4 py-3 text-start transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     :class="[active ? 'border-primary bg-primary/5' : expandable ? 'border-default hover:bg-elevated' : 'border-default hover:border-accented hover:bg-elevated/40']"
-    :aria-label="expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
-    :aria-expanded="expandable ? open : undefined"
+    :aria-label="resource.variation ? undefined : expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
+    :aria-expanded="!resource.variation && expandable ? open : undefined"
     @click="activate"
   >
-    <span class="flex min-w-0 flex-1 items-start gap-3">
+    <!-- A separate full-card target preserves native link behavior without
+         nesting the subtitle link inside another link or button. -->
+    <component v-if="resource.variation" :is="href ? 'a' : 'button'" :href="href" :type="href ? undefined : 'button'" :data-resource-key="resource.key"
+      class="absolute inset-0 rounded-[inherit] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+      :aria-label="expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
+      :aria-expanded="expandable ? open : undefined" data-card-primary @click.stop="activate" />
+    <span class="flex min-w-0 flex-1 items-start gap-3" :class="resource.variation && 'pointer-events-none relative'">
       <BlrKind
         :kind="resource.kind"
         :interface-type="interfaceType"
         :facet="facet"
         :acts="acts"
         :labelled="false"
-        class="mt-0.5"
+        class="mt-0.5 pointer-events-auto"
       />
       <span class="min-w-0 flex-1">
         <span class="flex min-w-0 items-center gap-2">
@@ -120,6 +126,9 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
             {{ presentation.badge }}
           </UBadge>
         </span>
+        <BlrVariationLink v-if="resource.variation" :workspace="workspace" :resource="resource" class="pointer-events-auto relative mt-1 mb-1" @open="emit('open', $event)">
+          <span v-if="resource.kind === 'rule'" class="whitespace-nowrap" data-conditional-rule>· Applies conditionally</span>
+        </BlrVariationLink>
         <span v-if="resource.lead" class="mt-0.5 block truncate text-sm leading-5 text-default">{{ resource.lead }}</span>
         <!-- The discriminating fact. Absent rather than empty when there is none. -->
         <span v-if="presentation.hook" class="mt-1 flex min-w-0 items-baseline gap-1.5">
@@ -139,7 +148,7 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
       </span>
     </span>
 
-    <span class="shrink-0 items-center gap-4" :class="stacked ? 'hidden' : 'hidden lg:flex'">
+    <span class="shrink-0 items-center gap-4" :class="[stacked ? 'hidden' : 'hidden lg:flex', resource.variation && 'pointer-events-none relative']">
       <UTooltip
         v-for="metric in presentation.metrics"
         :key="metric.label"
@@ -147,7 +156,7 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
         :disabled="!metric.kind"
         :ui="{ content: 'h-auto max-w-xl items-start px-3 py-3' }"
       >
-        <span class="min-w-16 text-end">
+        <span class="pointer-events-auto min-w-16 text-end">
           <span class="font-mono text-xs font-medium text-highlighted tabular-nums">{{ metric.value }}</span>
           <span class="ms-1 text-xs text-muted">{{ metric.label }}</span>
         </span>

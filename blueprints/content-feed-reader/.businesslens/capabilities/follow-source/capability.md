@@ -1,6 +1,6 @@
 ---
 domain: sources
-availability: [{ place: reader-web::personal-library }, { place: reader-mobile::personal-library }]
+availability: [ { place: reader-web::personal-library }, { place: reader-mobile::personal-library }, { place: reader-mobile::source-focused-library } ]
 ---
 
 # Source following

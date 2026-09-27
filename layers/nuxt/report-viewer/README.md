@@ -664,3 +664,57 @@ Check the collection preview picker against a running local viewer with
 `node scripts/check-collection-views.mjs <viewer-url>`. This covers all six
 collections, desktop and phone layouts, subtitles without About, saved filters,
 keyboard selection and the fixed position beside the legend.
+
+## Variations
+
+Interfaces, Experiences, Screens, Entities, Capabilities, Journeys and Business
+Rules share one relationship reading. Cards and tree rows show the shared subtype
+and a linked total count, including the resource itself. The link opens that
+resource's Variations tab without changing the working view or tree expansion.
+This presentation is the same for two or many members.
+On cards it is a muted subtitle directly beneath the resource title, before
+the description: `Configuration · View 2 variations`. It has no separate badge,
+divider or footer. A conditional Business Rule includes `Applies conditionally`
+in that subtitle. The card's resource link and its Variations link are separate
+keyboard targets; the subtitle never nests a link inside another link or button.
+Tree rows use the same explicit `View N variations` action beneath their name.
+
+Overview reads the resource's own structured When used with its vocabulary-linked subtype
+and a link to all members, together in a bordered box beneath the heading.
+The Variations tab sits before Connections and shows
+all members in title order, with key as the tie-breaker. It states the shared
+subtype and that the count includes this resource. Only the inspected member is
+marked Current; the anchor has no preferred position or default label.
+
+Each member offers its name and expandable When used. The usage reading shows
+linked settings, assignment units/facts or version discriminators, followed by
+Selected when, Takes effect and Stability. Subtype fields retain their own labels.
+Selection references use the standard Entity chip; a referenced Information kept
+fact appears separately as a vocabulary-linked Field label and the standard
+fact badge. Reference labels, Entity chips and field badges align vertically.
+Links open the referenced Entity; Connections includes the selection references
+in both directions without deriving availability or permission. Ownership appears when
+members have different containers. Descriptions, access badges and reach metrics
+stay in each member's own reading. The current member's conditions start open;
+multiple members may be expanded. Expansion survives peer navigation, tab changes,
+refresh and valid recompilation. Member links open Overview; Back restores the
+previous tab and reading position. Phones use the same stacked rows.
+
+Also on remains in Overview. Connections retains the complete relationship list.
+Variations neither change ownership nor inflate tree expansion counts. There is
+no separate report collection or comparison drawing.
+
+The vocabulary has a dedicated Variations group for Variation, Experiment,
+Configuration, Version and When used. Definitions remain sourced from Model
+overview. Usage fields describe meaning, not an executable selector. Rule cards
+label conditional applicability, with full conditions in the Rule reading;
+lifecycle prohibition marks remain for unconditional prohibitions only.
+Conditional Rule restrictions remain reachable through Rule and fact readings.
+No runtime permissions or selection decisions are inferred from applicability prose.
+
+Check the two-member teaching Blueprint and a synthetic five-member layout with
+`node scripts/check-resource-variations.mjs <viewer-url>`. Set
+`BLR_VARIATION_SCREENSHOTS` to save captures. The check covers direct tab links,
+keyboard activation, member counts and order, condition expansion, Back, refresh,
+Interface Delivery and phone layouts. Synthetic data is injected only into the
+isolated browser context; it does not alter the authored Blueprint.

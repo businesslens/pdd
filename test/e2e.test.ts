@@ -51,16 +51,16 @@ describe('end to end on a real git repo', () => {
       license: 'MIT'
     })
     expect(parsed.counts).toEqual({
-      interfaces: 5,
+      interfaces: 6,
       experiences: 2,
-      screens: 6,
+      screens: 10,
       domains: 1,
       entities: 8,
       capabilities: 6,
-      capabilityScenarios: 12,
+      capabilityScenarios: 14,
       journeys: 1,
       journeyScenarios: 2,
-      businessRules: 12
+      businessRules: 14
     })
     // `capabilityIds` comes from the achieved variation; `cancel-order`
     // appears only in the not-achieved one, so it is failure-only.

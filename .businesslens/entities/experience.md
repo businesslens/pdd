@@ -29,3 +29,5 @@ sees.
 - **Audience** — the acting Entities it serves and the access it requires
 - **Entry points** — its own addresses
 - **Navigation** — the Screens reachable from every place inside it
+
+- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability

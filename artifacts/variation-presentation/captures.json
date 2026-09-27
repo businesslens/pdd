@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-09-27T07:46:13.068453+00:00",
+  "before": "Previous uncommitted structured usage UI, preserved from variation-usage screenshots",
+  "after": "Entity chip, explicit Information kept field, bordered Overview usage",
+  "method": "Chromium screenshots; no generated or edited pixels",
+  "configuration": "Actual Content Feed Reader Blueprint",
+  "fiveMembersExperimentVersion": "Synthetic browser-only layout fixtures",
+  "desktop": {
+    "width": 1120,
+    "height": 900,
+    "deviceScaleFactor": 2
+  },
+  "phone": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 2
+  }
+}

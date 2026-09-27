@@ -3,27 +3,32 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
     entities:
-      - { entity: item, effect: reads, facts: [Title, Published at] }
-      - { entity: source, effect: reads, facts: [Name] }
+      - { entity: item, effect: reads, facts: [ Title, Published at ] }
+      - { entity: source, effect: reads, facts: [ Name ] }
     contexts:
       web:
         place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::saved-items
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::saved-items
   - text: The Reader consumes the item from the saved library
     kind: actor
     actor: reader
     entities:
-      - { entity: item, effect: reads, facts: [Title, Published at] }
+      - { entity: item, effect: reads, facts: [ Title, Published at ] }
     contexts:
       web:
         place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::saved-items
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::saved-items
   - text: The saved state remains unchanged unless the Reader explicitly removes it
     kind: product
     actor: reader
@@ -33,6 +38,8 @@ steps:
         place: reader-web::personal-library::saved-items
       mobile:
         place: reader-mobile::personal-library::saved-items
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::saved-items
 ---
 
 # Read a saved library item

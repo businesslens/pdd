@@ -319,7 +319,7 @@ describe('stable Product Report', () => {
     const order = workspace.entities.find((item: any) => item.id === 'order')!
     const stateOf = (name: string) => order.states.find((state: any) => state.name === name)!
 
-    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-when-the-gateway-settles'])
+    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-through-the-v2-contract', 'confirm-an-order-when-the-gateway-settles'])
     expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'])
     expect(stateOf('Refunded').journeyScenarioIds).toEqual(['cancel-an-order-before-fulfilment'])
     expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'sell-the-last-available-unit'])
@@ -399,7 +399,7 @@ describe('stable Product Report', () => {
     // A Capability page reads one group per Entity, each distinct move once with the Scenarios making it.
     const settle = workspace.capabilities.find((item: any) => item.id === 'settle-payment')!
     expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects.map((move: any) => [move.effect, move.from, move.to, move.scenarioIds.length]), line.scenarioIds.length])).toEqual([
-      ['order', [['changes', 'Pending', 'Confirmed', 3]], 3],
+      ['order', [['changes', 'Pending', 'Confirmed', 4]], 4],
       ['refund', [['changes', 'Requested', 'Settled', 1]], 1]
     ])
     for (const capability of workspace.capabilities) {

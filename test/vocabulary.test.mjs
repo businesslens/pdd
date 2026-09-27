@@ -66,7 +66,8 @@ describe('vocabulary lookup', () => {
     ['permissions', 'who-may'],
     ['Left here by', 'left-here-by'],
     ['Entities', 'entity'],
-    ['Capabilities', 'capability']
+    ['Capabilities', 'capability'],
+    ['Variations', 'variation']
   ])('finds the definition for the report label %s first', (query, slug) => {
     expect(results(query)[0].slug).toBe(slug)
   })
@@ -88,6 +89,10 @@ describe('vocabulary lookup', () => {
       .toEqual(expect.arrayContaining(['actor', 'entity-kind', 'state', 'arc']))
     expect(pages.find(page => page.page === 'interfaces').items.map(item => item.slug))
       .toEqual(expect.arrayContaining(['experience', 'access-mode', 'screen', 'navigation', 'child-screen']))
+    expect(pages.find(page => page.page === 'variations').items.map(item => item.slug))
+      .toEqual(['experiment', 'configuration', 'version', 'when-used'])
+    expect(pages.find(page => page.page === 'variations').title).toBe('Variations')
+    expect(termHref('variation', '/docs')).toBe('/docs/product-model#variations')
     expect(pages.find(page => page.page === 'capabilities').items.map(item => item.slug))
       .toContain('capability-scenario-trigger')
     expect(pages.find(page => page.page === 'journeys').items.map(item => item.slug))
@@ -96,13 +101,13 @@ describe('vocabulary lookup', () => {
 
   it('leads every section with the term it is named for, and never repeats it as a row', () => {
     expect(VOCABULARY_PAGES.map(page => page.lead.slug)).toEqual([
-      'product', 'entity', 'interface',
+      'product', 'variation', 'entity', 'interface',
       'domain', 'capability', 'journey', 'business-rule', 'reference'
     ])
     expect(VOCABULARY_PAGES.every(page => !page.items.some(item => item.slug === page.lead.slug))).toBe(true)
   })
 
-  it('leads with Product and moves every Model overview term beneath it without changing its documentation', () => {
+  it('separates Variations from general Product terms while retaining their documentation owner', () => {
     const product = VOCABULARY_PAGES[0]
     expect(product.page).toBe('product')
     expect(product.lead.slug).toBe('product')
@@ -110,8 +115,12 @@ describe('vocabulary lookup', () => {
       'product-model', 'intent', 'coverage', 'resource-type'
     ])
     expect(VOCABULARY_PAGES.some(page => page.page === 'product-model')).toBe(false)
-    for (const item of product.items) {
-      expect(vocabularySection(item.slug)).toBe('product')
+    const variations = VOCABULARY_PAGES[1]
+    expect(variations.page).toBe('variations')
+    for (const item of [variations.lead, ...variations.items]) {
+      expect(vocabularySection(item.slug)).toBe('variations')
+    }
+    for (const item of [...product.items, variations.lead, ...variations.items]) {
       expect(item.page).toBe('product-model')
       expect(termHref(item.slug)).toContain('/product-model#')
       expect(results(item.term)[0].slug).toBe(item.slug)

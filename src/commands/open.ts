@@ -251,7 +251,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         entryPoints: entryPoints(productInterface.entryPoints),
         languages: productInterface.languages,
         navigation: relativeNavigation(productInterface.id, productInterface.navigation),
-        references: references(productInterface.references)
+        ...variationFrontmatter(productInterface), references: references(productInterface.references)
       })) + body(
         productInterface.title,
         productInterface.description,
@@ -288,7 +288,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
             entity: relation.entityId, verb: relation.verb, cardinality: relation.cardinality
           }))
           : undefined,
-        references: references(entity.references)
+        ...variationFrontmatter(entity), references: references(entity.references)
       })) + body(entity.title, entity.description, entity.intent, [], [
         ...(entity.informationKept.length
           ? [{ heading: 'Information kept', content: entity.informationKept.map(fact => `- **${fact.name}** — ${fact.description}`).join('\n') }]
@@ -315,7 +315,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         access: experience.accessMode,
         entryPoints: entryPoints(experience.entryPoints),
         navigation: relativeNavigation(experience.id, experience.navigation),
-        references: references(experience.references)
+        ...variationFrontmatter(experience), references: references(experience.references)
       })) + body(
         experience.title,
         experience.description,
@@ -333,7 +333,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
           ? screen.entities.map(entry => entry.shows.length || entry.collects.length ? compactRecord({ entity: entry.entityId, shows: entry.shows, collects: entry.collects }) : entry.entityId)
           : undefined,
         entryPoints: entryPoints(screen.entryPoints),
-        references: references(screen.references)
+        ...variationFrontmatter(screen), references: references(screen.references)
       })) + body(
         screen.title,
         screen.description,
@@ -350,7 +350,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
       frontmatter(compactRecord({
         domain: capability.domainId,
         availability: contexts(capability.availability),
-        references: references(capability.references)
+        ...variationFrontmatter(capability), references: references(capability.references)
       })) + body(capability.title, capability.description, capability.intent, [], capability.supportingSections)
     )
   }
@@ -378,7 +378,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         /* `permits: []` is a claim — forbidden to everyone — so it is never
            compacted away; only an absent `permits` is. */
         ...(rule.permits === null ? {} : { permits: rule.permits.map(grantRecord) }),
-        ...compactRecord({ references: references(rule.references) })
+        ...compactRecord({ ...variationFrontmatter(rule), references: references(rule.references) })
       }) + body(
         rule.title,
         rule.statement,
@@ -448,7 +448,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
       resourcePath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
       frontmatter(compactRecord({
         actors: journey.actorIds,
-        references: references(journey.references)
+        ...variationFrontmatter(journey), references: references(journey.references)
       })) + body(
         journey.title,
         '',
@@ -558,5 +558,13 @@ export async function runOpen(cwd: string, source: string, force: boolean): Prom
   } catch (error) {
     console.error((error as Error).message)
     return error instanceof UsageError ? 2 : 1
+  }
+}
+
+function variationFrontmatter(resource: { variantOfId: string | null, variationKind: string | null, variationUsage: unknown | null }) {
+  return {
+    ...(resource.variantOfId === null ? {} : { variantOf: resource.variantOfId }),
+    ...(resource.variationKind === null ? {} : { variationKind: resource.variationKind }),
+    ...(resource.variationUsage === null ? {} : { variationUsage: resource.variationUsage })
   }
 }

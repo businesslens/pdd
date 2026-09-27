@@ -37,10 +37,9 @@ flowchart TD
       csaved[Saved items]
       csources[Source list]
     end
-    subgraph next[Personal library — next]
-      subgraph nunread[Unread library]
-        bysource[By source — always reachable]
-      end
+    subgraph alternative[Source-focused library — concurrent alternative]
+      nunread[Unread library]
+      bysource[Source backlog — always reachable]
       nsaved[Saved items]
       nsources[Source list]
     end
@@ -49,3 +48,7 @@ flowchart TD
 
 Frames are containment; a wizard's arrow is its order. Movement between
 Screens is recorded by Scenario Steps; this reference shows containment.
+
+Both mobile Experiences are current peers. A Business Rule selects them by Reader
+assignment; the Source-focused library explicitly links to Personal library with
+`variantOf` and inherits no content from it.
