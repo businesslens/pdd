@@ -9,6 +9,15 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **Variation mark** audition is decided: Ink split 14px is the stable mark.
+Where the variation glyph stands alone — the rail, a collection heading, search —
+it is the split glyph in the report ink, drawn at 14px inside the usual 16px
+slot so it sits level with the other marks. A Variation modifies a type rather
+than being a subject area, so it takes no hue of its own; its ink matches the
+sub-icon on a set's mark. The teal slot, the ink-at-16px and the two fork
+alternatives, the row, cookie composable, variant list and lab stylesheet have
+been removed.
+
 The **Resource heading** audition is decided: Nearest place is the stable
 header. Under the title, one short line names the type and the nearest place
 containing the resource, with that place's own mark — `Screen in [Screen] Add

@@ -23,6 +23,11 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('There are no active report experiments in this layer.')
+    expect(readme).toContain('The **Variation mark** audition is decided')
+    for (const file of ['utils/variationMarkLab.ts', 'composables/useBlrVariationMarkLab.ts', 'components/BlrVariationMarkLabRow.vue', 'assets/variation-mark-lab.css']) {
+      expect(existsSync(join(lab, 'app', file))).toBe(false)
+    }
+
     expect(readme).toContain('The **Resource heading** audition is decided')
     for (const file of ['components/BlrResourceHeading.vue', 'components/BlrHeadingDomains.vue', 'components/BlrHeadingLabRow.vue', 'composables/useBlrHeadingLab.ts', 'utils/headingLab.ts']) {
       expect(existsSync(join(lab, 'app', file))).toBe(false)
@@ -95,6 +100,7 @@ describe('private Product Report viewer lab', () => {
     expect(app).not.toContain('BlrDrawingControlsLabRow')
     expect(app).not.toContain('BlrEffectPhrasingLabRow')
     expect(app).not.toContain('BlrHeadingLabRow')
+    expect(app).not.toContain('BlrVariationMarkLabRow')
     expect(app).not.toContain(':row-count="2"')
   })
 })

@@ -669,7 +669,9 @@ keyboard selection and the fixed position beside the legend.
 
 A Variation is a resource: a named set of same-type alternatives with how one
 is chosen written once on the set. It has its own rail collection, **Variations**,
-marked with the variation glyph. Its rows group by the type each set varies —
+marked with the variation glyph in ink — a Variation modifies a type, so it
+takes no hue — drawn at 14px inside the usual 16px slot, since the glyph reaches
+the corners of its box. Its rows group by the type each set varies —
 Interfaces, Screens, Business Rules and so on — and show the set's mark, name,
 subtype pill, purpose, alternatives and what chooses between them (`Chosen by`,
 `Assigned per` or `Discriminator`). The collection has Rows only: a set has no

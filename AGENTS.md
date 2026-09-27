@@ -214,8 +214,8 @@ costed already.
   their parent, and a collection's Graph or Matrix through its drawing selector.
   Variations has Rows only. This supersedes the six-collection rail.
 - **A Variation reads as the type it varies.** A set wears its member type's mark
-  with the variation sub-icon; the variation glyph alone marks only the
-  Variations collection. Wherever two or more alternatives of one set meet in a
+  with the variation sub-icon; the variation glyph alone, in ink and never a
+  hue of its own, marks only the Variations collection. Wherever two or more alternatives of one set meet in a
   list or tab they are one set row that never expands; the reader picks an
   alternative from the pill on its title, which opens a switcher listing every
   alternative with its condition and the set itself. A tree is the exception:

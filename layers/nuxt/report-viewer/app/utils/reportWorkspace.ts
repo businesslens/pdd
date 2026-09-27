@@ -93,7 +93,7 @@ export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
   'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
   'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
   rule: { kind: 'rule', label: 'Business Rule', plural: 'Business Rules', icon: 'i-lucide-scale', slot: 8 },
-  /* The glyph alone marks the collection; a set wears its member type's mark with this as a sub-icon. */
+  /* The glyph alone marks the collection, in ink; a set wears its member type's mark with this as a sub-icon. */
   variation: { kind: 'variation', label: 'Variation', plural: 'Variations', icon: 'i-lucide-split', slot: 10 },
   /* Product is the Overview, and the Overview is where a reader lands and returns. */
   product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-house', slot: 9 }

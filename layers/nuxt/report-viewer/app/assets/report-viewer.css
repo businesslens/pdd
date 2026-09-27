@@ -284,7 +284,7 @@
   --blr-slot-7: #e34948;
   --blr-slot-8: #746651;
   --blr-slot-9: #2a78d6;
-  --blr-slot-10: #0f766e;
+  --blr-slot-10: var(--ui-text-highlighted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -299,7 +299,7 @@
   --blr-slot-7: #e66767;
   --blr-slot-8: #ab9d81;
   --blr-slot-9: #3987e5;
-  --blr-slot-10: #2bb5a5;
+  --blr-slot-10: var(--ui-text-highlighted);
 }
 
 /* The reading's width, including its Scenario density, follows the panel. */
@@ -329,3 +329,12 @@
   .blr-drawing-controls { gap: .25rem; }
   .blr-drawing-chooser { width: 10rem; }
 }
+
+/* The variation glyph reaches the corners of its box, so at the rail's 16px it
+   reads larger than every other mark. Where it stands alone it is drawn at 14px
+   inside the same slot; the sub-icon on a set's mark and the pill keep their
+   own sizing. Scaled, so no row shifts. */
+.i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-pill] *) {
+  transform: scale(0.875);
+}
+
