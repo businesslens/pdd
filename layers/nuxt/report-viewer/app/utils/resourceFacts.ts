@@ -34,6 +34,8 @@ export interface ResourceFact {
    * reader first meets the word Screen, and it is the honest place to answer.
    */
   term?: VocabularySlug
+  /** A quiet qualifier after the value, e.g. where an inherited value comes from. */
+  note?: string
 }
 
 export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceView): ResourceFact[] {
@@ -48,8 +50,14 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         { label: 'Experiences', value: String(item.experienceIds.length), term: KIND_TERM.experience },
         { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen },
         { label: 'Capabilities', value: String(item.capabilityIds.length), term: KIND_TERM.capability },
-        /* Only where the Interface narrows the Product's list; an empty list says nothing. */
-        ...(item.languages.length ? [{ label: 'Languages', value: item.languages.join(', '), wide: true }] : [])
+        /* The languages it actually serves. An Interface that narrows nothing serves the
+           Product's whole list, which is said as such — otherwise it would read as none.
+           Absent only when the Product itself declares no languages. */
+        ...(item.languages.length
+          ? [{ label: 'Languages', value: item.languages.join(', '), wide: true }]
+          : workspace.identity.languages.length
+            ? [{ label: 'Languages', value: workspace.identity.languages.join(', '), note: 'all of the Product’s', wide: true }]
+            : [])
       ]
     }
     case 'experience': {

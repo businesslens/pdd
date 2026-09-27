@@ -41,7 +41,7 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
         <BlrTerm v-if="fact.term" :slug="fact.term" :text="fact.label" />
         <template v-else>{{ fact.label }}</template>
       </dt>
-      <dd class="mt-0.5 truncate text-sm font-medium text-highlighted">{{ fact.value }}</dd>
+      <dd class="mt-0.5 truncate text-sm font-medium text-highlighted">{{ fact.value }}<span v-if="fact.note" class="font-normal text-muted" data-fact-note> · {{ fact.note }}</span></dd>
     </div>
   </dl>
 

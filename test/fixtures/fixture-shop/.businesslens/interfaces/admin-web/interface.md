@@ -1,6 +1,7 @@
 ---
 type: web
 actors: [store-admin]
+languages: [en]
 entryPoints:
   - web: /admin
 ---

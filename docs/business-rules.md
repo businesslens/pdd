@@ -304,14 +304,24 @@ scalar or `{ configuredBy: <entity-id> }`.
 `fact` defaults to a fact of the targeted Entity and may name another through
 `entity`, which is how thresholds and feature flags work: the value is a fact of
 a settings Entity and the Rule reads it — which is also what keeps that settings
-Entity from being an orphan. An A/B test that changes what an Actor can do is
-the same shape, a flag read by a Rule, while one that changes only looks is
-design and not modeled. Dynamic configuration is the same shape again: the
-setting is a fact, and the Rule that reads it says what it changes. Who is in
-which cohort is a fact on the Actor or tenant Entity read the same way; the
-experiment machinery is normally outside the model, unless the Product itself
-manages experiments. Grants encode Entity-operation permissions; other behavior
-variation belongs in Scenario conditions/outcomes and cross-behavior Rules.
+Entity from being an orphan. Dynamic configuration is the same shape again:
+the setting is a fact, and the Rule that reads it says what it changes.
+
+A flag or an A/B test has exactly one encoding, decided by what differs:
+
+| What differs | Model it as |
+| --- | --- |
+| Whether someone may perform an operation | A settings fact read by a grant's `when` — this page |
+| Which of two or more complete, supported forms of a resource applies | A [Variation](./variations.md) — an A/B test whose arms are different Screens, Rules or Capabilities is an Experiment |
+| Only how something looks | Design, not modeled: visual References |
+| A branch inside one ability | Scenario conditions and outcomes |
+
+*Self-service cancellation on or off* is a grant's `when`; *five product page
+layouts, one per Shopper* is an Experiment Variation. Who is in which cohort is a
+fact on the Actor or tenant Entity. The experiment engine — allocation, metrics,
+results — stays outside the model unless the Product itself runs experiments.
+Grants encode Entity-operation permissions; other behavior variation belongs in
+Scenario conditions/outcomes and cross-behavior Rules.
 `state` says *the instance is in state X when the
 operation happens*: it must be a state of the targeted Entity, it is valid on
 every target but `creates`, and it cannot be combined with `entity`. It exists

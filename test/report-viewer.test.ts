@@ -1845,7 +1845,16 @@ describe('Screens on the v16 wire', () => {
     expect(workspace.identity.languages).toEqual(['en', 'de-DE'])
     expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'customer-web')).map((fact: any) => fact.label))
       .toEqual(['Type', 'Experiences', 'Screens', 'Capabilities', 'Languages'])
-    expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'admin-web')).map((fact: any) => fact.label))
+    const languages = (id: string) => resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === id)).find((fact: any) => fact.label === 'Languages')
+    // Narrowed: its own list, alone. The fixture's admin console is English-only.
+    expect(languages('customer-web')).toMatchObject({ value: 'en' })
+    expect(languages('admin-web')).toMatchObject({ value: 'en' })
+    expect(languages('admin-web').note).toBeUndefined()
+    // Not narrowed: the Product's whole list, said as such rather than as nothing.
+    expect(languages('customer-mobile')).toMatchObject({ value: 'en, de-DE', note: 'all of the Product’s' })
+    // With no Product languages there is nothing to say.
+    const silent = projectReportWorkspace({ ...report, languages: [], model: { ...report.model, interfaces: report.model.interfaces.map(item => ({ ...item, languages: [] })) } })
+    expect(resourceFacts(silent, silent.interfaces.find((item: any) => item.id === 'customer-mobile')).map((fact: any) => fact.label))
       .toEqual(['Type', 'Experiences', 'Screens', 'Capabilities'])
     expect(resourceFacts(workspace, workspace.experiences.find((item: any) => item.id === storefront!.id)).map((fact: any) => [fact.label, fact.value]))
       .not.toContainEqual(['Version', 'v2'])

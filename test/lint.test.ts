@@ -2180,11 +2180,16 @@ permits:
 
     it('checks language tags and narrows them from the Product to an Interface', () => {
       const cwd = fixtureCopy()
+      // The fixture serves English and German, with the admin console English-only.
+      expect(run(cwd).errors.filter(error => error.includes('language'))).toEqual([])
+      const product = join(cwd, '.businesslens/product/product.md')
+      const admin = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
+      writeFileSync(product, readFileSync(product, 'utf8').replace('languages: [en, de]\n', ''))
+      writeFileSync(admin, readFileSync(admin, 'utf8').replace('languages: [en]\n', ''))
       const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
       writeFileSync(productInterface, readFileSync(productInterface, 'utf8').replace('type: web', 'type: web\nlanguages: [en, de-DE]'))
       expect(run(cwd).errors).toContain(`${productInterface}: lists languages, and product.md declares none`)
 
-      const product = join(cwd, '.businesslens/product/product.md')
       writeFileSync(product, readFileSync(product, 'utf8').replace('tags:', 'languages: [en, English]\ntags:'))
       const errors = run(cwd).errors
       expect(errors).toContain('product.md: language "English" is not a language tag like "en" or "pt-BR"')

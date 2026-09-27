@@ -622,7 +622,17 @@ serves, each matching `^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$` — `en`, `de-DE`,
 a redesign cannot drop German. The vocabulary is closed, so `verify` can hold
 it against the repository's i18n configuration. An Interface may narrow the
 list; Experiences and Screens never carry one, because a language is a fact
-about a surface, not about a context or a view inside it.
+about a surface, not about a context or a view inside it. An area served in
+fewer languages than its surroundings is its own Interface.
+
+`languages` names the languages the Product's interfaces are delivered in. Two
+neighbouring meanings are ordinary content, not this field: content the
+Product keeps in several languages is an Entity fact (*Name and description —
+in each language the store sells in*), and translation work is Capabilities
+when the Product manages it; how a language is chosen for someone — a saved
+preference, the device locale, the address — is a kept fact such as *Preferred
+language* and the Steps that set and read it. Neither is a Variation: each
+language is the same resource, not an alternative form of it.
 Product `limitations` are deliberate constraints of the Product; gaps and
 uncertainty in the model belong in [`coverage.md`](#coveragemd).
 
@@ -872,11 +882,10 @@ that wording. Verification compares it; an unavailable Reference makes that
 requirement unverifiable, not satisfied.
 
 An outbound message — a confirmation email, a push, an SMS — is a Product Step
-that `reads` what it carries, and its content beyond those facts is copy. A flag that gates an Entity operation may be a settings fact read by a
-permission grant. Other behavior variation belongs in Scenario conditions and
-outcomes. Experiment infrastructure is outside the model unless managing
-experiments is itself Product behavior; messages likewise may have a lifecycle
-when the Product manages them.
+that `reads` what it carries, and its content beyond those facts is copy.
+Messages may have a lifecycle when the Product manages them. Flags and
+experiments follow **Flags, experiments and dynamic configuration** under
+Business Rules: one encoding per case.
 
 ### `domains/<id>.md` or `domains/<id>/domain.md`
 
@@ -1591,13 +1600,21 @@ nor `to`. *Anyone may read a Published collection* and *the shopper edits
 delivery details only while Pending* are both `when` state conditions. A
 defaulted `fact` or a `state` needs exactly one Entity target to resolve against.
 
-**Flags and dynamic configuration.** A flag deciding who may perform an Entity
-operation is a settings fact read by a permission grant's `when`. There is no
-structured `when` on a Capability-targeting Rule. Other variations in behavior
-are Scenario conditions and outcomes; a Business Rule states constraints shared
-by several behaviors. Experiment assignment and metrics are usually mechanisms,
-but are modeled with ordinary Entities and Capabilities when managing
-experiments is the Product's purpose.
+**Flags, experiments and dynamic configuration.** What differs decides the
+encoding, and each case has exactly one:
+
+| What differs | How it is modeled |
+| --- | --- |
+| Whether someone may perform an Entity operation | A settings fact read by a permission grant's `when`. One Rule; no Variation |
+| Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations): Configuration, Experiment or Version. An A/B test whose arms are different Screens, Rules, Capabilities or any other variable resource is an Experiment |
+| Only how something looks | Design: `visual` References with `role: intent`. Not modeled |
+| A branch inside one ability | Scenario conditions and outcomes; a Business Rule states constraints shared by several behaviors |
+
+There is no structured `when` on a Capability-targeting Rule. Who is in which
+cohort is an Actor or tenant fact, cited as the Variation's `assignmentFact`.
+The experiment engine — allocation, metrics, results — is outside the model
+unless running experiments is the Product's purpose, when it is ordinary
+Entities and Capabilities.
 
 **A modelled product's own RBAC** is product behaviour, not this layer. A fixed,
 shipped set of roles is a closed vocabulary: Entities that act, and

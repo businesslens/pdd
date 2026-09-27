@@ -249,11 +249,16 @@ not contain another H1 or H2.
   `entity` to read another Entity's fact, or `{ state: X }` for the instance's
   current state (valid on every target but `creates`, needed because reads and
   information changes carry no state to select by). A value is a scalar or
-  `{ configuredBy: <entity-id> }`. Permission claims appear only here. A flag
-  gating an Entity operation may condition a grant; other behavior variations
-  use Scenario conditions and outcomes, or Rules spanning behaviors. No
-  structured `when` exists on Capability targets. Experiments and messages may
-  be ordinary Product Entities and behavior when that is the Product's purpose.
+  `{ configuredBy: <entity-id> }`. Permission claims appear only here. One
+  encoding per case: a flag deciding whether someone may perform an Entity
+  operation conditions a grant; two or more complete, supported forms of one
+  resource chosen by a setting, assignment or version are a Variation (an A/B
+  test whose arms are different Screens, Rules or Capabilities is an
+  Experiment); a looks-only difference is design; a branch inside one ability
+  is Scenario conditions and outcomes, or Rules spanning behaviors. No
+  structured `when` exists on Capability targets. The experiment engine and
+  messages are ordinary Product Entities and behavior only when that is the
+  Product's purpose.
   A Rule
   on exactly one behavioral target with no `contexts` is a warning; Entity and
   Context targets are always valid. Rationale explains the current condition or

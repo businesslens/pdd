@@ -517,14 +517,18 @@ has a home.
 language tags it serves; an Interface may narrow the list, and Experiences and
 Screens never carry one. A redesign cannot drop German, so it is product; the
 vocabulary is closed, and `businesslens-verify` can check it against i18n
-configuration.
+configuration. An area served in fewer languages than its surroundings — an
+English-only operator console — is its own Interface. Content kept in several
+languages and the language chosen for someone are ordinary Entity facts, not
+`languages`; see [Product](./product.md#the-file).
 
-**Flags and behavior variation.** A flag governing who may perform an Entity
-operation can condition a permission grant. Other variation belongs in Scenario
-conditions and outcomes, with Business Rules for constraints spanning behaviors.
-There is no structured `when` on a Capability-targeting Rule. Experiment
-infrastructure is usually outside the model, but managing experiments is Product
-behavior when that is the Product's purpose.
+**Flags and experiments.** A flag deciding who may perform an Entity operation
+conditions a permission grant; two or more complete, supported forms of one
+resource — an A/B test whose arms differ in Screens or Rules — are a
+[Variation](./variations.md); a difference only in looks is design. Other
+variation belongs in Scenario conditions and outcomes, with Business Rules for
+constraints spanning behaviors. The full boundary is in
+[Business Rules](./business-rules.md).
 
 **Concurrent contracts.** Independently supported interaction contracts may be
 separate Interfaces. A different URL or header alone does not decide this.

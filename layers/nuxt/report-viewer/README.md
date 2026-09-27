@@ -38,8 +38,12 @@ there, never a sum of the places nested inside it. An Interface or Experience
 Overview carries no Delivery list; its facts strip counts the Capabilities
 available inside it, and where each is delivered reads in its containment tree.
 The facts strip adds
-Languages to an Interface that narrows the Product's list; the Product Overview's About reading lists the
-Product's languages.
+the Languages an Interface serves: its own list where it narrows the Product's,
+otherwise the Product's list marked "all of the Product's", so an Interface that
+narrows nothing never reads as serving none. It is absent only when the Product
+declares no languages. The Product Overview's About reading lists the Product's
+languages. `node scripts/check-languages.mjs <viewer-url>` checks both against
+the Fixture Shop.
 A Screen Overview separates Presents (facts the Product shows) from Collects
 (input the Actor supplies), grouping each by Entity and omitting empty sections.
 A prefilled editable fact appears in both; a bare Entity entry appears only in

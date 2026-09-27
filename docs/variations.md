@@ -55,6 +55,8 @@ Do not create one for:
 | A thing moving through phases | Entity States |
 | The same Experience on another Interface | A counterpart: same id under each Interface |
 | A visual treatment with the same facts and abilities | References on the one Screen |
+| A flag deciding whether someone may perform an operation | A settings fact read by a permission grant's `when` — see [Business Rules](./business-rules.md) |
+| The same resource offered in several languages | `languages` on the Product and Interface — each language is not an alternative |
 | A retired version no client uses | Nothing — the model holds only what is supported |
 
 All alternatives are currently supported. None is a default, a parent or a

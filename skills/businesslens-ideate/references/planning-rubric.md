@@ -109,7 +109,11 @@ or read-only result alone is an Outcome on that process Screen, not a child.
   Attach a condition's capture to its Scenario, not to a new Screen state key.
 - `navigation` lists Screens reachable from every place in its Interface or
   Experience. Entry points describe arrival; Steps describe movement.
-- Languages belong to the Product, optionally narrowed by Interface. There is no
+- Languages belong to the Product, optionally narrowed by Interface; an area
+  served in fewer languages is its own Interface. Content kept in several
+  languages is an Entity fact, and how a language is chosen for someone is a
+  kept fact (*Preferred language*) with the Steps that set it; neither is
+  `languages` or a Variation. There is no
   Experience `version` field. Independently supported contracts may be separate
   Interfaces; addresses and headers alone never decide. Supported alternatives of one
   resource type form one Variation file, `variations/<id>.md`, following the
@@ -124,8 +128,11 @@ or read-only result alone is an Outcome on that process Screen, not a child.
   defaults and stability as relevant to the subtype. Selection prose is not
   executable; record what evidence does not establish as unresolved in Coverage. Ordinary
   outcomes stay Scenarios and visual-only differences stay References. Do not
-  claim deterministic granularity from lint alone. A permission flag may
-  be a grant's `when` on an Entity operation, never a Capability target.
+  claim deterministic granularity from lint alone. A permission flag is a
+  grant's `when` on an Entity operation, never a Capability target; a setting
+  or assignment that chooses between complete forms of a resource is a
+  Variation, never a flag. *Self-service cancellation on or off* is a grant's
+  `when`; *five product page layouts, one per Shopper* is an Experiment.
 - A Rule can prohibit a fact nobody reads. Require resolvable references, not an
   example of prohibited behavior. Experiments and messages can be ordinary
   Product Entities and behavior when the Product manages them.
