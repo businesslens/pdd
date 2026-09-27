@@ -140,7 +140,7 @@ describe('collection rows that expand', () => {
     for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
       for (const node of flatten([{ id: card.key, title: card.title, resource: card.resource, children: card.children }])) {
         const summary = insideSummary(node)
-        const below = flatten(node.children).filter((item: any) => item.resource && item.resource.kind !== node.groupKind)
+        const below = flatten(node.children).filter((item: any) => item.resource && item.resource.kind !== node.groupKind && item.resource.kind !== 'variation')
         expect(summary.map((entry: any) => entry.kind)).toEqual(order.filter(kind => below.some((item: any) => item.resource.kind === kind)))
         for (const entry of summary) {
           expect(entry.count).toBe(new Set(below.filter((item: any) => item.resource.kind === entry.kind).map((item: any) => item.resource.key)).size)

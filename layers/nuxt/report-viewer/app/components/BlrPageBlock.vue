@@ -81,17 +81,18 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
     />
   </div>
 
-  <section v-else-if="id === 'when-used' && resource.variation" class="space-y-2" data-when-used>
-    <p class="blr-block-heading"><BlrTerm slug="when-used" />
-      <span class="ms-2 font-normal text-dimmed"><BlrTerm :slug="resource.variation.kind" /></span>
+  <section v-else-if="id === 'selection' && resource.kind === 'variation'" class="space-y-2" data-variation-how>
+    <p class="blr-block-heading">How one is chosen
+      <span class="ms-2 font-normal text-dimmed"><BlrTerm :slug="resource.variationKind" /></span>
     </p>
-    <div class="space-y-3 rounded-lg border border-default p-4" data-variation-overview>
-      <BlrVariationUsage :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
-      <BlrVariationLink :workspace="workspace" :resource="resource" overview @open="emit('open', $event)" />
+    <div class="rounded-lg border border-default p-4">
+      <BlrVariationSelection :workspace="workspace" :set="resource" @open="emit('open', $event)" />
     </div>
   </section>
 
-  <BlrVariations v-else-if="id === 'variants'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+  <BlrVariationChoice v-else-if="id === 'variation-choice'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+
+  <BlrVariationAlternatives v-else-if="id === 'alternatives' && resource.kind === 'variation'" :workspace="workspace" :set="resource" @open="emit('open', $event)" />
 
   <BlrAttachedRules v-else-if="id === 'rules'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
 

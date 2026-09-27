@@ -79,6 +79,7 @@ const items = computed(() => props.nodes.map(toNode))
         :interface-type="item.source.resource.kind === 'interface' ? item.source.resource.interfaceType : undefined"
         :facet="entityFacetOf(item.source.resource)"
         :acts="item.source.resource.kind === 'entity' ? item.source.resource.acts ?? undefined : undefined"
+        :member-kind="item.source.resource.kind === 'variation' ? item.source.resource.memberKind : undefined"
         :labelled="false"
         size="xs"
         class="mt-0.5"
@@ -97,9 +98,17 @@ const items = computed(() => props.nodes.map(toNode))
             @keydown.stop
             @open="emit('open', item.source.resource)"
           >{{ item.label }}</BlrResourceLink>
-          <span v-else class="min-w-0 truncate" :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.children.length }}</span></span>
+          <span v-else class="min-w-0 truncate" :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.count ?? item.source.children.length }}</span></span>
           <BlrNavigationMark v-if="item.source.resource?.kind === 'screen' && item.source.resource.alwaysReachable" class="ms-1.5 shrink-0" />
         </span>
+        <!-- The Variation on the title row; an alternative under its set's node has it said already. -->
+        <BlrVariationPill
+          v-if="item.source.resource && !item.source.inSet && (item.source.resource.kind === 'variation' || item.source.resource.variation)"
+          :workspace="workspace"
+          :resource="item.source.resource"
+          class="font-normal"
+          @open="emit('open', $event)"
+        />
         <!-- Only while closed: what opening this row would find. The chevron is its control. -->
         <span
           v-if="!isExpanded && item.inside.length"
@@ -119,7 +128,6 @@ const items = computed(() => props.nodes.map(toNode))
           />
         </span>
       </span>
-      <BlrVariationLink v-if="item.source.resource?.variation" :workspace="workspace" :resource="item.source.resource" class="font-normal" @keydown.stop @open="emit('open', $event)" />
       <span v-if="item.source.note" class="block whitespace-normal text-xs font-normal text-muted" data-tree-note>{{ item.source.note }}</span>
       <span v-if="item.source.sharedFrom" class="block whitespace-normal text-xs font-normal text-muted">
         From <BlrResourceLink :resource-key="item.source.sharedFrom.key" @keydown.stop @open="emit('open', item.source.sharedFrom)">{{ item.source.sharedFrom.title }}</BlrResourceLink>

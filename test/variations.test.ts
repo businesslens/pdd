@@ -5,280 +5,325 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { lintModel } from '../src/commands/lint.js'
 import { expandProductReport } from '../src/commands/open.js'
-import { loadModel, type VariationResource } from '../src/core/model.js'
-import { ProductReportV15Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
-import { VARIATION_COLLECTIONS, VARIATION_KINDS, type VariationFields, type VariationUsage } from '../src/core/variations.js'
+import { loadModel, type PddModel, type VariationResource } from '../src/core/model.js'
+import { ProductReportV16Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
+import {
+  VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, type VariationKind, type VariationMemberType, type VariationSet
+} from '../src/core/variations.js'
 
-const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
-const { projectReportWorkspace } = await utility('reportWorkspace')
-const { variationsOf, variationMembers } = await utility('variations')
-const { resourceConnectionRows } = await utility('resourceConnections')
-const { tabsFor } = await utility('pageSections')
-const { structureChildren, insideSummary } = await utility('collectionChildren')
 const ROOT = join(__dirname, '..', 'blueprints/content-feed-reader')
-const ANCHOR = 'reader-mobile::personal-library'
-const VARIANT = 'reader-mobile::source-focused-library'
+const PERSONAL = 'reader-mobile::personal-library'
+const SOURCE = 'reader-mobile::source-focused-library'
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
 const model = () => loadModel(ROOT)
-const report = () => compileReport(model(), '2026-09-26')
+const report = () => compileReport(model(), '2026-09-27')
 const temporary = () => { const dir = mkdtempSync(join(tmpdir(), 'bl-variations-')); dirs.push(dir); return dir }
-function setVariation(resource: VariationResource, fields: Partial<VariationFields>) {
-  Object.assign(resource, fields)
-}
-function usageFor(kind: string, selectedWhen = 'Standard'): VariationUsage {
-  const base = { selectedWhen, takesEffect: 'At session start.', stability: 'Fixed until the session ends.' }
-  if (kind === 'experiment') return { ...base, assignmentUnit: { entity: 'reader' }, assignmentMethod: 'Assigned randomly per Reader.', assignmentFact: { entity: 'reader', fact: 'Library assignment' }, allocation: 'Half of eligible Readers.' }
-  if (kind === 'version') return { ...base, label: selectedWhen, discriminator: { entity: 'reader', fact: 'Library assignment' } }
-  return { ...base, settings: [{ entity: 'reader', fact: 'Library assignment' }] }
+const LIBRARY_FACT = { entity: 'reader', fact: 'Library assignment' }
+
+/** Selection fields for one subtype, with every field outside it cleared. */
+function selection(kind: VariationKind): Omit<VariationSet, 'id' | 'kind' | 'of' | 'alternatives'> {
+  const base = {
+    takesEffect: 'At session start.', stability: 'Fixed until the session ends.',
+    assignmentUnit: null, assignmentMethod: null, assignmentFact: null, allocation: null, settings: [], discriminator: null
+  }
+  if (kind === 'experiment') return { ...base, assignmentUnit: { entity: 'reader' }, assignmentMethod: 'Assigned randomly per Reader.', assignmentFact: LIBRARY_FACT, allocation: 'Half of eligible Readers.' }
+  if (kind === 'version') return { ...base, discriminator: LIBRARY_FACT }
+  return { ...base, settings: [LIBRARY_FACT] }
 }
 
-const cases = VARIATION_COLLECTIONS.flatMap(collection => VARIATION_KINDS.map(kind => ({ collection, kind })))
-describe('resource Variations', () => {
-  it.each(cases)('round-trips $kind on $collection with its own applicability and no inherited content', ({ collection, kind }) => {
+/** Replace the model's Variations with one set over `ids`. */
+function withSet(loaded: PddModel, kind: VariationKind, of: VariationMemberType, ids: string[]): VariationResource {
+  const template = loaded.variations[0]!
+  const set: VariationResource = {
+    ...template,
+    ...selection(kind),
+    id: 'chosen-form',
+    kind,
+    of,
+    alternatives: ids.map((id, index) => ({ id, selectedWhen: `Choice ${index + 1}.`, label: kind === 'version' ? `v${index + 1}` : null }))
+  }
+  // The library set also justifies reader-mobile holding Experiences; keep it unless this set replaces it.
+  loaded.variations = of === 'experience' ? [set] : [template, set]
+  return set
+}
+
+const cases = VARIATION_MEMBER_TYPES.flatMap(of => VARIATION_KINDS.map(kind => ({ of, kind })))
+
+describe('Variation resources', () => {
+  it('loads the library set with membership only on the set', () => {
     const loaded = model()
-    for (const key of VARIATION_COLLECTIONS) for (const resource of loaded[key]) {
-      setVariation(resource, { variantOf: null, variationKind: null, variationUsage: null })
-    }
-    const [anchor, peer] = loaded[collection]
-    setVariation(anchor!, { variationKind: kind, variationUsage: usageFor(kind, 'Standard') })
-    setVariation(peer!, { variantOf: anchor!.id, variationUsage: usageFor(kind, 'Guided') })
+    expect(loaded.variations.map(item => [item.id, item.kind, item.of, item.alternatives.map(alt => alt.id)])).toEqual([
+      ['library-layout', 'configuration', 'experience', [PERSONAL, SOURCE]]
+    ])
     expect(lintModel(loaded, []).errors).toEqual([])
-    const original = compileReport(loaded, '2026-09-26')
+    for (const experience of loaded.experiences) expect(Object.keys(experience)).not.toContain('variationUsage')
+  })
+
+  it.each(cases)('round-trips a $kind set of $of losslessly', ({ of, kind }) => {
+    const loaded = model()
+    const collection = VARIATION_COLLECTION_OF[of]
+    const ids = of === 'experience' ? [PERSONAL, SOURCE] : loaded[collection].slice(0, 2).map(item => item.id)
+    expect(ids).toHaveLength(2)
+    withSet(loaded, kind, of, ids)
+    expect(lintModel(loaded, []).errors).toEqual([])
+    const original = compileReport(loaded, '2026-09-27')
     expect(validateProductReport(original)).toEqual([])
-    const wirePeer = original.model[collection].find(item => item.id === peer!.id)!
-    expect(wirePeer.variationKind).toBeNull()
-    expect(wirePeer.variationUsage).toEqual(peer!.variationUsage)
-    expect(wirePeer.supportingSections.some(item => item.heading === 'When used')).toBe(false)
+    const wire = original.model.variations.find(item => item.id === 'chosen-form')!
+    expect(wire).toMatchObject({ kind, of, takesEffect: 'At session start.' })
+    expect(wire.alternatives.map(item => item.resourceId)).toEqual([...ids].sort())
+    expect(wire.alternatives.every(item => (item.label !== null) === (kind === 'version'))).toBe(true)
+    expect(original.counts.variations).toBe(original.model.variations.length)
     const portable = projectPortableReport(original)
-    expect(portable.model[collection]).toEqual(original.model[collection].map(item => ({ ...item, references: portable.model[collection].find(other => other.id === item.id)!.references })))
     const target = temporary()
     expandProductReport(target, portable, false)
     const reopened = loadModel(target)
     expect(lintModel(reopened, []).errors).toEqual([])
-    const again = compileReport(reopened, '2026-09-26')
-    expect(again.model[collection]).toEqual(portable.model[collection])
-    const workspace = projectReportWorkspace(original)
-    const viewKind = { interfaces: 'interface', experiences: 'experience', screens: 'screen', entities: 'entity', capabilities: 'capability', journeys: 'journey', businessRules: 'rule' }[collection]
-    const a = workspace.byKey.get(`${viewKind}:${anchor!.id}`), b = workspace.byKey.get(`${viewKind}:${peer!.id}`)
-    expect(b.variation).toEqual({ kind, anchorId: anchor!.id, usage: peer!.variationUsage })
-    expect(variationsOf(workspace, a).map((item: any) => item.key)).toEqual([b.key])
-    expect(variationsOf(workspace, b).map((item: any) => item.key)).toEqual([a.key])
-    for (const resource of [a, b]) {
-      const tabs = tabsFor(workspace, resource)
-      expect(tabs[0].blocks).toContain('when-used')
-      expect(tabs[0].blocks).not.toContain('variants')
-      expect(tabs.find((tab: any) => tab.id === 'variations')).toEqual({ id: 'variations', label: 'Variations', count: 2, blocks: ['variants'] })
-      expect(tabs.findIndex((tab: any) => tab.id === 'variations')).toBeLessThan(tabs.findIndex((tab: any) => tab.id === 'connections'))
-      expect(resourceConnectionRows(workspace, resource).some((row: any) => row.label === 'variation of')).toBe(true)
-    }
+    expect(compileReport(reopened, '2026-09-27').model.variations).toEqual(portable.model.variations)
   })
 
-
-  it('keeps five members in the same order from every reading and counts the current member once', () => {
-    const workspace = projectReportWorkspace(report())
-    const anchor = workspace.byKey.get(`experience:${ANCHOR}`)!
-    for (const [id, title] of [['compact', 'Compact library'], ['guided', 'Guided library'], ['compact-b', 'Compact library']]) {
-      const member = { ...anchor, id: `reader-mobile::${id}`, key: `experience:reader-mobile::${id}`, title }
-      workspace.byKey.set(member.key, member)
-    }
-    const members = variationMembers(workspace, anchor)
-    expect(members.map((member: any) => member.id)).toEqual([
-      'reader-mobile::compact', 'reader-mobile::compact-b', 'reader-mobile::guided', ANCHOR, VARIANT
-    ])
-    workspace.byKey = new Map([...workspace.byKey].reverse())
-    for (const member of members) {
-      expect(variationMembers(workspace, member).map((item: any) => item.key)).toEqual(members.map((item: any) => item.key))
-      expect(variationsOf(workspace, member)).toHaveLength(4)
-      expect(tabsFor(workspace, member).find((tab: any) => tab.id === 'variations')?.count).toBe(5)
-    }
-    const unrelated = workspace.interfaces[0]
-    expect(variationMembers(workspace, unrelated)).toEqual([])
-    expect(tabsFor(workspace, unrelated).some((tab: any) => tab.id === 'variations')).toBe(false)
-  })
-
-  it.each([
-    ['', 'full resource id'], ['personal-library', 'missing resource of the same type'],
-    ['reader-mobile::missing', 'missing resource of the same type'],
-    [VARIANT, 'cannot name itself'], ['reader-mobile::personal-library::unread-library', 'missing resource of the same type']
-  ])('rejects invalid target %s in folder and wire', (target, message) => {
+  it('writes the alternatives as a set, ordered by id', () => {
     const loaded = model()
-    loaded.experiences.find(e => e.id === VARIANT)!.variantOf = target
+    loaded.variations[0]!.alternatives.reverse()
+    const wire = compileReport(loaded, '2026-09-27')
+    expect(wire.model.variations[0]!.alternatives.map(item => item.resourceId)).toEqual([PERSONAL, SOURCE])
+  })
+
+  const rejections: Array<[string, (set: VariationSet) => void, string]> = [
+    ['one alternative', set => { set.alternatives = set.alternatives.slice(0, 1) }, 'at least two alternatives'],
+    ['a missing alternative', set => { set.alternatives[1]!.id = 'reader-mobile::missing' }, 'references missing experience'],
+    ['a repeated alternative', set => { set.alternatives[1]!.id = set.alternatives[0]!.id }, 'is listed twice'],
+    ['an unknown subtype', set => { set.kind = 'rollout' }, 'kind must be'],
+    ['an unknown member type', set => { set.of = 'domain' }, 'of must be'],
+    ['a field outside the subtype', set => { set.discriminator = LIBRARY_FACT }, 'does not belong on a configuration Variation'],
+    ['a label outside a version', set => { set.alternatives[0]!.label = 'v1' }, 'label belongs only on a version Variation'],
+    ['a missing setting Entity', set => { set.settings = [{ entity: 'missing', fact: 'Library assignment' }] }, 'missing Entity'],
+    ['a missing setting fact', set => { set.settings = [{ entity: 'reader', fact: 'Missing fact' }] }, 'missing fact'],
+    ['a repeated fact', set => { set.settings = [LIBRARY_FACT, LIBRARY_FACT] }, 'repeats fact'],
+    ['empty timing', set => { set.takesEffect = '  ' }, 'takesEffect'],
+    ['empty selection', set => { set.alternatives[0]!.selectedWhen = '' }, 'selectedWhen']
+  ]
+  it.each(rejections)('rejects %s in the folder and on the wire', (_name, mutate, message) => {
+    const loaded = model()
+    mutate(loaded.variations[0]!)
     expect(lintModel(loaded, []).errors.join('\n')).toContain(message)
     const wire = report()
-    wire.model.experiences.find(e => e.id === VARIANT)!.variantOfId = target
-    if (ProductReportV15Schema.safeParse(wire).success) expect(validateProductReport(wire).join('\n')).toContain(message)
-    else expect(validateProductReport(wire).length).toBeGreaterThan(0)
+    const record = wire.model.variations[0]!
+    const set = { ...record, alternatives: record.alternatives.map(item => ({ id: item.resourceId, selectedWhen: item.selectedWhen, label: item.label })) }
+    mutate(set)
+    Object.assign(record, { ...set, alternatives: set.alternatives.map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })) })
+    const parsed = ProductReportV16Schema.safeParse(wire)
+    if (parsed.success) expect(validateProductReport(wire).join('\n')).toContain(message)
+    else expect(parsed.success).toBe(false)
   })
 
-  it.each([
-    ['missing subtype', 'anchor', { variationKind: null }, 'anchor needs variationKind'],
-    ['unknown subtype', 'anchor', { variationKind: 'rollout' }, 'variationKind must be'],
-    ['prototype subtype', 'anchor', { variationKind: 'constructor' }, 'variationKind must be'],
-    ['repeated subtype', 'peer', { variationKind: 'configuration' }, 'belongs only on the anchor'],
-    ['conflicting subtype', 'peer', { variationKind: 'version' }, 'belongs only on the anchor'],
-    ['missing applicability', 'anchor', { variationUsage: null }, 'needs variationUsage'],
-    ['empty applicability', 'peer', { variationUsage: { selectedWhen: '  ', takesEffect: '', stability: '' } }, 'variationUsage.selectedWhen']
-  ] as const)('rejects %s', (_name, member, fields, message) => {
-    const loaded = model(), id = member === 'anchor' ? ANCHOR : VARIANT
-    Object.assign(loaded.experiences.find(e => e.id === id)!, fields)
-    expect(lintModel(loaded, []).errors.join('\n')).toContain(message)
-    const wire = report()
-    Object.assign(wire.model.experiences.find(e => e.id === id)!, fields)
-    expect(validateProductReport(wire).length).toBeGreaterThan(0)
+  it('requires experiment assignment and version labels, unique ignoring case', () => {
+    const experiment = model()
+    withSet(experiment, 'experiment', 'journey', experiment.journeys.slice(0, 2).map(item => item.id))
+    const set = experiment.variations.find(item => item.id === 'chosen-form')!
+    set.assignmentUnit = null
+    set.assignmentMethod = null
+    const errors = lintModel(experiment, []).errors.join('\n')
+    expect(errors).toContain('needs assignmentUnit')
+    expect(errors).toContain('needs assignmentMethod')
+    const version = model()
+    withSet(version, 'version', 'capability', version.capabilities.slice(0, 2).map(item => item.id))
+    const versions = version.variations.find(item => item.id === 'chosen-form')!
+    versions.alternatives[1]!.label = 'V1'
+    expect(lintModel(version, []).errors.join('\n')).toContain('must be unique')
+    versions.alternatives[1]!.label = null
+    expect(lintModel(version, []).errors.join('\n')).toContain('needs a label')
   })
 
-  it('rejects chains, cycles and orphan metadata', () => {
+  it('lets a resource join at most one Variation', () => {
     const loaded = model()
-    loaded.experiences.push({ ...loaded.experiences.find(e => e.id === VARIANT)!, id: 'reader-mobile::third', variantOf: VARIANT })
-    expect(lintModel(loaded, []).errors.join('\n')).toContain('chain or cycle')
+    loaded.variations.push({ ...loaded.variations[0]!, id: 'second-layout' })
+    expect(lintModel(loaded, []).errors.join('\n')).toContain('already belongs to Variation "library-layout"')
     const wire = report()
-    wire.model.experiences.find(e => e.id === ANCHOR)!.variantOfId = VARIANT
-    expect(validateProductReport(wire).join('\n')).toContain('chain or cycle')
-    const orphan = report()
-    orphan.model.experiences.find(e => e.id === VARIANT)!.variantOfId = null
-    expect(validateProductReport(orphan).join('\n')).toContain('incoming variantOf link')
-    expect(validateProductReport(orphan).join('\n')).toContain('only allowed on a member')
+    wire.model.variations.push({ ...wire.model.variations[0]!, id: 'second-layout' })
+    wire.counts.variations = 2
+    expect(validateProductReport(wire).join('\n')).toContain('already belongs to Variation')
   })
 
-  it('requires all three nullable fields on the wire and rejects unsupported types/hidden applicability', () => {
-    for (const field of ['variantOfId', 'variationKind', 'variationUsage'] as const) {
-      const wire = report()
-      delete (wire.model.entities[0]! as Partial<typeof wire.model.entities[number]>)[field]
-      expect(ProductReportV15Schema.safeParse(wire).success).toBe(false)
-    }
-    for (const collection of ['domains', 'capabilityScenarios', 'journeyScenarios'] as const) {
-      const wire = report()
-      Object.assign(wire.model[collection][0]!, { variationKind: 'version' })
-      expect(ProductReportV15Schema.safeParse(wire).success).toBe(false)
-    }
-    for (const collection of ['domains', 'capabilityScenarios', 'entities', 'businessRules'] as const) {
-      const wire = report()
-      wire.model[collection][0]!.supportingSections.push({ heading: 'When used', content: 'Always.' })
-      expect(validateProductReport(wire).join('\n')).toContain('conflicts with a structured section')
-    }
-    const removed = report()
-    Object.assign(removed.model.experiences[0]!, { whenUsed: 'Old prose.' })
-    expect(ProductReportV15Schema.safeParse(removed).success).toBe(false)
+  it('carries no Variation fields on member records', () => {
     const wire = report()
-    Object.assign(wire, { variationKind: 'version' })
-    expect(ProductReportV15Schema.safeParse(wire).success).toBe(false)
+    for (const field of ['variantOfId', 'variationKind', 'variationUsage']) {
+      const next = structuredClone(wire)
+      Object.assign(next.model.experiences[0]!, { [field]: null })
+      expect(ProductReportV16Schema.safeParse(next).success).toBe(false)
+    }
   })
 
-  it('rejects removed When used sections and variation fields on unsupported authored types', () => {
+  it('rejects member-side Variation keys and the reserved When used heading in the folder', () => {
     const target = temporary()
     expandProductReport(target, report(), false)
     const loaded = loadModel(target)
-    const anchor = loaded.experiences.find(e => e.id === ANCHOR)!
-    writeFileSync(anchor.file, readFileSync(anchor.file, 'utf8') + '\n## When used\n\nAnother condition.\n')
-    expect(lintModel(loadModel(target), []).errors.join('\n')).toContain('"## When used" is not allowed')
-    const domain = loaded.domains[0]!
-    writeFileSync(domain.file, readFileSync(domain.file, 'utf8').replace('---', '---\nvariationKind: configuration') + '\n## When used\n\nAlways.\n')
-    const invalid = lintModel(loadModel(target), []).errors.join('\n')
-    expect(invalid).toContain('variationKind')
-    expect(invalid).toContain('"## When used" is not allowed')
+    const experience = loaded.experiences.find(item => item.id === PERSONAL)!
+    writeFileSync(experience.file, readFileSync(experience.file, 'utf8').replace('---', '---\nvariantOf: reader-mobile::source-focused-library') + '\n## When used\n\nAlways.\n')
+    const errors = lintModel(loadModel(target), []).errors.join('\n')
+    expect(errors).toContain('variantOf')
+    expect(errors).toContain('"## When used" is not allowed')
   })
 
-
-  it.each([
-    ['missing setting Entity', 'configuration', { settings: [{ entity: 'missing', fact: 'Library assignment' }] }, 'missing Entity'],
-    ['missing setting fact', 'configuration', { settings: [{ entity: 'reader', fact: 'Missing fact' }] }, 'missing fact'],
-    ['duplicate settings', 'configuration', { settings: [{ entity: 'reader', fact: 'Library assignment' }, { entity: 'reader', fact: 'Library assignment' }] }, 'repeats fact'],
-    ['wrong subtype fields', 'configuration', { label: 'v2' }, 'variationUsage'],
-    ['missing assignment Entity', 'experiment', { assignmentUnit: { entity: 'missing' } }, 'missing Entity'],
-    ['missing assignment fact', 'experiment', { assignmentFact: { entity: 'reader', fact: 'Missing fact' } }, 'missing fact'],
-    ['missing version discriminator', 'version', { discriminator: { entity: 'missing', fact: 'Version' } }, 'missing Entity'],
-    ['duplicate version labels', 'version', { label: 'STANDARD' }, 'must be unique']
-  ])('rejects %s in authored models and reports', (_name, kind, fields, message) => {
-    const loaded = model()
-    const a = loaded.experiences.find(item => item.id === ANCHOR)!, b = loaded.experiences.find(item => item.id === VARIANT)!
-    setVariation(a, { variationKind: kind, variationUsage: usageFor(kind, 'Standard') })
-    setVariation(b, { variationUsage: { ...usageFor(kind, 'Guided'), ...fields } as VariationUsage })
-    expect(lintModel(loaded, []).errors.join('\n')).toContain(message)
-    const wire = report()
-    wire.model.experiences.find(item => item.id === ANCHOR)!.variationKind = kind as 'configuration' | 'experiment' | 'version'
-    wire.model.experiences.find(item => item.id === ANCHOR)!.variationUsage = a.variationUsage
-    wire.model.experiences.find(item => item.id === VARIANT)!.variationUsage = b.variationUsage
-    expect(validateProductReport(wire).join('\n')).toContain(message)
-  })
-
-  it('supports unmodeled assignment units and selection without invented facts', () => {
-    for (const kind of ['experiment', 'configuration', 'version']) {
-      const loaded = model()
-      const a = loaded.experiences.find(item => item.id === ANCHOR)!, b = loaded.experiences.find(item => item.id === VARIANT)!
-      const base = { selectedWhen: 'Eligible requests.', takesEffect: 'On each request.', stability: 'For that request only.' }
-      const usage = kind === 'experiment' ? { ...base, assignmentUnit: { description: 'A browser session.' }, assignmentMethod: 'Assigned randomly.' }
-        : kind === 'version' ? { ...base, label: 'v1' } : base
-      setVariation(a, { variationKind: kind, variationUsage: usage })
-      setVariation(b, { variationUsage: kind === 'version' ? { ...base, label: 'v2' } : usage })
-      expect(lintModel(loaded, []).errors).toEqual([])
-      const wire = compileReport(loaded, '2026-09-27')
-      expect(validateProductReport(wire)).toEqual([])
-      const target = temporary()
-      expandProductReport(target, wire, false)
-      expect(loadModel(target).experiences.find(item => item.id === ANCHOR)!.variationUsage).toEqual(usage)
-    }
-  })
-
-  it('rejects malformed authored usage rather than retaining it as prose', () => {
+  it('reports malformed Variation frontmatter as findings', () => {
     const target = temporary()
     expandProductReport(target, report(), false)
-    const file = loadModel(target).experiences.find(item => item.id === ANCHOR)!.file
-    const original = readFileSync(file, 'utf8')
-    writeFileSync(file, original.replace('variationUsage:', 'variationUsage: false\nunusedUsage:'))
-    expect(lintModel(loadModel(target), []).errors.join('\n')).toContain('invalid variationUsage')
+    const file = loadModel(target).variations[0]!.file
+    writeFileSync(file, readFileSync(file, 'utf8').replace(/^---\n[\s\S]*?\n---\n/, [
+      '---', 'kind: configuration', 'of: experience', 'settings: []', 'takesEffect: Now.', 'stability: Always.', 'alternatives: nope', '---', ''
+    ].join('\n')))
+    const errors = lintModel(loadModel(target), []).errors.join('\n')
+    expect(errors).toContain('"alternatives" must be a list')
+    expect(errors).toContain('settings must be a non-empty list')
   })
 
-  it('counts an Entity used only as a selection fact source as meaningful use', () => {
+  it('justifies Experiences through membership alone', () => {
+    const loaded = model()
+    // Break the reader-web counterpart so membership is the only justification left.
+    for (const experience of loaded.experiences.filter(item => item.interface === 'reader-web')) experience.id += '-web'
+    const justification = 'none is a counterpart or Variation'
+    expect(lintModel(loaded, []).errors.join('\n')).not.toContain(justification)
+    loaded.variations = []
+    expect(lintModel(loaded, []).errors.join('\n')).toContain(justification)
+  })
+
+  it('counts an Entity used only for selection as meaningful use', () => {
     const loaded = model()
     const template = loaded.entities.find(item => item.id === 'reader')!
     loaded.entities.push({ ...template, id: 'selection-settings', file: 'selection-settings.md', acts: undefined, kind: undefined, relations: [], states: [] })
-    loaded.experiences.find(item => item.id === ANCHOR)!.variationUsage = {
-      ...usageFor('configuration'), settings: [{ entity: 'selection-settings', fact: 'Library assignment' }]
-    }
+    loaded.variations[0]!.settings = [{ entity: 'selection-settings', fact: 'Library assignment' }]
     expect(lintModel(loaded, []).errors).toEqual([])
     expect(validateProductReport(compileReport(loaded, '2026-09-27'))).toEqual([])
+    loaded.variations[0]!.settings = [LIBRARY_FACT]
+    expect(lintModel(loaded, []).errors.join('\n')).toContain('selection-settings.md: no Step changes it')
   })
 
-  it('exposes typed selection references in both directions even when the Entity is also an Actor', () => {
-    const workspace = projectReportWorkspace(report())
-    const experience = workspace.byKey.get(`experience:${ANCHOR}`)
-    expect(resourceConnectionRows(workspace, experience).some((row: any) => row.label === 'variation setting: Library assignment' && row.ids.includes('reader'))).toBe(true)
-    expect(resourceConnectionRows(workspace, workspace.byKey.get('entity:reader')).some((row: any) => row.label === 'variation setting: Library assignment' && row.ids.includes(ANCHOR))).toBe(true)
-  })
-
-  it('keeps containment counts independent of variation peers', () => {
-    const workspace = projectReportWorkspace(report())
-    const iface = workspace.interfaces.find((item: any) => item.id === 'reader-mobile')
-    const group = structureChildren(workspace, iface).find((node: any) => node.groupKind === 'experience')
-    expect(group.children.map((node: any) => node.resource.id)).toEqual([ANCHOR, VARIANT])
-    for (const node of group.children) {
-      expect(node.children.some((child: any) => child.resource?.kind === 'experience')).toBe(false)
-      expect(insideSummary(node).some((count: any) => count.kind === 'experience')).toBe(false)
-    }
-  })
-
-  it('does not enforce or draw conditional permission alternatives as unconditional prohibitions', () => {
+  it('never treats a Rule alternative as an unconditional prohibition', () => {
     const loaded = model(), base = loaded.businessRules[0]!
     loaded.businessRules.push({ ...base, id: 'conditional-denial', file: 'conditional-denial.md',
-      appliesTo: [{ type: 'entity', id: 'source', effect: 'reads', facts: [], contexts: [] }], permits: [],
-      variantOf: null, variationKind: 'configuration', variationUsage: usageFor('configuration', 'When the account is suspended.')
+      appliesTo: [{ type: 'entity', id: 'source', effect: 'reads', facts: [], contexts: [] }], permits: []
     }, { ...base, id: 'conditional-access', file: 'conditional-access.md',
       appliesTo: [{ type: 'entity', id: 'source', effect: 'reads', facts: [], contexts: [] }],
-      permits: [{ actors: ['reader'], related: [], when: [], unattended: true }],
-      variantOf: 'conditional-denial', variationKind: null, variationUsage: usageFor('configuration', 'When the account is active.')
+      permits: [{ actors: ['reader'], related: [], when: [], unattended: true }]
     })
+    withSet(loaded, 'configuration', 'business-rule', ['conditional-access', 'conditional-denial'])
     const result = lintModel(loaded, [])
     expect(result.errors).toEqual([])
-    expect(result.warnings.filter(item => item.includes('permission applicability'))).toHaveLength(2)
-    const wire = compileReport(loaded, '2026-09-26')
-    expect(validateProductReport(wire)).toEqual([])
-    const workspace = projectReportWorkspace(wire)
-    expect(workspace.entities.find((item: any) => item.id === 'source').prohibitions.some((item: any) => item.ruleId === 'conditional-denial')).toBe(false)
-    expect(workspace.rules.find((item: any) => item.id === 'conditional-denial').variation.usage.selectedWhen).toContain('suspended')
-    // Removing applicability restores ordinary unconditional prohibition checks.
-    for (const rule of loaded.businessRules.filter(item => item.id.startsWith('conditional-'))) setVariation(rule, { variantOf: null, variationKind: null, variationUsage: null })
+    expect(result.warnings.filter(item => item.includes('permission applicability is stated by Variation "chosen-form"'))).toHaveLength(2)
+    expect(validateProductReport(compileReport(loaded, '2026-09-27'))).toEqual([])
+    // Without the set, the same Rules are ordinary policy again and contradict the Steps.
+    loaded.variations = loaded.variations.filter(item => item.id !== 'chosen-form')
     expect(lintModel(loaded, []).errors.join('\n')).toContain('forbids')
-    expect(() => compileReport(loaded, '2026-09-26')).toThrow('forbids')
+    expect(() => compileReport(loaded, '2026-09-27')).toThrow('forbids')
+  })
+})
+
+const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
+const { projectReportWorkspace } = await utility('reportWorkspace')
+const { collapseVariations, variationAlternatives, variationPillLabel, variationChooser } = await utility('variations')
+const { resourceConnectionRows } = await utility('resourceConnections')
+const { tabsFor } = await utility('pageSections')
+const { structureChildren, insideSummary, treeCards } = await utility('collectionChildren')
+const { collectionGroups } = await utility('resourceFacets')
+const { attachedRules } = await utility('topologyTargets')
+const SHOP = join(__dirname, 'fixtures/fixture-shop')
+const shop = () => projectReportWorkspace(compileReport(loadModel(SHOP), '2026-09-27'))
+
+describe('Variations in the Product Report', () => {
+  it('projects each set as a resource and each alternative with its own selection', () => {
+    const workspace = shop()
+    expect(workspace.variations.map((item: any) => [item.id, item.variationKind, item.memberKind])).toEqual([
+      ['payment-webhook-contract', 'version', 'interface'],
+      ['product-page-layout', 'experiment', 'screen'],
+      ['refund-review', 'configuration', 'rule']
+    ])
+    expect(workspace.counts.variations).toBe(3)
+    const strict = workspace.byKey.get('rule:refund-review-strict')
+    expect(strict.variation).toEqual({ key: 'variation:refund-review', id: 'refund-review', title: 'Refund review', kind: 'configuration', selectedWhen: 'Refund review mode is Strict.', label: null })
+    const set = workspace.byKey.get('variation:refund-review')
+    expect(variationAlternatives(workspace, set).map((item: any) => item.id)).toEqual(['refund-review-standard', 'refund-review-strict'])
+    expect(variationPillLabel(workspace, set)).toBe('Configuration · 2 alternatives')
+    expect(variationPillLabel(workspace, strict)).toBe('Refund review')
+    expect(variationPillLabel(workspace, workspace.byKey.get('interface:payment-webhook-v2'))).toBe('Payment webhook contract · v2')
+    expect(variationChooser(workspace, set)).toEqual({ label: 'Chosen by', text: 'Store settings · Refund review mode' })
+    expect(variationChooser(workspace, workspace.byKey.get('variation:product-page-layout'))?.label).toBe('Assigned per')
+  })
+
+  it('reads a set as Overview, Alternatives and Connections, and an alternative with how it is chosen', () => {
+    const workspace = shop()
+    const set = workspace.byKey.get('variation:refund-review')
+    const tabs = tabsFor(workspace, set)
+    expect(tabs.map((tab: any) => tab.id)).toEqual(['overview', 'alternatives', 'connections'])
+    expect(tabs[0].blocks).toContain('selection')
+    expect(tabs[1]).toMatchObject({ label: 'Alternatives', count: 2, blocks: ['alternatives'] })
+    const strictTabs = tabsFor(workspace, workspace.byKey.get('rule:refund-review-strict'))
+    expect(strictTabs[0].blocks).toContain('variation-choice')
+    expect(strictTabs.map((tab: any) => tab.id)).not.toContain('variations')
+    expect(tabsFor(workspace, workspace.byKey.get('rule:margin-is-for-operators'))[0].blocks).not.toContain('variation-choice')
+  })
+
+  it('connects a set to its alternatives and to what it chooses by, never alternatives to each other', () => {
+    const workspace = shop()
+    const setRows = resourceConnectionRows(workspace, workspace.byKey.get('variation:refund-review'))
+    expect(setRows.find((row: any) => row.label === 'Alternatives')).toMatchObject({ kind: 'rule', ids: ['refund-review-standard', 'refund-review-strict'] })
+    expect(setRows.some((row: any) => row.label === 'chooses by setting: Refund review mode' && row.ids.includes('store-settings'))).toBe(true)
+    const memberRows = resourceConnectionRows(workspace, workspace.byKey.get('rule:refund-review-strict'))
+    expect(memberRows.some((row: any) => row.label === 'alternative in' && row.ids.includes('refund-review'))).toBe(true)
+    expect(memberRows.some((row: any) => row.ids.includes('refund-review-standard'))).toBe(false)
+  })
+
+  it('collapses alternatives that meet in a list into one set row, and keeps a lone one', () => {
+    const workspace = shop()
+    const rules = workspace.rules
+    const rows = collapseVariations(workspace, rules)
+    expect(rows.filter((item: any) => item.kind === 'variation').map((item: any) => item.id)).toEqual(['refund-review'])
+    expect(rows.some((item: any) => item.id === 'refund-review-strict')).toBe(false)
+    expect(rows).toHaveLength(rules.length - 1)
+    const lone = collapseVariations(workspace, rules.filter((item: any) => item.id !== 'refund-review-standard'))
+    expect(lone.some((item: any) => item.id === 'refund-review-strict')).toBe(true)
+    // Tabs collapse too: Refund names both refund review alternatives.
+    const attached = attachedRules(workspace, workspace.byKey.get('entity:refund')).map((item: any) => item.rule)
+    expect(collapseVariations(workspace, attached).filter((item: any) => item.kind === 'variation')).toHaveLength(1)
+  })
+
+  it('groups the Variations collection by the type each set varies', () => {
+    const workspace = shop()
+    const groups = collectionGroups(workspace, 'variation', workspace.variations)
+    expect(groups.map((group: any) => [group.kind, group.title, group.resources.map((item: any) => item.id)])).toEqual([
+      ['interface', 'Interfaces', ['payment-webhook-contract']],
+      ['screen', 'Screens', ['product-page-layout']],
+      ['rule', 'Business Rules', ['refund-review']]
+    ])
+  })
+
+  it('folds sibling alternatives under one tree node while counts stay concrete', () => {
+    const workspace = shop()
+    const web = treeCards(workspace, 'interface', workspace.interfaces, false).find((card: any) => card.key === 'interface:customer-web')
+    const storefront = web.children[0].children.find((node: any) => node.resource?.id === 'customer-web::storefront')
+    const screens = storefront.children.find((node: any) => node.groupKind === 'screen')
+    expect(screens.count).toBe(6)
+    const set = screens.children.find((node: any) => node.resource?.kind === 'variation')
+    expect(set.resource.id).toBe('product-page-layout')
+    expect(set.children.map((node: any) => node.resource.id)).toHaveLength(5)
+    expect(set.children.every((node: any) => node.inSet)).toBe(true)
+    // Each alternative keeps its own children; the set is not counted as something inside.
+    expect(set.children.some((node: any) => node.children.length > 0)).toBe(true)
+    expect(insideSummary(screens).some((entry: any) => entry.kind === 'variation')).toBe(false)
+    expect(structureChildren(workspace, workspace.byKey.get('experience:customer-web::storefront'))).toBeTruthy()
+  })
+
+  it('never draws a Rule alternative as an unconditional prohibition', () => {
+    const loaded = model(), base = loaded.businessRules[0]!
+    loaded.businessRules.push({ ...base, id: 'conditional-denial', file: 'conditional-denial.md',
+      appliesTo: [{ type: 'entity', id: 'source', effect: 'reads', facts: [], contexts: [] }], permits: []
+    }, { ...base, id: 'conditional-access', file: 'conditional-access.md',
+      appliesTo: [{ type: 'entity', id: 'source', effect: 'reads', facts: [], contexts: [] }],
+      permits: [{ actors: ['reader'], related: [], when: [], unattended: true }]
+    })
+    withSet(loaded, 'configuration', 'business-rule', ['conditional-access', 'conditional-denial'])
+    const workspace = projectReportWorkspace(compileReport(loaded, '2026-09-27'))
+    const source = workspace.entities.find((item: any) => item.id === 'source')
+    expect(source.prohibitions.some((item: any) => item.ruleId === 'conditional-denial')).toBe(false)
+    expect(source.arcs.some((arc: any) => arc.forbiddenByRuleIds.includes('conditional-denial'))).toBe(false)
   })
 })

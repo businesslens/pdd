@@ -30,4 +30,4 @@ sees.
 - **Entry points** — its own addresses
 - **Navigation** — the Screens reachable from every place inside it
 
-- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

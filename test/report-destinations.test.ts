@@ -15,7 +15,7 @@ const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname,
 
 describe('report destinations', () => {
   it('gives every drawing one collection home, with matrices owned by their row subject', () => {
-    expect(MAIN_RESOURCE_KINDS).toEqual(['entity', 'interface', 'domain', 'capability', 'journey', 'rule'])
+    expect(MAIN_RESOURCE_KINDS).toEqual(['entity', 'interface', 'domain', 'capability', 'journey', 'rule', 'variation'])
     const homes = new Set<string>(MAIN_RESOURCE_KINDS)
     const matrices = REPORT_DESTINATIONS.filter((item: any) => item.mode === 'matrix')
     expect(matrices.map((item: any) => [item.rail, item.view])).toEqual([
@@ -28,7 +28,8 @@ describe('report destinations', () => {
     }
     for (const rail of homes) {
       const modes = REPORT_DESTINATIONS.filter((item: any) => item.rail === rail).map((item: any) => item.mode)
-      expect(modes, rail).toEqual(['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
+      // Variations are rows only: a set has no derivation of its own to draw.
+      expect(modes, rail).toEqual(rail === 'variation' ? [] : ['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
     }
   })
 

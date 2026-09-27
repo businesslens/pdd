@@ -1,4 +1,7 @@
-import { VariationUsageSchema, variationIssues, variationEntityReferences, VARIATION_COLLECTIONS, VARIATION_KINDS } from './variations.js'
+import {
+  AssignmentUnitSchema, VariationFactSchema, variationIssues, variationEntityReferences, variationMembership,
+  VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, type VariationCollection, type VariationSet
+} from './variations.js'
 import * as z from 'zod'
 import { undeclaredEntityMentions } from './entity-mentions.js'
 import { parseCodeTarget } from './coderefs.js'
@@ -8,7 +11,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '15.0.0'
+export const REPORT_SCHEMA_VERSION = '16.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -76,12 +79,6 @@ export const ReportSupportingSectionSchema = z.strictObject({
   content: MarkdownFragmentSchema
 })
 
-const VariationContentSchema = {
-  variantOfId: QualifiedIdSchema.nullable(),
-  variationKind: z.enum(VARIATION_KINDS).nullable(),
-  variationUsage: VariationUsageSchema.nullable()
-}
-
 const ResourceContentSchema = {
   intent: MarkdownFragmentSchema,
   supportingSections: z.array(ReportSupportingSectionSchema),
@@ -105,7 +102,8 @@ const ReportResourceCountShape = {
   capabilityScenarios: z.number().int().min(0),
   journeys: z.number().int().min(0),
   journeyScenarios: z.number().int().min(0),
-  businessRules: z.number().int().min(0)
+  businessRules: z.number().int().min(0),
+  variations: z.number().int().min(0)
 }
 
 export const ReportCountsSchema = z.strictObject(ReportResourceCountShape)
@@ -133,7 +131,6 @@ export const ReportContextSchema = z.strictObject({
 export const LanguageTagSchema = z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/)
 
 export const ReportInterfaceSchema = z.strictObject({
-  ...VariationContentSchema,
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -152,7 +149,6 @@ export const ReportInterfaceSchema = z.strictObject({
 })
 
 export const ReportExperienceSchema = z.strictObject({
-  ...VariationContentSchema,
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -214,7 +210,6 @@ export const ReportEntityRelationSchema = z.strictObject({
  * two are never merged.
  */
 export const ReportEntitySchema = z.strictObject({
-  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -231,7 +226,6 @@ export const ReportEntitySchema = z.strictObject({
 })
 
 export const ReportCapabilitySchema = z.strictObject({
-  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -256,7 +250,6 @@ export const ReportScreenEntitySchema = z.strictObject({
  * entered. Its id carries its whole placement, and a parent may be a Screen.
  */
 export const ReportScreenSchema = z.strictObject({
-  ...VariationContentSchema,
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
@@ -269,7 +262,6 @@ export const ReportScreenSchema = z.strictObject({
 })
 
 export const ReportJourneySchema = z.strictObject({
-  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   goal: RequiredMarkdownFragmentSchema,
@@ -424,7 +416,6 @@ export const ReportGrantSchema = z.strictObject({
 })
 
 export const ReportBusinessRuleSchema = z.strictObject({
-  ...VariationContentSchema,
   id: IdSchema,
   title: SingleLineTextSchema,
   statement: RequiredMarkdownFragmentSchema,
@@ -435,10 +426,42 @@ export const ReportBusinessRuleSchema = z.strictObject({
   ...ResourceContentSchema
 })
 
+/** One alternative: a same-type resource and the condition that selects it. */
+export const ReportVariationAlternativeSchema = z.strictObject({
+  resourceId: QualifiedIdSchema,
+  selectedWhen: RequiredMarkdownFragmentSchema,
+  /** A Version's label; null on every other subtype. */
+  label: SingleLineTextSchema.nullable()
+})
+
+/**
+ * A named set of supported alternatives. Selection is written once: the
+ * mechanism, `takesEffect` and `stability` describe the set, `selectedWhen` and
+ * a Version's `label` describe one alternative. Fields outside the subtype are
+ * null or empty.
+ */
+export const ReportVariationSchema = z.strictObject({
+  id: IdSchema,
+  title: SingleLineTextSchema,
+  description: RequiredMarkdownFragmentSchema,
+  kind: z.enum(VARIATION_KINDS),
+  of: z.enum(VARIATION_MEMBER_TYPES),
+  takesEffect: RequiredMarkdownFragmentSchema,
+  stability: RequiredMarkdownFragmentSchema,
+  assignmentUnit: AssignmentUnitSchema.nullable(),
+  assignmentMethod: RequiredMarkdownFragmentSchema.nullable(),
+  assignmentFact: VariationFactSchema.nullable(),
+  allocation: RequiredMarkdownFragmentSchema.nullable(),
+  settings: z.array(VariationFactSchema),
+  discriminator: VariationFactSchema.nullable(),
+  alternatives: z.array(ReportVariationAlternativeSchema).min(2),
+  ...ResourceContentSchema
+})
+
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV15Schema = z.strictObject({
+export const ProductReportV16Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -471,15 +494,16 @@ export const ProductReportV15Schema = z.strictObject({
     capabilityScenarios: z.array(ReportCapabilityScenarioSchema),
     journeys: z.array(ReportJourneySchema),
     journeyScenarios: z.array(ReportJourneyScenarioSchema),
-    businessRules: z.array(ReportBusinessRuleSchema)
+    businessRules: z.array(ReportBusinessRuleSchema),
+    variations: z.array(ReportVariationSchema)
   }),
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV15Schema
+export const ProductReportSchema = ProductReportV16Schema
 
-export type ProductReportV15 = z.infer<typeof ProductReportV15Schema>
-export type ProductReport = ProductReportV15
+export type ProductReportV16 = z.infer<typeof ProductReportV16Schema>
+export type ProductReport = ProductReportV16
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -506,11 +530,13 @@ export type ReportGrantCondition = z.infer<typeof ReportGrantConditionSchema>
 export type ReportJourneyScenario = z.infer<typeof ReportJourneyScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSchema>
+export type ReportVariation = z.infer<typeof ReportVariationSchema>
+export type ReportVariationAlternative = z.infer<typeof ReportVariationAlternativeSchema>
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV15['model']
+export type ReportModel = ProductReportV16['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -519,7 +545,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV15Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV16Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -540,8 +566,29 @@ export function reportResourceCollections(model: ReportModel): Record<ReportColl
     capabilityScenarios: model.capabilityScenarios,
     journeys: model.journeys,
     journeyScenarios: model.journeyScenarios,
-    businessRules: model.businessRules
+    businessRules: model.businessRules,
+    variations: model.variations
   }
+}
+
+/** The wire record in the shape the shared Variation rules read. */
+export function reportVariationSet(variation: ReportVariation): VariationSet {
+  return {
+    ...variation,
+    alternatives: variation.alternatives.map(item => ({ id: item.resourceId, selectedWhen: item.selectedWhen, label: item.label }))
+  }
+}
+
+/** Member key (`<collection>:<id>`) → Variation id, for "is this one of a set?". */
+export function reportVariationMembership(model: Pick<ReportModel, 'variations'>): Map<string, string> {
+  return variationMembership(model.variations.map(reportVariationSet))
+}
+
+export function reportVariationIssues(model: ReportModel): string[] {
+  const members = Object.fromEntries(Object.values(VARIATION_COLLECTION_OF)
+    .map(collection => [collection, new Set(model[collection].map(item => item.id))])) as Record<VariationCollection, Set<string>>
+  return variationIssues(model.variations.map(reportVariationSet), { members, entities: model.entities })
+    .map(issue => `variation "${issue.id}": ${issue.message}`)
 }
 
 function duplicateIssues(label: string, ids: string[]): string[] {
@@ -640,9 +687,11 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV15): string[] {
+export function validateProductReport(report: ProductReportV16): string[] {
   const issues: string[] = []
   const { model } = report
+  /* A Rule in a Variation applies only under its set's conditions, never unconditionally. */
+  const conditionalRules = reportVariationMembership(model)
   /* An Actor is an Entity that acts. Every actor reference resolves here. */
   const actorIds = new Set(model.entities.filter(item => item.acts !== null).map(item => item.id))
   const requireActing = (label: string, ids: string[]) => {
@@ -679,9 +728,9 @@ export function validateProductReport(report: ProductReportV15): string[] {
   requireUniqueValues(issues, 'product', 'tags', report.tags)
   requireUniqueValues(issues, 'product', 'languages', report.languages)
   const productLanguages = new Set(report.languages)
-  for (const collection of VARIATION_COLLECTIONS) {
-    const resources = model[collection].map(item => ({ ...item, variantOf: item.variantOfId }))
-    for (const issue of variationIssues(resources, model.entities)) issues.push(`${collection} "${issue.id}": ${issue.message}`)
+  issues.push(...reportVariationIssues(model))
+  for (const variation of model.variations) {
+    validateSupportingSections(issues, `variation "${variation.id}"`, variation.supportingSections, ['Intent'])
   }
   validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
 
@@ -1311,8 +1360,7 @@ export function validateProductReport(report: ProductReportV15): string[] {
       ...(grant.related.length ? [grant.related[grant.related.length - 1]!.entityId] : [])
     ]))
   ])
-  const citedByVariation = new Set(VARIATION_COLLECTIONS.flatMap(collection =>
-    model[collection].flatMap(resource => variationEntityReferences(resource.variationUsage))))
+  const citedByVariation = new Set(model.variations.flatMap(variation => variationEntityReferences(variation)))
   const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
     ...(grant.configuredByEntityId ? [grant.configuredByEntityId] : []),
     ...grant.when.flatMap(condition => [
@@ -1362,7 +1410,7 @@ export function validateProductReport(report: ProductReportV15): string[] {
     // so does a Rule reading a settings Entity.
     if (!entityChanged.has(entity.id) && !entityPresentedOn.has(entity.id)
       && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id) && !citedByVariation.has(entity.id)) {
-      issues.push(`${label}: no step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation usage references it`)
+      issues.push(`${label}: no step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation chooses by it`)
     }
   }
 
@@ -1608,7 +1656,7 @@ export function validateProductReport(report: ProductReportV15): string[] {
      accepting a report cannot defer a contradiction until expansion. */
   issues.push(...validatePermissionBehavior({
     rules: model.businessRules
-      .filter(rule => rule.variationUsage === null && rule.permits !== null
+      .filter(rule => !conditionalRules.has(`businessRules:${rule.id}`) && rule.permits !== null
         && rule.appliesTo.length > 0
         && rule.appliesTo.every(target => target.type === 'entity'))
       .map(rule => ({
@@ -1676,7 +1724,8 @@ export function validateProductReport(report: ProductReportV15): string[] {
     capabilityScenarios: model.capabilityScenarios.length,
     journeys: model.journeys.length,
     journeyScenarios: model.journeyScenarios.length,
-    businessRules: model.businessRules.length
+    businessRules: model.businessRules.length,
+    variations: model.variations.length
   }
   const referenceHosts: Array<{ id: string, references: ReportReference[] }> = [
     { id: 'product', references: report.references },
@@ -1750,7 +1799,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV15): ProductReportV15 {
+export function projectPortableReport(report: ProductReportV16): ProductReportV16 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1786,7 +1835,8 @@ export function projectPortableReport(report: ProductReportV15): ProductReportV1
       capabilityScenarios: strip(report.model.capabilityScenarios),
       journeys: strip(report.model.journeys),
       journeyScenarios: strip(report.model.journeyScenarios),
-      businessRules: strip(report.model.businessRules)
+      businessRules: strip(report.model.businessRules),
+      variations: strip(report.model.variations)
     },
     coverage: {
       ...report.coverage,
@@ -1798,8 +1848,8 @@ export function projectPortableReport(report: ProductReportV15): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV15 {
-  const parsed = ProductReportV15Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV16 {
+  const parsed = ProductReportV16Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1825,7 +1875,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV15): string[] {
+export function validateBlueprintReport(report: ProductReportV16): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

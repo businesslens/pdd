@@ -30,4 +30,4 @@ what it changes is what its Steps say.
 - **Availability** — where it is available, as Contexts
 - **Domain** — its subject Domain, when it has one
 
-- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

@@ -12,6 +12,7 @@ entities:
   - { entity: journey, shows: [Goal, Actors, Variation] }
   - { entity: journey-scenario, shows: [Result, Classification] }
   - { entity: business-rule, shows: [Assertion, Reach, Variation] }
+  - { entity: variation, shows: [Choice, Subtype, Member type, Alternatives, Selection] }
 entryPoints:
   - local-report-web: /?s=capability
 references:
@@ -25,7 +26,7 @@ references:
 
 # Resource collection
 
-One of the six main resource collections, named with its type mark, its
+One of the seven main resource collections, named with its type mark, its
 definition and how many resources it holds. Every resource of the collection is
 one row, grouped by its authored Domain wherever the type carries one, with the
 things that act leading the Entity collection because a reader arrives asking
@@ -39,4 +40,9 @@ collection one axis at a time and clears one value or all of them, hides a kind
 or focuses one resource and its neighbourhood, expands or collapses a group,
 reads the documentation for the resource type, and searches the whole model by
 name. Scenarios are read from the Capability or Journey that owns them rather
-than listed here. An empty collection offers no control for narrowing it.
+than listed here. Alternatives of one Variation that meet in a list read as one
+row for their set, which never expands: the row opens the set, and its pill
+opens a switcher that picks one alternative. A lone alternative keeps its own
+row with its set named on its title. The Variations collection lists every set
+grouped by the type it varies, each row wearing that type's mark with a
+Variation sub-icon and saying what chooses between its alternatives. An empty collection offers no control for narrowing it.

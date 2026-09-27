@@ -88,7 +88,8 @@ export const KIND_TERM: Record<ReportResourceKind, VocabularySlug> = {
   journey: 'journey',
   'capability-scenario': 'capability-scenario',
   'journey-scenario': 'journey-scenario',
-  rule: 'business-rule'
+  rule: 'business-rule',
+  variation: 'variation'
 }
 
 /** A Scenario's own words, chosen by the type of Scenario being read. */
@@ -111,28 +112,24 @@ export interface VocabularyPage {
   items: VocabularyItem[]
 }
 
-const VARIATION_TERMS = new Set<VocabularySlug>(['variation', 'experiment', 'configuration', 'version', 'when-used'])
-
-/** Browsing groups related terms independently of their documentation owner. */
+/** Browsing groups terms by their documentation owner; Model overview supplies the Product terms. */
 export function vocabularySection(slug: VocabularySlug): string {
-  if (VARIATION_TERMS.has(slug)) return 'variations'
   const page = VOCABULARY[slug].page
   return page === 'product-model' ? 'product' : page
 }
 
 /**
- * Browsing follows documentation order. Model overview supplies Product terms
- * and a separate Variations group, since Variations span resource types.
+ * Browsing follows documentation order.
  *
  * Search does not group. A reader who typed a word wants that word ranked, so
  * the flat list keeps every term as a row, leads included.
  */
 export const VOCABULARY_PAGES: VocabularyPage[] = [...new Set(VOCABULARY_ITEMS.map(item => vocabularySection(item.slug)))]
   .map((page) => {
-    const lead = page === 'variations' ? 'variation' : VOCABULARY_LEADS[page]!
+    const lead = VOCABULARY_LEADS[page]!
     return {
       page,
-      title: page === 'variations' ? 'Variations' : VOCABULARY[lead].pageTitle,
+      title: VOCABULARY[lead].pageTitle,
       lead: termItem(lead),
       items: VOCABULARY_ITEMS.filter(item => vocabularySection(item.slug) === page && item.slug !== lead)
     }

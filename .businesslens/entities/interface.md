@@ -34,4 +34,4 @@ expensive to correct later.
 - **Navigation** — the Screens reachable from every place inside it
 - **Languages** — the language tags it serves, narrowing the Product's
 
-- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

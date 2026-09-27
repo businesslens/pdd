@@ -39,7 +39,7 @@
   Actors split into groups no Capability available there bridges (a Capability
   bridges the Actors its Scenario Steps name ).
   Otherwise it holds no Experiences and availability names the Interface
-  directly. `lint` decides and reports a violation as an error; exceptions are a valid Variation (`variantOf`) relationship and an Experience
+  directly. `lint` decides and reports a violation as an error; exceptions are Experiences that are alternatives in a Variation and an Experience
   whose name also exists under another Interface — a counterpart. Do not equate an
   Experience with a page, command group, route tree, API, or CLI.
 - Screens are optional stable views an Actor reaches: places, decided under
@@ -127,13 +127,18 @@ or read-only result alone is an Outcome on that process Screen, not a child.
   Experience. Entry points describe arrival; Steps describe movement.
 - Languages belong to the Product, optionally narrowed by Interface. There is no
   Experience `version` field. Independently supported contracts may be separate
-  Interfaces; addresses and headers alone never decide. Variations apply across supported
-  resource types, following the shared format reference. Keep one anchor-owned
-  subtype (Experiment, Configuration or Version), typed variationUsage on every
-  member, and complete independent content. Link existing selection Entities and
-  facts; never invent Entities to populate usage fields. Check eligibility, selection,
-  defaults, overrides and stability as relevant to the subtype. Selection prose
-  is not executable; report missing evidence or unresolved conditions. Ordinary
+  Interfaces; addresses and headers alone never decide. Supported alternatives of one
+  resource type form one Variation file, `variations/<id>.md`, following the
+  shared format reference: one `kind` (Experiment, Configuration or Version) and
+  one `of` per set; membership only in its `alternatives`, never on the
+  alternatives' own files; the mechanism, `takesEffect` and `stability` once on
+  the set; `selectedWhen` (and a Version's `label`) per alternative. Create one
+  only when two or more resources of one type are all supported now and something
+  selects between them; a threshold or other parameter stays content of one
+  resource. Link existing selection Entities and facts; never invent Entities,
+  settings, allocations, defaults or timing. Check eligibility, selection,
+  defaults and stability as relevant to the subtype. Selection prose is not
+  executable; record what evidence does not establish as unresolved in Coverage. Ordinary
   outcomes stay Scenarios and visual-only differences stay References. Do not
   claim deterministic granularity from lint alone. A permission flag may
   be a grant's `when` on an Entity operation, never a Capability target.

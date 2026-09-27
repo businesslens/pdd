@@ -29,4 +29,4 @@ because it feels owed rather than because it was needed.
 - **Success criterion** — how an achieved attempt is recognized
 - **Actors** — which acting Entities pursue it
 
-- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

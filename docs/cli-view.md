@@ -3,7 +3,7 @@ title: view
 description: Open a Product Model as a private local report, from your checkout or from a GitHub repository.
 section: open-source
 group: CLI
-order: 28
+order: 29
 ---
 
 # `businesslens view`

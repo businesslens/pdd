@@ -31,4 +31,4 @@ a Scenario shows someone doing a thing, and the Rule says whether they may.
 - **Permission** — who may perform a governed operation: named Actors, a relation path from the thing to whoever holds it, the thing itself, an unattended trigger, or nobody at all, and the fact or state condition under which the grant holds
 - **Rationale** — the reasoning that makes it reviewable
 
-- **Variation** — the same-type alternatives, their shared subtype, selection Entity and fact references, selection conditions, timing and stability
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

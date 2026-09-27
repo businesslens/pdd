@@ -207,11 +207,22 @@ costed already.
   the full width. Refresh and valid recompilation preserve the reading.
   Expand fills the window with the same resource reading; Restore returns to
   the panel width without losing its drawing, selected detail or graph viewport.
-- **The rail lists Overview, then six collections.** Matrix comparisons live
+- **The rail lists Overview, then seven collections.** Matrix comparisons live
   within the collection supplying their rows. The collections are Entities,
-  Interfaces, Domains, Capabilities, Journeys, Business Rules. Experiences and
-  Screens are reached through Interfaces, Scenarios through their parent, and
-  a collection's Graph or Matrix through its drawing selector.
+  Interfaces, Domains, Capabilities, Journeys, Business Rules, Variations.
+  Experiences and Screens are reached through Interfaces, Scenarios through
+  their parent, and a collection's Graph or Matrix through its drawing selector.
+  Variations has Rows only. This supersedes the six-collection rail.
+- **A Variation reads as the type it varies.** A set wears its member type's mark
+  with the variation sub-icon; the variation glyph alone marks only the
+  Variations collection. Wherever two or more alternatives of one set meet in a
+  list or tab they are one set row that never expands; the reader picks an
+  alternative from the pill on its title, which opens a switcher listing every
+  alternative with its condition and the set itself. A tree is the exception:
+  its set node expands, because each alternative keeps its own children. A lone
+  alternative carries its set's pill on its title, in rows and in its reading
+  header. Headings count concrete resources, never set rows; nothing shows a
+  position within a set.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
   carries the resource's explanation and contextual links, including an Entity's
   Information kept. Scenarios follows for a Capability or
@@ -229,6 +240,9 @@ costed already.
   targets as a tree, each holding only the places the Rule names. Every edge
   that tree draws is read at its other end: a resource the Rules name has a
   Business Rules tab before Connections, each Rule with how it names it.
+  A Variation's Overview says how one is chosen; an Alternatives tab follows
+  with each alternative in its own words and its condition. An alternative's
+  Overview says how it is chosen; it has no tab of its own for its set.
   Connections
   follows when relationships exist and includes the complete relationship
   list, including links also explained in Overview. References comes last when
@@ -243,8 +257,11 @@ costed already.
 - **Named views, not a view builder.** A named view picks one derivation, states
   it, and is accountable for it. A new correlation costs code, which is the
   point.
-- **Grouping is authored, never configured.** Domain is the only axis, always on
-  where the type carries one. Entities that act lead their collection.
+- **Grouping is authored, never configured.** Domain is the axis, always on
+  where the type carries one. Entities that act lead their collection. The
+  Variations collection alone groups by the type each set varies — its authored
+  `of` — because a Variation carries no Domain. This supersedes "Domain is the
+  only axis".
 - **One filter control per axis, inside the reading it narrows**, offering only
   what the row already prints. A control says how many values it holds, never
   which; the values sit on a second row, each with its own way out. It is absent

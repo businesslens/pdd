@@ -29,7 +29,11 @@ export const CATEGORICAL_SLOTS: PaletteSlot[] = [
   { light: '#008300', dark: '#008300' }, // 6 green
   { light: '#4a3aa7', dark: '#9085e9' }, // 7 violet
   { light: '#e34948', dark: '#e66767' }, // 8 red
-  { light: '#746651', dark: '#ab9d81' } //  9 umber — neutral, not a hue slot
+  { light: '#746651', dark: '#ab9d81' }, //  9 umber — neutral, not a hue slot
+  /* Slot 9 is the Product's, the first blue repeated; slot 10 is Variation's teal.
+     Neither is a hue in the categorical order: both always ship beside a label. */
+  { light: '#2a78d6', dark: '#3987e5' }, // 10 Product
+  { light: '#0f766e', dark: '#2bb5a5' } //  11 teal — Variation
 ]
 
 /** Single-hue blue ramp for magnitude. Light→dark; index 0 is nearest zero. */

@@ -49,6 +49,6 @@ flowchart TD
 Frames are containment; a wizard's arrow is its order. Movement between
 Screens is recorded by Scenario Steps; this reference shows containment.
 
-Both mobile Experiences are current peers. A Business Rule selects them by Reader
-assignment; the Source-focused library explicitly links to Personal library with
-`variantOf` and inherits no content from it.
+Both mobile Experiences are current alternatives in the Library layout Variation
+(`variations/library-layout.md`), chosen by the Reader's Library assignment.
+Neither Experience's file names the other or inherits content from it.

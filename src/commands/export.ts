@@ -1,6 +1,6 @@
-import type { VariationKind } from '../core/variations.js'
-import type { ResourceFile, VariationResource, PddModel } from '../core/model.js'
-import type { ProductReportV15 } from '../core/portable.js'
+import type { VariationKind, VariationMemberType } from '../core/variations.js'
+import type { ResourceFile, PddModel } from '../core/model.js'
+import type { ProductReportV16 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -10,7 +10,7 @@ import { loadModel } from '../core/model.js'
 import { qualify } from '../core/ids.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV15Schema,
+  ProductReportV16Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV15 {
+): ProductReportV16 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -114,7 +114,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV15 = {
+  const report: ProductReportV16 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -146,7 +146,8 @@ export function compileReport(
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
       journeyScenarios: model.journeyScenarios.length,
-      businessRules: model.businessRules.length
+      businessRules: model.businessRules.length,
+      variations: model.variations.length
     },
     limitations: model.product.limitations,
     model: {
@@ -167,7 +168,6 @@ export function compileReport(
         entryPoints: productInterface.entryPoints,
         languages: sorted(productInterface.languages),
         navigation: sorted(productInterface.navigation.map(entry => qualify(productInterface.id, entry))),
-        ...variationContent(productInterface),
         ...resourceContent(productInterface, [], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
@@ -179,7 +179,6 @@ export function compileReport(
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
         navigation: sorted(experience.navigation.map(entry => qualify(experience.id, entry))),
-        ...variationContent(experience),
         ...resourceContent(experience, [], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
@@ -193,7 +192,6 @@ export function compileReport(
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
-        ...variationContent(screen),
         ...resourceContent(screen, [], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
@@ -216,7 +214,6 @@ export function compileReport(
           entityId: relation.entity, verb: relation.verb, cardinality: relation.cardinality
         })),
         states: entity.states.map(state => ({ name: state.title, content: state.description })),
-        ...variationContent(entity),
         ...resourceContent(entity, ['Information kept', 'States'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
@@ -225,7 +222,6 @@ export function compileReport(
         description: capability.doc.lead,
         ...(capability.domain ? { domainId: capability.domain } : {}),
         availability: contexts(capability.availability),
-        ...variationContent(capability),
         ...resourceContent(capability, [], assetBase)
       })),
       capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
@@ -265,7 +261,6 @@ export function compileReport(
           capabilityIds: sorted([...achievedCapabilityIds]),
           failureOnlyCapabilityIds: sorted(failureOnlyCapabilityIds),
           domainIds: sorted([...new Set(domainIds)]),
-          ...variationContent(journey),
           ...resourceContent(journey, ['Goal', 'Success criterion'], assetBase)
         }
       }),
@@ -324,8 +319,27 @@ export function compileReport(
           unattended: grant.unattended === true,
           configuredByEntityId: grant.configuredBy ?? null
         })),
-        ...variationContent(rule),
         ...resourceContent(rule, ['Rationale'], assetBase)
+      })),
+      /* Alternatives are a set: the wire orders them by id, never by authoring. */
+      variations: byId(model.variations).map(variation => ({
+        id: variation.id,
+        title: variation.doc.title,
+        description: variation.doc.lead,
+        kind: variation.kind as VariationKind,
+        of: variation.of as VariationMemberType,
+        takesEffect: variation.takesEffect,
+        stability: variation.stability,
+        assignmentUnit: variation.assignmentUnit,
+        assignmentMethod: variation.assignmentMethod,
+        assignmentFact: variation.assignmentFact,
+        allocation: variation.allocation,
+        settings: variation.settings,
+        discriminator: variation.discriminator,
+        alternatives: [...variation.alternatives]
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })),
+        ...resourceContent(variation, [], assetBase)
       }))
     },
     coverage: {
@@ -338,24 +352,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV15Schema.parse(report)
+  const parsed = ProductReportV16Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV15
+  report: ProductReportV16
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV15 {
+export function compileWorkspaceReport(cwd: string): ProductReportV16 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV15 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV16 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)
@@ -393,13 +407,5 @@ export function runExport(cwd: string): number {
   } catch (error) {
     console.error((error as Error).message)
     return 1
-  }
-}
-
-function variationContent(resource: VariationResource) {
-  return {
-    variantOfId: resource.variantOf,
-    variationKind: resource.variationKind as VariationKind | null,
-    variationUsage: resource.variationUsage
   }
 }

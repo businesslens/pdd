@@ -177,20 +177,38 @@ claim that messages cannot have behavior or a lifecycle.
 
 ## Variation
 
+**Member-side Variation keys — superseded.** An anchor member carrying
+`variationKind`, other members pointing at it with `variantOf`, and every member
+carrying its own `variationUsage` put one product choice across several files
+with no name of its own. The set is now a resource, `variations/<id>.md`, and
+membership lives only there; alternatives carry no Variation keys.
+
+**A designated anchor or default member — rejected.** An anchor made deleting one
+alternative mean something different from deleting another, and read as a
+default or parent the model never claimed. Alternatives are an unordered set;
+a default, where one exists, is part of an alternative's `selectedWhen`.
+
+**Usage repeated on every alternative — rejected.** Per-member usage copied the
+same timing and stability onto each member and let a fact that only tuned one
+alternative sit among the settings that choose. Each selection field now has
+exactly one level: the mechanism, `takesEffect` and `stability` on the set,
+`selectedWhen` and a Version's `label` on the alternative. No field exists at
+both levels, so there is nothing to inherit or override.
+
+**A standalone mark on a set — rejected.** A set drawn with a glyph of its own
+read as a new kind of thing rather than the type it varies. A set wears its
+member type's mark with a Variation sub-icon; the glyph alone marks only the
+collection of every set.
+
 **Historical version archives and version-driven containment — deferred.**
 Historical snapshots and version labels that dictate containment remain outside
-the model. Current alternatives now use the shared Variation contract: same-type
-`variantOf`, one anchor-owned `variationKind` (Experiment, Configuration or
-Version), and each member's typed `variationUsage`. This supersedes the Experience-only
-relationship and the deferral of a general variation relationship. Automatic
-inheritance, runtime selection and a condition language remain outside the model.
-Older contracts still used by current clients or records are supported behavior,
-not historical snapshots. Addresses and headers alone do not determine resource
-boundaries.
+the model. Older contracts still used by current clients or records are
+supported behavior, and a Version Variation, not history. Addresses and headers
+alone do not determine resource boundaries.
 
-**Free-form applicability as the only encoding — superseded.** Typed usage
-fields and Entity/fact references now own selection, timing and stability.
-Separate When used prose would duplicate that meaning and is rejected.
+**Free-form applicability as the only encoding — superseded.** Typed selection
+fields and Entity/fact references own selection, timing and stability. A
+separate When used prose section would duplicate them and is rejected.
 
 **A general experiment/configuration engine — deferred.** Variations state
 Product meaning and applicability. They do not run allocations, combine flags,

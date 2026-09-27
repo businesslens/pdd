@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV15 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV16 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV15): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV16): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -163,8 +163,6 @@ describe('open report', () => {
       const parent = report.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
       report.model.screens.push({
         ...structuredClone(parent),
-        variationKind: null,
-        variationUsage: null,
         id: 'customer-web::storefront::product-record::reviews',
         title: 'Reviews',
         description: 'What other shoppers said.',
@@ -269,7 +267,9 @@ describe('open report', () => {
       }
       for (const screen of report.model.screens) {
         screen.id = directScreenIds.get(screen.id)!
-        if (screen.variantOfId) screen.variantOfId = directScreenIds.get(screen.variantOfId)!
+      }
+      for (const variation of report.model.variations.filter(item => item.of === 'screen')) {
+        for (const alternative of variation.alternatives) alternative.resourceId = directScreenIds.get(alternative.resourceId)!
       }
       const file = join(fresh, 'direct-report.json')
       writeFileSync(file, JSON.stringify(report))
@@ -282,7 +282,7 @@ describe('open report', () => {
       expect(readFileSync(join(fresh, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
         .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 10')
+        .toContain('schema: 11')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))

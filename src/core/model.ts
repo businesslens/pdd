@@ -1,4 +1,4 @@
-import { VariationUsageSchema, type VariationFields } from './variations.js'
+import { AssignmentUnitSchema, VariationFactSchema, type VariationAlternative, type VariationFact, type VariationSet } from './variations.js'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
@@ -46,9 +46,10 @@ export interface ResourceFile {
   assetMeta: ResourceAsset[]
 }
 
-export interface VariationResource extends ResourceFile, VariationFields {}
+/** A named set of same-type alternatives, authored in `variations/`. */
+export interface VariationResource extends ResourceFile, VariationSet {}
 
-export interface InterfaceResource extends VariationResource {
+export interface InterfaceResource extends ResourceFile {
   type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
@@ -65,7 +66,7 @@ export interface InterfaceResource extends VariationResource {
   navigation: string[]
 }
 
-export interface ExperienceResource extends VariationResource {
+export interface ExperienceResource extends ResourceFile {
   actors: string[]
   /** The one Interface that owns it, read from the path. Never authored. */
   interface: string
@@ -80,7 +81,7 @@ export interface DomainResource extends ResourceFile {
   boundary: string
 }
 
-export interface CapabilityResource extends VariationResource {
+export interface CapabilityResource extends ResourceFile {
   domain?: string
   availability: Context[]
 }
@@ -135,7 +136,7 @@ export interface EntityRelation {
  * The Entity declares its states and nothing about the moves between them: the
  * lifecycle is composed from Scenario Steps.
  */
-export interface EntityResource extends VariationResource {
+export interface EntityResource extends ResourceFile {
   domain?: string
   /** Named single-line facts the Product keeps about the thing. Never how it is stored. */
   informationKept: EntityFact[]
@@ -158,7 +159,7 @@ export interface ScreenEntity {
   collects: string[]
 }
 
-export interface ScreenResource extends VariationResource {
+export interface ScreenResource extends ResourceFile {
   /** The Entities this view presents, with the facts on screen. */
   entities: ScreenEntity[]
   /**
@@ -265,13 +266,13 @@ export interface JourneyScenarioResource extends ScenarioResource {
   result: string
 }
 
-export interface JourneyResource extends VariationResource {
+export interface JourneyResource extends ResourceFile {
   actors: string[]
   goal: string
   successCriterion: string
 }
 
-export interface BusinessRuleResource extends VariationResource {
+export interface BusinessRuleResource extends ResourceFile {
   appliesTo: BusinessRuleTarget[]
   /**
    * Absent: the Rule makes no authorization claim. `[]`: the selected operation
@@ -393,6 +394,7 @@ export interface PddModel {
   businessRules: BusinessRuleResource[]
   journeys: JourneyResource[]
   journeyScenarios: JourneyScenarioResource[]
+  variations: VariationResource[]
   issues: string[]
   notices: string[]
 }
@@ -422,7 +424,8 @@ export function resourceCollections(model: PddModel): Record<ResourceCollectionN
     capabilityScenarios: model.capabilityScenarios,
     businessRules: model.businessRules,
     journeys: model.journeys,
-    journeyScenarios: model.journeyScenarios
+    journeyScenarios: model.journeyScenarios,
+    variations: model.variations
   }
 }
 
@@ -436,7 +439,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 10
+export const FOLDER_SCHEMA = 11
 
 /**
  * The two channels a model load reports into.
@@ -1098,7 +1101,7 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 10 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 11 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -1270,7 +1273,7 @@ export function loadModel(cwd: string): PddModel {
     scope: '', exclusions: [], method: '', covered: [], unmapped: [], limitations: []
   }
   const coverageFile = join(root, 'coverage.md')
-  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 10)')
+  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 11)')
   if (existsSync(coverageFile)) {
     const { data, body } = splitFrontmatter(readFileSync(coverageFile, 'utf8'), issues, 'coverage.md')
     if (body.trim() !== '# Coverage') issues.push('coverage.md: body must contain only "# Coverage"; put scope, reasons and limitations in frontmatter')
@@ -1307,12 +1310,11 @@ export function loadModel(cwd: string): PddModel {
     for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`, ['screens'])) {
       const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
-        ['entities', 'entryPoints', 'variantOf', 'variationKind', 'variationUsage'],
+        ['entities', 'entryPoints'],
         issues
       )
       const id = qualify(parentId, location.id)
       screens.push({
-        ...variationFields(data, issues, location.file),
         entities: screenEntitiesField(data, issues, location.file),
         id,
         file: location.file,
@@ -1339,7 +1341,7 @@ export function loadModel(cwd: string): PddModel {
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readResource(
       productInterface,
-      ['type', 'actors', 'entryPoints', 'languages', 'navigation', 'variantOf', 'variationKind', 'variationUsage'],
+      ['type', 'actors', 'entryPoints', 'languages', 'navigation'],
       issues
     )
     interfaces.push({
@@ -1350,7 +1352,6 @@ export function loadModel(cwd: string): PddModel {
       directory,
       assets,
       assetMeta,
-      ...variationFields(data, issues, productInterface.file),
       type: stringField(data, 'type', issues, productInterface.file) || '',
       actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
       entryPoints: entryPointsField(data, issues, productInterface.file),
@@ -1368,7 +1369,7 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation', 'variantOf', 'variationKind', 'variationUsage'], issues)
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -1380,7 +1381,6 @@ export function loadModel(cwd: string): PddModel {
         actors: uniqueStringListField(parsed.data, 'actors', issues, location.file),
         interface: productInterface.id,
         access: stringField(parsed.data, 'access', issues, location.file) || '',
-        ...variationFields(parsed.data, issues, location.file),
         entryPoints: entryPointsField(parsed.data, issues, location.file),
         navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file)
       })
@@ -1410,7 +1410,7 @@ export function loadModel(cwd: string): PddModel {
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } =
-        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions', 'variantOf', 'variationKind', 'variationUsage'], issues)
+        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions'], issues)
       /* The lifecycle is composed from Steps. A list that restated it was the
          second authority the format removed, and the message names the first. */
       if (data.transitions !== undefined) {
@@ -1482,7 +1482,6 @@ export function loadModel(cwd: string): PddModel {
          loaded rather than this parser asking it one Entity file at a time. */
       return {
         id, file, doc, references, directory, assets, assetMeta,
-        ...variationFields(data, issues, file),
         domain: stringField(data, 'domain', issues, file),
         informationKept,
         kind,
@@ -1501,7 +1500,7 @@ export function loadModel(cwd: string): PddModel {
     'capabilities',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['domain', 'entities', 'availability', 'variantOf', 'variationKind', 'variationUsage'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['domain', 'entities', 'availability'], issues)
     /* What a Capability changes is what its Steps say it changes. A list here
        restated that from the other side, and the message names the replacement. */
     if (data.entities !== undefined) {
@@ -1515,7 +1514,6 @@ export function loadModel(cwd: string): PddModel {
       directory,
       assets,
       assetMeta,
-      ...variationFields(data, issues, location.file),
       domain: stringField(data, 'domain', issues, location.file),
       availability: availabilityField(data, issues, location.file)
     })
@@ -1552,7 +1550,7 @@ export function loadModel(cwd: string): PddModel {
     'journeys',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['actors', 'variantOf', 'variationKind', 'variationUsage'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['actors'], issues)
     journeys.push({
       id: location.id,
       file: location.file,
@@ -1562,7 +1560,6 @@ export function loadModel(cwd: string): PddModel {
       assets,
       assetMeta,
       actors: uniqueStringListField(data, 'actors', issues, location.file),
-      ...variationFields(data, issues, location.file),
       goal: section(doc, 'Goal') || '',
       successCriterion: section(doc, 'Success criterion') || ''
     })
@@ -1598,14 +1595,27 @@ export function loadModel(cwd: string): PddModel {
     'business-rules'
   ).map((location) => {
     const { id, file } = location
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo', 'permits', 'variantOf', 'variationKind', 'variationUsage'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo', 'permits'], issues)
     return {
       id, file, doc, references, directory, assets, assetMeta,
-      ...variationFields(data, issues, file),
       appliesTo: businessRuleTargetsField(data, issues, file),
       permits: businessRulePermitsField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
+  })
+
+  const variations: VariationResource[] = listResources(
+    join(root, 'variations'),
+    'variation',
+    findings,
+    'variations'
+  ).map((location) => {
+    const { id, file } = location
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, [
+      'kind', 'of', 'takesEffect', 'stability', 'assignmentUnit', 'assignmentMethod', 'assignmentFact',
+      'allocation', 'settings', 'discriminator', 'alternatives'
+    ], issues)
+    return { file, doc, references, directory, assets, assetMeta, ...variationSetFields(id, data, issues, file) }
   })
 
   // One authority: both Scenario kinds contribute the Capabilities exercised here.
@@ -1638,17 +1648,78 @@ export function loadModel(cwd: string): PddModel {
     businessRules,
     journeys,
     journeyScenarios,
+    variations,
     issues,
     notices
   }
 }
 
-function variationFields(data: Record<string, unknown>, issues: string[], label: string): VariationFields {
-  const usage = data.variationUsage === undefined ? null : VariationUsageSchema.safeParse(data.variationUsage)
-  if (usage && !usage.success) issues.push(`${label}: invalid variationUsage: ${usage.error.message}`)
+function factField(raw: unknown, issues: string[], label: string): VariationFact | null {
+  if (raw === undefined || raw === null) return null
+  const parsed = VariationFactSchema.safeParse(raw)
+  if (!parsed.success) {
+    issues.push(`${label} must be { entity: <id>, fact: <name> }`)
+    return null
+  }
+  return parsed.data
+}
+
+function variationAlternativesField(data: Record<string, unknown>, issues: string[], label: string): VariationAlternative[] {
+  const raw = data.alternatives
+  if (raw === undefined || raw === null) {
+    issues.push(`${label}: "alternatives" is required`)
+    return []
+  }
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "alternatives" must be a list`)
+    return []
+  }
+  return raw.flatMap((entry, index) => {
+    const where = `${label}: alternatives[${index}]`
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      issues.push(`${where} must be { id, selectedWhen, label? }`)
+      return []
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['id', 'selectedWhen', 'label'], issues, where)
+    const id = stringField(item, 'id', issues, where)
+    const selectedWhen = stringField(item, 'selectedWhen', issues, where)
+    if (!id) issues.push(`${where}: "id" is required`)
+    if (selectedWhen === undefined) issues.push(`${where}: "selectedWhen" is required`)
+    return id ? [{ id, selectedWhen: selectedWhen ?? '', label: stringField(item, 'label', issues, where) ?? null }] : []
+  })
+}
+
+/** Reads a Variation's frontmatter; `lint` owns every rule beyond value shapes. */
+function variationSetFields(id: string, data: Record<string, unknown>, issues: string[], label: string): VariationSet {
+  const required = (key: string) => {
+    const value = stringField(data, key, issues, label)
+    if (value === undefined) issues.push(`${label}: "${key}" is required`)
+    return value ?? ''
+  }
+  let assignmentUnit: VariationSet['assignmentUnit'] = null
+  if (data.assignmentUnit !== undefined && data.assignmentUnit !== null) {
+    const parsed = AssignmentUnitSchema.safeParse(data.assignmentUnit)
+    if (parsed.success) assignmentUnit = parsed.data
+    else issues.push(`${label}: assignmentUnit must be { entity: <id> } or { description: <text> }`)
+  }
+  let settings: VariationFact[] = []
+  if (data.settings !== undefined && data.settings !== null) {
+    if (!Array.isArray(data.settings) || data.settings.length === 0) issues.push(`${label}: settings must be a non-empty list of { entity, fact }`)
+    else settings = data.settings.flatMap((raw, index) => factField(raw, issues, `${label}: settings[${index}]`) ?? [])
+  }
   return {
-    variantOf: stringField(data, 'variantOf', issues, label) ?? null,
-    variationKind: stringField(data, 'variationKind', issues, label) ?? null,
-    variationUsage: usage?.success ? usage.data : null
+    id,
+    kind: required('kind'),
+    of: required('of'),
+    takesEffect: required('takesEffect'),
+    stability: required('stability'),
+    assignmentUnit,
+    assignmentMethod: stringField(data, 'assignmentMethod', issues, label) ?? null,
+    assignmentFact: factField(data.assignmentFact, issues, `${label}: assignmentFact`),
+    allocation: stringField(data, 'allocation', issues, label) ?? null,
+    settings,
+    discriminator: factField(data.discriminator, issues, `${label}: discriminator`),
+    alternatives: variationAlternativesField(data, issues, label)
   }
 }

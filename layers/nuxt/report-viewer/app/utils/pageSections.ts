@@ -3,7 +3,6 @@ import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
 import { structureChildren } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
-import { variationMembers } from './variations'
 import { attachedRules } from './topologyTargets'
 
 export type PageBlockId =
@@ -13,8 +12,9 @@ export type PageBlockId =
   | 'contexts'
   | 'detail'
   | 'counterparts'
-  | 'variants'
-  | 'when-used'
+  | 'selection'
+  | 'alternatives'
+  | 'variation-choice'
   | 'connections'
   | 'structure'
   | 'rule-scope'
@@ -22,7 +22,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'applies-to' | 'delivery' | 'scenarios' | 'lifecycle' | 'rules' | 'variations' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'applies-to' | 'alternatives' | 'delivery' | 'scenarios' | 'lifecycle' | 'rules' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -57,7 +57,9 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   const hasEntryPoints = resource.kind === 'journey' && resource.entryPoints.length > 0
   if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')
 
-  if (resource.variation) overviewBlocks.push('when-used')
+  /* A set says how one is chosen; an alternative says how it is chosen. */
+  if (resource.kind === 'variation') overviewBlocks.push('selection')
+  if (resource.variation) overviewBlocks.push('variation-choice')
 
   if (hasAuthoredBody(resource)) overviewBlocks.push('detail')
 
@@ -69,6 +71,9 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
     label: 'Overview',
     blocks: overviewBlocks
   }]
+
+  /* A Variation's alternatives, each in its own words. */
+  if (resource.kind === 'variation') tabs.push({ id: 'alternatives', label: 'Alternatives', count: resource.alternatives.length, blocks: ['alternatives'] })
 
   /* What a Rule governs: its own reading, beside its statement. */
   if (resource.kind === 'rule') tabs.push({ id: 'applies-to', label: 'Applies to', count: resource.appliesTo.length, blocks: ['rule-scope'] })
@@ -86,8 +91,6 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   /* The Rules that name it, each saying how: its own reading, so a reader who asks "what constrains this?" finds it by name. */
   const rules = attachedRules(workspace, resource)
   if (rules.length) tabs.push({ id: 'rules', label: 'Business Rules', count: rules.length, blocks: ['rules'] })
-  const members = variationMembers(workspace, resource)
-  if (members.length > 1) tabs.push({ id: 'variations', label: 'Variations', count: members.length, blocks: ['variants'] })
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }

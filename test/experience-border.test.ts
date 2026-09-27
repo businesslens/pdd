@@ -6,7 +6,7 @@ import { compileReport } from '../src/commands/export.js'
 import { lintModel } from '../src/commands/lint.js'
 import { expandProductReport } from '../src/commands/open.js'
 import { loadModel } from '../src/core/model.js'
-import { ProductReportV15Schema, validateProductReport } from '../src/core/portable.js'
+import { ProductReportV16Schema, validateProductReport } from '../src/core/portable.js'
 
 const TRACKED = ['README.md', 'src/routes/storefront.ts', 'src/routes/admin.ts',
   'src/services/catalog.ts', 'src/services/orders.ts', 'src/services/payments.ts',
@@ -87,7 +87,7 @@ The address may be supplied here but is not disclosed by the Product.
     expect(screen.capabilityIds).toEqual(['browse-catalog', 'place-order'])
     screen.capabilityIds = ['browse-catalog']
     expect(validateProductReport(report).join('\n')).toContain('capabilityIds must equal the Capabilities derived from placed Steps')
-    expect(ProductReportV15Schema.safeParse({ ...report, model: { ...report.model, experiences: report.model.experiences.map(e => ({ ...e, version: null })) } }).success).toBe(false)
+    expect(ProductReportV16Schema.safeParse({ ...report, model: { ...report.model, experiences: report.model.experiences.map(e => ({ ...e, version: null })) } }).success).toBe(false)
   })
 
   it('keeps Journey Step contributions after the Capability Scenario moves to a container', () => {

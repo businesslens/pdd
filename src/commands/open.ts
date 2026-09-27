@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV15,
+  ProductReportV16,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -51,7 +51,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV15['references']): Array<Record<string, string>> {
+function references(value: ProductReportV16['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -203,7 +203,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -251,7 +251,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         entryPoints: entryPoints(productInterface.entryPoints),
         languages: productInterface.languages,
         navigation: relativeNavigation(productInterface.id, productInterface.navigation),
-        ...variationFrontmatter(productInterface), references: references(productInterface.references)
+        references: references(productInterface.references)
       })) + body(
         productInterface.title,
         productInterface.description,
@@ -288,7 +288,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
             entity: relation.entityId, verb: relation.verb, cardinality: relation.cardinality
           }))
           : undefined,
-        ...variationFrontmatter(entity), references: references(entity.references)
+        references: references(entity.references)
       })) + body(entity.title, entity.description, entity.intent, [], [
         ...(entity.informationKept.length
           ? [{ heading: 'Information kept', content: entity.informationKept.map(fact => `- **${fact.name}** — ${fact.description}`).join('\n') }]
@@ -315,7 +315,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         access: experience.accessMode,
         entryPoints: entryPoints(experience.entryPoints),
         navigation: relativeNavigation(experience.id, experience.navigation),
-        ...variationFrontmatter(experience), references: references(experience.references)
+        references: references(experience.references)
       })) + body(
         experience.title,
         experience.description,
@@ -333,7 +333,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
           ? screen.entities.map(entry => entry.shows.length || entry.collects.length ? compactRecord({ entity: entry.entityId, shows: entry.shows, collects: entry.collects }) : entry.entityId)
           : undefined,
         entryPoints: entryPoints(screen.entryPoints),
-        ...variationFrontmatter(screen), references: references(screen.references)
+        references: references(screen.references)
       })) + body(
         screen.title,
         screen.description,
@@ -350,7 +350,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
       frontmatter(compactRecord({
         domain: capability.domainId,
         availability: contexts(capability.availability),
-        ...variationFrontmatter(capability), references: references(capability.references)
+        references: references(capability.references)
       })) + body(capability.title, capability.description, capability.intent, [], capability.supportingSections)
     )
   }
@@ -378,7 +378,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         /* `permits: []` is a claim — forbidden to everyone — so it is never
            compacted away; only an absent `permits` is. */
         ...(rule.permits === null ? {} : { permits: rule.permits.map(grantRecord) }),
-        ...compactRecord({ ...variationFrontmatter(rule), references: references(rule.references) })
+        ...compactRecord({ references: references(rule.references) })
       }) + body(
         rule.title,
         rule.statement,
@@ -389,10 +389,34 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
     )
   }
 
+  for (const variation of report.model.variations) {
+    write(
+      resourcePath(join(root, 'variations'), variation.id, 'variation', false),
+      frontmatter(compactRecord({
+        kind: variation.kind,
+        of: variation.of,
+        assignmentUnit: variation.assignmentUnit,
+        assignmentMethod: variation.assignmentMethod,
+        assignmentFact: variation.assignmentFact,
+        allocation: variation.allocation,
+        settings: variation.settings,
+        discriminator: variation.discriminator,
+        takesEffect: variation.takesEffect,
+        stability: variation.stability,
+        alternatives: variation.alternatives.map(item => compactRecord({
+          id: item.resourceId,
+          label: item.label,
+          selectedWhen: item.selectedWhen
+        })),
+        references: references(variation.references)
+      })) + body(variation.title, variation.description, variation.intent, [], variation.supportingSections)
+    )
+  }
+
   const scenarioSections = (
     scenario:
-      | ProductReportV15['model']['capabilityScenarios'][number]
-      | ProductReportV15['model']['journeyScenarios'][number]
+      | ProductReportV16['model']['capabilityScenarios'][number]
+      | ProductReportV16['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -448,7 +472,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
       resourcePath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
       frontmatter(compactRecord({
         actors: journey.actorIds,
-        ...variationFrontmatter(journey), references: references(journey.references)
+        references: references(journey.references)
       })) + body(
         journey.title,
         '',
@@ -501,7 +525,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV15
+  report: ProductReportV16
   root: string
 }
 
@@ -558,13 +582,5 @@ export async function runOpen(cwd: string, source: string, force: boolean): Prom
   } catch (error) {
     console.error((error as Error).message)
     return error instanceof UsageError ? 2 : 1
-  }
-}
-
-function variationFrontmatter(resource: { variantOfId: string | null, variationKind: string | null, variationUsage: unknown | null }) {
-  return {
-    ...(resource.variantOfId === null ? {} : { variantOf: resource.variantOfId }),
-    ...(resource.variationKind === null ? {} : { variationKind: resource.variationKind }),
-    ...(resource.variationUsage === null ? {} : { variationUsage: resource.variationUsage })
   }
 }

@@ -33,6 +33,10 @@ export interface TreeCardNode {
   sharedFrom?: AnyResourceView
   /** A short qualifier under the title, e.g. the Journey a Journey Scenario belongs to. */
   note?: string
+  /** An alternative drawn under its own Variation node: the node already names the set. */
+  inSet?: boolean
+  /** A group's concrete resources: a Variation node counts its alternatives, never itself. */
+  count?: number
   children: TreeCardNode[]
 }
 
@@ -44,7 +48,35 @@ export interface TreeCard {
 }
 
 const leaf = (resource: AnyResourceView, children: TreeCardNode[] = []): TreeCardNode => ({ id: resource.key, title: resource.title, resource, children })
-const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, children })
+const concrete = (nodes: TreeCardNode[]): number => nodes.reduce((total, node) => total + (node.resource?.kind === 'variation' ? node.children.length : 1), 0)
+const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, count: concrete(children), children })
+
+/**
+ * Siblings that are alternatives of one Variation sit under one node for the
+ * set, where two or more meet; a lone alternative stays in place. The set node
+ * is membership, not containment: each alternative keeps its own children.
+ */
+export function foldVariations(workspace: ReportWorkspace, parentId: string, nodes: TreeCardNode[]): TreeCardNode[] {
+  const together = new Map<string, number>()
+  for (const node of nodes) {
+    const key = node.resource?.variation?.key
+    if (key) together.set(key, (together.get(key) ?? 0) + 1)
+  }
+  const sets = new Map<string, TreeCardNode>()
+  return nodes.flatMap((node) => {
+    const key = node.resource?.variation?.key
+    const set = key ? workspace.byKey.get(key) : undefined
+    if (!key || !set || (together.get(key) ?? 0) < 2) return [node]
+    const existing = sets.get(key)
+    if (existing) {
+      existing.children.push({ ...node, inSet: true })
+      return []
+    }
+    const holder: TreeCardNode = { id: `${parentId}>${key}`, title: set.title, resource: set, children: [{ ...node, inSet: true }] }
+    sets.set(key, holder)
+    return [holder]
+  })
+}
 
 /** Name a place's own tree in its tab and accessible label. */
 export function structureLabel(_resource: AnyResourceView): string {
@@ -98,15 +130,18 @@ function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | Exper
 export function structureChildren(workspace: ReportWorkspace, resource: AnyResourceView): TreeCardNode[] {
   /* A nested Screen sits under its parent Screen with no group between: the parent already says what kind it holds.
      Its own Capabilities come first, then the Screens nested inside it. */
-  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, [...deliveryLeaves(workspace, screen), ...childScreens(workspace, screen).map(screenLeaf)])
+  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, [
+    ...deliveryLeaves(workspace, screen),
+    ...foldVariations(workspace, screen.key, childScreens(workspace, screen).map(screenLeaf))
+  ])
   const screensOf = (owner: AnyResourceView) => ownedScreens(workspace, owner)
-  const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', screensOf(owner).map(screenLeaf))
+  const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', foldVariations(workspace, `${owner.key}:screens`, screensOf(owner).map(screenLeaf)))
   if (resource.kind === 'interface') {
     const experiences = workspace.experiences.filter(item => item.interfaceIds.includes(resource.id))
     const screens = screenGroup(resource)
     if (experiences.length) screens.title = 'Shared Screens'
     return [
-      group(`${resource.key}:experiences`, 'experience', experiences.map(experience => leaf(experience, [...deliveryLeaves(workspace, experience), ...[screenGroup(experience)].filter(node => node.children.length)]))),
+      group(`${resource.key}:experiences`, 'experience', foldVariations(workspace, `${resource.key}:experiences`, experiences.map(experience => leaf(experience, [...deliveryLeaves(workspace, experience), ...[screenGroup(experience)].filter(node => node.children.length)])))),
       screens
     ].filter(node => node.children.length).concat(deliveryLeaves(workspace, resource))
   }
@@ -167,7 +202,8 @@ export function insideSummary(node: TreeCardNode): InsideCount[] {
   const found = new Map<ReportResourceKind, Set<string>>()
   const walk = (child: TreeCardNode) => {
     const resource = child.resource
-    if (resource && resource.kind !== node.groupKind) found.set(resource.kind, (found.get(resource.kind) ?? new Set()).add(resource.key))
+    /* A Variation node is membership, not something found below: only its alternatives count. */
+    if (resource && resource.kind !== node.groupKind && resource.kind !== 'variation') found.set(resource.kind, (found.get(resource.kind) ?? new Set()).add(resource.key))
     child.children.forEach(walk)
   }
   node.children.forEach(walk)
@@ -196,7 +232,10 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
   if (kind === 'domain') {
     const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView): TreeCard => ({
       key, title, resource,
-      children: [group(`${key}:capabilities`, 'capability', capabilities.map(item => leaf(item))), group(`${key}:entities`, 'entity', entities.map(item => leaf(item)))].filter(group => group.children.length)
+      children: [
+        group(`${key}:capabilities`, 'capability', foldVariations(workspace, `${key}:capabilities`, capabilities.map(item => leaf(item)))),
+        group(`${key}:entities`, 'entity', foldVariations(workspace, `${key}:entities`, entities.map(item => leaf(item))))
+      ].filter(group => group.children.length)
     })
     const cards = resources.filter(item => item.kind === 'domain').map(domain => domainCard(domain.key, domain.title,
       workspace.capabilities.filter(item => item.domainId === domain.id), workspace.entities.filter(item => item.domainId === domain.id), domain))

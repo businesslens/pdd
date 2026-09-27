@@ -23,7 +23,10 @@ const targetId = computed(() => props.rule.entityTargets.length === 1 ? props.ru
 
 <template>
   <div class="blr-fact-rule" data-fact-rule>
-    <div v-if="rule.variation" class="basis-full space-y-2"><strong>Applies conditionally</strong><BlrVariationUsage :workspace="workspace" :resource="rule" @open="emit('select', $event)" /></div>
+    <div v-if="rule.variation" class="basis-full space-y-1" data-conditional-rule>
+      <strong>Applies only when selected</strong>
+      <span class="block text-muted">An alternative in {{ rule.variation.title }}: {{ rule.variation.selectedWhen }}</span>
+    </div>
     <template v-if="rule.permits !== null">
       <span class="blr-fact-rule-claim">{{ claim }}</span>
       <template v-if="!rule.prohibits">

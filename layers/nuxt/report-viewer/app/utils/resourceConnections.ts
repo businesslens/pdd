@@ -11,7 +11,8 @@ import type {
   ReportWorkspace,
   RuleView,
   ScenarioView,
-  ScreenView
+  ScreenView,
+  VariationSetView
 } from './reportWorkspace'
 import { topologyRelations } from './topologyRelations'
 import { attachedRules } from './topologyTargets'
@@ -149,6 +150,11 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
       )
       break
     }
+    case 'variation': {
+      const set = resource as VariationSetView
+      all.push(row('Alternatives', set.memberKind, set.alternatives.map(item => item.id), false, 'Outgoing'))
+      break
+    }
     case 'rule': {
       const rule = resource as RuleView
       const reachedCapabilities = new Set([...rule.capabilityIds, ...rule.derivedCapabilityIds])
@@ -183,7 +189,7 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
     if (relation.source !== resource.key && relation.target !== resource.key) continue
     const direction = relation.source === resource.key ? 'Outgoing' : 'Incoming'
     const other = workspace.byKey.get(direction === 'Outgoing' ? relation.target : relation.source)!
-    if (!relation.label.startsWith('variation ') && all.some(item => item.kind === other.kind && item.ids.includes(other.id))) continue
+    if (!relation.label.startsWith('chooses by ') && all.some(item => item.kind === other.kind && item.ids.includes(other.id))) continue
     const key = JSON.stringify([direction, other.kind, relation.label])
     const existing = additional.get(key)
     if (existing) { if (!existing.ids.includes(other.id)) existing.ids.push(other.id) }

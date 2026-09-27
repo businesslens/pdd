@@ -13,7 +13,10 @@ const props = defineProps<{ workspace: ReportWorkspace, resource: AnyResourceVie
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const ancestors = computed(() => resourceAncestors(props.workspace, props.resource))
 const domains = computed(() => resourceDomains(props.workspace, props.resource))
-const label = computed(() => ENTITY_KIND_META[props.resource.kind].label)
+/* A set reads as the type it varies. */
+const label = computed(() => props.resource.kind === 'variation'
+  ? `${ENTITY_KIND_META[props.resource.memberKind].label} variation`
+  : ENTITY_KIND_META[props.resource.kind].label)
 const parent = computed(() => ancestors.value.at(-1))
 const path = computed(() => ancestors.value.map(item => item.title).join(' › '))
 const domain = computed(() => domains.value[0])

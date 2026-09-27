@@ -3,50 +3,65 @@ kind: edge
 routes:
   local: Local
 steps:
-  - text: The Developer reads an Experience row and its Variation count in the Interfaces list
+  - text: The Developer opens the Variations collection and reads each set grouped by the type it varies
     kind: actor
     actor: developer
     entities:
-      - { entity: interface, effect: reads, facts: [Type] }
-      - { entity: experience, effect: reads, facts: [Container, Audience, Variation] }
+      - { entity: variation, effect: reads, facts: [Choice, Subtype, Member type, Alternatives, Selection] }
     contexts:
       local: { place: local-report-web::resource-collection }
-  - text: The Product annotates the Experience with a subtype and a linked count including itself without treating them as children
+  - text: The Product shows alternatives that meet in another collection as one set row that never expands
     kind: product
     entities:
-      - { entity: experience, effect: reads, facts: [Variation] }
+      - { entity: business-rule, effect: reads, facts: [Variation] }
     contexts:
       local: { place: local-report-web::resource-collection }
-  - text: The Developer opens the Variations tab, expands selection conditions and follows a member without losing the underlying list
+  - text: The Developer opens a set and reads how one alternative is chosen
     kind: actor
     actor: developer
     entities:
-      - { entity: experience, effect: reads, facts: [Variation] }
+      - { entity: variation, effect: reads, facts: [Choice, Subtype, Selection, Takes effect, Stability] }
     contexts:
-      local: { place: local-report-web::resource-reading::variations }
+      local: { place: local-report-web::resource-reading::overview }
+  - text: The Developer reads each alternative's own words and the condition that selects it
+    kind: actor
+    actor: developer
+    entities:
+      - { entity: variation, effect: reads, facts: [Subtype, Alternatives] }
+      - { entity: business-rule, effect: reads, facts: [Assertion, Variation] }
+    contexts:
+      local: { place: local-report-web::resource-reading::alternatives }
+  - text: The Developer opens one alternative, reads its set on its title and switches to another from the pill
+    kind: actor
+    actor: developer
+    entities:
+      - { entity: business-rule, effect: reads, facts: [Assertion, Variation] }
+    contexts:
+      local: { place: local-report-web::resource-reading::overview }
 ---
 
 # Read resource Variations
 
 ## Trigger
 
-The Developer wants to find the current alternatives of an Experience and read
-each one in context.
+The Developer wants to find a product choice with several supported answers and
+read each answer in context.
 
 ## Outcome
 
-Alternatives remain peers under their owning Interface. Each list row shows the
-shared subtype and total count, linking to its Variations tab. The tab includes
-the inspected member marked Current and every peer in a stable title order.
-Selection conditions expand independently, with the current member open initially.
-Different containers are named where necessary. Opening a peer reads its Overview;
-Back restores the Variations tab, expansion and reading position. Overview states
-its own When used and links to the full set. Closing restores the working list.
+Every Variation is listed in the Variations collection, grouped by the type it
+varies, each row saying what chooses between its alternatives. Wherever two or
+more alternatives of one set meet in a list, they read as one set row that never
+expands; its pill opens a switcher listing every alternative with its condition.
+The set's reading says once how one is chosen, and its Alternatives reading
+shows each alternative in its own words. An alternative's reading names its set
+on its title; the same pill switches to another alternative on the same reading.
+Back restores the previous reading; closing restores the working list.
 
 ## Edge cases
 
-- An Experience without alternatives has no empty relation label or tab.
-- Peer links never become containment children or inflate expansion counts.
-- The same peer annotation appears in Interface Delivery and every supported collection.
-- Conditional permission Rules disclose applicability and are not drawn as unconditional prohibitions.
-- A Variation link does not choose a default or inherit content from another resource.
+- A resource that is no alternative carries no pill and no empty label.
+- A lone alternative in a filtered list keeps its own row and names its set.
+- Membership never becomes containment: a set node in a tree opens to its alternatives, and group counts stay counts of real resources.
+- A Business Rule that is an alternative is disclosed as conditional and never drawn as an unconditional prohibition.
+- No alternative is a default or inherits content from another.

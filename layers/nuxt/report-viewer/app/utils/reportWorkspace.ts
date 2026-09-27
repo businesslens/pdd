@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV15,
+  ProductReportV16,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -19,8 +19,10 @@ import type {
   ReportJourneyScenario,
   ReportReference,
   ReportScreen,
-  ReportSupportingSection
+  ReportSupportingSection,
+  ReportVariation
 } from 'businesslens/report'
+import { reportVariationMembership } from 'businesslens/report'
 import { operationPlaces, permissionTargetSelectsOperation } from 'businesslens/report/selectors'
 
 /** Split an authored `cardinality` into its two ends. */
@@ -44,6 +46,7 @@ export type ReportResourceKind =
   | 'capability-scenario'
   | 'journey-scenario'
   | 'rule'
+  | 'variation'
 
 /** The two Scenario collections are separate kinds, not one kind with a flag. */
 export type ReportScenarioKind = 'capability-scenario' | 'journey-scenario'
@@ -90,6 +93,8 @@ export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
   'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
   'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
   rule: { kind: 'rule', label: 'Business Rule', plural: 'Business Rules', icon: 'i-lucide-scale', slot: 8 },
+  /* The glyph alone marks the collection; a set wears its member type's mark with this as a sub-icon. */
+  variation: { kind: 'variation', label: 'Variation', plural: 'Variations', icon: 'i-lucide-split', slot: 10 },
   /* Product is the Overview, and the Overview is where a reader lands and returns. */
   product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-house', slot: 9 }
 }
@@ -172,15 +177,41 @@ export interface EntryPointView {
   key: string
 }
 
-export interface VariationView {
-  anchorId: string
-  kind: 'experiment' | 'configuration' | 'version'
-  usage: NonNullable<ReportInterface['variationUsage']>
+export type VariationKind = ReportVariation['kind']
+
+/** An alternative's own part of a Variation: its set, and what selects it. */
+export interface MemberVariationView {
+  /** The set's key and id. */
+  key: ReportResourceKey
+  id: string
+  title: string
+  kind: VariationKind
+  selectedWhen: string
+  /** A Version's label; null on every other subtype. */
+  label: string | null
+}
+
+export interface VariationAlternativeView {
+  key: ReportResourceKey
+  id: string
+  selectedWhen: string
+  label: string | null
+}
+
+/** Report view kind for each authored member type. */
+export const VARIATION_MEMBER_KIND: Record<ReportVariation['of'], ReportResourceKind> = {
+  interface: 'interface',
+  experience: 'experience',
+  screen: 'screen',
+  entity: 'entity',
+  capability: 'capability',
+  journey: 'journey',
+  'business-rule': 'rule'
 }
 
 interface ResourceBase {
-  /** Present only for a member of a validated Variation set. */
-  variation?: VariationView
+  /** Present only on an alternative in a Variation. */
+  variation?: MemberVariationView
 
   key: ReportResourceKey
   id: string
@@ -548,7 +579,25 @@ export interface RuleView extends ResourceBase {
   appliesTo: ReportBusinessRuleTarget[]
 }
 
+/** A named set of same-type alternatives. Selection is written once, here. */
+export interface VariationSetView extends ResourceBase {
+  kind: 'variation'
+  variationKind: VariationKind
+  /** The one resource kind every alternative has. */
+  memberKind: ReportResourceKind
+  alternatives: VariationAlternativeView[]
+  takesEffect: string
+  stability: string
+  assignmentUnit: ReportVariation['assignmentUnit']
+  assignmentMethod: string | null
+  assignmentFact: ReportVariation['assignmentFact']
+  allocation: string | null
+  settings: ReportVariation['settings']
+  discriminator: ReportVariation['discriminator']
+}
+
 export type AnyResourceView =
+  | VariationSetView
   | InterfaceView
   | ExperienceView
   | ScreenView
@@ -596,6 +645,7 @@ export interface WorkspaceCounts {
   journeyScenarios: number
   scenarios: number
   rules: number
+  variations: number
   /** Derived depth measures the counts block never carries. */
   steps: number
   decisionPoints: number
@@ -632,6 +682,7 @@ export interface ReportWorkspace {
   journeyScenarios: ScenarioView[]
   scenarios: ScenarioView[]
   rules: RuleView[]
+  variations: VariationSetView[]
   /** Every distinct Context declared or derived in the model. */
   contexts: ContextView[]
   /** All references in the model, each tagged with the resource that owns it. */
@@ -779,7 +830,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV15): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV16): ReportWorkspace {
   const model = report.model
   const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
@@ -1032,12 +1083,17 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     for (const entityId of relations.entityIds) push(rulesByEntity, entityId, rule.id)
   }
 
-  const variationOf = (resource: ReportInterface | ReportExperience | ReportScreen | ReportEntity | ReportCapability | ReportJourney | ReportBusinessRule, collection: { id: string, variationKind: VariationView['kind'] | null }[]): VariationView | undefined => {
-    if (resource.variationUsage === null) return undefined
-    const anchorId = resource.variantOfId ?? resource.id
-    const kind = collection.find(item => item.id === anchorId)?.variationKind
-    return kind ? { anchorId, kind, usage: resource.variationUsage } : undefined
+  /* A Rule in a Variation is conditional; membership lives only on the set. */
+  const membership = reportVariationMembership(model)
+  const variationById = new Map(model.variations.map(variation => [variation.id, variation]))
+  const variationOf = (collection: string, id: string): MemberVariationView | undefined => {
+    const set = variationById.get(membership.get(`${collection}:${id}`) ?? '')
+    const alternative = set?.alternatives.find(item => item.resourceId === id)
+    return set && alternative
+      ? { key: resourceKey('variation', set.id), id: set.id, title: set.title, kind: set.kind, selectedWhen: alternative.selectedWhen, label: alternative.label }
+      : undefined
   }
+
 
   const interfaces: InterfaceView[] = model.interfaces.map((item: ReportInterface) => {
     const experienceIds = experiencesByInterface.get(item.id) || []
@@ -1046,7 +1102,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
       key: resourceKey('interface', item.id),
-      variation: variationOf(item, model.interfaces),
+      variation: variationOf('interfaces', item.id),
       id: item.id,
       kind: 'interface',
       title: item.title,
@@ -1077,7 +1133,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const capabilityIds = model.capabilities.filter(c => declares(c.availability)).map(c => c.id)
     return {
       key: resourceKey('experience', item.id),
-      variation: variationOf(item, model.experiences),
+      variation: variationOf('experiences', item.id),
       id: item.id,
       kind: 'experience',
       title: item.title,
@@ -1112,7 +1168,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       .sort(byIndex(journeyIndex))
     return {
       key: resourceKey('screen', screen.id),
-      variation: variationOf(screen, model.screens),
+      variation: variationOf('screens', screen.id),
       entityIds: screen.entities.map(entry => entry.entityId),
       entities: screen.entities.map(entry => ({ entityId: entry.entityId, shows: entry.shows, collects: entry.collects })),
       id: screen.id,
@@ -1276,7 +1332,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
   /* A Rule closing an operation to everyone: the arc is drawn as forbidden, since no Capability may make it. */
   const rulesForbidding = (entityId: string, effect: string, from: string, to: string) =>
     model.businessRules
-      .filter(rule => rule.variationUsage === null && rule.permits !== null && rule.permits.length === 0
+      .filter(rule => !membership.has(`businessRules:${rule.id}`) && rule.permits !== null && rule.permits.length === 0
         && rule.appliesTo.some(target => target.type === 'entity' && targetSelects(target, entityId, effect, from, to)))
       .map(rule => rule.id)
 
@@ -1295,7 +1351,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     }))
     const produced = new Set(arcs.map(arc => arc.to).filter(Boolean))
     const prohibitions: EntityProhibitionView[] = model.businessRules
-      .filter(rule => rule.variationUsage === null && rule.permits !== null && rule.permits.length === 0)
+      .filter(rule => !membership.has(`businessRules:${rule.id}`) && rule.permits !== null && rule.permits.length === 0)
       .flatMap(rule => rule.appliesTo
         .filter((target): target is Extract<ReportBusinessRuleTarget, { type: 'entity' }> =>
           target.type === 'entity' && target.entityId === entity.id)
@@ -1305,7 +1361,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       .map(rule => rule.id)
     return {
       key: resourceKey('entity', entity.id),
-      variation: variationOf(entity, model.entities),
+      variation: variationOf('entities', entity.id),
       id: entity.id,
       kind: 'entity' as const,
       title: entity.title,
@@ -1414,7 +1470,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const entityIds = [...effects.keys()].sort()
     return {
       key: resourceKey('capability', capability.id),
-      variation: variationOf(capability, model.capabilities),
+      variation: variationOf('capabilities', capability.id),
       id: capability.id,
       entityIds,
       readEntityIds: [...readIds].filter(id => !effects.has(id)).sort(),
@@ -1479,7 +1535,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
       key: resourceKey('journey', journey.id),
-      variation: variationOf(journey, model.journeys),
+      variation: variationOf('journeys', journey.id),
       id: journey.id,
       kind: 'journey',
       title: journey.title,
@@ -1661,7 +1717,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       grants: (rule.permits ?? []).map(grant => describeGrant(grant, targetId)),
       prohibits: rule.permits !== null && rule.permits.length === 0,
       key: resourceKey('rule', rule.id),
-      variation: variationOf(rule, model.businessRules),
+      variation: variationOf('businessRules', rule.id),
       id: rule.id,
       kind: 'rule',
       title: rule.title,
@@ -1688,6 +1744,36 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     }
   })
 
+  const variations: VariationSetView[] = model.variations.map(variation => {
+    const memberKind = VARIATION_MEMBER_KIND[variation.of]
+    return {
+      key: resourceKey('variation', variation.id),
+      id: variation.id,
+      kind: 'variation' as const,
+      title: variation.title,
+      lead: variation.description,
+      intent: variation.intent,
+      supportingContent: supportingMarkdown(variation.supportingSections),
+      references: variation.references,
+      variationKind: variation.kind,
+      memberKind,
+      alternatives: variation.alternatives.map(item => ({
+        key: resourceKey(memberKind, item.resourceId),
+        id: item.resourceId,
+        selectedWhen: item.selectedWhen,
+        label: item.label
+      })),
+      takesEffect: variation.takesEffect,
+      stability: variation.stability,
+      assignmentUnit: variation.assignmentUnit,
+      assignmentMethod: variation.assignmentMethod,
+      assignmentFact: variation.assignmentFact,
+      allocation: variation.allocation,
+      settings: variation.settings,
+      discriminator: variation.discriminator
+    }
+  })
+
   const allResources: AnyResourceView[] = [
     ...entities,
     ...interfaces,
@@ -1697,7 +1783,8 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     ...capabilities,
     ...journeys,
     ...scenarios,
-    ...rules
+    ...rules,
+    ...variations
   ]
 
   const references: ReferenceGroup[] = [
@@ -1756,6 +1843,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     journeyScenarios: model.journeyScenarios.length,
     scenarios: allReportScenarios.length,
     rules: model.businessRules.length,
+    variations: model.variations.length,
     steps: allReportScenarios.reduce((total, item) => total + item.steps.length, 0),
     decisionPoints: allReportScenarios.reduce((total, item) => total + item.decisionPoints.length, 0),
     branches: allReportScenarios.reduce(
@@ -1837,6 +1925,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     journeyScenarios,
     scenarios,
     rules,
+    variations,
     contexts: [...contextSeen.values()].sort((left, right) =>
       left.interfaceId.localeCompare(right.interfaceId) || left.experienceId.localeCompare(right.experienceId)),
     references,

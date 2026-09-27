@@ -38,7 +38,8 @@ A representative model looks like this:
 ├── journeys/<id>/                           # optional collection
 │   ├── journey.md
 │   └── scenarios/<id>.md
-└── business-rules/<id>.md                   # optional collection
+├── business-rules/<id>.md                   # optional collection
+└── variations/<id>.md                       # optional collection
 ```
 
 Use `<id>.md` while a resource has no assets or child resources. When it gains the
@@ -64,6 +65,7 @@ Use these exact compact and expanded paths:
 | Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
+| Variation | `variations/<id>.md` | `variations/<id>/variation.md` | — |
 
 Here `<screen-parent>` is the Interface, Experience or expanded Screen folder
 that contains the Screen: Screens nest, to any depth. There is no `actors/`
@@ -97,7 +99,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 10` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 11` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, `languages`, H1, lead description, and optional
   `## Intent`. `summary` is one line of at most 400 characters, `category` is
@@ -133,9 +135,9 @@ not contain another H1 or H2.
   `access` (`public|authenticated|restricted`); optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
   There is no `version` or `capabilityBoundary`. Disjoint audiences require
-  division; distinct access modes, counterparts or valid Variation links justify
-  existing Experiences. Variations follow the shared contract below and may
-  link Experiences across Interfaces without changing ownership.
+  division; distinct access modes, counterparts or membership in a Variation
+  justify existing Experiences. A Variation may span Interfaces without
+  changing ownership.
   Their Actor union equals the Interface's Actors.
 - Capability: at least one `availability` Context; optional singular `domain`;
   H1 and lead description. **It declares nothing about Entities** — what it
@@ -450,7 +452,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 10 it
+Context is the single model concept for where behavior applies. In schema 11 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
@@ -559,81 +561,87 @@ Documentation: https://businesslens.io
 
 ## Variations
 
-A Variation is a currently supported alternative form of an Interface,
-Experience, Screen, Entity, Capability, Journey or Business Rule. Product,
-Domain and both Scenario types do not support Variation metadata.
-
-The anchor declares `variationKind: experiment | configuration | version` and
-has at least one incoming `variantOf`. Every other member declares `variantOf`
-naming that anchor in the same resource collection, using full qualified place
-ids. Linked members do not repeat the subtype. No self-links, chains, cycles,
-missing targets, cross-type links or orphan metadata are allowed.
-
-Every member, including the anchor, declares `variationUsage`. This replaces
-`## When used`; that heading is reserved and rejected on all resources. The
-usage block is the sole owner of applicability. It is forbidden outside a set.
-Its required shared fields are non-empty Markdown fragments without H1/H2:
-
-| Field | Meaning |
-| --- | --- |
-| `selectedWhen` | Eligibility and the choice selecting this member, including missing/unsupported choices, defaults and precedence where relevant |
-| `takesEffect` | When selection is made or re-evaluated, including changes during use |
-| `stability` | How long the choice remains fixed and what happens to existing clients, sessions or records when it changes |
-
-The resolved subtype determines the additional fields. Unknown or wrong-subtype
-keys are errors. A fact reference is exactly `{ entity: <id>, fact: <name> }`:
-it must resolve to an Entity and one of its Information kept facts.
-
-| Subtype | Additional fields |
-| --- | --- |
-| `experiment` | Required `assignmentUnit`: `{ entity: <id> }` for an existing Entity, otherwise `{ description: <non-empty explanation> }` for an unmodeled unit such as a session. Required `assignmentMethod` explains allocation/assignment. Optional `assignmentFact` references a kept assignment fact. Optional `allocation` describes a known allocation promise. |
-| `configuration` | Optional non-empty `settings` list of distinct fact references naming the effective settings used for selection. When selection uses unrecorded context instead, omit it and identify that context in `selectedWhen`. |
-| `version` | Required non-empty `label`, unique across the set ignoring case. Optional `discriminator` references the kept fact identifying the selected version. Header/path selection is explained in `selectedWhen`; do not invent an Entity to hold it. |
-
-Use a reference whenever the relevant Entity or fact is already modeled. For
-Experiment, the assignment unit is the thing receiving the choice; the assignment
-fact may be held by a different Entity. Neither field asserts an instance-level
-relationship. Do not create Entities solely to populate usage fields. Assignment
-units need not act: a Workspace or Order may receive a variation. Existing Actor
-relationships and permission Rules continue to answer who may use the resource;
-variation usage neither duplicates nor grants permission.
+A Variation is a named set of two or more currently supported alternatives of
+one resource type: Interface, Experience, Screen, Entity, Capability, Journey or
+Business Rule. Product, Domain, both Scenario types and Variation itself cannot
+vary. The set is its own resource, `variations/<id>.md`; alternatives stay
+ordinary, independently complete resources and carry no Variation keys.
 
 ```yaml
-# Source-focused library Experience
-variantOf: reader-mobile::personal-library
-variationUsage:
-  settings: [{ entity: reader, fact: Library assignment }]
-  selectedWhen: Source-focused. Classic or unset selects Personal library; unknown values are rejected.
-  takesEffect: At session start; assignment changes take effect in the next session.
-  stability: Fixed until the session ends.
+# variations/refund-review.md
+kind: configuration          # experiment | configuration | version
+of: business-rule            # the one member type
+settings:
+  - { entity: store-settings, fact: Refund review mode }
+takesEffect: When a refund is requested. A settings change applies to subsequent requests.
+stability: A refund already under review keeps the policy captured when it was requested.
+alternatives:
+  - id: refund-review-standard
+    selectedWhen: Refund review mode is Standard. Missing mode uses Standard.
+  - id: refund-review-strict
+    selectedWhen: Refund review mode is Strict.
+---
+
+# Refund review
+
+Stores choose how strictly refunds are reviewed; both policies are supported.
 ```
+
+The H1 names the choice; the lead says why the alternatives coexist. `## Intent`
+is optional.
+
+**Membership lives only on the set.** `alternatives` lists at least two distinct
+resources of the type `of` names, by that type's ordinary ids (a Screen's full
+`interface::experience::screen`). A resource belongs to at most one Variation.
+Never write `variantOf`, `variationKind`, `variationUsage` or a `## When used`
+section on a resource: those keys are unknown and the heading is reserved and
+rejected. The list is a set; its order means nothing.
+
+**Each selection field has exactly one level.** All text is a non-empty Markdown
+fragment without H1/H2.
+
+| Field | Level | Meaning |
+| --- | --- | --- |
+| `selectedWhen` | alternative | Eligibility and the choice selecting this alternative, including missing/unsupported choices and defaults |
+| `takesEffect` | set | When selection is made or re-evaluated, including changes during use |
+| `stability` | set | How long the choice remains fixed and what happens to existing clients, sessions or records when it changes |
+
+`kind` decides the remaining fields; a field outside the subtype is a `lint`
+error. A fact reference is exactly `{ entity: <id>, fact: <name> }` and must
+resolve to an Entity and one of its Information kept facts.
+
+| `kind` | Set fields | Alternative fields |
+| --- | --- | --- |
+| `experiment` | Required `assignmentUnit` (`{ entity: <id> }`, or `{ description: <text> }` for an unmodeled unit such as a session) and `assignmentMethod`. Optional `assignmentFact` and `allocation`. | — |
+| `configuration` | Optional non-empty `settings`: distinct facts that choose between the alternatives. A fact that only tunes one alternative's behavior is not a setting. | — |
+| `version` | Optional `discriminator`: the kept fact identifying the version. | Required `label`, unique in the set ignoring case. |
 
 The subtype states why alternatives coexist: Experiment evaluates outcomes;
 Configuration selects through a setting or operating context; Version keeps
-contracts/forms live together. Versions selected by a setting remain Version;
-experiments enabled by a setting remain Experiment. Combined mechanisms belong
-in the appropriate usage explanations, not multiple subtypes.
+contracts or forms live together. A version selected by a setting stays
+Version; an experiment enabled by a setting stays Experiment. Header or path
+selection is explained in `selectedWhen`; do not invent an Entity to hold it,
+and do not create Entities solely to fill these fields.
 
-Do not repeat usage in another When used section, selection Rule or descriptive
-paragraph. Constraints shared across behavior remain Business Rules. References
-in usage explain selection only: they imply no availability, containment,
-inheritance, permission, paired children or automatic runtime selection.
+**When a Variation is justified.** Two or more resources of one type are all
+supported now and something decides which applies. Otherwise: a condition inside
+one ability is a Scenario decision point; a parameter value (a threshold, a
+limit) is content of the one resource; phases are Entity States; the same
+Experience on another Interface is a counterpart; a look-only treatment is a
+`visual` Reference. Every alternative is currently supported; none is a
+default, parent or historical version. When one alternative is left, remove the
+Variation and keep still-relevant meaning in ordinary content.
 
-A Business Rule Variation applies only under its usage conditions. Its grants
-and constraints govern only then. A grant's `when` still conditions an Entity
-operation; it cannot select a whole Rule. Lint validates structure and references,
-but does not evaluate applicability or treat all Rule alternatives as applicable.
+A Variation is a relation, never containment: folders, Domains, Experience
+ownership, Screen nesting and Scenario parents stay as they are, and Rule
+targets, Steps and Contexts keep naming concrete resources. Membership justifies
+Experiences that would otherwise flatten. A Business Rule that is an
+alternative applies only while selected, never unconditionally. A Variation
+grants no permission. An Entity that is an assignment unit or holds a fact a
+Variation chooses by is not an orphan.
 
-All members are independently complete and currently supported. The anchor is
-not a default, parent or historical version. Do not create alternatives for every
-parameter value, Scenario outcome or visual treatment. Remove metadata when a
-set has only one member left; preserve still-relevant meaning in ordinary content.
-
-Do not invent settings, allocations, defaults or timing. Unknown behavior stays
-explicitly unresolved and is recorded in Coverage. Structural checks cannot
-prove conditions exhaustive, resolve conflicts in prose, verify promised
-allocation, or establish deterministic resource granularity. No condition engine,
-experiment infrastructure, historical archive or dedicated Cohort type is added.
-
-An Entity used as a typed assignment unit or selection fact source is not an
-orphan: the usage reference supplies a concrete role in Product behavior.
+**Evidence, not invention.** Record only selection the evidence or approved
+intent establishes. Unknown settings, allocations, defaults or timing stay out
+of the file and are recorded as unresolved in Coverage. `lint` validates
+structure and references; it cannot prove conditions exhaustive or granularity
+deterministic.

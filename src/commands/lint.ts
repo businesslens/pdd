@@ -1,4 +1,7 @@
-import { variationIssues, variationEntityReferences, VARIATION_COLLECTIONS } from '../core/variations.js'
+import {
+  variationIssues, variationEntityReferences, variationMembership, VARIATION_COLLECTION_OF, VARIATION_COLLECTIONS,
+  type VariationCollection
+} from '../core/variations.js'
 import { undeclaredEntityMentions } from '../core/entity-mentions.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
@@ -40,6 +43,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const errors = [...model.issues]
   const warnings: string[] = [...model.notices]
   const tracked = new Set(trackedFiles)
+  /* Member key (`<collection>:<id>`) → Variation. Membership lives on the set. */
+  const variationOf = variationMembership(model.variations)
 
   const requireTitle = (label: string, title: string, lead: string) => {
     if (!title) errors.push(`${label}: missing H1 title`)
@@ -87,12 +92,17 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  const variationMembers = Object.fromEntries(Object.values(VARIATION_COLLECTION_OF)
+    .map(collection => [collection, new Set(model[collection].map(item => item.id))])) as Record<VariationCollection, Set<string>>
+  for (const issue of variationIssues(model.variations, { members: variationMembers, entities: model.entities })) {
+    errors.push(`${model.variations.find(variation => variation.id === issue.id)!.file}: ${issue.message}`)
+  }
+  for (const variation of model.variations) {
+    requireTitle(variation.file, variation.doc.title, variation.doc.lead)
+    validateSections(variation.file, variation.doc, ['Intent'], ['When used'])
+  }
   for (const collection of VARIATION_COLLECTIONS) {
-    const resources = model[collection]
-    for (const issue of variationIssues(resources, model.entities)) {
-      errors.push(`${resources.find(resource => resource.id === issue.id)!.file}: ${issue.message}`)
-    }
-    for (const resource of resources) validateSections(resource.file, resource.doc, [], ['When used'])
+    for (const resource of model[collection]) validateSections(resource.file, resource.doc, [], ['When used'])
   }
   for (const resource of [...model.domains, ...model.capabilityScenarios, ...model.journeyScenarios]) {
     validateSections(resource.file, resource.doc, [], ['When used'])
@@ -454,7 +464,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         other => other.interface !== productInterface.id && other.id.split('::').pop() === localId
       )
     })
-    if (owned.length && !mustDivide && !hasCounterpart && !owned.some(item => item.variantOf !== null)) {
+    if (owned.length && !mustDivide && !hasCounterpart && !owned.some(item => variationOf.has(`experiences:${item.id}`))) {
       errors.push(
         `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability`
       )
@@ -626,8 +636,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
   /* A settings or policy Entity that only Rules read is still in use: a
      condition reads a fact of it, or a grant is gated by it. */
-  const citedByVariation = new Set(VARIATION_COLLECTIONS.flatMap(collection =>
-    model[collection].flatMap(resource => variationEntityReferences(resource.variationUsage))))
+  const citedByVariation = new Set(model.variations.flatMap(variation => variationEntityReferences(variation)))
   const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
     ...(grant.configuredBy ? [grant.configuredBy] : []),
     ...grant.when.flatMap(condition => [
@@ -733,7 +742,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // counts; acting does.
     if (!changedEntities.has(entity.id) && !(presentedOn.get(entity.id) || []).length
       && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id) && !citedByVariation.has(entity.id)) {
-      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation usage references it`)
+      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation chooses by it`)
     }
   }
 
@@ -1520,10 +1529,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * that cite one of its facts and the Screens that list one.
    */
   for (const rule of model.businessRules) {
-    if (rule.variationUsage !== null && rule.permits !== undefined) warnings.push(`${rule.file}: permission applicability is stated in variationUsage; verify selection and permissions against implementation or approved intent (lint cannot evaluate this prose)`)
+    const set = variationOf.get(`businessRules:${rule.id}`)
+    if (set && rule.permits !== undefined) warnings.push(`${rule.file}: permission applicability is stated by Variation "${set}"; verify selection and permissions against implementation or approved intent (lint cannot evaluate this prose)`)
   }
   const permissionRuleResources = model.businessRules.filter(
-    rule => rule.variationUsage === null && rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
+    rule => !variationOf.has(`businessRules:${rule.id}`) && rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
   )
   const permissionTarget = (target: BusinessRuleEntityTarget): PermissionTarget => ({
     entityId: target.id,

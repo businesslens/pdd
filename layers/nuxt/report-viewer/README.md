@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v15 renderer used by `businesslens view` and exported
+The stable Product Report v16 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -314,7 +314,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV15` from `businesslens/report`. There is
+`report` must be a `ProductReportV16` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -377,7 +377,7 @@ nothing else is configurable: the reading and its grouping are decided by the
 report rather than auditioned on every visit.
 
 A collection is one set with shared drawings, selected with `section` and `tab`
-and no resource key. The rail lists Overview and six collections. The filters
+and no resource key. The rail lists Overview and seven collections. The filters
 narrow the collection, and a dropdown beside them changes how
 that set is drawn. Its preview cards name each view and explain it with a short
 subtitle, without a separate help button or About section. The picker stays at
@@ -661,60 +661,63 @@ access, tooltips, saved state, utilities and the independent mobile drawer.
 
 
 Check the collection preview picker against a running local viewer with
-`node scripts/check-collection-views.mjs <viewer-url>`. This covers all six
+`node scripts/check-collection-views.mjs <viewer-url>`. This covers all seven
 collections, desktop and phone layouts, subtitles without About, saved filters,
 keyboard selection and the fixed position beside the legend.
 
 ## Variations
 
-Interfaces, Experiences, Screens, Entities, Capabilities, Journeys and Business
-Rules share one relationship reading. Cards and tree rows show the shared subtype
-and a linked total count, including the resource itself. The link opens that
-resource's Variations tab without changing the working view or tree expansion.
-This presentation is the same for two or many members.
-On cards it is a muted subtitle directly beneath the resource title, before
-the description: `Configuration · View 2 variations`. It has no separate badge,
-divider or footer. A conditional Business Rule includes `Applies conditionally`
-in that subtitle. The card's resource link and its Variations link are separate
-keyboard targets; the subtitle never nests a link inside another link or button.
-Tree rows use the same explicit `View N variations` action beneath their name.
+A Variation is a resource: a named set of same-type alternatives with how one
+is chosen written once on the set. It has its own rail collection, **Variations**,
+marked with the variation glyph. Its rows group by the type each set varies —
+Interfaces, Screens, Business Rules and so on — and show the set's mark, name,
+subtype pill, purpose, alternatives and what chooses between them (`Chosen by`,
+`Assigned per` or `Discriminator`). The collection has Rows only: a set has no
+derivation of its own to draw.
 
-Overview reads the resource's own structured When used with its vocabulary-linked subtype
-and a link to all members, together in a bordered box beneath the heading.
-The Variations tab sits before Connections and shows
-all members in title order, with key as the tie-breaker. It states the shared
-subtype and that the count includes this resource. Only the inspected member is
-marked Current; the anchor has no preferred position or default label.
+**A set reads as the type it varies.** Its mark is the member type's mark with
+the variation sub-icon in the corner the viewer badges an Interface's type or an
+Entity's facet with (`BlrVariationMark`, through `BlrKind`'s `memberKind`). On
+an Interface set the sub-icon takes the type's corner; each alternative keeps
+its own type where it is read. The reading's subtitle names it the same way:
+`Business Rule variation`.
 
-Each member offers its name and expandable When used. The usage reading shows
-linked settings, assignment units/facts or version discriminators, followed by
-Selected when, Takes effect and Stability. Subtype fields retain their own labels.
-Selection references use the standard Entity chip; a referenced Information kept
-fact appears separately as a vocabulary-linked Field label and the standard
-fact badge. Reference labels, Entity chips and field badges align vertically.
-Links open the referenced Entity; Connections includes the selection references
-in both directions without deriving availability or permission. Ownership appears when
-members have different containers. Descriptions, access badges and reach metrics
-stay in each member's own reading. The current member's conditions start open;
-multiple members may be expanded. Expansion survives peer navigation, tab changes,
-refresh and valid recompilation. Member links open Overview; Back restores the
-previous tab and reading position. Phones use the same stacked rows.
+**The pill on the title.** Wherever a set or an alternative is named — a row, a
+tree node, a reading header — its title carries a pill (`BlrVariationPill`). A
+set's says its subtype and size (`Configuration · 2 alternatives`); an
+alternative's names its set (`Refund review`), or a Version's set and label
+(`Payment webhook contract · v2`). There are no position numbers: alternatives
+are a set. Pressing the pill opens a switcher: the set and what chooses, every
+alternative with its condition and the one being read marked, and the set
+itself. Picking an alternative opens it on the same tab. The pill is its own
+button beside the row's full-card link, never inside it.
 
-Also on remains in Overview. Connections retains the complete relationship list.
-Variations neither change ownership nor inflate tree expansion counts. There is
-no separate report collection or comparison drawing.
+**Where alternatives meet, they are one row.** `collapseVariations` replaces two
+or more alternatives of one set in a list with the set's row, at the first one's
+place; a lone alternative keeps its own row with its pill. This applies to every
+collection list and to the Business Rules tab. Heading counts stay concrete —
+`Business Rules 14` while thirteen rows show. A set row never expands. Trees are
+the exception: `foldVariations` puts sibling alternatives under one set node,
+which expands to them because each keeps its own children; a group's count
+stays concrete, and a closed row's summary never counts the set node.
 
-The vocabulary has a dedicated Variations group for Variation, Experiment,
-Configuration, Version and When used. Definitions remain sourced from Model
-overview. Usage fields describe meaning, not an executable selector. Rule cards
-label conditional applicability, with full conditions in the Rule reading;
-lifecycle prohibition marks remain for unconditional prohibitions only.
-Conditional Rule restrictions remain reachable through Rule and fact readings.
-No runtime permissions or selection decisions are inferred from applicability prose.
+**Readings.** A Variation's Overview carries its purpose and **How one is
+chosen** (`BlrVariationSelection`): the Entities and facts it chooses by, any
+assignment, Takes effect and Stability. Its Alternatives tab reads each
+alternative in its own words with its label and Selected when, and where each
+sits when owners differ. An alternative's Overview carries **How this one is
+chosen** (`BlrVariationChoice`): what chooses and its own condition, with a link
+to the set for timing and stability. There is no Variations tab on an
+alternative. Connections reads a set's Alternatives and what it chooses by
+(`chooses by setting: …`), and an alternative's `alternative in` its set —
+never alternatives to each other.
 
-Check the two-member teaching Blueprint and a synthetic five-member layout with
-`node scripts/check-resource-variations.mjs <viewer-url>`. Set
-`BLR_VARIATION_SCREENSHOTS` to save captures. The check covers direct tab links,
-keyboard activation, member counts and order, condition expansion, Back, refresh,
-Interface Delivery and phone layouts. Synthetic data is injected only into the
-isolated browser context; it does not alter the authored Blueprint.
+A Business Rule that is an alternative is conditional: its lifecycle
+prohibitions are never drawn as unconditional, and its fact badges read
+`Conditional Rule`. Also on keeps its own meaning. Drawings keep concrete
+nodes, rows and columns.
+
+Check it against the Fixture Shop with `node scripts/check-variations.mjs
+<viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the
+collection, set rows in a list and a tab, the switcher by keyboard, switching
+alternatives, the set's readings, Escape, the tree and phone width.

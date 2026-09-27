@@ -14,6 +14,7 @@ import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/repor
 import type { ResourceCardMetric } from '../utils/resourceCards'
 import { resourceCardPresentation } from '../utils/resourceCards'
 import { slotColor } from '../utils/reportPalette'
+import { variationChooser } from '../utils/variations'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -35,7 +36,9 @@ const props = withDefaults(defineProps<{
   /** False where the row is read from another resource's side, and the
       resource's own reach would describe it rather than the relation. */
   metrics?: boolean
-}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0, metrics: true })
+  /** False inside a surface that already names the row's Variation. */
+  pill?: boolean
+}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0, metrics: true, pill: true })
 
 const navigation = inject(resourceNavigationKey, null)
 const href = computed(() => props.expandable ? undefined : navigation?.href(props.resource.key))
@@ -53,6 +56,11 @@ const presentation = computed(() => {
   return props.hook ? { ...own, hookLabel: props.hookLabel ?? own.hookLabel, hook: props.hook } : own
 })
 const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)
+/* A row with its own button — the Variation pill — keeps its link as a full-card
+   target beside it, never around it. */
+const hasPill = computed(() => props.pill && (props.resource.kind === 'variation' || Boolean(props.resource.variation)))
+const memberKind = computed(() => props.resource.kind === 'variation' ? props.resource.memberKind : undefined)
+const chooser = computed(() => props.resource.kind === 'variation' ? variationChooser(props.workspace, props.resource) : undefined)
 const interfaceType = computed(() => props.resource.kind === 'interface' ? props.resource.interfaceType : undefined)
 const facet = computed(() => entityFacetOf(props.resource))
 const acts = computed(() => props.resource.kind === 'entity' ? props.resource.acts ?? undefined : undefined)
@@ -88,34 +96,36 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
 <template>
   <div class="relative">
   <component
-    :is="resource.variation ? 'div' : href ? 'a' : 'button'"
-    :href="resource.variation ? undefined : href"
-    :type="resource.variation || href ? undefined : 'button'"
+    :is="hasPill ? 'div' : href ? 'a' : 'button'"
+    :href="hasPill ? undefined : href"
+    :type="hasPill || href ? undefined : 'button'"
     :data-resource-key="resource.key"
     class="blr-resource-row group relative flex w-full items-center gap-4 overflow-hidden rounded-[0.625rem] border bg-default px-4 py-3 text-start transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     :class="[active ? 'border-primary bg-primary/5' : expandable ? 'border-default hover:bg-elevated' : 'border-default hover:border-accented hover:bg-elevated/40']"
-    :aria-label="resource.variation ? undefined : expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
-    :aria-expanded="!resource.variation && expandable ? open : undefined"
+    :aria-label="hasPill ? undefined : expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
+    :aria-expanded="!hasPill && expandable ? open : undefined"
     @click="activate"
   >
     <!-- A separate full-card target preserves native link behavior without
          nesting the subtitle link inside another link or button. -->
-    <component v-if="resource.variation" :is="href ? 'a' : 'button'" :href="href" :type="href ? undefined : 'button'" :data-resource-key="resource.key"
+    <component v-if="hasPill" :is="href ? 'a' : 'button'" :href="href" :type="href ? undefined : 'button'" :data-resource-key="resource.key"
       class="absolute inset-0 rounded-[inherit] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
       :aria-label="expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
       :aria-expanded="expandable ? open : undefined" data-card-primary @click.stop="activate" />
-    <span class="flex min-w-0 flex-1 items-start gap-3" :class="resource.variation && 'pointer-events-none relative'">
+    <span class="flex min-w-0 flex-1 items-start gap-3" :class="hasPill && 'pointer-events-none relative'">
       <BlrKind
         :kind="resource.kind"
         :interface-type="interfaceType"
         :facet="facet"
         :acts="acts"
+        :member-kind="memberKind"
         :labelled="false"
         class="mt-0.5 pointer-events-auto"
       />
       <span class="min-w-0 flex-1">
         <span class="flex min-w-0 items-center gap-2">
           <span class="truncate text-[15px] font-semibold tracking-tight text-highlighted">{{ resource.title }}</span>
+          <BlrVariationPill v-if="hasPill" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
           <UBadge
             v-if="badge && presentation.badge"
             color="neutral"
@@ -126,9 +136,6 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
             {{ presentation.badge }}
           </UBadge>
         </span>
-        <BlrVariationLink v-if="resource.variation" :workspace="workspace" :resource="resource" class="pointer-events-auto relative mt-1 mb-1" @open="emit('open', $event)">
-          <span v-if="resource.kind === 'rule'" class="whitespace-nowrap" data-conditional-rule>· Applies conditionally</span>
-        </BlrVariationLink>
         <span v-if="resource.lead" class="mt-0.5 block truncate text-sm leading-5 text-default">{{ resource.lead }}</span>
         <!-- The discriminating fact. Absent rather than empty when there is none. -->
         <span v-if="presentation.hook" class="mt-1 flex min-w-0 items-baseline gap-1.5">
@@ -136,6 +143,11 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
           <!-- A surface may draw the hook itself, e.g. an operation with its badges; the text stays the fallback. -->
           <span v-if="$slots.hook" class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 text-xs font-medium text-muted"><slot name="hook" /></span>
           <span v-else class="truncate text-xs font-medium text-muted">{{ presentation.hook }}</span>
+        </span>
+        <!-- A set also says what chooses between its alternatives. -->
+        <span v-if="chooser" class="mt-0.5 flex min-w-0 items-baseline gap-1.5" data-variation-chooser>
+          <span class="shrink-0 text-xs text-dimmed">{{ chooser.label }}</span>
+          <span class="truncate text-xs font-medium text-muted">{{ chooser.text }}</span>
         </span>
         <!-- Stacked: the same metrics, under the title, where a narrow column
              has no room beside it. -->
@@ -148,7 +160,7 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
       </span>
     </span>
 
-    <span class="shrink-0 items-center gap-4" :class="[stacked ? 'hidden' : 'hidden lg:flex', resource.variation && 'pointer-events-none relative']">
+    <span class="shrink-0 items-center gap-4" :class="[stacked ? 'hidden' : 'hidden lg:flex', hasPill && 'pointer-events-none relative']">
       <UTooltip
         v-for="metric in presentation.metrics"
         :key="metric.label"

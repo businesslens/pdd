@@ -90,9 +90,9 @@ describe('vocabulary lookup', () => {
     expect(pages.find(page => page.page === 'interfaces').items.map(item => item.slug))
       .toEqual(expect.arrayContaining(['experience', 'access-mode', 'screen', 'navigation', 'child-screen']))
     expect(pages.find(page => page.page === 'variations').items.map(item => item.slug))
-      .toEqual(['experiment', 'configuration', 'version', 'when-used'])
+      .toEqual(['alternative', 'experiment', 'configuration', 'version'])
     expect(pages.find(page => page.page === 'variations').title).toBe('Variations')
-    expect(termHref('variation', '/docs')).toBe('/docs/product-model#variations')
+    expect(termHref('variation', '/docs')).toBe('/docs/variations')
     expect(pages.find(page => page.page === 'capabilities').items.map(item => item.slug))
       .toContain('capability-scenario-trigger')
     expect(pages.find(page => page.page === 'journeys').items.map(item => item.slug))
@@ -101,13 +101,13 @@ describe('vocabulary lookup', () => {
 
   it('leads every section with the term it is named for, and never repeats it as a row', () => {
     expect(VOCABULARY_PAGES.map(page => page.lead.slug)).toEqual([
-      'product', 'variation', 'entity', 'interface',
-      'domain', 'capability', 'journey', 'business-rule', 'reference'
+      'product', 'entity', 'interface', 'domain',
+      'capability', 'journey', 'business-rule', 'variation', 'reference'
     ])
     expect(VOCABULARY_PAGES.every(page => !page.items.some(item => item.slug === page.lead.slug))).toBe(true)
   })
 
-  it('separates Variations from general Product terms while retaining their documentation owner', () => {
+  it('keeps Product terms apart and lets Variations own their page', () => {
     const product = VOCABULARY_PAGES[0]
     expect(product.page).toBe('product')
     expect(product.lead.slug).toBe('product')
@@ -115,14 +115,14 @@ describe('vocabulary lookup', () => {
       'product-model', 'intent', 'coverage', 'resource-type'
     ])
     expect(VOCABULARY_PAGES.some(page => page.page === 'product-model')).toBe(false)
-    const variations = VOCABULARY_PAGES[1]
-    expect(variations.page).toBe('variations')
-    for (const item of [variations.lead, ...variations.items]) {
-      expect(vocabularySection(item.slug)).toBe('variations')
-    }
-    for (const item of [...product.items, variations.lead, ...variations.items]) {
+    for (const item of product.items) {
       expect(item.page).toBe('product-model')
       expect(termHref(item.slug)).toContain('/product-model#')
+    }
+    const variations = VOCABULARY_PAGES.find(page => page.page === 'variations')
+    for (const item of [variations.lead, ...variations.items]) {
+      expect(vocabularySection(item.slug)).toBe('variations')
+      expect(termHref(item.slug)).toContain('/variations')
       expect(results(item.term)[0].slug).toBe(item.slug)
     }
   })

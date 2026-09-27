@@ -102,7 +102,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
           <UTooltip v-if="previous" :text="`Back to ${previous.title}`">
             <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${previous.title}`" @click="save(); emit('back')" />
           </UTooltip>
-          <BlrResourceHeading ref="heading" :workspace="workspace" :resource="resource" @open="open" />
+          <BlrResourceHeading ref="heading" :workspace="workspace" :resource="resource" :tab="tab" @open="open" />
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
             <UTooltip v-for="link in exits" :key="link.section" :text="link.name">
               <UButton :label="link.name" :aria-label="link.name" :icon="link.icon" color="neutral" variant="ghost" size="sm" :ui="{ label: 'blr-resource-action-label text-xs' }" @click="subject && emit('view', link.section, subject)" />

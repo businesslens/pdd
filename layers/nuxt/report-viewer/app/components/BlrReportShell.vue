@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { destinationForSection, destinationForLocation, graphForCollection, matrixForCollection, collectionKindFor } from '../utils/reportDestinations'
+import { collapseVariations } from '../utils/variations'
 import { resourceNavigationKey, resourceOpenerKey } from '../utils/resourceNavigation'
 import { referenceNavigationKey, localReferenceHref } from '../utils/referenceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
@@ -209,7 +210,8 @@ const kindCounts = computed<Record<ReportResourceKind, number>>(() => ({
   journey: props.workspace.counts.journeys,
   'capability-scenario': props.workspace.counts.capabilityScenarios,
   'journey-scenario': props.workspace.counts.journeyScenarios,
-  rule: props.workspace.counts.rules
+  rule: props.workspace.counts.rules,
+  variation: props.workspace.counts.variations
 }))
 
 const facets = computed<FacetSelections>(() => facetState[activeKind.value] ?? {})
@@ -858,8 +860,9 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                    element itself would hold the box open until it unmounts. -->
               <template #content>
                 <div class="space-y-2" :class="grouped && 'border-t border-muted p-2'" :style="rowGrid" data-collection-rows>
+                  <!-- Alternatives that meet in a group read as their set: one row, picked from its pill. -->
                   <BlrResourceCard
-                    v-for="resource in group.resources"
+                    v-for="resource in collapseVariations(workspace, group.resources)"
                     :key="resource.key"
                     :workspace="workspace"
                     :resource="resource"

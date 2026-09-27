@@ -17,7 +17,7 @@ export const REPORT_DESTINATIONS = [
   { section: 'rule-attachments', view: 'rule-attachments', name: 'Rule attachments', label: 'Matrix', icon: 'i-lucide-link-2', rail: 'rule', mode: 'matrix' }
 ] as const
 
-export const MAIN_RESOURCE_KINDS = ['entity', 'interface', 'domain', 'capability', 'journey', 'rule'] as const
+export const MAIN_RESOURCE_KINDS = ['entity', 'interface', 'domain', 'capability', 'journey', 'rule', 'variation'] as const
 export const destinationForSection = (section: string) => REPORT_DESTINATIONS.find(item => item.section === section)
 export const destinationForView = (view: ProductTopologyViewId) => REPORT_DESTINATIONS.find(item => item.view === view)
 export const destinationForLocation = (section: string, tab: string) => REPORT_DESTINATIONS.find(item => item.rail === section && item.mode === tab)

@@ -74,10 +74,12 @@ Read before authoring:
    Capability bridges the Actors its Scenario Steps name). Otherwise it holds no Experiences and availability
    names the Interface directly. `lint` decides
    and reports a violation as an error. Counterparts across Interfaces and
-   valid Variation (`variantOf`) relationships also justify Experiences. For A/B
-   and other Variations, follow the shared format reference: one subtype per set,
-   typed variationUsage on every member, and no inherited content. Use Scenarios for
-   variation in one ability and visual References for design-only alternatives.
+   Experiences that are alternatives in one Variation also justify division. For
+   A/B and other supported alternatives, write one `variations/<id>.md` per the
+   shared format reference: membership only on the set, each selection field
+   once, no keys on the alternatives. Use Scenarios for variation in one ability,
+   plain content for a parameter value, and visual References for design-only
+   alternatives.
    Distinguish durable Capabilities from complete Actor goals. Give every
    Capability per-Capability acceptance. Decide the nouns as deliberately as the
    verbs: create an Entity for a thing an Actor would call *"this one"* and the

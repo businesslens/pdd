@@ -265,6 +265,18 @@ function baseResourceCardPresentation(
         hook: isCapability ? scenario.capabilityTitle : scenario.journeyTitle
       }
     }
+    case 'variation': {
+      /* A set has no reach of its own; its alternatives do. */
+      return {
+        badge: '',
+        metrics: [],
+        hookLabel: 'Alternatives',
+        hook: resource.alternatives
+          .map(item => workspace.byKey.get(item.key)?.title ?? item.id)
+          .sort((a, b) => a.localeCompare(b, 'en'))
+          .join(' · ')
+      }
+    }
     case 'rule': {
       const rule = resource as RuleView
       return {

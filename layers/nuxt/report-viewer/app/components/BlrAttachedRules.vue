@@ -9,17 +9,34 @@
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { attachedRules } from '../utils/topologyTargets'
+import { collapseVariations } from '../utils/variations'
 
 const props = defineProps<{ workspace: ReportWorkspace, resource: AnyResourceView }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const rules = computed(() => attachedRules(props.workspace, props.resource))
+/* Alternatives of one Variation that both name this resource read as their set. */
+const sets = computed(() => {
+  const rows = collapseVariations(props.workspace, rules.value.map(item => item.rule))
+  return new Set(rows.filter(row => row.kind === 'variation').map(row => row.key))
+})
+const rows = computed(() => {
+  const placed = new Set<string>()
+  return rules.value.flatMap((item) => {
+    const setKey = item.rule.variation?.key
+    if (!setKey || !sets.value.has(setKey)) return [{ ...item, set: undefined }]
+    if (placed.has(setKey)) return []
+    placed.add(setKey)
+    return [{ ...item, set: props.workspace.byKey.get(setKey) }]
+  })
+})
 </script>
 
 <template>
   <div v-if="rules.length" class="space-y-2" data-attached-rules>
+    <template v-for="{ rule, hookLabel, hook, parts, set } in rows" :key="set?.key ?? rule.key">
+    <BlrResourceCard v-if="set" :workspace="workspace" :resource="set" :metrics="false" @open="emit('open', $event)" />
     <BlrResourceCard
-      v-for="{ rule, hookLabel, hook, parts } in rules"
-      :key="rule.key"
+      v-else
       :workspace="workspace"
       :resource="rule"
       :hook-label="hookLabel"
@@ -46,5 +63,6 @@ const rules = computed(() => attachedRules(props.workspace, props.resource))
         </template>
       </template>
     </BlrResourceCard>
+    </template>
   </div>
 </template>

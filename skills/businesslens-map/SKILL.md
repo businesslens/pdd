@@ -101,10 +101,12 @@ Read before authoring:
    Scenario Steps name). Otherwise it holds no
    Experiences and availability names the Interface directly. `lint` decides
    and reports a violation as an error. Counterparts across Interfaces and
-   valid Variation (`variantOf`) relationships also justify Experiences. For A/B
-   and other Variations, follow the shared format reference: one subtype per set,
-   typed variationUsage on every member, and no inherited content. Use Scenarios for
-   variation in one ability and visual References for design-only alternatives. Screens are places, authored under the paragraph below.
+   Experiences that are alternatives in one Variation also justify division. For
+   A/B and other supported alternatives, write one `variations/<id>.md` per the
+   shared format reference: membership only on the set, each selection field
+   once, no keys on the alternatives. Use Scenarios for variation in one ability,
+   plain content for a parameter value, and visual References for design-only
+   alternatives. Screens are places, authored under the paragraph below.
    Preserve valid existing meaning in a scoped expansion. **Attach what you
    actually read.**
    `references` is optional in the format, and leaving it empty is the most

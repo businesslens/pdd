@@ -37,9 +37,9 @@ Capabilities, Journeys, their Scenarios, direct Contexts, or an operation on an
 constraint remains reusable and reviewable instead of drifting across several
 files.
 
-This resource family supports [Variations](./product-model.md#variations):
-`variationKind` on the anchor, `variantOf` on other alternatives, and a
-`variationUsage` block on every member.
+Business Rules can be alternatives in a [Variation](./variations.md) — Standard
+and Strict refund review, one selected per store. The Variation says how one is
+chosen; the Rule's own file does not, and such a Rule holds only while selected.
 
 ## When you create one
 

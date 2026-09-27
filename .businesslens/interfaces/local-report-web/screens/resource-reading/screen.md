@@ -12,6 +12,7 @@ entities:
   - { entity: journey, shows: [Actors] }
   - { entity: journey-scenario, shows: [Classification] }
   - { entity: business-rule, shows: [Reach] }
+  - { entity: variation, shows: [Member type] }
 entryPoints:
   - local-report-web: /?s=capability&e=capability:lint-product-model
 references:

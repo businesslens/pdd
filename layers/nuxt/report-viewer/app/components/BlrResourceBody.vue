@@ -278,7 +278,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     -->
     <section v-if="resource.kind === 'rule' && asRule.permits !== null" class="space-y-3" data-rule-grants>
       <h2 class="blr-page-heading"><BlrTerm slug="who-may" /></h2>
-      <p v-if="asRule.variation" class="text-sm text-muted">These permissions apply only under this Rule’s When used conditions.</p>
+      <p v-if="asRule.variation" class="text-sm text-muted">These permissions apply only while this Rule is the selected alternative in {{ asRule.variation.title }}.</p>
       <!-- What may be done: each operation the Rule selects, as the Entity chip and the Steps' State badges. -->
       <ul class="space-y-1.5" data-rule-operations>
         <li v-for="(target, index) in asRule.entityTargets" :key="index" class="text-sm">
