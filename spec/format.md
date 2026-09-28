@@ -446,6 +446,24 @@ selected the same way, usually a Scenario Variation with the same selection.
 Vary an Entity only when the thing itself differs; when only the path it takes
 differs, the Scenarios vary and the Entity keeps every State.
 
+**What selects decides whether it is a Variation.** A Variation chooses by a
+fact that exists to choose — a setting, an experiment assignment, a version
+discriminator — or by the deployment, fixed before the behavior starts. A fact
+that describes the thing the behavior acts on — a page's own editor format, an
+order's own delivery option — is state the behavior meets, and a `condition`
+Step or a decision point reads it, even when an earlier Step or an
+administrator set it.
+A decision point is a choice or branch made during one run; a setting that
+decides the form of the run before it starts selects a Variation. A registration
+setting that requires email confirmation selects which registration Scenario
+runs; the unconfirmed account that sign-in later meets is state.
+
+**A resource that exists only under some alternatives** stays an ordinary
+resource. A Business Rule without `permits` that applies to it states the
+dependency in its lead, naming the Variation and the alternatives it exists
+under: registration exists only while the sign-in method is password. There is
+no field for it, because the Rule already says it and `verify` checks it.
+
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, spelled as that type's ordinary ids — a
 Business Rule's id, or a Screen's qualified `interface::experience::screen`.
@@ -817,7 +835,10 @@ Where authorized operators manage the store and its orders.
 ```
 
 `actors` is a non-empty list of Entities that `acts` — who uses the Experience —
-and every one must be supported by the owning Interface. `access` is required. Optional `entryPoints` key the
+and every one must be supported by the owning Interface. `access` is required,
+and it is the most open the context can be. A setting that closes it — content
+public only while the store allows guests — is a grant's `when` on the
+operations it restricts, never a second Experience holding the same Screens. Optional `entryPoints` key the
 owning Interface only. H1 and lead description are required; `## Intent` is
 optional. There is no `## Capability boundary`, for the reason given on the
 Interface, and one still authored is a `lint` error. There is no `exit` field

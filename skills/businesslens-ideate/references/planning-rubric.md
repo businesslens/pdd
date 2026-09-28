@@ -27,7 +27,9 @@
   Interface directly. `lint` decides and reports a violation as an error;
   Experiences that are alternatives in a Variation, and an Experience whose
   name also exists under another Interface — a counterpart — justify
-  themselves. A
+  themselves. `access` is the most open the context can be; a setting that
+  closes it (content public only while guests are allowed) is a grant's
+  `when`, never a second Experience holding the same Screens. A
   page or command group alone is not an Experience.
 - Screens are optional stable views an Actor reaches: places, decided under
   "Places, not designs" below, never components, layouts or visual variants.
@@ -135,6 +137,19 @@ its authoritative Reference.
   out of stock, payment declined — is Scenario conditions and outcomes; a
   difference only in looks is design. A different address or header alone
   never makes a separate Interface.
+- **What selects.** A Variation chooses by a fact that exists to choose — a
+  setting, an experiment assignment, a version discriminator — or by the
+  deployment, fixed before the behavior starts. A fact describing the thing
+  the behavior acts on is state, read by a `condition` Step or decision point
+  even when someone set it earlier: a page's own editor format is a condition
+  of editing, while the site's sign-in method selects between sign-in
+  Capabilities. A decision point is a choice made during one run; a setting
+  deciding the form of the run before it starts — sign-in that starts at the
+  provider automatically, registration that requires email confirmation —
+  selects Scenario alternatives, while the unconfirmed account sign-in later
+  meets is state. A resource that exists only under some alternatives
+  (registration while the sign-in method is password) stays ordinary; a
+  Business Rule without `permits` applying to it names the Variation.
 - **Variations.** One `variations/<id>.md` per set, per the shared format
   reference: membership only in its `alternatives`; the mechanism,
   `takesEffect` and `stability` once on the set; `selectedWhen` (and a

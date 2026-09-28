@@ -104,9 +104,12 @@ Read before authoring:
    justify themselves. Do not apply a prose test of your own. For
    A/B and other supported alternatives, write one `variations/<id>.md` per the
    shared format reference: membership only on the set, each selection field
-   once, no keys on the alternatives. Use Scenarios for variation in one ability,
-   plain content for a parameter value, and visual References for design-only
-   alternatives. Screens are places, authored under the paragraph below.
+   once, no keys on the alternatives. Vary the smallest resource that contains
+   the difference — two Scenarios of one owner when one Step differs. A setting,
+   assignment, version or deployment fixed before the behavior selects a
+   Variation; state the behavior meets, including a value kept on the thing it
+   acts on, is a Scenario condition. A parameter value is plain content, and a
+   design-only difference is a visual Reference. Screens are places, authored under the paragraph below.
    Preserve valid existing meaning in a scoped expansion. **Attach what you
    actually read.**
    `references` is optional in the format, and leaving it empty is the most
@@ -123,8 +126,9 @@ Read before authoring:
    `shows` from `collects`; Capabilities derive from placed Steps. Step facts
    are exhaustive for reads, changes and creation. Screen ownership follows a
    persistent working context, never merely the act of opening a destination.
-   Use Scenario conditions for behavior variation and grants only for Entity
-   permissions. Keep ordinary copy external; verify exact wording when a Rule
+   Use a grant's `when` only for whether someone may perform an Entity
+   operation, and a Variation, never a condition, when a setting selects the
+   form of the behavior. Keep ordinary copy external; verify exact wording when a Rule
    makes it contractual. Consult the rubric for the boundary cases.
 
 7. **Put what the repository cannot settle to the author, in rounds, before

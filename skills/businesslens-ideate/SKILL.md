@@ -78,9 +78,12 @@ Read before authoring:
    themselves. Do not apply a prose test of your own. For
    A/B and other supported alternatives, write one `variations/<id>.md` per the
    shared format reference: membership only on the set, each selection field
-   once, no keys on the alternatives. Use Scenarios for variation in one ability,
-   plain content for a parameter value, and visual References for design-only
-   alternatives.
+   once, no keys on the alternatives. Vary the smallest resource that contains
+   the difference — two Scenarios of one owner when one Step differs. A setting,
+   assignment, version or deployment fixed before the behavior selects a
+   Variation; state the behavior meets, including a value kept on the thing it
+   acts on, is a Scenario condition. A parameter value is plain content, and a
+   design-only difference is a visual Reference.
    Distinguish durable Capabilities from complete Actor goals. Give every
    Capability per-Capability acceptance. Decide the nouns as deliberately as the
    verbs: create an Entity for a thing an Actor would call *"this one"* and the
@@ -105,8 +108,9 @@ Read before authoring:
    `shows` from `collects`; Capabilities derive from placed Steps. Step facts
    are exhaustive for reads, changes and creation. Screen ownership follows a
    persistent working context, never merely the act of opening a destination.
-   Use Scenario conditions for behavior variation and grants only for Entity
-   permissions. Keep ordinary copy external; verify exact wording when a Rule
+   Use a grant's `when` only for whether someone may perform an Entity
+   operation, and a Variation, never a condition, when a setting selects the
+   form of the behavior. Keep ordinary copy external; verify exact wording when a Rule
    makes it contractual. Consult the rubric for the boundary cases.
 
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,

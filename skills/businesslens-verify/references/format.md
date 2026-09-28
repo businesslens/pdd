@@ -132,7 +132,9 @@ not contain another H1 or H2.
   calling Capability, give that Capability an availability Context for where
   the Actor observes the result, and make its failure a Capability Scenario.
 - Experience: non-empty `actors` supported by the owning Interface; required
-  `access` (`public|authenticated|restricted`); optional Interface-keyed
+  `access` (`public|authenticated|restricted`), the most open the context can
+  be — a setting that closes it is a grant's `when` on the operations it
+  restricts, never a second Experience with the same Screens; optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
   `## Capability boundary` is an error. Disjoint audiences require
   division; distinct access modes, counterparts or membership in a Variation
@@ -240,8 +242,10 @@ not contain another H1 or H2.
   operation are AND, and an operation no permission Rule selects is open. A
   Rule with `permits` targets Entities only. Every grant names a who — one of
   `actors` (Entities that act), `related` (a path of `{ verb, entity }`
-  segments from the targeted Entity, walking relations and their inverses,
-  ending on an Entity that acts), `self: true` (the instance itself),
+  segments from the Rule's one Entity target, walking relations and their
+  inverses, ending on an Entity that acts; a Rule using it, a defaulted `fact`
+  or a `state` condition has exactly one Entity target, so split a Rule that
+  needs more), `self: true` (the instance itself),
   `unattended: true` (the Product's own schedule), `configuredBy` (an Entity
   holding customer configuration) — plus optional `when`, a list of AND-ed
   conditions, each `{ fact, <operator>: value }` with one of
@@ -616,6 +620,18 @@ or States kept: Entities. A Step is never an alternative. Steps, Screens and
 Rules name one concrete alternative, so a varying Entity carries into the
 Scenarios that touch it, selected the same way; when only the path differs, vary
 the Scenarios and keep one Entity with every State.
+
+**What selects decides it.** A Variation chooses by a fact that exists to
+choose — a setting, an experiment assignment, a version discriminator — or by
+the deployment, fixed before the behavior starts. A fact describing the thing
+the behavior acts on (a page's own editor format) is state: a `condition` Step
+or decision point reads it, even when someone set it earlier. A decision point
+is a choice made during one run; a setting deciding the form of the run before
+it starts selects a Variation. A registration setting requiring email
+confirmation selects the registration Scenario; the unconfirmed account sign-in
+later meets is state. A resource that exists only under some alternatives
+(registration while the sign-in method is password) stays ordinary, and a
+Business Rule without `permits` applying to it names the Variation in its lead.
 
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.

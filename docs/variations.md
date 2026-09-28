@@ -71,6 +71,23 @@ Scenario that creates a VAT invoice and the one that creates a sales tax receipt
 are themselves alternatives, selected the same way. That is why an Entity
 varies only when the thing itself differs.
 
+### What selects decides it
+
+A Variation chooses by a fact that exists to choose — a setting, an experiment
+assignment, a version discriminator — or by the deployment, fixed before the
+behavior starts. A fact that describes the thing being worked on is state the
+behavior meets: a page's own editor format is read by a `condition` Step, even
+though someone set it earlier. A decision point is a choice made during one
+run; a setting that decides the form of the run before it starts selects a
+Variation. So a registration setting requiring email confirmation selects which
+registration Scenario runs, while the unconfirmed account that sign-in later
+meets is state.
+
+A resource that exists only under some alternatives — registration, which
+exists only while the sign-in method is password — stays an ordinary resource.
+A Business Rule without `permits` applies to it and says so in its lead, naming
+the Variation.
+
 Do not create one for:
 
 | What you see | Model it as |
