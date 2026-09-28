@@ -7,16 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Model Variations — experiments, configuration alternatives and live versions — as their own resource, with how one is chosen written once. Browse them in a Variations collection, see each set as one row wherever its alternatives meet, and switch between alternatives from the pill on any title.
-- Model nested Screens, always-reachable destinations and supported languages.
-- Distinguish what Screens show from what they collect, and validate the facts Scenario Steps read, change or create.
-- Explore each place's Delivery: its Capabilities, Scenarios and passing Journeys, with clearer nested trees and summaries of collapsed branches.
-- Read what a Business Rule governs in Applies to, and find applicable Rules from the resources they govern.
-- Read permissions as operations and grants. Badges on governed facts explain restrictions and open the relevant Rule.
-- Follow each Capability's state changes and supporting Scenarios into the Entity's Lifecycle, with consistent state badges and clearer graph highlighting.
-- Recognize a resource's type, ownership and Domains in a compact header.
-- Updated skills, documentation and the example Blueprint explain product behavior separately from visual design, and name Business Rules by what they assert.
-- Retired the Information presented, Available actions, View states and Capability boundary sections, along with screenshot state labels.
+- Model Variations — experiments, configuration alternatives and live versions of an Interface, Experience, Screen or Business Rule — as their own resource, browsable in a Variations collection.
+- Model nested Screens, Screens reachable from everywhere in a context, and the languages a Product serves.
+- Record which facts a Screen shows and which it collects; a Screen's Capabilities now come from the Steps placed on it.
+- Record the facts each Scenario Step reads, changes or creates.
+- Read what a Business Rule governs, and find the Rules that govern a resource, from either end.
+- Follow Capability state changes into each Entity's Lifecycle, and see each place's Capabilities, Scenarios and Journeys.
+- Read permissions as operations and grants, with badges on the facts they restrict, and see a resource's type, ownership and Domains in a compact header.
+- Skills and documentation separate product behavior from visual design.
+- Screens no longer have Information presented, Available actions, View states or Capability boundary sections, and captures no longer carry a state label.
+- Existing models must be updated to the new format, and older Blueprints and reports are refused.
 
 ## [0.22.0] - 2026-09-23
 

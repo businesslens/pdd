@@ -616,7 +616,6 @@ describe('stable Product Report', () => {
     /* A Step names an Actor, so it renders one: the shared Entity chip, which
        carries the Actor's own mark and opens it. */
     expect(resourceBody).toContain('<BlrEntityChip :entity="stepActor(step.actorId)!"')
-    expect(resourceBody).not.toContain(':facet="stepActor(step.actorId)!.entityKind!"')
     /* The Entity page draws its composed state machine on the shared canvas,
        on its own tab, with every arc routed along the layout's points. */
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
@@ -711,7 +710,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV16')
+    expect(renderer).toContain('ProductReportV15')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -1050,32 +1049,10 @@ describe('stable Product Report', () => {
       expect(body, marker).toContain(marker)
     }
     /* A Rule's lead is its statement, read once, with who may beside it; what it applies to is its Applies to tab. */
-    expect(body).not.toContain('asRule.statement')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrRuleScope')
-    expect(source('app/components/BlrRuleScope.vue')).toContain('<BlrResourceTree')
-    expect(source('app/components/BlrRuleScope.vue')).not.toContain('data-rule-grants')
-    expect(body).toContain('data-rule-grants')
-    /* Who may lists each operation as an Entity chip with State badges, and each grant from its parts. */
-    expect(body).toContain('<BlrRuleOperation :workspace="workspace" :target="target"')
-    expect(body).toContain('<BlrRuleGrant :workspace="workspace" :grant="grant"')
-    expect(body).not.toContain('grant.sentence')
-    const grant = source('app/components/BlrRuleGrant.vue')
-    for (const part of ['grant.actorIds', 'grant.related', 'grant.self', 'grant.unattended', 'grant.configuredByEntityId', '<BlrEntityState v-if="item.condition.state !== null"']) expect(grant).toContain(part)
-    expect(source('app/components/BlrAttachedRules.vue')).toContain('<BlrRuleOperation')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrAttachedRules')
-    /* The tab lists Rules as the collection does, without the Rule's own reach metrics. */
-    expect(source('app/components/BlrAttachedRules.vue')).toContain(':metrics="false"')
     /* A fact a Rule governs carries one badge per Rule naming the kind of claim; the claim opens from it. */
-    expect(body).toContain('data-fact-rules')
-    expect(body).toContain('v-for="id in fact.ruleIds"')
     expect(body).toContain('<BlrFactRuleBadge v-if="factRule(id)"')
-    expect(body).not.toContain('col-span-2')
-    const badge = source('app/components/BlrFactRuleBadge.vue')
-    for (const part of ['<UPopover', '<BlrFactRule ', "'Constraint'", '`${NOUNS[effect.value]} restricted`', '`Never ${PAST[effect.value]}`']) expect(badge).toContain(part)
-    const factRule = source('app/components/BlrFactRule.vue')
-    for (const part of ['only by', 'Never', 'rule.statement', '<BlrRuleGrant', '<BlrContextPlace', 'resource-key="rule.key"']) expect(factRule).toContain(part)
-    /* A fact reads as one tag wherever it stands: a Step cites it, a Screen presents it, a Rule governs it. */
-    for (const component of ['BlrStepEntity.vue', 'BlrResourceBody.vue', 'BlrRuleOperation.vue']) expect(source(`app/components/${component}`)).toContain('<BlrFactTag')
   })
 
   it('keeps Context where it answers an Overview question', () => {
@@ -1231,7 +1208,6 @@ describe('stable Product Report', () => {
     expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
     /* Opening a page opens its Overview unless a reading was asked for; the tab
        is set in the same tick as the page, so one gesture is one history entry. */
-    expect(reportShell).toContain("function openResourcePage(resource: AnyResourceView, tab = 'overview')")
     expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = tab")
   })
 
@@ -1424,29 +1400,9 @@ describe('composed lifecycle', () => {
     expect(source('app/components/BlrDiagram.vue')).toContain('<BlrFlowEdgeLabel :edge="edge" />')
     expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain('<BlrFlowEdgeLabel :edge="data" />')
 
-    /* A clicked badge says which part of the change it reached for; the details head each part, in the badges' order and marks. */
-    expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain("closest?.('[data-edge-badge]')")
-    /* Hovering or focusing a label lights its context, as a node does. */
-    expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain(`@mouseenter="emit('hover', id)"`)
-    expect(source('app/components/BlrFlowCanvas.vue')).toContain('diagramEdgeContext(props.layout, activeEdge.value)')
-    expect(source('app/components/BlrFlowCanvas.vue')).toContain("emit('inspect', key, part)")
     expect(source('app/components/BlrDiagram.vue')).toContain("emit('inspect', key, part)")
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
     expect(lifecycle).toContain(':highlight="highlight"')
-    expect(lifecycle).toContain('[data-change-part="${highlight.value}"]')
-    expect(lifecycle).not.toContain('arc.marker')
-    const details = source('app/components/BlrLifecycleChangeDetails.vue')
-    expect(details).toContain('Made through')
-    expect(details).toContain('Forbidden by')
-    expect(details).not.toContain('Who may make this change')
-    expect(details).not.toContain('arc.rules')
-    /* A change reads as it does in a Capability and a Step, and a State wears the same badge wherever it stands. */
-    expect(lifecycle).toContain('<BlrEntityEffect v-else-if="selectedArc" :mention="selectedArc"')
-    expect(lifecycle).toContain('<BlrEntityEffect :mention="arc.rowMention" />')
-    expect(lifecycle).toContain('<BlrEntityEffect :mention="arc" />')
-    expect(lifecycle).toContain('<BlrEntityState v-if="group.state" :name="group.state.name" />')
-    expect(lifecycle).toContain('<BlrEntityState v-if="selectedState" :name="selectedState.name" />')
-    expect(source('app/components/BlrEntityEffect.vue')).toContain('<BlrEntityState v-else :name="part.text" :from="part.from" />')
     /* Where the governed change happens: each Step names the Rules selecting it, in both Steps drawings. */
     expect(source('app/components/BlrScenarioStep.vue')).toContain('data-step-rules')
     expect(source('app/components/BlrResourceBody.vue')).toContain('label="Governed by"')
@@ -1506,12 +1462,12 @@ describe('composed lifecycle', () => {
 })
 
 /*
- * Product Report v16: a Screen presents facts, Screens nest, a container leads
+ * Product Report v15: a Screen presents facts, Screens nest, a container leads
  * with what it delivers, and navigation is a mark. The nested Screen is built by
  * hand on top of the fixture so the reading is pinned to the wire, not to
  * whichever fixture happens to nest today.
  */
-describe('Screens on the v16 wire', () => {
+describe('Screens on the v15 wire', () => {
   const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
   const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
   const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'
@@ -1550,53 +1506,19 @@ describe('Screens on the v16 wire', () => {
     expect(screen.entities).toEqual([{ entityId: 'catalog-product', shows: ['Name and description', 'Price'], collects: [] }])
     expect(screen.entityIds).toEqual(['catalog-product'])
     expect(workspace.entities.find((item: any) => item.id === 'catalog-product')!.presentedOnIds).toContain(screen.id)
-    const body = source('app/components/BlrResourceBody.vue')
-    expect(body).toContain('data-screen-fact')
-    expect(body).toContain('no facts named')
-    for (const removed of ['Information presented', 'Available actions', 'View states', 'capability-boundary', 'view-state']) {
-      expect(body).not.toContain(removed)
-    }
-    expect(source('app/components/BlrRefs.vue')).not.toContain('reference.state')
   })
 
   it('names an Entity with one chip wherever it is a reference', () => {
-    const chip = source('app/components/BlrEntityChip.vue')
-    expect(chip).toContain('entity: EntityView')
-    expect(chip).toContain('data-entity-chip')
-    expect(chip).toContain('<BlrEntityMark')
-    expect(chip).toContain('rounded-full border')
-    expect(chip).toContain("'border-dashed border-muted")
     const body = source('app/components/BlrResourceBody.vue')
-    /* Presents, What it changes and its reads row, the Step Actor. */
+    /* Presents and What it changes. */
     const presents = body.slice(body.indexOf('data-screen-presents'), body.indexOf('<!-- ENTITY:'))
     expect(presents).toContain('<BlrEntityChip v-if="entry.entity" :entity="entry.entity"')
     const changes = body.slice(body.indexOf('text="What it changes"'), body.indexOf('<!-- SCENARIO:'))
     expect(changes).toContain('<BlrEntityChip v-if="entityChip(line.entityId)"')
-    expect(changes).toContain('data-capability-reads')
-    expect(changes).toContain('<BlrEntityChip v-if="read.entity" :entity="read.entity" muted')
-    expect(changes).toContain('<BlrEntityEffect :mention="effect" />')
-    expect(changes).toContain(`<BlrEntityEffect :mention="{ effect: 'reads', from: '', to: '' }" />`)
-    expect(changes).not.toContain('<BlrLinks')
-    expect(changes).not.toContain('blr-chip')
-    /* Entity effects on a Step, the Scenario summary's endings and reads,
-       the Step's own chip, and every Entity relation row. */
-    expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrStepEntity :workspace="workspace" :mention="effect"')
+    /* The Step Actor, an Entity effect on a Step, and every Entity relation row. */
     expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrEntityChip v-if="actor"')
-    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrStepEntity :workspace="workspace" :mention="ending" outcome')
-    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrEntityChip v-if="read.entity" :entity="read.entity" muted')
     expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityChip v-if="entity" :entity="entity" :label="label" :muted="isRead"')
-    expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityEffect :mention="mention" :outcome="outcome" />')
     expect(source('app/components/BlrLinks.vue')).toContain('<BlrEntityChip v-if="interactive && asEntity(resource)"')
-    expect(source('app/components/BlrOverview.vue')).toContain('<BlrEntityChip')
-    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrEntityChip v-for="actor in audience"')
-    for (const file of ['BlrScenarioStep.vue', 'BlrScenarioSummary.vue', 'BlrStepEntity.vue', 'BlrResourceBody.vue', 'BlrLinks.vue']) {
-      expect(source(`app/components/${file}`), file).not.toContain('entityFacetOf')
-    }
-    /* A numbered Step keeps its number in a column of its own, so the chip
-       row lines up with the text in both widths of the Scenario reading. */
-    expect(source('app/assets/report-viewer.css')).toContain('.blr-numbered-step {')
-    expect(body.match(/class="blr-numbered-step[ "]/g)).toHaveLength(2)
-    expect(body).not.toContain('{{ step.index + 1 }}. {{ step.text }}')
   })
 
   it('phrases every Entity effect Entity first, with States as badges', async () => {
@@ -1630,14 +1552,8 @@ describe('Screens on the v16 wire', () => {
       .toEqual(['creates:→Draft', 'changes:Draft→Gone', 'changes:Draft→Live', 'changes:Live→Draft', 'changes:→Live', 'changes:Unknown→Live'])
     expect(lifecycleChangeAddress(move('Private', 'Published'))).toBe('changes~Private~Published')
     const body = source('app/components/BlrResourceBody.vue')
-    expect(body).not.toContain('joinStateMoves')
-    expect(body).toContain('lifecycleRowOrder(entity, line.effects)')
     expect(body).toContain(':tab="`lifecycle/${lifecycleChangeAddress(effect)}`"')
     expect(source('app/components/BlrResourcePage.vue')).toContain(':change="tabDetail"')
-    /* Every surface that says what happened to an Entity draws this one phrase. */
-    expect(source('app/components/BlrScenarioStep.vue')).not.toContain('in state')
-    expect(source('app/components/BlrScenarioSummary.vue')).not.toContain('Created in')
-    expect(source('app/components/BlrResourceBody.vue')).not.toContain('readings')
   })
 
   it('carries the facts a Step cites into its Entity chip', () => {
@@ -1647,7 +1563,6 @@ describe('Screens on the v16 wire', () => {
     expect(cited.length).toBeGreaterThan(0)
     expect(cited.every((entry: any) => entry.effect === 'reads' || entry.effect === 'changes' || entry.effect === 'creates')).toBe(true)
     const chip = source('app/components/BlrStepEntity.vue')
-    expect(chip).toContain('data-step-fact')
     expect(chip).toContain("props.outcome ? [] : props.mention.facts")
   })
 
@@ -1719,9 +1634,6 @@ describe('Screens on the v16 wire', () => {
     expect(onParent?.stepsHere[`capability-scenario:${scenario.id}`] ?? []).not.toContain(index)
     /* A tab, after Overview, where a place delivers itself. */
     expect(tabsFor(workspace, child).map((tab: any) => tab.id).slice(0, 2)).toEqual(['overview', 'delivery'])
-    const body = source('app/components/BlrResourceBody.vue')
-    expect(body).not.toContain('Changes made here')
-    expect(body).not.toContain('data-screen-delivery')
     /* The tab is the Screen's own branch of the tree: each Capability holds those Scenarios as items. */
     const { structureChildren } = await import(collectionChildrenModulePath)
     for (const node of structureChildren(workspace, child).filter((item: any) => item.resource?.kind === 'capability')) {
@@ -1808,7 +1720,6 @@ describe('Screens on the v16 wire', () => {
     const cliNode = map.find((item: any) => item.id === cli.key)!
     expect(cliNode.children.every((item: any) => item.resource?.kind === 'journey'
       || (item.resource?.kind === 'capability' && item.note === 'Delivered directly'))).toBe(true)
-    expect(source('app/components/BlrResourceTree.vue')).toContain('data-tree-note')
   })
 
   it('marks a Screen named in its container\'s navigation as always reachable, and never draws it as an edge', async () => {
@@ -1827,12 +1738,9 @@ describe('Screens on the v16 wire', () => {
     const branches = flatten(interfaceProjection(workspace))
     expect(branches.find((node: any) => node.resource?.key === catalog.key).note).toBe('Shared Screen · Always reachable')
     expect(branches.find((node: any) => node.resource?.key === nested.key).note).toBe('Always reachable')
-    const mark = source('app/components/BlrNavigationMark.vue')
-    expect(mark).toContain('i-lucide-anchor')
     expect(source('nuxt.config.ts')).toContain("'lucide:anchor'")
     expect(source('app/components/BlrResourceTree.vue')).toContain('<BlrNavigationMark')
     expect(source('app/components/BlrResourceHeading.vue')).toContain('<BlrNavigationMark')
-    for (const file of ['app/utils/topologyProjections.ts', 'app/utils/placeReadings.ts']) expect(source(file)).not.toContain('navigationIds')
 
   })
 

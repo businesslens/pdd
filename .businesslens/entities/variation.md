@@ -38,11 +38,11 @@ references:
 # Variation
 
 One product choice with several supported answers: Standard or Strict refund
-review, five product page layouts under an experiment, two live versions of a
-webhook contract. Naming the choice once, as its own resource, is what keeps its
-alternatives from reading as unrelated duplicates or contradictory policies. It
-is read as the type it varies, and it moves nothing: each alternative keeps its
-own folder, owner and Domain.
+review, product pages with and without remaining stock under an experiment, two
+live versions of a webhook contract. Naming the choice once, as its own
+resource, is what keeps its alternatives from reading as unrelated duplicates or
+contradictory policies. It is read as the type it varies, and it moves nothing:
+each alternative keeps its own folder, owner and Domain.
 
 ## Information kept
 

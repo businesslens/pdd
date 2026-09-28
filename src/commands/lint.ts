@@ -1,8 +1,11 @@
 import {
-  variationIssues, variationEntityReferences, variationMembership, VARIATION_COLLECTION_OF, VARIATION_COLLECTIONS,
+  variationIssues, variationEntityReferences, variationMembership, VARIATION_COLLECTION_OF,
   type VariationCollection
 } from '../core/variations.js'
 import { undeclaredEntityMentions } from '../core/entity-mentions.js'
+import {
+  interfaceLanguageIssues, isLanguageTag, screenEntityIssues, screenReadIssues, unknownFactIssues
+} from '../core/model-checks.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import type {
@@ -99,15 +102,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
   for (const variation of model.variations) {
     requireTitle(variation.file, variation.doc.title, variation.doc.lead)
-    validateSections(variation.file, variation.doc, ['Intent'], ['When used'])
+    validateSections(variation.file, variation.doc, ['Intent'])
   }
-  for (const collection of VARIATION_COLLECTIONS) {
-    for (const resource of model[collection]) validateSections(resource.file, resource.doc, [], ['When used'])
-  }
-  for (const resource of [...model.domains, ...model.capabilityScenarios, ...model.journeyScenarios]) {
-    validateSections(resource.file, resource.doc, [], ['When used'])
-  }
-  validateSections('product.md', model.product.doc, [], ['When used'])
 
   if (model.product.id && !isId(model.product.id)) errors.push('product.md: id must be lowercase kebab-case')
   if (model.product.id.length > 64) errors.push('product.md: id must be at most 64 characters')
@@ -144,9 +140,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * Languages are a closed vocabulary — a tag, not a name — so the shape is
    * checked here and the list against i18n configuration is `verify`'s.
    */
-  const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/
   for (const tag of model.product.languages) {
-    if (!LANGUAGE_TAG.test(tag)) errors.push(`product.md: language "${tag}" is not a language tag like "en" or "pt-BR"`)
+    if (!isLanguageTag(tag)) errors.push(`product.md: language "${tag}" is not a language tag like "en" or "pt-BR"`)
   }
   const productLanguages = new Set(model.product.languages)
 
@@ -293,15 +288,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
     if (!productInterface.actors.length) errors.push(`${productInterface.file}: needs at least one actor`)
     for (const actorId of productInterface.actors) requireActor(productInterface.file, actorId)
-    /* An Interface narrows the Product's languages; it never adds one. */
-    if (productInterface.languages.length && !productLanguages.size) {
-      errors.push(`${productInterface.file}: lists languages, and product.md declares none`)
-    }
     for (const tag of productInterface.languages) {
-      if (!LANGUAGE_TAG.test(tag)) errors.push(`${productInterface.file}: language "${tag}" is not a language tag like "en" or "pt-BR"`)
-      else if (productLanguages.size && !productLanguages.has(tag)) {
-        errors.push(`${productInterface.file}: language "${tag}" is not one of the Product's languages`)
-      }
+      if (!isLanguageTag(tag)) errors.push(`${productInterface.file}: language "${tag}" is not a language tag like "en" or "pt-BR"`)
+    }
+    for (const issue of interfaceLanguageIssues(productInterface.languages.filter(isLanguageTag), productLanguages, 'product.md')) {
+      errors.push(`${productInterface.file}: ${issue}`)
     }
     validateNavigation(productInterface.file, productInterface.id, productInterface.navigation, experienceScopedInterfaces.has(productInterface.id))
     /*
@@ -621,17 +612,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         continue
       }
       presentedOn.set(entry.entity, [...(presentedOn.get(entry.entity) || []), screen.id])
-      /* A Screen names the facts on screen by the Entity's own names, so the
-         claim is checkable against the Entity and against every Rule and Step
-         that cites the same fact. */
-      for (const fact of [...entry.shows, ...entry.collects]) {
-        if (!entity.informationKept.some(item => item.name === fact)) {
-          errors.push(`${screen.file}: "${fact}" is not a fact of entity "${entry.entity}"`)
-        }
-      }
-      if (!entry.shows.length && !entry.collects.length && entity.informationKept.length) {
-        errors.push(`${screen.file}: presents "${entry.entity}" without naming its facts; a Screen says which facts it shows or collects`)
-      }
+      for (const issue of screenEntityIssues(entry.entity, entry, entity)) errors.push(`${screen.file}: ${issue}`)
     }
   }
   /* A settings or policy Entity that only Rules read is still in use: a
@@ -886,11 +867,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           errors.push(`${label}: "${entry.entity}" is ${priorMode === 'aliased' ? 'aliased' : 'bare'} elsewhere in this Scenario; once an Entity is aliased, every mention of it is`)
         }
         aliasModes.set(entry.entity, mode)
-        for (const fact of entry.facts ?? []) {
-          if (!entity.informationKept.some(item => item.name === fact)) {
-            errors.push(`${label}: "${fact}" is not a fact of entity "${entry.entity}"`)
-          }
-        }
+        for (const issue of unknownFactIssues(entry.entity, entry.facts, entity)) errors.push(`${label}: ${issue}`)
 
         const hasStates = entity.states.length > 0
         for (const [key, value] of [['from', entry.from], ['to', entry.to]] as const) {
@@ -1227,19 +1204,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const placed = stepsOnScreen.get(screen.id) || []
     const presented = new Map(screen.entities.map(entry => [entry.entity, entry]))
     for (const { label, step } of placed) {
-      for (const entry of step.entities) {
-        if (step.kind !== 'actor' || (entry.effect ?? 'changes') !== 'reads' || (actorIds.has(entry.entity) && !entry.facts.length)) continue
-        const shown = presented.get(entry.entity)
-        if (!shown) {
-          errors.push(`${label}: reads "${entry.entity}" on Screen "${screen.id}", which does not present it`)
-          continue
-        }
-        for (const fact of entry.facts) {
-          if (!shown.shows.includes(fact)) {
-            errors.push(`${label}: reads "${fact}" of "${entry.entity}" on Screen "${screen.id}", which does not show that fact`)
-          }
-        }
-      }
+      const reads = { kind: step.kind, entities: step.entities.map(entry => ({ entityId: entry.entity, effect: entry.effect ?? 'changes', facts: entry.facts })) }
+      for (const issue of screenReadIssues(screen.id, presented, reads, actorIds)) errors.push(`${label}: ${issue}`)
     }
   }
 
@@ -1344,11 +1310,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
               errors.push(`${label}: "${stateKey}: ${value}" is not a state of entity "${target.id}"`)
             }
           }
-          for (const fact of target.facts) {
-            if (!entity.informationKept.some(item => item.name === fact)) {
-              errors.push(`${label}: "${fact}" is not a fact of entity "${target.id}"`)
-            }
-          }
+          for (const issue of unknownFactIssues(target.id, target.facts, entity)) errors.push(`${label}: ${issue}`)
         }
         /* An Entity has no availability. A place-scoped Entity Rule is about
            visibility, so the selector names a Screen presenting the Entity —
@@ -1526,12 +1488,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * lists it, `related` ends on its type, `self` is the targeted thing itself,
    * `unattended` is what the Scenario is — and every state condition matches
    * the Step's origin where it has one. A fact-scoped Rule selects the Steps
-   * that cite one of its facts and the Screens that list one.
+   * that cite one of its facts and the Screens that list one. A permission
+   * Rule that is a Variation alternative holds only while selected, and lint
+   * cannot tell which alternative a Step runs under, so it is left to verify.
    */
-  for (const rule of model.businessRules) {
-    const set = variationOf.get(`businessRules:${rule.id}`)
-    if (set && rule.permits !== undefined) warnings.push(`${rule.file}: permission applicability is stated by Variation "${set}"; verify selection and permissions against implementation or approved intent (lint cannot evaluate this prose)`)
-  }
   const permissionRuleResources = model.businessRules.filter(
     rule => !variationOf.has(`businessRules:${rule.id}`) && rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
   )

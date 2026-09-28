@@ -52,9 +52,6 @@ Capabilities name the Product's **verbs**. Entities name its **nouns**,
 including the people and systems that act on it: one resource type for things,
 and the ones that act carry one more field.
 
-Entities can be alternatives in a [Variation](./variations.md). The Variation
-says how one is chosen; the Entity's own file does not.
-
 ## When you create one
 
 Apply the naming test: **a thing an Actor would call "this one"**.

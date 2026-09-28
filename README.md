@@ -105,8 +105,8 @@ Catalog contribution stays in the CLI; there is no contribution skill.
   `place` is an undivided Interface or an Experience.
 - Domains are optional regions of subject matter. Only a Capability authors
   `domain:`; every other Domain relation is derived.
-- Screens are optional platform-neutral product views, nested in the Interface
-  or Experience that contains them. Their path supplies their place. Product
+- Screens are optional platform-neutral product views, nested in the Interface,
+  Experience or parent Screen that contains them. Their path supplies their place. Product
   assets sit beside the resource they describe; anything
   under `implementation/` describes this realization and stays home.
 - `lint` checks format, required content, relationships, Reference grammar, and

@@ -9,7 +9,6 @@
  * inside a row's link.
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
-import { entityFacetOf } from '../utils/reportWorkspace'
 import { resourceOpenerKey } from '../utils/resourceNavigation'
 import { VARIATION_LABELS, variationAlternatives, variationChooser, variationPillLabel, variationSetOf } from '../utils/variations'
 
@@ -75,8 +74,6 @@ function go(target: AnyResourceView, tab?: string) {
               <BlrKind
                 :kind="alternative.kind"
                 :interface-type="alternative.kind === 'interface' ? alternative.interfaceType : undefined"
-                :facet="entityFacetOf(alternative)"
-                :acts="alternative.kind === 'entity' ? alternative.acts ?? undefined : undefined"
                 :labelled="false"
                 size="xs"
                 class="mt-0.5"

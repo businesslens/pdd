@@ -1,5 +1,5 @@
 /**
- * `businesslens/report` — strict Product Report v16 contract as a library.
+ * `businesslens/report` — strict Product Report v15 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
@@ -12,6 +12,10 @@ export {
 export type {
   InterfaceType,
 } from './core/interface-types.js'
+
+export {
+  reportVariationMembership,
+} from './core/variation-membership.js'
 
 export {
   REPORT_SCHEMA_VERSION,
@@ -49,10 +53,9 @@ export {
   ReportBusinessRuleSchema,
   ReportVariationSchema,
   ReportVariationAlternativeSchema,
-  reportVariationMembership,
   ReportCoverageSchema,
   ReportUnmappedAreaSchema,
-  ProductReportV16Schema,
+  ProductReportV15Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -62,7 +65,7 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV16,
+  ProductReportV15,
   ProductReport,
   ReportCoverage,
   ReportUnmappedArea,

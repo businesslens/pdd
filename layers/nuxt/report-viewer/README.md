@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v16 renderer used by `businesslens view` and exported
+The stable Product Report v15 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -318,7 +318,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV16` from `businesslens/report`. There is
+`report` must be a `ProductReportV15` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -676,7 +676,7 @@ is chosen written once on the set. It has its own rail collection, **Variations*
 marked with the variation glyph in ink — a Variation modifies a type, so it
 takes no hue — drawn at 14px inside the usual 16px slot, since the glyph reaches
 the corners of its box. Its rows group by the type each set varies —
-Interfaces, Screens, Business Rules and so on — and show the set's mark, name,
+Interfaces, Experiences, Screens or Business Rules — and show the set's mark, name,
 subtype pill, purpose, alternatives and what chooses between them (`Chosen by`,
 `Assigned per` or `Discriminator`). The collection has Rows only: a set has no
 derivation of its own to draw.

@@ -78,11 +78,6 @@ export function foldVariations(workspace: ReportWorkspace, parentId: string, nod
   })
 }
 
-/** Name a place's own tree in its tab and accessible label. */
-export function structureLabel(_resource: AnyResourceView): string {
-  return 'Delivery'
-}
-
 /** A Screen's nested Screens, resolved in authored order. */
 export function childScreens(workspace: ReportWorkspace, screen: ScreenView): ScreenView[] {
   return screen.childScreenIds.flatMap((id) => {
@@ -233,8 +228,8 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
     const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView): TreeCard => ({
       key, title, resource,
       children: [
-        group(`${key}:capabilities`, 'capability', foldVariations(workspace, `${key}:capabilities`, capabilities.map(item => leaf(item)))),
-        group(`${key}:entities`, 'entity', foldVariations(workspace, `${key}:entities`, entities.map(item => leaf(item))))
+        group(`${key}:capabilities`, 'capability', capabilities.map(item => leaf(item))),
+        group(`${key}:entities`, 'entity', entities.map(item => leaf(item)))
       ].filter(group => group.children.length)
     })
     const cards = resources.filter(item => item.kind === 'domain').map(domain => domainCard(domain.key, domain.title,

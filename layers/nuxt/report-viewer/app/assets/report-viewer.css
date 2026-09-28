@@ -333,8 +333,9 @@
 /* The variation glyph reaches the corners of its box, so at the rail's 16px it
    reads larger than every other mark. Where it stands alone it is drawn at 14px
    inside the same slot; the sub-icon on a set's mark and the pill keep their
-   own sizing. Scaled, so no row shifts. */
-.i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-pill] *) {
+   own sizing. Scaled, so no row shifts. Scoped to the report and the overlays
+   it portals out, so a host's own use of the glyph is left alone. */
+:is(.businesslens-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-pill] *) {
   transform: scale(0.875);
 }
 

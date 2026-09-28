@@ -402,8 +402,7 @@ future format revision, but Context is not an arbitrary metadata bag.
 ## Variations
 
 A Variation is a named set of currently supported alternatives of one resource
-type: Interface, Experience, Screen, Entity, Capability, Journey or Business
-Rule. Product, Domain, both Scenario types and Variation itself cannot vary.
+type: Interface, Experience, Screen or Business Rule. No other type varies.
 The set is its own resource, `variations/<id>.md`; its alternatives stay
 ordinary, independently complete resources that carry no Variation keys.
 
@@ -443,6 +442,8 @@ id.
 `takesEffect` and `stability`; each alternative carries `selectedWhen` and, on a
 Version, `label`. Nothing is inherited or overridden, because no field exists at
 both levels. All text fields are non-empty Markdown fragments without H1/H2.
+A required field the evidence does not settle says so rather than inventing an
+answer, and Coverage records the gap.
 
 | Field | Level | Meaning |
 | --- | --- | --- |
@@ -466,8 +467,7 @@ assignment fact may be held by a different Entity. Neither field asserts an
 instance-level relationship. Do not create Entities solely to populate these
 fields. Assignment units need not act. Existing Actor relationships and
 permission Rules continue to answer who may use a resource; a Variation neither
-duplicates nor grants permission. `When used` is a reserved H2, rejected on every
-resource.
+duplicates nor grants permission.
 
 The subtype states why alternatives coexist: Experiment evaluates outcomes;
 Configuration selects through a setting or operating context; Version keeps
@@ -484,7 +484,9 @@ A Business Rule that is an alternative applies only under its `selectedWhen`.
 Its grants and constraints govern only then; it is never unconditional policy.
 A grant's `when` still conditions an Entity operation; it cannot select a whole
 Rule. `lint` validates structure and references but does not evaluate
-applicability.
+applicability, so it does not hold an alternative permission Rule's grants
+against Steps and Screens: it cannot tell which alternative a Step runs under.
+`verify` does.
 
 All alternatives are currently supported. None is a default, parent or
 historical version. Do not create alternatives for every parameter value,
@@ -492,12 +494,9 @@ Scenario outcome or visual treatment. Deleting an alternative leaves a dangling
 entry, an ordinary `lint` error; a set left with one alternative is removed, and
 still-relevant meaning moves into ordinary content.
 
-Do not invent settings, allocations, defaults or timing. Unknown behavior stays
-explicitly unresolved and is recorded in Coverage. Structural checks cannot
-prove conditions exhaustive, resolve conflicts in prose, verify promised
-allocation, or establish deterministic resource granularity. No condition
-engine, experiment infrastructure, historical archive or dedicated Cohort type
-is added.
+Do not invent settings, allocations, defaults or timing: an optional field the
+evidence does not establish is omitted, and a required one says so. `lint`
+checks structure and references, never whether conditions are exhaustive.
 
 ## References
 
@@ -569,7 +568,7 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 11                         # folder-format version
+schema: 10                         # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
@@ -619,11 +618,10 @@ its full description.
 `languages` is an optional unique list of the language tags the Product
 serves, each matching `^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$` — `en`, `de-DE`,
 `pt-BR`. A malformed tag is a `lint` error. A language is product, not design:
-a redesign cannot drop German. The vocabulary is closed, so `verify` can hold
-it against the repository's i18n configuration. An Interface may narrow the
+a redesign cannot drop German. Tags are well-formed, so `verify` can hold them
+against the repository's i18n configuration. An Interface may narrow the
 list; Experiences and Screens never carry one, because a language is a fact
-about a surface, not about a context or a view inside it. An area served in
-fewer languages than its surroundings is its own Interface.
+about a surface, not about a context or a view inside it.
 
 `languages` names the languages the Product's interfaces are delivered in. Two
 neighbouring meanings are ordinary content, not this field: content the
@@ -1364,7 +1362,7 @@ appliesTo:
     facts: [Total charged]
 ---
 
-# Total charged
+# Total charged equals subtotal plus tax minus discount
 
 Total charged always equals Subtotal plus Tax minus Discount.
 ```
@@ -1373,7 +1371,7 @@ The lead paragraph is the rule statement; `## Intent` and `## Rationale` are
 optional prose. The H1 states the assertion itself, about what the targets
 select: a permission names the operation and who may perform it ("Only the
 owner reads an unpublished collection"), an invariant names what always holds
-("Total charged"). A consequence of the Rule, a feature, or the mechanism that
+("Total charged equals subtotal plus tax minus discount"). A consequence of the Rule, a feature, or the mechanism that
 motivates it is not its title; it belongs in the lead or the Rationale. Read
 with only the title and `appliesTo`, the grants' who should be no surprise.
 Rationale explains the current condition or consequence that makes the
@@ -1683,6 +1681,9 @@ Rules against Steps and Screens — errors:
 - A Screen presenting an Entity whose `reads` are governed, where no Actor using
   the Screen's container has a possible grant.
 
+A permission Rule that is a [Variation](#variations) alternative is exempt from
+these checks, because it holds only while selected.
+
 **A fact-scoped read Rule** — an Entity target with `facts` whose `effect` is
 `reads` or absent — is checked against Screen facts and Step facts, never
 against Entity presence alone. A Screen is selected when its `entities` entry
@@ -1796,9 +1797,6 @@ A parent Screen is itself a place: a Step placed there is on the parent, not
 in a child. Confirmation is behavior on its host unless the confirmation
 establishes a distinct working context; visual presentation is not the test.
 Preserving the underlying view on close is a Scenario Outcome.
-
-This boundary must be assessed through independent mapping of the same
-product. Do not claim determinism from the wording or structural lint alone.
 
 Choose the nearest qualifying persistent context as the parent. A generic
 settings/category selector is not itself a selected subject or an in-progress

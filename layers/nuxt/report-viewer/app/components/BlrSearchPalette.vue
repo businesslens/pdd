@@ -51,7 +51,7 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
 </script>
 
 <template>
-  <UModal v-model:open="open" :ui="{ content: 'sm:max-w-2xl' }">
+  <UModal v-model:open="open" :ui="{ content: 'blr-search-palette sm:max-w-2xl' }">
     <template #content>
       <UCommandPalette
         :groups="groups"

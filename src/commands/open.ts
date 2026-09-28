@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV16,
+  ProductReportV15,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -51,7 +51,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV16['references']): Array<Record<string, string>> {
+function references(value: ProductReportV15['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -92,13 +92,8 @@ function screenPath(root: string, id: string, experienceIds: Set<string>, parent
     ? join(root, 'interfaces', interfaceId, 'experiences', parts[1]!)
     : join(root, 'interfaces', interfaceId)
   const screenSegments = parts.slice(underExperience ? 2 : 1)
-  for (const [index, segment] of screenSegments.entries()) {
-    const screenId = parts.slice(0, (underExperience ? 2 : 1) + index + 1).join('::')
-    const last = index === screenSegments.length - 1
-    if (last) return resourcePath(join(directory, 'screens'), segment, 'screen', parentScreenIds.has(screenId))
-    directory = join(directory, 'screens', segment)
-  }
-  return join(directory, 'screens', `${screenSegments.at(-1)!}.md`)
+  for (const segment of screenSegments.slice(0, -1)) directory = join(directory, 'screens', segment)
+  return resourcePath(join(directory, 'screens'), screenSegments.at(-1)!, 'screen', parentScreenIds.has(id))
 }
 
 /** Compact until a resource needs a namespace for children or assets. */
@@ -203,7 +198,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -415,8 +410,8 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV16['model']['capabilityScenarios'][number]
-      | ProductReportV16['model']['journeyScenarios'][number]
+      | ProductReportV15['model']['capabilityScenarios'][number]
+      | ProductReportV15['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -525,7 +520,7 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV16
+  report: ProductReportV15
   root: string
 }
 

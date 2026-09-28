@@ -61,7 +61,6 @@ export default defineNuxtConfig({
         'lucide:file-text',
         'lucide:filter-x',
         'lucide:funnel',
-        'lucide:gallery-horizontal',
         'lucide:focus',
         'lucide:folder',
         'lucide:folder-git-2',

@@ -6,7 +6,7 @@ import { compileReport } from '../src/commands/export.js'
 import { lintModel } from '../src/commands/lint.js'
 import { expandProductReport } from '../src/commands/open.js'
 import { loadModel, type PddModel, type VariationResource } from '../src/core/model.js'
-import { ProductReportV16Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
+import { ProductReportV15Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
 import {
   VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, type VariationKind, type VariationMemberType, type VariationSet
 } from '../src/core/variations.js'
@@ -54,10 +54,9 @@ describe('Variation resources', () => {
   it('loads the library set with membership only on the set', () => {
     const loaded = model()
     expect(loaded.variations.map(item => [item.id, item.kind, item.of, item.alternatives.map(alt => alt.id)])).toEqual([
-      ['library-layout', 'configuration', 'experience', [PERSONAL, SOURCE]]
+      ['library-organization', 'configuration', 'experience', [PERSONAL, SOURCE]]
     ])
     expect(lintModel(loaded, []).errors).toEqual([])
-    for (const experience of loaded.experiences) expect(Object.keys(experience)).not.toContain('variationUsage')
   })
 
   it.each(cases)('round-trips a $kind set of $of losslessly', ({ of, kind }) => {
@@ -112,14 +111,14 @@ describe('Variation resources', () => {
     const set = { ...record, alternatives: record.alternatives.map(item => ({ id: item.resourceId, selectedWhen: item.selectedWhen, label: item.label })) }
     mutate(set)
     Object.assign(record, { ...set, alternatives: set.alternatives.map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })) })
-    const parsed = ProductReportV16Schema.safeParse(wire)
+    const parsed = ProductReportV15Schema.safeParse(wire)
     if (parsed.success) expect(validateProductReport(wire).join('\n')).toContain(message)
     else expect(parsed.success).toBe(false)
   })
 
   it('requires experiment assignment and version labels, unique ignoring case', () => {
     const experiment = model()
-    withSet(experiment, 'experiment', 'journey', experiment.journeys.slice(0, 2).map(item => item.id))
+    withSet(experiment, 'experiment', 'screen', experiment.screens.slice(0, 2).map(item => item.id))
     const set = experiment.variations.find(item => item.id === 'chosen-form')!
     set.assignmentUnit = null
     set.assignmentMethod = null
@@ -127,7 +126,7 @@ describe('Variation resources', () => {
     expect(errors).toContain('needs assignmentUnit')
     expect(errors).toContain('needs assignmentMethod')
     const version = model()
-    withSet(version, 'version', 'capability', version.capabilities.slice(0, 2).map(item => item.id))
+    withSet(version, 'version', 'business-rule', version.businessRules.slice(0, 2).map(item => item.id))
     const versions = version.variations.find(item => item.id === 'chosen-form')!
     versions.alternatives[1]!.label = 'V1'
     expect(lintModel(version, []).errors.join('\n')).toContain('must be unique')
@@ -135,34 +134,20 @@ describe('Variation resources', () => {
     expect(lintModel(version, []).errors.join('\n')).toContain('needs a label')
   })
 
+  it('varies only Interfaces, Experiences, Screens and Business Rules', () => {
+    const loaded = model()
+    withSet(loaded, 'configuration', 'entity' as VariationMemberType, loaded.entities.slice(0, 2).map(item => item.id))
+    expect(lintModel(loaded, []).errors.join('\n')).toContain('of must be interface|experience|screen|business-rule')
+  })
+
   it('lets a resource join at most one Variation', () => {
     const loaded = model()
     loaded.variations.push({ ...loaded.variations[0]!, id: 'second-layout' })
-    expect(lintModel(loaded, []).errors.join('\n')).toContain('already belongs to Variation "library-layout"')
+    expect(lintModel(loaded, []).errors.join('\n')).toContain('already belongs to Variation "library-organization"')
     const wire = report()
     wire.model.variations.push({ ...wire.model.variations[0]!, id: 'second-layout' })
     wire.counts.variations = 2
     expect(validateProductReport(wire).join('\n')).toContain('already belongs to Variation')
-  })
-
-  it('carries no Variation fields on member records', () => {
-    const wire = report()
-    for (const field of ['variantOfId', 'variationKind', 'variationUsage']) {
-      const next = structuredClone(wire)
-      Object.assign(next.model.experiences[0]!, { [field]: null })
-      expect(ProductReportV16Schema.safeParse(next).success).toBe(false)
-    }
-  })
-
-  it('rejects member-side Variation keys and the reserved When used heading in the folder', () => {
-    const target = temporary()
-    expandProductReport(target, report(), false)
-    const loaded = loadModel(target)
-    const experience = loaded.experiences.find(item => item.id === PERSONAL)!
-    writeFileSync(experience.file, readFileSync(experience.file, 'utf8').replace('---', '---\nvariantOf: reader-mobile::source-focused-library') + '\n## When used\n\nAlways.\n')
-    const errors = lintModel(loadModel(target), []).errors.join('\n')
-    expect(errors).toContain('variantOf')
-    expect(errors).toContain('"## When used" is not allowed')
   })
 
   it('reports malformed Variation frontmatter as findings', () => {
@@ -209,7 +194,6 @@ describe('Variation resources', () => {
     withSet(loaded, 'configuration', 'business-rule', ['conditional-access', 'conditional-denial'])
     const result = lintModel(loaded, [])
     expect(result.errors).toEqual([])
-    expect(result.warnings.filter(item => item.includes('permission applicability is stated by Variation "chosen-form"'))).toHaveLength(2)
     expect(validateProductReport(compileReport(loaded, '2026-09-27'))).toEqual([])
     // Without the set, the same Rules are ordinary policy again and contradict the Steps.
     loaded.variations = loaded.variations.filter(item => item.id !== 'chosen-form')
@@ -234,8 +218,8 @@ describe('Variations in the Product Report', () => {
     const workspace = shop()
     expect(workspace.variations.map((item: any) => [item.id, item.variationKind, item.memberKind])).toEqual([
       ['payment-webhook-contract', 'version', 'interface'],
-      ['product-page-layout', 'experiment', 'screen'],
-      ['refund-review', 'configuration', 'rule']
+      ['refund-review', 'configuration', 'rule'],
+      ['stock-disclosure', 'experiment', 'screen']
     ])
     expect(workspace.counts.variations).toBe(3)
     const strict = workspace.byKey.get('rule:refund-review-strict')
@@ -246,7 +230,7 @@ describe('Variations in the Product Report', () => {
     expect(variationPillLabel(workspace, strict)).toBe('Refund review')
     expect(variationPillLabel(workspace, workspace.byKey.get('interface:payment-webhook-v2'))).toBe('Payment webhook contract · v2')
     expect(variationChooser(workspace, set)).toEqual({ label: 'Chosen by', text: 'Store settings · Refund review mode' })
-    expect(variationChooser(workspace, workspace.byKey.get('variation:product-page-layout'))?.label).toBe('Assigned per')
+    expect(variationChooser(workspace, workspace.byKey.get('variation:stock-disclosure'))?.label).toBe('Assigned per')
   })
 
   it('reads a set as Overview, Alternatives and Connections, and an alternative with how it is chosen', () => {
@@ -291,7 +275,7 @@ describe('Variations in the Product Report', () => {
     const groups = collectionGroups(workspace, 'variation', workspace.variations)
     expect(groups.map((group: any) => [group.kind, group.title, group.resources.map((item: any) => item.id)])).toEqual([
       ['interface', 'Interfaces', ['payment-webhook-contract']],
-      ['screen', 'Screens', ['product-page-layout']],
+      ['screen', 'Screens', ['stock-disclosure']],
       ['rule', 'Business Rules', ['refund-review']]
     ])
   })
@@ -301,10 +285,10 @@ describe('Variations in the Product Report', () => {
     const web = treeCards(workspace, 'interface', workspace.interfaces, false).find((card: any) => card.key === 'interface:customer-web')
     const storefront = web.children[0].children.find((node: any) => node.resource?.id === 'customer-web::storefront')
     const screens = storefront.children.find((node: any) => node.groupKind === 'screen')
-    expect(screens.count).toBe(6)
+    expect(screens.count).toBe(3)
     const set = screens.children.find((node: any) => node.resource?.kind === 'variation')
-    expect(set.resource.id).toBe('product-page-layout')
-    expect(set.children.map((node: any) => node.resource.id)).toHaveLength(5)
+    expect(set.resource.id).toBe('stock-disclosure')
+    expect(set.children.map((node: any) => node.resource.id)).toHaveLength(2)
     expect(set.children.every((node: any) => node.inSet)).toBe(true)
     // Each alternative keeps its own children; the set is not counted as something inside.
     expect(set.children.some((node: any) => node.children.length > 0)).toBe(true)

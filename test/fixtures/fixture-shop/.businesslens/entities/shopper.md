@@ -19,4 +19,4 @@ A visitor who browses the catalog and buys products.
 
 - **Delivery address** — where their orders are sent unless an order says otherwise
 
-- **Product presentation assignment** — the named product-detail experiment arm assigned to this shopper
+- **Product presentation assignment** — whether the stock disclosure experiment shows this shopper the remaining stock

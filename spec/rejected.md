@@ -218,3 +218,9 @@ Entity-operation meaning; they cannot stand in for selecting whole resources.
 **Cohorts as a dedicated resource type — deferred.** Actor or tenant facts can
 record membership. Experiment-management Products can model assignment and
 measurement using ordinary Entities, Capabilities and Scenarios.
+
+**Varying Entities, Capabilities and Journeys — deferred.** No example showed
+two complete, supported forms of one of these that Scenario conditions, a
+grant's `when`, or ordinary content could not already state, and each extra
+member type is one more place two lint-clean encodings can meet. Interfaces,
+Experiences, Screens and Business Rules vary; the others wait for a case.

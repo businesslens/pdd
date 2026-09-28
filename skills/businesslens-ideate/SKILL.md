@@ -69,12 +69,13 @@ Read before authoring:
    schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
    Product decision; do not treat technologies or internal APIs as Interfaces.
    Whether an Interface is divided into Experiences is derived, never judged,
-   from audience and access: divide it when it serves more than one `access` value,
-   when its Actors split into groups no Capability available there bridges (a
-   Capability bridges the Actors its Scenario Steps name). Otherwise it holds no Experiences and availability
-   names the Interface directly. `lint` decides
-   and reports a violation as an error. Counterparts across Interfaces and
-   Experiences that are alternatives in one Variation also justify division. For
+   from audience and access: divide it when it serves more than one `access`
+   value, or when its Actors split into groups no Capability available there
+   bridges (a Capability bridges the Actors its Scenario Steps name). Otherwise
+   it holds no Experiences and availability names the Interface directly.
+   `lint` decides and reports a violation as an error; counterparts across
+   Interfaces and Experiences that are alternatives in one Variation justify
+   themselves. Do not apply a prose test of your own. For
    A/B and other supported alternatives, write one `variations/<id>.md` per the
    shared format reference: membership only on the set, each selection field
    once, no keys on the alternatives. Use Scenarios for variation in one ability,

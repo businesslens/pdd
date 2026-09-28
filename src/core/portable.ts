@@ -1,9 +1,13 @@
 import {
-  AssignmentUnitSchema, VariationFactSchema, variationIssues, variationEntityReferences, variationMembership,
+  AssignmentUnitSchema, VariationFactSchema, variationIssues, variationEntityReferences,
   VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, type VariationCollection, type VariationSet
 } from './variations.js'
 import * as z from 'zod'
+import { reportVariationMembership } from './variation-membership.js'
 import { undeclaredEntityMentions } from './entity-mentions.js'
+import {
+  interfaceLanguageIssues, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
+} from './model-checks.js'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading, statesAnExclusion } from './markdown.js'
@@ -11,7 +15,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '16.0.0'
+export const REPORT_SCHEMA_VERSION = '15.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -128,7 +132,7 @@ export const ReportContextSchema = z.strictObject({
 })
 
 /** A language tag: `en`, `de-DE`, `pt-BR`. A closed vocabulary, never a name. */
-export const LanguageTagSchema = z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/)
+export const LanguageTagSchema = z.string().regex(LANGUAGE_TAG_PATTERN)
 
 export const ReportInterfaceSchema = z.strictObject({
   id: QualifiedIdSchema,
@@ -461,7 +465,7 @@ export const ReportVariationSchema = z.strictObject({
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV16Schema = z.strictObject({
+export const ProductReportV15Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -500,10 +504,10 @@ export const ProductReportV16Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV16Schema
+export const ProductReportSchema = ProductReportV15Schema
 
-export type ProductReportV16 = z.infer<typeof ProductReportV16Schema>
-export type ProductReport = ProductReportV16
+export type ProductReportV15 = z.infer<typeof ProductReportV15Schema>
+export type ProductReport = ProductReportV15
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -536,7 +540,7 @@ export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV16['model']
+export type ReportModel = ProductReportV15['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -545,7 +549,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV16Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV15Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -579,10 +583,6 @@ export function reportVariationSet(variation: ReportVariation): VariationSet {
   }
 }
 
-/** Member key (`<collection>:<id>`) → Variation id, for "is this one of a set?". */
-export function reportVariationMembership(model: Pick<ReportModel, 'variations'>): Map<string, string> {
-  return variationMembership(model.variations.map(reportVariationSet))
-}
 
 export function reportVariationIssues(model: ReportModel): string[] {
   const members = Object.fromEntries(Object.values(VARIATION_COLLECTION_OF)
@@ -620,7 +620,7 @@ function validateSupportingSections(
   sections: ReportSupportingSection[],
   reservedHeadings: string[]
 ): void {
-  const reserved = new Set([...reservedHeadings, 'When used'].map(heading => heading.toLowerCase()))
+  const reserved = new Set(reservedHeadings.map(heading => heading.toLowerCase()))
   for (const item of sections) {
     if (reserved.has(item.heading.trim().toLowerCase())) {
       issues.push(`${label}: supporting section "${item.heading}" conflicts with a structured section`)
@@ -687,7 +687,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV16): string[] {
+export function validateProductReport(report: ProductReportV15): string[] {
   const issues: string[] = []
   const { model } = report
   /* A Rule in a Variation applies only under its set's conditions, never unconditionally. */
@@ -774,13 +774,8 @@ export function validateProductReport(report: ProductReportV16): string[] {
   for (const productInterface of model.interfaces) {
     requireUniqueValues(issues, `interface "${productInterface.id}"`, 'actorIds', productInterface.actorIds)
     requireUniqueValues(issues, `interface "${productInterface.id}"`, 'languages', productInterface.languages)
-    if (productInterface.languages.length && !productLanguages.size) {
-      issues.push(`interface "${productInterface.id}": lists languages, and the Product declares none`)
-    }
-    for (const tag of productInterface.languages) {
-      if (productLanguages.size && !productLanguages.has(tag)) {
-        issues.push(`interface "${productInterface.id}": language "${tag}" is not one of the Product's languages`)
-      }
+    for (const issue of interfaceLanguageIssues(productInterface.languages, productLanguages, 'the Product')) {
+      issues.push(`interface "${productInterface.id}": ${issue}`)
     }
     validateNavigation(`interface "${productInterface.id}"`, productInterface.id, productInterface.navigation)
     /* The folder has always checked this and the wire never did. A key is the
@@ -1003,11 +998,7 @@ export function validateProductReport(report: ProductReportV16): string[] {
         if (entry.facts.length && entry.effect === 'removes') {
           issues.push(`${stepLabel}: a "removes" entry carries no facts`)
         }
-        for (const fact of entry.facts) {
-          if (!entity.informationKept.some(item => item.name === fact)) {
-            issues.push(`${stepLabel}: "${fact}" is not a fact of entity "${entry.entityId}"`)
-          }
-        }
+        for (const issue of unknownFactIssues(entry.entityId, entry.facts, entity)) issues.push(`${stepLabel}: ${issue}`)
         if (entry.effect === 'reads' && (entry.from !== null || entry.to !== null)) {
           issues.push(`${stepLabel}: a "reads" entry carries no state`)
           continue
@@ -1269,14 +1260,7 @@ export function validateProductReport(report: ProductReportV16): string[] {
       }
       requireUniqueValues(issues, label, `shows of "${entry.entityId}"`, entry.shows)
       requireUniqueValues(issues, label, `collects of "${entry.entityId}"`, entry.collects)
-      for (const fact of [...entry.shows, ...entry.collects]) {
-        if (!entity.informationKept.some(item => item.name === fact)) {
-          issues.push(`${label}: "${fact}" is not a fact of entity "${entry.entityId}"`)
-        }
-      }
-      if (!entry.shows.length && !entry.collects.length && entity.informationKept.length) {
-        issues.push(`${label}: presents "${entry.entityId}" without naming its facts; a Screen says which facts it shows or collects`)
-      }
+      for (const issue of screenEntityIssues(entry.entityId, entry, entity)) issues.push(`${label}: ${issue}`)
     }
     validateSupportingSections(
       issues,
@@ -1320,19 +1304,7 @@ export function validateProductReport(report: ProductReportV16): string[] {
     }
     const presented = new Map(screen.entities.map(entry => [entry.entityId, entry]))
     for (const { label: stepLabel, step } of placed) {
-      for (const entry of step.entities) {
-        if (step.kind !== 'actor' || entry.effect !== 'reads' || (actorIds.has(entry.entityId) && !entry.facts.length)) continue
-        const shown = presented.get(entry.entityId)
-        if (!shown) {
-          issues.push(`${stepLabel}: reads "${entry.entityId}" on Screen "${screen.id}", which does not present it`)
-          continue
-        }
-        for (const fact of entry.facts) {
-          if (!shown.shows.includes(fact)) {
-            issues.push(`${stepLabel}: reads "${fact}" of "${entry.entityId}" on Screen "${screen.id}", which does not show that fact`)
-          }
-        }
-      }
+      for (const issue of screenReadIssues(screen.id, presented, step, actorIds)) issues.push(`${stepLabel}: ${issue}`)
     }
   }
   /*
@@ -1485,11 +1457,7 @@ export function validateProductReport(report: ProductReportV16): string[] {
               issues.push(`${targetLabel}: "${value}" is not a state of entity "${target.entityId}"`)
             }
           }
-          for (const fact of target.facts) {
-            if (!entity.informationKept.some(item => item.name === fact)) {
-              issues.push(`${targetLabel}: "${fact}" is not a fact of entity "${target.entityId}"`)
-            }
-          }
+          for (const issue of unknownFactIssues(target.entityId, target.facts, entity)) issues.push(`${targetLabel}: ${issue}`)
         }
         const presenting = model.screens.filter(screen => screen.entities.some(entry =>
           entry.entityId === target.entityId
@@ -1799,7 +1767,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV16): ProductReportV16 {
+export function projectPortableReport(report: ProductReportV15): ProductReportV15 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1848,8 +1816,8 @@ export function projectPortableReport(report: ProductReportV16): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV16 {
-  const parsed = ProductReportV16Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV15 {
+  const parsed = ProductReportV15Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1875,7 +1843,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV16): string[] {
+export function validateBlueprintReport(report: ProductReportV15): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

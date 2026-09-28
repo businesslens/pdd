@@ -99,7 +99,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 11` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 10` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, `languages`, H1, lead description, and optional
   `## Intent`. `summary` is one line of at most 400 characters, `category` is
@@ -134,7 +134,7 @@ not contain another H1 or H2.
 - Experience: non-empty `actors` supported by the owning Interface; required
   `access` (`public|authenticated|restricted`); optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
-  There is no `version` or `capabilityBoundary`. Disjoint audiences require
+  `## Capability boundary` is an error. Disjoint audiences require
   division; distinct access modes, counterparts or membership in a Variation
   justify existing Experiences. A Variation may span Interfaces without
   changing ownership.
@@ -253,7 +253,7 @@ not contain another H1 or H2.
   encoding per case: a flag deciding whether someone may perform an Entity
   operation conditions a grant; two or more complete, supported forms of one
   resource chosen by a setting, assignment or version are a Variation (an A/B
-  test whose arms are different Screens, Rules or Capabilities is an
+  test whose arms are different Screens or Rules is an
   Experiment); a looks-only difference is design; a branch inside one ability
   is Scenario conditions and outcomes, or Rules spanning behaviors. No
   structured `when` exists on Capability targets. The experiment engine and
@@ -457,7 +457,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 11 it
+Context is the single model concept for where behavior applies. In schema 10 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
@@ -524,8 +524,7 @@ placed Capability, and an Actor read of information its Screen does not show.
 Product and condition reads are not display claims. Named facts require
 shows/collects on Screens. Step facts are required on reads, changes and creates,
 and forbidden on removal. Language lists must be valid Product subsets.
-`version` on an Experience, authored Screen `capabilities`, `screens` on a
-container, reference/asset `state`, and removed Screen prose sections are errors.
+Authored Screen `capabilities`, `screens` on a container, reference/asset `state`, and removed Screen prose sections are errors.
 A prohibition is valid with no example of the prohibited behavior.
 
 `.gitignore` contains `build/` and `cache/`.
@@ -567,9 +566,8 @@ Documentation: https://businesslens.io
 ## Variations
 
 A Variation is a named set of two or more currently supported alternatives of
-one resource type: Interface, Experience, Screen, Entity, Capability, Journey or
-Business Rule. Product, Domain, both Scenario types and Variation itself cannot
-vary. The set is its own resource, `variations/<id>.md`; alternatives stay
+one resource type: Interface, Experience, Screen or Business Rule. No other type
+varies. The set is its own resource, `variations/<id>.md`; alternatives stay
 ordinary, independently complete resources and carry no Variation keys.
 
 ```yaml
@@ -598,9 +596,7 @@ is optional.
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, by that type's ordinary ids (a Screen's full
 `interface::experience::screen`). A resource belongs to at most one Variation.
-Never write `variantOf`, `variationKind`, `variationUsage` or a `## When used`
-section on a resource: those keys are unknown and the heading is reserved and
-rejected. The list is a set; its order means nothing.
+The list is a set; its order means nothing.
 
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.
@@ -641,12 +637,13 @@ A Variation is a relation, never containment: folders, Domains, Experience
 ownership, Screen nesting and Scenario parents stay as they are, and Rule
 targets, Steps and Contexts keep naming concrete resources. Membership justifies
 Experiences that would otherwise flatten. A Business Rule that is an
-alternative applies only while selected, never unconditionally. A Variation
+alternative applies only while selected, never unconditionally, so `lint`
+does not check its grants against Steps and Screens; `verify` does. A Variation
 grants no permission. An Entity that is an assignment unit or holds a fact a
 Variation chooses by is not an orphan.
 
 **Evidence, not invention.** Record only selection the evidence or approved
-intent establishes. Unknown settings, allocations, defaults or timing stay out
-of the file and are recorded as unresolved in Coverage. `lint` validates
-structure and references; it cannot prove conditions exhaustive or granularity
-deterministic.
+intent establishes. Omit an optional field the evidence does not establish,
+say so in a required one such as `takesEffect`, and record the gap as
+unresolved in Coverage. `lint` validates structure and references, never
+whether conditions are exhaustive.

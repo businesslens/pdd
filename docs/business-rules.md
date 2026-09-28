@@ -37,10 +37,6 @@ Capabilities, Journeys, their Scenarios, direct Contexts, or an operation on an
 constraint remains reusable and reviewable instead of drifting across several
 files.
 
-Business Rules can be alternatives in a [Variation](./variations.md) — Standard
-and Strict refund review, one selected per store. The Variation says how one is
-chosen; the Rule's own file does not, and such a Rule holds only while selected.
-
 ## When you create one
 
 **A Rule governs two or more behaviors, a Context independent of any single
@@ -307,21 +303,14 @@ a settings Entity and the Rule reads it — which is also what keeps that settin
 Entity from being an orphan. Dynamic configuration is the same shape again:
 the setting is a fact, and the Rule that reads it says what it changes.
 
-A flag or an A/B test has exactly one encoding, decided by what differs:
+A flag that decides whether someone may perform an operation is exactly this:
+*self-service cancellation on or off* is a settings fact read by a grant's
+`when`. A setting or assignment that chooses between complete, supported forms
+of a resource is a [Variation](./variations.md#when-you-create-one) instead, a
+difference only in looks is design, and a branch inside one ability is Scenario
+conditions and outcomes. Who is in which cohort is a fact on the Actor or
+tenant Entity.
 
-| What differs | Model it as |
-| --- | --- |
-| Whether someone may perform an operation | A settings fact read by a grant's `when` — this page |
-| Which of two or more complete, supported forms of a resource applies | A [Variation](./variations.md) — an A/B test whose arms are different Screens, Rules or Capabilities is an Experiment |
-| Only how something looks | Design, not modeled: visual References |
-| A branch inside one ability | Scenario conditions and outcomes |
-
-*Self-service cancellation on or off* is a grant's `when`; *five product page
-layouts, one per Shopper* is an Experiment Variation. Who is in which cohort is a
-fact on the Actor or tenant Entity. The experiment engine — allocation, metrics,
-results — stays outside the model unless the Product itself runs experiments.
-Grants encode Entity-operation permissions; other behavior variation belongs in
-Scenario conditions/outcomes and cross-behavior Rules.
 `state` says *the instance is in state X when the
 operation happens*: it must be a state of the targeted Entity, it is valid on
 every target but `creates`, and it cannot be combined with `entity`. It exists
@@ -398,6 +387,11 @@ Rules against Steps and Screens — errors:
   grant permits.
 - A Screen presenting an Entity whose reads are governed, where no Actor using
   the Screen's container has a possible grant.
+
+A permission Rule that is an alternative in a [Variation](./variations.md) holds
+only while selected, and `lint` cannot tell which alternative a Step runs
+under, so these checks skip it; `businesslens-verify` checks it against the
+code.
 
 A fact-scoped read Rule selects Screens whose `shows` lists a governed fact
 and Steps that read it. Collected input is not disclosure. Existing matching

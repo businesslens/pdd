@@ -196,7 +196,7 @@ describe('lintModel', () => {
     expect(result.counts).toEqual({
       interfaces: 6,
       experiences: 2,
-      screens: 10,
+      screens: 7,
       domains: 1,
       entities: 8,
       capabilities: 6,
@@ -258,16 +258,16 @@ describe('lintModel', () => {
 
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
-    for (const schema of [5, 8, 9, 10]) {
+    for (const schema of [5, 8, 9]) {
       writeFileSync(join(cwd, '.businesslens/config.yaml'), `schema: ${schema}\nsdd:\n  paths: []\n`)
-      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 11)`)
+      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 10)`)
     }
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 11)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 10)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -448,14 +448,14 @@ Lead.
     compactResource(join(bl, 'interfaces/admin-web/interface.md'), join(bl, 'interfaces/admin-web.md'))
     walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8')
       .replaceAll('customer-web::catalog', 'customer-web::storefront')
-      .replace(/::product-record(?:-(?:summary|price-first|stock-first|guided))?/g, '')
+      .replace(/::product-record(?:-without-stock)?/g, '')
       .replaceAll('::order-status', '')
       .replaceAll('admin-web::order-detail', 'admin-web')))
     // The experiment's routes differ only by Screen; without Screens the
     // existing browse Scenario already covers their single remaining place.
-    unlinkSync(join(bl, 'capabilities/browse-catalog/scenarios/read-an-experiment-product-presentation.md'))
-    // The product page experiment varies Screens, which no longer exist.
-    unlinkSync(join(bl, 'variations/product-page-layout.md'))
+    unlinkSync(join(bl, 'capabilities/browse-catalog/scenarios/read-a-product-without-its-stock.md'))
+    // The stock disclosure experiment varies Screens, which no longer exist.
+    unlinkSync(join(bl, 'variations/stock-disclosure.md'))
     /* With no Screen anywhere, nothing is reachable from everywhere, and a
        governed fact is checkable only where a Step cites it. */
     const web = join(bl, 'interfaces/customer-web/interface.md')
@@ -2020,7 +2020,7 @@ What other shoppers said, opened from the product record.
       ))
       const result = run(cwd)
       expect(result.errors).toEqual([])
-      expect(result.counts.screens).toBe(11)
+      expect(result.counts.screens).toBe(8)
 
       /* A selector on the parent covers the child. */
       writeRule(cwd, 'reviews-are-public', `appliesTo:

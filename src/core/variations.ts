@@ -1,27 +1,15 @@
 import { z } from 'zod'
 import { isQualifiedId } from './ids.js'
 
-export const VARIATION_KINDS = ['experiment', 'configuration', 'version'] as const
-export type VariationKind = typeof VARIATION_KINDS[number]
+import {
+  VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES,
+  type VariationCollection, type VariationKind, type VariationMemberType
+} from './variation-membership.js'
 
-/** The resource types a Variation may vary, spelled as their folder types. */
-export const VARIATION_MEMBER_TYPES = [
-  'interface', 'experience', 'screen', 'entity', 'capability', 'journey', 'business-rule'
-] as const
-export type VariationMemberType = typeof VARIATION_MEMBER_TYPES[number]
-
-/** The model collection that holds each member type. */
-export const VARIATION_COLLECTION_OF = {
-  interface: 'interfaces',
-  experience: 'experiences',
-  screen: 'screens',
-  entity: 'entities',
-  capability: 'capabilities',
-  journey: 'journeys',
-  'business-rule': 'businessRules'
-} as const satisfies Record<VariationMemberType, string>
-export type VariationCollection = typeof VARIATION_COLLECTION_OF[VariationMemberType]
-export const VARIATION_COLLECTIONS = Object.values(VARIATION_COLLECTION_OF) as VariationCollection[]
+export {
+  VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, variationMembership,
+  type VariationCollection, type VariationKind, type VariationMemberType
+} from './variation-membership.js'
 
 const UsageText = z.string().trim().min(1).refine(value => !/^#{1,2}\s/m.test(value), 'must not contain H1/H2 headings')
 export const VariationFactSchema = z.object({ entity: UsageText, fact: UsageText }).strict()
@@ -181,15 +169,4 @@ export function variationIssues(sets: readonly VariationSet[], scope: VariationS
     }
   }
   return issues
-}
-
-/** Member key → Variation, for the conditional checks that ask "is this one of a set?". */
-export function variationMembership(sets: readonly Pick<VariationSet, 'id' | 'of' | 'alternatives'>[]): Map<string, string> {
-  const membership = new Map<string, string>()
-  for (const set of sets) {
-    const collection = VARIATION_COLLECTION_OF[set.of as VariationMemberType]
-    if (!collection) continue
-    for (const alternative of set.alternatives) membership.set(`${collection}:${alternative.id}`, set.id)
-  }
-  return membership
 }

@@ -48,10 +48,6 @@ Inside an Interface, the model says what an Actor can reach, see, do and
 trigger at each place. It never says how that looks or is built — see
 [Is this a design spec?](#is-this-a-design-spec).
 
-Interfaces, Experiences and Screens can be alternatives in a
-[Variation](./variations.md). The Variation says how one is chosen; the place's
-own file does not.
-
 ## When you create one
 
 Create an Interface when Actors can interact with the Product through it and
@@ -259,8 +255,8 @@ Create a Screen when a view has a stable Product purpose and exposes at least
 one Capability. Do not create Screens for responsive layouts, themes, hover
 variants, skeletons, components, or every route found in source.
 
-**Error, legal and other capability-free views are not Screens.** A Screen must
-name at least one Capability, and a not-found page, a privacy policy, or a terms
+**Error, legal and other capability-free views are not Screens.** A Screen needs
+at least one Capability exercised by a Step placed on it, and a not-found page, a privacy policy, or a terms
 page exposes none — nothing about the Product's abilities happens there. The
 condition such a view answers — unauthorized, missing, empty — is a `condition`
 Step, an Edge case, or a Rule outcome in the Scenario that meets it; the view
@@ -324,9 +320,9 @@ one explicitly. At least one placed Capability is needed for a Screen. The
 same Steps supply Scenario backlinks. Parent and child Screens retain separate
 Capability sets.
 
-Other H2 sections are supporting content, except the removed `Information
-presented`, `Available actions`, `View states` and `Capability boundary`
-sections. Conditions belong in Scenarios and Rules.
+Other H2 sections are supporting content, except `Information presented`,
+`Available actions`, `View states` and `Capability boundary`, which are errors:
+information is in `entities`, and conditions belong in Scenarios and Rules.
 
 ### What a Screen presents
 
@@ -465,15 +461,17 @@ place.
 
 | | Design | Product Model |
 | --- | --- | --- |
-| Which surfaces and places exist, nested how | | **yes** |
+| Which surfaces and places exist, their interaction type, and how places nest | | **yes** |
 | Who is in each context, with what access, and which languages are served | | **yes** |
 | The facts each place shows or collects, and the abilities it offers | | **yes** |
 | What is always reachable, and where behavior moves between places | | **yes** |
 | The conditions and outcomes an Actor meets, and who may act | | **yes** |
-| Layout, components, typography, color, spacing, icons, motion | yes | never |
+| The Product's own vocabulary for all of it | | **yes** |
+| Component libraries, theming, layout, typography, color, spacing, radius, icons, motion | yes | never |
+| Gestures versus buttons, breakpoints, loading and hover states, navigation chrome and the order of its items | yes | never |
 | Ordinary copy and tone | yes | no |
 | Exact wording explicitly required by a Rule | | **yes, by Reference** |
-| Gestures versus buttons, breakpoints, loading and hover states, navigation chrome | yes | never |
+| Accessibility or performance, unless it changes what an Actor can do | yes | no |
 
 One test decides every case:
 
@@ -483,19 +481,6 @@ One test decides every case:
 > abilities it offers, what conditions change that, and what happens next.
 > Everything the redesign is free to change is design's, and the model says
 > nothing about it.
-
-**In the model:** which surfaces exist and their interaction type; which
-languages they serve; who is in each context and with what access; which
-places exist, nested how, and what facts and abilities each has, including the
-facts an Actor enters; what is always reachable inside a context; where
-behavior moves between places; the conditions and outcomes an Actor meets; who
-may act; and the Product's own vocabulary for all of it.
-
-**Out of the model:** component libraries, theming, layout, typography, color,
-radius and borders, iconography, motion, microcopy and tone, gestures versus
-buttons, breakpoints, loading and hover states, navigation chrome, the order of
-navigation items, and quality attributes such as accessibility or performance
-unless they change what an Actor can do.
 
 **Ordinary copy is design; contractual wording is a requirement.** The model
 normally records what an Actor must be told and under which condition. When
@@ -510,31 +495,12 @@ it, never is it*.
 
 ## Other forms of variation
 
-A Product varies along a few axes without leaving the model, and each already
-has a home.
-
-**Languages.** [`languages`](./product.md#the-file) on the Product lists the
-language tags it serves; an Interface may narrow the list, and Experiences and
-Screens never carry one. A redesign cannot drop German, so it is product; the
-vocabulary is closed, and `businesslens-verify` can check it against i18n
-configuration. An area served in fewer languages than its surroundings — an
-English-only operator console — is its own Interface. Content kept in several
-languages and the language chosen for someone are ordinary Entity facts, not
-`languages`; see [Product](./product.md#the-file).
-
-**Flags and experiments.** A flag deciding who may perform an Entity operation
-conditions a permission grant; two or more complete, supported forms of one
-resource — an A/B test whose arms differ in Screens or Rules — are a
-[Variation](./variations.md); a difference only in looks is design. Other
-variation belongs in Scenario conditions and outcomes, with Business Rules for
-constraints spanning behaviors. The full boundary is in
-[Business Rules](./business-rules.md).
-
-**Concurrent contracts.** Independently supported interaction contracts may be
-separate Interfaces. A different URL or header alone does not decide this.
-Supported alternatives of one place form a [Variation](./variations.md);
-differences within one ability use Scenarios and Rules. There is no Experience `version` field or
-version-driven division rule. Git preserves historical models.
+Languages are [`languages`](./product.md#the-file) on the Product, which an
+Interface may narrow. Two or more complete, supported forms of one Interface,
+Experience or Screen are a [Variation](./variations.md); a flag deciding who may
+perform an operation is a [grant's `when`](./business-rules.md); a difference
+only in looks is design. A different URL or header alone never makes a separate
+Interface.
 
 ## Findings `lint` reports
 
@@ -546,10 +512,10 @@ version-driven division rule. Git preserves historical models.
 - Actor reads must be shown by their Screen. Product and condition reads are
   not display claims; fact-free reads naming an Actor as a participant are exempt.
 - Languages must be valid and an Interface's list a subset of the Product's.
-- Experiences must follow the audience/access/counterpart/Variation rules; `version` is
-  an unknown key.
-- Removed Screen sections, `screens` on a container and `languages` on an
-  Experience or Screen are errors.
+- Experiences must follow the audience, access, counterpart and Variation rules.
+- `## Information presented`, `## Available actions`, `## View states` and
+  `## Capability boundary`, a `screens` list on an Interface or Experience, and
+  `languages` on an Experience or Screen are errors.
 
 Coverage does not relax these checks. A Capability can have no Screen; a Rule
 can prohibit behavior for which there is no example.

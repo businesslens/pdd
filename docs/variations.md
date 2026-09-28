@@ -24,20 +24,20 @@ terms:
 # Variations
 
 **A Variation is one product choice with several supported answers.** Stores
-choose Standard or Strict refund review; signed-in shoppers see one of five
-product page layouts; a payment gateway posts either the v1 or the v2 settlement
+choose Standard or Strict refund review; signed-in shoppers either see how many
+units of a product remain or do not; a payment gateway posts either the v1 or the v2 settlement
 contract. Each answer is an **alternative**: an ordinary, complete resource of
 one type — a Business Rule, a Screen, an Interface. The Variation names the
 choice, says why the alternatives coexist, and says once how one of them is
 chosen.
 
 A Variation is read as the type it varies. Refund review is a set of Business
-Rules; Product page layout is a set of Screens. Nothing about an alternative
+Rules; Stock disclosure is a set of Screens. Nothing about an alternative
 moves: its folder, its Domain, its owner and its Scenarios stay where they are.
 Membership is a relation, never containment.
 
-Interface, Experience, Screen, Entity, Capability, Journey and Business Rule
-can vary. Product, Domain, both Scenario types and Variation itself cannot.
+Interfaces, Experiences, Screens and Business Rules can vary. No other type
+does.
 
 ## When you create one
 
@@ -120,8 +120,9 @@ one of that [Entity](./entities.md)'s Information kept.
 A version selected by a setting is still a Version; an experiment enabled by a
 setting is still an Experiment. Where selection uses context the model does not
 keep — a header, a path — say so in `selectedWhen` rather than inventing an
-Entity to hold it. Where timing, allocation or a default is unknown, leave it
-out and record the gap in [Coverage](./product-model.md#coverage).
+Entity to hold it. Never invent what the evidence does not establish: leave out
+an optional field such as `allocation`, say so in a required one such as
+`takesEffect`, and record the gap in [Coverage](./product-model.md#coverage).
 
 An Entity used only to choose — an assignment unit, a setting's holder — is
 used; it needs nothing else to belong in the model. A Variation grants no
@@ -132,8 +133,8 @@ while it is selected, never unconditionally.
 ## What lint checks
 
 - `kind`, `of`, `takesEffect`, `stability` and `alternatives` are required;
-  `kind` is `experiment`, `configuration` or `version`; `of` is one of the seven
-  types that can vary.
+  `kind` is `experiment`, `configuration` or `version`; `of` is `interface`,
+  `experience`, `screen` or `business-rule`.
 - At least two alternatives, each listed once, each resolving to a resource of
   the type `of` names.
 - A resource is an alternative in at most one Variation.
@@ -142,7 +143,5 @@ while it is selected, never unconditionally.
   `assignmentMethod`.
 - Version labels are present and unique within the set, ignoring case.
 - Every Entity and fact reference resolves, and no fact is listed twice.
-- `## When used` is a reserved heading, rejected on every resource: how an
-  alternative is chosen belongs on its Variation.
 - An Interface may hold Experiences its audiences alone would not justify when
   those Experiences are alternatives in a Variation.

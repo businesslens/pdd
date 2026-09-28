@@ -17,16 +17,17 @@
   frameworks are not Product Interfaces. Give each Interface exactly one
   authored interaction type; use the contract (`web`, `mobile-app`, `cli`,
   `api`, and so on), not its implementation technology.
-- An Experience is who is there and what they can do — a coherent Actor context
-  with one access mode —
-  inside exactly one Interface, the folder that holds it; never what it looks
-  like. Whether an Interface is divided into Experiences is derived, never
-  judged: it is divided when it serves more than one `access` value, when its
-  Actors split into groups no Capability available there bridges (a Capability
-  bridges the Actors its Scenario Steps name ).
-  Otherwise it holds no Experiences and availability names the Interface
-  directly. `lint` decides and reports a violation as an error; exceptions are Experiences that are alternatives in a Variation and an Experience
-  whose name also exists under another Interface — a counterpart. A
+- An Experience is who is there and what they can do — a coherent Actor
+  context with one access mode inside exactly one Interface, the folder that
+  holds it — never what it looks like. Whether an Interface is divided into
+  Experiences is derived, never judged: it is divided when it serves more than
+  one `access` value, or when its Actors split into groups no Capability
+  available there bridges (a Capability bridges the Actors its Scenario Steps
+  name). Otherwise it holds no Experiences and availability names the
+  Interface directly. `lint` decides and reports a violation as an error;
+  Experiences that are alternatives in a Variation, and an Experience whose
+  name also exists under another Interface — a counterpart — justify
+  themselves. A
   page or command group alone is not an Experience.
 - Screens are optional stable views an Actor reaches: places, decided under
   "Places, not designs" below, never components, layouts or visual variants.
@@ -68,75 +69,82 @@
 
 ## Places, not designs
 
-The model records what an Actor can reach, see, supply, do and trigger. Layout,
-styling and ordinary copy remain external design References. When exact wording
-is a product requirement, a Business Rule identifies its authoritative Reference;
-verify that wording, or report it unverifiable when the source is unavailable.
+The model records what an Actor can reach, see, supply, do and trigger at each
+place. It never says how that looks or is built. One test decides every case:
 
-- A Screen's `entities` distinguish `shows` (Product disclosure) from `collects`
-  (Actor input). Each is a non-empty list of named Entity facts when present.
-  A prefilled editable fact can occur in both. A bare Entity id is only for an
-  Entity without named facts. Read permissions apply only to `shows`.
-- Never author Screen `capabilities`: derive them from Capabilities exercised by
-  Steps placed exactly there, including both Scenario kinds. Parent and child
-  Screens have separate sets. A Screen needs at least one placed Capability.
-- On every `reads`, `changes` and `creates` Entity entry, write `facts`: the
-  exhaustive named Product facts read, changed or initialized, including
-  product-defined defaults. `[]` means no named facts, never unspecified.
-  Removal names the whole Entity and has no authored `facts`. Do not infer
-  operation effects from form fields or include incidental implementation data.
-- A child Screen subdivides its parent's persistent selected subject or process;
-  changing that parent context also changes or ends the child. Tabs within a
-  resource reading and wizard stages qualify. Opening a destination from a view
-  alone does not establish ownership: a shared resource panel belongs once at
-  the common Interface or Experience container of its launch sites. URLs,
-  co-visibility and modal/page presentation do not decide ownership. Different
-  drawings of the same information remain one Screen. Confirmation normally
-  stays behavior on its host; preserving the underlying view is an Outcome.
-  Treat ambiguous ownership as an authoring question, never claim that lint
-  establishes semantic determinism.
-Choose the nearest qualifying persistent context as the parent. A generic
-settings/category selector is not itself a selected subject or an in-progress
-process. A process stage requires its own Actor decision or input while retaining
-the same draft or operation; a completion message, generated credential reveal
-or read-only result alone is an Outcome on that process Screen, not a child.
+> Rebuild a view with a different component library, layout, typography,
+> colors, spacing, icons, motion and copy. Everything that would still have to
+> be true is the model's: who can reach the view, what facts it shows, what
+> abilities it offers, what conditions change that, and what happens next.
+> Everything the redesign is free to change is design's, and the model says
+> nothing about it.
 
-- A wizard is a Journey only when its Scenario crosses Capabilities.
-- Ordinary filtering, sorting and searching are browsing Scenarios. Split them
-  when the general Capability test establishes an independent purpose,
-  permission, availability or outcome; returning the same set is not decisive.
-- A view condition belongs in Scenario conditions, Edge cases or Rule outcomes.
-  Attach a condition's capture to its Scenario, not to a new Screen state key.
-- `navigation` lists Screens reachable from every place in its Interface or
-  Experience. Entry points describe arrival; Steps describe movement.
-- Languages belong to the Product, optionally narrowed by Interface; an area
-  served in fewer languages is its own Interface. Content kept in several
-  languages is an Entity fact, and how a language is chosen for someone is a
-  kept fact (*Preferred language*) with the Steps that set it; neither is
-  `languages` or a Variation. There is no
-  Experience `version` field. Independently supported contracts may be separate
-  Interfaces; addresses and headers alone never decide. Supported alternatives of one
-  resource type form one Variation file, `variations/<id>.md`, following the
-  shared format reference: one `kind` (Experiment, Configuration or Version) and
-  one `of` per set; membership only in its `alternatives`, never on the
-  alternatives' own files; the mechanism, `takesEffect` and `stability` once on
-  the set; `selectedWhen` (and a Version's `label`) per alternative. Create one
-  only when two or more resources of one type are all supported now and something
-  selects between them; a threshold or other parameter stays content of one
-  resource. Link existing selection Entities and facts; never invent Entities,
-  settings, allocations, defaults or timing. Check eligibility, selection,
-  defaults and stability as relevant to the subtype. Selection prose is not
-  executable; record what evidence does not establish as unresolved in Coverage. Ordinary
-  outcomes stay Scenarios and visual-only differences stay References. Do not
-  claim deterministic granularity from lint alone. A permission flag is a
-  grant's `when` on an Entity operation, never a Capability target; a setting
-  or assignment that chooses between complete forms of a resource is a
-  Variation, never a flag. *Self-service cancellation on or off* is a grant's
-  `when`; *five product page layouts, one per Shopper* is an Experiment.
-- A Rule can prohibit a fact nobody reads. Require resolvable references, not an
-  example of prohibited behavior. Experiments and messages can be ordinary
-  Product Entities and behavior when the Product manages them.
+Design lives in `visual` References with `role: intent`. Ordinary copy is
+design; when exact wording is a product requirement, a Business Rule identifies
+its authoritative Reference.
 
+- **Screen facts.** A Screen's `entities` distinguish `shows` (what the Product
+  discloses) from `collects` (what the Actor supplies). Each present list is
+  non-empty and names Entity facts; a prefilled editable fact can be in both. A
+  bare Entity id is only for an Entity without named facts. Read permissions
+  apply only to `shows`.
+- **Screen Capabilities are derived.** Never author Screen `capabilities`: they
+  are the Capabilities of Steps placed exactly on that Screen, from both
+  Scenario kinds. Parent and child Screens keep separate sets, and every Screen
+  needs at least one.
+- **Step facts.** On every `reads`, `changes` and `creates` entry, write
+  `facts`: the exhaustive named Product facts read, changed or initialized,
+  including product-defined defaults. `[]` means none, never unspecified.
+  `removes` has no `facts`. Do not infer operation effects from form fields or
+  list incidental implementation data.
+- **Nesting.** A child Screen subdivides its parent's persistent selected
+  subject or process: changing the parent context changes or ends the child.
+  Tabs within one resource reading and wizard stages qualify. Choose the
+  nearest qualifying context as the parent. A process stage needs its own Actor
+  decision or input on the same draft or operation; a completion message, a
+  generated credential reveal or a read-only result is an Outcome on the
+  process Screen, not a child. A generic settings or category selector is
+  neither a selected subject nor a process. Opening a destination from a view
+  does not make that view its owner: a panel opened from several views sits
+  once at their common Interface or Experience. URLs, co-visibility, modal
+  versus page, and different drawings of the same information decide nothing.
+  Treat ambiguous ownership as a question for the author.
+- **Conditions.** An empty, unauthorized or blocked view is a `condition` Step,
+  Edge case or Rule outcome in the Scenario that meets it, and its capture
+  attaches to that Scenario. Confirmation stays behavior on its host;
+  preserving the underlying view is an Outcome.
+- **Movement and reach.** Steps say movement and entry points say arrival;
+  `navigation` lists only Screens reachable from every place in its Interface
+  or Experience.
+- **Journeys and browsing.** A wizard is a Journey only when its Scenario
+  crosses Capabilities. Ordinary filtering, sorting and searching are Scenarios
+  of the browsing Capability unless the general Capability test establishes an
+  independent purpose, permission, availability or outcome.
+- **Languages.** `languages` belongs to the Product, optionally narrowed by an
+  Interface. Content kept in several languages is an Entity fact, and how a
+  language is chosen for someone is a kept fact such as *Preferred language*
+  with the Steps that set it; neither is `languages` or a Variation.
+- **One encoding per kind of difference.** A flag deciding whether someone may
+  perform an Entity operation is a grant's `when` (*self-service cancellation
+  on or off*). A setting, assignment or version choosing between complete,
+  supported forms of one Interface, Experience, Screen or Business Rule is a
+  Variation (*Shoppers assigned to see or not see a product's remaining stock*
+  is an Experiment of Screens). A branch inside one ability is Scenario
+  conditions and outcomes; a difference only in looks is design. A different
+  address or header alone never makes a separate Interface.
+- **Variations.** One `variations/<id>.md` per set, per the shared format
+  reference: membership only in its `alternatives`; the mechanism,
+  `takesEffect` and `stability` once on the set; `selectedWhen` (and a
+  Version's `label`) per alternative. A set exists only when two or more
+  resources of one type are all supported now and something selects between
+  them; a threshold or other parameter stays content of one resource. Link
+  existing Entities and facts; never invent Entities, settings, allocations,
+  defaults or timing. Omit an optional field the evidence does not establish,
+  say so in a required one, and record the gap in Coverage.
+- **Prohibitions.** A Rule can prohibit a fact nobody reads; it needs
+  resolvable references, not an example of the prohibited behavior.
+  Experiments and messages are ordinary Entities and behavior only when the
+  Product manages them.
 
 ## Scenarios are the acceptance contract
 

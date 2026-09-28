@@ -95,13 +95,13 @@ Read before authoring:
    are evidence, not automatic Interfaces. Create an Interface only for a
    supported Product interaction contract, and do not infer cross-Interface
    parity from shared implementation. Whether an Interface is divided into
-   Experiences follows audience and access: divide it when it
-   serves more than one `access` value, when its Actors split into groups no
-   Capability available there bridges (a Capability bridges the Actors its
-   Scenario Steps name). Otherwise it holds no
-   Experiences and availability names the Interface directly. `lint` decides
-   and reports a violation as an error. Counterparts across Interfaces and
-   Experiences that are alternatives in one Variation also justify division. For
+   Experiences is derived, never judged: divide it when it serves more than one
+   `access` value, or when its Actors split into groups no Capability available
+   there bridges (a Capability bridges the Actors its Scenario Steps name).
+   Otherwise it holds no Experiences and availability names the Interface
+   directly. `lint` decides and reports a violation as an error; counterparts
+   across Interfaces and Experiences that are alternatives in one Variation
+   justify themselves. Do not apply a prose test of your own. For
    A/B and other supported alternatives, write one `variations/<id>.md` per the
    shared format reference: membership only on the set, each selection field
    once, no keys on the alternatives. Use Scenarios for variation in one ability,

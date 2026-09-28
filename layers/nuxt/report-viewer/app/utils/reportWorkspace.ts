@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV16,
+  ProductReportV15,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -22,8 +22,7 @@ import type {
   ReportSupportingSection,
   ReportVariation
 } from 'businesslens/report'
-import { reportVariationMembership } from 'businesslens/report'
-import { operationPlaces, permissionTargetSelectsOperation } from 'businesslens/report/selectors'
+import { operationPlaces, permissionTargetSelectsOperation, reportVariationMembership } from 'businesslens/report/selectors'
 
 /** Split an authored `cardinality` into its two ends. */
 export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {
@@ -203,9 +202,6 @@ export const VARIATION_MEMBER_KIND: Record<ReportVariation['of'], ReportResource
   interface: 'interface',
   experience: 'experience',
   screen: 'screen',
-  entity: 'entity',
-  capability: 'capability',
-  journey: 'journey',
   'business-rule': 'rule'
 }
 
@@ -808,13 +804,6 @@ function contextResolver(places: PlaceIndex): (context: ReportContext) => Contex
   }
 }
 
-/** The nearest Interface or Experience above a Screen: its parent may be a Screen. */
-export function containerOf(screenId: string, isScreen: (id: string) => boolean): string {
-  let place = parentPlace(screenId)
-  while (place && isScreen(place)) place = parentPlace(place)
-  return place
-}
-
 function entryPoints(
   points: Array<{ type: string, path: string }>,
   interfaces: ReportInterface[],
@@ -830,7 +819,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV16): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV15): ReportWorkspace {
   const model = report.model
   const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
@@ -1361,7 +1350,6 @@ export function projectReportWorkspace(report: ProductReportV16): ReportWorkspac
       .map(rule => rule.id)
     return {
       key: resourceKey('entity', entity.id),
-      variation: variationOf('entities', entity.id),
       id: entity.id,
       kind: 'entity' as const,
       title: entity.title,
@@ -1470,7 +1458,6 @@ export function projectReportWorkspace(report: ProductReportV16): ReportWorkspac
     const entityIds = [...effects.keys()].sort()
     return {
       key: resourceKey('capability', capability.id),
-      variation: variationOf('capabilities', capability.id),
       id: capability.id,
       entityIds,
       readEntityIds: [...readIds].filter(id => !effects.has(id)).sort(),
@@ -1535,7 +1522,6 @@ export function projectReportWorkspace(report: ProductReportV16): ReportWorkspac
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
       key: resourceKey('journey', journey.id),
-      variation: variationOf('journeys', journey.id),
       id: journey.id,
       kind: 'journey',
       title: journey.title,

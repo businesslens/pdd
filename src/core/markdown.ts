@@ -174,13 +174,7 @@ export function decisionPoints(
 }
 
 /** Parse named states — an Entity's `## States` — as one H3 name followed by non-empty prose. */
-export function namedStates(
-  body: string,
-  issues: string[],
-  label: string,
-  heading = 'States',
-  noun = 'state'
-): MarkdownNamedState[] {
+export function namedStates(body: string, issues: string[], label: string): MarkdownNamedState[] {
   if (!body.trim()) return []
   const lines = body.split('\n')
   const chunks: Array<{ title: string, lines: string[] }> = []
@@ -194,7 +188,7 @@ export function namedStates(
       continue
     }
     if (!current) {
-      if (line.trim()) issues.push(`${label}: "## ${heading}" content must begin with an H3 title`)
+      if (line.trim()) issues.push(`${label}: "## States" content must begin with an H3 title`)
       continue
     }
     current.lines.push(line)
@@ -203,8 +197,8 @@ export function namedStates(
 
   return chunks.map((chunk) => {
     const description = chunk.lines.join('\n').trim()
-    if (!chunk.title) issues.push(`${label}: ${noun} needs a title`)
-    if (!description) issues.push(`${label}: ${noun} "${chunk.title}" needs a description`)
+    if (!chunk.title) issues.push(`${label}: entity state needs a title`)
+    if (!description) issues.push(`${label}: entity state "${chunk.title}" needs a description`)
     return { title: chunk.title, description }
   })
 }
