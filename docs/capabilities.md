@@ -159,6 +159,13 @@ This does not promise `public-discovery` on `reader-mobile`. Availability is
 intended Product meaning, not implementation status; `businesslens-verify`
 checks whether the implementation satisfies it.
 
+**List every Experience in which one of the Capability's Actors uses it.** When
+Guests read pages in a public Experience and signed-in Users read them in an
+authenticated one, the Capability names both, and each Experience holds its own
+counterpart Screen, unless every Experience of the Interface shares that
+Screen. A Screen reached both before and after signing in exists in each
+Experience that reaches it.
+
 For an Interface with no Experiences, use the Interface as the Context place:
 
 ```yaml

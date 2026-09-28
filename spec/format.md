@@ -453,16 +453,28 @@ that describes the thing the behavior acts on — a page's own editor format, an
 order's own delivery option — is state the behavior meets, and a `condition`
 Step or a decision point reads it, even when an earlier Step or an
 administrator set it.
-A decision point is a choice or branch made during one run; a setting that
-decides the form of the run before it starts selects a Variation. A registration
-setting that requires email confirmation selects which registration Scenario
-runs; the unconfirmed account that sign-in later meets is state.
 
-**A resource that exists only under some alternatives** stays an ordinary
-resource. A Business Rule without `permits` that applies to it states the
-dependency in its lead, naming the Variation and the alternatives it exists
-under: registration exists only while the sign-in method is password. There is
-no field for it, because the Rule already says it and `verify` checks it.
+**Scenarios vary only when what an Actor does differs.** A setting that changes
+an Actor's Steps — one skipped, one added, a different place or input — selects
+Scenario alternatives: a registration setting requiring email confirmation adds
+the Actor's confirmation, so it selects which registration Scenario runs. A
+setting that changes only the Product's own Steps — whether group sync replaces
+a User's Roles or adds to them — is a decision point in one Scenario. The one
+exception is a Step that must name a different alternative of another
+Variation, which varies with it: issuing a VAT invoice or a sales tax receipt.
+When a Product-only setting changes the outcome — an unknown social account
+registered or refused — the branches are separate Scenarios, each with a
+`condition` Step reading the setting, and still no Variation.
+A decision point is also any choice or branch made during one run, and the
+unconfirmed account that sign-in later meets is state.
+
+**A resource that exists only under some alternatives, or only while a setting
+enables it,** stays an ordinary resource. A Business Rule without `permits` that
+applies to it states the dependency in its lead, naming the Variation and the
+alternatives it exists under, or the enabling setting: registration exists only
+while the sign-in method is password; social sign-in exists only while a
+provider is configured. There is no field for it, because the Rule already says
+it and `verify` checks it.
 
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, spelled as that type's ordinary ids — a
@@ -838,7 +850,7 @@ Where authorized operators manage the store and its orders.
 and every one must be supported by the owning Interface. `access` is required,
 and it is the most open the context can be. A setting that closes it — content
 public only while the store allows guests — is a grant's `when` on the
-operations it restricts, never a second Experience holding the same Screens. Optional `entryPoints` key the
+operations it restricts; it never justifies an Experience of its own. Optional `entryPoints` key the
 owning Interface only. H1 and lead description are required; `## Intent` is
 optional. There is no `## Capability boundary`, for the reason given on the
 Interface, and one still authored is a `lint` error. There is no `exit` field
@@ -876,6 +888,14 @@ availability:
 ```
 
 Availability states intended Product meaning, never implementation status.
+
+**A Capability is available in every Experience in which one of its Actors uses
+it**, never only in the most open one. Guests reading pages in a public
+Experience and signed-in Users reading them in an authenticated one make the
+Capability list both, and each Experience holds its own counterpart Screen —
+unless the Screen is shared by every Experience of the Interface, which puts it
+beside `experiences/`. A Screen an Actor reaches both before and after signing
+in exists in each Experience that reaches it.
 
 A **Screen does not declare availability** — its path is its placement.
 Scenarios and Journeys do not declare availability either. A Scenario Step

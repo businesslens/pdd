@@ -225,3 +225,26 @@ way to say which Step replaces which inside an ordered list, and rules for
 routes and Contexts across the swap: a patch language inside Scenarios. Two
 Scenarios of one owner that differ in that Step say the same thing with no new
 mechanism, and each stays a complete acceptance contract.
+
+**A Capability only in the most open Experience that admits its Actors.**
+Placing page reading once in a public Experience, for guests and signed-in
+Users alike, avoids counterpart Screens, but it makes "public" also mean "where
+signed-in Users read", and an authenticated Experience then holds only what
+nobody reaches unauthenticated. A Capability is available in every Experience
+in which one of its Actors uses it instead.
+
+**A Scenario in more than one Variation.** Two settings shaping the same run —
+how sign-in starts and how group sync treats Roles — would each vary the same
+Scenarios. Allowing both multiplies Scenarios with every setting and breaks the
+one set a resource's reading names. Scenarios vary only when what an Actor
+does differs; a Product-only difference is a decision point.
+
+**A setting-driven Product side effect as a Capability of its own.** Moving
+group sync into its own Capability keeps its setting from crossing sign-in's,
+but it creates Capabilities the Capability test would not make, only to host a
+Variation.
+
+**A structured `enabledBy` field for switched-on behavior.** Naming the setting
+that enables a Capability as a fact reference would let `lint` resolve it, but
+deployment settings have no Entity to reference, and the grant-less Business
+Rule already carries the same claim for `verify`.

@@ -77,16 +77,21 @@ A Variation chooses by a fact that exists to choose — a setting, an experiment
 assignment, a version discriminator — or by the deployment, fixed before the
 behavior starts. A fact that describes the thing being worked on is state the
 behavior meets: a page's own editor format is read by a `condition` Step, even
-though someone set it earlier. A decision point is a choice made during one
-run; a setting that decides the form of the run before it starts selects a
-Variation. So a registration setting requiring email confirmation selects which
-registration Scenario runs, while the unconfirmed account that sign-in later
-meets is state.
+though someone set it earlier.
 
-A resource that exists only under some alternatives — registration, which
-exists only while the sign-in method is password — stays an ordinary resource.
-A Business Rule without `permits` applies to it and says so in its lead, naming
-the Variation.
+**Scenarios vary only when what an Actor does differs.** A registration setting
+requiring email confirmation adds a Step the Actor takes, so it selects which
+registration Scenario runs. A setting that changes only the Product's own Steps
+— whether group sync replaces a User's Roles or adds to them — is a decision
+point in one Scenario, like any choice made during a run. The exception is a
+Step that must name a different alternative of another Variation, such as
+issuing a VAT invoice or a sales tax receipt: that Scenario varies with it.
+
+A resource that exists only under some alternatives, or only while a setting
+enables it — registration while the sign-in method is password, social sign-in
+while a provider is configured — stays an ordinary resource. A Business Rule
+without `permits` applies to it and says so in its lead, naming the Variation
+or the setting.
 
 Do not create one for:
 

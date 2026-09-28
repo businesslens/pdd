@@ -29,7 +29,7 @@
   name also exists under another Interface — a counterpart — justify
   themselves. `access` is the most open the context can be; a setting that
   closes it (content public only while guests are allowed) is a grant's
-  `when`, never a second Experience holding the same Screens. A
+  `when`, never a reason for an Experience of its own. A
   page or command group alone is not an Experience.
 - Screens are optional stable views an Actor reaches: places, decided under
   "Places, not designs" below, never components, layouts or visual variants.
@@ -143,13 +143,27 @@ its authoritative Reference.
   the behavior acts on is state, read by a `condition` Step or decision point
   even when someone set it earlier: a page's own editor format is a condition
   of editing, while the site's sign-in method selects between sign-in
-  Capabilities. A decision point is a choice made during one run; a setting
-  deciding the form of the run before it starts — sign-in that starts at the
-  provider automatically, registration that requires email confirmation —
-  selects Scenario alternatives, while the unconfirmed account sign-in later
-  meets is state. A resource that exists only under some alternatives
-  (registration while the sign-in method is password) stays ordinary; a
-  Business Rule without `permits` applying to it names the Variation.
+  Capabilities. Scenarios vary only when what an Actor does differs: sign-in
+  that starts at the provider automatically drops the Actor's choice, and
+  registration that requires email confirmation adds the Actor's
+  confirmation, so both select Scenario alternatives. A setting that changes
+  only the Product's own Steps — group sync replacing or adding Roles — is a
+  decision point in one Scenario, as is any choice made during a run; the one
+  exception is a Step that must name a different alternative of another
+  Variation, which varies with it. When such a setting changes the outcome — an
+  unknown social account registered or refused — the branches are separate
+  Scenarios, each with a `condition` Step reading the setting, not a Variation. The unconfirmed account sign-in later
+  meets is state. A resource that exists only under some alternatives or only
+  while a setting enables it (registration while the sign-in method is
+  password; social sign-in while a provider is configured) stays ordinary; a
+  Business Rule without `permits` applying to it names the Variation or the
+  setting.
+- **Every context it is used from.** A Capability is available in every
+  Experience in which one of its Actors uses it — guests reading pages in a
+  public Experience and signed-in Users in an authenticated one — never only
+  in the most open. Each Experience holds its own counterpart Screen unless
+  every Experience shares it, and a Screen reached before and after signing
+  in exists in each Experience that reaches it.
 - **Variations.** One `variations/<id>.md` per set, per the shared format
   reference: membership only in its `alternatives`; the mechanism,
   `takesEffect` and `stability` once on the set; `selectedWhen` (and a

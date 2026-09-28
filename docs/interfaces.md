@@ -206,7 +206,7 @@ Where authorized operators manage the Product and its users.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
-| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. A setting that closes it — content public only while the store allows guests — is a grant's `when` on the operations it restricts, never a second Experience holding the same Screens. |
+| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. A setting that closes it — content public only while the store allows guests — is a grant's `when` on the operations it restricts, never a reason for an Experience of its own. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `navigation` | no | List this Experience's own Screens reachable from every place inside it, each as a path relative to the Experience, nested ones by their child path. Unique values; order carries no meaning. See [Navigation](#navigation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |

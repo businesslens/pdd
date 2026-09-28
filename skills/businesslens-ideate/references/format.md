@@ -134,14 +134,17 @@ not contain another H1 or H2.
 - Experience: non-empty `actors` supported by the owning Interface; required
   `access` (`public|authenticated|restricted`), the most open the context can
   be — a setting that closes it is a grant's `when` on the operations it
-  restricts, never a second Experience with the same Screens; optional Interface-keyed
+  restricts, never a reason for an Experience of its own; optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
   `## Capability boundary` is an error. Disjoint audiences require
   division; distinct access modes, counterparts or membership in a Variation
   justify existing Experiences. A Variation may span Interfaces without
   changing ownership.
   Their Actor union equals the Interface's Actors.
-- Capability: at least one `availability` Context; optional singular `domain`;
+- Capability: at least one `availability` Context — every Experience in which
+  one of its Actors uses it (guests in a public one, signed-in Users in an
+  authenticated one), each with its own counterpart Screen unless every
+  Experience shares it, never only the most open; optional singular `domain`;
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
   `entities` is refused. Every Capability needs a Capability Scenario for every
@@ -617,13 +620,20 @@ the Scenarios and keep one Entity with every State.
 choose — a setting, an experiment assignment, a version discriminator — or by
 the deployment, fixed before the behavior starts. A fact describing the thing
 the behavior acts on (a page's own editor format) is state: a `condition` Step
-or decision point reads it, even when someone set it earlier. A decision point
-is a choice made during one run; a setting deciding the form of the run before
-it starts selects a Variation. A registration setting requiring email
-confirmation selects the registration Scenario; the unconfirmed account sign-in
-later meets is state. A resource that exists only under some alternatives
-(registration while the sign-in method is password) stays ordinary, and a
-Business Rule without `permits` applying to it names the Variation in its lead.
+or decision point reads it, even when someone set it earlier. Scenarios vary
+only when what an Actor does differs: a registration setting requiring email
+confirmation adds the Actor's confirmation, so it selects the registration
+Scenario. A setting changing only the Product's own Steps (group sync replacing
+or adding Roles) is a decision point in one Scenario, as is any choice made
+during a run — except a Step that must name a different alternative of another
+Variation (a VAT invoice or a sales tax receipt), which varies with it. A
+Product-only setting that changes the outcome (an unknown social account
+registered or refused) makes separate Scenarios with a `condition` Step. The
+unconfirmed account sign-in later meets is state. A resource that exists only
+under some alternatives or only while a setting enables it (registration while
+the sign-in method is password; social sign-in while a provider is configured)
+stays ordinary, and a Business Rule without `permits` applying to it names the
+Variation or the setting in its lead.
 
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.
