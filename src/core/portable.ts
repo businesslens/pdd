@@ -587,7 +587,14 @@ export function reportVariationSet(variation: ReportVariation): VariationSet {
 export function reportVariationIssues(model: ReportModel): string[] {
   const members = Object.fromEntries(Object.values(VARIATION_COLLECTION_OF)
     .map(collection => [collection, new Set(model[collection].map(item => item.id))])) as Record<VariationCollection, Set<string>>
-  return variationIssues(model.variations.map(reportVariationSet), { members, entities: model.entities })
+  return variationIssues(model.variations.map(reportVariationSet), {
+    members,
+    entities: model.entities,
+    scenarioOwners: new Map([
+      ...model.capabilityScenarios.map(item => [item.id, `capability:${item.capabilityId}`] as const),
+      ...model.journeyScenarios.map(item => [item.id, `journey:${item.journeyId}`] as const)
+    ])
+  })
     .map(issue => `variation "${issue.id}": ${issue.message}`)
 }
 

@@ -127,17 +127,22 @@ its authoritative Reference.
 - **One encoding per kind of difference.** A flag deciding whether someone may
   perform an Entity operation is a grant's `when` (*self-service cancellation
   on or off*). A setting, assignment or version choosing between complete,
-  supported forms of one Interface, Experience, Screen or Business Rule is a
-  Variation (*Shoppers assigned to see or not see a product's remaining stock*
-  is an Experiment of Screens). A branch inside one ability is Scenario
-  conditions and outcomes; a difference only in looks is design. A different
-  address or header alone never makes a separate Interface.
+  supported forms of a resource is a Variation of the smallest resource that
+  contains the difference: *a checkout that skips address review for half of
+  Shoppers* is an Experiment of two Scenarios of Checkout; *a store that keeps a
+  VAT invoice or a sales tax receipt* is a Configuration of Entities, carried
+  into the Scenarios that create each. A branch on state the behavior meets —
+  out of stock, payment declined — is Scenario conditions and outcomes; a
+  difference only in looks is design. A different address or header alone
+  never makes a separate Interface.
 - **Variations.** One `variations/<id>.md` per set, per the shared format
   reference: membership only in its `alternatives`; the mechanism,
   `takesEffect` and `stability` once on the set; `selectedWhen` (and a
   Version's `label`) per alternative. A set exists only when two or more
   resources of one type are all supported now and something selects between
-  them; a threshold or other parameter stays content of one resource. Link
+  them; a threshold or other parameter stays content of one resource.
+  Alternatives of a Scenario Variation share their Capability or Journey, and a
+  Step is never an alternative. Link
   existing Entities and facts; never invent Entities, settings, allocations,
   defaults or timing. Omit an optional field the evidence does not establish,
   say so in a required one, and record the gap in Coverage.

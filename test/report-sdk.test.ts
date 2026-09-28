@@ -165,6 +165,14 @@ describe('projectPortableReport', () => {
 
   it('accepts direct Interface availability when no Experiences divide an Interface', () => {
     const direct = structuredClone(report)
+    // The mobile catalog preview exists only as a Variation alternative; flattening drops it.
+    direct.model.variations = direct.model.variations.filter(set => set.id !== 'mobile-storefront')
+    direct.counts.variations = direct.model.variations.length
+    for (const capability of direct.model.capabilities) capability.availability = capability.availability.filter(context => context.placeId !== 'customer-mobile::catalog-preview')
+    for (const scenario of direct.model.capabilityScenarios) {
+      scenario.routes = scenario.routes.filter(route => route.id !== 'preview')
+      for (const step of scenario.steps) step.contexts = step.contexts.filter(context => context.routeId !== 'preview')
+    }
     direct.model.experiences = []
     direct.counts.experiences = 0
     for (const collection of [
@@ -250,9 +258,10 @@ describe('projectPortableReport', () => {
       withFailure.model.screens.find(screen => screen.id === screenId)!.journeyScenarioIds.push('checkout-needs-operator-help')
     }
     withFailure.counts.journeyScenarios += 1
-    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order', 'manage-orders']
+    // Manual confirmation is an achieved alternative, so Order management is primary, not failure-only.
+    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order']
 
-    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'place-order', 'settle-payment'])
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'])
     expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 

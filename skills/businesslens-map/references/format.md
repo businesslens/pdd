@@ -253,9 +253,9 @@ not contain another H1 or H2.
   encoding per case: a flag deciding whether someone may perform an Entity
   operation conditions a grant; two or more complete, supported forms of one
   resource chosen by a setting, assignment or version are a Variation (an A/B
-  test whose arms are different Screens or Rules is an
-  Experiment); a looks-only difference is design; a branch inside one ability
-  is Scenario conditions and outcomes, or Rules spanning behaviors. No
+  test whose arms differ in one Step is an Experiment of two
+  Scenarios); a looks-only difference is design; a branch on state the behavior
+  meets is Scenario conditions and outcomes, or Rules spanning behaviors. No
   structured `when` exists on Capability targets. The experiment engine and
   messages are ordinary Product Entities and behavior only when that is the
   Product's purpose.
@@ -566,8 +566,9 @@ Documentation: https://businesslens.io
 ## Variations
 
 A Variation is a named set of two or more currently supported alternatives of
-one resource type: Interface, Experience, Screen or Business Rule. No other type
-varies. The set is its own resource, `variations/<id>.md`; alternatives stay
+one resource type: Interface, Experience, Screen, Entity, Capability, Capability
+Scenario, Journey, Journey Scenario or Business Rule. Product, Domain and
+Variation itself cannot vary. The set is its own resource, `variations/<id>.md`; alternatives stay
 ordinary, independently complete resources and carry no Variation keys.
 
 ```yaml
@@ -597,6 +598,16 @@ is optional.
 resources of the type `of` names, by that type's ordinary ids (a Screen's full
 `interface::experience::screen`). A resource belongs to at most one Variation.
 The list is a set; its order means nothing.
+
+**Vary the smallest resource that fully contains the difference.** One Step
+that differs: two Scenarios of one owner (`of: capability-scenario` or
+`journey-scenario`), never two Capabilities; a Scenario Variation whose
+alternatives have different owners is a `lint` error. The ability's contract,
+availability or Actors: Capabilities. A place: Screens or Experiences. The facts
+or States kept: Entities. A Step is never an alternative. Steps, Screens and
+Rules name one concrete alternative, so a varying Entity carries into the
+Scenarios that touch it, selected the same way; when only the path differs, vary
+the Scenarios and keep one Entity with every State.
 
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.

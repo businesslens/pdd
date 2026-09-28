@@ -219,8 +219,9 @@ Entity-operation meaning; they cannot stand in for selecting whole resources.
 record membership. Experiment-management Products can model assignment and
 measurement using ordinary Entities, Capabilities and Scenarios.
 
-**Varying Entities, Capabilities and Journeys — deferred.** No example showed
-two complete, supported forms of one of these that Scenario conditions, a
-grant's `when`, or ordinary content could not already state, and each extra
-member type is one more place two lint-clean encodings can meet. Interfaces,
-Experiences, Screens and Business Rules vary; the others wait for a case.
+**Steps as Variation alternatives.** A Step has no id and means what it means
+in its position among the Steps around it. Varying one needed ids on Steps, a
+way to say which Step replaces which inside an ordered list, and rules for
+routes and Contexts across the swap: a patch language inside Scenarios. Two
+Scenarios of one owner that differ in that Step say the same thing with no new
+mechanism, and each stays a complete acceptance contract.

@@ -6,6 +6,7 @@
  * moves anything.
  */
 import type { AnyResourceView, ReportWorkspace, VariationSetView } from '../utils/reportWorkspace'
+import { entityFacetOf } from '../utils/reportWorkspace'
 import { resourceAncestors } from '../utils/reportDestinations'
 import { variationAlternatives } from '../utils/variations'
 
@@ -24,6 +25,8 @@ const showOwners = computed(() => new Set([...owners.value.values()].map(items =
         <BlrKind
           :kind="alternative.kind"
           :interface-type="alternative.kind === 'interface' ? alternative.interfaceType : undefined"
+          :facet="entityFacetOf(alternative)"
+          :acts="alternative.kind === 'entity' ? alternative.acts ?? undefined : undefined"
           :labelled="false"
           class="mt-0.5 shrink-0"
         />

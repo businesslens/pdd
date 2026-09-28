@@ -80,6 +80,7 @@ describe('stable Product Report', () => {
     // so the Scenario also reaches the Interface itself.
     expect(workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!.contexts
       .map((context: any) => context.key).sort()).toEqual([
+      'customer-mobile::catalog-preview',
       'customer-mobile::storefront',
       'customer-web',
       'customer-web::storefront'
@@ -162,7 +163,7 @@ describe('stable Product Report', () => {
     // whose Step draws it and its co-effects. The Rules governing it are read
     // on the Steps they select.
     const arc = (from: string, to: string) => order.arcs.find((item: any) => item.from === from && item.to === to)
-    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['settle-payment'])
+    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['manage-orders', 'settle-payment'])
     expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'] })
     expect(arc('Confirmed', 'Refunded').coEffects).toEqual([{ entityId: 'refund', effect: 'creates', to: 'Requested' }])
     expect(order.arcs.find((item: any) => item.effect === 'creates').to).toBe('Pending')
@@ -172,7 +173,7 @@ describe('stable Product Report', () => {
     expect(order.noCreation).toBe(false)
 
     // Both relations are derived from the Steps and Screens, never authored here.
-    expect(order.changedByIds).toEqual(['cancel-order', 'manage-orders', 'place-order', 'settle-payment'])
+    expect(order.changedByIds).toEqual(['cancel-order', 'manage-orders', 'place-order', 'request-cancellation', 'settle-payment'])
     expect(order.readByIds).toEqual(['track-order'])
     expect(order.presentedOnIds).toEqual([
       'admin-web::order-detail',
@@ -320,9 +321,9 @@ describe('stable Product Report', () => {
     const stateOf = (name: string) => order.states.find((state: any) => state.name === name)!
 
     expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-through-the-v2-contract', 'confirm-an-order-when-the-gateway-settles'])
-    expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'])
+    expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'browse-and-complete-checkout-with-manual-confirmation', 'buy-and-follow-the-order', 'cancel-an-order-before-fulfilment'])
     expect(stateOf('Refunded').journeyScenarioIds).toEqual(['cancel-an-order-before-fulfilment'])
-    expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'sell-the-last-available-unit'])
+    expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'complete-checkout-without-review', 'sell-the-last-available-unit'])
 
     // A state nothing lands in says so by holding nothing, not by guessing —
     // and, past the first, is marked unreached.
@@ -353,8 +354,8 @@ describe('stable Product Report', () => {
 
     // A Domain classifies Entities, though the Entity is the side that says so.
     const ordering = workspace.domains.find((item: any) => item.id === 'ordering')!
-    expect(ordering.entityIds).toEqual(['cart', 'order', 'refund'])
-    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order', 'refund'])
+    expect(ordering.entityIds).toEqual(['cart', 'order', 'refund', 'sales-tax-receipt', 'vat-invoice'])
+    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order', 'refund', 'sales-tax-receipt', 'vat-invoice'])
 
     // An Entity that acts is reachable from where it acts, and the other way.
     const shopper = workspace.entities.find((item: any) => item.id === 'shopper')!
@@ -399,8 +400,10 @@ describe('stable Product Report', () => {
     // A Capability page reads one group per Entity, each distinct move once with the Scenarios making it.
     const settle = workspace.capabilities.find((item: any) => item.id === 'settle-payment')!
     expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects.map((move: any) => [move.effect, move.from, move.to, move.scenarioIds.length]), line.scenarioIds.length])).toEqual([
-      ['order', [['changes', 'Pending', 'Confirmed', 4]], 4],
-      ['refund', [['changes', 'Requested', 'Settled', 1]], 1]
+      ['order', [['changes', 'Pending', 'Confirmed', 5]], 5],
+      ['refund', [['changes', 'Requested', 'Settled', 1]], 1],
+      ['sales-tax-receipt', [['creates', '', '', 1]], 1],
+      ['vat-invoice', [['creates', '', '', 1]], 1]
     ])
     for (const capability of workspace.capabilities) {
       for (const line of capability.entityEffects) {
@@ -466,7 +469,7 @@ describe('stable Product Report', () => {
     /* Parallel lanes are not transitions; a Step that moves to the webhook is one, on both. */
     expect(matrix.steps[1].cells.map((cell: any) => cell.contextChanged)).toEqual([false, false])
     expect(matrix.steps[2].cells.map((cell: any) => cell.contextChanged)).toEqual([true, true])
-    expect(scenarioStepMatrix(workspace.capabilityScenarios[0]).routes).toHaveLength(2)
+    expect(scenarioStepMatrix(workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')).routes).toHaveLength(2)
   })
 
   it('gives both Scenario types one Steps table while keeping their Context semantics distinct', () => {
@@ -669,8 +672,9 @@ describe('stable Product Report', () => {
     expect(checkoutStep.contexts.map((context: any) => context.context.screenTitle)).toEqual(['Product record', 'Product record'])
 
     const capabilityScenario = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
+    // The mobile catalog preview has no Screens, so its route names none.
     expect(capabilityScenario.steps[0].contexts.map((context: any) => context.context.screenTitle))
-      .toEqual(['Catalog', 'Product record'])
+      .toEqual(['Catalog', 'Product record', ''])
   })
 
   it('marks a Context place transition and preserves its previous Context, per route', async () => {
@@ -697,7 +701,7 @@ describe('stable Product Report', () => {
   it('derives Journey Contexts only from achieved flows', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios[0]!
-    report.model.journeyScenarios[0] = { ...scenario, result: 'not-achieved' }
+    report.model.journeyScenarios = report.model.journeyScenarios.map(item => item.journeyId === scenario.journeyId ? { ...item, result: 'not-achieved' as const } : item)
 
     const workspace = projectReportWorkspace(report)
     const journey = workspace.journeys.find((item: any) => item.id === scenario.journeyId)!
@@ -1686,14 +1690,17 @@ describe('Screens on the v15 wire', () => {
       const items = node.children.filter((item: any) => item.resource?.kind === 'capability')
       expect(items.map((item: any) => item.resource.id)).toEqual(node.resource.capabilityIds)
       expect(items.every((item: any) => item.id === `${node.resource.key}>${item.resource.key}`
-        && item.children.every((scenario: any) => scenario.resource.kind === 'capability-scenario'))).toBe(true)
+        && item.children.every((scenario: any) => scenario.resource.kind === 'capability-scenario'
+          || (scenario.resource.kind === 'variation' && scenario.children.every((alternative: any) => alternative.resource.kind === 'capability-scenario'))))).toBe(true)
       /* Its own Capabilities come first, then the Journeys passing through, then the Screens nested inside it. */
       expect(node.children.slice(0, items.length)).toEqual(items)
       const journeys = placeJourneys(workspace, node.resource)
       const passing = node.children.slice(items.length, items.length + journeys.length)
       expect(passing.map((item: any) => [item.id, item.resource.kind])).toEqual(journeys.map(({ journey }: any) => [`${node.resource.key}>${journey.key}`, 'journey']))
       for (const [index, { scenarios }] of journeys.entries()) {
-        expect(passing[index].children.map((item: any) => [item.id, item.resource.kind, item.note])).toEqual(scenarios.map(({ scenario, steps }: any) =>
+        // Alternatives of one set fold under its node; each keeps its own row inside it.
+        const rows = passing[index].children.flatMap((item: any) => item.resource.kind === 'variation' ? item.children : [item])
+        expect(rows.map((item: any) => [item.id, item.resource.kind, item.note])).toEqual(scenarios.map(({ scenario, steps }: any) =>
           [`${passing[index].id}>${scenario.key}`, 'journey-scenario', `${stepsLabel(steps)} here`]))
       }
       expect(node.children.slice(items.length + journeys.length).every((item: any) => item.resource?.kind === 'screen')).toBe(true)

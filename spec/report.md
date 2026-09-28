@@ -74,7 +74,8 @@ record carries `navigation` under the same resolution. Neither record carries
 `model.variations` holds one record per Variation, and `counts.variations`
 counts them. A record carries `id`, `title`, `description` (the lead), `kind`,
 `of` (the member type, spelled as the folder spells it: `interface`,
-`experience`, `screen`, `business-rule`),
+`experience`, `screen`, `entity`, `capability`, `capability-scenario`,
+`journey`, `journey-scenario`, `business-rule`),
 `takesEffect`, `stability`, the mechanism fields `assignmentUnit`,
 `assignmentMethod`, `assignmentFact`, `allocation`, `settings` and
 `discriminator`, and `alternatives`, plus `intent`, `supportingSections` and
@@ -84,7 +85,8 @@ non-null exactly on a Version. Alternatives are ordered by `resourceId`: the
 list is a set. Entity/fact references keep their `entity` and `fact` keys.
 
 The same rules as the folder apply to a received report: at least two distinct
-alternatives, each resolving in the collection `of` names; a resource in at
+alternatives, each resolving in the collection `of` names; Scenario
+alternatives sharing one Capability or Journey; a resource in at
 most one Variation; subtype fields only where the subtype allows them; unique
 Version labels ignoring case; existing Entities and facts. Member records carry
 no Variation fields, so membership has exactly one source.

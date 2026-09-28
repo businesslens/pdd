@@ -97,7 +97,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   const variationMembers = Object.fromEntries(Object.values(VARIATION_COLLECTION_OF)
     .map(collection => [collection, new Set(model[collection].map(item => item.id))])) as Record<VariationCollection, Set<string>>
-  for (const issue of variationIssues(model.variations, { members: variationMembers, entities: model.entities })) {
+  for (const issue of variationIssues(model.variations, {
+    members: variationMembers,
+    entities: model.entities,
+    scenarioOwners: new Map([
+      ...model.capabilityScenarios.map(item => [item.id, `capability:${item.capability}`] as const),
+      ...model.journeyScenarios.map(item => [item.id, `journey:${item.journey}`] as const)
+    ])
+  })) {
     errors.push(`${model.variations.find(variation => variation.id === issue.id)!.file}: ${issue.message}`)
   }
   for (const variation of model.variations) {

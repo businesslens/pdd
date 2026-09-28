@@ -402,7 +402,9 @@ future format revision, but Context is not an arbitrary metadata bag.
 ## Variations
 
 A Variation is a named set of currently supported alternatives of one resource
-type: Interface, Experience, Screen or Business Rule. No other type varies.
+type: Interface, Experience, Screen, Entity, Capability, Capability Scenario,
+Journey, Journey Scenario or Business Rule. Product, Domain and Variation itself
+cannot vary.
 The set is its own resource, `variations/<id>.md`; its alternatives stay
 ordinary, independently complete resources that carry no Variation keys.
 
@@ -428,6 +430,21 @@ Stores choose how strictly refunds are reviewed; both policies are supported.
 
 The H1 names the choice and the lead says why the alternatives coexist. `## Intent`
 is optional; other H2 sections are supporting content.
+
+**Vary the smallest resource that fully contains the difference.** One Step
+that differs makes two Scenarios of one owner the alternatives, not two
+Capabilities; a different ability contract or availability makes the
+Capabilities vary; a different place makes Screens or Experiences vary; a
+difference in the facts or states the Product keeps makes Entities vary. The
+alternatives of a Scenario Variation share their Capability or Journey, and
+alternatives spread over several owners are a `lint` error. A Step has no id and
+is never an alternative: the Scenario is the smallest resource that holds one.
+
+Steps, Screens and Rules name concrete resources, so a varying Entity carries
+into what touches it: a Step that creates one alternative sits in a Scenario
+selected the same way, usually a Scenario Variation with the same selection.
+Vary an Entity only when the thing itself differs; when only the path it takes
+differs, the Scenarios vary and the Entity keeps every State.
 
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, spelled as that type's ordinary ids — a
@@ -1604,9 +1621,9 @@ encoding, and each case has exactly one:
 | What differs | How it is modeled |
 | --- | --- |
 | Whether someone may perform an Entity operation | A settings fact read by a permission grant's `when`. One Rule; no Variation |
-| Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations): Configuration, Experiment or Version. An A/B test whose arms are different Screens, Rules, Capabilities or any other variable resource is an Experiment |
+| Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations) of the smallest resource containing the difference: Configuration, Experiment or Version. An A/B test whose arms differ in one Step is an Experiment of two Scenarios |
 | Only how something looks | Design: `visual` References with `role: intent`. Not modeled |
-| A branch inside one ability | Scenario conditions and outcomes; a Business Rule states constraints shared by several behaviors |
+| A branch on state the behavior meets — out of stock, payment declined | Scenario conditions and outcomes; a Business Rule states constraints shared by several behaviors |
 
 There is no structured `when` on a Capability-targeting Rule. Who is in which
 cohort is an Actor or tenant fact, cited as the Variation's `assignmentFact`.

@@ -38,6 +38,8 @@ const expansionLabel = computed(() => [
         <BlrKind :kind="scenario.kind" :labelled="false" class="mt-0.5 shrink-0" />
         <div class="blr-summary-heading">
           <h3 class="blr-summary-title">{{ scenario.title }}</h3>
+          <!-- An alternative keeps its own card, because its Steps are what differ; the pill names its set. -->
+          <BlrVariationPill v-if="scenario.variation" :workspace="workspace" :resource="scenario" @open="emit('open', $event)" />
           <UBadge v-if="scenario.kindName" color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
         </div>
       </div>

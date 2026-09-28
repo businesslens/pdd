@@ -202,6 +202,11 @@ export const VARIATION_MEMBER_KIND: Record<ReportVariation['of'], ReportResource
   interface: 'interface',
   experience: 'experience',
   screen: 'screen',
+  entity: 'entity',
+  capability: 'capability',
+  'capability-scenario': 'capability-scenario',
+  journey: 'journey',
+  'journey-scenario': 'journey-scenario',
   'business-rule': 'rule'
 }
 
@@ -1350,6 +1355,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       .map(rule => rule.id)
     return {
       key: resourceKey('entity', entity.id),
+      variation: variationOf('entities', entity.id),
       id: entity.id,
       kind: 'entity' as const,
       title: entity.title,
@@ -1458,6 +1464,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const entityIds = [...effects.keys()].sort()
     return {
       key: resourceKey('capability', capability.id),
+      variation: variationOf('capabilities', capability.id),
       id: capability.id,
       entityIds,
       readEntityIds: [...readIds].filter(id => !effects.has(id)).sort(),
@@ -1522,6 +1529,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
       key: resourceKey('journey', journey.id),
+      variation: variationOf('journeys', journey.id),
       id: journey.id,
       kind: 'journey',
       title: journey.title,
@@ -1565,6 +1573,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const steps = scenarioSteps(scenario)
     return {
       key: resourceKey('capability-scenario', scenario.id),
+      variation: variationOf('capabilityScenarios', scenario.id),
       id: scenario.id,
       kind: 'capability-scenario',
       entityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId))),
@@ -1604,6 +1613,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     const steps = scenarioSteps(scenario)
     return {
       key: resourceKey('journey-scenario', scenario.id),
+      variation: variationOf('journeyScenarios', scenario.id),
       id: scenario.id,
       kind: 'journey-scenario',
       entityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId))),

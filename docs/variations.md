@@ -24,20 +24,22 @@ terms:
 # Variations
 
 **A Variation is one product choice with several supported answers.** Stores
-choose Standard or Strict refund review; signed-in shoppers either see how many
-units of a product remain or do not; a payment gateway posts either the v1 or the v2 settlement
-contract. Each answer is an **alternative**: an ordinary, complete resource of
-one type — a Business Rule, a Screen, an Interface. The Variation names the
+choose Standard or Strict refund review; signed-in shoppers either confirm their
+delivery address at checkout or skip straight to payment; a payment gateway
+posts either the v1 or the v2 settlement contract. Each answer is an
+**alternative**: an ordinary, complete resource of one type — a Business Rule, a
+Scenario, an Interface. The Variation names the
 choice, says why the alternatives coexist, and says once how one of them is
 chosen.
 
 A Variation is read as the type it varies. Refund review is a set of Business
-Rules; Stock disclosure is a set of Screens. Nothing about an alternative
+Rules; Checkout review is a set of Capability Scenarios. Nothing about an alternative
 moves: its folder, its Domain, its owner and its Scenarios stay where they are.
 Membership is a relation, never containment.
 
-Interfaces, Experiences, Screens and Business Rules can vary. No other type
-does.
+Interfaces, Experiences, Screens, Entities, Capabilities, Journeys, both
+Scenario types and Business Rules can vary. Product, Domain and Variation itself
+cannot.
 
 ## When you create one
 
@@ -46,11 +48,34 @@ decides which one applies.** Create a Variation when a reader could otherwise
 see the alternatives as unrelated duplicates, or as contradictions — two Rules
 that both seem to govern every refund.
 
+### Vary the smallest resource that contains the difference
+
+| What differs | What varies |
+| --- | --- |
+| One Step of an otherwise identical path — a checkout that skips address review | Two Scenarios of that one Capability or Journey |
+| The path a thing takes — a store that approves orders before fulfilling them | Scenarios; the Entity keeps every State |
+| The ability's contract, availability or Actors | Capabilities |
+| A goal pursued across Capabilities in two supported ways | Journeys |
+| A place — which facts it shows, which abilities it offers | Screens or Experiences |
+| The facts or States the Product keeps — an EU store's VAT invoice against a US store's sales tax receipt | Entities |
+| A supported contract — the v1 and v2 webhook | Interfaces |
+
+The alternatives of a Scenario Variation share their Capability or Journey.
+Scenarios of different owners are a bigger difference: their owners vary. A
+Step is never an alternative; the Scenario is the smallest resource that holds
+one.
+
+An Entity is named by Steps, Screens and Rules, and each names one concrete
+alternative. Varying an Entity therefore carries into what touches it: the
+Scenario that creates a VAT invoice and the one that creates a sales tax receipt
+are themselves alternatives, selected the same way. That is why an Entity
+varies only when the thing itself differs.
+
 Do not create one for:
 
 | What you see | Model it as |
 | --- | --- |
-| One behavior branching on a condition | A decision point in one Scenario |
+| One behavior branching on what it meets — out of stock, payment declined | A `condition` Step or decision point in one Scenario |
 | A value that changes a number, not the resource | Content of the one resource — Strict and Standard refund review are two Rules; a different threshold is not |
 | A thing moving through phases | Entity States |
 | The same Experience on another Interface | A counterpart: same id under each Interface |
@@ -133,10 +158,13 @@ while it is selected, never unconditionally.
 ## What lint checks
 
 - `kind`, `of`, `takesEffect`, `stability` and `alternatives` are required;
-  `kind` is `experiment`, `configuration` or `version`; `of` is `interface`,
-  `experience`, `screen` or `business-rule`.
+  `kind` is `experiment`, `configuration` or `version`; `of` names one of the
+  nine types that can vary: `interface`, `experience`, `screen`, `entity`,
+  `capability`, `capability-scenario`, `journey`, `journey-scenario` or
+  `business-rule`.
 - At least two alternatives, each listed once, each resolving to a resource of
-  the type `of` names.
+  the type `of` names. The alternatives of a Scenario Variation share their
+  Capability or Journey.
 - A resource is an alternative in at most one Variation.
 - A field outside the subtype is an error: `settings` on an Experiment, a
   `label` outside a Version, an Experiment without `assignmentUnit` or

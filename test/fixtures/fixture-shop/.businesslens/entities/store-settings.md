@@ -9,3 +9,7 @@ decides who may do what.
 - **Self-service cancellation** — whether shoppers may cancel their own unpaid orders
 
 - **Refund review mode** — Standard or Strict review of refunds, independent of who is permitted to issue one
+- **Tax region** — EU or US: which tax document the store issues when an order settles
+- **Mobile selling** — whether the mobile app sells or only previews the catalog
+- **Cancellation handling** — Immediate or On approval: whether a shopper's cancellation takes effect at once or waits for an operator
+- **Order confirmation** — Automatic or Manual: whether a settled payment confirms an order or an operator does

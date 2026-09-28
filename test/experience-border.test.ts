@@ -41,6 +41,8 @@ permits: []
 
 The address may be supplied here but is not disclosed by the Product.
 `)
+    // The skip-review checkout arm reads the saved address here, which this hypothetical Rule forbids.
+    edit(cwd, 'capabilities/place-order/scenarios/complete-checkout-without-review.md', text => text.replace('      - { entity: shopper, effect: reads, facts: [Delivery address] }\n', ''))
     expect(errors(cwd)).toEqual([])
     const report = compileReport(loadModel(cwd), '2026-09-26')
     expect(validateProductReport(report)).toEqual([])

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Model Variations — experiments, configuration alternatives and live versions of an Interface, Experience, Screen or Business Rule — as their own resource, browsable in a Variations collection.
+- Model Variations — experiments, configuration alternatives and live versions of Interfaces, Experiences, Screens, Entities, Capabilities, Journeys, Scenarios or Business Rules — as their own resource, browsable in a Variations collection. A difference in one Step is two alternative Scenarios.
 - Model nested Screens, Screens reachable from everywhere in a context, and the languages a Product serves.
 - Record which facts a Screen shows and which it collects; a Screen's Capabilities now come from the Steps placed on it.
 - Record the facts each Scenario Step reads, changes or creates.

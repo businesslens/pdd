@@ -676,7 +676,7 @@ is chosen written once on the set. It has its own rail collection, **Variations*
 marked with the variation glyph in ink — a Variation modifies a type, so it
 takes no hue — drawn at 14px inside the usual 16px slot, since the glyph reaches
 the corners of its box. Its rows group by the type each set varies —
-Interfaces, Experiences, Screens or Business Rules — and show the set's mark, name,
+Interfaces, Screens, Business Rules, Scenarios and so on — and show the set's mark, name,
 subtype pill, purpose, alternatives and what chooses between them (`Chosen by`,
 `Assigned per` or `Discriminator`). The collection has Rows only: a set has no
 derivation of its own to draw.

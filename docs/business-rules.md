@@ -306,9 +306,10 @@ the setting is a fact, and the Rule that reads it says what it changes.
 A flag that decides whether someone may perform an operation is exactly this:
 *self-service cancellation on or off* is a settings fact read by a grant's
 `when`. A setting or assignment that chooses between complete, supported forms
-of a resource is a [Variation](./variations.md#when-you-create-one) instead, a
-difference only in looks is design, and a branch inside one ability is Scenario
-conditions and outcomes. Who is in which cohort is a fact on the Actor or
+of a resource is a [Variation](./variations.md#when-you-create-one) instead —
+two Scenarios when only one Step differs — a difference only in looks is
+design, and a branch on state the behavior meets is Scenario conditions and
+outcomes. Who is in which cohort is a fact on the Actor or
 tenant Entity.
 
 `state` says *the instance is in state X when the

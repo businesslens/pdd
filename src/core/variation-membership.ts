@@ -8,7 +8,10 @@ export const VARIATION_KINDS = ['experiment', 'configuration', 'version'] as con
 export type VariationKind = typeof VARIATION_KINDS[number]
 
 /** The resource types a Variation may vary, spelled as their folder types. */
-export const VARIATION_MEMBER_TYPES = ['interface', 'experience', 'screen', 'business-rule'] as const
+export const VARIATION_MEMBER_TYPES = [
+  'interface', 'experience', 'screen', 'entity', 'capability', 'capability-scenario',
+  'journey', 'journey-scenario', 'business-rule'
+] as const
 export type VariationMemberType = typeof VARIATION_MEMBER_TYPES[number]
 
 /** The model collection that holds each member type. */
@@ -16,6 +19,11 @@ export const VARIATION_COLLECTION_OF = {
   interface: 'interfaces',
   experience: 'experiences',
   screen: 'screens',
+  entity: 'entities',
+  capability: 'capabilities',
+  'capability-scenario': 'capabilityScenarios',
+  journey: 'journeys',
+  'journey-scenario': 'journeyScenarios',
   'business-rule': 'businessRules'
 } as const satisfies Record<VariationMemberType, string>
 export type VariationCollection = typeof VARIATION_COLLECTION_OF[VariationMemberType]

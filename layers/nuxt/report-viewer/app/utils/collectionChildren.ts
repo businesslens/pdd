@@ -108,12 +108,12 @@ function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | Exper
   const delivered = placeDelivery(workspace, place)
   const leaves = delivered.map(({ capability, scenarios }) => {
     const id = `${place.key}>${capability.key}`
-    return { ...leaf(capability, scenarios.map(scenario => ({ ...leaf(scenario), id: `${id}>${scenario.key}` }))), id }
+    return { ...leaf(capability, foldVariations(workspace, id, scenarios.map(scenario => ({ ...leaf(scenario), id: `${id}>${scenario.key}` })))), id }
   })
   const note = delivered[0]?.note
   const journeys = placeJourneys(workspace, place).map(({ journey, scenarios }) => {
     const id = `${place.key}>${journey.key}`
-    return { ...leaf(journey, scenarios.map(({ scenario, steps }) => ({ ...leaf(scenario), id: `${id}>${scenario.key}`, note: `${stepsLabel(steps)} here` }))), id }
+    return { ...leaf(journey, foldVariations(workspace, id, scenarios.map(({ scenario, steps }) => ({ ...leaf(scenario), id: `${id}>${scenario.key}`, note: `${stepsLabel(steps)} here` })))), id }
   })
   return [
     ...(!note || note === 'own' ? leaves : [{ ...group(`${place.key}:${note}`, 'capability', leaves), title: note === 'gap' ? 'Available here, on no Screen' : 'Delivered directly' }]),
@@ -228,8 +228,8 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
     const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView): TreeCard => ({
       key, title, resource,
       children: [
-        group(`${key}:capabilities`, 'capability', capabilities.map(item => leaf(item))),
-        group(`${key}:entities`, 'entity', entities.map(item => leaf(item)))
+        group(`${key}:capabilities`, 'capability', foldVariations(workspace, `${key}:capabilities`, capabilities.map(item => leaf(item)))),
+        group(`${key}:entities`, 'entity', foldVariations(workspace, `${key}:entities`, entities.map(item => leaf(item))))
       ].filter(group => group.children.length)
     })
     const cards = resources.filter(item => item.kind === 'domain').map(domain => domainCard(domain.key, domain.title,

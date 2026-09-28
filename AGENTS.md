@@ -219,7 +219,9 @@ costed already.
   list or tab they are one set row that never expands; the reader picks an
   alternative from the pill on its title, which opens a switcher listing every
   alternative with its condition and the set itself. A tree is the exception:
-  its set node expands, because each alternative keeps its own children. A lone
+  its set node expands, because each alternative keeps its own children. A
+  Scenario card is the other: alternative Scenarios keep their own cards,
+  because their Steps are what differ, and each carries its set's pill. A lone
   alternative carries its set's pill on its title, in rows and in its reading
   header. Headings count concrete resources, never set rows; nothing shows a
   position within a set.

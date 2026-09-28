@@ -86,6 +86,8 @@ export function variationEntityReferences(set: Pick<VariationSet, 'settings' | '
 export interface VariationScope {
   /** Ids per member collection. Ids never resolve across collections. */
   members: Record<VariationCollection, ReadonlySet<string>>
+  /** Scenario id → the Capability or Journey that owns it. */
+  scenarioOwners: ReadonlyMap<string, string>
   entities: readonly { id: string, informationKept: readonly { name: string }[] }[]
 }
 
@@ -166,6 +168,11 @@ export function variationIssues(sets: readonly VariationSet[], scope: VariationS
         if (previous && previous !== set.id) fail(`${where} already belongs to Variation "${previous}"; a resource joins at most one`)
         else owner.set(memberKey, set.id)
       }
+    }
+    // A difference bigger than one path is its owner's Variation, not its Scenarios'.
+    if (type === 'capability-scenario' || type === 'journey-scenario') {
+      const owners = new Set(set.alternatives.map(item => scope.scenarioOwners.get(item.id)).filter(Boolean))
+      if (owners.size > 1) fail(`alternatives must be Scenarios of one ${type === 'capability-scenario' ? 'Capability' : 'Journey'}; vary the ${type === 'capability-scenario' ? 'Capabilities' : 'Journeys'} instead`)
     }
   }
   return issues

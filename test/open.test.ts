@@ -235,6 +235,14 @@ describe('open report', () => {
     initialize(fresh)
     try {
       const report = structuredClone(buildProject(source).report)
+      // The mobile catalog preview exists only as a Variation alternative; flattening drops it.
+      report.model.variations = report.model.variations.filter(set => set.id !== 'mobile-storefront')
+      report.counts.variations = report.model.variations.length
+      for (const capability of report.model.capabilities) capability.availability = capability.availability.filter(context => context.placeId !== 'customer-mobile::catalog-preview')
+      for (const scenario of report.model.capabilityScenarios) {
+        scenario.routes = scenario.routes.filter(route => route.id !== 'preview')
+        for (const step of scenario.steps) step.contexts = step.contexts.filter(context => context.routeId !== 'preview')
+      }
       report.model.experiences = []
       report.counts.experiences = 0
       for (const collection of [

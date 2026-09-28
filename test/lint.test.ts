@@ -73,7 +73,21 @@ Lead.
 
 - **Delivery address** — where their orders are sent
 - **Product presentation assignment** — the named product-detail experiment arm assigned to this shopper
+- **Checkout assignment** — the checkout review experiment arm assigned to this shopper
+- **Post-purchase assignment** — the post-purchase experiment arm assigned to this shopper
 `
+}
+
+/** Drop the mobile catalog preview and its Variation, for tests that reshape customer-mobile. */
+function withoutCatalogPreview(bl: string) {
+  unlinkSync(join(bl, 'variations/mobile-storefront.md'))
+  unlinkSync(join(bl, 'interfaces/customer-mobile/experiences/catalog-preview.md'))
+  const capability = join(bl, 'capabilities/browse-catalog/capability.md')
+  writeFileSync(capability, readFileSync(capability, 'utf8').replace(', { place: customer-mobile::catalog-preview }', ''))
+  const scenario = join(bl, 'capabilities/browse-catalog/scenarios/browse-catalog.md')
+  writeFileSync(scenario, readFileSync(scenario, 'utf8')
+    .replace('  preview: Mobile catalog preview\n', '')
+    .replaceAll('      preview:\n        place: customer-mobile::catalog-preview\n', ''))
 }
 
 function writeRule(cwd: string, id: string, frontmatter: string) {
@@ -195,14 +209,14 @@ describe('lintModel', () => {
     expect(result.ok).toBe(true)
     expect(result.counts).toEqual({
       interfaces: 6,
-      experiences: 2,
+      experiences: 3,
       screens: 7,
       domains: 1,
-      entities: 8,
-      capabilities: 6,
-      capabilityScenarios: 14,
-      journeys: 1,
-      journeyScenarios: 2,
+      entities: 10,
+      capabilities: 7,
+      capabilityScenarios: 18,
+      journeys: 2,
+      journeyScenarios: 4,
       businessRules: 14
     })
   })
@@ -486,6 +500,7 @@ Lead.
 
     // Promote every Experience-contained Screen up to its Interface and drop the
     // Experiences, leaving each Interface undivided.
+    withoutCatalogPreview(bl)
     for (const interfaceId of ['customer-web', 'customer-mobile']) {
       const from = join(bl, 'interfaces', interfaceId, 'experiences', 'storefront', 'screens')
       cpSync(from, join(bl, 'interfaces', interfaceId, 'screens'), { recursive: true })
@@ -917,8 +932,8 @@ Filed away.
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      '    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens',
-      '    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens'
+      '    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper opens',
+      '    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper opens'
     ))
     expect(run(cwd).errors.join('\n')).toContain('step 1: needs "entities" — what this Step does to the Product\'s things, or [] when it touches nothing')
   })
@@ -980,7 +995,7 @@ Filed away.
 
   it('requires Capability Scenario coverage for every availability Context', () => {
     const cwd = fixtureCopy()
-    for (const name of ['complete-checkout', 'decline-checkout-payment', 'sell-the-last-available-unit']) {
+    for (const name of ['complete-checkout', 'complete-checkout-without-review', 'decline-checkout-payment', 'sell-the-last-available-unit']) {
       const file = join(cwd, `.businesslens/capabilities/place-order/scenarios/${name}.md`)
       writeFileSync(
         file,
@@ -1061,6 +1076,9 @@ Filed away.
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace('actors: [shopper]', 'actors: [shopper, store-admin]'))
+    // The manual-confirmation alternative is where an operator acts; without it, none does.
+    unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout-with-manual-confirmation.md'))
+    unlinkSync(join(cwd, '.businesslens/variations/order-confirmation.md'))
 
     expect(run(cwd).errors.join('\n')).toContain(
       'actor "store-admin" needs an achieved Journey Scenario'
@@ -1260,8 +1278,10 @@ permits:
     const adminWeb = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
     // admin-web now serves shoppers too; manage-orders is reached by the admin,
     // cancel-order by the shopper, and nothing bridges them. (The fixture's
-    // admin-cancels-a-paid-order Scenario would bridge them, so it goes.)
+    // admin-cancels-a-paid-order and cancellation-request Scenarios would bridge
+    // them, so they go.)
     unlinkSync(join(cwd, '.businesslens/capabilities/cancel-order/scenarios/cancel-a-paid-order-before-fulfilment.md'))
+    unlinkSync(join(cwd, '.businesslens/capabilities/request-cancellation/scenarios/approve-a-cancellation-request.md'))
     writeFileSync(adminWeb, readFileSync(adminWeb, 'utf8').replace('actors: [store-admin]', 'actors: [store-admin, shopper]'))
     const disjoint = run(cwd)
     expect(disjoint.errors).toContain(
@@ -1317,10 +1337,11 @@ Both have looked at the same order record.
     expect(bridged.errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
   })
 
-  it('flags a ceremonial Experience as an error, unless it is a counterpart', () => {
+  it('flags a ceremonial Experience as an error, unless it is a counterpart or a Variation alternative', () => {
     const cwd = fixtureCopy()
     // As authored, customer-web's single storefront Experience is justified by
-    // customer-mobile's counterpart. Rename the mobile one and both stand alone.
+    // customer-mobile's counterpart. Rename the mobile one and web stands alone,
+    // while mobile stays justified by the Mobile storefront Variation.
     const bl = join(cwd, '.businesslens')
     renameSync(join(bl, 'interfaces/customer-mobile/experiences/storefront'), join(bl, 'interfaces/customer-mobile/experiences/shop'))
     const walk = (directory: string) => {
@@ -1335,7 +1356,10 @@ Both have looked at the same order record.
     walk(bl)
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability')
-    expect(errors).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
+    expect(errors).not.toContain('interfaces/customer-mobile/interface.md: holds Experiences')
+    withoutCatalogPreview(bl)
+    rmSync(join(bl, 'variations/mobile-storefront.md'), { force: true })
+    expect(run(cwd).errors.join('\n')).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
   })
 
   it('reads a word the model declares as a thing, not as a verb, in id vocabulary checks', () => {
@@ -1545,6 +1569,7 @@ Lead.
   it('fails when a Journey loses all achieved Journey Scenarios', () => {
     const cwd = fixtureCopy()
     unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'))
+    unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout-with-manual-confirmation.md'))
     expect(run(cwd).errors.some(error => error.includes('at least one achieved Journey Scenario'))).toBe(true)
   })
 
@@ -2016,7 +2041,7 @@ What other shoppers said, opened from the product record.
       const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
       writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
         '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record',
-        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper reads its reviews\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Price] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record::reviews'
+        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper reads its reviews\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Price] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record::reviews'
       ))
       const result = run(cwd)
       expect(result.errors).toEqual([])

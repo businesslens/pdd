@@ -33,6 +33,13 @@ function selection(kind: VariationKind): Omit<VariationSet, 'id' | 'kind' | 'of'
 }
 
 /** Replace the model's Variations with one set over `ids`. */
+/** Two Scenarios that share an owner, from `[owner, id]` pairs. */
+function siblings(pairs: [string, string][]): string[] {
+  const byOwner = new Map<string, string[]>()
+  for (const [owner, id] of pairs) byOwner.set(owner, [...(byOwner.get(owner) ?? []), id])
+  return [...byOwner.values()].find(ids => ids.length >= 2)!.slice(0, 2)
+}
+
 function withSet(loaded: PddModel, kind: VariationKind, of: VariationMemberType, ids: string[]): VariationResource {
   const template = loaded.variations[0]!
   const set: VariationResource = {
@@ -62,7 +69,10 @@ describe('Variation resources', () => {
   it.each(cases)('round-trips a $kind set of $of losslessly', ({ of, kind }) => {
     const loaded = model()
     const collection = VARIATION_COLLECTION_OF[of]
-    const ids = of === 'experience' ? [PERSONAL, SOURCE] : loaded[collection].slice(0, 2).map(item => item.id)
+    const ids = of === 'experience' ? [PERSONAL, SOURCE]
+      : of === 'capability-scenario' ? siblings(loaded.capabilityScenarios.map(item => [item.capability, item.id]))
+        : of === 'journey-scenario' ? siblings(loaded.journeyScenarios.map(item => [item.journey, item.id]))
+          : loaded[collection].slice(0, 2).map(item => item.id)
     expect(ids).toHaveLength(2)
     withSet(loaded, kind, of, ids)
     expect(lintModel(loaded, []).errors).toEqual([])
@@ -134,10 +144,15 @@ describe('Variation resources', () => {
     expect(lintModel(version, []).errors.join('\n')).toContain('needs a label')
   })
 
-  it('varies only Interfaces, Experiences, Screens and Business Rules', () => {
+  it('varies Scenarios only within one owner, and never Domains', () => {
     const loaded = model()
-    withSet(loaded, 'configuration', 'entity' as VariationMemberType, loaded.entities.slice(0, 2).map(item => item.id))
-    expect(lintModel(loaded, []).errors.join('\n')).toContain('of must be interface|experience|screen|business-rule')
+    const owners = new Map<string, string>()
+    const apart = loaded.capabilityScenarios.filter(item => !owners.has(item.capability) && owners.set(item.capability, item.id)).slice(0, 2).map(item => item.id)
+    withSet(loaded, 'configuration', 'capability-scenario', apart)
+    expect(lintModel(loaded, []).errors.join('\n')).toContain('alternatives must be Scenarios of one Capability; vary the Capabilities instead')
+    const domains = model()
+    withSet(domains, 'configuration', 'domain' as VariationMemberType, ['reading', 'sources'])
+    expect(lintModel(domains, []).errors.join('\n')).toContain('of must be interface|experience|screen|entity|capability|capability-scenario|journey|journey-scenario|business-rule')
   })
 
   it('lets a resource join at most one Variation', () => {
@@ -217,11 +232,18 @@ describe('Variations in the Product Report', () => {
   it('projects each set as a resource and each alternative with its own selection', () => {
     const workspace = shop()
     expect(workspace.variations.map((item: any) => [item.id, item.variationKind, item.memberKind])).toEqual([
+      ['cancellation-handling', 'configuration', 'capability'],
+      ['checkout-review', 'experiment', 'capability-scenario'],
+      ['mobile-storefront', 'configuration', 'experience'],
+      ['order-confirmation', 'configuration', 'journey-scenario'],
       ['payment-webhook-contract', 'version', 'interface'],
+      ['post-purchase', 'experiment', 'journey'],
       ['refund-review', 'configuration', 'rule'],
-      ['stock-disclosure', 'experiment', 'screen']
+      ['stock-disclosure', 'experiment', 'screen'],
+      ['tax-document', 'configuration', 'entity'],
+      ['tax-document-issue', 'configuration', 'capability-scenario']
     ])
-    expect(workspace.counts.variations).toBe(3)
+    expect(workspace.counts.variations).toBe(10)
     const strict = workspace.byKey.get('rule:refund-review-strict')
     expect(strict.variation).toEqual({ key: 'variation:refund-review', id: 'refund-review', title: 'Refund review', kind: 'configuration', selectedWhen: 'Refund review mode is Strict.', label: null })
     const set = workspace.byKey.get('variation:refund-review')
@@ -270,14 +292,23 @@ describe('Variations in the Product Report', () => {
     expect(collapseVariations(workspace, attached).filter((item: any) => item.kind === 'variation')).toHaveLength(1)
   })
 
-  it('groups the Variations collection by the type each set varies', () => {
+  it('groups the Variations collection by the type each set varies, and the fixture varies every type', () => {
     const workspace = shop()
     const groups = collectionGroups(workspace, 'variation', workspace.variations)
     expect(groups.map((group: any) => [group.kind, group.title, group.resources.map((item: any) => item.id)])).toEqual([
+      ['entity', 'Entities', ['tax-document']],
       ['interface', 'Interfaces', ['payment-webhook-contract']],
+      ['experience', 'Experiences', ['mobile-storefront']],
       ['screen', 'Screens', ['stock-disclosure']],
+      ['capability', 'Capabilities', ['cancellation-handling']],
+      ['journey', 'Journeys', ['post-purchase']],
+      ['capability-scenario', 'Capability Scenarios', ['checkout-review', 'tax-document-issue']],
+      ['journey-scenario', 'Journey Scenarios', ['order-confirmation']],
       ['rule', 'Business Rules', ['refund-review']]
     ])
+    // The golden fixture is the example set: every type that can vary, and every subtype.
+    expect(groups).toHaveLength(VARIATION_MEMBER_TYPES.length)
+    expect(new Set(workspace.variations.map((item: any) => item.variationKind))).toEqual(new Set(VARIATION_KINDS))
   })
 
   it('folds sibling alternatives under one tree node while counts stay concrete', () => {

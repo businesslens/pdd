@@ -3,6 +3,7 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  preview: Mobile catalog preview
 steps:
   - text: The catalog is listed
     kind: product
@@ -13,6 +14,8 @@ steps:
         place: customer-web::catalog
       mobile:
         place: customer-mobile::storefront::product-record
+      preview:
+        place: customer-mobile::catalog-preview
   - text: The shopper opens a product page
     kind: actor
     actor: shopper
@@ -23,6 +26,8 @@ steps:
         place: customer-web::storefront::product-record
       mobile:
         place: customer-mobile::storefront::product-record
+      preview:
+        place: customer-mobile::catalog-preview
 references:
   - kind: code
     role: implementation
