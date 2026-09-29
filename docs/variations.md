@@ -79,12 +79,17 @@ behavior starts. A fact that describes the thing being worked on is state the
 behavior meets: a page's own editor format is read by a `condition` Step, even
 though someone set it earlier.
 
-**Scenarios vary only when what an Actor does differs.** A registration setting
-requiring email confirmation adds a Step the Actor takes, so it selects which
-registration Scenario runs. A setting that changes only the Product's own Steps
-— whether group sync replaces a User's Roles or adds to them — is a decision
-point in one Scenario, like any choice made during a run. The exception is a
-Step that must name a different alternative of another Variation, such as
+**Scenarios vary only when what an Actor does differs, and one setting alone
+decides it.** Sign-in that starts at the only provider automatically drops a
+Step the Actor takes, so it selects which sign-in Scenario runs. When two or
+more settings would each vary the same Scenario — a captcha and a provider
+password on one registration — none of them makes a Variation; each is a
+decision point. A setting that changes only the Product's own Steps — whether
+group sync replaces a User's Roles or adds to them — is a decision point in one
+Scenario, like any choice made during a run. When it changes the outcome —
+registration that requires email confirmation leaves the account inactive —
+the branches are separate Scenarios with a `condition` Step. The exception is
+a Step that must name a different alternative of another Variation, such as
 issuing a VAT invoice or a sales tax receipt: that Scenario varies with it.
 
 A resource that exists only under some alternatives, or only while a setting

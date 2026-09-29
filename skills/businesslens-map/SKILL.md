@@ -85,9 +85,11 @@ Read before authoring:
    unattended behavior — a schedule the Product owns, an expiry, a retry — as a
    Scenario whose first Step is a `condition` carrying `unattended: true`,
    availability naming where an Actor observes the outcome. Give every mapped
-   Capability evidence-backed per-Capability acceptance. Create a Journey only
-   for a stable goal whose achieved path crosses at least two Capabilities; do
-   not wrap a single Capability in a Journey. Give every Journey an achieved
+   Capability evidence-backed per-Capability acceptance. Write a Journey
+   wherever the Product itself carries an Actor from one Capability into
+   another toward one outcome, and none elsewhere; do not wrap a single
+   Capability in a Journey. Split Capabilities by contract and create Domains
+   from the Product's own sections, both per the format reference. Give every Journey an achieved
    Journey Scenario whose ordered typed Steps annotate responsible Actors and
    locally identified Capabilities, with named routes placed through
    most-specific Contexts. Repository deployables, routes,
@@ -180,6 +182,10 @@ Read before authoring:
    differ by more than a couple of resources, the call is open however settled it
    feels, and the model records it as open. A rule confident enough to decide a
    third of the model on its own is being trusted further than any rule earns.
+   The defaults decide only what no test settles. Capability splits, Journeys
+   and Domains follow their tests in the format reference; a call that size
+   leaves open is still recorded as open, but decided by its test, not by a
+   default.
 8. Present the proposed model delta before writing. Include added, changed, and
    removed resources; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently

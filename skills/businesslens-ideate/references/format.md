@@ -148,7 +148,25 @@ not contain another H1 or H2.
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
   `entities` is refused. Every Capability needs a Capability Scenario for every
-  availability Context: a gap is always an error.
+  availability Context: a gap is always an error. **Split by contract:**
+  parts of an ability are separate Capabilities when they differ in who may do
+  them (a permission of their own), where they are offered (availability), or
+  in verb — create, configure, archive and delete are four. A different Actor
+  does not split one (it is offered in every Experience it is used from), and
+  neither does a Business Rule governing only one part. Ways of doing one verb that
+  share all of those are Scenarios of one Capability, even when each creates a
+  different Entity: adding an authenticator app or backup codes as a second
+  factor is one Capability. Ways a setting selects between follow the
+  Variation rules instead. The Steps of one run are one Capability, including a
+  link or code the run sends when the run has no outcome for the Actor without
+  it: requesting a password reset and choosing the new password are one, and
+  resending the link is a Scenario of it. A later act on something a run
+  already produced — confirming the email of an account that exists — is its
+  own Capability. A continuation shared by several Capabilities (entering a
+  second factor after any sign-in method) is its own Capability: the ones it
+  continues end their Scenarios at the hand-off, stating it in their Outcome,
+  and a Journey joins them, since no Capability Scenario names another
+  Capability.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
@@ -156,7 +174,14 @@ not contain another H1 or H2.
   Experience → Screen and behavior hierarchies. Only
   Capability authors `domain:`; every other Domain relation is derived. Its
   `## Boundary` must state something the Domain does **not** own, and a Domain
-  naming fewer than two Capabilities is a warning.
+  naming fewer than two Capabilities is a warning. Create Domains from the
+  Product's own sections — the areas its navigation, settings and
+  administration group things under — one per section holding two or more
+  Capabilities, named in the Product's words; a Capability no section reaches
+  (one only an emailed link or a schedule starts) joins the section whose
+  Entities it changes. For a planned Product, use the planned sections.
+  Domains already in the model are the author's: add new Capabilities to them
+  and never re-cut, merge or rename them.
 - Naming: a behavioral id's noun half names something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface. Entity, Domain and Business Rule ids never open with a verb; they
@@ -273,7 +298,11 @@ not contain another H1 or H2.
   designs or why they were rejected.
 - Journey: at least one unique `actors` entry, H1, no lead prose, `## Goal`,
   and `## Success criterion`. A Journey is a stable goal, not a route or
-  Capability wrapper. Every Journey needs achieved Journey Scenario coverage
+  Capability wrapper. Write every Journey the test finds: one exists wherever
+  the Product itself carries an Actor from one Capability into another toward
+  one outcome — a redirect, a required next Step, an emailed link to follow —
+  and never where the Actor merely chooses to do something else next. The
+  test is structural, so "omit rather than assert" does not apply to it. Every Journey needs achieved Journey Scenario coverage
   for every Journey Actor. It has no `entryPoints`; resolve presentation routes
   from the first Actor-owned placed Step's Context place and its Interface or
   Experience.
@@ -621,14 +650,18 @@ choose — a setting, an experiment assignment, a version discriminator — or b
 the deployment, fixed before the behavior starts. A fact describing the thing
 the behavior acts on (a page's own editor format) is state: a `condition` Step
 or decision point reads it, even when someone set it earlier. Scenarios vary
-only when what an Actor does differs: a registration setting requiring email
-confirmation adds the Actor's confirmation, so it selects the registration
-Scenario. A setting changing only the Product's own Steps (group sync replacing
-or adding Roles) is a decision point in one Scenario, as is any choice made
-during a run — except a Step that must name a different alternative of another
-Variation (a VAT invoice or a sales tax receipt), which varies with it. A
-Product-only setting that changes the outcome (an unknown social account
-registered or refused) makes separate Scenarios with a `condition` Step. The
+only when what an Actor does differs and one setting alone decides it: sign-in
+that starts at the only provider automatically drops the Actor's choice, so it
+selects the sign-in Scenario. When two or more settings would each vary the
+same Scenario (a captcha and a provider password on one registration), none
+makes a Variation; each is a decision point. A setting changing only the
+Product's own Steps (group sync replacing or adding Roles) is a decision point
+in one Scenario, as is any choice made during a run — except a Step that must
+name a different alternative of another Variation (a VAT invoice or a sales tax
+receipt), which varies with it. A Product-only setting that changes the outcome
+(registration requiring email confirmation leaves the account inactive; an
+unknown social account is registered or refused) makes separate Scenarios with
+a `condition` Step, never a Variation. The
 unconfirmed account sign-in later meets is state. A resource that exists only
 under some alternatives or only while a setting enables it (registration while
 the sign-in method is password; social sign-in while a provider is configured)

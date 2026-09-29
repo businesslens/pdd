@@ -52,7 +52,9 @@
   on web and on mobile is two Screens with the same name — counterparts, told
   apart by their path — each listing its own facts and Capabilities, so a
   divergence between them is visible instead of silent.
-- Domains optionally group recognizable Product areas; zero is valid.
+- Create Domains from the Product's own sections — its navigation, settings
+  and administration areas — one per section holding two or more
+  Capabilities; existing Domains are the author's and are never re-cut.
 - Capabilities are durable Product abilities, not UI labels, Journey titles, or
   sequence steps. Map availability Contexts to an undivided Interface or an
   Experience only when the repository supports that claim.
@@ -74,7 +76,10 @@
   largest single group in the model, and deciding the whole set alone is the
   quietest way to author most of it unreviewed.
 - Journeys represent stable user or operator goals, never a wrapper for one
-  Capability. Omit Journeys when no established goal crosses Capabilities.
+  Capability. Write one wherever the Product itself carries an Actor from one
+  Capability into another toward one outcome — a redirect, a required next
+  Step, an emailed link — and none where the Actor merely chooses what to do
+  next. The test is structural; do not omit a Journey it finds.
 - Journey Scenarios are observable paths through a goal. Write one ordered
   typed Steps list, annotate responsible Actors and the Steps that exercise
   locally identified Capabilities, and place every named route at its
@@ -136,8 +141,13 @@ its authoritative Reference.
   or Experience.
 - **Journeys and browsing.** A wizard is a Journey only when its Scenario
   crosses Capabilities. Ordinary filtering, sorting and searching are Scenarios
-  of the browsing Capability unless the general Capability test establishes an
-  independent purpose, permission, availability or outcome.
+  of the browsing Capability unless they differ by contract — the split test
+  in the format reference: a permission, availability or verb of their own.
+  Ways of doing one verb that share all of those are Scenarios of one
+  Capability, and the Steps of one run, including a link the run sends to
+  finish it, are one Capability. A continuation several Capabilities share is
+  its own: each ends its Scenarios at the hand-off, stated in their Outcome,
+  and a Journey joins them.
 - **Languages.** `languages` belongs to the Product, optionally narrowed by an
   Interface. Content kept in several languages is an Entity fact, and how a
   language is chosen for someone is a kept fact such as *Preferred language*
@@ -159,16 +169,19 @@ its authoritative Reference.
   the behavior acts on is state, read by a `condition` Step or decision point
   even when someone set it earlier: a page's own editor format is a condition
   of editing, while the site's sign-in method selects between sign-in
-  Capabilities. Scenarios vary only when what an Actor does differs: sign-in
-  that starts at the provider automatically drops the Actor's choice, and
-  registration that requires email confirmation adds the Actor's
-  confirmation, so both select Scenario alternatives. A setting that changes
-  only the Product's own Steps — group sync replacing or adding Roles — is a
-  decision point in one Scenario, as is any choice made during a run; the one
-  exception is a Step that must name a different alternative of another
-  Variation, which varies with it. When such a setting changes the outcome — an
-  unknown social account registered or refused — the branches are separate
-  Scenarios, each with a `condition` Step reading the setting, not a Variation. The unconfirmed account sign-in later
+  Capabilities. Scenarios vary only when what an Actor does differs and one
+  setting alone decides it: sign-in that starts at the only provider
+  automatically drops the Actor's choice, so it selects Scenario alternatives.
+  When two or more settings would each vary the same Scenario — a captcha and
+  a provider password on one registration — none makes a Variation; each is a
+  decision point. A setting that changes only the Product's own Steps — group
+  sync replacing or adding Roles — is a decision point in one Scenario, as is
+  any choice made during a run; the one exception is a Step that must name a
+  different alternative of another Variation, which varies with it. When such
+  a setting changes the outcome — registration requiring email confirmation
+  leaves the account inactive, an unknown social account is registered or
+  refused — the branches are separate Scenarios, each with a `condition` Step
+  reading the setting, not a Variation. The unconfirmed account sign-in later
   meets is state. A resource that exists only under some alternatives or only
   while a setting enables it (registration while the sign-in method is
   password; social sign-in while a provider is configured) stays ordinary; a

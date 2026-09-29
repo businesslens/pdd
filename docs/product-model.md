@@ -236,7 +236,7 @@ availability Context must be covered by at least one Capability Scenario;
 appearing in a Journey Scenario does not satisfy that local acceptance
 coverage. Every model has at least one Capability.
 
-Journeys are optional high-level goals. A Journey authors only the Actors, Goal,
+Journeys are high-level goals the Product carries an Actor through, and a model has one wherever such a path exists. A Journey authors only the Actors, Goal,
 and Success criterion. Journey Scenarios own concrete Capability selection,
 order, branches, repetition, correlated context routes, and terminal results.
 Every Journey needs at least one achieved Journey Scenario using at least two
@@ -278,7 +278,7 @@ one. Where a rule can be computed, an author never has to argue it.
 | Screen, or Child Screen? | A region is a [Child Screen](./interfaces.md#screens-nest) when it subdivides its parent’s persistent working context. Opening a destination alone does not establish ownership. The same content drawn differently is design, and one Screen. |
 | Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing changes, presents, names as an actor, or reads by Rule is an error. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, a Context independent of any behavior, or an operation on a thing — and it is the only place permission is said. Anything else true of exactly one Capability is a `condition` Step or its Outcome. |
-| Domain, or no grouping? | A Domain states a `## Boundary` naming what it does **not** own, and holds at least two Capabilities. Otherwise it is a folder. |
+| Domain, or no grouping? | A map creates one per section of the Product's own navigation, settings or administration that holds two or more Capabilities; an author regroups them by hand, and a map never re-cuts what an author wrote. Every Domain states a `## Boundary` naming what it does **not** own. |
 
 ### Naming
 

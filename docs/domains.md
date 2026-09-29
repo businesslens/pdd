@@ -36,14 +36,20 @@ must hold at least two Capabilities. A Boundary that only asserts inclusion is a
 label rather than a region, and a Domain holding one Capability is a folder.
 `lint` checks both.
 
-Create a Domain when a region of the Product has a boundary you can state — what
-it covers and what it explicitly does not. Zero Domains is valid, and a small
-Product often needs none.
+Domains are made both ways. `businesslens-map` creates them automatically from
+the Product's own sections — the areas its navigation, settings and
+administration group things under — one per section holding two or more
+Capabilities, named in the Product's words. A Capability no section reaches,
+such as one only an emailed link starts, joins the section whose Entities it
+changes. You regroup them by hand like any file: merge, split or rename, and
+write your own Boundary. Once you have, a later map adds new Capabilities to
+your Domains and never re-cuts them. Zero Domains is valid for a Product with
+no sections of two or more Capabilities.
 
-Do not create a Domain to re-gather Capabilities you have just split. If
-`manage-repositories` was too broad and became create, configure, archive and
-delete, those four were already about the Repositories region before the split.
-A Domain that exists only to hold them is a folder, not a region.
+Splitting a Capability neither creates nor removes a Domain. If
+`manage-repositories` became create, configure, archive and delete, those four
+were about Repositories before the split, and whether they share a Domain
+depends on the Product's sections, not on the split.
 
 > **Domain vs Capability.** A Domain is what a part of the Product is *about*; a
 > [Capability](./capabilities.md) is something the Product can *do*.

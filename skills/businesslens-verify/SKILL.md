@@ -129,7 +129,8 @@ the diff.
    Coverage, then Naming. Only what inspection cannot answer; finding facts
    stays your job. With no author reachable, split rather than collapse, omit
    rather than assert, and carry each unanswered question into the delta as an
-   open question rather than a settled decision. This does not touch the
+   open question rather than a settled decision; Capability splits, Journeys
+   and Domains follow their tests in the format reference, not these defaults. This does not touch the
    authority question in step 6, which is already asked the right way.
 
    In every model delta, present the selected shape and its consequences.

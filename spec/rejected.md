@@ -248,3 +248,23 @@ Variation.
 that enables a Capability as a fact reference would let `lint` resolve it, but
 deployment settings have no Entity to reference, and the grant-less Business
 Rule already carries the same claim for `verify`.
+
+**Domains cut by "the thing the Actor works on".** Two independent maps of one
+product cut the same Capabilities into three Domains and into seven: an
+account read as one area, or its passwords, second factors, registration and
+linked identities each read as a thing of its own. Both readings follow the
+wording. Domains are cut at the Product's own sections instead, which two
+readers find the same way, and an author regroups them by hand.
+
+**Domains only when an author asks, or only as a derived report grouping.**
+Either would be deterministic, but automatic grouping has value on its own and
+so has an author's regrouping; a map that never proposes Domains leaves every
+model ungrouped, and a report-only grouping cannot be reviewed or edited as a
+file.
+
+**A Variation for each of several settings shaping one Scenario.** A captcha and
+a provider password on one registration would each select Scenario
+alternatives. Enumerating their combinations multiplies Scenarios with every
+setting, and choosing the setting that "most changes" the Actor's Steps is a
+judgment. When more than one setting would vary a Scenario, each is a decision
+point.

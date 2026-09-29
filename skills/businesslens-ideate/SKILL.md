@@ -99,8 +99,8 @@ Read before authoring:
    permission is a grant on a Business Rule targeting the operation, never a
    sentence in a Scenario, and an operation nobody may perform is `permits: []`.
    Where a family of things could be one Entity or several, ask with both shapes
-   named rather than choosing the smaller model. Create a Journey only when an achieved
-   goal path crosses at least two distinct Capabilities; define its Scenario as
+   named rather than choosing the smaller model. Plan a Journey wherever the Product
+   carries the Actor from one Capability into another toward one outcome; define its Scenario as
    one ordered typed Steps list, annotating responsible Actors and Capabilities
    while named routes select most-specific Context places.
 

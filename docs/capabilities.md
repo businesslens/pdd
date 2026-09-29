@@ -68,20 +68,25 @@ label, or sequence step that has no durable Product meaning.
 
 A Capability is the smallest durable behavior that remains independently
 meaningful, not necessarily the smallest button, API operation, or code
-function. If supposed Scenarios describe different Product verbs with different
-purposes, outcomes, permissions, availability, or Business Rules, the
-Capability is probably too broad.
+function. **The contract decides how many there are.** Parts of an ability are
+separate Capabilities when they differ in who may do them (a permission of
+their own), where they are offered (availability), or in verb. A different
+Actor does not split one — it is offered in every Experience it is used from —
+and neither does a Business Rule that governs only one part:
 
-For example, `manage-repositories` is not a useful umbrella when its cases are
-really create, configure, archive, and delete behaviors with distinct
-contracts. Split those into Capabilities and, when navigation benefits, group
-them under a Repository administration [Domain](./domains.md).
+| What you see | Capabilities |
+| --- | --- |
+| Create, configure, archive and delete repositories | Four: different verbs |
+| Switching an item's format, which needs a permission editing does not | Two: a permission of its own |
+| Adding an authenticator app or backup codes as a second factor | One: ways of doing one verb, even though each creates a different Entity |
+| Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, which has no outcome without the link |
+| Confirming the email of an account that already exists | Its own: a later act on something a run produced |
+| Entering a second factor after any sign-in method | Its own: a continuation several Capabilities share. Each sign-in ends its Scenario at the hand-off, and a Journey joins them |
+| Filtering, sorting and searching a list | Scenarios of the browsing Capability, unless one differs by contract |
 
-Ordinary filtering, sorting and searching within a browsing ability belong to
-its Scenarios. Split them when the general Capability test establishes an
-independent purpose, permission, availability or outcome contract. Returning the
-same set does not prevent a split, and returning a different set does not
-require one.
+Ways a setting selects between follow the [Variation](./variations.md) rules
+instead. Splitting neither creates nor removes a [Domain](./domains.md): the
+four repository Capabilities were about Repositories before the split.
 
 Every Capability declares explicit availability Contexts, naming
 [Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
