@@ -19,7 +19,7 @@ function activate(data: { resourceKey?: string, inspectionKey?: string }, event?
   <g :opacity="data?.dimmed ? 0.08 : data?.quiet ? 0.25 : data?.faint ? 0.55 : 1">
     <path v-for="(points, index) in data?.paths" :key="index" class="vue-flow__edge-path blr-flow-route"
       :d="points.map((point, i) => `${i ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')"
-      fill="none" :style="data?.selected ? { stroke: 'var(--ui-primary)', strokeWidth: 2.5 } : undefined" :stroke-dasharray="data?.forbidden ? '5 4' : data?.faint ? '2 4' : undefined" :marker-end="markerEnd" />
+      fill="none" :style="data?.selected ? { stroke: 'var(--ui-primary)', strokeWidth: 2.5 } : undefined" :stroke-dasharray="data?.forbidden ? '5 4' : data?.conditional || data?.alternative ? '8 4' : data?.faint ? '2 4' : undefined" :marker-end="markerEnd" />
     <template v-if="data?.inspectionKey || data?.resourceKey">
       <path v-for="(points, index) in data.paths" :key="`hit:${index}`" class="blr-flow-edge-hit nodrag nopan"
         :d="points.map((point, i) => `${i ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')"
@@ -28,7 +28,7 @@ function activate(data: { resourceKey?: string, inspectionKey?: string }, event?
   </g>
   <EdgeLabelRenderer v-if="data?.labelBox && !data?.quiet && !data?.dimmed">
     <component :is="data.inspectionKey || data.resourceKey ? 'button' : 'div'" :type="data.inspectionKey || data.resourceKey ? 'button' : undefined"
-      class="blr-flow-edge-label nodrag nopan" :class="[(data.inspectionKey || data.resourceKey) && 'blr-flow-edge-button', { 'blr-flow-edge-label--badges': data.badges?.length }]" :data-edge-id="id" :title="data.note"
+      class="blr-flow-edge-label nodrag nopan" :class="[(data.inspectionKey || data.resourceKey) && 'blr-flow-edge-button', { 'blr-flow-edge-label--badges': data.badges?.length || data.label }]" :data-edge-id="id" :title="data.note"
       :aria-label="data.resourceKey ? `Open ${data.label}` : data.inspectionKey ? `Inspect ${data.inspectionLabel || data.label}` : undefined" :aria-pressed="data.inspectionKey ? Boolean(data.selected) : undefined"
       :style="{ position: 'absolute', transform: `translate(${data.labelBox.x}px, ${data.labelBox.y}px)`, width: `${data.labelBox.width}px`, minHeight: `${data.labelBox.height}px` }"
       @click.stop="activate(data, $event)" @mouseenter="emit('hover', id)" @mouseleave="emit('hover', null)" @focus="emit('focus', id)" @blur="emit('focus', null)"><BlrFlowEdgeLabel :edge="data" /></component>

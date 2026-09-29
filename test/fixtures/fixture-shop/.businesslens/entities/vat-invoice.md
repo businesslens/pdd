@@ -1,4 +1,8 @@
 ---
+relations:
+  - entity: order
+    verb: is issued for
+    cardinality: one-to-one
 domain: ordering
 ---
 

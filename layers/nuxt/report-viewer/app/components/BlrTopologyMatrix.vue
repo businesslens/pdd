@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { TopologyMatrix } from '../utils/topologyProjections'
-import { ENTITY_KIND_META, entityFacetOf, type ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf, type AnyResourceView, type ReportWorkspace } from '../utils/reportWorkspace'
 import { matrixColumnWindow } from '../utils/matrixColumnWindow'
+import { VARIATION_LABELS, variationSetOf } from '../utils/variations'
 const props = defineProps<{ workspace: ReportWorkspace, matrix: TopologyMatrix, column: string | null, mode: 'rules' | 'mutations' | 'delivery' }>()
 
 /* Every matrix answers "which of these, against which of those". State each
@@ -40,6 +41,49 @@ const matrixStyle = computed(() => ({
   '--blr-matrix-table-width': `${window.value.tableWidth}px`
 }))
 const cells = computed(() => new Map(props.matrix.cells.map(cell => [JSON.stringify([cell.row, cell.column]), cell])))
+
+/* A Variation's alternatives sit side by side on an axis (the projection orders
+   them so) under one band naming the set once — even one alone, as the trees
+   put a lone alternative under its set's node. */
+interface Run { key: string, start: number, size: number }
+function runsOf(resources: AnyResourceView[]): Map<number, Run> {
+  const runs = new Map<number, Run>()
+  resources.forEach((resource, index) => {
+    const key = resource.variation?.key
+    if (!key) return
+    const previous = runs.get(index - 1)
+    const run = previous && previous.key === key ? previous : { key, start: index, size: 0 }
+    run.size += 1
+    runs.set(index, run)
+  })
+  return runs
+}
+const rowRuns = computed(() => runsOf(props.matrix.rows))
+const columnRuns = computed(() => runsOf(props.matrix.columns))
+const setOf = (resource: AnyResourceView) => variationSetOf(props.workspace, resource)
+/* The band says how many of the set's alternatives this table holds when it is not all of them. */
+const setMeta = (resource: AnyResourceView, present: number, short = false) => {
+  const set = setOf(resource)
+  if (!set) return ''
+  const total = set.alternatives.length
+  const count = present < total ? `${present}/${total} in table` : `${total}${short ? '' : ' alternatives'}`
+  return `${VARIATION_LABELS[set.variationKind]} · ${count}`
+}
+const grouped = (runs: Map<number, Run>, index: number) => runs.has(index)
+/* A column band is labelled on the first of its columns in view, so paging never hides its name. */
+const bandLabelled = (index: number) => {
+  const run = columnRuns.value.get(index)
+  return Boolean(run) && index === Math.max(run!.start, window.value.start)
+}
+/* The label runs across the band's columns in view, never past its last. */
+const bandSpan = (index: number) => {
+  const run = columnRuns.value.get(index)!
+  return Math.max(1, Math.min(run.start + run.size, window.value.end) - index)
+}
+const bandEdge = (index: number) => {
+  const run = columnRuns.value.get(index)!
+  return [index === Math.max(run.start, window.value.start) && 'is-first', index === run.start + run.size - 1 && 'is-last']
+}
 const cellAt = (row: string, column: string) => cells.value.get(JSON.stringify([row, column]))
 
 // CSS animates the shared offset. Vue patches only the new window, never every
@@ -184,13 +228,41 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
               <span class="blr-matrix-axis-column" aria-hidden="true">{{ words.column }}</span>
               <span class="blr-matrix-axis-row" aria-hidden="true">{{ words.row }}</span>
             </th>
-            <th v-for="(item, index) in matrix.columns" :key="item.key" scope="col" class="blr-matrix-column bg-elevated/20" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
+            <th v-for="(item, index) in matrix.columns" :key="item.key" scope="col" class="blr-matrix-column bg-elevated/20" :class="[grouped(columnRuns, index) && 'blr-matrix-banded', bandLabelled(index) && grouped(columnRuns, index) && 'blr-matrix-band-labelled']" :style="[columnStyle(index), grouped(columnRuns, index) && bandLabelled(index) ? { '--blr-band-span': bandSpan(index) } : {}]" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
+              <!-- A Variation's columns share one band across their tops, named on the first in view. -->
+              <span v-if="grouped(columnRuns, index)" class="blr-matrix-colband" :class="bandEdge(index)" :data-variation-band="item.variation!.key">
+                <!-- One line across the band, so every strip is the same height. -->
+                <span v-if="bandLabelled(index)" class="blr-matrix-band-line" :style="{ maxWidth: `calc(var(--blr-matrix-column-width) * ${bandSpan(index)} - 28px)` }">
+                  <BlrResourceLink :resource-key="item.variation!.key" class="blr-matrix-band-link blr-matrix-band-title" :title="`${item.variation!.title} · ${setMeta(item, columnRuns.get(index)!.size)}`" @open="emit('open', item.variation!.key)">
+                    <BlrKind kind="variation" :member-kind="setOf(item)?.memberKind" :facet="setOf(item)?.memberFacet" :labelled="false" size="xs" class="shrink-0" /><span class="blr-matrix-band-name truncate">{{ item.variation!.title }}</span>
+                  </BlrResourceLink>
+                  <span class="blr-matrix-band-meta">{{ setMeta(item, columnRuns.get(index)!.size, true) }}</span>
+                </span>
+              </span>
               <span v-if="mode === 'rules'" class="blr-matrix-kind">{{ ENTITY_KIND_META[item.kind].label }}</span>
-              <BlrTopologyResource :resource="item" @open="emit('open', $event)" />
+              <span v-if="grouped(columnRuns, index) && item.variation!.label" class="blr-matrix-versioned">
+                <span class="blr-matrix-version">{{ item.variation!.label }}</span>
+                <BlrTopologyResource :resource="item" @open="emit('open', $event)" />
+              </span>
+              <BlrTopologyResource v-else :resource="item" @open="emit('open', $event)" />
             </th>
           </tr>
         </thead>
-        <tbody><tr v-for="row in matrix.rows" :key="row.key"><th scope="row"><BlrTopologyResource :resource="row" @open="emit('open', $event)" /></th>
+        <tbody><template v-for="(row, rowIndex) in matrix.rows" :key="row.key">
+          <!-- A band names a Variation once, above its alternatives, as a collection's group header does. -->
+          <tr v-if="grouped(rowRuns, rowIndex) && rowRuns.get(rowIndex)!.start === rowIndex" class="blr-matrix-band" :data-variation-band="row.variation!.key">
+            <!-- One line across the table: the name, its subtype and size, and the way into it. -->
+            <th scope="rowgroup">
+              <BlrResourceLink :resource-key="row.variation!.key" class="blr-matrix-band-link blr-matrix-band-title" @open="emit('open', row.variation!.key)">
+                <BlrKind kind="variation" :member-kind="setOf(row)?.memberKind" :facet="setOf(row)?.memberFacet" :labelled="false" size="xs" class="shrink-0" /><span class="blr-matrix-band-name">{{ row.variation!.title }}</span>
+                <span class="blr-matrix-band-meta">{{ setMeta(row, rowRuns.get(rowIndex)!.size) }}</span>
+                <UIcon name="i-lucide-chevron-right" class="blr-matrix-band-go" aria-hidden="true" />
+              </BlrResourceLink>
+            </th>
+            <td :colspan="matrix.columns.length" aria-hidden="true" />
+          </tr>
+          <tr :data-variation-row="row.variation?.key" :class="grouped(rowRuns, rowIndex) && 'blr-matrix-in-set'"><th scope="row">
+          <BlrTopologyResource :resource="row" @open="emit('open', $event)" /></th>
           <td v-if="window.renderStart" :colspan="window.renderStart" class="blr-matrix-spacer" aria-hidden="true" inert />
           <td v-for="{ resource: column, index } in columns" :key="column.key" :data-cell="`${row.key}->${column.key}`" class="blr-matrix-column" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
             <template v-if="cellAt(row.key, column.key)">
@@ -206,7 +278,7 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
             </template><span v-else aria-label="No modeled relation" class="text-dimmed">—</span>
           </td>
           <td v-if="window.renderEnd < matrix.columns.length" :colspan="matrix.columns.length - window.renderEnd" class="blr-matrix-spacer" aria-hidden="true" inert />
-        </tr></tbody>
+        </tr></template></tbody>
       </table>
     </div>
     <p v-else class="blr-topology-empty">{{ words.empty }}</p>

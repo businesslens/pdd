@@ -2,9 +2,10 @@
 import type { AnyResourceView, CapabilityView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
-import { placeDelivery, placeJourneys } from './placeReadings'
+import { placeDelivery, placeJourneys, type Place } from './placeReadings'
 import type { TopologyAttachment } from './topologyTargets'
 import type { Diagram } from './diagram'
+import { adjacentAlternatives, variationCondition, variationConditionNote } from './variations'
 
 export interface TopologyBranch {
   id: string
@@ -16,13 +17,23 @@ export interface TopologyBranch {
   referenceLabel?: string
   contexts?: ContextView[]
   note?: string
+  /** An alternative drawn under its Variation's node, which already names the set. */
+  inSet?: boolean
+  /** An alternative of its set's node that does not happen at the node's place: drawn struck, with no children. */
+  absentFrom?: Place
+}
+
+/** The concrete resources a branch's children stand for: a Variation's node counts what is here under it, never itself or a struck one. */
+export function concreteBranches(children: TopologyBranch[]): TopologyBranch[] {
+  return children.flatMap(child => child.absentFrom ? [] : child.resource?.kind === 'variation' ? child.children.filter(item => !item.absentFrom) : [child])
 }
 
 /** Name a homogeneous collection of children without repeating its resource type. */
 export function branchChildrenLabel(children: TopologyBranch[]): string {
-  const kind = children[0]?.resource?.kind
-  if (!kind || children.some(child => child.resource?.kind !== kind)) return 'branches'
-  return children.length === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural
+  const concrete = concreteBranches(children)
+  const kind = concrete[0]?.resource?.kind
+  if (!kind || concrete.some(child => child.resource?.kind !== kind)) return 'branches'
+  return concrete.length === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural
 }
 
 export function branch(resource: AnyResourceView, children: TopologyBranch[] = []): TopologyBranch {
@@ -44,6 +55,40 @@ export type ReachKind = 'domain' | 'capability' | 'journey' | 'rule'
 
 const occurrence = (parent: string, resource: AnyResourceView, children: TopologyBranch[] = []): TopologyBranch =>
   ({ id: `${parent}${OCCURRENCE_SEPARATOR}${resource.key}`, title: resource.title, resource, children, references: [] })
+
+const isPlace = (resource: AnyResourceView | undefined): resource is Place =>
+  resource?.kind === 'interface' || resource?.kind === 'experience' || resource?.kind === 'screen'
+
+/**
+ * A graph tree folds as the Rows tree does: sibling alternatives sit under
+ * their Variation's node, even one alone, and at a place an alternative that
+ * does not happen there follows them struck, with no children. The set node
+ * is membership, not containment; each alternative keeps its own branch.
+ */
+export function foldBranches(workspace: ReportWorkspace, parentId: string, branches: TopologyBranch[], place?: Place): TopologyBranch[] {
+  const sets = new Map<string, TopologyBranch>()
+  const folded = branches.flatMap((item) => {
+    const key = item.resource?.variation?.key
+    const set = key ? workspace.byKey.get(key) : undefined
+    if (!key || set?.kind !== 'variation') return [item]
+    const existing = sets.get(key)
+    if (existing) { existing.children.push({ ...item, inSet: true }); return [] }
+    /* At the root a set stands for itself, as a subject does; below, it is an occurrence under its parent. */
+    const holder: TopologyBranch = { id: parentId ? `${parentId}${OCCURRENCE_SEPARATOR}${key}` : key, title: set.title, resource: set, references: [], children: [{ ...item, inSet: true }] }
+    sets.set(key, holder)
+    return [holder]
+  })
+  if (place) {
+    for (const holder of sets.values()) {
+      if (holder.resource?.kind !== 'variation') continue
+      const here = new Set(holder.children.map(child => child.resource?.key))
+      const absent = holder.resource.alternatives.flatMap(item => { const alternative = workspace.byKey.get(item.key); return alternative && !here.has(item.key) ? [alternative] : [] })
+        .sort((a, b) => a.title.localeCompare(b.title, 'en'))
+      holder.children.push(...absent.map(alternative => ({ id: `${holder.id}${OCCURRENCE_SEPARATOR}${alternative.key}`, title: alternative.title, resource: alternative, references: [], children: [], inSet: true, absentFrom: place })))
+    }
+  }
+  return folded
+}
 
 /** The most specific resource each Context resolves to, each place once. */
 export function placesOf(workspace: ReportWorkspace, contexts: ContextView[]): AnyResourceView[] {
@@ -67,12 +112,12 @@ function ruleReach(workspace: ReportWorkspace, rule: RuleView): AnyResourceView[
 const productRoot = (workspace: ReportWorkspace, children: TopologyBranch[]): TopologyBranch =>
   ({ id: resourceKey('product', workspace.identity.id), title: workspace.identity.title, children, references: [] })
 
-/** Places first, then Rules, both as occurrences under the subject. */
+/** Places first, then Rules, both as occurrences under the subject; alternatives among them sit under their Variation's node. */
 function reachOf(workspace: ReportWorkspace, subject: AnyResourceView & { contexts: ContextView[], ruleIds: string[] }): TopologyBranch[] {
-  return [
+  return foldBranches(workspace, subject.key, [
     ...placesOf(workspace, subject.contexts).map(place => occurrence(subject.key, place)),
     ...subject.ruleIds.flatMap((id) => { const rule = workspace.byKey.get(resourceKey('rule', id)); return rule ? [occurrence(subject.key, rule)] : [] })
-  ]
+  ])
 }
 
 /** A Domain's members, grouped under the places they are reached in. */
@@ -88,10 +133,14 @@ function domainBranch(workspace: ReportWorkspace, id: string, title: string, mem
       places.set(place.key, entry)
     }
   }
-  return { id, title, resource, references: [], colorSlot: resource?.colorSlot, children: [
-    ...[...places.values()].map(({ place, members }) => occurrence(id, place, members.map(member => occurrence(`${id}${OCCURRENCE_SEPARATOR}${place.key}`, member)))),
+  /* A Domain is not a place: the places it reaches fold under their Variations, never struck. */
+  return { id, title, resource, references: [], colorSlot: resource?.colorSlot, children: foldBranches(workspace, id, [
+    ...[...places.values()].map(({ place, members }) => {
+      const at = `${id}${OCCURRENCE_SEPARATOR}${place.key}`
+      return occurrence(id, place, foldBranches(workspace, at, members.map(member => occurrence(at, member)), isPlace(place) ? place : undefined))
+    }),
     ...direct.map(member => occurrence(id, member))
-  ] }
+  ]) }
 }
 
 export function reachTreeProjection(workspace: ReportWorkspace, kind: ReachKind): TopologyBranch {
@@ -112,14 +161,15 @@ export function reachTreeProjection(workspace: ReportWorkspace, kind: ReachKind)
         ...(unassigned.children.length ? [unassigned] : [])
       ])
     }
+    /* A reach tree folds as the Rows tree does: its subjects, and what each reaches, sit under their Variations. */
     case 'capability':
-      return productRoot(workspace, workspace.capabilities.map(item => branch(item, reachOf(workspace, item))))
+      return productRoot(workspace, foldBranches(workspace, '', workspace.capabilities.map(item => branch(item, reachOf(workspace, item)))))
     case 'journey':
-      return productRoot(workspace, workspace.journeys.map(item => branch(item, reachOf(workspace, item))))
+      return productRoot(workspace, foldBranches(workspace, '', workspace.journeys.map(item => branch(item, reachOf(workspace, item)))))
     case 'rule':
-      return productRoot(workspace, workspace.rules.map(rule => branch(rule,
-        ruleReach(workspace, rule).map(target => occurrence(rule.key, target))
-      )))
+      return productRoot(workspace, foldBranches(workspace, '', workspace.rules.map(rule => branch(rule,
+        foldBranches(workspace, rule.key, ruleReach(workspace, rule).map(target => occurrence(rule.key, target)))
+      ))))
   }
 }
 
@@ -174,28 +224,29 @@ export function interfaceProjection(workspace: ReportWorkspace, delivery = false
  * Rooted at the Product, like the reach trees.
  */
 export function deliveryMapProjection(workspace: ReportWorkspace): TopologyBranch {
-  const notes = { own: undefined, gap: 'Available here, on no Screen', direct: 'Delivered directly' } as const
-  /* What happens at a place — the same reading as its tree branch. */
+  /* What happens at a place — the same reading as its tree branch. Where a
+     Capability sits says it is on no Screen, so no note repeats it. */
   const leaves = (item: TopologyBranch): TopologyBranch[] => {
     const place = item.resource
-    if (!place || (place.kind !== 'screen' && place.kind !== 'experience' && place.kind !== 'interface')) return []
+    if (!isPlace(place)) return []
     return [
-      ...placeDelivery(workspace, place).map(({ capability, note, scenarios }) => {
+      ...placeDelivery(workspace, place).map(({ capability, scenarios }) => {
         const id = `${item.id}${OCCURRENCE_SEPARATOR}${capability.key}`
-        return { ...occurrence(item.id, capability, scenarios.map(scenario => occurrence(id, scenario))), ...(notes[note] ? { note: notes[note] } : {}) }
+        return occurrence(item.id, capability, foldBranches(workspace, id, scenarios.map(scenario => occurrence(id, scenario)), place))
       }),
       ...placeJourneys(workspace, place).map(({ journey, scenarios }) => {
         const id = `${item.id}${OCCURRENCE_SEPARATOR}${journey.key}`
-        return occurrence(item.id, journey, scenarios.map(({ scenario }) => occurrence(id, scenario)))
+        return occurrence(item.id, journey, foldBranches(workspace, id, scenarios.map(({ scenario }) => occurrence(id, scenario)), place))
       })
     ]
   }
+  /* Every level folds as the Interfaces tree does, from the Interfaces at the root to the Scenarios at a place. */
   const withLeaves = (item: TopologyBranch): TopologyBranch => ({
     ...item, references: [], referenceLabel: undefined,
-    children: [...leaves(item), ...item.children.filter(child => child.resource?.kind !== 'capability').map(withLeaves)]
+    children: foldBranches(workspace, item.id, [...leaves(item), ...item.children.filter(child => child.resource?.kind !== 'capability').map(withLeaves)], isPlace(item.resource) ? item.resource : undefined)
   })
   const trees = interfaceProjection(workspace, true).map(item => withLeaves({ ...item, references: [] }))
-  return productRoot(workspace, trees)
+  return productRoot(workspace, foldBranches(workspace, '', trees))
 }
 
 /**
@@ -224,7 +275,11 @@ export function deliveryMatrixProjection(workspace: ReportWorkspace): TopologyMa
       const direct = !screens.length
         && capability.contexts.some(context => context.interfaceId === resource.id && !context.experienceId)
       if (!screens.length && !experiences.length && !direct) continue
+      /* Delivered only under some alternatives when some choice leaves no route: the row's and column's own Variations are said by their headers. */
+      const known = new Set([capability.variation?.key, resource.variation?.key].filter((key): key is string => Boolean(key)))
+      const condition = variationCondition(workspace, [...experiences, ...screens, ...(direct ? [resource] : [])], known)
       cells.push({
+        ...(condition.conditional ? { condition: variationConditionNote([condition]) } : {}),
         id: `${capability.key}->${resource.key}`,
         row: capability.key,
         column: resource.key,
@@ -239,15 +294,16 @@ export function deliveryMatrixProjection(workspace: ReportWorkspace): TopologyMa
     }
   }
   return {
-    rows: workspace.capabilities,
-    columns: workspace.interfaces,
+    rows: adjacentAlternatives(workspace.capabilities),
+    columns: adjacentAlternatives(workspace.interfaces),
     cells
   }
 }
 
 export interface TopologyMutation {
   effect: 'creates' | 'changes' | 'removes'
-  variants: Array<{ from: string, to: string, evidence: ScenarioView[] }>
+  /** Each change, with "Only under …" where some choice of alternatives leaves no Scenario making it. */
+  variants: Array<{ from: string, to: string, evidence: ScenarioView[], condition?: string }>
 }
 
 export interface TopologyMatrixCell {
@@ -259,6 +315,8 @@ export interface TopologyMatrixCell {
   mutations?: TopologyMutation[]
   evidence: AnyResourceView[]
   details: string[]
+  /** "Only under …": the cell holds only under some alternatives beyond its own row's and column's. */
+  condition?: string
 }
 export interface TopologyMatrix {
   rows: AnyResourceView[]
@@ -280,7 +338,7 @@ export function ruleAttachmentsProjection(workspace: ReportWorkspace): TopologyM
     })
   }
   const kinds = Object.keys(ENTITY_KIND_META)
-  return { rows: workspace.rules, columns: [...columns.values()].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind)), cells }
+  return { rows: adjacentAlternatives(workspace.rules), columns: adjacentAlternatives([...columns.values()].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind))), cells }
 }
 
 export function mutationProjection(workspace: ReportWorkspace): TopologyMatrix {
@@ -293,29 +351,44 @@ export function mutationProjection(workspace: ReportWorkspace): TopologyMatrix {
       .filter(step => (scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId) === capability.id)
       .flatMap(step => step.entities.filter(item => item.entityId === line.entityId && item.effect !== 'reads'))
     })).filter(item => item.effects.length)
+    /* A change only some alternatives make says under which; the row's and column's own Variations are said by their headers. */
+    const known = new Set([entity.variation?.key, capability.variation?.key].filter((key): key is string => Boolean(key)))
+    const conditionOf = (evidence: ScenarioView[]) => variationCondition(workspace, evidence, known)
     const mutations: TopologyMutation[] = [...new Set(line.effects.map(item => item.effect))].map(effect => ({
       effect,
-      variants: line.effects.filter(item => item.effect === effect).map(item => ({
-        from: item.from, to: item.to,
-        evidence: occurrences.filter(({ effects }) => effects.some(candidate =>
+      variants: line.effects.filter(item => item.effect === effect).map(item => {
+        const evidence = occurrences.filter(({ effects }) => effects.some(candidate =>
           candidate.effect === effect && candidate.from === item.from && candidate.to === item.to
         )).map(({ scenario }) => scenario)
-      }))
+        const condition = conditionOf(evidence)
+        return { from: item.from, to: item.to, evidence, ...(condition.conditional ? { condition: variationConditionNote([condition]) } : {}) }
+      })
     }))
+    const condition = conditionOf(occurrences.map(({ scenario }) => scenario))
     return [{ id: `${entity.key}->${capability.key}`, row: entity.key, column: capability.key,
+      ...(condition.conditional ? { condition: variationConditionNote([condition]) } : {}),
       labels: mutations.map(item => item.effect), mutations,
       evidence: occurrences.map(({ scenario }) => scenario), details: []
     }]
   }))
-  return { rows: workspace.entities,
-    columns: workspace.capabilities, cells }
+  return { rows: adjacentAlternatives(workspace.entities),
+    columns: adjacentAlternatives(workspace.capabilities), cells }
 }
 
 export function entityRelationsProjection(workspace: ReportWorkspace): Diagram {
   const notation = { 'one-to-one': '1:1', 'one-to-many': '1:N', 'many-to-many': 'M:N' }
+  /* Every line here is an authored relation, so a Variation is a frame around
+     its alternatives, never a node with lines of its own. Relations keep their
+     concrete ends. */
+  const frames = workspace.variations.filter(set => set.memberKind === 'entity' && set.alternatives.filter(item => workspace.byKey.has(item.key)).length > 1)
+  const frameOf = new Map(frames.flatMap(set => set.alternatives.map(item => [item.key, set.key] as const)))
   return {
-    nodes: workspace.entities.map(entity => ({ id: entity.key, resourceKey: entity.key, title: entity.title,
-      colorSlot: workspace.domains.find(domain => domain.id === entity.domainId)?.colorSlot })),
+    nodes: [
+      ...frames.map(set => ({ id: set.key, resourceKey: set.key, title: set.title, group: true })),
+      ...workspace.entities.map(entity => ({ id: entity.key, resourceKey: entity.key, title: entity.title,
+        colorSlot: workspace.domains.find(domain => domain.id === entity.domainId)?.colorSlot,
+        ...(frameOf.has(entity.key) ? { parent: frameOf.get(entity.key)! } : {}) }))
+    ],
     edges: workspace.entities.flatMap(entity => entity.relations.flatMap((relation, index) => {
       const target = resourceKey('entity', relation.entityId)
       return workspace.byKey.has(target) ? [{ id: `${entity.key}:relation:${index}`, source: entity.key, target, label: `${relation.verb} ${notation[relation.ends]}` }] : []
@@ -329,6 +402,7 @@ export function filterBranches(branches: TopologyBranch[], visible: (resource: A
     const children = filterBranches(item.children, visible)
     if (item.resource && !visible(item.resource) && !children.length) return []
     if (!item.resource && item.children.length && !children.length) return []
+    if (item.resource?.kind === 'variation' && !children.some(child => !child.absentFrom)) return []
     return [{ ...item, children, references: item.references.filter(visible) }]
   })
 }

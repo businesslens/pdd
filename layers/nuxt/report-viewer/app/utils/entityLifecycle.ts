@@ -2,6 +2,8 @@
 import type { EntityArcView, EntityStateView, EntityView, ReportWorkspace } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
 import type { Diagram, DiagramNode, DiagramEdge, DiagramEdgeBadge } from './diagram'
+import type { AnyResourceView } from './reportWorkspace'
+import { variationCondition, variationConditionNote, type VariationCondition } from './variations'
 
 interface LifecycleState { name: string, reached: boolean, terminal: 'start' | 'end' | null }
 
@@ -46,6 +48,35 @@ export function lifecycleArcLabel(workspace: ReportWorkspace, entity: EntityView
     coEffects: arc.coEffects.map(co => `also ${co.effect} ${titleOf('entity', co.entityId)}${co.to ? ` → ${co.to}` : ''}`),
     forbidden: arc.forbiddenByRuleIds.length > 0
   }
+}
+
+/**
+ * Under which alternatives a change is made, read from the Scenarios making it:
+ * one runs only when its alternative — or its Capability's or Journey's — is
+ * chosen. The Entity's own Variation is said once, in its header, never again here.
+ */
+export function lifecycleArcCondition(workspace: ReportWorkspace, entity: EntityView, arc: Pick<EntityArcView, 'capabilityScenarioIds' | 'journeyScenarioIds'>): VariationCondition<AnyResourceView> {
+  const supporters = [
+    ...arc.capabilityScenarioIds.map(id => workspace.byKey.get(`capability-scenario:${id}`)),
+    ...arc.journeyScenarioIds.map(id => workspace.byKey.get(`journey-scenario:${id}`))
+  ].filter((item): item is AnyResourceView => Boolean(item))
+  return variationCondition(workspace, supporters, new Set(entity.variation ? [entity.variation.key] : []))
+}
+
+/** What a conditional change or State says about when it holds: its one alternative, or that it takes some. */
+export function lifecycleConditionNote(conditions: VariationCondition<AnyResourceView>[]): string {
+  return variationConditionNote(conditions)
+}
+
+/** A State only conditional changes reach is conditional too; one nothing reaches is unreached, not conditional. */
+export function lifecycleStateCondition(workspace: ReportWorkspace, entity: EntityView, state: string): string | null {
+  const into = entity.arcs.filter(arc => arc.to === state && arc.from !== state)
+  if (!into.length) return null
+  const conditions = into.map(arc => lifecycleArcCondition(workspace, entity, arc))
+  if (!conditions.every(condition => condition.conditional)) return null
+  /* A State box is narrow: it names the alternatives alone; its details say their sets. */
+  const alternatives = new Set(conditions.flatMap(condition => condition.groups.map(group => group.choices.map(choice => choice.alternative.title).join(' · '))))
+  return alternatives.size === 1 ? `Only under ${[...alternatives][0]}` : 'Only under some alternatives'
 }
 
 /** A change no one may make is marked, not attributed: no Capability draws it. */
@@ -112,11 +143,10 @@ export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<Entit
 
 /** Build the placed graph for one Entity's composed lifecycle. */
 export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityView): Diagram {
-  const nodes: DiagramNode[] = entity.states.map((state) => stateNode(entity, {
-    name: state.name,
-    reached: state.reached,
-    terminal: null
-  }))
+  const nodes: DiagramNode[] = entity.states.map((state) => {
+    const conditional = lifecycleStateCondition(workspace, entity, state.name)
+    return { ...stateNode(entity, { name: state.name, reached: state.reached, terminal: null }), ...(conditional ? { conditional } : {}) }
+  })
   const present = new Set(nodes.map(node => node.id))
   const edges: DiagramEdge[] = []
   let hasStart = false
@@ -144,8 +174,11 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if ((source !== LIFECYCLE_START && !present.has(source)) || (target !== LIFECYCLE_END && !present.has(target))) return
     if (arc.effect === 'creates') hasStart = true
     if (arc.effect === 'removes') hasEnd = true
+    /* A change only some alternatives make is dashed, and its label wears the variation mark. */
+    const conditional = !label.forbidden && lifecycleArcCondition(workspace, entity, arc).conditional
     edges.push({
-      source, target, label: caption(label), badges: badges(label),
+      source, target, label: caption(label), badges: conditional ? badges(label).map((badge, index) => index ? badge : { ...badge, varied: true }) : badges(label),
+      ...(conditional ? { conditional: true } : {}),
       id: lifecycleArcEdgeId(entity.id, arc),
       inspectionKey: lifecycleArcEdgeId(entity.id, arc),
       inspectionLabel: lifecycleArcTitle(arc),

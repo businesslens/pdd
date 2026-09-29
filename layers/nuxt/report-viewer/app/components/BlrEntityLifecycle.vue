@@ -2,7 +2,7 @@
 /** Rows nests outgoing changes under their starting States; Graph inspects the same lifecycle. */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
-import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle, lifecycleChangeAddress } from '../utils/entityLifecycle'
+import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcCondition, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle, lifecycleChangeAddress, lifecycleConditionNote, lifecycleStateCondition } from '../utils/entityLifecycle'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -47,9 +47,12 @@ const arcs = computed(() => props.resource.arcs.map((arc, index) => {
     /* A row sits under the State it leaves, so its phrase names only where it goes — unless it stays. */
     rowMention: { effect: arc.effect, from: arc.to && arc.to === arc.from ? arc.from : '', to: arc.to },
     capabilities: label.capabilities,
+    /* "Only under …" where some choice of alternatives leaves nothing making it. */
+    condition: (() => { const condition = lifecycleArcCondition(props.workspace, props.resource, arc); return condition.conditional ? lifecycleConditionNote([condition]) : '' })(),
     drawn: drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc)) }
 }))
 const groups = computed(() => groupEntityLifecycle(props.resource, arcs.value))
+const stateCondition = (name: string) => lifecycleStateCondition(props.workspace, props.resource, name)
 const unplaced = computed(() => arcs.value.filter(arc => !arc.drawn))
 const prohibitions = computed(() => props.resource.prohibitions.map(prohibition => ({
   ...prohibition,
@@ -202,6 +205,7 @@ watch(() => props.change, (address) => {
                     <BlrProse v-if="group.state?.content" :text="group.state.content" />
                     <p v-else-if="group.explanation" class="text-sm text-muted">{{ group.explanation }}</p>
                     <p v-if="group.state && !group.state.reached" class="text-xs text-muted">No Scenario leaves it in this state.</p>
+                    <p v-if="group.state && stateCondition(group.state.name)" class="flex items-center gap-1 text-xs text-muted" data-state-condition><UIcon name="i-lucide-split" class="size-3 shrink-0" />Reached {{ stateCondition(group.state.name)!.replace(/^Only/, 'only') }}</p>
                     <details v-if="group.state && (group.state.capabilityScenarioIds.length || group.state.journeyScenarioIds.length)" class="text-sm"
                       :open="reading.expandedProvenance.includes(group.key)" @toggle="setProvenanceOpen(group.key, ($event.target as HTMLDetailsElement).open)">
                       <summary class="cursor-pointer text-xs text-muted">Scenarios that leave it here · {{ group.state.capabilityScenarioIds.length + group.state.journeyScenarioIds.length }}</summary>
@@ -213,13 +217,14 @@ watch(() => props.change, (address) => {
                   </div>
                   <ul v-if="group.arcs.length" class="space-y-2">
                     <li v-for="arc in group.arcs" :key="arc.id" :data-occurrence-id="arc.id" data-lifecycle-change
-                      class="overflow-hidden rounded-[0.625rem] border border-default bg-default" :class="{ 'border-dashed': arc.forbiddenByRuleIds.length > 0 }">
+                      class="overflow-hidden rounded-[0.625rem] border border-default bg-default" :class="{ 'border-dashed': arc.forbiddenByRuleIds.length > 0 || arc.condition }">
                       <button type="button" class="blr-resource-row group flex w-full items-start gap-3 rounded-[0.625rem] px-4 py-3 text-start transition hover:bg-elevated/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
                         :aria-label="`${reading.expandedChanges.includes(arc.id) ? 'Collapse' : 'Expand'} ${arc.title}`" :aria-expanded="reading.expandedChanges.includes(arc.id)" @click="toggleChange(arc.id)">
                         <span class="min-w-0 flex-1">
                           <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                             <BlrEntityEffect :mention="arc.rowMention" />
                             <span v-if="arc.forbiddenByRuleIds.length" class="text-xs text-primary">forbidden by Rule</span>
+                            <span v-if="arc.condition" class="inline-flex items-center gap-1 text-xs text-muted" data-change-condition><UIcon name="i-lucide-split" class="size-3 shrink-0" />{{ arc.condition }}</span>
                           </span>
                           <!-- The Capabilities making it, as the graph's badge and the details' chips draw them; the row itself is the control. -->
                           <span v-if="!reading.expandedChanges.includes(arc.id) && arc.capabilities.length" class="mt-2 flex flex-wrap gap-1.5">
@@ -253,6 +258,7 @@ watch(() => props.change, (address) => {
         <div v-else-if="selectedState" class="space-y-4">
           <BlrProse :text="selectedState.content" />
           <p v-if="!selectedState.reached" class="text-sm text-muted">No Scenario leaves it in this state.</p>
+          <p v-if="stateCondition(selectedState.name)" class="flex items-center gap-1.5 text-sm font-medium text-highlighted" data-state-condition><UIcon name="i-lucide-split" class="size-3.5 shrink-0" />Reached {{ stateCondition(selectedState.name)!.replace(/^Only/, 'only') }}</p>
           <section v-if="selectedState.capabilityScenarioIds.length || selectedState.journeyScenarioIds.length" class="space-y-2">
             <h4 class="blr-field"><BlrTerm slug="left-here-by" /></h4>
             <BlrLinks :workspace="workspace" :ids="selectedState.capabilityScenarioIds" kind="capability-scenario" interactive @select="emit('open', $event)" />

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ElkNode } from 'elkjs/lib/elk-api'
-import type { Diagram, DiagramLayout, DiagramSize } from '../utils/diagram'
+import type { Diagram, DiagramLayout, DiagramPoint, DiagramSize } from '../utils/diagram'
 import { diagramLayoutInput, diagramLayoutResult } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
 
@@ -59,9 +59,16 @@ async function arrange() {
       const result = layoutTopologyTree(tree(root.id), Object.fromEntries(diagram.nodes.map(node => [node.id, sizes[`node:${node.id}`]! ])))
       const positions = new Map(result.nodes.map(node => [node.id, node]))
       const routes = new Map(result.branches.flatMap(branch => branch.children.map(child => [JSON.stringify([branch.source, child.target]), child.points] as const)))
+      /* A labelled tree edge carries its label where its parent's lines fork, centred on the stem. */
+      const forkLabel = (edge: typeof diagram.edges[number], points: DiagramPoint[]) => {
+        const size = sizes[`edge:${edge.id}`]
+        if (!edge.label || !size || points.length < 2) return {}
+        const fork = points[1]!
+        return { labelBox: { x: fork.x - size.width / 2, y: fork.y - size.height / 2, ...size } }
+      }
       publish({ width: result.width, height: result.height,
         nodes: diagram.nodes.map(node => ({ ...node, ...positions.get(node.id)! })),
-        edges: diagram.edges.map(edge => ({ ...edge, paths: [routes.get(JSON.stringify([edge.source, edge.target]))!] })) })
+        edges: diagram.edges.map(edge => { const points = routes.get(JSON.stringify([edge.source, edge.target]))!; return { ...edge, paths: [points], ...forkLabel(edge, points) } }) })
       return
     }
   }
@@ -125,7 +132,7 @@ onBeforeUnmount(() => { mounted = false; requestId++; stopWorker(); observer?.di
       <div v-for="node in diagram.nodes" :key="node.id" :data-measure="`node:${node.id}`" :style="node.group ? { width: 'max-content', maxWidth: '320px' } : { width: node.terminal ? '132px' : '236px' }">
         <BlrFlowNodeContent :node="node" />
       </div>
-      <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label" :class="{ 'blr-flow-edge-label--badges': edge.badges?.length }"><BlrFlowEdgeLabel :edge="edge" /></div>
+      <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label" :class="{ 'blr-flow-edge-label--badges': edge.badges?.length || edge.label }"><BlrFlowEdgeLabel :edge="edge" /></div>
     </div>
     <div v-if="layout" class="blr-diagram-canvas">
       <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" :selected="selected" @open="emit('open', $event)" @inspect="(key, part) => emit('inspect', key, part)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />

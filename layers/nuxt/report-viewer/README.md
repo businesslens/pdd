@@ -747,12 +747,50 @@ never alternatives to each other.
 
 A Business Rule that is an alternative is conditional: its lifecycle
 prohibitions are never drawn as unconditional, and its fact badges read
-`Conditional Rule`. Also on keeps its own meaning. Drawings keep concrete
-nodes, rows and columns.
+`Conditional Rule`. Also on keeps its own meaning.
+
+**In the drawings.** Nodes, rows, columns and relations stay concrete; the
+Variation is added around them, the way each drawing's lines already read.
+- *Graph trees* — the four reach graphs and the Delivery map — fold as the
+  Interfaces tree does (`foldBranches`): sibling alternatives sit under their
+  Variation's node, drawn in the member type's color with its mark and the
+  sub-icon, subtitled `Capability variation`, which opens the set. Its lines to
+  its alternatives are dashed — "one of", never containment — and say
+  `alternatives` once where they fork. The
+  Delivery map folds at every level, from Interfaces at the root to Scenarios at
+  a place, and at a place an alternative that does not happen there follows the
+  others struck, with the same badge as the tree. Reach trees fold their
+  subjects and what each reaches — places, Rules and targets — the same way; a
+  subject is not a place, so nothing under it is struck. The `+N` on a closed
+  node counts concrete resources only (`concreteBranches`). Only the Entity
+  graph and the matrices draw an alternative on its own, naming its set.
+- *Entity relationships* — every line is an authored relation, so an Entity
+  Variation is a frame around its alternatives, headed by the set; relations
+  keep their concrete ends. A frame holding fewer than two alternatives in scope
+  is dropped.
+- *Lifecycle* — a change is conditional when some choice of alternatives leaves
+  no Scenario making it (`variationCondition`): a Scenario runs only when it,
+  or its Capability or Journey, is chosen. A conditional change is dashed and
+  its Capability badge leads with the sub-icon; a State only conditional
+  changes reach is dashed and says `Only under Cancellation request`. Every
+  change's details group its Scenarios by alternative, `Always` first. The
+  Entity's own Variation is never counted again.
+- *Matrices* — alternatives on an axis sit side by side at the first one's
+  place (`adjacentAlternatives`) under one band naming the Variation once, as a
+  collection list's group header does, tinted a step darker than the cells: a
+  one-line band row above its rows — name, subtype and size, and a chevron into
+  it — and one band across its columns' tops, named on the first of them in view
+  so paging never hides it; a Version's columns carry their labels before their
+  names (`v1 Payment webhook`). A lone alternative sits under its band too, as in
+  the trees; when the table holds only some of a set's alternatives, the band
+  says how many (`Experiment · 1/2 in table`). A cell held only under some alternatives beyond its own
+  row's and column's is dashed, and its details say which first; in What
+  changes what, a single change inside a solid cell says so on its own line.
+  Rule attachments are authored, so their cells are never dashed.
 
 Check it against the Fixture Shop with `node scripts/check-variations.mjs
 <viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the
 collection and its owner lines, set rows in a list and a tab, the switcher by
 keyboard, set-first titles, switching in a header without a Back step, the set's
-readings, the Scenario card and a Scenario address, Escape, the tree and phone
-width.
+readings, the Scenario card and a Scenario address, Escape, the tree, the
+graphs, the Lifecycle, the matrices and phone width.

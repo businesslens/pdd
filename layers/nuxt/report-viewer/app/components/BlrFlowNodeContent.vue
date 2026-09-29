@@ -13,7 +13,10 @@ function activate(event: MouseEvent) {
   else if (props.node.inspectionKey) emit('inspect', props.node.inspectionKey)
 }
 const meta = computed(() => props.node.kind ? ENTITY_KIND_META[props.node.kind] : undefined)
-const color = computed(() => `var(--blr-slot-${props.node.colorSlot ?? meta.value?.slot ?? 0})`)
+/* A Variation wears the color of the type it varies; only its mark's sub-icon is in ink. */
+const color = computed(() => `var(--blr-slot-${props.node.colorSlot ?? (props.node.kind === 'variation' && props.node.memberKind ? ENTITY_KIND_META[props.node.memberKind].slot : meta.value?.slot) ?? 0})`)
+/* A lone alternative says its set beside its type: "Journey · Post-purchase". */
+const subtitle = computed(() => props.node.note || (props.node.alternativeOf ? `${meta.value?.label} · ${props.node.alternativeOf}` : meta.value?.label))
 const branchLabel = computed(() => props.node.branch
   ? `${props.node.branch.open ? 'Collapse' : 'Expand'} ${props.node.title} · ${props.node.branch.open ? 'Hide' : 'Show'} ${props.node.branch.count} ${props.node.branch.childrenLabel}`
   : '')
@@ -21,19 +24,25 @@ const branchLabel = computed(() => props.node.branch
 
 <template>
   <div class="blr-flow-node" :class="{ 'blr-flow-node--state': !node.kind, 'blr-flow-node--terminal': node.terminal, 'blr-flow-node--group': node.group, 'blr-flow-node--highlighted': highlighted }"
-    :data-unreached="node.unreached || undefined" :data-resource-key="node.resourceKey" :style="{ '--node-color': color }">
+    :data-unreached="node.unreached || undefined" :data-conditional="node.conditional ? '' : undefined" :data-absent="node.absent ? '' : undefined" :data-resource-key="node.resourceKey" :style="{ '--node-color': color }">
     <component :is="href ? 'a' : node.resourceKey || node.inspectionKey ? 'button' : 'div'" :href="href" :type="(node.resourceKey || node.inspectionKey) && !href ? 'button' : undefined" :tabindex="node.resourceKey || node.inspectionKey ? undefined : 0" class="blr-flow-node__main" :aria-description="node.description"
     @click.stop="activate">
     <span v-if="meta" class="blr-flow-node__icon">
-      <BlrEntityMark v-if="node.kind === 'entity' && node.entityFacet" :facet="node.entityFacet" :acts="node.acts" />
+      <BlrVariationMark v-if="node.kind === 'variation' && node.memberKind" :kind="node.memberKind" :facet="node.entityFacet" />
+      <BlrEntityMark v-else-if="node.kind === 'entity' && node.entityFacet" :facet="node.entityFacet" :acts="node.acts" />
       <BlrInterfaceType v-else-if="node.kind === 'interface' && node.interfaceType" :type="node.interfaceType" />
       <UIcon v-else :name="meta.icon" class="size-5" />
+      <!-- An alternative drawn on its own wears the variation sub-icon, as a set's mark does. -->
+      <span v-if="node.alternativeOf && node.kind !== 'variation'" class="blr-flow-node__varied" aria-hidden="true"><UIcon name="i-lucide-split" /></span>
     </span>
     <span v-else-if="node.terminal" class="blr-flow-terminal" :data-terminal="node.terminal" aria-hidden="true" />
     <span class="blr-flow-node__text">
       <strong class="blr-flow-node__title" :title="node.title">{{ node.title }}</strong>
-      <span v-if="node.note || meta" class="blr-flow-node__sub" :title="node.note || meta?.label">{{ node.note || meta?.label }}</span>
+      <span v-if="node.absent" class="blr-flow-node__sub"><span class="blr-absent-badge">{{ node.absent }}</span></span>
+      <span v-else-if="node.note || meta" class="blr-flow-node__sub" :title="subtitle">{{ subtitle }}</span>
       <span v-if="node.unreached" class="blr-flow-node__sub">unreached</span>
+      <!-- Held only under some alternatives: the variation mark and which. -->
+      <span v-if="node.conditional" class="blr-flow-node__sub blr-flow-node__condition" :title="node.conditional"><UIcon name="i-lucide-split" class="size-3 shrink-0" />{{ node.conditional }}</span>
     </span>
     <BlrNavigationMark v-if="node.navigation" :labelled="false" class="shrink-0" />
     </component>
@@ -74,7 +83,16 @@ button.blr-flow-node__main { cursor: pointer; }
 .blr-flow-node--group:has(.blr-flow-node__main:hover) > .blr-flow-node__main,
 .blr-flow-node--group:focus-within > .blr-flow-node__main,
 .blr-flow-node--group.blr-flow-node--highlighted > .blr-flow-node__main { box-shadow: none; background: color-mix(in srgb, var(--node-color) 10%, transparent); }
-.blr-flow-node[data-unreached] > .blr-flow-node__main { border-style: dashed; }
+.blr-flow-node[data-unreached] > .blr-flow-node__main,
+.blr-flow-node[data-conditional] > .blr-flow-node__main { border-style: dashed; }
+.blr-flow-node__condition { display: flex; align-items: center; gap: 4px; }
+.blr-flow-node__icon { position: relative; }
+.blr-flow-node__varied { position: absolute; inset-inline-end: -4px; inset-block-end: -4px; display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 9999px; background: var(--ui-bg); box-shadow: 0 0 0 1px var(--ui-border); color: var(--ui-text-highlighted); }
+.blr-flow-node__varied :deep(svg) { width: 9px; height: 9px; stroke-width: 2.25; }
+/* Not at this place: muted and struck, the tree's same reading. */
+.blr-flow-node[data-absent] > .blr-flow-node__main { border-style: dashed; background: transparent; opacity: 0.7; }
+.blr-flow-node[data-absent] .blr-flow-node__title { font-weight: 500; color: var(--ui-text-muted); text-decoration: line-through; }
+.blr-flow-node[data-absent] .blr-flow-node__icon { opacity: 0.5; }
 .blr-flow-node:has(.blr-flow-node__main:hover) > .blr-flow-node__main,
 .blr-flow-node:focus-within > .blr-flow-node__main,
 .blr-flow-node--highlighted > .blr-flow-node__main { border-color: var(--node-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--node-color) 35%, transparent); }

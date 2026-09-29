@@ -10,7 +10,8 @@ import type { DiagramNode } from '../utils/diagram'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 const props = defineProps<NodeProps<DiagramNode & { dimmed?: boolean, highlighted?: boolean }>>()
 const emit = defineEmits<{ open: [key: string], inspect: [key: string], toggle: [id: string, open: boolean], focus: [id: string | null] }>()
-const color = computed(() => `var(--blr-slot-${props.data.colorSlot ?? (props.data.kind ? ENTITY_KIND_META[props.data.kind].slot : 0)})`)
+/* A Variation's frame wears the color of the type it varies, as its node does in a tree. */
+const color = computed(() => `var(--blr-slot-${props.data.colorSlot ?? (props.data.kind === 'variation' && props.data.memberKind ? ENTITY_KIND_META[props.data.memberKind].slot : props.data.kind ? ENTITY_KIND_META[props.data.kind].slot : 0)})`)
 function blur(event: FocusEvent) {
   if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) emit('focus', null)
 }

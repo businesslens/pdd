@@ -171,6 +171,51 @@ try {
     await context.close()
   }
 
+  { // The drawings: trees fold under the set's node, the Entity graph frames it, the Lifecycle and matrices dash what only some choices make.
+    const { context, tab } = await page('?s=capability&t=graph')
+    await expect(tab.locator('.vue-flow__node [data-resource-key="variation:cancellation-handling"]').first()).toBeVisible()
+    await expect(tab.locator('.vue-flow__node [data-resource-key="variation:cancellation-handling"]').first()).toContainText('Capability variation')
+    await capture(tab, 'graph-reach')
+    // A Variation's lines to its alternatives are dashed, and say "alternatives" once where they fork.
+    await tab.goto(`${origin}/?s=journey&t=graph`)
+    await expect(tab.locator('.vue-flow .blr-flow-edge-label').filter({ hasText: /^alternatives$/ })).toHaveCount(1)
+    await expect(tab.locator('.vue-flow path.blr-flow-route[stroke-dasharray="8 4"]')).toHaveCount(2)
+    await capture(tab, 'graph-journeys')
+    await tab.goto(`${origin}/?s=entity&t=graph`)
+    await expect(tab.locator('[data-flow-group][data-resource-key="variation:tax-document"]')).toBeVisible()
+    await capture(tab, 'graph-entities')
+    await tab.goto(`${origin}/?s=entity&e=entity:order&rt=lifecycle`)
+    const dialog = tab.locator('[role=dialog]').filter({ has: tab.locator('[data-resource-title]') })
+    await expect(dialog.locator('.blr-flow-node[data-conditional]')).toContainText('Cancellation requested')
+    await expect(dialog.locator('.blr-flow-node[data-conditional]')).toContainText('Only under Cancellation request')
+    await capture(tab, 'lifecycle')
+    await tab.goto(`${origin}/?s=capability&t=matrix`)
+    await expect(tab.locator('.blr-matrix-badge[data-conditional]')).toHaveCount(3)
+    // One band names the Variation once, and its two alternatives follow it.
+    await expect(tab.locator('tbody tr[data-variation-band="variation:cancellation-handling"]')).toHaveCount(1)
+    await expect(tab.locator('tbody tr[data-variation-band="variation:cancellation-handling"]')).toContainText('Configuration · 2 alternatives')
+    const rows = await tab.locator('tbody tr').evaluateAll(items => items.map(item => item.getAttribute('data-variation-band') ? 'band' : item.getAttribute('data-variation-row')))
+    const band = rows.indexOf('band')
+    expect(rows.slice(band + 1, band + 3)).toEqual(['variation:cancellation-handling', 'variation:cancellation-handling'])
+    await expect(tab.locator('thead [data-variation-band="variation:payment-webhook-contract"]')).toHaveCount(2)
+    await expect(tab.locator('thead [data-variation-band="variation:payment-webhook-contract"] .blr-matrix-band-link')).toHaveCount(1)
+    await tab.locator('.blr-matrix-badge[data-conditional]').first().click()
+    await expect(tab.locator('[data-matrix-condition]')).toContainText('Only under Mobile storefront: Shopping')
+    await capture(tab, 'matrix-delivery')
+    await tab.keyboard.press('Escape')
+    await tab.goto(`${origin}/?s=rule&t=matrix`)
+    // A lone alternative still sits under its Variation's band, as in the trees.
+    await expect(tab.locator('thead [data-variation-band="variation:post-purchase"]')).toContainText('Post-purchase')
+    // When the table holds only some of a set's alternatives, the band says how many.
+    await expect(tab.locator('thead [data-variation-band="variation:post-purchase"]')).toContainText('Experiment · 1/2 in table')
+    await expect(tab.locator('tbody tr[data-variation-band="variation:refund-review"]')).toHaveCount(1)
+    await capture(tab, 'matrix-rules')
+    await tab.goto(`${origin}/?s=entity&t=matrix`)
+    await expect(tab.locator('[data-cell="entity:shopper->capability:place-order"] .blr-matrix-badge[data-conditional]')).toHaveCount(1)
+    await capture(tab, 'matrix-changes')
+    await context.close()
+  }
+
   { // Phone width: nothing scrolls sideways, and the picker stays reachable.
     const { context, tab } = await page('?s=rule&e=rule:refund-review-strict', { width: 390, height: 844 })
     await expect(tab.locator('[role=dialog]').getByRole('button', { name: 'Refund review alternative: Strict refund review' })).toBeVisible()
@@ -180,7 +225,7 @@ try {
   }
 
   if (errors.length) throw new Error(`Page errors:\n${errors.join('\n')}`)
-  console.log('Variations: collection, owners, set-first titles, pickers, Scenario cards and addresses, tab, tree and phone width passed.')
+  console.log('Variations: collection, owners, set-first titles, pickers, Scenario cards and addresses, tab, tree, drawings and phone width passed.')
 } finally {
   await browser.close()
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { destinationForSection, destinationForLocation, graphForCollection, matrixForCollection, collectionKindFor } from '../utils/reportDestinations'
-import { collapseVariations, variationsByOwner } from '../utils/variations'
+import { adjacentAlternatives, collapseVariations, variationsByOwner } from '../utils/variations'
 import { resourceNavigationKey, resourceOpenerKey, type ResourceOpenOptions } from '../utils/resourceNavigation'
 import { referenceNavigationKey, localReferenceHref } from '../utils/referenceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
@@ -396,9 +396,10 @@ const surfaceHeading = computed(() => {
 })
 
 // Preserve collection order (Actors first, then authored Domains) without
-// duplicating a Rule that belongs to more than one Domain.
-const matrixRows = computed(() => [...new Map(resourceGroups.value.flatMap(group => group.resources)
-  .map(resource => [resource.key, resource])).values()])
+// duplicating a Rule that belongs to more than one Domain; a Variation's
+// alternatives sit side by side at the first one's place.
+const matrixRows = computed(() => adjacentAlternatives([...new Map(resourceGroups.value.flatMap(group => group.resources)
+  .map(resource => [resource.key, resource])).values()]))
 const matrixView = computed(() => {
   const relation = relationView.value
   if (!relation) return undefined

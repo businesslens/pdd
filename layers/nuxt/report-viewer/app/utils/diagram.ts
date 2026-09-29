@@ -1,5 +1,5 @@
 import type { ActingSide, AnyResourceView, EntityFacet, InterfaceView, ReportResourceKind, ReportScenarioType } from './reportWorkspace'
-import { entityFacetOf } from './reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf } from './reportWorkspace'
 
 /** Private drawing input. Resource identity is independent of an occurrence. */
 export interface DiagramNode {
@@ -24,13 +24,27 @@ export interface DiagramNode {
   group?: boolean
   /** Named in its container's navigation: a mark on the node, never an edge. */
   navigation?: boolean
+  /** "Only under …": held only under some alternatives, drawn dashed with the note as its subtitle. */
+  conditional?: string
+  /** A Variation's node or frame: drawn as the type it varies, badged, in ink. */
+  memberKind?: ReportResourceKind | null
+  /** An alternative drawn on its own: its set's name, said beside its type with the variation mark. */
+  alternativeOf?: string
+  /** An alternative not at its set node's place: struck, with this badge. */
+  absent?: string
 }
 
 export function diagramResource(resource: AnyResourceView): DiagramNode {
+  /* Its alternatives are said where its dashed lines fork, so the card names only what it is. */
+  if (resource.kind === 'variation') {
+    return { id: resource.key, resourceKey: resource.key, title: resource.title, kind: 'variation', memberKind: resource.memberKind,
+      entityFacet: resource.memberFacet, note: `${ENTITY_KIND_META[resource.memberKind].label} variation` }
+  }
   return { id: resource.key, resourceKey: resource.key, title: resource.title, kind: resource.kind,
     entityFacet: entityFacetOf(resource), acts: resource.kind === 'entity' ? resource.acts : null,
     interfaceType: resource.kind === 'interface' ? resource.interfaceType : null,
-    scenarioType: resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario' ? resource.scenarioType : null }
+    scenarioType: resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario' ? resource.scenarioType : null,
+    ...(resource.variation ? { alternativeOf: resource.variation.title } : {}) }
 }
 
 /** One badge in an edge label: a resource type's mark and a name, or a plain mark such as Forbidden. */
@@ -38,6 +52,8 @@ export interface DiagramEdgeBadge {
   kind?: ReportResourceKind
   icon?: string
   text: string
+  /** Made only under some alternatives: the badge leads with the variation mark. */
+  varied?: boolean
 }
 
 export interface DiagramEdge {
@@ -51,6 +67,10 @@ export interface DiagramEdge {
   forbidden?: boolean
   /** Drawn lighter and dotted: present, but not the drawing's subject. */
   faint?: boolean
+  /** Made only under some alternatives: dashed, with the variation mark on its label. */
+  conditional?: boolean
+  /** From a Variation's node to one of its alternatives: dashed, "one of", never containment. */
+  alternative?: boolean
   arrow?: boolean
   inspectionKey?: string
   inspectionLabel?: string

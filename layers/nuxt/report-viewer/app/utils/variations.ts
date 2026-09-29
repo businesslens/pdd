@@ -107,3 +107,89 @@ export function variationChooser(workspace: ReportWorkspace, set: VariationSetVi
     text: refs.map(ref => ref.fact ? `${title(ref.entity)} · ${ref.fact}` : title(ref.entity)).join(', ')
   }
 }
+
+/** One alternative a thing happens under: the set, and the alternative chosen in it. */
+export interface VariationChoice { set: VariationSetView, alternative: AnyResourceView }
+
+/**
+ * The alternatives a resource runs or sits under. A resource that is an
+ * alternative runs only when chosen; so does everything inside one — a
+ * Scenario of a Capability or Journey that is an alternative, a Screen inside
+ * an Experience that is one. Each set appears once.
+ */
+export function variationChoicesOf(workspace: ReportWorkspace, resource: AnyResourceView): VariationChoice[] {
+  const found = new Map<string, VariationChoice>()
+  const add = (item: AnyResourceView | undefined) => {
+    const set = item ? variationSetOf(workspace, item) : undefined
+    if (item && set && item.kind !== 'variation' && !found.has(set.key)) found.set(set.key, { set, alternative: item })
+  }
+  add(resource)
+  for (const ancestor of resourceAncestors(workspace, resource)) add(ancestor)
+  return [...found.values()]
+}
+
+/** How a group of choices reads: "Cancellation handling: Order cancellation", joined. */
+export function variationChoiceLabel(choices: readonly VariationChoice[]): string {
+  return choices.map(choice => `${choice.set.title}: ${choice.alternative.variation?.label ?? choice.alternative.title}`).join(' · ')
+}
+
+export interface VariationCondition<T extends AnyResourceView> {
+  /** True when some choice of alternatives leaves nothing behind it. */
+  conditional: boolean
+  /** The supporters grouped by what they need: what always holds first (`choices` empty), then by alternative. */
+  groups: Array<{ key: string, choices: VariationChoice[], resources: T[] }>
+}
+
+/**
+ * Whether something holds whatever is chosen, read from what supports it — the
+ * Scenarios making a change, the places delivering a Capability. It holds
+ * unconditionally when one supporter needs no choice, or when supporters that
+ * each need only one alternative of the same set cover every alternative of it.
+ * Otherwise some choice leaves it with nothing, and it is conditional. A set the
+ * surface already reads under — a row's or column's own Variation, an Entity's
+ * own — is passed in `known` and never counted.
+ */
+export function variationCondition<T extends AnyResourceView>(workspace: ReportWorkspace, supporters: readonly T[], known: ReadonlySet<string> = new Set()): VariationCondition<T> {
+  const needs = supporters.map(resource => ({ resource, choices: variationChoicesOf(workspace, resource).filter(choice => !known.has(choice.set.key)) }))
+  const groups = new Map<string, { key: string, choices: VariationChoice[], resources: T[] }>()
+  for (const { resource, choices } of needs) {
+    const key = choices.map(choice => choice.alternative.key).sort().join('+')
+    const group = groups.get(key) ?? { key, choices, resources: [] }
+    if (!group.resources.includes(resource)) group.resources.push(resource)
+    groups.set(key, group)
+  }
+  const always = needs.some(item => !item.choices.length)
+  const covered = new Map<string, Set<string>>()
+  for (const { choices } of needs) {
+    if (choices.length !== 1) continue
+    const [choice] = choices
+    covered.set(choice!.set.key, (covered.get(choice!.set.key) ?? new Set()).add(choice!.alternative.key))
+  }
+  const either = [...covered].some(([key, alternatives]) => {
+    const set = workspace.byKey.get(key)
+    return set?.kind === 'variation' && set.alternatives.every(item => alternatives.has(item.key))
+  })
+  const ordered = [...groups.values()].sort((a, b) => a.choices.length - b.choices.length || variationChoiceLabel(a.choices).localeCompare(variationChoiceLabel(b.choices), 'en'))
+  return { conditional: supporters.length > 0 && !always && !either, groups: ordered }
+}
+
+/** What a conditional thing says about when it holds: its one set of alternatives, or that it takes some. */
+export function variationConditionNote(conditions: readonly VariationCondition<AnyResourceView>[]): string {
+  const labels = new Set(conditions.flatMap(condition => condition.groups.map(group => variationChoiceLabel(group.choices))).filter(Boolean))
+  return labels.size === 1 ? `Only under ${[...labels][0]}` : 'Only under some alternatives'
+}
+
+/**
+ * Alternatives of one set next to each other, at the first one's place, so a
+ * matrix axis reads them together; everything else keeps its order.
+ */
+export function adjacentAlternatives<T extends AnyResourceView>(resources: readonly T[]): T[] {
+  const placed = new Set<string>()
+  return resources.flatMap((resource) => {
+    const key = resource.variation?.key
+    if (!key) return [resource]
+    if (placed.has(key)) return []
+    placed.add(key)
+    return resources.filter(item => item.variation?.key === key)
+  })
+}

@@ -8,7 +8,8 @@
  */
 import type { AnyResourceView, EntityArcView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
-import { lifecycleArcLabel } from '../utils/entityLifecycle'
+import { lifecycleArcCondition, lifecycleArcLabel, lifecycleConditionNote } from '../utils/entityLifecycle'
+import { variationChoiceLabel } from '../utils/variations'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -19,6 +20,10 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const arc = computed(() => ({ ...props.change, ...lifecycleArcLabel(props.workspace, props.resource, props.resource.arcs.findIndex(item => item.key === props.change.key)) }))
+/* Under which alternatives the change is made; its Scenarios are read grouped by them whenever any needs one. */
+const condition = computed(() => lifecycleArcCondition(props.workspace, props.resource, props.change))
+const grouped = computed(() => condition.value.groups.some(group => group.choices.length))
+const idsOf = (resources: AnyResourceView[], kind: 'capability-scenario' | 'journey-scenario') => resources.filter(item => item.kind === kind).map(item => item.id)
 function open(kind: 'capability' | 'rule', id: string) {
   const resource = resolveResource(props.workspace, kind, id)
   if (resource) emit('open', resource)
@@ -27,6 +32,9 @@ function open(kind: 'capability' | 'rule', id: string) {
 
 <template>
   <div class="space-y-4 text-sm" data-lifecycle-change-details>
+    <p v-if="condition.conditional" class="flex items-center gap-1.5 font-medium text-highlighted" data-change-condition>
+      <UIcon name="i-lucide-split" class="size-3.5 shrink-0" />{{ lifecycleConditionNote([condition]) }}
+    </p>
     <section v-if="arc.capabilityIds.length" class="blr-change-part space-y-2" :class="highlight === 'capability' && 'is-highlighted'" data-change-part="capability">
       <h4 class="blr-field">Made through</h4>
       <div class="flex flex-wrap gap-2">
@@ -49,8 +57,19 @@ function open(kind: 'capability' | 'rule', id: string) {
     </ul>
     <section v-if="arc.capabilityScenarioIds.length || arc.journeyScenarioIds.length" class="space-y-2">
       <h4 class="blr-field">Described by</h4>
-      <BlrLinks :workspace="workspace" :ids="arc.capabilityScenarioIds" kind="capability-scenario" interactive @select="emit('open', $event)" />
-      <BlrLinks :workspace="workspace" :ids="arc.journeyScenarioIds" kind="journey-scenario" interactive @select="emit('open', $event)" />
+      <template v-if="grouped">
+        <div v-for="group in condition.groups" :key="group.key" class="space-y-1.5" data-change-group>
+          <p class="flex items-center gap-1.5 text-xs font-medium text-muted">
+            <UIcon v-if="group.choices.length" name="i-lucide-split" class="size-3 shrink-0" />{{ group.choices.length ? variationChoiceLabel(group.choices) : 'Always' }}
+          </p>
+          <BlrLinks :workspace="workspace" :ids="idsOf(group.resources, 'capability-scenario')" kind="capability-scenario" interactive @select="emit('open', $event)" />
+          <BlrLinks :workspace="workspace" :ids="idsOf(group.resources, 'journey-scenario')" kind="journey-scenario" interactive @select="emit('open', $event)" />
+        </div>
+      </template>
+      <template v-else>
+        <BlrLinks :workspace="workspace" :ids="arc.capabilityScenarioIds" kind="capability-scenario" interactive @select="emit('open', $event)" />
+        <BlrLinks :workspace="workspace" :ids="arc.journeyScenarioIds" kind="journey-scenario" interactive @select="emit('open', $event)" />
+      </template>
     </section>
   </div>
 </template>

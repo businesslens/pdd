@@ -222,6 +222,9 @@ const { projectReportWorkspace } = await utility('reportWorkspace')
 const { collapseVariations, titledBy, variationAlternatives, variationPickerLabel, variationsByOwner, variationChooser } = await utility('variations')
 const { resourceAncestors, resourceDomains } = await utility('reportDestinations')
 const { absenceLabel } = await utility('placeReadings')
+const projections = await utility('topologyProjections')
+const lifecycle = await utility('entityLifecycle')
+const { adjacentAlternatives, variationCondition } = await utility('variations')
 const { resourceConnectionRows } = await utility('resourceConnections')
 const { tabsFor } = await utility('pageSections')
 const { structureChildren, insideSummary, treeCards } = await utility('collectionChildren')
@@ -370,6 +373,85 @@ describe('Variations in the Product Report', () => {
     // Nothing counts a struck alternative.
     expect(insideSummary(status).find((entry: any) => entry.kind === 'capability')?.count).toBe(status.resource.capabilityIds.length)
     expect(flatten(mobile.children).some((node: any) => node.resource?.variation && !node.inSet)).toBe(false)
+  })
+
+  it('reads a change as conditional only when some choice of alternatives leaves nothing making it', () => {
+    const workspace = shop()
+    const order = workspace.byKey.get('entity:order')
+    const condition = (from: string, to: string) => lifecycle.lifecycleArcCondition(workspace, order, order.arcs.find((arc: any) => arc.from === from && arc.to === to))
+    // Merge duplicate orders cancels a pending Order in every store; the immediate policy also does, on its own.
+    const pending = condition('Pending', 'Cancelled')
+    expect(pending.conditional).toBe(false)
+    expect(pending.groups.map((group: any) => group.choices.map((choice: any) => choice.alternative.id))).toEqual([[], ['cancel-order']])
+    // Only Order cancellation (or a Journey arm using it) cancels a confirmed Order.
+    expect(condition('Confirmed', 'Cancelled').conditional).toBe(true)
+    // Both Checkout review arms create the Order, so it is created whichever runs.
+    const checkout = workspace.byKey.get('capability:place-order')
+    const arms = workspace.capabilityScenarios.filter((item: any) => item.capabilityId === checkout.id && item.variation)
+    expect(variationCondition(workspace, arms).conditional).toBe(false)
+    expect(variationCondition(workspace, arms.slice(0, 1)).conditional).toBe(true)
+    // A State only conditional changes reach is conditional, and says under which alternative.
+    expect(lifecycle.lifecycleStateCondition(workspace, order, 'Cancellation requested')).toBe('Only under Cancellation request')
+    expect(lifecycle.lifecycleStateCondition(workspace, order, 'Cancelled')).toBeNull()
+    const graph = lifecycle.buildEntityLifecycle(workspace, order)
+    expect(graph.nodes.filter((node: any) => node.conditional).map((node: any) => node.title)).toEqual(['Cancellation requested'])
+    expect(graph.edges.filter((edge: any) => edge.conditional).map((edge: any) => edge.inspectionLabel).sort())
+      .toEqual(['Cancellation requested → Cancelled', 'Confirmed → Cancelled', 'Pending → Cancellation requested'])
+  })
+
+  it('sets alternatives side by side on matrix axes and dashes cells only some choices hold', () => {
+    const workspace = shop()
+    expect(adjacentAlternatives(workspace.capabilities).map((item: any) => item.id).indexOf('request-cancellation'))
+      .toBe(adjacentAlternatives(workspace.capabilities).map((item: any) => item.id).indexOf('cancel-order') + 1)
+    const delivery = projections.deliveryMatrixProjection(workspace)
+    const conditional = delivery.cells.filter((cell: any) => cell.condition)
+    // On mobile, only the Shopping storefront sells; Catalog preview only shows the catalog.
+    expect(conditional.map((cell: any) => cell.id).sort()).toEqual([
+      'capability:cancel-order->interface:customer-mobile', 'capability:place-order->interface:customer-mobile', 'capability:track-order->interface:customer-mobile'
+    ])
+    expect(conditional.every((cell: any) => cell.condition === 'Only under Mobile storefront: Shopping')).toBe(true)
+    // Both Stock disclosure arms carry Checkout, so web delivery is unconditional.
+    expect(delivery.cells.find((cell: any) => cell.id === 'capability:place-order->interface:customer-web').condition).toBeUndefined()
+    const mutations = projections.mutationProjection(workspace)
+    const cell = (id: string) => mutations.cells.find((item: any) => item.id === id)
+    expect(cell('entity:shopper->capability:place-order').condition).toBe('Only under Checkout review: Complete checkout')
+    // A cell is never dashed for its own column's Variation.
+    expect(cell('entity:order->capability:cancel-order').condition).toBeUndefined()
+    // Order management stays solid while one change inside it is conditional.
+    const management = cell('entity:order->capability:manage-orders')
+    expect(management.condition).toBeUndefined()
+    expect(management.mutations[0].variants.filter((variant: any) => variant.condition).map((variant: any) => `${variant.from}>${variant.to}`)).toEqual(['Pending>Confirmed'])
+  })
+
+  it('folds graph trees like the Rows tree and frames an Entity Variation', () => {
+    const workspace = shop()
+    const reach = projections.reachTreeProjection(workspace, 'capability')
+    const handling = reach.children.find((item: any) => item.resource?.key === 'variation:cancellation-handling')
+    expect(handling.id).toBe('variation:cancellation-handling')
+    expect(handling.children.map((item: any) => [item.resource.id, item.inSet, Boolean(item.absentFrom)])).toEqual([['cancel-order', true, false], ['request-cancellation', true, false]])
+    expect(projections.concreteBranches(reach.children)).toHaveLength(workspace.capabilities.length)
+    // What a subject reaches folds too: the two webhook contracts Payment settlement is available in.
+    const settlement = reach.children.find((item: any) => item.resource?.id === 'settle-payment')
+    const contract = settlement.children.find((item: any) => item.resource?.id === 'payment-webhook-contract')
+    expect(contract.children.map((item: any) => [item.resource.id, item.inSet, Boolean(item.absentFrom)])).toEqual([['payment-webhook', true, false], ['payment-webhook-v2', true, false]])
+    const rules = projections.reachTreeProjection(workspace, 'rule')
+    const payment = rules.children.find((item: any) => item.resource?.id === 'payment-before-confirmation')
+    const postPurchase = payment.children.find((item: any) => item.resource?.id === 'post-purchase')
+    expect(postPurchase.children.map((item: any) => [item.resource.id, Boolean(item.absentFrom)])).toEqual([['browse-and-buy', false]])
+    // At a place, an alternative not there is struck, with no children.
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    const map = flatten([projections.deliveryMapProjection(workspace)])
+    const status = map.find((item: any) => item.id.endsWith('screen:customer-mobile::storefront::order-status') && item.resource?.kind === 'screen')
+    const set = status.children.find((item: any) => item.resource?.id === 'cancellation-handling')
+    expect(set.children.map((item: any) => [item.resource.id, item.absentFrom?.key ?? null, item.children.length])).toEqual([
+      ['cancel-order', null, 1], ['request-cancellation', status.resource.key, 0]
+    ])
+    expect(map.some((item: any) => item.note === 'Available here, on no Screen' || item.note === 'Delivered directly')).toBe(false)
+    const erd = projections.entityRelationsProjection(workspace)
+    expect(erd.nodes.filter((node: any) => node.group).map((node: any) => node.id)).toEqual(['variation:tax-document'])
+    expect(erd.nodes.filter((node: any) => node.parent === 'variation:tax-document').map((node: any) => node.id).sort()).toEqual(['entity:sales-tax-receipt', 'entity:vat-invoice'])
+    // Relations keep their concrete ends: each tax document is issued for an Order.
+    expect(erd.edges.filter((edge: any) => edge.target === 'entity:order' && edge.source.includes('tax') || edge.source.includes('vat')).length).toBe(2)
   })
 
   it('never draws a Rule alternative as an unconditional prohibition', () => {

@@ -28,7 +28,7 @@ function routeContexts(resource: AnyResourceView): ContextView[] {
 <template>
   <BlrMatrixBadge v-for="badge in badges" :key="badge.label" :label="badge.label" :tone="badge.tone"
     :accessible-label="`${badge.label} · ${row.title} · ${column.title}: show details`"
-    :view-key="viewKey" :content-key="cell" @open="emit('open', $event)">
+    :view-key="viewKey" :content-key="cell" :condition="cell.condition" @open="emit('open', $event)">
     <template #heading="{ follow }"><BlrTopologyResource :resource="column" @open="follow" /></template>
     <template #default="{ follow }">
       <section class="blr-matrix-popover-section">
@@ -39,6 +39,8 @@ function routeContexts(resource: AnyResourceView): ContextView[] {
             <ul class="blr-matrix-popover-links"><li v-for="route in badge.routes" :key="route.key" class="min-w-0">
               <BlrContextPlace v-for="context in routeContexts(route)" :key="context.key"
                 :workspace="workspace" :context="context" hide-interface @select="follow($event.key)" />
+              <!-- A route that is an alternative says its set, as every alternative drawn on its own does. -->
+              <span v-if="route.variation" class="blr-matrix-route-set"><UIcon name="i-lucide-split" aria-hidden="true" />{{ route.variation.title }}</span>
             </li></ul>
           </template>
         </template>

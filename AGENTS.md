@@ -238,7 +238,13 @@ costed already.
   a Scenario set under the Capability or Journey that owns its Scenarios, and
   a set's subtitle names the place all its alternatives share. Headings count
   concrete resources, never set rows; nothing shows a position within a set.
-  This supersedes the set pill on an alternative's title.
+  This supersedes the set pill on an alternative's title. The drawings keep
+  concrete nodes, rows and relations and add the Variation the way their lines
+  read: graph trees fold alternatives under the set's node and strike one
+  absent at a place; Entity relationships frame them; matrices set them side
+  by side under their set; and a Lifecycle change or State, or a matrix cell,
+  that some choice of alternatives leaves unsupported is dashed and says under
+  which.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
   carries the resource's explanation and contextual links, including an Entity's
   Information kept. Scenarios follows for a Capability or

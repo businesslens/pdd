@@ -3,6 +3,7 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  web-without-stock: Web without stock
 steps:
   - text: The shopper submits checkout with a non-empty cart
     kind: actor
@@ -14,6 +15,8 @@ steps:
         place: customer-web::storefront::product-record
       mobile:
         place: customer-mobile::storefront::product-record
+      web-without-stock:
+        place: customer-web::storefront::product-record-without-stock
   - text: The cart is validated against the catalog
     kind: product
     actor: shopper
@@ -25,6 +28,8 @@ steps:
         place: customer-web::storefront::product-record
       mobile:
         place: customer-mobile::storefront::product-record
+      web-without-stock:
+        place: customer-web::storefront::product-record-without-stock
   - text: The payment gateway is asked to charge the total
     kind: product
     actor: shopper
@@ -35,6 +40,8 @@ steps:
         place: customer-web::storefront::product-record
       mobile:
         place: customer-mobile::storefront::product-record
+      web-without-stock:
+        place: customer-web::storefront::product-record-without-stock
   - text: The order is stored as pending and the cart is emptied
     kind: product
     actor: shopper
@@ -47,6 +54,8 @@ steps:
         place: customer-web::storefront::product-record
       mobile:
         place: customer-mobile::storefront::product-record
+      web-without-stock:
+        place: customer-web::storefront::product-record-without-stock
 references:
   - kind: code
     role: implementation

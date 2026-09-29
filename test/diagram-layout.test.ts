@@ -40,7 +40,9 @@ function verifyGeometry(graph: any) {
       for (let index = 1; index < points.length; index++) {
         const a = points[index - 1], b = points[index]
         expect(Math.abs(a.x - b.x) < epsilon || Math.abs(a.y - b.y) < epsilon, `${edge.id} orthogonal`).toBe(true)
-        for (const node of nodes.filter((node: any) => !edge.sources.includes(node.id) && !edge.targets.includes(node.id))) {
+        /* An edge leaving a frame's alternative crosses that frame by construction. */
+        const holds = (node: any) => (node.children ?? []).some((child: any) => edge.sources.includes(child.id) || edge.targets.includes(child.id))
+        for (const node of nodes.filter((node: any) => !edge.sources.includes(node.id) && !edge.targets.includes(node.id) && !holds(node))) {
           const enters = Math.abs(a.x - b.x) < epsilon
             ? a.x > node.x + epsilon && a.x < node.x + node.width - epsilon && Math.max(a.y, b.y) > node.y + epsilon && Math.min(a.y, b.y) < node.y + node.height - epsilon
             : a.y > node.y + epsilon && a.y < node.y + node.height - epsilon && Math.max(a.x, b.x) > node.x + epsilon && Math.min(a.x, b.x) < node.x + node.width - epsilon
@@ -57,8 +59,11 @@ describe('routed diagram geometry', () => {
     const diagrams = [entityRelationsProjection(workspace), ...workspace.entities.filter((entity: any) => entity.states.length).map((entity: any) => buildEntityLifecycle(workspace, entity))]
     for (const diagram of diagrams) {
       const graph = await layout(diagram)
-      expect(graph.children.map((node: any) => node.id)).toEqual(diagram.nodes.map((node: any) => node.id))
-      expect(graph.edges.map((edge: any) => edge.id)).toEqual(diagram.edges.map((edge: any) => edge.id))
+      /* A frame nests what it holds, and ELK may keep an edge in the frame holding both ends. */
+      const nodes = (node: any): string[] => (node.children ?? []).flatMap((child: any) => [child.id, ...nodes(child)])
+      const edges = (node: any): string[] => [...(node.edges ?? []).map((edge: any) => edge.id), ...(node.children ?? []).flatMap(edges)]
+      expect(nodes(graph).sort()).toEqual(diagram.nodes.map((node: any) => node.id).sort())
+      expect(edges(graph).sort()).toEqual(diagram.edges.map((edge: any) => edge.id).sort())
       verifyGeometry(graph)
     }
   })

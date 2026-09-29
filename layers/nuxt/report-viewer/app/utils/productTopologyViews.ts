@@ -49,7 +49,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Reach tree',
     name: 'Domain reach',
     question: 'Where is each Domain reached, and what is reached there?',
-    note: 'Each Domain branches into the places its Capabilities, Journeys and Business Rules are available in — a Screen, else an Experience, else an Interface, resolved from authored Contexts — and each place into what is reached there. A member with no Context sits directly under its Domain. Domains classify; the tree does not imply containment.',
+    note: 'Each Domain branches into the places its Capabilities, Journeys and Business Rules are available in — a Screen, else an Experience, else an Interface, resolved from authored Contexts — and each place into what is reached there. A member with no Context sits directly under its Domain. Alternatives of one Variation sit under its node — places under a Domain, and members under a place, where one not reached there is struck. Domains classify; the tree does not imply containment.',
     kinds: ['product', 'domain', 'interface', 'experience', 'screen', 'capability', 'journey', 'rule']
   },
   {
@@ -57,7 +57,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Reach tree',
     name: 'Capability reach',
     question: 'Where is each Capability available, and which Business Rules attach to it?',
-    note: 'Each Capability branches into the places its Contexts name and the Business Rules attached to it. A place is the most specific resource the Context resolves to. A Capability with neither is a leaf.',
+    note: 'Each Capability branches into the places its Contexts name and the Business Rules attached to it. A place is the most specific resource the Context resolves to. A Capability with neither is a leaf. Alternatives — Capabilities, and the places each reaches — sit under their Variation\'s node.',
     kinds: ['product', 'capability', 'interface', 'experience', 'screen', 'rule']
   },
   {
@@ -65,7 +65,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Reach tree',
     name: 'Journey reach',
     question: 'Where does each Journey take place, and which Business Rules attach to it?',
-    note: 'Each Journey branches into the places its Scenarios\' Steps resolve to and the Business Rules attached to it. Places are derived from the Steps, so a Journey with no Capability-bearing Step names no place.',
+    note: 'Each Journey branches into the places its Scenarios\' Steps resolve to and the Business Rules attached to it. Places are derived from the Steps, so a Journey with no Capability-bearing Step names no place. Alternatives — Journeys, and the places each reaches — sit under their Variation\'s node.',
     kinds: ['product', 'journey', 'interface', 'experience', 'screen', 'rule']
   },
   {
@@ -73,7 +73,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Reach tree',
     name: 'Rule reach',
     question: 'What is each Business Rule attached to, and where does it apply?',
-    note: 'Each Business Rule branches into its authored attachment targets — Entities, Capabilities, Journeys and Scenarios — and the places its Contexts restrict it to. Derived Domains and inherited reach are excluded.',
+    note: 'Each Business Rule branches into its authored attachment targets — Entities, Capabilities, Journeys and Scenarios — and the places its Contexts restrict it to. Derived Domains and inherited reach are excluded. Alternatives — Rules, and the targets and places each reaches — sit under their Variation\'s node.',
     kinds: ['product', 'rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
   },
   /* The Interfaces collection's Graph: containment, like the Rows tree, with
@@ -84,7 +84,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Delivery map',
     name: 'Delivery map',
     question: 'Which Capabilities does each Screen deliver, through which Scenarios, inside which Experience and Interface?',
-    note: 'Each Interface branches into its Experiences and Screens, nested as authored, and each Screen into the Capabilities it lists — its own, never a child\'s, so a Capability exposed on five Screens is a leaf under each — and each Capability into its own Scenarios with a Step placed exactly on that place. The Journeys passing through a place follow its Capabilities, each holding its Scenarios with a Step placed there, once, whatever Capabilities those Steps use. A Capability available in an Experience or Interface that no Screen there exposes is marked as a gap under that place; an Interface with no Screens delivers its Capabilities directly.',
+    note: 'Each Interface branches into its Experiences and Screens, nested as authored, and each Screen into the Capabilities it lists — its own, never a child\'s, so a Capability exposed on five Screens is a leaf under each — and each Capability into its own Scenarios with a Step placed exactly on that place. The Journeys passing through a place follow its Capabilities, each holding its Scenarios with a Step placed there, once, whatever Capabilities those Steps use. A Capability available in an Experience or Interface that no Screen there exposes sits under that place beside its Screens; an Interface with no Screens delivers its Capabilities directly. Alternatives of one Variation sit under its node at every level, and one that does not happen at a place is struck.',
     kinds: ['product', 'interface', 'experience', 'screen', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
   },
   {
@@ -92,7 +92,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Entity relationship diagram',
     name: 'Entity relationships',
     question: 'What does the Product keep, and how do those things relate?',
-    note: 'Each authored Entity relation is drawn once, from its declaring source to its target. Labels include both cardinalities: 1:N means one source to many targets. Disconnected Entities remain visible.',
+    note: 'Each authored Entity relation is drawn once, from its declaring source to its target. Labels include both cardinalities: 1:N means one source to many targets. Disconnected Entities remain visible. An Entity Variation is a frame around its alternatives; relations keep their concrete ends.',
     kinds: ['entity']
   },
   {
@@ -100,7 +100,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Delivery matrix',
     name: 'Compare delivery',
     question: 'Which Interfaces deliver each Capability, and by what route?',
-    note: 'Each cell is one authored delivery: a Screen of that Interface exposing the Capability, an Experience of it whose Context the Capability names, or the Interface itself where a Context names no Experience and no Screen carries it. A row with two cells is delivered twice; a row with one is exclusive to that Interface. Available in narrows delivery to the selected Interfaces, Experiences or Screens, including their descendants. Columns remain Interfaces; badges show only matching routes. An empty cell makes no claim beyond the absence of an authored Context.',
+    note: 'Each cell is one authored delivery: a Screen of that Interface exposing the Capability, an Experience of it whose Context the Capability names, or the Interface itself where a Context names no Experience and no Screen carries it. A row with two cells is delivered twice; a row with one is exclusive to that Interface. Available in narrows delivery to the selected Interfaces, Experiences or Screens, including their descendants. Columns remain Interfaces; badges show only matching routes. An empty cell makes no claim beyond the absence of an authored Context. Alternatives sit side by side, each headed by its Variation; a dashed cell is delivered only under some alternatives, and says which.',
     kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
   },
   {
@@ -108,7 +108,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Attachment matrix',
     name: 'Rule attachments',
     question: 'Where is each Business Rule explicitly attached?',
-    note: 'Each cell is an authored Rule attachment. Details retain Entity operations, States, facts and Context restrictions. Derived Domains and inherited reach are excluded. An empty cell makes no permission or enforcement claim.',
+    note: 'Each cell is an authored Rule attachment. Details retain Entity operations, States, facts and Context restrictions. Derived Domains and inherited reach are excluded. An empty cell makes no permission or enforcement claim. Alternative Rules and targets sit side by side, each headed by its Variation.',
     kinds: ['rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
   },
   {
@@ -116,7 +116,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     diagramType: 'Mutation matrix',
     name: 'What changes what',
     question: 'Which Capabilities create, change or remove each Entity?',
-    note: 'Each row is an Entity; each column is a Capability. Capability and Journey Scenario Step effects are aggregated in their cells, showing creates, changes and removes with supporting Scenarios. Reads are excluded. An empty cell means no declared mutation.',
+    note: 'Each row is an Entity; each column is a Capability. Capability and Journey Scenario Step effects are aggregated in their cells, showing creates, changes and removes with supporting Scenarios. Reads are excluded. An empty cell means no declared mutation. Alternatives sit side by side, each headed by its Variation; a dashed cell is made only under some alternatives beyond its own row\'s and column\'s, and says which.',
     kinds: ['entity', 'capability'],
   }
 ]

@@ -135,7 +135,7 @@ describe('stable Product Report', () => {
     // Facts are named, and a Rule that governs one is marked on it.
     expect(order.informationKept.map((fact: any) => fact.name)).toContain('When placed')
     expect(order.informationKept.find((fact: any) => fact.name === 'Total charged').ruleIds).toEqual(['total-charged'])
-    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Cancelled', 'Refunded'])
+    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Cancellation requested', 'Confirmed', 'Cancelled', 'Refunded'])
     // A thing that does not act says nothing; one that does says which.
     expect(order.acts).toBeNull()
     expect(workspace.entities.find((item: any) => item.id === 'payment-gateway')).toMatchObject({ entityKind: 'system', acts: 'external' })
@@ -469,7 +469,8 @@ describe('stable Product Report', () => {
     /* Parallel lanes are not transitions; a Step that moves to the webhook is one, on both. */
     expect(matrix.steps[1].cells.map((cell: any) => cell.contextChanged)).toEqual([false, false])
     expect(matrix.steps[2].cells.map((cell: any) => cell.contextChanged)).toEqual([true, true])
-    expect(scenarioStepMatrix(workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')).routes).toHaveLength(2)
+    // Checkout runs on web, on mobile, and on the web Screen of the Stock disclosure arm that hides stock.
+    expect(scenarioStepMatrix(workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')).routes.map((route: any) => route.id)).toEqual(['web', 'mobile', 'web-without-stock'])
   })
 
   it('gives both Scenario types one Steps table while keeping their Context semantics distinct', () => {
@@ -1264,7 +1265,8 @@ describe('composed lifecycle', () => {
     expect(groups.flatMap((group: any) => group.arcs.map((arc: any) => arc.key)).sort()).toEqual(order.arcs.map((arc: any) => arc.key).sort())
     expect(groups[0].title).toBe('Creation')
     expect(groups[0].arcs.every((arc: any) => arc.effect === 'creates')).toBe(true)
-    expect(groups.find((group: any) => group.title === 'Pending').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Confirmed'])
+    expect(groups.find((group: any) => group.title === 'Pending').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancellation requested', 'Cancelled', 'Confirmed'])
+    expect(groups.find((group: any) => group.title === 'Cancellation requested').arcs.map((arc: any) => arc.to)).toEqual(['Cancelled'])
     expect(groups.find((group: any) => group.title === 'Confirmed').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Refunded'])
     expect(groups.find((group: any) => group.title === 'Cancelled').arcs).toEqual([])
     expect(groups.find((group: any) => group.title === 'No specified state').arcs.map((arc: any) => arc.effect)).toEqual(['changes'])
@@ -1346,8 +1348,8 @@ describe('composed lifecycle', () => {
     const stateless = order.arcs.find((arc: any) => arc.effect === 'changes' && !arc.to)
     expect(stateless.capabilityIds).toEqual(['manage-orders'])
     expect(drawn.has(lifecycleArcEdgeId(order.id, stateless))).toBe(false)
-    expect(order.arcs).toHaveLength(6)
-    expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(5)
+    expect(order.arcs).toHaveLength(8)
+    expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(7)
     /* Graph keeps changes without specified states accessible alongside its edges. */
     const component = source('app/components/BlrEntityLifecycle.vue')
     expect(component).toContain('drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc))')
@@ -1721,20 +1723,21 @@ describe('Screens on the v15 wire', () => {
     const map = flatten([deliveryMapProjection(workspace)])
     for (const screen of webScreens) {
       const node = map.find((item: any) => item.id === screen.key)!
-      expect(node.children.filter((item: any) => item.resource?.kind === 'capability').map((item: any) => item.resource.id)).toEqual(screen.capabilityIds)
+      expect(unfold(node.children).filter((item: any) => item.resource?.kind === 'capability').map((item: any) => item.resource.id)).toEqual(screen.capabilityIds)
       /* Each Capability leaf holds the Scenarios placed exactly on this Screen, as its tree branch does. */
       for (const group of placeDelivery(workspace, screen)) {
-        const leaf = node.children.find((item: any) => item.resource?.key === group.capability.key)!
-        expect(leaf.children.map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
+        const leaf = unfold(node.children).find((item: any) => item.resource?.key === group.capability.key)!
+        expect(unfold(leaf.children).map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
       }
       /* The Journeys passing through follow, each holding its Scenarios placed there. */
-      const journeys = node.children.filter((item: any) => item.resource?.kind === 'journey')
-      expect(journeys.map((item: any) => [item.resource.key, item.children.map((entry: any) => entry.resource.key)]))
+      const journeys = unfold(node.children).filter((item: any) => item.resource?.kind === 'journey')
+      expect(journeys.map((item: any) => [item.resource.key, unfold(item.children).map((entry: any) => entry.resource.key)]))
         .toEqual(placeJourneys(workspace, screen).map(({ journey, scenarios }: any) => [journey.key, scenarios.map(({ scenario }: any) => scenario.key)]))
     }
+    /* Where a Capability sits says it is delivered directly; the graph no longer repeats it on the node. */
     const cliNode = map.find((item: any) => item.id === cli.key)!
-    expect(cliNode.children.every((item: any) => item.resource?.kind === 'journey'
-      || (item.resource?.kind === 'capability' && item.note === 'Delivered directly'))).toBe(true)
+    expect(unfold(cliNode.children).every((item: any) => item.resource?.kind === 'journey'
+      || (item.resource?.kind === 'capability' && !item.note))).toBe(true)
   })
 
   it('marks a Screen named in its container\'s navigation as always reachable, and never draws it as an edge', async () => {

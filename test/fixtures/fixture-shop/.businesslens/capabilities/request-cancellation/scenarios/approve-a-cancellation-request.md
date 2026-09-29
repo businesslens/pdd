@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }
+      - { entity: order, effect: changes, from: Pending, to: Cancellation requested, facts: [] }
     contexts:
       web:
         place: customer-web::storefront::order-status
@@ -15,7 +15,7 @@ steps:
     kind: actor
     actor: store-admin
     entities:
-      - { entity: order, effect: changes, from: Pending, to: Cancelled, facts: [] }
+      - { entity: order, effect: changes, from: Cancellation requested, to: Cancelled, facts: [] }
     contexts:
       web:
         place: admin-web::order-detail

@@ -468,8 +468,15 @@ Lead.
     // The experiment's routes differ only by Screen; without Screens the
     // existing browse Scenario already covers their single remaining place.
     unlinkSync(join(bl, 'capabilities/browse-catalog/scenarios/read-a-product-without-its-stock.md'))
-    // The stock disclosure experiment varies Screens, which no longer exist.
+    // The stock disclosure experiment varies Screens, which no longer exist,
+    // and the checkout route through its second Screen collapses onto web.
     unlinkSync(join(bl, 'variations/stock-disclosure.md'))
+    for (const name of ['complete-checkout', 'complete-checkout-without-review']) {
+      const file = join(bl, `capabilities/place-order/scenarios/${name}.md`)
+      writeFileSync(file, readFileSync(file, 'utf8')
+        .replace('  web-without-stock: Web without stock\n', '')
+        .replace(/ {6}web-without-stock:\n {8}place: [^\n]*\n/g, ''))
+    }
     /* With no Screen anywhere, nothing is reachable from everywhere, and a
        governed fact is checkable only where a Step cites it. */
     const web = join(bl, 'interfaces/customer-web/interface.md')

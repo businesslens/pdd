@@ -44,6 +44,8 @@ const inSet = (resource: AnyResourceView) => resource.kind !== props.kind || sub
 const keepSubjects = (branches: TopologyBranch[]): TopologyBranch[] => branches
   .filter(item => item.resource ? inSet(item.resource) : !(item.id === 'unassigned' && props.narrowed))
   .map(item => ({ ...item, children: keepSubjects(item.children) }))
+  /* A Variation's node goes with the last of its alternatives here. */
+  .filter(item => item.resource?.kind !== 'variation' || item.children.some(child => !child.absentFrom))
 
 const isTree = computed(() => view.value.id !== 'what-it-keeps')
 const tree = computed(() => !isTree.value ? null
@@ -53,7 +55,11 @@ const visible = (resource: AnyResourceView) => inSet(resource) && (!neighbourhoo
 const shown = computed(() => tree.value ? filterBranches([tree.value], visible)[0] : undefined)
 const diagram = computed(() => {
   const base = entityRelationsProjection(props.workspace)
-  const nodes = base.nodes.filter(node => visible(props.workspace.byKey.get(node.id)!)).map(node => ({ ...diagramResource(props.workspace.byKey.get(node.id)!), ...node }))
+  const shownNodes = base.nodes.filter(node => visible(props.workspace.byKey.get(node.id)!)).map(node => ({ ...diagramResource(props.workspace.byKey.get(node.id)!), ...node }))
+  /* A frame holding fewer than two of its alternatives here is dropped; one left alone says its set instead. */
+  const held = (id: string) => shownNodes.filter(node => node.parent === id).length
+  const nodes = shownNodes.filter(node => !node.group || held(node.id) > 1)
+    .map(node => node.parent && held(node.parent) < 2 ? { ...node, parent: undefined } : node.parent ? { ...node, alternativeOf: undefined } : node)
   const keys = new Set(nodes.map(node => node.id))
   return { ...base, nodes, edges: base.edges.filter(edge => keys.has(edge.source) && keys.has(edge.target)) }
 })

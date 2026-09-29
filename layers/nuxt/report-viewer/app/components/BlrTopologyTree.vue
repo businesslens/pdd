@@ -4,7 +4,8 @@ import type { TopologyReading } from '../utils/topologyState'
 import type { Diagram } from '../utils/diagram'
 import { diagramResource } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
-import { branchChildrenLabel } from '../utils/topologyProjections'
+import { branchChildrenLabel, concreteBranches } from '../utils/topologyProjections'
+import { absenceLabel } from '../utils/placeReadings'
 const props = withDefaults(defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string, label?: string, relation?: string }>(), { label: 'reach', relation: 'Reached from' })
 const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean, ids: string[]], ready: [] }>()
 const isOpen = (node: TopologyBranch) => {
@@ -52,9 +53,15 @@ const diagram = computed<Diagram>(() => {
        parents is two nodes; `resourceKey` still opens the one page. */
     nodes: visible.map(node => ({ ...(node.resource ? { ...diagramResource(node.resource), id: node.id } : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),
       ...(node.note ? { note: node.note } : {}),
+      /* Under its set's node an alternative names only itself; one not at the place is struck. */
+      ...(node.inSet ? { alternativeOf: undefined } : {}),
+      ...(node.absentFrom ? { absent: absenceLabel(node.absentFrom) } : {}),
       description: parents.value.has(node.id) ? `${props.relation} ${parents.value.get(node.id)!.title}.` : 'Product root.',
-      branch: originals.get(node.id)!.children.length ? { id: node.id, count: originals.get(node.id)!.children.length, open: isOpen(node), childrenLabel: branchChildrenLabel(originals.get(node.id)!.children) } : undefined })),
-    edges: visible.flatMap(node => node.children.map(child => ({ id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false }))) }
+      branch: originals.get(node.id)!.children.length ? { id: node.id, count: concreteBranches(originals.get(node.id)!.children).length, open: isOpen(node), childrenLabel: branchChildrenLabel(originals.get(node.id)!.children) } : undefined })),
+    /* A Variation's lines to its alternatives are dashed, and say "alternatives" once where they fork. */
+    edges: visible.flatMap(node => node.children.map((child, index) => node.resource?.kind === 'variation'
+      ? { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: index ? '' : 'alternatives', arrow: false, alternative: true }
+      : { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false })) }
 })
 </script>
 <template>

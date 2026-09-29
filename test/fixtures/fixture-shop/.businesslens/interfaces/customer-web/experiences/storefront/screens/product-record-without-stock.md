@@ -4,6 +4,8 @@ entities:
     shows:
       - Name and description
       - Price
+  - { entity: cart, shows: [Quantity chosen] }
+  - { entity: shopper, shows: [Delivery address] }
 ---
 
 # Product record without stock
