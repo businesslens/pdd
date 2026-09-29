@@ -458,20 +458,20 @@ administrator set it.
 decides it.** A setting that changes an Actor's Steps — one skipped, one added,
 a different place or input — selects Scenario alternatives: sign-in that starts
 at the only provider automatically drops the Actor's choice of provider. When
-two or more settings would each vary the same Scenario — a captcha and a
-provider password on one registration — none of them makes a Variation; each is
-a decision point, so no Scenario needs a set per combination. A setting that
-changes only the Product's own Steps — whether group sync replaces a User's
-Roles or adds to them — is a decision point in one Scenario. The one exception
-is a Step that must name a different alternative of another Variation, which
-varies with it: issuing a VAT invoice or a sales tax receipt. When a
-Product-only setting changes the outcome — registration that requires email
-confirmation leaves the account inactive, whose confirming is a Capability of
-its own; an unknown social account is registered or refused — the branches are
-separate Scenarios, each with a `condition` Step reading the setting, and still
-no Variation.
-A decision point is also any choice or branch made during one run, and the
-unconfirmed account that sign-in later meets is state.
+two or more settings would each vary or split the same Scenario, whether they
+change the Actor's Steps or the outcome — a captcha and a provider password on
+one registration — none of them makes a Variation; each is a decision point, so
+no Scenario needs a set per combination. A setting that changes only the
+Product's own Steps — whether group sync replaces a User's Roles or adds to them
+— is a decision point in one Scenario. The one exception is a Step that must
+name a different alternative of another Variation, which varies with it: issuing
+a VAT invoice or a sales tax receipt. When a Product-only setting changes the
+outcome — registration that requires email confirmation leaves the account
+inactive, whose confirming is a Capability of its own; an unknown social account
+is registered or refused — the branches are separate Scenarios, each with a
+`condition` Step reading the setting, and still no Variation. A decision point
+is also any choice or branch made during one run, and the unconfirmed account
+that sign-in later meets is state.
 
 **A resource that exists only under some alternatives, or only while a setting
 enables it,** stays an ordinary resource. A Business Rule without `permits` that
@@ -977,7 +977,9 @@ naming fewer than two Capabilities is a `lint` warning — one Capability is not
 region, and splitting a Capability neither creates nor removes a Domain. The entire Domain collection is optional to `lint`. A map creates Domains
 automatically from the Product's own sections — the areas its navigation,
 settings and administration group things under — one per section holding two
-or more Capabilities, named in the Product's words. A Capability no section
+or more Capabilities, named in the Product's words. The section is the finest
+navigation level that still holds two or more Capabilities; a parent menu is a
+section only when none of its children is. A Capability no section
 reaches, such as one only an emailed link or a schedule starts, joins the
 section whose Entities it changes. For a Product planned before its code, the
 sections are the planned ones. Domains an author has written or regrouped are
@@ -1370,19 +1372,21 @@ Capabilities when they differ in who may do them (a permission of their own),
 where they are offered (availability), or in verb. Neither a different Actor —
 the same Capability is offered in every Experience it is used from — nor a
 Business Rule governing one part splits it. Ways of doing one verb that share
-all of those are Scenarios of one Capability, even when each creates a different Entity:
-adding an authenticator app or backup codes as a second factor is one
-Capability. Ways a setting selects between follow the Variation rules instead.
+all of those are Scenarios of one Capability, even when each creates a different
+Entity: adding an authenticator app or backup codes as a second factor is one
+Capability. Ways a setting selects between follow the Variation rules instead: a
+sign-in method the deployment selects makes one Capability per method, while
+methods that coexist, the Actor choosing one at sign-in, are Scenarios of one.
 The Steps of one run are one Capability, including a link or code the run sends
 when the run has no outcome for the Actor without it: requesting a password
 reset and choosing the new password are one, and resending the link is a
-Scenario of it. A later act on something a run already produced — confirming
-the email of an account that exists — is its own Capability.
-A continuation shared by several Capabilities — entering a second factor after
-any sign-in method — is its own Capability: the Capabilities it continues end
-their Scenarios at the hand-off and say so in their Outcome, the shared one
-starts its Scenarios from that state, and a Journey joins them, because no
-Capability Scenario names another Capability.
+Scenario of it. A later act on something a run already produced — confirming the
+email of an account that exists — is its own Capability. A continuation shared
+by several Capabilities — entering a second factor after any sign-in method — is
+its own Capability: the Capabilities it continues end their Scenarios at the
+hand-off and say so in their Outcome, the shared one starts its Scenarios from
+that state, and a Journey joins them, because no Capability Scenario names
+another Capability.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
@@ -1971,19 +1975,21 @@ This is Journey acceptance coverage, not the source of its identity.
 **A Journey exists when an achieved Journey Scenario carries its Actor through
 two or more Capabilities toward one outcome.** The Product itself carries the
 Actor across — a redirect, a required next Step, an emailed link to follow —
-where an Actor merely choosing what to do next carries nobody. A map writes
-every Journey this test finds. That is the whole test, and it
-is structural, so it reads the same way for a Journey mapped from code and one
-decided before any code exists: an orchestration, shared state, or a
-cross-Interface hand-off is how a product usually earns one, but none is
-required, and a merely plausible sequence of independent Product actions has
-no achieved Scenario and is not a Journey. A wizard is not evidence either
-way: it is nested Screens on the structure axis, and the Scenario walking it
-is a Journey Scenario only where it crosses Capabilities. Whether the
+where an Actor merely choosing what to do next carries nobody. Returning the
+Actor to where they were already going after signing in is not a hand-off, and
+neither is a continuation the Product runs without the Actor, such as merging
+automatically once checks pass. A map writes every Journey this test finds. That
+is the whole test, and it is structural, so it reads the same way for a Journey
+mapped from code and one decided before any code exists: an orchestration,
+shared state, or a cross-Interface hand-off is how a product usually earns one,
+but none is required, and a merely plausible sequence of independent Product
+actions has no achieved Scenario and is not a Journey. A wizard is not evidence
+either way: it is nested Screens on the structure axis, and the Scenario walking
+it is a Journey Scenario only where it crosses Capabilities. Whether the
 repository implements the Journey is `verify`'s finding, never the Journey's
-own. The number of Journey Scenario variations does not define it;
-one achieved variation provides valid coverage. A goal with no achieved
-multi-Capability path belongs to Capability behavior.
+own. The number of Journey Scenario variations does not define it; one achieved
+variation provides valid coverage. A goal with no achieved multi-Capability path
+belongs to Capability behavior.
 
 ### `capabilities/<capability-id>/scenarios/<id>.md` or `<id>/capability-scenario.md`
 

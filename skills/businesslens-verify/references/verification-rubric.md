@@ -100,28 +100,29 @@ unavailable. The rest of the border classifies what you find:
   never makes a separate Interface.
 - **What selects.** A Variation chooses by a fact that exists to choose — a
   setting, an experiment assignment, a version discriminator — or by the
-  deployment, fixed before the behavior starts. A fact describing the thing
-  the behavior acts on is state, read by a `condition` Step or decision point
-  even when someone set it earlier: a page's own editor format is a condition
-  of editing, while the site's sign-in method selects between sign-in
-  Capabilities. Scenarios vary only when what an Actor does differs and one
-  setting alone decides it: sign-in that starts at the only provider
-  automatically drops the Actor's choice, so it selects Scenario alternatives.
-  When two or more settings would each vary the same Scenario — a captcha and
-  a provider password on one registration — none makes a Variation; each is a
-  decision point. A setting that changes only the Product's own Steps — group
-  sync replacing or adding Roles — is a decision point in one Scenario, as is
-  any choice made during a run; the one exception is a Step that must name a
-  different alternative of another Variation, which varies with it. When such
+  deployment, fixed before the behavior starts. A fact describing the thing the
+  behavior acts on is state, read by a `condition` Step or decision point even
+  when someone set it earlier: a page's own editor format is a condition of
+  editing, while a sign-in method the deployment selects makes each method a
+  Capability in a Variation; methods that coexist, the Actor choosing one at
+  sign-in, are Scenarios of one Capability. Scenarios vary only when what an
+  Actor does differs and one setting alone decides it: sign-in that starts at
+  the only provider automatically drops the Actor's choice, so it selects
+  Scenario alternatives. When two or more settings would each vary or split the
+  same Scenario, whether they change the Actor's Steps or the outcome — a
+  captcha and a provider password on one registration — none makes a Variation;
+  each is a decision point. A setting that changes only the Product's own Steps
+  — group sync replacing or adding Roles — is a decision point in one Scenario,
+  as is any choice made during a run; the one exception is a Step that must name
+  a different alternative of another Variation, which varies with it. When such
   a setting changes the outcome — registration requiring email confirmation
   leaves the account inactive, an unknown social account is registered or
   refused — the branches are separate Scenarios, each with a `condition` Step
   reading the setting, not a Variation. The unconfirmed account sign-in later
   meets is state. A resource that exists only under some alternatives or only
-  while a setting enables it (registration while the sign-in method is
-  password; social sign-in while a provider is configured) stays ordinary; a
-  Business Rule without `permits` applying to it names the Variation or the
-  setting.
+  while a setting enables it (registration while the sign-in method is password;
+  social sign-in while a provider is configured) stays ordinary; a Business Rule
+  without `permits` applying to it names the Variation or the setting.
 - **Every context it is used from.** A Capability is available in every
   Experience in which one of its Actors uses it — guests reading pages in a
   public Experience and signed-in Users in an authenticated one — never only

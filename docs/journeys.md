@@ -53,8 +53,11 @@ Capability selection, order, branches, repetition, and failure belong to its
 
 A Journey exists wherever the Product itself carries an Actor from one
 Capability into another toward one outcome — a redirect, a required next Step,
-an emailed link to follow — and nowhere an Actor merely chooses what to do
-next. A Product Model contains none only when no such path exists.
+an emailed link to follow — and nowhere an Actor merely chooses what to do next.
+Returning the Actor to where they were already going after signing in is not a
+hand-off, and neither is a continuation the Product runs without the Actor, such
+as merging automatically once checks pass. A Product Model contains none only
+when no such path exists.
 
 ## When you create one
 

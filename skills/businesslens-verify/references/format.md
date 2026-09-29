@@ -144,44 +144,46 @@ not contain another H1 or H2.
 - Capability: at least one `availability` Context — every Experience in which
   one of its Actors uses it (guests in a public one, signed-in Users in an
   authenticated one), each with its own counterpart Screen unless every
-  Experience shares it, never only the most open; optional singular `domain`;
-  H1 and lead description. **It declares nothing about Entities** — what it
-  changes is what its Scenarios' Steps say, and a file still carrying
-  `entities` is refused. Every Capability needs a Capability Scenario for every
-  availability Context: a gap is always an error. **Split by contract:**
-  parts of an ability are separate Capabilities when they differ in who may do
-  them (a permission of their own), where they are offered (availability), or
-  in verb — create, configure, archive and delete are four. A different Actor
-  does not split one (it is offered in every Experience it is used from), and
-  neither does a Business Rule governing only one part. Ways of doing one verb that
-  share all of those are Scenarios of one Capability, even when each creates a
-  different Entity: adding an authenticator app or backup codes as a second
-  factor is one Capability. Ways a setting selects between follow the
-  Variation rules instead. The Steps of one run are one Capability, including a
-  link or code the run sends when the run has no outcome for the Actor without
-  it: requesting a password reset and choosing the new password are one, and
-  resending the link is a Scenario of it. A later act on something a run
-  already produced — confirming the email of an account that exists — is its
-  own Capability. A continuation shared by several Capabilities (entering a
-  second factor after any sign-in method) is its own Capability: the ones it
-  continues end their Scenarios at the hand-off, stating it in their Outcome,
-  and a Journey joins them, since no Capability Scenario names another
-  Capability.
+  Experience shares it, never only the most open; optional singular `domain`; H1
+  and lead description. **It declares nothing about Entities** — what it changes
+  is what its Scenarios' Steps say, and a file still carrying `entities` is
+  refused. Every Capability needs a Capability Scenario for every availability
+  Context: a gap is always an error. **Split by contract:** parts of an ability
+  are separate Capabilities when they differ in who may do them (a permission of
+  their own), where they are offered (availability), or in verb — create,
+  configure, archive and delete are four. A different Actor does not split one
+  (it is offered in every Experience it is used from), and neither does a
+  Business Rule governing only one part. Ways of doing one verb that share all
+  of those are Scenarios of one Capability, even when each creates a different
+  Entity: adding an authenticator app or backup codes as a second factor is one
+  Capability. Ways a setting selects between follow the Variation rules instead:
+  a sign-in method the deployment selects makes one Capability per method, while
+  methods that coexist, the Actor choosing one at sign-in, are Scenarios of one.
+  The Steps of one run are one Capability, including a link or code the run
+  sends when the run has no outcome for the Actor without it: requesting a
+  password reset and choosing the new password are one, and resending the link
+  is a Scenario of it. A later act on something a run already produced —
+  confirming the email of an account that exists — is its own Capability. A
+  continuation shared by several Capabilities (entering a second factor after
+  any sign-in method) is its own Capability: the ones it continues end their
+  Scenarios at the hand-off, stating it in their Outcome, and a Journey joins
+  them, since no Capability Scenario names another Capability.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
-- Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
-  is a region of subject matter, classifying members of the Interface →
-  Experience → Screen and behavior hierarchies. Only
-  Capability authors `domain:`; every other Domain relation is derived. Its
-  `## Boundary` must state something the Domain does **not** own, and a Domain
-  naming fewer than two Capabilities is a warning. Create Domains from the
-  Product's own sections — the areas its navigation, settings and
-  administration group things under — one per section holding two or more
-  Capabilities, named in the Product's words; a Capability no section reaches
+- Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A
+  Domain is a region of subject matter, classifying members of the Interface →
+  Experience → Screen and behavior hierarchies. Only Capability authors
+  `domain:`; every other Domain relation is derived. Its `## Boundary` must
+  state something the Domain does **not** own, and a Domain naming fewer than
+  two Capabilities is a warning. Create Domains from the Product's own sections
+  — the areas its navigation, settings and administration group things under —
+  one per section holding two or more Capabilities (the finest navigation level
+  that still holds two or more; a parent menu is a section only when none of its
+  children is), named in the Product's words; a Capability no section reaches
   (one only an emailed link or a schedule starts) joins the section whose
-  Entities it changes. For a planned Product, use the planned sections.
-  Domains already in the model are the author's: add new Capabilities to them
-  and never re-cut, merge or rename them.
+  Entities it changes. For a planned Product, use the planned sections. Domains
+  already in the model are the author's: add new Capabilities to them and never
+  re-cut, merge or rename them.
 - Naming: a behavioral id's noun half names something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface. Entity, Domain and Business Rule ids never open with a verb; they
@@ -296,16 +298,19 @@ not contain another H1 or H2.
   Context targets are always valid. Rationale explains the current condition or
   consequence that makes the constraint necessary; it never recounts alternative
   designs or why they were rejected.
-- Journey: at least one unique `actors` entry, H1, no lead prose, `## Goal`,
-  and `## Success criterion`. A Journey is a stable goal, not a route or
-  Capability wrapper. Write every Journey the test finds: one exists wherever
-  the Product itself carries an Actor from one Capability into another toward
-  one outcome — a redirect, a required next Step, an emailed link to follow —
-  and never where the Actor merely chooses to do something else next. The
-  test is structural, so "omit rather than assert" does not apply to it. Every Journey needs achieved Journey Scenario coverage
-  for every Journey Actor. It has no `entryPoints`; resolve presentation routes
-  from the first Actor-owned placed Step's Context place and its Interface or
-  Experience.
+- Journey: at least one unique `actors` entry, H1, no lead prose, `## Goal`, and
+  `## Success criterion`. A Journey is a stable goal, not a route or Capability
+  wrapper. Write every Journey the test finds: one exists wherever the Product
+  itself carries an Actor from one Capability into another toward one outcome —
+  a redirect, a required next Step, an emailed link to follow — and never where
+  the Actor merely chooses to do something else next. Returning the Actor to
+  where they were already going after signing in is not a hand-off, and neither
+  is a continuation the Product runs without the Actor, such as merging
+  automatically once checks pass. The test is structural, so "omit rather than
+  assert" does not apply to it. Every Journey needs achieved Journey Scenario
+  coverage for every Journey Actor. It has no `entryPoints`; resolve
+  presentation routes from the first Actor-owned placed Step's Context place and
+  its Interface or Experience.
 - Journey Scenario: taxonomy `kind`, `result: achieved|not-achieved`, named
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`
@@ -660,8 +665,8 @@ the behavior acts on (a page's own editor format) is state: a `condition` Step
 or decision point reads it, even when someone set it earlier. Scenarios vary
 only when what an Actor does differs and one setting alone decides it: sign-in
 that starts at the only provider automatically drops the Actor's choice, so it
-selects the sign-in Scenario. When two or more settings would each vary the
-same Scenario (a captcha and a provider password on one registration), none
+selects the sign-in Scenario. When two or more settings would each vary or split the
+same Scenario, whether they change the Actor's Steps or the outcome (a captcha and a provider password on one registration), none
 makes a Variation; each is a decision point. A setting changing only the
 Product's own Steps (group sync replacing or adding Roles) is a decision point
 in one Scenario, as is any choice made during a run — except a Step that must

@@ -85,8 +85,11 @@ and neither does a Business Rule that governs only one part:
 | Filtering, sorting and searching a list | Scenarios of the browsing Capability, unless one differs by contract |
 
 Ways a setting selects between follow the [Variation](./variations.md) rules
-instead. Splitting neither creates nor removes a [Domain](./domains.md): the
-four repository Capabilities were about Repositories before the split.
+instead: a sign-in method the deployment selects makes one Capability per
+method, while methods that coexist, the Actor choosing one at sign-in, are
+Scenarios of one. Splitting neither creates nor removes a
+[Domain](./domains.md): the four repository Capabilities were about Repositories
+before the split.
 
 Every Capability declares explicit availability Contexts, naming
 [Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
