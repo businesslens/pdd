@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<{
   size?: 'xs' | 'sm'
   /** A concrete Interface can retain its kind and disclose its authored type. */
   interfaceType?: ReportInterface['type'] | null
-  /** An Entity instance is drawn by its facet; a kind heading passes none. */
+  /** An Entity instance, or an Entity set, is drawn by its facet; a kind heading passes none. */
   facet?: EntityFacet | null
   acts?: ActingSide | null
   /** Suppress the text label only where a nearby label already names the kind. */
@@ -60,6 +60,7 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     <BlrVariationMark
       v-if="kind === 'variation' && memberKind"
       :kind="memberKind"
+      :facet="facet"
       :size="size"
     />
     <BlrEntityMark

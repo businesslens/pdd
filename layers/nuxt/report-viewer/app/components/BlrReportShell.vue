@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { destinationForSection, destinationForLocation, graphForCollection, matrixForCollection, collectionKindFor } from '../utils/reportDestinations'
-import { collapseVariations } from '../utils/variations'
-import { resourceNavigationKey, resourceOpenerKey } from '../utils/resourceNavigation'
+import { collapseVariations, variationsByOwner } from '../utils/variations'
+import { resourceNavigationKey, resourceOpenerKey, type ResourceOpenOptions } from '../utils/resourceNavigation'
 import { referenceNavigationKey, localReferenceHref } from '../utils/referenceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
@@ -578,7 +578,7 @@ function openResourceKey(key: string, tab = 'overview') {
 }
 
 /** Inspection preserves the working view, including a graph's drawing and focus. */
-function openResourcePage(resource: AnyResourceView, tab = 'overview') {
+function openResourcePage(resource: AnyResourceView, tab = 'overview', options: ResourceOpenOptions = {}) {
   reference.value = null
   localReferenceTrail.value = []
   if (resource.key === openResource.value) {
@@ -587,15 +587,16 @@ function openResourcePage(resource: AnyResourceView, tab = 'overview') {
   }
   mobileNavOpen.value = false
   if (!openResource.value) returnFocus.value = document.activeElement as HTMLElement | null
+  else if (options.replace) navigation?.replace?.()
   else if (!navigation) localTrail.value.push({ key: openResource.value, tab: resourceTab.value })
   openResource.value = resource.key
   resourceTab.value = tab
   scenarioRoute.value = null
   routeColumns.value = 'auto'
 }
-provide(resourceOpenerKey, (key, tab) => {
+provide(resourceOpenerKey, (key, tab, options) => {
   const resource = resolveResourceKey(props.workspace, key)
-  if (resource) openResourcePage(resource, tab)
+  if (resource) openResourcePage(resource, tab, options)
 })
 
 function openSurfaceTab(id: string) {
@@ -859,17 +860,26 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                    on it: the height animation reaches zero, and padding on the
                    element itself would hold the box open until it unmounts. -->
               <template #content>
-                <div class="space-y-2" :class="grouped && 'border-t border-muted p-2'" :style="rowGrid" data-collection-rows>
-                  <!-- Alternatives that meet in a group read as their set: one row, picked from its pill. -->
-                  <BlrResourceCard
-                    v-for="resource in collapseVariations(workspace, group.resources)"
-                    :key="resource.key"
-                    :workspace="workspace"
-                    :resource="resource"
-                    :badge="group.kind !== 'domain'"
-                    :stacked="columns > 1"
-                    @open="openResourcePage"
-                  />
+                <div class="space-y-2" :class="grouped && 'border-t border-muted p-2'">
+                  <!-- Alternatives that meet in a group read as their set: one row, picked from its picker.
+                       A Scenario set sits under the Capability or Journey that owns its Scenarios. -->
+                  <template v-for="part in variationsByOwner(workspace, collapseVariations(workspace, group.resources))" :key="part.owner?.key ?? ''">
+                    <p v-if="part.owner" class="flex min-w-0 items-center gap-2 px-1 pt-1 text-sm font-medium" data-variation-owner>
+                      <BlrKind :kind="part.owner.kind" :labelled="false" size="xs" class="shrink-0" />
+                      <BlrResourceLink :resource-key="part.owner.key" class="min-w-0 truncate text-highlighted underline decoration-dotted decoration-(--ui-border-accented) underline-offset-4 hover:decoration-current" @open="openResourcePage(part.owner)">{{ part.owner.title }}</BlrResourceLink>
+                    </p>
+                    <div class="space-y-2" :class="part.owner && 'ms-2.5 border-s border-accented ps-3'" :style="rowGrid" data-collection-rows>
+                      <BlrResourceCard
+                        v-for="resource in part.resources"
+                        :key="resource.key"
+                        :workspace="workspace"
+                        :resource="resource"
+                        :badge="group.kind !== 'domain'"
+                        :stacked="columns > 1"
+                        @open="openResourcePage"
+                      />
+                    </div>
+                  </template>
                 </div>
               </template>
             </UCollapsible>

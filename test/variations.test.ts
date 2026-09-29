@@ -219,7 +219,9 @@ describe('Variation resources', () => {
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { collapseVariations, variationAlternatives, variationPillLabel, variationChooser } = await utility('variations')
+const { collapseVariations, titledBy, variationAlternatives, variationPickerLabel, variationsByOwner, variationChooser } = await utility('variations')
+const { resourceAncestors, resourceDomains } = await utility('reportDestinations')
+const { absenceLabel } = await utility('placeReadings')
 const { resourceConnectionRows } = await utility('resourceConnections')
 const { tabsFor } = await utility('pageSections')
 const { structureChildren, insideSummary, treeCards } = await utility('collectionChildren')
@@ -244,13 +246,21 @@ describe('Variations in the Product Report', () => {
       ['tax-document-issue', 'configuration', 'capability-scenario']
     ])
     expect(workspace.counts.variations).toBe(10)
+    // An Entity set is drawn by the facet its alternatives play, never the Entities collection glyph.
+    expect(workspace.byKey.get('variation:tax-document').memberFacet).toBe('kept')
+    expect(workspace.byKey.get('variation:refund-review').memberFacet).toBeNull()
     const strict = workspace.byKey.get('rule:refund-review-strict')
     expect(strict.variation).toEqual({ key: 'variation:refund-review', id: 'refund-review', title: 'Refund review', kind: 'configuration', selectedWhen: 'Refund review mode is Strict.', label: null })
     const set = workspace.byKey.get('variation:refund-review')
     expect(variationAlternatives(workspace, set).map((item: any) => item.id)).toEqual(['refund-review-standard', 'refund-review-strict'])
-    expect(variationPillLabel(workspace, set)).toBe('Configuration · 2 alternatives')
-    expect(variationPillLabel(workspace, strict)).toBe('Refund review')
-    expect(variationPillLabel(workspace, workspace.byKey.get('interface:payment-webhook-v2'))).toBe('Payment webhook contract · v2')
+    // An alternative is titled by its set; the picker beside the title names the alternative.
+    expect(titledBy(workspace, strict).key).toBe('variation:refund-review')
+    expect(titledBy(workspace, set).key).toBe('variation:refund-review')
+    expect(titledBy(workspace, workspace.byKey.get('rule:margin-is-for-operators')).key).toBe('rule:margin-is-for-operators')
+    expect(variationPickerLabel(workspace, set)).toBe('2 alternatives')
+    expect(variationPickerLabel(workspace, strict)).toBe('Strict refund review')
+    expect(variationPickerLabel(workspace, workspace.byKey.get('interface:payment-webhook-v2'))).toBe('v2')
+    expect(variationPickerLabel(workspace, workspace.byKey.get('rule:margin-is-for-operators'))).toBeUndefined()
     expect(variationChooser(workspace, set)).toEqual({ label: 'Chosen by', text: 'Store settings · Refund review mode' })
     expect(variationChooser(workspace, workspace.byKey.get('variation:stock-disclosure'))?.label).toBe('Assigned per')
   })
@@ -311,6 +321,24 @@ describe('Variations in the Product Report', () => {
     expect(new Set(workspace.variations.map((item: any) => item.variationKind))).toEqual(new Set(VARIATION_KINDS))
   })
 
+  it('places a set where all its alternatives sit, and a Scenario set under its one owner', () => {
+    const workspace = shop()
+    const checkout = workspace.byKey.get('variation:checkout-review')
+    expect(resourceAncestors(workspace, checkout).map((item: any) => item.key)).toEqual(['capability:place-order'])
+    expect(resourceDomains(workspace, checkout).map((item: any) => item.id)).toEqual(['ordering'])
+    expect(resourceAncestors(workspace, workspace.byKey.get('variation:order-confirmation')).map((item: any) => item.key)).toEqual(['journey:browse-and-buy'])
+    // Alternatives in different places leave the set without one.
+    expect(resourceAncestors(workspace, workspace.byKey.get('variation:refund-review'))).toEqual([])
+    const scenarioSets = workspace.variations.filter((item: any) => item.memberKind === 'capability-scenario')
+    expect(variationsByOwner(workspace, scenarioSets).map((part: any) => [part.owner?.title, part.resources.map((item: any) => item.id)])).toEqual([
+      ['Checkout', ['checkout-review']],
+      ['Payment settlement', ['tax-document-issue']]
+    ])
+    // Other sets keep their place, with no owner.
+    const rules = workspace.variations.filter((item: any) => item.memberKind === 'rule')
+    expect(variationsByOwner(workspace, rules)).toEqual([{ resources: rules }])
+  })
+
   it('folds sibling alternatives under one tree node while counts stay concrete', () => {
     const workspace = shop()
     const web = treeCards(workspace, 'interface', workspace.interfaces, false).find((card: any) => card.key === 'interface:customer-web')
@@ -325,6 +353,23 @@ describe('Variations in the Product Report', () => {
     expect(set.children.some((node: any) => node.children.length > 0)).toBe(true)
     expect(insideSummary(screens).some((entry: any) => entry.kind === 'variation')).toBe(false)
     expect(structureChildren(workspace, workspace.byKey.get('experience:customer-web::storefront'))).toBeTruthy()
+    // Capabilities that vary fold where a place delivers both, so a set's title appears once.
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    const admin = treeCards(workspace, 'interface', workspace.interfaces, false).find((item: any) => item.key === 'interface:admin-web')
+    const handling = flatten(admin.children).filter((node: any) => node.resource?.id === 'cancellation-handling')
+    expect(handling).toHaveLength(1)
+    expect(handling[0].children.map((node: any) => [node.resource.kind, Boolean(node.absentFrom)])).toEqual([['capability', false], ['capability', false]])
+    // A place holding one alternative still reads as a choice: the absent one follows, struck, with no children.
+    const mobile = treeCards(workspace, 'interface', workspace.interfaces, false).find((item: any) => item.key === 'interface:customer-mobile')
+    const status = flatten(mobile.children).find((node: any) => node.resource?.id === 'customer-mobile::storefront::order-status')
+    const lone = status.children.find((node: any) => node.resource?.id === 'cancellation-handling')
+    expect(lone.place.key).toBe(status.resource.key)
+    expect(lone.children.map((node: any) => [node.resource.id, node.absentFrom?.key ?? null, node.children.length > 0]))
+      .toEqual([['cancel-order', null, true], ['request-cancellation', status.resource.key, false]])
+    expect(absenceLabel(status.resource)).toBe('Not on this Screen')
+    // Nothing counts a struck alternative.
+    expect(insideSummary(status).find((entry: any) => entry.kind === 'capability')?.count).toBe(status.resource.capabilityIds.length)
+    expect(flatten(mobile.children).some((node: any) => node.resource?.variation && !node.inSet)).toBe(false)
   })
 
   it('never draws a Rule alternative as an unconditional prohibition', () => {

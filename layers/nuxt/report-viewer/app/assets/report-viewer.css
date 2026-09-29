@@ -332,10 +332,25 @@
 
 /* The variation glyph reaches the corners of its box, so at the rail's 16px it
    reads larger than every other mark. Where it stands alone it is drawn at 14px
-   inside the same slot; the sub-icon on a set's mark and the pill keep their
+   inside the same slot; the sub-icon on a set's mark and the picker keep their
    own sizing. Scaled, so no row shifts. Scoped to the report and the overlays
    it portals out, so a host's own use of the glyph is left alone. */
-:is(.businesslens-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-pill] *) {
+:is(.businesslens-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-picker] *) {
   transform: scale(0.875);
 }
 
+
+/* An alternative of a Variation that does not happen at a tree node's place:
+   the same badge on its struck row and in the node's picker. */
+.blr-absent-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px dashed var(--ui-border-accented);
+  border-radius: 0.25rem;
+  padding: 0 0.3125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+  color: var(--ui-text-muted);
+  white-space: nowrap;
+}

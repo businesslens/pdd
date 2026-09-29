@@ -41,10 +41,14 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     routeColumns.value = next.routeColumns
     if (!same(topology.value, next.topology)) topology.value = next.topology
   }, { immediate: true })
+  /* One-shot: the next resource change replaces the current entry and keeps the trail. */
+  let replacing = false
   watch([section, resource, tab, resourceTab, reference, scenarioRoute, routeColumns, topology, coverage], () => {
     const before = read()
+    const replace = replacing
+    replacing = false
     const next = { coverage: coverage.value, section: section.value, resource: resource.value, tab: tab.value, resourceTab: resourceTab.value, reference: reference.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
-    const push = !same(before.coverage, next.coverage) || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology)
+    const push = !replace && (!same(before.coverage, next.coverage) || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology))
     const query = { ...route.query, ...coverageToQuery(next.coverage), [sectionKey]: next.section === 'overview' && !next.resource ? undefined : next.section,
       e: next.resource ?? undefined, [tabKey]: next.tab === 'overview' ? undefined : next.tab,
       rt: next.resource && next.resourceTab !== 'overview' ? next.resourceTab : undefined,
@@ -53,7 +57,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
       ...topologyToQuery(next.topology), tv: destinationForLocation(next.section, next.tab) ? undefined : topologyToQuery(next.topology).tv }
     if (same(before, next) && router.resolve({ query }).fullPath === route.fullPath) return
     const history = import.meta.client ? window.history.state : null
-    const trail = nextResourceTrail(resourceTrail(history?.blrResourceTrail),
+    const trail = replace ? resourceTrail(history?.blrResourceTrail) : nextResourceTrail(resourceTrail(history?.blrResourceTrail),
       before.resource ? { resource: before.resource, tab: before.resourceTab, position: history?.position ?? 0 } : null,
       next.resource, before.section === next.section && before.tab === next.tab)
     const sameReading = before.section === next.section && before.tab === next.tab && before.resource === next.resource && before.resourceTab === next.resourceTab
@@ -67,6 +71,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
       [sectionKey]: section.value, e: key, rt: reading === 'overview' ? undefined : reading, f: undefined,
       r: key === resource.value ? scenarioRoute.value ?? undefined : undefined,
       rc: key === resource.value && routeColumns.value !== 'auto' ? routeColumns.value : undefined } }).href,
+    replace: () => { replacing = true },
     back: () => {
       const visit = previous.value
       if (!visit || !import.meta.client) return

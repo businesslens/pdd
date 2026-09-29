@@ -1,4 +1,4 @@
-import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
+import type { AnyResourceView, DomainView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
 import type { ProductTopologyViewId } from './productTopologyViews'
 import { ruleAttachments } from './topologyTargets'
 import { relatedIds } from './resourceFacets'
@@ -26,8 +26,23 @@ export const graphForCollection = (kind: ReportResourceKind) => REPORT_DESTINATI
 export const matrixForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'matrix')
 export const collectionKindFor = (kind: ReportResourceKind): ReportResourceKind => kind === 'experience' || kind === 'screen' ? 'interface' : kind === 'capability-scenario' ? 'capability' : kind === 'journey-scenario' ? 'journey' : kind
 
-/** Actual ownership only: a shared Screen has an Interface parent, a nested Screen its parent Screens. */
+/** The alternatives of a set, resolved; a set holds only concrete resources. */
+const alternativesOf = (workspace: ReportWorkspace, resource: AnyResourceView) => resource.kind === 'variation'
+  ? resource.alternatives.flatMap(item => { const alternative = workspace.byKey.get(item.key); return alternative && alternative.kind !== 'variation' ? [alternative] : [] })
+  : []
+
+/**
+ * Actual ownership only: a shared Screen has an Interface parent, a nested Screen its parent Screens.
+ * A Variation sits where every one of its alternatives sits, and nowhere when they differ:
+ * a Scenario set always has its alternatives' one owner.
+ */
 export function resourceAncestors(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView[] {
+  if (resource.kind === 'variation') {
+    const chains = alternativesOf(workspace, resource).map(item => resourceAncestors(workspace, item))
+    const shared = chains[0] ?? []
+    const same = chains.every(chain => chain.map(item => item.key).join('|') === shared.map(item => item.key).join('|'))
+    return same ? shared : []
+  }
   let keys: string[] = []
   if (resource.kind === 'experience') keys = [`interface:${resource.interfaceIds[0]}`]
   if (resource.kind === 'screen') {
@@ -40,8 +55,12 @@ export function resourceAncestors(workspace: ReportWorkspace, resource: AnyResou
   return keys.flatMap(key => { const item = workspace.byKey.get(key); return item ? [item] : [] })
 }
 
-/** Domain context is separate from ownership, whether assigned or reached. */
-export function resourceDomains(workspace: ReportWorkspace, resource: AnyResourceView) {
+/** Domain context is separate from ownership, whether assigned or reached. A Variation has the Domains all its alternatives share. */
+export function resourceDomains(workspace: ReportWorkspace, resource: AnyResourceView): DomainView[] {
+  if (resource.kind === 'variation') {
+    const each = alternativesOf(workspace, resource).map(item => new Set(resourceDomains(workspace, item).map(domain => domain.key)))
+    return workspace.domains.filter(domain => each.length > 0 && each.every(keys => keys.has(domain.key)))
+  }
   const ids = new Set(relatedIds(resource, 'domain'))
   // Interfaces and Scenarios reach Domains through their own Capabilities.
   // A Scenario must not inherit unrelated Domains from its parent's other cases.

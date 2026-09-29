@@ -106,14 +106,9 @@ export function placeJourneys(workspace: ReportWorkspace, place: InterfaceView |
   })
 }
 
-/** Step indexes as a reader counts them: "Step 2", "Steps 1–3", "Steps 1, 4". */
-export function stepsLabel(steps: number[]): string {
-  const runs: number[][] = []
-  for (const step of steps) {
-    const last = runs.at(-1)
-    if (last && step === last.at(-1)! + 1) last.push(step)
-    else runs.push([step])
-  }
-  const text = runs.map(run => run.length > 1 ? `${run[0]! + 1}–${run.at(-1)! + 1}` : `${run[0]! + 1}`).join(', ')
-  return `${steps.length === 1 ? 'Step' : 'Steps'} ${text}`
+export type Place = InterfaceView | ExperienceView | ScreenView
+
+/** How a tree says an alternative does not happen at a place. */
+export function absenceLabel(place: Place): string {
+  return place.kind === 'screen' ? 'Not on this Screen' : place.kind === 'experience' ? 'Not in this Experience' : 'Not in this Interface'
 }

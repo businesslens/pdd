@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * An alternative's own part of its Variation: what chooses between the
- * alternatives, and the condition that selects this one. The title's pill
- * already names the set; timing and stability are the set's, one link away.
+ * alternatives, and the condition that selects this one. The title already
+ * names the set; timing and stability are the set's, one link away.
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { variationSetOf } from '../utils/variations'

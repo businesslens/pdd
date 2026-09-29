@@ -14,7 +14,7 @@ import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/repor
 import type { ResourceCardMetric } from '../utils/resourceCards'
 import { resourceCardPresentation } from '../utils/resourceCards'
 import { slotColor } from '../utils/reportPalette'
-import { variationChooser } from '../utils/variations'
+import { titledBy, variationChooser } from '../utils/variations'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<{
   /** False where the row is read from another resource's side, and the
       resource's own reach would describe it rather than the relation. */
   metrics?: boolean
-  /** False inside a surface that already names the row's Variation. */
+  /** False inside a surface that already names the row's Variation: the row then names only itself. */
   pill?: boolean
 }>(), { badge: true, stacked: false, expandable: false, open: false, count: 0, metrics: true, pill: true })
 
@@ -56,14 +56,16 @@ const presentation = computed(() => {
   return props.hook ? { ...own, hookLabel: props.hookLabel ?? own.hookLabel, hook: props.hook } : own
 })
 const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)
-/* A row with its own button — the Variation pill — keeps its link as a full-card
-   target beside it, never around it. */
+/* A row with its own button — the Variation picker — keeps its link as a full-card
+   target beside it, never around it. A lone alternative's row is titled by its
+   Variation, and the picker names the alternative. */
 const hasPill = computed(() => props.pill && (props.resource.kind === 'variation' || Boolean(props.resource.variation)))
-const memberKind = computed(() => props.resource.kind === 'variation' ? props.resource.memberKind : undefined)
+const title = computed(() => hasPill.value ? titledBy(props.workspace, props.resource) : props.resource)
+const memberKind = computed(() => title.value.kind === 'variation' ? title.value.memberKind : undefined)
 const chooser = computed(() => props.resource.kind === 'variation' ? variationChooser(props.workspace, props.resource) : undefined)
-const interfaceType = computed(() => props.resource.kind === 'interface' ? props.resource.interfaceType : undefined)
-const facet = computed(() => entityFacetOf(props.resource))
-const acts = computed(() => props.resource.kind === 'entity' ? props.resource.acts ?? undefined : undefined)
+const interfaceType = computed(() => title.value.kind === 'interface' ? title.value.interfaceType : undefined)
+const facet = computed(() => title.value.kind === 'variation' ? title.value.memberFacet : entityFacetOf(title.value))
+const acts = computed(() => title.value.kind === 'entity' ? title.value.acts ?? undefined : undefined)
 const colorMode = useColorMode()
 const mounted = ref(false)
 
@@ -114,7 +116,7 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
       :aria-expanded="expandable ? open : undefined" data-card-primary @click.stop="activate" />
     <span class="flex min-w-0 flex-1 items-start gap-3" :class="hasPill && 'pointer-events-none relative'">
       <BlrKind
-        :kind="resource.kind"
+        :kind="title.kind"
         :interface-type="interfaceType"
         :facet="facet"
         :acts="acts"
@@ -124,8 +126,8 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
       />
       <span class="min-w-0 flex-1">
         <span class="flex min-w-0 items-center gap-2">
-          <span class="truncate text-[15px] font-semibold tracking-tight text-highlighted">{{ resource.title }}</span>
-          <BlrVariationPill v-if="hasPill" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+          <span class="truncate text-[15px] font-semibold tracking-tight text-highlighted" data-row-title>{{ title.title }}</span>
+          <BlrVariationPicker v-if="hasPill" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
           <UBadge
             v-if="badge && presentation.badge"
             color="neutral"

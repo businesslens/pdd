@@ -3,19 +3,21 @@
  * Where a resource belongs, in one short line under its title: its type, the
  * nearest place containing it with that place's own mark, and its Domains as
  * marks. The full containing path is the nearest place's tooltip; each place
- * and Domain opens.
+ * and Domain opens. A Variation sits where all its alternatives sit.
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { resourceAncestors, resourceDomains } from '../utils/reportDestinations'
+import { VARIATION_LABELS, variationSetOf } from '../utils/variations'
 
 const props = defineProps<{ workspace: ReportWorkspace, resource: AnyResourceView }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const ancestors = computed(() => resourceAncestors(props.workspace, props.resource))
 const domains = computed(() => resourceDomains(props.workspace, props.resource))
-/* A set reads as the type it varies. */
-const label = computed(() => props.resource.kind === 'variation'
-  ? `${ENTITY_KIND_META[props.resource.memberKind].label} variation`
+/* A set, and an alternative titled by its set, read as the type varied and how it varies. */
+const set = computed(() => variationSetOf(props.workspace, props.resource))
+const label = computed(() => set.value
+  ? `${ENTITY_KIND_META[set.value.memberKind].label} variation · ${VARIATION_LABELS[set.value.variationKind]}`
   : ENTITY_KIND_META[props.resource.kind].label)
 const parent = computed(() => ancestors.value.at(-1))
 const path = computed(() => ancestors.value.map(item => item.title).join(' › '))

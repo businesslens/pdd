@@ -116,9 +116,11 @@ describe('collection rows that expand', () => {
   it('omits containment tabs and their empty groups on childless places', () => {
     const empty = { ...workspace, experiences: [], screens: [] }
     for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
-      /* With no place inside, what is left is what it delivers directly. */
+      /* With no place inside, what is left is what it delivers directly, as its own rows: Capabilities, or a Variation's node holding them. */
       const children = structureChildren(empty, resource)
-      expect(children.every((node: any) => node.groupKind === 'capability' && node.children.every((item: any) => item.resource.kind === 'capability'))).toBe(true)
+      const unfold = (nodes: any[]): any[] => nodes.flatMap(item => item.resource?.kind === 'variation' ? item.children : [item])
+      expect(children.every((node: any) => !node.groupKind)).toBe(true)
+      expect(unfold(children).every((item: any) => item.resource.kind === 'capability' || item.resource.kind === 'journey')).toBe(true)
       expect(tabsFor(empty, resource).map((tab: any) => tab.id).includes('delivery')).toBe(children.length > 0)
     }
   })

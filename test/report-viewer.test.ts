@@ -14,7 +14,7 @@ const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSecti
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const { resourceFacts } = await import(resourceFactsModulePath)
 const { REPORT_ENTITY_KINDS, ENTITY_KIND_META, INTERFACE_TYPE_META } = await import(workspaceModulePath)
-const { hasAuthoredBody, tabsFor } = await import(pageSectionsModulePath)
+const { hasAuthoredBody, parentOf, tabsFor } = await import(pageSectionsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 function source(path: string): string {
@@ -1157,15 +1157,17 @@ describe('stable Product Report', () => {
     }
     for (const resource of workspace.byKey.values()) {
       const tabs = tabsFor(workspace, resource)
+      /* A Scenario address reads its parent; the Scenario's own References are on its card. */
+      const subject = parentOf(workspace, resource) ?? resource
       expect(tabs[0].blocks).not.toContain('connections')
       expect(tabs[0].blocks).not.toContain('references')
       const connections = tabs.find((tab: any) => tab.id === 'connections')
       if (connections) {
-        expect(tabs.at(resource.references.length ? -2 : -1)).toBe(connections)
+        expect(tabs.at(subject.references.length ? -2 : -1)).toBe(connections)
         expect(connections.blocks).toEqual(['connections'])
       }
-      if (resource.references.length) {
-        expect(tabs.at(-1)).toMatchObject({ id: 'references', count: resource.references.length, blocks: ['references'] })
+      if (subject.references.length) {
+        expect(tabs.at(-1)).toMatchObject({ id: 'references', count: subject.references.length, blocks: ['references'] })
       } else expect(tabs.some((tab: any) => tab.id === 'references')).toBe(false)
     }
     expect(sections).not.toContain("id: 'diagram'")
@@ -1600,7 +1602,7 @@ describe('Screens on the v15 wire', () => {
   })
 
   it('reads a place\'s Delivery through the Scenarios placed exactly there, never on a nested place', async () => {
-    const { placeDelivery, placeJourneys, stepsLabel } = await import(placeReadingsModulePath)
+    const { placeDelivery, placeJourneys } = await import(placeReadingsModulePath)
     const { report, scenario, step } = nestedReport()
     const workspace = projectReportWorkspace(report)
     const parent = workspace.screens.find((item: any) => item.id === PARENT)!
@@ -1629,7 +1631,6 @@ describe('Screens on the v15 wire', () => {
         }
       }
     }
-    expect([stepsLabel([1]), stepsLabel([0, 1, 2]), stepsLabel([0, 3, 4])]).toEqual(['Step 2', 'Steps 1–3', 'Steps 1, 4–5'])
     /* The Step moved to the child is read there, and no longer on the parent. */
     const index = scenario.steps.indexOf(step)
     const onChild = placeDelivery(workspace, child).find((group: any) => group.capability.id === scenario.capabilityId)!
@@ -1638,12 +1639,15 @@ describe('Screens on the v15 wire', () => {
     expect(onParent?.stepsHere[`capability-scenario:${scenario.id}`] ?? []).not.toContain(index)
     /* A tab, after Overview, where a place delivers itself. */
     expect(tabsFor(workspace, child).map((tab: any) => tab.id).slice(0, 2)).toEqual(['overview', 'delivery'])
-    /* The tab is the Screen's own branch of the tree: each Capability holds those Scenarios as items. */
+    /* The tab is the Screen's own branch of the tree: each Capability holds those Scenarios as items,
+       an alternative under its set's node even where it is the only one here, and one not here struck after it. */
     const { structureChildren } = await import(collectionChildrenModulePath)
+    const unfold = (nodes: any[]): any[] => nodes.flatMap(item => item.resource?.kind === 'variation' ? item.children.filter((child: any) => !child.absentFrom) : [item])
     for (const node of structureChildren(workspace, child).filter((item: any) => item.resource?.kind === 'capability')) {
       const group = placeDelivery(workspace, child).find((item: any) => item.capability.key === node.resource.key)!
-      expect(node.children.map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
-      expect(node.children.every((item: any) => item.id === `${node.id}>${item.resource.key}`)).toBe(true)
+      expect(unfold(node.children).map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
+      expect(unfold(node.children).every((item: any) => item.id === `${node.id}>${item.resource.key}`)).toBe(true)
+      expect(node.children.every((item: any) => item.resource.kind !== 'variation' || item.children.every((alternative: any) => alternative.inSet))).toBe(true)
     }
   })
 
@@ -1661,7 +1665,7 @@ describe('Screens on the v15 wire', () => {
   })
 
   it('carries each place\'s own Capabilities where it sits in the tree and the delivery map', async () => {
-    const { placeCapabilities, placeDelivery, placeJourneys, stepsLabel } = await import(placeReadingsModulePath)
+    const { placeCapabilities, placeDelivery, placeJourneys } = await import(placeReadingsModulePath)
     const { deliveryMapProjection } = await import(projectionsModulePath)
     const { structureChildren } = await import(collectionChildrenModulePath)
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
@@ -1686,29 +1690,33 @@ describe('Screens on the v15 wire', () => {
     expect(direct.capabilities.length).toBeGreaterThan(0)
     /* The tree rows carry the same reading. */
     const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    /* Alternatives delivered at one place fold under their set's node; each keeps its own row inside it, and one not here is struck. */
+    const unfold = (nodes: any[]): any[] => nodes.flatMap(item => item.resource?.kind === 'variation' ? item.children.filter((child: any) => !child.absentFrom) : [item])
     for (const node of flatten(structureChildren(workspace, customerWeb)).filter((item: any) => item.resource?.kind === 'screen')) {
-      const items = node.children.filter((item: any) => item.resource?.kind === 'capability')
+      const children = unfold(node.children)
+      const items = children.filter((item: any) => item.resource?.kind === 'capability')
       expect(items.map((item: any) => item.resource.id)).toEqual(node.resource.capabilityIds)
       expect(items.every((item: any) => item.id === `${node.resource.key}>${item.resource.key}`
         && item.children.every((scenario: any) => scenario.resource.kind === 'capability-scenario'
           || (scenario.resource.kind === 'variation' && scenario.children.every((alternative: any) => alternative.resource.kind === 'capability-scenario'))))).toBe(true)
       /* Its own Capabilities come first, then the Journeys passing through, then the Screens nested inside it. */
-      expect(node.children.slice(0, items.length)).toEqual(items)
+      expect(children.slice(0, items.length)).toEqual(items)
       const journeys = placeJourneys(workspace, node.resource)
-      const passing = node.children.slice(items.length, items.length + journeys.length)
+      const passing = children.slice(items.length, items.length + journeys.length)
       expect(passing.map((item: any) => [item.id, item.resource.kind])).toEqual(journeys.map(({ journey }: any) => [`${node.resource.key}>${journey.key}`, 'journey']))
       for (const [index, { scenarios }] of journeys.entries()) {
         // Alternatives of one set fold under its node; each keeps its own row inside it.
-        const rows = passing[index].children.flatMap((item: any) => item.resource.kind === 'variation' ? item.children : [item])
-        expect(rows.map((item: any) => [item.id, item.resource.kind, item.note])).toEqual(scenarios.map(({ scenario, steps }: any) =>
-          [`${passing[index].id}>${scenario.key}`, 'journey-scenario', `${stepsLabel(steps)} here`]))
+        // Where it sits says it has Steps here, so no row repeats which.
+        const rows = unfold(passing[index].children)
+        expect(rows.map((item: any) => [item.id, item.resource.kind, item.note])).toEqual(scenarios.map(({ scenario }: any) =>
+          [`${passing[index].id}>${scenario.key}`, 'journey-scenario', undefined]))
       }
-      expect(node.children.slice(items.length + journeys.length).every((item: any) => item.resource?.kind === 'screen')).toBe(true)
+      expect(children.slice(items.length + journeys.length).every((item: any) => item.resource?.kind === 'screen')).toBe(true)
     }
-    /* A direct delivery is said once, as the group holding its Capabilities, never on each row. */
+    /* A direct delivery is ordinary rows in the place's own branch: where they sit says it, so no group heads them. */
     const cliItems = structureChildren(workspace, cli)
-    expect(cliItems.map((item: any) => [item.id, item.title, item.groupKind])).toEqual([[`${cli.key}:direct`, 'Delivered directly', 'capability']])
-    expect(cliItems[0].children.map((item: any) => [item.resource.id, item.note])).toEqual(direct.capabilities.map((capability: any) => [capability.id, undefined]))
+    expect(cliItems.some((item: any) => item.groupKind === 'capability')).toBe(false)
+    expect(cliItems.filter((item: any) => item.resource?.kind === 'capability').map((item: any) => [item.resource.id, item.note])).toEqual(direct.capabilities.map((capability: any) => [capability.id, undefined]))
     /* The delivery map: a Screen's leaves are its own Capabilities, and an Interface with no Screens delivers directly. */
     const map = flatten([deliveryMapProjection(workspace)])
     for (const screen of webScreens) {

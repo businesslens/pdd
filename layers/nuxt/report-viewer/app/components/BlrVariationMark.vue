@@ -6,16 +6,19 @@
  * that lists every set. On an Interface set the badge takes the type's corner:
  * its alternatives each carry their own type where they are read.
  */
-import type { ReportResourceKind } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import type { EntityFacet, ReportResourceKind } from '../utils/reportWorkspace'
+import { ENTITY_FACET_META, ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
 const props = withDefaults(defineProps<{
   kind: ReportResourceKind
+  /** An Entity set is drawn by the facet its alternatives play, as each of them is. */
+  facet?: EntityFacet | null
   size?: 'xs' | 'sm'
-}>(), { size: 'sm' })
+}>(), { facet: null, size: 'sm' })
 
 const meta = computed(() => ENTITY_KIND_META[props.kind])
+const icon = computed(() => props.kind === 'entity' && props.facet ? ENTITY_FACET_META[props.facet].icon : meta.value.icon)
 const colorMode = useColorMode()
 const mounted = ref(false)
 onMounted(() => {
@@ -28,7 +31,7 @@ const explanation = computed(() => `${meta.value.label} Variation`)
 <template>
   <UTooltip :text="explanation" :delay-duration="150">
     <span class="blr-variation-mark" :data-size="size" role="img" :aria-label="explanation" data-variation-mark>
-      <UIcon :name="meta.icon" class="blr-variation-mark__kind" :style="{ color }" />
+      <UIcon :name="icon" class="blr-variation-mark__kind" :style="{ color }" />
       <span class="blr-variation-mark__badge">
         <UIcon name="i-lucide-split" />
       </span>

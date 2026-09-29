@@ -4,6 +4,7 @@ import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { resourceViewLinks } from '../utils/reportDestinations'
 import { parentOf } from '../utils/pageSections'
 import { referenceHref } from '../utils/referenceNavigation'
+import { titledBy } from '../utils/variations'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -20,7 +21,11 @@ const expanded = useCookie<boolean>('blr-resource-expanded', { default: () => fa
 const expandLabel = computed(() => expanded.value ? 'Restore resource size' : 'Expand resource')
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+/* A Scenario is read inside its parent, so its address shows the parent's reading with its card open. */
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
+/* What a title line names: an alternative's Variation, with the alternative in its picker. */
+const readingTitle = (resource: AnyResourceView) => titledBy(props.workspace, parentOf(props.workspace, resource) ?? resource).title
+const previousTitle = computed(() => props.previous ? readingTitle(props.previous) : '')
 const exits = computed(() => subject.value ? resourceViewLinks(subject.value, props.workspace) : [])
 const tabsTarget = useTemplateRef('tabsTarget')
 const heading = useTemplateRef('heading')
@@ -42,7 +47,7 @@ function referenceInfo(href: string) {
     sourceLink: !source && /\.md$/i.test(target) ? url.pathname + url.search : null, raw }
 }
 const file = computed(() => props.reference ? referenceInfo(props.reference) : null)
-const fileBackTitle = computed(() => props.previousReference ? referenceInfo(props.previousReference).title : props.resource?.title ?? 'References')
+const fileBackTitle = computed(() => props.previousReference ? referenceInfo(props.previousReference).title : props.resource ? readingTitle(props.resource) : 'References')
 const readingKey = computed(() => JSON.stringify([props.workspace.identity.id, 'resource', props.resource?.key, tab.value]))
 const { element: pane, save, restore, hasSaved } = useBlrTopologyScroll(readingKey)
 const restorePosition = computed(() => { void readingKey.value; return hasSaved() })
@@ -58,7 +63,8 @@ watch(() => props.reference, (next, before) => {
   if (next) focusReading()
   else if (before && props.resource) void nextTick(async () => { await restore(); (referenceFocus?.isConnected ? referenceFocus : heading.value)?.focus({ preventScroll: true }) })
 })
-watch(() => props.resource?.key, key => { if (key) focusReading() })
+/* A new reading takes focus; switching Scenarios inside one parent keeps it where the reader is. */
+watch(() => subject.value?.key, key => { if (key) focusReading() })
 function closeFocus(event: Event) {
   event.preventDefault()
   const target = props.returnFocus?.isConnected ? props.returnFocus : props.fallbackFocus
@@ -72,8 +78,8 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
     :open="Boolean(resource || reference)"
     modal
     overlay
-    :title="file?.title ?? resource?.title"
-    :description="file ? 'Reference' : resource ? ENTITY_KIND_META[resource.kind].label : ''"
+    :title="file?.title ?? (resource ? readingTitle(resource) : undefined)"
+    :description="file ? 'Reference' : subject ? ENTITY_KIND_META[subject.kind].label : ''"
     :content="{ onOpenAutoFocus: focusReading, onCloseAutoFocus: closeFocus }"
     :ui="{ overlay: 'blr-resource-overlay bg-black/40 dark:bg-black/60', content: `blr-resource-slideover w-full max-w-full ${expanded ? '' : 'md:max-w-[min(880px,70vw)]'} shadow-2xl`, body: 'min-h-0 flex-1 overflow-hidden p-0 sm:p-0' }"
     @update:open="!$event && emit('close')"
@@ -99,10 +105,10 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
           <BlrReferencePreview :href="reference" :title="file.title" :scope="workspace.identity.id" @details="referenceDetails = $event" @navigate="emit('referenceOpen', $event)" @close="emit('close')" />
         </template>
         <header v-if="resource" v-show="!reference" class="blr-resource-header grid shrink-0 items-start gap-x-2 border-b border-default px-5 py-3" :class="previous ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'">
-          <UTooltip v-if="previous" :text="`Back to ${previous.title}`">
-            <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${previous.title}`" @click="save(); emit('back')" />
+          <UTooltip v-if="previous" :text="`Back to ${previousTitle}`">
+            <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${previousTitle}`" @click="save(); emit('back')" />
           </UTooltip>
-          <BlrResourceHeading ref="heading" :workspace="workspace" :resource="resource" :tab="tab" @open="open" />
+          <BlrResourceHeading v-if="subject" ref="heading" :workspace="workspace" :resource="subject" :tab="tab" @open="open" />
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
             <UTooltip v-for="link in exits" :key="link.section" :text="link.name">
               <UButton :label="link.name" :aria-label="link.name" :icon="link.icon" color="neutral" variant="ghost" size="sm" :ui="{ label: 'blr-resource-action-label text-xs' }" @click="subject && emit('view', link.section, subject)" />
@@ -118,8 +124,8 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
         <div ref="tabsTarget" v-show="!reference" class="blr-resource-tabs shrink-0" data-page-tabs-host />
         <div ref="pane" v-show="!reference" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="!reference && save()">
           <BlrResourcePage
-            v-if="resource"
-            :key="resource.key"
+            v-if="resource && subject"
+            :key="subject.key"
             v-model:tab="tab"
             v-model:scenario-route="scenarioRoute"
             v-model:route-columns="routeColumns"

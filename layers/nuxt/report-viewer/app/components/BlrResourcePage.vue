@@ -42,10 +42,10 @@ const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id =
 const tabId = (value: string) => value.split('/')[0] ?? value
 const tabDetail = computed(() => tab.value.includes('/') ? tab.value.slice(tab.value.indexOf('/') + 1) : '')
 
-/* A Scenario address defaults to its parent's Scenarios reading. An explicit
-   References address reads the attachments owned by that Scenario. */
+/* A Scenario address is its parent's Scenarios reading with its card open;
+   the Scenario's own References are read on that card. */
 watch([tabs, requestedChild, tab], () => {
-  if (requestedChild.value && (tabId(tab.value) !== 'references' || !isTab('references')) && isTab('scenarios')) {
+  if (requestedChild.value && isTab('scenarios')) {
     active.value = 'scenarios'
     return
   }
@@ -55,7 +55,7 @@ watch([tabs, requestedChild, tab], () => {
 
 function select(id: string) {
   if (!isTab(id)) return
-  if (id !== 'scenarios' && id !== 'references' && requestedChild.value) emit('open', subject.value)
+  if (id !== 'scenarios' && requestedChild.value) emit('open', subject.value)
   active.value = id
   tab.value = id
 }
@@ -77,7 +77,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         v-if="tabs.length > 1"
         :model-value="active"
         :items="tabs"
-        :label="`${ENTITY_KIND_META[resource.kind].label} readings`"
+        :label="`${ENTITY_KIND_META[subject.kind].label} readings`"
         :class="!tabsTarget && 'mb-5'"
         @update:model-value="select"
       >
@@ -134,7 +134,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           v-for="id in current?.blocks ?? []"
           :key="id"
           :workspace="workspace"
-          :resource="current?.id === 'references' ? resource : subject"
+          :resource="subject"
           :id="id"
           :heading="current?.id === 'overview'"
           @open="emit('open', $event)"

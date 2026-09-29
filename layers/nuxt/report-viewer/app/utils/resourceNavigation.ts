@@ -11,12 +11,19 @@ export interface ResourceNavigation {
   href: (resource: string, tab?: string) => string
   previous: Ref<ResourceVisit | null>
   back: () => void
+  /** The next change of resource replaces the reading: no history entry, no Back step. */
+  replace?: () => void
 }
 
 export const resourceNavigationKey: InjectionKey<ResourceNavigation> = Symbol('businesslens:resource-navigation')
 
+export interface ResourceOpenOptions {
+  /** Switching between a Variation's alternatives keeps the same title, so it replaces the reading. */
+  replace?: boolean
+}
+
 /** Open a resource at one of its readings — `lifecycle/<change>` included. The report shell provides it. */
-export const resourceOpenerKey: InjectionKey<(key: string, tab?: string) => void> = Symbol('businesslens:resource-opener')
+export const resourceOpenerKey: InjectionKey<(key: string, tab?: string, options?: ResourceOpenOptions) => void> = Symbol('businesslens:resource-opener')
 
 export function resourceTrail(value: unknown): ResourceVisit[] {
   if (!Array.isArray(value)) return []

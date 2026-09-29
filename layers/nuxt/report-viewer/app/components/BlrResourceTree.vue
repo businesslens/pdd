@@ -8,10 +8,12 @@
  * the chevron, which carries it in its label, so a row keeps one tab stop.
  */
 import type { TreeItem } from '@nuxt/ui'
-import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace, VariationSetView } from '../utils/reportWorkspace'
 import { entityFacetOf } from '../utils/reportWorkspace'
 import type { InsideCount, TreeCardNode } from '../utils/collectionChildren'
 import { insideLabel, insideSummary } from '../utils/collectionChildren'
+import { titledBy } from '../utils/variations'
+import { absenceLabel } from '../utils/placeReadings'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -27,8 +29,11 @@ interface Node extends TreeItem { value: string, label: string, source: TreeCard
 const toggle = (key: string) => {
   expanded.value = expanded.value.includes(key) ? expanded.value.filter(value => value !== key) : [...expanded.value, key]
 }
+/* A lone alternative is titled by its Variation, with the alternative in the picker;
+   under its set's node an alternative names itself. */
+const titleOf = (source: TreeCardNode) => source.resource && !source.inSet ? titledBy(props.workspace, source.resource) : source.resource
 const toNode = (source: TreeCardNode): Node => ({
-  value: source.id, label: source.title, source, inside: insideSummary(source),
+  value: source.id, label: titleOf(source)?.title ?? source.title, source, inside: insideSummary(source),
   children: source.children.length ? source.children.map(toNode) : undefined,
   onSelect: (event: Event) => {
     event.preventDefault()
@@ -74,15 +79,16 @@ const items = computed(() => props.nodes.map(toNode))
       <span v-else aria-hidden="true" class="mt-0.5 size-4 shrink-0" />
       <BlrKind v-if="item.source.groupKind" :kind="item.source.groupKind" :labelled="false" size="xs" class="mt-0.5" />
       <BlrKind
-        v-else-if="item.source.resource"
-        :kind="item.source.resource.kind"
-        :interface-type="item.source.resource.kind === 'interface' ? item.source.resource.interfaceType : undefined"
-        :facet="entityFacetOf(item.source.resource)"
-        :acts="item.source.resource.kind === 'entity' ? item.source.resource.acts ?? undefined : undefined"
-        :member-kind="item.source.resource.kind === 'variation' ? item.source.resource.memberKind : undefined"
+        v-else-if="titleOf(item.source)"
+        :kind="titleOf(item.source)!.kind"
+        :interface-type="item.source.resource!.kind === 'interface' ? item.source.resource!.interfaceType : undefined"
+        :facet="titleOf(item.source)!.kind === 'variation' ? (titleOf(item.source) as VariationSetView).memberFacet : entityFacetOf(titleOf(item.source)!)"
+        :acts="item.source.resource!.kind === 'entity' ? item.source.resource!.acts ?? undefined : undefined"
+        :member-kind="titleOf(item.source)!.kind === 'variation' ? item.source.resource!.kind === 'variation' ? item.source.resource!.memberKind : item.source.resource!.kind : undefined"
         :labelled="false"
         size="xs"
         class="mt-0.5"
+        :class="item.source.absentFrom && 'opacity-45'"
       />
     </template>
     <template #item-label="{ item, expanded: isExpanded }">
@@ -93,7 +99,7 @@ const items = computed(() => props.nodes.map(toNode))
             v-if="item.source.resource"
             :resource-key="item.source.resource.key"
             class="min-w-0 truncate text-highlighted"
-            :class="[item.value === rootKey && 'font-semibold', highlight?.includes(item.source.resource.id) && item.source.resource.kind === 'capability' && 'rounded-sm bg-primary/12 px-1 text-primary']"
+            :class="[item.value === rootKey && 'font-semibold', item.source.absentFrom && 'font-normal text-muted line-through decoration-(--ui-text-dimmed)', highlight?.includes(item.source.resource.id) && item.source.resource.kind === 'capability' && 'rounded-sm bg-primary/12 px-1 text-primary']"
             :data-highlighted="(highlight?.includes(item.source.resource.id) && item.source.resource.kind === 'capability') || undefined"
             @keydown.stop
             @open="emit('open', item.source.resource)"
@@ -101,11 +107,15 @@ const items = computed(() => props.nodes.map(toNode))
           <span v-else class="min-w-0 truncate" :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.count ?? item.source.children.length }}</span></span>
           <BlrNavigationMark v-if="item.source.resource?.kind === 'screen' && item.source.resource.alwaysReachable" class="ms-1.5 shrink-0" />
         </span>
-        <!-- The Variation on the title row; an alternative under its set's node has it said already. -->
-        <BlrVariationPill
+        <!-- An alternative of this set that does not happen at this place; the set's picker says where it does. -->
+        <span v-if="item.source.absentFrom" class="blr-absent-badge" data-variation-absent>{{ absenceLabel(item.source.absentFrom) }}</span>
+        <!-- The alternative beside its Variation's title; an alternative under its set's node names itself. -->
+        <BlrVariationPicker
           v-if="item.source.resource && !item.source.inSet && (item.source.resource.kind === 'variation' || item.source.resource.variation)"
           :workspace="workspace"
           :resource="item.source.resource"
+          :place="item.source.place"
+          :absent="item.source.children.flatMap(child => child.absentFrom && child.resource ? [child.resource.key] : [])"
           class="font-normal"
           @open="emit('open', $event)"
         />

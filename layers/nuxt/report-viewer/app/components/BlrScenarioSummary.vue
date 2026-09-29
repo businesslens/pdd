@@ -1,15 +1,25 @@
 <script setup lang="ts">
-/** One expandable box for a Scenario's story, Entity results and ordered Steps. */
+/**
+ * One expandable box for a Scenario's story, Entity results and ordered Steps.
+ *
+ * Alternative Scenarios of one Variation are one card: the Variation is its
+ * title, the picker beside it names the Scenario being read and switches it in
+ * place, and the condition that selects it leads the card.
+ */
 import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
+import { variationSetOf } from '../utils/variations'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   scenario: ScenarioView
   expanded: boolean
+  /** True where the card holds every alternative of its set and switches between them. */
+  switchable?: boolean
 }>()
-const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [] }>()
+const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [], pick: [resource: AnyResourceView] }>()
+const set = computed(() => variationSetOf(props.workspace, props.scenario))
 const expansionId = useId()
 const trigger = computed(() => props.scenario.trigger || props.scenario.lead)
 const word = (name: 'trigger' | 'outcome') => scenarioTerm(props.scenario.scenarioType, name)
@@ -35,11 +45,21 @@ const expansionLabel = computed(() => [
   <div class="blr-scenario-summary hover:bg-elevated/40" data-scenario-summary>
     <div class="blr-summary-header">
       <div class="blr-summary-identity">
-        <BlrKind :kind="scenario.kind" :labelled="false" class="mt-0.5 shrink-0" />
+        <BlrKind :kind="set ? 'variation' : scenario.kind" :member-kind="set ? scenario.kind : undefined" :labelled="false" class="mt-0.5 shrink-0" />
         <div class="blr-summary-heading">
-          <h3 class="blr-summary-title">{{ scenario.title }}</h3>
-          <!-- An alternative keeps its own card, because its Steps are what differ; the pill names its set. -->
-          <BlrVariationPill v-if="scenario.variation" :workspace="workspace" :resource="scenario" @open="emit('open', $event)" />
+          <h3 v-if="set" class="blr-summary-title" data-scenario-title>
+            <BlrResourceLink :resource-key="set.key" class="hover:underline" @open="emit('open', set)">{{ set.title }}</BlrResourceLink>
+          </h3>
+          <h3 v-else class="blr-summary-title" data-scenario-title>{{ scenario.title }}</h3>
+          <!-- The Scenario being read; its Steps are what differ between the alternatives. -->
+          <BlrVariationPicker
+            v-if="set"
+            :workspace="workspace"
+            :resource="scenario"
+            :mode="switchable ? 'switch' : 'open'"
+            @open="emit('open', $event)"
+            @pick="emit('pick', $event)"
+          />
           <UBadge v-if="scenario.kindName" color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
         </div>
       </div>
@@ -59,6 +79,11 @@ const expansionLabel = computed(() => [
         </button>
       </div>
     </div>
+
+    <dl v-if="set && scenario.variation" class="blr-summary-selected" data-selected-when>
+      <dt class="blr-summary-label">Selected when</dt>
+      <dd>{{ scenario.variation.selectedWhen }}</dd>
+    </dl>
 
     <dl v-if="trigger || scenario.outcome || scenario.result" class="blr-summary-story">
       <div v-if="trigger">
@@ -101,6 +126,10 @@ const expansionLabel = computed(() => [
     <template v-if="expanded">
       <div class="p-4" data-scenario-steps><slot /></div>
       <div v-if="detailLabel" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
+      <!-- The Scenario's own attachments: a Scenario is read only on its card. -->
+      <div v-if="scenario.references.length" class="border-t border-muted p-4" data-scenario-references>
+        <BlrRefs :references="scenario.references" :scope="JSON.stringify([workspace.identity.id, scenario.key])" />
+      </div>
     </template>
   </div>
   </div>
@@ -120,6 +149,8 @@ const expansionLabel = computed(() => [
 .blr-summary-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; min-width: 0; }
 .blr-summary-heading h3 { min-width: 0; }
 .blr-summary-title { min-width: 0; text-align: start; font-size: 1rem; font-weight: 600; line-height: 1.5; color: var(--ui-text-highlighted); overflow-wrap: anywhere; }
+.blr-summary-selected { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.25rem 1rem; margin-top: 0.75rem; align-items: baseline; }
+.blr-summary-selected dd { max-width: 75ch; color: var(--ui-text-muted); overflow-wrap: anywhere; }
 .blr-summary-story { display: grid; gap: 1rem 2rem; margin-top: 1rem; }
 .blr-summary-story > div { min-width: 0; }
 .blr-summary-label { font-size: 0.8125rem; font-weight: 600; color: var(--ui-text-highlighted); }
@@ -138,7 +169,7 @@ const expansionLabel = computed(() => [
 @container (max-width: 26rem) {
   .blr-summary-header { flex-wrap: wrap; gap: 0.625rem; }
   .blr-summary-actions { margin-inline-start: auto; }
-  .blr-summary-entity-row { grid-template-columns: minmax(0, 1fr); }
+  .blr-summary-entity-row, .blr-summary-selected { grid-template-columns: minmax(0, 1fr); }
   .blr-summary-endings { flex-direction: column; }
 }
 </style>

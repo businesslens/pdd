@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
+const source = (path: string) => readFileSync(join(__dirname, '../layers/nuxt/report-viewer', path), 'utf8')
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
 const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, resourceViewLinks } = await utility('reportDestinations')
@@ -123,12 +125,12 @@ describe('resource readings', () => {
     expect(tabsFor(isolated, resource).map((tab: any) => tab.id)).toEqual(['overview'])
   })
 
-  it('keeps Scenario References and their count scoped to their owner', () => {
+  it('reads a Scenario address as its parent, References included; the Scenario\'s own are on its card', () => {
     const parent = workspace.byKey.get('capability:browse-catalog')
     const scenario = workspace.byKey.get('capability-scenario:browse-catalog')
+    expect(scenario.references).toHaveLength(2)
     expect(tabsFor(workspace, parent).at(-1)).toMatchObject({ id: 'references', count: 1 })
-    expect(tabsFor(workspace, scenario).at(-1)).toMatchObject({ id: 'references', count: 2 })
-    const withoutReferences = { ...scenario, references: [] }
-    expect(tabsFor(workspace, withoutReferences).map((tab: any) => tab.id)).toEqual(['overview', 'scenarios', 'connections'])
+    expect(tabsFor(workspace, scenario)).toEqual(tabsFor(workspace, parent))
+    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrRefs :references="scenario.references"')
   })
 })

@@ -586,6 +586,8 @@ export interface VariationSetView extends ResourceBase {
   variationKind: VariationKind
   /** The one resource kind every alternative has. */
   memberKind: ReportResourceKind
+  /** An Entity set's facet, when every alternative plays the same one: its mark is drawn by it. */
+  memberFacet: EntityFacet | null
   alternatives: VariationAlternativeView[]
   takesEffect: string
   stability: string
@@ -1742,6 +1744,9 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
 
   const variations: VariationSetView[] = model.variations.map(variation => {
     const memberKind = VARIATION_MEMBER_KIND[variation.of]
+    const facets = memberKind === 'entity'
+      ? [...new Set(variation.alternatives.map(item => entityFacetOf(entities.find(entity => entity.id === item.resourceId))))]
+      : []
     return {
       key: resourceKey('variation', variation.id),
       id: variation.id,
@@ -1753,6 +1758,7 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       references: variation.references,
       variationKind: variation.kind,
       memberKind,
+      memberFacet: facets.length === 1 ? facets[0] ?? null : null,
       alternatives: variation.alternatives.map(item => ({
         key: resourceKey(memberKind, item.resourceId),
         id: item.resourceId,

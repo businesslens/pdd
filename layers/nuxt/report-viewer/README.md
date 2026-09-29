@@ -61,17 +61,17 @@ never drawn as an edge.
 The Interfaces tree says what each place delivers, as ordinary items in its
 own branch, exactly as the Delivery map does: a Screen lists its own
 Capabilities first, never a child's, then the Screens nested inside it; an
-Experience or Interface lists only a gap, a Capability available there and
-exposed on no Screen of its own, in a group headed “Available here, on no
-Screen”; an Interface with no Screens lists its Capabilities in a group headed
-“Delivered directly”. Every Capability of one place shares that reading, so the
-group says it once and the rows do not repeat it.
+Experience or Interface lists only the Capabilities available there and
+exposed on no Screen of its own, and an Interface with no Screens lists every
+Capability it delivers. They are ordinary rows beside the place's Screens, so
+where they sit says they are on no Screen; no group heads them. The Delivery map
+notes a direct delivery on each node, because a graph has no branch to say it.
 Under each Capability sit its own Capability Scenarios with a Step placed
 exactly on that place. A Journey Scenario belongs to its Journey, never to a
 Capability its Steps use, so it sits under its Journey instead: after the
 place's Capabilities come the Journeys passing through it, each holding its
-Scenarios with a Step placed there, once each, noted with the Steps taken
-there, such as “Steps 1–2 here”. Scenarios start folded, under a Capability or
+Scenarios with a Step placed there, once each; where it sits says it has Steps
+there, so no row repeats which. Scenarios start folded, under a Capability or
 a Journey alike. A nested place reads its own; nothing is summed. Every item opens its
 reading.
 On the Interfaces collection the Capabilities filter marks the matching items.
@@ -351,8 +351,8 @@ where it left:
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
 Every one is optional; bind the ones the host wants in its URL. A Scenario key
-selects that Scenario inside its parent reading, or its own References when
-requested, while the section stays on the originating working view.
+opens its parent's reading at Scenarios with that Scenario's card open, its own
+References on the card, while the section stays on the originating working view.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
 It returns these eight models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
@@ -677,35 +677,62 @@ marked with the variation glyph in ink — a Variation modifies a type, so it
 takes no hue — drawn at 14px inside the usual 16px slot, since the glyph reaches
 the corners of its box. Its rows group by the type each set varies —
 Interfaces, Screens, Business Rules, Scenarios and so on — and show the set's mark, name,
-subtype pill, purpose, alternatives and what chooses between them (`Chosen by`,
-`Assigned per` or `Discriminator`). The collection has Rows only: a set has no
-derivation of its own to draw.
+picker, purpose, alternatives and what chooses between them (`Chosen by`,
+`Assigned per` or `Discriminator`). A Scenario is never read without its owner,
+so a Scenario set sits under a one-line link to the Capability or Journey its
+alternatives share (`variationsByOwner`); `lint` keeps them under one. The
+collection has Rows only: a set has no derivation of its own to draw.
 
 **A set reads as the type it varies.** Its mark is the member type's mark with
 the variation sub-icon in the corner the viewer badges an Interface's type or an
 Entity's facet with (`BlrVariationMark`, through `BlrKind`'s `memberKind`). On
 an Interface set the sub-icon takes the type's corner; each alternative keeps
-its own type where it is read. The reading's subtitle names it the same way:
-`Business Rule variation`.
+its own type where it is read. The reading's subtitle names it the same way,
+with its subtype and, where all its alternatives sit in one place, that place
+and its Domains: `Capability Scenario variation · Experiment in Checkout`
+(`resourceAncestors` and `resourceDomains` of a set).
 
-**The pill on the title.** Wherever a set or an alternative is named — a row, a
-tree node, a reading header — its title carries a pill (`BlrVariationPill`). A
-set's says its subtype and size (`Configuration · 2 alternatives`); an
-alternative's names its set (`Refund review`), or a Version's set and label
-(`Payment webhook contract · v2`). There are no position numbers: alternatives
-are a set. Pressing the pill opens a switcher: the set and what chooses, every
-alternative with its condition and the one being read marked, and the set
-itself. Picking an alternative opens it on the same tab. The pill is its own
-button beside the row's full-card link, never inside it.
+**The set is the title; the picker names the alternative.** Wherever an
+alternative is a title — a reading header, a row, a tree node, a Scenario card —
+the title names its Variation (`titledBy`) and the picker beside it
+(`BlrVariationPicker`) names the alternative being read: its title, or a
+Version's label (`v2`). On a set's own title the picker counts the alternatives
+(`2 alternatives`). There are no position numbers: alternatives are a set.
+Pressing the picker opens a switcher. Its first row is the set — the variation
+glyph in its own ink, the set's name with an arrow, its subtype and what
+chooses — and opens the set's own reading; it is checked while that reading is
+open. Every alternative follows with its condition, the one being read checked.
+The set is named once in the menu. The picker has three modes. In a row or tree
+node it opens the picked alternative; in a reading header it replaces the
+reading under the same title, with no Back step (`ResourceNavigation.replace`);
+on a Scenario card it switches the card in place. Nothing switches alternatives
+with tabs. The picker is its own button beside the row's full-card link, never
+inside it. References inside a reading — Step places, Rule targets, relation
+chips — stay concrete.
 
 **Where alternatives meet, they are one row.** `collapseVariations` replaces two
 or more alternatives of one set in a list with the set's row, at the first one's
-place; a lone alternative keeps its own row with its pill. This applies to every
-collection list and to the Business Rules tab. Heading counts stay concrete —
-`Business Rules 14` while thirteen rows show. A set row never expands. Trees are
-the exception: `foldVariations` puts sibling alternatives under one set node,
-which expands to them because each keeps its own children; a group's count
-stays concrete, and a closed row's summary never counts the set node.
+place; a lone alternative keeps its own row, titled by its set. This applies to
+every collection list and to the Business Rules tab. Heading counts stay
+concrete — `Business Rules 14` while thirteen rows show. A set row never
+expands. Trees are the exception: `foldVariations` puts every alternative —
+Screens, Experiences, the Capabilities and Journeys a place delivers, and their
+Scenarios — under its set's node, even where it is the only one there. The node
+expands to them by their own titles because each keeps its own children. At a
+place, an alternative that does not happen there follows them struck through,
+muted, with a dashed `Not on this Screen` badge (`Not in this Experience`, `Not
+in this Interface`) and no children, so a place holding one alternative still
+reads as a choice; it still opens its reading. The node's picker draws it the
+same way, after the alternatives that are here, with its condition. Counts and a
+closed row's summary never include a struck alternative or the set node.
+
+**Scenarios are read in their parent.** A Scenario address opens its parent's
+reading at Scenarios, with its card open and in view; its own References are read
+on the card. Alternative Scenarios are one card at the first one's place, titled
+by their set, with **Selected when** leading it. The card reads the alternative
+the address asked for, else the reader's last pick for this parent, else the
+first by title; switching in place follows an address that names the set,
+without a history entry. The Scenarios tab still counts every Scenario.
 
 **Readings.** A Variation's Overview carries its purpose and **How one is
 chosen** (`BlrVariationSelection`): the Entities and facts it chooses by, any
@@ -725,5 +752,7 @@ nodes, rows and columns.
 
 Check it against the Fixture Shop with `node scripts/check-variations.mjs
 <viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the
-collection, set rows in a list and a tab, the switcher by keyboard, switching
-alternatives, the set's readings, Escape, the tree and phone width.
+collection and its owner lines, set rows in a list and a tab, the switcher by
+keyboard, set-first titles, switching in a header without a Back step, the set's
+readings, the Scenario card and a Scenario address, Escape, the tree and phone
+width.

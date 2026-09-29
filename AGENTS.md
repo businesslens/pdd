@@ -193,10 +193,13 @@ costed already.
   the density control without changing the saved preference. Expand all and
   Collapse all sit beside the drawing controls on desktop and inside the view
   picker on phones.
-- **Every surface names itself, with the name the reader clicked.** The main
-  H1 keeps the working view and its count or Product qualifier. A resource
-  slideover names its resource and type, with actual ownership shown separately
-  from the return trail. Report identity and the way home stay in the sidebar.
+- **Every surface names itself.** The main H1 keeps the working view and its
+  count or Product qualifier. A resource slideover names its resource and type,
+  with actual ownership shown separately from the return trail. The name the
+  reader clicked is on the title line: as the title, as the Variation picker's
+  value, or, for a Scenario, as its card inside the parent's reading, which is
+  what a Scenario address opens. This supersedes the Scenario-named header.
+  Report identity and the way home stay in the sidebar.
 - **Resources open in one complete slideover.** This supersedes the resource-page
   navigation rule. Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
@@ -213,18 +216,29 @@ costed already.
   Experiences and Screens are reached through Interfaces, Scenarios through
   their parent, and a collection's Graph or Matrix through its drawing selector.
   Variations has Rows only. This supersedes the six-collection rail.
-- **A Variation reads as the type it varies.** A set wears its member type's mark
-  with the variation sub-icon; the variation glyph alone, in ink and never a
-  hue of its own, marks only the Variations collection. Wherever two or more alternatives of one set meet in a
-  list or tab they are one set row that never expands; the reader picks an
-  alternative from the pill on its title, which opens a switcher listing every
-  alternative with its condition and the set itself. A tree is the exception:
-  its set node expands, because each alternative keeps its own children. A
-  Scenario card is the other: alternative Scenarios keep their own cards,
-  because their Steps are what differ, and each carries its set's pill. A lone
-  alternative carries its set's pill on its title, in rows and in its reading
-  header. Headings count concrete resources, never set rows; nothing shows a
-  position within a set.
+- **A Variation reads as the type it varies, and leads its alternatives.** A
+  set wears its member type's mark with the variation sub-icon; the variation
+  glyph alone, in ink and never a hue of its own, marks only the Variations
+  collection. Wherever an alternative is a title — a reading header, a row, a
+  tree node, a Scenario card — its Variation is the title and a picker beside
+  it names the alternative being read (a Version by its label) and switches
+  it; on the set's own title the picker counts the alternatives. Its menu is
+  headed by the set, which opens the set's own reading, then lists every
+  alternative with its condition. Switching in a reading header replaces the
+  reading, with no Back step. Nothing switches alternatives with tabs.
+  Wherever two or more alternatives of one set meet in a list or tab they are
+  one set row that never expands. A tree is the exception: every alternative
+  sits under its set node, even alone, because each keeps its own children;
+  the node names them by their own titles. At a place, an alternative that
+  does not happen there follows them struck with a "Not on this Screen" badge,
+  and the node's picker marks it the same way. Strikethrough means "not at
+  this place", never retired. Alternative Scenarios are one card, switched in
+  place, whose condition leads it. References inside a reading — Step places,
+  Rule targets, relation chips — stay concrete. The Variations collection puts
+  a Scenario set under the Capability or Journey that owns its Scenarios, and
+  a set's subtitle names the place all its alternatives share. Headings count
+  concrete resources, never set rows; nothing shows a position within a set.
+  This supersedes the set pill on an alternative's title.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
   carries the resource's explanation and contextual links, including an Entity's
   Information kept. Scenarios follows for a Capability or
@@ -248,8 +262,8 @@ costed already.
   Connections
   follows when relationships exist and includes the complete relationship
   list, including links also explained in Overview. References comes last when
-  attachments exist, with a count and attribution to the inspected resource,
-  including a Scenario's own attachments. This supersedes the limit
+  attachments exist, with a count and attribution to the inspected resource;
+  a Scenario's own attachments are read on its card. This supersedes the limit
   of one peer tab. A view comparing resources belongs to the collection, never
   to one of them.
 - **The Product's page is the report Overview** — headed `Overview` like the

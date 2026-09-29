@@ -2,7 +2,7 @@
 import type { AnyResourceView, CapabilityView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
-import { placeDelivery, placeJourneys, stepsLabel } from './placeReadings'
+import { placeDelivery, placeJourneys } from './placeReadings'
 import type { TopologyAttachment } from './topologyTargets'
 import type { Diagram } from './diagram'
 
@@ -186,7 +186,7 @@ export function deliveryMapProjection(workspace: ReportWorkspace): TopologyBranc
       }),
       ...placeJourneys(workspace, place).map(({ journey, scenarios }) => {
         const id = `${item.id}${OCCURRENCE_SEPARATOR}${journey.key}`
-        return occurrence(item.id, journey, scenarios.map(({ scenario, steps }) => ({ ...occurrence(id, scenario), note: `${stepsLabel(steps)} here` })))
+        return occurrence(item.id, journey, scenarios.map(({ scenario }) => occurrence(id, scenario)))
       })
     ]
   }

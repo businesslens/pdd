@@ -1,4 +1,5 @@
 import type { AnyResourceView, ReportWorkspace, VariationKind, VariationSetView } from './reportWorkspace'
+import { resourceAncestors } from './reportDestinations'
 
 export const VARIATION_LABELS: Record<VariationKind, string> = {
   experiment: 'Experiment', configuration: 'Configuration', version: 'Version'
@@ -18,16 +19,23 @@ export function variationAlternatives(workspace: ReportWorkspace, set: Variation
     .sort((a, b) => a.title.localeCompare(b.title, 'en') || a.key.localeCompare(b.key, 'en'))
 }
 
-/** What the pill on a title says: a set's subtype and size, or an alternative's set. */
-export function variationPillLabel(workspace: ReportWorkspace, resource: AnyResourceView): string | undefined {
+/**
+ * The resource a title line names: an alternative is titled by its Variation,
+ * and the picker beside the title names the alternative. Everything else names
+ * itself.
+ */
+export function titledBy(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView {
+  return resource.kind === 'variation' ? resource : variationSetOf(workspace, resource) ?? resource
+}
+
+/** What the picker beside a set's title says: the alternative being read, a Version's label, or the set's size. */
+export function variationPickerLabel(workspace: ReportWorkspace, resource: AnyResourceView): string | undefined {
   if (resource.kind === 'variation') {
     const count = resource.alternatives.length
-    return `${VARIATION_LABELS[resource.variationKind]} · ${count} ${count === 1 ? 'alternative' : 'alternatives'}`
+    return `${count} ${count === 1 ? 'alternative' : 'alternatives'}`
   }
-  if (!resource.variation) return undefined
-  const set = variationSetOf(workspace, resource)
-  const title = set?.title ?? resource.variation.title
-  return resource.variation.label ? `${title} · ${resource.variation.label}` : title
+  if (!resource.variation || !variationSetOf(workspace, resource)) return undefined
+  return resource.variation.label ?? resource.title
 }
 
 /**
@@ -51,6 +59,27 @@ export function collapseVariations(workspace: ReportWorkspace, resources: readon
     const set = workspace.byKey.get(key)
     return set ? [set] : [resource]
   })
+}
+
+/**
+ * A list of sets, with each Scenario set under the Capability or Journey its
+ * alternatives share. A Scenario is never read without its owner, and `lint`
+ * keeps a Scenario set's alternatives under one, so the owner is always known.
+ * Other sets keep their place, ahead of any owner; owners order by title.
+ */
+export function variationsByOwner(workspace: ReportWorkspace, resources: readonly AnyResourceView[]): Array<{ owner?: AnyResourceView, resources: AnyResourceView[] }> {
+  const loose: AnyResourceView[] = []
+  const owned = new Map<string, { owner: AnyResourceView, resources: AnyResourceView[] }>()
+  for (const resource of resources) {
+    const scenarios = resource.kind === 'variation' && (resource.memberKind === 'capability-scenario' || resource.memberKind === 'journey-scenario')
+    const owner = scenarios ? resourceAncestors(workspace, resource).at(-1) : undefined
+    if (!owner) { loose.push(resource); continue }
+    const entry = owned.get(owner.key) ?? { owner, resources: [] }
+    entry.resources.push(resource)
+    owned.set(owner.key, entry)
+  }
+  const owners = [...owned.values()].sort((a, b) => a.owner.title.localeCompare(b.owner.title, 'en') || a.owner.key.localeCompare(b.owner.key, 'en'))
+  return [...(loose.length ? [{ resources: loose }] : []), ...owners]
 }
 
 /** Typed selection references a set chooses by, never availability or permission. */

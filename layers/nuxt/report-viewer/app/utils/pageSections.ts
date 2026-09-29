@@ -46,7 +46,7 @@ export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView
   return []
 }
 
-/** A Scenario shares its parent's readings while retaining its own References. */
+/** A Scenario is read inside its parent: its address shares the parent's readings, References included. */
 export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResourceView): PageTab[] {
   const resource = parentOf(workspace, requestedResource) ?? requestedResource
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
@@ -94,8 +94,8 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }
-  if (requestedResource.references.length) {
-    tabs.push({ id: 'references', label: 'References', count: requestedResource.references.length, blocks: ['references'] })
+  if (resource.references.length) {
+    tabs.push({ id: 'references', label: 'References', count: resource.references.length, blocks: ['references'] })
   }
 
   return tabs

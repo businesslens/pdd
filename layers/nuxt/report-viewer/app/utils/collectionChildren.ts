@@ -14,7 +14,7 @@ import { interfaceProjection } from './topologyProjections'
 import { entityOperation, ruleAttachments } from './topologyTargets'
 import { resourceAncestors } from './reportDestinations'
 import type { TopologyBranch } from './topologyProjections'
-import { placeDelivery, placeJourneys, stepsLabel } from './placeReadings'
+import { placeDelivery, placeJourneys, type Place } from './placeReadings'
 
 export interface RowChild {
   resource: AnyResourceView
@@ -35,6 +35,10 @@ export interface TreeCardNode {
   note?: string
   /** An alternative drawn under its own Variation node: the node already names the set. */
   inSet?: boolean
+  /** A Variation node's place: where its alternatives are read as here or not. */
+  place?: Place
+  /** An alternative of this node's set that does not happen at its place: drawn struck, with no children. */
+  absentFrom?: Place
   /** A group's concrete resources: a Variation node counts its alternatives, never itself. */
   count?: number
   children: TreeCardNode[]
@@ -48,34 +52,44 @@ export interface TreeCard {
 }
 
 const leaf = (resource: AnyResourceView, children: TreeCardNode[] = []): TreeCardNode => ({ id: resource.key, title: resource.title, resource, children })
-const concrete = (nodes: TreeCardNode[]): number => nodes.reduce((total, node) => total + (node.resource?.kind === 'variation' ? node.children.length : 1), 0)
+const concrete = (nodes: TreeCardNode[]): number => nodes.reduce((total, node) => total + (node.resource?.kind === 'variation' ? node.children.filter(child => !child.absentFrom).length : 1), 0)
 const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, count: concrete(children), children })
 
 /**
- * Siblings that are alternatives of one Variation sit under one node for the
- * set, where two or more meet; a lone alternative stays in place. The set node
- * is membership, not containment: each alternative keeps its own children.
+ * In a tree an alternative always sits under its Variation's node, named by its
+ * own title: the node names the set, and its children are the alternatives
+ * found here, in their first one's place. At a place, an alternative that does
+ * not happen there follows them struck, with no children, so a place holding one
+ * alternative still reads as a choice; the node's picker says where it does
+ * happen. The set node is membership, not containment: each alternative keeps
+ * its own children, and counts never include a struck one.
  */
-export function foldVariations(workspace: ReportWorkspace, parentId: string, nodes: TreeCardNode[]): TreeCardNode[] {
-  const together = new Map<string, number>()
-  for (const node of nodes) {
-    const key = node.resource?.variation?.key
-    if (key) together.set(key, (together.get(key) ?? 0) + 1)
-  }
+export function foldVariations(workspace: ReportWorkspace, parentId: string, nodes: TreeCardNode[], place?: Place): TreeCardNode[] {
   const sets = new Map<string, TreeCardNode>()
-  return nodes.flatMap((node) => {
+  const folded = nodes.flatMap((node) => {
     const key = node.resource?.variation?.key
     const set = key ? workspace.byKey.get(key) : undefined
-    if (!key || !set || (together.get(key) ?? 0) < 2) return [node]
+    if (!key || set?.kind !== 'variation') return [node]
     const existing = sets.get(key)
     if (existing) {
       existing.children.push({ ...node, inSet: true })
       return []
     }
-    const holder: TreeCardNode = { id: `${parentId}>${key}`, title: set.title, resource: set, children: [{ ...node, inSet: true }] }
+    const holder: TreeCardNode = { id: `${parentId}>${key}`, title: set.title, resource: set, place, children: [{ ...node, inSet: true }] }
     sets.set(key, holder)
     return [holder]
   })
+  if (place) {
+    for (const holder of sets.values()) {
+      const set = holder.resource
+      if (set?.kind !== 'variation') continue
+      const here = new Set(holder.children.map(child => child.resource?.key))
+      const absent = set.alternatives.flatMap(item => { const alternative = workspace.byKey.get(item.key); return alternative && !here.has(item.key) ? [alternative] : [] })
+        .sort((a, b) => a.title.localeCompare(b.title, 'en'))
+      holder.children.push(...absent.map(alternative => ({ id: `${holder.id}>${alternative.key}`, title: alternative.title, resource: alternative, inSet: true, absentFrom: place, children: [] })))
+    }
+  }
+  return folded
 }
 
 /** A Screen's nested Screens, resolved in authored order. */
@@ -94,31 +108,27 @@ export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView)
 
 /**
  * What happens at a place, as items in its own branch. First what it
- * delivers: a Screen's own Capabilities; an Experience's or Interface's gap,
+ * delivers: a Screen's own Capabilities; an Experience's or Interface's,
  * available there and on no Screen of its own; or, for an Interface with no
- * Screens, delivered directly. Every Capability of one place carries the same
- * one of those, so a gap or a direct delivery is said once, as the group
- * holding them, never on each row. Under each Capability sit its own Scenarios
+ * Screens, delivered directly. The branch says which by where the rows sit —
+ * beside the place's Screens, never under one — so no group repeats it.
+ * Under each Capability sit its own Scenarios
  * with a Step placed exactly on this place. Then the Journeys passing through:
  * a Journey Scenario belongs to its Journey, not to a Capability its Steps
- * use, so it sits under its Journey, noted with the Steps taken here, and each
- * appears once. All are occurrences, so an id is the path of keys.
+ * use, so it sits under its Journey, and each appears once. All are occurrences, so an id is the path of keys.
  */
 function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): TreeCardNode[] {
   const delivered = placeDelivery(workspace, place)
-  const leaves = delivered.map(({ capability, scenarios }) => {
+  /* Alternatives delivered at one place meet here, so they fold under their set like any siblings. */
+  const leaves = foldVariations(workspace, place.key, delivered.map(({ capability, scenarios }) => {
     const id = `${place.key}>${capability.key}`
-    return { ...leaf(capability, foldVariations(workspace, id, scenarios.map(scenario => ({ ...leaf(scenario), id: `${id}>${scenario.key}` })))), id }
-  })
-  const note = delivered[0]?.note
-  const journeys = placeJourneys(workspace, place).map(({ journey, scenarios }) => {
+    return { ...leaf(capability, foldVariations(workspace, id, scenarios.map(scenario => ({ ...leaf(scenario), id: `${id}>${scenario.key}` })), place)), id }
+  }), place)
+  const journeys = foldVariations(workspace, place.key, placeJourneys(workspace, place).map(({ journey, scenarios }) => {
     const id = `${place.key}>${journey.key}`
-    return { ...leaf(journey, foldVariations(workspace, id, scenarios.map(({ scenario, steps }) => ({ ...leaf(scenario), id: `${id}>${scenario.key}`, note: `${stepsLabel(steps)} here` })))), id }
-  })
-  return [
-    ...(!note || note === 'own' ? leaves : [{ ...group(`${place.key}:${note}`, 'capability', leaves), title: note === 'gap' ? 'Available here, on no Screen' : 'Delivered directly' }]),
-    ...journeys
-  ]
+    return { ...leaf(journey, foldVariations(workspace, id, scenarios.map(({ scenario }) => ({ ...leaf(scenario), id: `${id}>${scenario.key}` })), place)), id }
+  }), place)
+  return [...leaves, ...journeys]
 }
 
 /** One hierarchy for collection cards and focused containment readings. */
@@ -127,16 +137,16 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
      Its own Capabilities come first, then the Screens nested inside it. */
   const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, [
     ...deliveryLeaves(workspace, screen),
-    ...foldVariations(workspace, screen.key, childScreens(workspace, screen).map(screenLeaf))
+    ...foldVariations(workspace, screen.key, childScreens(workspace, screen).map(screenLeaf), screen)
   ])
   const screensOf = (owner: AnyResourceView) => ownedScreens(workspace, owner)
-  const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', foldVariations(workspace, `${owner.key}:screens`, screensOf(owner).map(screenLeaf)))
+  const screenGroup = (owner: Place) => group(`${owner.key}:screens`, 'screen', foldVariations(workspace, `${owner.key}:screens`, screensOf(owner).map(screenLeaf), owner))
   if (resource.kind === 'interface') {
     const experiences = workspace.experiences.filter(item => item.interfaceIds.includes(resource.id))
     const screens = screenGroup(resource)
     if (experiences.length) screens.title = 'Shared Screens'
     return [
-      group(`${resource.key}:experiences`, 'experience', foldVariations(workspace, `${resource.key}:experiences`, experiences.map(experience => leaf(experience, [...deliveryLeaves(workspace, experience), ...[screenGroup(experience)].filter(node => node.children.length)])))),
+      group(`${resource.key}:experiences`, 'experience', foldVariations(workspace, `${resource.key}:experiences`, experiences.map(experience => leaf(experience, [...deliveryLeaves(workspace, experience), ...[screenGroup(experience)].filter(node => node.children.length)])), resource)),
       screens
     ].filter(node => node.children.length).concat(deliveryLeaves(workspace, resource))
   }
@@ -196,6 +206,8 @@ const KIND_ORDER = Object.keys(ENTITY_KIND_META) as ReportResourceKind[]
 export function insideSummary(node: TreeCardNode): InsideCount[] {
   const found = new Map<ReportResourceKind, Set<string>>()
   const walk = (child: TreeCardNode) => {
+    /* A struck alternative is not here, so it is never something found below. */
+    if (child.absentFrom) return
     const resource = child.resource
     /* A Variation node is membership, not something found below: only its alternatives count. */
     if (resource && resource.kind !== node.groupKind && resource.kind !== 'variation') found.set(resource.kind, (found.get(resource.kind) ?? new Set()).add(resource.key))
