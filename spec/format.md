@@ -318,16 +318,23 @@ future format revision, but Context is not an arbitrary metadata bag.
   further rules bind ids to vocabulary the model already declares.
 
   **A behavioral id's noun half names something the model declares.** When the
-  noun half is the suffix of an Entity, Domain, Interface, Experience, or
-  Screen id in the same model, use the declared name — `install-agent-skills`,
-  not `install-skills`. `lint` warns otherwise. It only fires where the author
-  has declared the fuller term, so it never invents vocabulary.
+  noun half is the suffix of an Entity, Domain, or Interface id in the same
+  model, use the declared name — `install-agent-skills`, not `install-skills`.
+  `lint` warns otherwise. It only fires where the author has declared the
+  fuller term, so it never invents vocabulary, and stays silent when two
+  declared names share the noun half, which then names their category
+  (`send-message` beside channel and direct messages). Experiences and Screens are
+  places, not the things a behavior acts on, so their names are never
+  suggested: `reset-password` is not told to become a `forgot-password` Screen.
 
   **A cross-cutting id never opens with a verb.** Entity, Domain, and Business
   Rule ids name what something *is* or what must remain true, so they read as
   nouns and assertions rather than commands: `refunds-apply-only-to-existing-orders`,
   not `refund-existing-orders`. A single-segment id such as `order` is a noun by
-  construction and is never flagged.
+  construction and is never flagged. `lint` flags an id whose first word is a
+  verb followed by something the model declares — `cancel-unpaid-orders` with
+  an Order Entity — and leaves compound nouns whose first word can be a verb,
+  such as `pull-request` or `sign-in`, alone.
  The one
   exception is `product.md`, whose `id:` names the Product Model (it may differ
   from the repo name) and is limited to 64 characters. Compacting or expanding
@@ -454,22 +461,24 @@ order's own delivery option — is state the behavior meets, and a `condition`
 Step or a decision point reads it, even when an earlier Step or an
 administrator set it.
 
-**Scenarios vary only when what an Actor does differs, and one setting alone
-decides it.** A setting that changes an Actor's Steps — one skipped, one added,
-a different place or input — selects Scenario alternatives: sign-in that starts
-at the only provider automatically drops the Actor's choice of provider. When
-two or more settings would each vary or split the same Scenario, whether they
-change the Actor's Steps or the outcome — a captcha and a provider password on
-one registration — none of them makes a Variation; each is a decision point, so
-no Scenario needs a set per combination. A setting that changes only the
-Product's own Steps — whether group sync replaces a User's Roles or adds to them
-— is a decision point in one Scenario. The one exception is a Step that must
-name a different alternative of another Variation, which varies with it: issuing
-a VAT invoice or a sales tax receipt. When a Product-only setting changes the
-outcome — registration that requires email confirmation leaves the account
-inactive, whose confirming is a Capability of its own; an unknown social account
-is registered or refused — the branches are separate Scenarios, each with a
-`condition` Step reading the setting, and still no Variation. A decision point
+**Scenarios vary only when what an Actor does differs, and one choice decides
+it, even when several settings combine to make that choice.** A setting that
+changes an Actor's Steps — one skipped, one added, a different place or input —
+selects Scenario alternatives: sign-in that starts at the only provider
+automatically drops the Actor's choice of provider. When two or more settings
+would each vary or split the same Scenario, whether they change the Actor's
+Steps or the outcome — a captcha and a provider password on one registration —
+none of them makes a Variation; each is a decision point, so no Scenario needs a
+set per combination. A setting that changes only the Product's own Steps —
+whether group sync replaces a User's Roles or adds to them — is a decision point
+in one Scenario. The one exception is a Step that must name a different
+alternative of another Variation, which varies with it: issuing a VAT invoice or
+a sales tax receipt. When a Product-only setting changes the outcome —
+registration that requires email confirmation leaves the account inactive, whose
+confirming is a Capability of its own; an unknown social account is registered
+or refused — the branches are separate Scenarios, each with a `condition` Step
+reading the setting, and still no Variation. If another setting also varies or
+splits that Scenario, each setting is a decision point instead. A decision point
 is also any choice or branch made during one run, and the unconfirmed account
 that sign-in later meets is state.
 
@@ -1371,22 +1380,31 @@ set alone does not decide it.
 Capabilities when they differ in who may do them (a permission of their own),
 where they are offered (availability), or in verb. Neither a different Actor —
 the same Capability is offered in every Experience it is used from — nor a
-Business Rule governing one part splits it. Ways of doing one verb that share
-all of those are Scenarios of one Capability, even when each creates a different
-Entity: adding an authenticator app or backup codes as a second factor is one
-Capability. Ways a setting selects between follow the Variation rules instead: a
-sign-in method the deployment selects makes one Capability per method, while
-methods that coexist, the Actor choosing one at sign-in, are Scenarios of one.
-The Steps of one run are one Capability, including a link or code the run sends
-when the run has no outcome for the Actor without it: requesting a password
-reset and choosing the new password are one, and resending the link is a
-Scenario of it. A later act on something a run already produced — confirming the
-email of an account that exists — is its own Capability. A continuation shared
-by several Capabilities — entering a second factor after any sign-in method — is
-its own Capability: the Capabilities it continues end their Scenarios at the
-hand-off and say so in their Outcome, the shared one starts its Scenarios from
-that state, and a Journey joins them, because no Capability Scenario names
-another Capability.
+Business Rule that only constrains one part — a time limit, an invariant —
+splits it: a permission of its own means a separate grant of who may do it. Ways
+of doing one verb that share all of those are Scenarios of one Capability, even
+when each creates a different Entity: adding an authenticator app or backup
+codes as a second factor is one Capability. Ways a setting selects between
+follow the Variation rules instead: a sign-in method the deployment selects
+makes one Capability per method, while methods that coexist, the Actor choosing
+one at sign-in, are Scenarios of one. A method a setting adds beside the others
+still coexists with them: it is a Scenario of that Capability, and a Business
+Rule without grants says it exists only while enabled. The Steps of one run are
+one Capability, including a link or code the run sends when the run has no
+outcome for the Actor without it: requesting a password reset and choosing the
+new password are one, and resending the link is a Scenario of it. A later act on
+something a run already produced — confirming the email of an account that
+exists — is its own Capability. Settings in one section of the Product's
+navigation are one Capability however the screen saves them — each field on its
+own or one Save button — and settings in different sections are separate
+Capabilities: all notification settings are one. The same verb reached from
+another context is the same Capability, available there too: changing a password
+the Product requires at sign-in is Change password, joined to sign-in by a
+Journey. A continuation shared by several Capabilities — entering a second
+factor after any sign-in method — is its own Capability: the Capabilities it
+continues end their Scenarios at the hand-off and say so in their Outcome, the
+shared one starts its Scenarios from that state, and a Journey joins them,
+because no Capability Scenario names another Capability.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 

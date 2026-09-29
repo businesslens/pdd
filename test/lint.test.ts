@@ -1386,19 +1386,29 @@ Lead.
     // `order` and `refund` name Entities here, so these open with a noun.
     entity('order-line', 'Order line')
     entity('refund-request', 'Refund request')
-    // `ship` names nothing in this model, so this one does open with a verb.
+    // A compound noun whose first word can be a verb is still a noun.
     entity('ship-manifest', 'Ship manifest')
+    // A verb acting on something the model declares reads as a command.
+    entity('cancel-orders', 'Cancel orders')
     // The spec's own counter-example: `order` is a thing, so the id carries no verb.
     cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/order-management'), { recursive: true })
+    // The noun half is matched against things, never against a Screen's name:
+    // `record` ends the `product-record` Screen but names no Entity.
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/browse-record'), { recursive: true })
+    // `product` ends the `catalog-product` Entity, so the declared name is suggested.
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/price-product'), { recursive: true })
     // Scenarios are behavioural ids too.
     cpSync(join(bl, 'capabilities/manage-orders/scenarios/refund-order.md'), join(bl, 'capabilities/manage-orders/scenarios/refund-processing.md'))
 
     const warnings = run(cwd).warnings.join('\n')
     expect(warnings).not.toContain('"order-line" opens with a verb')
     expect(warnings).not.toContain('"refund-request" opens with a verb')
-    expect(warnings).toContain('Entity id "ship-manifest" opens with a verb')
+    expect(warnings).not.toContain('"ship-manifest" opens with a verb')
+    expect(warnings).toContain('Entity id "cancel-orders" opens with a verb')
     expect(warnings).toContain('Capability id "order-management" reads as a noun phrase')
     expect(warnings).toContain('Capability Scenario id "refund-processing" reads as a noun phrase')
+    expect(warnings).not.toContain('"browse-record" names "record"')
+    expect(warnings).toContain('Capability id "price-product" names "product" where this model declares "catalog-product"')
   })
 
   it('warns on a Rule that governs exactly one behaviour with no narrowing', () => {

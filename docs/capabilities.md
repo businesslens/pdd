@@ -69,10 +69,11 @@ label, or sequence step that has no durable Product meaning.
 A Capability is the smallest durable behavior that remains independently
 meaningful, not necessarily the smallest button, API operation, or code
 function. **The contract decides how many there are.** Parts of an ability are
-separate Capabilities when they differ in who may do them (a permission of
-their own), where they are offered (availability), or in verb. A different
-Actor does not split one — it is offered in every Experience it is used from —
-and neither does a Business Rule that governs only one part:
+separate Capabilities when they differ in who may do them (a permission of their
+own), where they are offered (availability), or in verb. A different Actor does
+not split one — it is offered in every Experience it is used from — and neither
+does a Business Rule that only constrains one part, such as a time limit. A
+permission of its own means a separate grant of who may do it:
 
 | What you see | Capabilities |
 | --- | --- |
@@ -81,13 +82,17 @@ and neither does a Business Rule that governs only one part:
 | Adding an authenticator app or backup codes as a second factor | One: ways of doing one verb, even though each creates a different Entity |
 | Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, which has no outcome without the link |
 | Confirming the email of an account that already exists | Its own: a later act on something a run produced |
+| Notification settings, each saved on its own as it changes | One: settings in one section of the Product's navigation are one Capability, however the screen saves them |
+| Changing a password the Product requires at sign-in | The same Change password Capability, available there too, joined to sign-in by a Journey |
 | Entering a second factor after any sign-in method | Its own: a continuation several Capabilities share. Each sign-in ends its Scenario at the hand-off, and a Journey joins them |
 | Filtering, sorting and searching a list | Scenarios of the browsing Capability, unless one differs by contract |
 
 Ways a setting selects between follow the [Variation](./variations.md) rules
 instead: a sign-in method the deployment selects makes one Capability per
 method, while methods that coexist, the Actor choosing one at sign-in, are
-Scenarios of one. Splitting neither creates nor removes a
+Scenarios of one. A method a setting adds beside the others still coexists with
+them: it is a Scenario of that Capability, and a Business Rule without grants
+says it exists only while enabled. Splitting neither creates nor removes a
 [Domain](./domains.md): the four repository Capabilities were about Repositories
 before the split.
 

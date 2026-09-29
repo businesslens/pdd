@@ -20,7 +20,12 @@ export function undeclaredEntityMentions(
   const covered = entities
     .filter(entity => entity.title && (declared.has(entity.id) || entity.id === actorId))
     .flatMap(entity => titleSpans(entity.title))
+  /* The longest title wins: "invitation link" names the Invitation link, not
+     also the Invitation, whether or not the longer one is declared. */
+  const spans = entities.filter(entity => entity.title).map(entity => ({ id: entity.id, spans: titleSpans(entity.title) }))
+  const shadowed = (id: string, [start, end]: [number, number]) => spans.some(other => other.id !== id
+    && other.spans.some(([from, to]) => from <= start && end <= to && to - from > end - start))
   return entities.filter(entity => entity.title && !declared.has(entity.id) && entity.id !== actorId
-    && titleSpans(entity.title).some(([start, end]) =>
-      !covered.some(([from, to]) => from <= start && end <= to)))
+    && titleSpans(entity.title).some(span =>
+      !shadowed(entity.id, span) && !covered.some(([from, to]) => from <= span[0] && span[1] <= to)))
 }

@@ -76,13 +76,19 @@ unavailable. The rest of the border classifies what you find:
   or Experience.
 - **Journeys and browsing.** A wizard is a Journey only when its Scenario
   crosses Capabilities. Ordinary filtering, sorting and searching are Scenarios
-  of the browsing Capability unless they differ by contract — the split test
-  in the format reference: a permission, availability or verb of their own.
-  Ways of doing one verb that share all of those are Scenarios of one
-  Capability, and the Steps of one run, including a link the run sends to
-  finish it, are one Capability. A continuation several Capabilities share is
-  its own: each ends its Scenarios at the hand-off, stated in their Outcome,
-  and a Journey joins them.
+  of the browsing Capability unless they differ by contract — the split test in
+  the format reference: a permission (a separate grant of who may), availability
+  or verb of their own; a Rule that only constrains one part does not split it.
+  Settings in one section of the Product's navigation are one Capability however
+  the screen saves them — each field on its own or one Save button — and
+  settings in different sections are separate Capabilities: all notification
+  settings are one. The same verb reached from another context is the same
+  Capability, available there too: changing a password the Product requires at
+  sign-in is Change password, joined to sign-in by a Journey. Ways of doing one
+  verb that share all of those are Scenarios of one Capability, and the Steps of
+  one run, including a link the run sends to finish it, are one Capability. A
+  continuation several Capabilities share is its own: each ends its Scenarios at
+  the hand-off, stated in their Outcome, and a Journey joins them.
 - **Languages.** `languages` belongs to the Product, optionally narrowed by an
   Interface. Content kept in several languages is an Entity fact, and how a
   language is chosen for someone is a kept fact such as *Preferred language*
@@ -105,24 +111,29 @@ unavailable. The rest of the border classifies what you find:
   when someone set it earlier: a page's own editor format is a condition of
   editing, while a sign-in method the deployment selects makes each method a
   Capability in a Variation; methods that coexist, the Actor choosing one at
-  sign-in, are Scenarios of one Capability. Scenarios vary only when what an
-  Actor does differs and one setting alone decides it: sign-in that starts at
-  the only provider automatically drops the Actor's choice, so it selects
-  Scenario alternatives. When two or more settings would each vary or split the
-  same Scenario, whether they change the Actor's Steps or the outcome — a
-  captcha and a provider password on one registration — none makes a Variation;
-  each is a decision point. A setting that changes only the Product's own Steps
-  — group sync replacing or adding Roles — is a decision point in one Scenario,
-  as is any choice made during a run; the one exception is a Step that must name
-  a different alternative of another Variation, which varies with it. When such
-  a setting changes the outcome — registration requiring email confirmation
-  leaves the account inactive, an unknown social account is registered or
-  refused — the branches are separate Scenarios, each with a `condition` Step
-  reading the setting, not a Variation. The unconfirmed account sign-in later
-  meets is state. A resource that exists only under some alternatives or only
-  while a setting enables it (registration while the sign-in method is password;
-  social sign-in while a provider is configured) stays ordinary; a Business Rule
-  without `permits` applying to it names the Variation or the setting.
+  sign-in, are Scenarios of one Capability. A method a setting adds beside the
+  others still coexists with them: it is a Scenario of that Capability, and a
+  Business Rule without grants says it exists only while enabled. Scenarios vary
+  only when what an Actor does differs and one choice decides it, even when
+  several settings combine to make that choice: sign-in that starts at the only
+  provider automatically drops the Actor's choice, so it selects Scenario
+  alternatives. When two or more settings would each vary or split the same
+  Scenario, whether they change the Actor's Steps or the outcome — a captcha and
+  a provider password on one registration — none makes a Variation; each is a
+  decision point. A setting that changes only the Product's own Steps — group
+  sync replacing or adding Roles — is a decision point in one Scenario, as is
+  any choice made during a run; the one exception is a Step that must name a
+  different alternative of another Variation, which varies with it. When such a
+  setting changes the outcome — registration requiring email confirmation leaves
+  the account inactive, an unknown social account is registered or refused — the
+  branches are separate Scenarios, each with a `condition` Step reading the
+  setting, not a Variation. If another setting also varies or splits that
+  Scenario, each setting is a decision point instead. The unconfirmed account
+  sign-in later meets is state. A resource that exists only under some
+  alternatives or only while a setting enables it (registration while the
+  sign-in method is password; social sign-in while a provider is configured)
+  stays ordinary; a Business Rule without `permits` applying to it names the
+  Variation or the setting.
 - **Every context it is used from.** A Capability is available in every
   Experience in which one of its Actors uses it — guests reading pages in a
   public Experience and signed-in Users in an authenticated one — never only

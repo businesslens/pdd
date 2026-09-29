@@ -486,18 +486,18 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   // as verb-noun however it ends — `publish-and-share-a-collection` is fine —
   // so only a nominalised id with no verb in it is flagged.
   const PRODUCT_VERBS = new Set([
-    'add', 'answer', 'apply', 'approve', 'archive', 'assign', 'back', 'block', 'book', 'browse', 'build',
+    'accept', 'activate', 'add', 'allow', 'answer', 'apply', 'approve', 'archive', 'assign', 'back', 'block', 'book', 'browse', 'build',
     'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
-    'configure', 'confirm', 'connect', 'contribute', 'create', 'decide', 'decline', 'delete',
-    'deliver', 'discover', 'edit', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
+    'configure', 'confirm', 'connect', 'contribute', 'create', 'deactivate', 'decide', 'decline', 'delete',
+    'deliver', 'disable', 'discover', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
     'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
-    'keep', 'leave', 'link', 'lint', 'list', 'manage', 'map', 'mark', 'merge', 'move', 'name',
+    'keep', 'leave', 'link', 'lint', 'list', 'log', 'manage', 'map', 'mark', 'merge', 'move', 'name',
     'open', 'order', 'organize', 'pause', 'pay', 'place', 'plan', 'preserve', 'publish', 'pull',
-    'read', 'receive', 'recover', 'refresh', 'refund', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
-    'report', 'request', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
+    'read', 'receive', 'recover', 'refresh', 'refund', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
+    'report', 'request', 'resend', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
     'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
     'share', 'ship', 'show', 'sign', 'start', 'stop', 'submit', 'subscribe', 'switch',
-    'synchronize', 'track', 'transfer', 'unfollow', 'unlist', 'update', 'upload', 'verify',
+    'synchronize', 'track', 'transfer', 'unfollow', 'unlink', 'unlist', 'update', 'upload', 'verify',
     'view', 'withdraw', 'write'
   ])
   /*
@@ -511,6 +511,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const leaf = resource.id.split('::').pop()
     if (leaf) nounVocabulary.add(leaf)
   }
+  const thingVocabulary = new Set([...model.entities, ...model.domains, ...model.interfaces].map(resource => resource.id))
   // A word this model declares as a thing is read as that thing, not as a verb:
   // `order` in `order-management` names the Order, so the id carries no verb.
   const isVerbSegment = (segment: string) => PRODUCT_VERBS.has(segment) && !nounVocabulary.has(segment)
@@ -549,11 +550,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // Suffix only. A declared term that merely *starts* with the noun half is
     // usually a different thing — `blueprint-portability` is a Domain, and
     // `contribute-blueprint` is correctly about a blueprint, not about the Domain.
-    const fuller = [...nounVocabulary]
-      .filter(term => term.endsWith(`-${object}`))
-      // Prefer the plain leaf: an id is written unqualified, so suggesting
-      // `local-report-web::product-topology` would not be usable as one.
-      .sort((left, right) => left.length - right.length)[0]
+    // Only things a behavior acts on: an Experience or Screen names a place.
+    const candidates = [...thingVocabulary]
+      .filter(term => term.endsWith(`-${object}`) && term !== resource.id)
+    // Two declared kinds sharing the noun make it their category:
+    // `send-message` beside channel and direct messages names both.
+    const fuller = candidates.length === 1 ? candidates[0] : undefined
     if (fuller) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" names "${object}" where this model declares "${fuller}"; use the declared name`
@@ -577,7 +579,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // though the same word is a verb elsewhere.
     if (segments.length < 2) continue
     const first = segments[0] || ''
-    if (isVerbSegment(first)) {
+    // A verb only commands when it acts on something the model declares:
+    // `cancel-unpaid-orders` does, while `pull-request` and `sign-in` are nouns.
+    const actsOnDeclared = segments.slice(1).some(segment => nounVocabulary.has(segment) || nounVocabulary.has(segment.replace(/s$/, '')))
+    if (isVerbSegment(first) && actsOnDeclared) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
       )

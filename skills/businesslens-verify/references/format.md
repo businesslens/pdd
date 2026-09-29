@@ -153,21 +153,30 @@ not contain another H1 or H2.
   their own), where they are offered (availability), or in verb — create,
   configure, archive and delete are four. A different Actor does not split one
   (it is offered in every Experience it is used from), and neither does a
-  Business Rule governing only one part. Ways of doing one verb that share all
-  of those are Scenarios of one Capability, even when each creates a different
-  Entity: adding an authenticator app or backup codes as a second factor is one
-  Capability. Ways a setting selects between follow the Variation rules instead:
-  a sign-in method the deployment selects makes one Capability per method, while
-  methods that coexist, the Actor choosing one at sign-in, are Scenarios of one.
-  The Steps of one run are one Capability, including a link or code the run
-  sends when the run has no outcome for the Actor without it: requesting a
-  password reset and choosing the new password are one, and resending the link
-  is a Scenario of it. A later act on something a run already produced —
-  confirming the email of an account that exists — is its own Capability. A
-  continuation shared by several Capabilities (entering a second factor after
-  any sign-in method) is its own Capability: the ones it continues end their
-  Scenarios at the hand-off, stating it in their Outcome, and a Journey joins
-  them, since no Capability Scenario names another Capability.
+  Business Rule that only constrains one part (a time limit, an invariant); a
+  permission of its own means a separate grant of who may do it. Ways of doing
+  one verb that share all of those are Scenarios of one Capability, even when
+  each creates a different Entity: adding an authenticator app or backup codes
+  as a second factor is one Capability. Ways a setting selects between follow
+  the Variation rules instead: a sign-in method the deployment selects makes one
+  Capability per method, while methods that coexist, the Actor choosing one at
+  sign-in, are Scenarios of one. A method a setting adds beside the others still
+  coexists with them: it is a Scenario of that Capability, and a Business Rule
+  without grants says it exists only while enabled. The Steps of one run are one
+  Capability, including a link or code the run sends when the run has no outcome
+  for the Actor without it: requesting a password reset and choosing the new
+  password are one, and resending the link is a Scenario of it. A later act on
+  something a run already produced — confirming the email of an account that
+  exists — is its own Capability. Settings in one section of the Product's
+  navigation are one Capability however the screen saves them — each field on
+  its own or one Save button — and settings in different sections are separate
+  Capabilities: all notification settings are one. The same verb reached from
+  another context is the same Capability, available there too: changing a
+  password the Product requires at sign-in is Change password, joined to sign-in
+  by a Journey. A continuation shared by several Capabilities (entering a second
+  factor after any sign-in method) is its own Capability: the ones it continues
+  end their Scenarios at the hand-off, stating it in their Outcome, and a
+  Journey joins them, since no Capability Scenario names another Capability.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A
@@ -186,8 +195,10 @@ not contain another H1 or H2.
   re-cut, merge or rename them.
 - Naming: a behavioral id's noun half names something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
-  Interface. Entity, Domain and Business Rule ids never open with a verb; they
-  name what a thing is or what must remain true.
+  Interface; the noun half comes from an Entity, Domain or Interface, never a
+  Screen name. Entity, Domain and Business Rule ids never open with a verb;
+  they name what a thing is or what must remain true. A compound noun whose
+  first word can be a verb (`pull-request`, `sign-in`) is a noun.
 - Entity: H1, lead description, and at least one of `## Information kept`,
   `## States`, and `acts`. `## Information kept` is a bullet list of **named**
   single-line facts, each `- **Name** — prose` with an em dash as the only
@@ -658,28 +669,30 @@ Rules name one concrete alternative, so a varying Entity carries into the
 Scenarios that touch it, selected the same way; when only the path differs, vary
 the Scenarios and keep one Entity with every State.
 
-**What selects decides it.** A Variation chooses by a fact that exists to
-choose — a setting, an experiment assignment, a version discriminator — or by
-the deployment, fixed before the behavior starts. A fact describing the thing
-the behavior acts on (a page's own editor format) is state: a `condition` Step
-or decision point reads it, even when someone set it earlier. Scenarios vary
-only when what an Actor does differs and one setting alone decides it: sign-in
-that starts at the only provider automatically drops the Actor's choice, so it
-selects the sign-in Scenario. When two or more settings would each vary or split the
-same Scenario, whether they change the Actor's Steps or the outcome (a captcha and a provider password on one registration), none
-makes a Variation; each is a decision point. A setting changing only the
-Product's own Steps (group sync replacing or adding Roles) is a decision point
-in one Scenario, as is any choice made during a run — except a Step that must
-name a different alternative of another Variation (a VAT invoice or a sales tax
-receipt), which varies with it. A Product-only setting that changes the outcome
-(registration requiring email confirmation leaves the account inactive; an
-unknown social account is registered or refused) makes separate Scenarios with
-a `condition` Step, never a Variation. The
-unconfirmed account sign-in later meets is state. A resource that exists only
-under some alternatives or only while a setting enables it (registration while
-the sign-in method is password; social sign-in while a provider is configured)
-stays ordinary, and a Business Rule without `permits` applying to it names the
-Variation or the setting in its lead.
+**What selects decides it.** A Variation chooses by a fact that exists to choose
+— a setting, an experiment assignment, a version discriminator — or by the
+deployment, fixed before the behavior starts. A fact describing the thing the
+behavior acts on (a page's own editor format) is state: a `condition` Step or
+decision point reads it, even when someone set it earlier. Scenarios vary only
+when what an Actor does differs and one choice decides it, even when several
+settings combine to make that choice: sign-in that starts at the only provider
+automatically drops the Actor's choice, so it selects the sign-in Scenario. When
+two or more settings would each vary or split the same Scenario, whether they
+change the Actor's Steps or the outcome (a captcha and a provider password on
+one registration), none makes a Variation; each is a decision point. A setting
+changing only the Product's own Steps (group sync replacing or adding Roles) is
+a decision point in one Scenario, as is any choice made during a run — except a
+Step that must name a different alternative of another Variation (a VAT invoice
+or a sales tax receipt), which varies with it. A Product-only setting that
+changes the outcome (registration requiring email confirmation leaves the
+account inactive; an unknown social account is registered or refused) makes
+separate Scenarios with a `condition` Step, never a Variation. If another
+setting also varies or splits that Scenario, each setting is a decision point
+instead. The unconfirmed account sign-in later meets is state. A resource that
+exists only under some alternatives or only while a setting enables it
+(registration while the sign-in method is password; social sign-in while a
+provider is configured) stays ordinary, and a Business Rule without `permits`
+applying to it names the Variation or the setting in its lead.
 
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.
