@@ -1381,18 +1381,21 @@ Capabilities when they differ in who may do them (a permission of their own),
 where they are offered (availability), or in verb. Neither a different Actor —
 the same Capability is offered in every Experience it is used from — nor a
 Business Rule that only constrains one part — a time limit, an invariant —
-splits it: a permission of its own means a separate grant of who may do it. Ways
-of doing one verb that share all of those are Scenarios of one Capability, even
-when each creates a different Entity: adding an authenticator app or backup
-codes as a second factor is one Capability. Ways a setting selects between
-follow the Variation rules instead: a sign-in method the deployment selects
-makes one Capability per method, while methods that coexist, the Actor choosing
-one at sign-in, are Scenarios of one. A method a setting adds beside the others
-still coexists with them: it is a Scenario of that Capability, and a Business
-Rule without grants says it exists only while enabled. The Steps of one run are
-one Capability, including a link or code the run sends when the run has no
-outcome for the Actor without it: requesting a password reset and choosing the
-new password are one, and resending the link is a Scenario of it. A later act on
+splits it: a permission of its own means a separate grant of who may do it.
+Parts that differ only in which grant applies, told apart by a fact of the thing
+they act on — a channel's privacy, whether a message is the Actor's own — are
+one Capability whose grants carry that condition in `when`. Ways of doing one
+verb that share all of those are Scenarios of one Capability, even when each
+creates a different Entity: adding an authenticator app or backup codes as a
+second factor is one Capability. Ways a setting selects between follow the
+Variation rules instead: a sign-in method the deployment selects makes one
+Capability per method, while methods that coexist, the Actor choosing one at
+sign-in, are Scenarios of one. A method a setting adds beside the others still
+coexists with them: it is a Scenario of that Capability, and a Business Rule
+without grants says it exists only while enabled. The Steps of one run are one
+Capability, including a link or code the run sends when the run has no outcome
+for the Actor without it: requesting a password reset and choosing the new
+password are one, and resending the link is a Scenario of it. A later act on
 something a run already produced — confirming the email of an account that
 exists — is its own Capability. Settings in one section of the Product's
 navigation are one Capability however the screen saves them — each field on its
@@ -1730,7 +1733,9 @@ shipped set of roles is a closed vocabulary: Entities that act, and
 `permits.actors` works directly. User-defined roles created at runtime are
 instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
 and this layer constrains who may create one — never one Entity per customer
-role. ABAC policies on attributes are likewise an Entity `Policy` and the
+role. A relation that holds whatever role a person has — the sender of a message — is
+declared to each role Entity that can hold it, and ownership is one `related`
+grant per role: *the sender, if a Member*, *the sender, if a Moderator*. ABAC policies on attributes are likewise an Entity `Policy` and the
 Capabilities that define and evaluate it.
 
 **What `lint` checks.** `lint` checks structural eligibility. It cannot prove

@@ -79,14 +79,17 @@ unavailable. The rest of the border classifies what you find:
   of the browsing Capability unless they differ by contract — the split test in
   the format reference: a permission (a separate grant of who may), availability
   or verb of their own; a Rule that only constrains one part does not split it.
-  Settings in one section of the Product's navigation are one Capability however
-  the screen saves them — each field on its own or one Save button — and
-  settings in different sections are separate Capabilities: all notification
-  settings are one. The same verb reached from another context is the same
-  Capability, available there too: changing a password the Product requires at
-  sign-in is Change password, joined to sign-in by a Journey. Ways of doing one
-  verb that share all of those are Scenarios of one Capability, and the Steps of
-  one run, including a link the run sends to finish it, are one Capability. A
+  Parts that differ only in which grant applies, told apart by a fact of the
+  thing they act on — a channel's privacy, whether a message is the Actor's own
+  — are one Capability whose grants carry that condition in `when`. Settings in
+  one section of the Product's navigation are one Capability however the screen
+  saves them — each field on its own or one Save button — and settings in
+  different sections are separate Capabilities: all notification settings are
+  one. The same verb reached from another context is the same Capability,
+  available there too: changing a password the Product requires at sign-in is
+  Change password, joined to sign-in by a Journey. Ways of doing one verb that
+  share all of those are Scenarios of one Capability, and the Steps of one run,
+  including a link the run sends to finish it, are one Capability. A
   continuation several Capabilities share is its own: each ends its Scenarios at
   the hand-off, stated in their Outcome, and a Journey joins them.
 - **Languages.** `languages` belongs to the Product, optionally narrowed by an

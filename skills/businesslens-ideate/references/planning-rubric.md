@@ -8,10 +8,14 @@
 
 ## Resources
 
-- An Actor is a role, not a resource type: an Entity that carries
-  `kind: person|system` and `acts: external|internal`, relative to the Product
+- An Actor is a role, not a resource type: an Entity that carries `kind:
+  person|system` and `acts: external|internal`, relative to the Product
   boundary. Actors differ by Product goals, triggers, responsibilities, or
-  privileges; two roles with the same goals and permissions are one Entity.
+  privileges; two roles with the same goals and permissions are one Entity. A
+  fixed, shipped set of roles is one Entity that acts per role, never one person
+  Entity with a Role fact; roles created at runtime are one `Role` Entity with a
+  lifecycle. A relation that holds whatever the role (the sender of a message)
+  is declared to each role Entity, with one `related` grant per role.
 - Interfaces are supported interaction contracts. Decide web, mobile, CLI,
   partner API, and integration commitments independently; internal APIs and
   frameworks are not Product Interfaces. Give each Interface exactly one
@@ -132,14 +136,17 @@ its authoritative Reference.
   of the browsing Capability unless they differ by contract — the split test in
   the format reference: a permission (a separate grant of who may), availability
   or verb of their own; a Rule that only constrains one part does not split it.
-  Settings in one section of the Product's navigation are one Capability however
-  the screen saves them — each field on its own or one Save button — and
-  settings in different sections are separate Capabilities: all notification
-  settings are one. The same verb reached from another context is the same
-  Capability, available there too: changing a password the Product requires at
-  sign-in is Change password, joined to sign-in by a Journey. Ways of doing one
-  verb that share all of those are Scenarios of one Capability, and the Steps of
-  one run, including a link the run sends to finish it, are one Capability. A
+  Parts that differ only in which grant applies, told apart by a fact of the
+  thing they act on — a channel's privacy, whether a message is the Actor's own
+  — are one Capability whose grants carry that condition in `when`. Settings in
+  one section of the Product's navigation are one Capability however the screen
+  saves them — each field on its own or one Save button — and settings in
+  different sections are separate Capabilities: all notification settings are
+  one. The same verb reached from another context is the same Capability,
+  available there too: changing a password the Product requires at sign-in is
+  Change password, joined to sign-in by a Journey. Ways of doing one verb that
+  share all of those are Scenarios of one Capability, and the Steps of one run,
+  including a link the run sends to finish it, are one Capability. A
   continuation several Capabilities share is its own: each ends its Scenarios at
   the hand-off, stated in their Outcome, and a Journey joins them.
 - **Languages.** `languages` belongs to the Product, optionally narrowed by an

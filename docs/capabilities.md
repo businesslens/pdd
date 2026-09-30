@@ -73,7 +73,10 @@ separate Capabilities when they differ in who may do them (a permission of their
 own), where they are offered (availability), or in verb. A different Actor does
 not split one — it is offered in every Experience it is used from — and neither
 does a Business Rule that only constrains one part, such as a time limit. A
-permission of its own means a separate grant of who may do it:
+permission of its own means a separate grant of who may do it. Parts that differ
+only in which grant applies, told apart by a fact of the thing they act on — a
+channel's privacy, whether a message is the Actor's own — are one Capability
+whose grants carry that condition in `when`:
 
 | What you see | Capabilities |
 | --- | --- |

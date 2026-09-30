@@ -72,6 +72,13 @@ that contains the Screen: Screens nest, to any depth. There is no `actors/`
 collection: **an Actor is an Entity that `acts`**, and the word names the role
 such an Entity plays on a Step, an Interface, an Experience, a Journey, or a
 Business Rule grant.
+A product's fixed, shipped set of roles (owner, administrator, member, guest) is
+a closed vocabulary: one Entity that acts per role, named in grants' `actors`,
+never one person Entity with a Role fact. Roles people create at runtime are
+instances instead: one `Role` Entity with its own lifecycle and a Capability
+that assigns it, never one Entity per customer role. A relation that holds
+whatever role a person has (the sender of a message) is declared to each role
+Entity that can hold it, and ownership is one `related` grant per role.
 
 IDs are lowercase kebab-case segments. Behavior-hierarchy and cross-cutting ids
 are the bare file or folder name. Qualified ids for Interfaces, Experiences,
@@ -154,11 +161,14 @@ not contain another H1 or H2.
   configure, archive and delete are four. A different Actor does not split one
   (it is offered in every Experience it is used from), and neither does a
   Business Rule that only constrains one part (a time limit, an invariant); a
-  permission of its own means a separate grant of who may do it. Ways of doing
-  one verb that share all of those are Scenarios of one Capability, even when
-  each creates a different Entity: adding an authenticator app or backup codes
-  as a second factor is one Capability. Ways a setting selects between follow
-  the Variation rules instead: a sign-in method the deployment selects makes one
+  permission of its own means a separate grant of who may do it. Parts that
+  differ only in which grant applies, told apart by a fact of the thing they act
+  on — a channel's privacy, whether a message is the Actor's own — are one
+  Capability whose grants carry that condition in `when`. Ways of doing one verb
+  that share all of those are Scenarios of one Capability, even when each
+  creates a different Entity: adding an authenticator app or backup codes as a
+  second factor is one Capability. Ways a setting selects between follow the
+  Variation rules instead: a sign-in method the deployment selects makes one
   Capability per method, while methods that coexist, the Actor choosing one at
   sign-in, are Scenarios of one. A method a setting adds beside the others still
   coexists with them: it is a Scenario of that Capability, and a Business Rule
