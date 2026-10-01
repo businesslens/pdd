@@ -18,7 +18,10 @@
   fixed, shipped set of roles is one Entity that acts per role, never one person
   Entity with a Role fact; roles created at runtime are one `Role` Entity with a
   lifecycle. A relation that holds whatever the role (the sender of a message)
-  is declared to each role Entity, with one `related` grant per role.
+  is declared to each role Entity, with one `related` grant per role. Facts that
+  belong to the person whatever their role — email, display and notification
+  preferences — live once on an Account Entity that does not act, and each role
+  Entity relates to it; they are never copied onto every role.
 - An AI agent harness that loads a skill and acts in the repository is an Entity
   that acts: id `ai-agent`, `kind: system`, `acts: external`. It initiates, it
   reads and writes on the person's behalf, and it chooses what to inspect and
@@ -59,8 +62,8 @@
 - Create Domains from the Product's own sections — its navigation, settings and
   administration areas — one per section holding two or more Capabilities (the
   finest navigation level that still holds two or more; a parent menu is a
-  section only when none of its children is); existing Domains are the author's
-  and are never re-cut.
+  section only when none of its direct children is); existing Domains are the
+  author's and are never re-cut.
 - Capabilities are durable Product abilities, not UI labels, Journey titles, or
   sequence steps. Map availability Contexts to an undivided Interface or an
   Experience only when the repository supports that claim.
@@ -87,8 +90,10 @@
   an emailed link — and none where the Actor merely chooses what to do next.
   Returning the Actor to where they were already going after signing in is not a
   hand-off, and neither is a continuation the Product runs without the Actor,
-  such as merging automatically once checks pass. The test is structural; do not
-  omit a Journey it finds.
+  such as merging automatically once checks pass. Neither is a hand-off to a
+  different Actor, such as an invitation another person follows: the Actor
+  carried must be the same one. The test is structural; do not omit a Journey it
+  finds.
 - Journey Scenarios are observable paths through a goal. Write one ordered
   typed Steps list, annotate responsible Actors and the Steps that exercise
   locally identified Capabilities, and place every named route at its

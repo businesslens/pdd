@@ -40,7 +40,7 @@ Domains are made both ways. `businesslens-map` creates them automatically from
 the Product's own sections — the areas its navigation, settings and
 administration group things under — one per section holding two or more
 Capabilities (the finest navigation level that still holds two or more; a parent
-menu is a section only when none of its children is), named in the Product's
+menu is a section only when none of its direct children is), named in the Product's
 words. A Capability no section reaches, such as one only an emailed link starts,
 joins the section whose Entities it changes. You regroup them by hand like any
 file: merge, split or rename, and write your own Boundary. Once you have, a

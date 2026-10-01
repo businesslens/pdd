@@ -327,9 +327,12 @@ shipped set of roles is a closed vocabulary: Entities that act, and
 `permits.actors` works directly. User-defined roles created at runtime are
 instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
 and this layer constrains who may create one — never one Entity per customer
-role. A relation that holds whatever role a person has — the sender of a message — is
-declared to each role Entity that can hold it, and ownership is one `related`
-grant per role: *the sender, if a Member*, *the sender, if a Moderator*.
+role. A relation that holds whatever role a person has — the sender of a message
+— is declared to each role Entity that can hold it, and ownership is one
+`related` grant per role: *the sender, if a Member*, *the sender, if a
+Moderator*. Facts that belong to the person whatever their role — email, display
+and notification preferences — live once on an Account Entity that does not act,
+and each role Entity relates to it; they are never copied onto every role.
 
 ## What `lint` checks
 

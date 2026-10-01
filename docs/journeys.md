@@ -56,8 +56,9 @@ Capability into another toward one outcome — a redirect, a required next Step,
 an emailed link to follow — and nowhere an Actor merely chooses what to do next.
 Returning the Actor to where they were already going after signing in is not a
 hand-off, and neither is a continuation the Product runs without the Actor, such
-as merging automatically once checks pass. A Product Model contains none only
-when no such path exists.
+as merging automatically once checks pass. Neither is a hand-off to a different
+Actor, such as an invitation another person follows: the Actor carried must be
+the same one. A Product Model contains none only when no such path exists.
 
 ## When you create one
 

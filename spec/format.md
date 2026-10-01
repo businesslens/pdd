@@ -988,7 +988,7 @@ automatically from the Product's own sections — the areas its navigation,
 settings and administration group things under — one per section holding two
 or more Capabilities, named in the Product's words. The section is the finest
 navigation level that still holds two or more Capabilities; a parent menu is a
-section only when none of its children is. A Capability no section
+section only when none of its direct children is. A Capability no section
 reaches, such as one only an emailed link or a schedule starts, joins the
 section whose Entities it changes. For a Product planned before its code, the
 sections are the planned ones. Domains an author has written or regrouped are
@@ -1733,10 +1733,14 @@ shipped set of roles is a closed vocabulary: Entities that act, and
 `permits.actors` works directly. User-defined roles created at runtime are
 instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
 and this layer constrains who may create one — never one Entity per customer
-role. A relation that holds whatever role a person has — the sender of a message — is
-declared to each role Entity that can hold it, and ownership is one `related`
-grant per role: *the sender, if a Member*, *the sender, if a Moderator*. ABAC policies on attributes are likewise an Entity `Policy` and the
-Capabilities that define and evaluate it.
+role. A relation that holds whatever role a person has — the sender of a message
+— is declared to each role Entity that can hold it, and ownership is one
+`related` grant per role: *the sender, if a Member*, *the sender, if a
+Moderator*. Facts that belong to the person whatever their role — email, display
+and notification preferences — live once on an Account Entity that does not act,
+and each role Entity relates to it; they are never copied onto every role. ABAC
+policies on attributes are likewise an Entity `Policy` and the Capabilities that
+define and evaluate it.
 
 **What `lint` checks.** `lint` checks structural eligibility. It cannot prove
 runtime ownership, a fact's value, or customer configuration, and never claims a
@@ -2001,18 +2005,20 @@ Actor across — a redirect, a required next Step, an emailed link to follow —
 where an Actor merely choosing what to do next carries nobody. Returning the
 Actor to where they were already going after signing in is not a hand-off, and
 neither is a continuation the Product runs without the Actor, such as merging
-automatically once checks pass. A map writes every Journey this test finds. That
-is the whole test, and it is structural, so it reads the same way for a Journey
-mapped from code and one decided before any code exists: an orchestration,
-shared state, or a cross-Interface hand-off is how a product usually earns one,
-but none is required, and a merely plausible sequence of independent Product
-actions has no achieved Scenario and is not a Journey. A wizard is not evidence
-either way: it is nested Screens on the structure axis, and the Scenario walking
-it is a Journey Scenario only where it crosses Capabilities. Whether the
-repository implements the Journey is `verify`'s finding, never the Journey's
-own. The number of Journey Scenario variations does not define it; one achieved
-variation provides valid coverage. A goal with no achieved multi-Capability path
-belongs to Capability behavior.
+automatically once checks pass. Neither is a hand-off to a different Actor, such
+as an invitation another person follows: the Actor carried must be the same one.
+A map writes every Journey this test finds. That is the whole test, and it is
+structural, so it reads the same way for a Journey mapped from code and one
+decided before any code exists: an orchestration, shared state, or a
+cross-Interface hand-off is how a product usually earns one, but none is
+required, and a merely plausible sequence of independent Product actions has no
+achieved Scenario and is not a Journey. A wizard is not evidence either way: it
+is nested Screens on the structure axis, and the Scenario walking it is a
+Journey Scenario only where it crosses Capabilities. Whether the repository
+implements the Journey is `verify`'s finding, never the Journey's own. The
+number of Journey Scenario variations does not define it; one achieved variation
+provides valid coverage. A goal with no achieved multi-Capability path belongs
+to Capability behavior.
 
 ### `capabilities/<capability-id>/scenarios/<id>.md` or `<id>/capability-scenario.md`
 

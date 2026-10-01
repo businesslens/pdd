@@ -71,14 +71,17 @@ Here `<screen-parent>` is the Interface, Experience or expanded Screen folder
 that contains the Screen: Screens nest, to any depth. There is no `actors/`
 collection: **an Actor is an Entity that `acts`**, and the word names the role
 such an Entity plays on a Step, an Interface, an Experience, a Journey, or a
-Business Rule grant.
-A product's fixed, shipped set of roles (owner, administrator, member, guest) is
-a closed vocabulary: one Entity that acts per role, named in grants' `actors`,
-never one person Entity with a Role fact. Roles people create at runtime are
-instances instead: one `Role` Entity with its own lifecycle and a Capability
-that assigns it, never one Entity per customer role. A relation that holds
-whatever role a person has (the sender of a message) is declared to each role
-Entity that can hold it, and ownership is one `related` grant per role.
+Business Rule grant. A product's fixed, shipped set of roles (owner,
+administrator, member, guest) is a closed vocabulary: one Entity that acts per
+role, named in grants' `actors`, never one person Entity with a Role fact. Roles
+people create at runtime are instances instead: one `Role` Entity with its own
+lifecycle and a Capability that assigns it, never one Entity per customer role.
+A relation that holds whatever role a person has (the sender of a message) is
+declared to each role Entity that can hold it, and ownership is one `related`
+grant per role. Facts that belong to the person whatever their role — email,
+display and notification preferences — live once on an Account Entity that does
+not act, and each role Entity relates to it; they are never copied onto every
+role.
 
 IDs are lowercase kebab-case segments. Behavior-hierarchy and cross-cutting ids
 are the bare file or folder name. Qualified ids for Interfaces, Experiences,
@@ -198,7 +201,7 @@ not contain another H1 or H2.
   — the areas its navigation, settings and administration group things under —
   one per section holding two or more Capabilities (the finest navigation level
   that still holds two or more; a parent menu is a section only when none of its
-  children is), named in the Product's words; a Capability no section reaches
+  direct children is), named in the Product's words; a Capability no section reaches
   (one only an emailed link or a schedule starts) joins the section whose
   Entities it changes. For a planned Product, use the planned sections. Domains
   already in the model are the author's: add new Capabilities to them and never
@@ -327,11 +330,12 @@ not contain another H1 or H2.
   the Actor merely chooses to do something else next. Returning the Actor to
   where they were already going after signing in is not a hand-off, and neither
   is a continuation the Product runs without the Actor, such as merging
-  automatically once checks pass. The test is structural, so "omit rather than
-  assert" does not apply to it. Every Journey needs achieved Journey Scenario
-  coverage for every Journey Actor. It has no `entryPoints`; resolve
-  presentation routes from the first Actor-owned placed Step's Context place and
-  its Interface or Experience.
+  automatically once checks pass. Neither is a hand-off to a different Actor,
+  such as an invitation another person follows: the Actor carried must be the
+  same one. The test is structural, so "omit rather than assert" does not apply
+  to it. Every Journey needs achieved Journey Scenario coverage for every
+  Journey Actor. It has no `entryPoints`; resolve presentation routes from the
+  first Actor-owned placed Step's Context place and its Interface or Experience.
 - Journey Scenario: taxonomy `kind`, `result: achieved|not-achieved`, named
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`

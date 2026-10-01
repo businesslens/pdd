@@ -15,7 +15,10 @@
   fixed, shipped set of roles is one Entity that acts per role, never one person
   Entity with a Role fact; roles created at runtime are one `Role` Entity with a
   lifecycle. A relation that holds whatever the role (the sender of a message)
-  is declared to each role Entity, with one `related` grant per role.
+  is declared to each role Entity, with one `related` grant per role. Facts that
+  belong to the person whatever their role — email, display and notification
+  preferences — live once on an Account Entity that does not act, and each role
+  Entity relates to it; they are never copied onto every role.
 - Interfaces are supported interaction contracts. Decide web, mobile, CLI,
   partner API, and integration commitments independently; internal APIs and
   frameworks are not Product Interfaces. Give each Interface exactly one
@@ -45,8 +48,8 @@
 - Create Domains from the Product's planned sections — its navigation, settings
   and administration areas — one per section holding two or more Capabilities
   (the finest navigation level that still holds two or more; a parent menu is a
-  section only when none of its children is); existing Domains are the author's
-  and are never re-cut. Journeys may cross Domains.
+  section only when none of its direct children is); existing Domains are the
+  author's and are never re-cut. Journeys may cross Domains.
 - Capabilities are durable Product abilities, not UI labels, Journey titles,
   or sequence steps. Declare availability Contexts whose places are an
   undivided Interface or an Experience.
@@ -70,8 +73,10 @@
   required next Step, an emailed link — and none for a sequence the Actor merely
   chooses. Returning the Actor to where they were already going after signing in
   is not a hand-off, and neither is a continuation the Product runs without the
-  Actor, such as merging automatically once checks pass. Do not create a Journey
-  to house acceptance for one Capability.
+  Actor, such as merging automatically once checks pass. Neither is a hand-off
+  to a different Actor, such as an invitation another person follows: the Actor
+  carried must be the same one. Do not create a Journey to house acceptance for
+  one Capability.
 - Journey Scenarios express observable paths through a goal. Write one ordered
   typed Steps list, annotate responsible Actors and Steps that exercise locally
   identified Capabilities, and place every named route at its most-specific Context place.
