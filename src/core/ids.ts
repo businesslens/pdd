@@ -17,6 +17,19 @@ export function isId(value: string): boolean {
   return ID_PATTERN.test(value)
 }
 
+/** A Context or parent id must name one place, regardless of its resource type. */
+export function placeIdentityIssues(places: readonly { id: string, label: string }[]): string[] {
+  const owners = new Map<string, string[]>()
+  for (const place of places) {
+    const labels = owners.get(place.id) ?? []
+    labels.push(place.label)
+    owners.set(place.id, labels)
+  }
+  return [...owners].filter(([, labels]) => labels.length > 1)
+    .sort(([left], [right]) => left.localeCompare(right, 'en'))
+    .map(([id, labels]) => `place id "${id}": used by ${labels.join(' and ')}; each place id must be unique`)
+}
+
 /**
  * A qualified Interface, Experience, or Screen id: one or more path segments
  * joined by `::`.

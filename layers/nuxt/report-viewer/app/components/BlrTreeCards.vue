@@ -2,7 +2,7 @@
 /** Collection cards and resource containment readings use the same tree rows. */
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import type { TreeCard } from '../utils/collectionChildren'
-import { treeCards, treeBranchKeys } from '../utils/collectionChildren'
+import { treeCards, treeCardExpanded } from '../utils/collectionChildren'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -17,10 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{ open: [resource: AnyResourceView], close: [key: string, closed: boolean], expand: [key: string, values: string[]] }>()
 const cards = computed(() => treeCards(props.workspace, props.kind, props.resources, props.narrowed))
 // Closing a root keeps its descendants' expansion choices.
-const expandedOf = (card: TreeCard) => [
-  ...(props.closed.includes(card.key) ? [] : [card.key]),
-  ...(props.expansion[card.key] ?? treeBranchKeys(card.children, true))
-]
+const expandedOf = (card: TreeCard) => treeCardExpanded(card, props.closed, props.expansion)
 const setExpanded = (card: TreeCard, values: string[]) => {
   const closed = !values.includes(card.key)
   if (closed !== props.closed.includes(card.key)) emit('close', card.key, closed)

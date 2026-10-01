@@ -9,7 +9,7 @@ import {
   interfaceLanguageIssues, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
 } from './model-checks.js'
 import { parseCodeTarget } from './coderefs.js'
-import { containsPlace, interfaceOf, parentPlace } from './ids.js'
+import { containsPlace, interfaceOf, parentPlace, placeIdentityIssues } from './ids.js'
 import { containsStructuralHeading, statesAnExclusion } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
@@ -708,6 +708,13 @@ export function validateProductReport(report: ProductReportV15): string[] {
       else issues.push(`${label}: references missing entity "${id}"`)
     }
   }
+  const identityIssues = placeIdentityIssues([
+    ...model.interfaces.map(item => ({ id: item.id, label: `Interface "${item.id}"` })),
+    ...model.experiences.map(item => ({ id: item.id, label: `Experience "${item.id}"` })),
+    ...model.screens.map(item => ({ id: item.id, label: `Screen "${item.id}"` }))
+  ])
+  // Contexts and Screen parents have no unambiguous meaning until this holds.
+  if (identityIssues.length) return identityIssues
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(item => [item.id, item]))

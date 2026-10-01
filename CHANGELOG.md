@@ -7,18 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Model Variations — experiments, configuration alternatives and live versions of Interfaces, Experiences, Screens, Entities, Capabilities, Journeys, Scenarios or Business Rules — as their own resource, browsable in a Variations collection. A difference in one Step is two alternative Scenarios.
-- Wherever an alternative appears, the report titles it by its Variation and shows the alternative beside it, where it can be switched; alternative Scenarios are one card inside their Capability or Journey.
+- Keep directly placed behavior visible in Delivery, group Interface alternatives together, and show Lifecycle States as available when every alternative reaches them.
+- Reject ambiguous place names before importing a Blueprint, preserving Screen ownership.
+
+- Browse experiments, configuration alternatives and supported versions in a new Variations collection.
+- Read alternatives under their Variation's title and switch between them; alternative Scenarios share one card inside their Capability or Journey.
 - Graphs, matrices and Entity Lifecycles show Variations too: alternatives are grouped under their Variation, and what happens only under some alternatives is dashed and says which.
+- Search results name the Variation an alternative belongs to.
+- Skills give clearer guidance on Capability boundaries, Domains, Journeys, settings, roles and personal information.
+- Lint warns about resource names less often, and suggests a declared name only when exactly one fits.
 - Model nested Screens, Screens reachable from everywhere in a context, and the languages a Product serves.
 - Record which facts a Screen shows and which it collects; a Screen's Capabilities now come from the Steps placed on it.
 - Record the facts each Scenario Step reads, changes or creates.
 - Read what a Business Rule governs, and find the Rules that govern a resource, from either end.
 - Follow Capability state changes into each Entity's Lifecycle, and see each place's Capabilities, Scenarios and Journeys.
 - Read permissions as operations and grants, with badges on the facts they restrict, and see a resource's type, ownership and Domains in a compact header.
-- Skills and documentation separate product behavior from visual design.
-- Screens no longer have Information presented, Available actions, View states or Capability boundary sections, and captures no longer carry a state label.
-- Existing models must be updated to the new format, and older Blueprints and reports are refused.
+- Skills and documentation distinguish product behavior from visual design, with an updated example Blueprint.
+- **Breaking.** Screens describe their facts and behavior through relations; the former presentation, action, view-state and boundary sections, authored Capability lists, and capture state labels are no longer accepted.
+- **Breaking.** Existing models and Blueprints must be updated to the new format; older model and report formats are no longer accepted.
 
 ## [0.22.0] - 2026-09-23
 

@@ -12,7 +12,7 @@ import type {
   BusinessRuleEntityTarget, BusinessRuleGrant, PddModel, RelatedSegment, ScenarioStep, ScenarioStepEntity
 } from '../core/model.js'
 import { lsFiles } from '../core/git.js'
-import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId, qualify } from '../core/ids.js'
+import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId, placeIdentityIssues, qualify } from '../core/ids.js'
 import { INTERFACE_TYPES } from '../core/interface-types.js'
 import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { allResources, resourceCollections, loadModel } from '../core/model.js'
@@ -168,6 +168,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (!valid(item.id)) errors.push(`${name}: id "${item.id}" must be lowercase kebab-case`)
     }
   }
+
+  errors.push(...placeIdentityIssues([
+    ...model.interfaces, ...model.experiences, ...model.screens
+  ].map(place => ({ id: place.id, label: place.file }))))
 
   const entityIds = new Set(model.entities.map(item => item.id))
   const entitiesById = new Map(model.entities.map(item => [item.id, item]))

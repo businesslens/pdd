@@ -61,9 +61,9 @@ never drawn as an edge.
 The Interfaces tree says what each place delivers, as ordinary items in its
 own branch, exactly as the Delivery map does: a Screen lists its own
 Capabilities first, never a child's, then the Screens nested inside it; an
-Experience or Interface lists only the Capabilities available there and
-exposed on no Screen of its own, and an Interface with no Screens lists every
-Capability it delivers. They are ordinary rows beside the place's Screens, so
+Experience or Interface lists Capabilities with Steps placed exactly there,
+plus availability gaps exposed on no relevant Screen. Exposure on a Screen
+never removes behavior placed directly on its container. They are ordinary rows beside the place's Screens, so
 where they sit says they are on no Screen; no group heads them. The Delivery map
 notes a direct delivery on each node, because a graph has no branch to say it.
 Under each Capability sit its own Capability Scenarios with a Step placed
@@ -392,7 +392,7 @@ Matrix is offered only by the three collections whose resources supply its rows.
 | Section | Rows (`overview`) | Graph (`graph`) | Matrix (`matrix`) |
 | --- | --- | --- | --- |
 | `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships | What changes what: Entities × Capabilities |
-| `interface` | one tree card per Interface, its Experiences and Screens | Delivery map | — |
+| `interface` | one tree card per Interface or Interface Variation, alternatives retaining their delivery trees | Delivery map | — |
 | `domain` | one tree card per Domain, its Capabilities and Entities | Domain reach | — |
 | `capability` | one row per Capability, grouped by Domain | Capability reach | Compare delivery: Capabilities × Interfaces |
 | `journey` | one row per Journey | Journey reach | — |
@@ -531,7 +531,8 @@ Capabilities appears under each of them.
 The Interfaces Graph is the delivery map: containment rooted at the Product,
 like the reach trees, with each Screen's own Capabilities as leaves, a gap
 leaf under an Experience or Interface for a Capability available there and on
-no Screen of its own, and an Interface with no Screens delivering directly.
+no Screen of its own, plus direct leaves for behavior with Steps placed exactly
+on that Interface or Experience, even when the same Capability uses a Screen.
 A Capability exposed on five Screens is a leaf under each.
 
 The renderer never runs Diagram Design or generates model-controlled HTML.
@@ -748,6 +749,15 @@ never alternatives to each other.
 A Business Rule that is an alternative is conditional: its lifecycle
 prohibitions are never drawn as unconditional, and its fact badges read
 `Conditional Rule`. Also on keeps its own meaning.
+
+Interface root cards fold alternatives under their Variation, including a lone
+alternative left by a filter. Each alternative keeps its concrete name and
+children. Counts remain concrete. New set roots retain the old alternative
+cards' saved expansion until the set has its own saved choice.
+
+A Lifecycle State's conditional styling uses the union of all incoming Scenario
+supporters. Complementary alternatives on different incoming changes can make
+the State unconditional while those changes stay conditional individually.
 
 **In the drawings.** Nodes, rows, columns and relations stay concrete; the
 Variation is added around them, the way each drawing's lines already read.

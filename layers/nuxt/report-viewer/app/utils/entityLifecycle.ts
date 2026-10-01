@@ -68,14 +68,17 @@ export function lifecycleConditionNote(conditions: VariationCondition<AnyResourc
   return variationConditionNote(conditions)
 }
 
-/** A State only conditional changes reach is conditional too; one nothing reaches is unreached, not conditional. */
+/** A State is conditional only when its combined incoming support is incomplete. */
 export function lifecycleStateCondition(workspace: ReportWorkspace, entity: EntityView, state: string): string | null {
   const into = entity.arcs.filter(arc => arc.to === state && arc.from !== state)
   if (!into.length) return null
-  const conditions = into.map(arc => lifecycleArcCondition(workspace, entity, arc))
-  if (!conditions.every(condition => condition.conditional)) return null
+  const condition = lifecycleArcCondition(workspace, entity, {
+    capabilityScenarioIds: [...new Set(into.flatMap(arc => arc.capabilityScenarioIds))],
+    journeyScenarioIds: [...new Set(into.flatMap(arc => arc.journeyScenarioIds))]
+  })
+  if (!condition.conditional) return null
   /* A State box is narrow: it names the alternatives alone; its details say their sets. */
-  const alternatives = new Set(conditions.flatMap(condition => condition.groups.map(group => group.choices.map(choice => choice.alternative.title).join(' · '))))
+  const alternatives = new Set(condition.groups.map(group => group.choices.map(choice => choice.alternative.title).join(' · ')))
   return alternatives.size === 1 ? `Only under ${[...alternatives][0]}` : 'Only under some alternatives'
 }
 

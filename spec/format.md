@@ -290,6 +290,13 @@ future format revision, but Context is not an arbitrary metadata bag.
   placement and containment is a prefix test. Never
   write `id:` in frontmatter — the filesystem is the id authority.
 
+  Interfaces, Experiences, and Screens share one place-id namespace. Each
+  qualified id must identify exactly one place across all three types. In
+  particular, a shared Screen and an Experience under the same Interface must
+  not have the same name: both would resolve to `interface-id::name`, making
+  Contexts and a nested Screen's ownership ambiguous. `lint` rejects the
+  collision and names both files; rename one place and update its references.
+
   **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.** A
   Capability, Capability Scenario, Journey, and Journey Scenario name something
   the Product or an Actor *does*, so their ids begin with a verb:

@@ -22,9 +22,9 @@ import { resourceKey } from './reportWorkspace'
 /**
  * The Capabilities a place carries where it sits in the tree. A Screen carries
  * its own `capabilities` — never a child's, which the child carries. An
- * Experience or Interface carries only what is available there and exposed on
- * no Screen that belongs to it, a gap `lint` grades; an Interface with no
- * Screens at all carries its available Capabilities as delivered directly.
+ * Experience or Interface carries behavior with Steps placed exactly there,
+ * plus what is available there and exposed on no Screen, a gap `lint` grades.
+ * Screen exposure never suppresses Steps placed directly on a container.
  */
 export interface PlaceCapabilities {
   capabilities: CapabilityView[]
@@ -45,7 +45,13 @@ export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceVi
     ? context.experienceId === place.id || (place.interfaceIds.includes(context.interfaceId) && !context.experienceId)
     : context.interfaceId === place.id))
   if (place.kind === 'interface' && !screens.length) return { note: 'direct', capabilities: available }
-  return { note: 'gap', capabilities: available.filter(capability => !screens.some(screen => screen.capabilityIds.includes(capability.id))) }
+  const directIds = new Set(workspace.scenarios.filter(scenario =>
+    scenario.scenarioType === 'capability' && stepsOn(scenario, place).length > 0
+  ).map(scenario => scenario.capabilityId))
+  const gapIds = new Set(available.filter(capability =>
+    !screens.some(screen => screen.capabilityIds.includes(capability.id))
+  ).map(capability => capability.id))
+  return { note: 'gap', capabilities: workspace.capabilities.filter(capability => directIds.has(capability.id) || gapIds.has(capability.id)) }
 }
 
 /** One Capability a place delivers itself, read through its own Scenarios that happen there. */
@@ -70,7 +76,7 @@ const stepsOn = (scenario: ScenarioView, place: InterfaceView | ExperienceView |
  * Capability its Steps use, so it is read on the place (see `placeJourneys`).
  */
 export function placeDelivery(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceDeliveryGroup[] {
-  const { capabilities, note } = placeCapabilities(workspace, place)
+  const { capabilities } = placeCapabilities(workspace, place)
   return capabilities.map((capability) => {
     const stepsHere: Record<string, number[]> = {}
     const scenarios = workspace.scenarios.filter((scenario) => {
@@ -79,6 +85,7 @@ export function placeDelivery(workspace: ReportWorkspace, place: InterfaceView |
       if (here.length) stepsHere[scenario.key] = here
       return here.length > 0
     })
+    const note: PlaceCapabilities['note'] = place.kind === 'screen' ? 'own' : scenarios.length ? 'direct' : 'gap'
     return { capability, note, scenarios, stepsHere }
   })
 }

@@ -273,7 +273,11 @@ direct Context target stores one nested `context` record. Screen records carry
 no `availability` field because their qualified id
 and path already determine their Interface, optional Experience, and parent
 Screens: a Screen's parent is `parentPlace(id)`, and it may be an Interface, an
-Experience, or a Screen. An
+Experience, or a Screen. Interface, Experience, and Screen ids share one
+namespace: each id identifies exactly one place across all three collections.
+Validation rejects collisions before resolving Contexts or expanding a report;
+an Experience and a shared Screen cannot both use `interface-id::name`.
+An
 Experience's `interfaceIds` is held to exactly the Interface its own qualified id
 names, for the same reason: expansion files an Experience by that id, so a list
 saying anything else is a second encoding of containment, and a report could

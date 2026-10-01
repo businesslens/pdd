@@ -171,6 +171,30 @@ try {
     await context.close()
   }
 
+  { // Interface alternatives share a root, retain their delivery trees and expansion after refresh.
+    const { context, tab } = await page('?s=interface')
+    const card = tab.locator('[data-card-key="variation:payment-webhook-contract"]')
+    await expect(card).toHaveCount(1)
+    await expect(tab.locator('[data-tree-card]')).toHaveCount(5)
+    await expect(tab.getByRole('heading', { level: 1 })).toContainText('6')
+    await expect(tab.locator('[data-card-key="interface:payment-webhook"], [data-card-key="interface:payment-webhook-v2"]')).toHaveCount(0)
+    await expect(card.getByRole('link', { name: 'Payment webhook', exact: true })).toBeVisible()
+    await expect(card.getByRole('link', { name: 'Payment webhook v2', exact: true })).toBeVisible()
+    const root = card.locator('[role="treeitem"][aria-level="1"]')
+    await root.press('ArrowLeft')
+    await expect(root).toHaveAttribute('aria-expanded', 'false')
+    await tab.reload()
+    await expect(root).toHaveAttribute('aria-expanded', 'false')
+    await root.press('ArrowRight')
+    await expect(root).toHaveAttribute('aria-expanded', 'true')
+    await capture(tab, 'interface-root-set')
+    await card.getByRole('link', { name: 'Payment webhook v2', exact: true }).click()
+    const dialog = tab.locator('[role=dialog]').filter({ has: tab.locator('[data-resource-title]') })
+    await expect(dialog.locator('[data-resource-title]')).toHaveText('Payment webhook contract')
+    await expect(dialog.getByRole('button', { name: 'Payment webhook contract alternative: v2', exact: true })).toBeVisible()
+    await context.close()
+  }
+
   { // The drawings: trees fold under the set's node, the Entity graph frames it, the Lifecycle and matrices dash what only some choices make.
     const { context, tab } = await page('?s=capability&t=graph')
     await expect(tab.locator('.vue-flow__node [data-resource-key="variation:cancellation-handling"]').first()).toBeVisible()

@@ -100,7 +100,9 @@ try {
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
       await expandCollection(page)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
-      for (const resource of resources) {
+      // Variation root cards are exercised with their concrete children in check-variations.
+      const alternativeIds = new Set(report.model.variations.filter(set => set.of === kind).flatMap(set => set.alternatives.map(alt => alt.resourceId)))
+      for (const resource of resources.filter(resource => !alternativeIds.has(resource.id))) {
         const title = kind === 'domain' ? resource.name : resource.title
         const card = page.locator(`[data-card-key="${kind}:${resource.id}"]`)
         const subject = card.getByRole('treeitem').first()
@@ -159,7 +161,9 @@ try {
     await choose(page, 'Interfaces')
     await expect(page.locator('[data-interface-directory]')).toHaveCount(0)
     /* Interfaces and Domains read as one tree card per subject. */
-    await expect(page.locator('[data-tree-card]')).toHaveCount(report.model.interfaces.length)
+    const interfaceSets = report.model.variations.filter(set => set.of === 'interface')
+    const rootCount = report.model.interfaces.length - interfaceSets.reduce((sum, set) => sum + set.alternatives.length - 1, 0)
+    await expect(page.locator('[data-tree-card]')).toHaveCount(rootCount)
     const experience = report.model.experiences.find(item => report.model.screens.some(screen => screen.id.startsWith(`${item.id}::`)))
     if (experience) {
       const item = page.getByRole('treeitem').filter({ has: page.getByText(experience.title, { exact: true }) }).first()
@@ -289,7 +293,9 @@ try {
       if (!parent) continue
       const scenario = report.model[`${kind}Scenarios`].find(item => item[`${kind}Id`] === parent.id)
       await page.goto(resourceUrl(kind, parent.id, '&rt=scenarios'))
-      const card = page.locator(`[data-row-key="${kind}-scenario:${scenario.id}"] [data-scenario-card]`)
+      const scenarioSet = report.model.variations.find(set => set.of === `${kind}-scenario` && set.alternatives.some(alt => alt.resourceId === scenario.id))
+      const cardKey = scenarioSet ? `variation:${scenarioSet.id}` : `${kind}-scenario:${scenario.id}`
+      const card = page.locator(`[data-row-key="${cardKey}"] [data-scenario-card]`)
       const toggle = card.locator('.blr-summary-toggle')
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
       await toggle.click()

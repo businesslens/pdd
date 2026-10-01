@@ -94,6 +94,12 @@ the parent covers the child. Two resources of the same kind sharing
 a path suffix below their Interface are counterparts: the same thing on two
 Interfaces.
 
+Interfaces, Experiences, and Screens share one place-id namespace. Every id
+must name exactly one place across all three types. In particular, never give
+an Experience and a shared Screen under the same Interface the same name:
+both would resolve to `interface-id::name`. Rename one and update its references;
+`lint` names both colliding files.
+
 The path owns every parent relation. An Experience never writes `interfaces:`,
 a Capability Scenario never writes `capability:`, a Journey Scenario never
 writes `journey:`, and a Screen never writes `availability:`. Capability

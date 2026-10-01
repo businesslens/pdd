@@ -151,6 +151,14 @@ Similar Experiences on another Interface are counterparts with separate
 qualified ids. The rules below determine when an Interface requires Experiences
 and when existing Experiences are justified.
 
+### Place names must resolve once
+
+Interfaces, Experiences, and Screens share one namespace for their qualified
+ids. An Experience and a shared Screen under the same Interface cannot have
+the same name: both would resolve to `interface-id::name`. `lint` reports the
+colliding id and both files. Rename one place and update its references so that
+Steps, Rules, and nested Screen ownership resolve unambiguously.
+
 ### When to create an Experience
 
 **Whether an Interface is divided into Experiences is derived, never judged.**

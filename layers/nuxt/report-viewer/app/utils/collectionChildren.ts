@@ -1,8 +1,9 @@
 /**
  * What a tree card holds.
  *
- * A card is one Interface or Domain; its children are the resources the model
- * files under it, in the model's own order. Nothing here derives a relation the
+ * A card is one Interface, Interface Variation or Domain; its children are the
+ * resources the model files under it, in the model's own order. Nothing here
+ * derives a relation the
  * projection does not already hold: an Interface's Experiences and Screens are
  * its containment, a Domain's Capabilities and Entities are its classification.
  * Every other collection lists plain rows; a Capability's or Journey's
@@ -109,8 +110,8 @@ export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView)
 /**
  * What happens at a place, as items in its own branch. First what it
  * delivers: a Screen's own Capabilities; an Experience's or Interface's,
- * available there and on no Screen of its own; or, for an Interface with no
- * Screens, delivered directly. The branch says which by where the rows sit —
+ * with Steps placed exactly there or available there and on no Screen of its
+ * own. The branch says which by where the rows sit —
  * beside the place's Screens, never under one — so no group repeats it.
  * Under each Capability sit its own Scenarios
  * with a Step placed exactly on this place. Then the Journeys passing through:
@@ -250,11 +251,24 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
     return [...cards, ...(!narrowed && unassigned.children.length ? [unassigned] : [])]
   }
   if (kind === 'interface') {
-    return resources.filter(item => item.kind === 'interface').map(iface => ({
-      key: iface.key, title: iface.title, resource: iface, children: structureChildren(workspace, iface)
+    const roots = resources.filter(item => item.kind === 'interface').map(iface => leaf(iface, structureChildren(workspace, iface)))
+    return foldVariations(workspace, 'interfaces', roots).map(node => ({
+      key: node.resource!.key, title: node.title, resource: node.resource, children: node.children
     }))
   }
   return []
+}
+
+/** New set roots retain each alternative's previously saved card expansion. */
+export function treeCardExpanded(card: TreeCard, closed: readonly string[], expansion: Readonly<Record<string, string[]>>): string[] {
+  const saved = expansion[card.key]
+  const children = saved ?? (card.resource?.kind === 'variation'
+    ? card.children.flatMap(child => [
+      ...(closed.includes(child.id) ? [] : [child.id]),
+      ...(expansion[child.id] ?? treeBranchKeys(child.children, true))
+    ])
+    : treeBranchKeys(card.children, true))
+  return [...new Set([...(closed.includes(card.key) ? [] : [card.key]), ...children])]
 }
 
 const fromBranch = (branch: TopologyBranch): RowChild[] => branch.children

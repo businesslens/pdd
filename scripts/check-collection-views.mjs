@@ -15,7 +15,7 @@ if (screenshots) mkdirSync(screenshots, { recursive: true })
 const chosenEntity = report.model.entities.find(item => item.id === 'order') ?? report.model.entities[0]
 const cases = [
   ['entity', `1 / ${report.model.entities.length}`, ['List', 'Relationships', 'Changes']],
-  ['interface', String(report.model.interfaces.length), ['List', 'Structure']],
+  ['interface', String(report.model.interfaces.length), ['List', 'Delivery map']],
   ['domain', String(report.model.domains.length), ['List', 'Reach']],
   ['capability', String(report.model.capabilities.length), ['List', 'Reach', 'Delivery']],
   ['journey', String(report.model.journeys.length), ['List', 'Reach']],
