@@ -76,12 +76,16 @@ administrator, member, guest) is a closed vocabulary: one Entity that acts per
 role, named in grants' `actors`, never one person Entity with a Role fact. Roles
 people create at runtime are instances instead: one `Role` Entity with its own
 lifecycle and a Capability that assigns it, never one Entity per customer role.
-A relation that holds whatever role a person has (the sender of a message) is
-declared to each role Entity that can hold it, and ownership is one `related`
-grant per role. Facts that belong to the person whatever their role — email,
-display and notification preferences — live once on an Account Entity that does
-not act, and each role Entity relates to it; they are never copied onto every
-role.
+Roles operators define in configuration, outside the product, are modeled the
+same way: one Role Entity (its name, permissions and members) granted through
+`configuredBy`, with no Capability that creates it. A configuration that also
+grants directly to people stays its own Entity, and the people who hold
+configured roles are one acting Entity. A relation that holds whatever role a
+person has (the sender of a message) is declared to each role Entity that can
+hold it, and ownership is one `related` grant per role. Facts that belong to the
+person whatever their role — email, display and notification preferences — live
+once on an Account Entity that does not act, and each role Entity relates to it;
+they are never copied onto every role.
 
 IDs are lowercase kebab-case segments. Behavior-hierarchy and cross-cutting ids
 are the bare file or folder name. Qualified ids for Interfaces, Experiences,
@@ -696,10 +700,12 @@ behavior acts on (a page's own editor format) is state: a `condition` Step or
 decision point reads it, even when someone set it earlier. Scenarios vary only
 when what an Actor does differs and one choice decides it, even when several
 settings combine to make that choice: sign-in that starts at the only provider
-automatically drops the Actor's choice, so it selects the sign-in Scenario. When
-two or more settings would each vary or split the same Scenario, whether they
-change the Actor's Steps or the outcome (a captcha and a provider password on
-one registration), none makes a Variation; each is a decision point. A setting
+automatically drops the Actor's choice, so it selects the sign-in Scenario. A
+choice the Actor makes on a page outside the product, such as picking a
+connector at an identity provider, is still an Actor Step. When two or more
+settings would each vary or split the same Scenario, whether they change the
+Actor's Steps or the outcome (a captcha and a provider password on one
+registration), none makes a Variation; each is a decision point. A setting
 changing only the Product's own Steps (group sync replacing or adding Roles) is
 a decision point in one Scenario, as is any choice made during a run — except a
 Step that must name a different alternative of another Variation (a VAT invoice

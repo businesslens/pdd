@@ -120,23 +120,24 @@ unavailable. The rest of the border classifies what you find:
   only when what an Actor does differs and one choice decides it, even when
   several settings combine to make that choice: sign-in that starts at the only
   provider automatically drops the Actor's choice, so it selects Scenario
-  alternatives. When two or more settings would each vary or split the same
-  Scenario, whether they change the Actor's Steps or the outcome — a captcha and
-  a provider password on one registration — none makes a Variation; each is a
-  decision point. A setting that changes only the Product's own Steps — group
-  sync replacing or adding Roles — is a decision point in one Scenario, as is
-  any choice made during a run; the one exception is a Step that must name a
-  different alternative of another Variation, which varies with it. When such a
-  setting changes the outcome — registration requiring email confirmation leaves
-  the account inactive, an unknown social account is registered or refused — the
-  branches are separate Scenarios, each with a `condition` Step reading the
-  setting, not a Variation. If another setting also varies or splits that
-  Scenario, each setting is a decision point instead. The unconfirmed account
-  sign-in later meets is state. A resource that exists only under some
-  alternatives or only while a setting enables it (registration while the
-  sign-in method is password; social sign-in while a provider is configured)
-  stays ordinary; a Business Rule without `permits` applying to it names the
-  Variation or the setting.
+  alternatives. A choice the Actor makes on a page outside the product, such as
+  picking a connector at an identity provider, is still an Actor Step. When two
+  or more settings would each vary or split the same Scenario, whether they
+  change the Actor's Steps or the outcome — a captcha and a provider password on
+  one registration — none makes a Variation; each is a decision point. A setting
+  that changes only the Product's own Steps — group sync replacing or adding
+  Roles — is a decision point in one Scenario, as is any choice made during a
+  run; the one exception is a Step that must name a different alternative of
+  another Variation, which varies with it. When such a setting changes the
+  outcome — registration requiring email confirmation leaves the account
+  inactive, an unknown social account is registered or refused — the branches
+  are separate Scenarios, each with a `condition` Step reading the setting, not
+  a Variation. If another setting also varies or splits that Scenario, each
+  setting is a decision point instead. The unconfirmed account sign-in later
+  meets is state. A resource that exists only under some alternatives or only
+  while a setting enables it (registration while the sign-in method is password;
+  social sign-in while a provider is configured) stays ordinary; a Business Rule
+  without `permits` applying to it names the Variation or the setting.
 - **Every context it is used from.** A Capability is available in every
   Experience in which one of its Actors uses it — guests reading pages in a
   public Experience and signed-in Users in an authenticated one — never only

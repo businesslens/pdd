@@ -472,22 +472,24 @@ administrator set it.
 it, even when several settings combine to make that choice.** A setting that
 changes an Actor's Steps — one skipped, one added, a different place or input —
 selects Scenario alternatives: sign-in that starts at the only provider
-automatically drops the Actor's choice of provider. When two or more settings
-would each vary or split the same Scenario, whether they change the Actor's
-Steps or the outcome — a captcha and a provider password on one registration —
-none of them makes a Variation; each is a decision point, so no Scenario needs a
-set per combination. A setting that changes only the Product's own Steps —
-whether group sync replaces a User's Roles or adds to them — is a decision point
-in one Scenario. The one exception is a Step that must name a different
-alternative of another Variation, which varies with it: issuing a VAT invoice or
-a sales tax receipt. When a Product-only setting changes the outcome —
-registration that requires email confirmation leaves the account inactive, whose
-confirming is a Capability of its own; an unknown social account is registered
-or refused — the branches are separate Scenarios, each with a `condition` Step
-reading the setting, and still no Variation. If another setting also varies or
-splits that Scenario, each setting is a decision point instead. A decision point
-is also any choice or branch made during one run, and the unconfirmed account
-that sign-in later meets is state.
+automatically drops the Actor's choice of provider. A choice the Actor makes on
+a page outside the product, such as picking a connector at an identity provider,
+is still an Actor Step. When two or more settings would each vary or split the
+same Scenario, whether they change the Actor's Steps or the outcome — a captcha
+and a provider password on one registration — none of them makes a Variation;
+each is a decision point, so no Scenario needs a set per combination. A setting
+that changes only the Product's own Steps — whether group sync replaces a User's
+Roles or adds to them — is a decision point in one Scenario. The one exception
+is a Step that must name a different alternative of another Variation, which
+varies with it: issuing a VAT invoice or a sales tax receipt. When a
+Product-only setting changes the outcome — registration that requires email
+confirmation leaves the account inactive, whose confirming is a Capability of
+its own; an unknown social account is registered or refused — the branches are
+separate Scenarios, each with a `condition` Step reading the setting, and still
+no Variation. If another setting also varies or splits that Scenario, each
+setting is a decision point instead. A decision point is also any choice or
+branch made during one run, and the unconfirmed account that sign-in later meets
+is state.
 
 **A resource that exists only under some alternatives, or only while a setting
 enables it,** stays an ordinary resource. A Business Rule without `permits` that
@@ -1740,14 +1742,18 @@ shipped set of roles is a closed vocabulary: Entities that act, and
 `permits.actors` works directly. User-defined roles created at runtime are
 instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
 and this layer constrains who may create one — never one Entity per customer
-role. A relation that holds whatever role a person has — the sender of a message
-— is declared to each role Entity that can hold it, and ownership is one
-`related` grant per role: *the sender, if a Member*, *the sender, if a
-Moderator*. Facts that belong to the person whatever their role — email, display
-and notification preferences — live once on an Account Entity that does not act,
-and each role Entity relates to it; they are never copied onto every role. ABAC
-policies on attributes are likewise an Entity `Policy` and the Capabilities that
-define and evaluate it.
+role. Roles operators define in configuration, outside the product, are modeled
+the same way: one Role Entity (its name, permissions and members) granted
+through `configuredBy`, with no Capability that creates it. A configuration that
+also grants directly to people stays its own Entity, and the people who hold
+configured roles are one acting Entity. A relation that holds whatever role a
+person has — the sender of a message — is declared to each role Entity that can
+hold it, and ownership is one `related` grant per role: *the sender, if a
+Member*, *the sender, if a Moderator*. Facts that belong to the person whatever
+their role — email, display and notification preferences — live once on an
+Account Entity that does not act, and each role Entity relates to it; they are
+never copied onto every role. ABAC policies on attributes are likewise an Entity
+`Policy` and the Capabilities that define and evaluate it.
 
 **What `lint` checks.** `lint` checks structural eligibility. It cannot prove
 runtime ownership, a fact's value, or customer configuration, and never claims a

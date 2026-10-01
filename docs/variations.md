@@ -82,18 +82,20 @@ though someone set it earlier.
 **Scenarios vary only when what an Actor does differs, and one choice decides
 it, even when several settings combine to make that choice.** Sign-in that
 starts at the only provider automatically drops a Step the Actor takes, so it
-selects which sign-in Scenario runs. When two or more settings would each vary
-or split the same Scenario, whether they change the Actor's Steps or the outcome
-— a captcha and a provider password on one registration — none of them makes a
-Variation; each is a decision point. A setting that changes only the Product's
-own Steps — whether group sync replaces a User's Roles or adds to them — is a
-decision point in one Scenario, like any choice made during a run. When it
-changes the outcome — registration that requires email confirmation leaves the
-account inactive — the branches are separate Scenarios with a `condition` Step.
-If another setting also varies or splits that Scenario, each setting is a
-decision point instead. The exception is a Step that must name a different
-alternative of another Variation, such as issuing a VAT invoice or a sales tax
-receipt: that Scenario varies with it.
+selects which sign-in Scenario runs. A choice the Actor makes on a page outside
+the product, such as picking a connector at an identity provider, is still an
+Actor Step. When two or more settings would each vary or split the same
+Scenario, whether they change the Actor's Steps or the outcome — a captcha and a
+provider password on one registration — none of them makes a Variation; each is
+a decision point. A setting that changes only the Product's own Steps — whether
+group sync replaces a User's Roles or adds to them — is a decision point in one
+Scenario, like any choice made during a run. When it changes the outcome —
+registration that requires email confirmation leaves the account inactive — the
+branches are separate Scenarios with a `condition` Step. If another setting also
+varies or splits that Scenario, each setting is a decision point instead. The
+exception is a Step that must name a different alternative of another Variation,
+such as issuing a VAT invoice or a sales tax receipt: that Scenario varies with
+it.
 
 A resource that exists only under some alternatives, or only while a setting
 enables it — registration while the sign-in method is password, social sign-in
