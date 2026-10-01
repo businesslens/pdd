@@ -45,6 +45,15 @@ const initialDepth = computed(() => {
 
 /* Every branch below the root: the root stays open, or nothing would show. */
 const branchIds = computed(() => all.value.filter(node => node.children.length && node.id !== props.tree.id).map(node => node.id))
+/* The fork names what its dashed lines lead to, and says how many of the set's
+   alternatives are shown when a focus or filter hides some. A struck one is
+   still drawn, so it counts as shown. */
+const forkLabel = (node: TopologyBranch) => {
+  const total = node.resource?.kind === 'variation' ? node.resource.alternatives.length : 0
+  const shown = originals.value.get(node.id)?.children.length ?? 0
+  return shown < total ? `${shown} of ${total} alternatives` : 'alternatives'
+}
+const originals = computed(() => new Map(all.value.map(node => [node.id, node])))
 const diagram = computed<Diagram>(() => {
   const originals = new Map(all.value.map(node => [node.id, node]))
   const visible = flatten(visibleTree.value)
@@ -60,7 +69,7 @@ const diagram = computed<Diagram>(() => {
       branch: originals.get(node.id)!.children.length ? { id: node.id, count: concreteBranches(originals.get(node.id)!.children).length, open: isOpen(node), childrenLabel: branchChildrenLabel(originals.get(node.id)!.children) } : undefined })),
     /* A Variation's lines to its alternatives are dashed, and say "alternatives" once where they fork. */
     edges: visible.flatMap(node => node.children.map((child, index) => node.resource?.kind === 'variation'
-      ? { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: index ? '' : 'alternatives', arrow: false, alternative: true }
+      ? { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: index ? '' : forkLabel(node), badges: index ? undefined : [{ icon: 'i-lucide-split', text: forkLabel(node) }], arrow: false, alternative: true }
       : { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false })) }
 })
 </script>

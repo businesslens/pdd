@@ -12,6 +12,7 @@ import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { REPORT_ENTITY_KINDS } from '../utils/reportWorkspace'
 import { resourcesOfKind } from '../utils/resourceFacets'
 import { firstSentence } from '../utils/reportMarkdown'
+import { variationSetOf } from '../utils/variations'
 
 const props = defineProps<{ workspace: ReportWorkspace }>()
 const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
@@ -30,12 +31,15 @@ function choose(resource: AnyResourceView) {
   open.value = false
 }
 
+/* A result keeps the name that matched. A Variation wears its set mark; an
+   alternative adds a chip naming its Variation, the fact the name alone hides. */
 function items(resources: AnyResourceView[], icon: string): CommandPaletteItem[] {
   return resources.map(resource => ({
     label: resource.title,
     description: firstSentence(resource.lead, 90),
     suffix: resource.id,
     icon,
+    ...(resource.kind === 'variation' || resource.variation ? { slot: 'varied' as const, resource, set: variationSetOf(props.workspace, resource) } : {}),
     onSelect: () => choose(resource)
   }))
 }
@@ -61,6 +65,17 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
         class="h-96"
         @update:open="open = $event"
       >
+        <template #varied-leading="{ item }">
+          <BlrKind v-if="item.resource.kind === 'variation'" kind="variation" :member-kind="item.resource.memberKind" :facet="item.resource.memberFacet" :labelled="false" class="shrink-0" />
+          <UIcon v-else :name="item.icon" class="size-5 shrink-0 text-dimmed" />
+        </template>
+        <template #varied-label="{ item, ui }">
+          <span :class="ui.itemLabelBase()">{{ item.label }}</span>
+          <span :class="ui.itemLabelSuffix()">{{ item.suffix }}</span>
+          <span v-if="item.resource.kind !== 'variation' && item.set" class="blr-search-set" data-search-variation>
+            <UIcon name="i-lucide-split" aria-hidden="true" />{{ item.set.title }}
+          </span>
+        </template>
         <template #empty>
           <p class="p-6 text-center text-sm text-muted italic">
             Nothing in this model matches that.
@@ -70,3 +85,8 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
     </template>
   </UModal>
 </template>
+
+<style scoped>
+.blr-search-set { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 8px; padding: 0 6px; border: 1px solid var(--ui-border-accented); border-radius: 5px; background: var(--ui-bg-elevated); font-size: 11px; font-weight: 500; line-height: 18px; color: var(--ui-text-highlighted); vertical-align: 1px; }
+.blr-search-set > .iconify { width: 10px; height: 10px; }
+</style>

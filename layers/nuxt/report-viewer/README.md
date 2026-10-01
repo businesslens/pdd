@@ -756,7 +756,9 @@ Variation is added around them, the way each drawing's lines already read.
   Variation's node, drawn in the member type's color with its mark and the
   sub-icon, subtitled `Capability variation`, which opens the set. Its lines to
   its alternatives are dashed — "one of", never containment — and say
-  `alternatives` once where they fork. The
+  `alternatives` once where they fork, on a chip with the split mark, as every
+  dashed line that depends on a Variation carries it. When a focus or filter
+  hides some, the chip says `1 of 2 alternatives`. The
   Delivery map folds at every level, from Interfaces at the root to Scenarios at
   a place, and at a place an alternative that does not happen there follows the
   others struck, with the same badge as the tree. Reach trees fold their
@@ -787,6 +789,9 @@ Variation is added around them, the way each drawing's lines already read.
   row's and column's is dashed, and its details say which first; in What
   changes what, a single change inside a solid cell says so on its own line.
   Rule attachments are authored, so their cells are never dashed.
+
+Search keeps the name that matched: a Variation wears its set mark, and an
+alternative adds a chip naming its Variation.
 
 Check it against the Fixture Shop with `node scripts/check-variations.mjs
 <viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the

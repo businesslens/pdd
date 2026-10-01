@@ -181,6 +181,18 @@ try {
     await expect(tab.locator('.vue-flow .blr-flow-edge-label').filter({ hasText: /^alternatives$/ })).toHaveCount(1)
     await expect(tab.locator('.vue-flow path.blr-flow-route[stroke-dasharray="8 4"]')).toHaveCount(2)
     await capture(tab, 'graph-journeys')
+    // A focus that hides some alternatives says how many are shown.
+    await tab.goto(`${origin}/?s=interface&t=graph&tf=screen:customer-mobile::storefront::order-status`)
+    await expect(tab.locator('.vue-flow .blr-flow-edge-label').filter({ hasText: /^1 of 2 alternatives$/ })).toHaveCount(1)
+    // Search keeps the matched name, marks a Variation with its set mark, and names an alternative's Variation.
+    await tab.goto(`${origin}/?s=rule`)
+    await expect(tab.locator('.blr-resource-row').first()).toBeVisible()
+    await tab.keyboard.press('Meta+k')
+    await tab.keyboard.type('refund review')
+    await expect(tab.locator('[data-search-variation]').filter({ hasText: 'Refund review' })).toHaveCount(2)
+    await expect(tab.locator('.blr-search-palette [data-variation-mark]').first()).toBeVisible()
+    await capture(tab, 'search')
+    await tab.keyboard.press('Escape')
     await tab.goto(`${origin}/?s=entity&t=graph`)
     await expect(tab.locator('[data-flow-group][data-resource-key="variation:tax-document"]')).toBeVisible()
     await capture(tab, 'graph-entities')
