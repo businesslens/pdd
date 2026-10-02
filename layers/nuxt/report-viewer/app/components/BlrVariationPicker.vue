@@ -5,9 +5,9 @@
  *
  * Wherever an alternative is a title, the title names its Variation and this
  * picker names the alternative: its title, or a Version's label. On the set's
- * own title it counts the alternatives. Its menu is headed by the set, in the
- * variation glyph's own ink: what chooses, and the way to the set's own
- * reading. Every alternative follows with its condition.
+ * own title it counts the alternatives. Its menu is headed by the set, wearing
+ * its member type's mark with the variation sub-icon: what chooses, and the way
+ * to the set's own reading. Every alternative follows with its condition.
  *
  * `open` opens the picked alternative, as a row or tree node does. `replace`
  * swaps the reading under the same title without a Back step, as a reading
@@ -88,7 +88,7 @@ function go(target: AnyResourceView, tab?: string) {
           data-variation-open-set
           @open="go(set)"
         >
-          <UIcon name="i-lucide-split" class="mt-0.5 size-4 shrink-0 text-highlighted" />
+          <BlrKind kind="variation" :member-kind="set.memberKind" :facet="set.memberFacet" :labelled="false" class="mt-0.5 shrink-0" />
           <span class="flex min-w-0 items-center gap-1.5 font-semibold text-highlighted">
             <span class="[overflow-wrap:anywhere]">{{ set.title }}</span>
             <UIcon v-if="!onSet" name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-dimmed transition group-hover/set:translate-x-0.5 group-hover/set:text-default" aria-hidden="true" />

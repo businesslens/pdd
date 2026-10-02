@@ -175,6 +175,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   const entityIds = new Set(model.entities.map(item => item.id))
   const entitiesById = new Map(model.entities.map(item => [item.id, item]))
+  const namedEntities = model.entities.map(entity => ({ id: entity.id, title: entity.doc.title }))
   /*
    * An Actor is an Entity that acts. Every actor reference — a Step's `actor`,
    * an Interface's, Experience's or Journey's `actors`, a grant's `actors` —
@@ -585,7 +586,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const first = segments[0] || ''
     // A verb only commands when it acts on something the model declares:
     // `cancel-unpaid-orders` does, while `pull-request` and `sign-in` are nouns.
-    const actsOnDeclared = segments.slice(1).some(segment => nounVocabulary.has(segment) || nounVocabulary.has(segment.replace(/s$/, '')))
+    // A declared noun can span segments: `approve-refund-request` acts on a Refund request.
+    const rest = segments.slice(1)
+    const nouns = [...rest, ...rest.map((_, index) => rest.slice(index).join('-'))]
+    const actsOnDeclared = nouns.some(noun => nounVocabulary.has(noun) || nounVocabulary.has(noun.replace(/s$/, '')))
     if (isVerbSegment(first) && actsOnDeclared) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
@@ -920,7 +924,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
        */
       for (const entity of undeclaredEntityMentions(
         step.text,
-        model.entities.map(entity => ({ id: entity.id, title: entity.doc.title })),
+        namedEntities,
         step.entities.map(entry => entry.entity),
         step.actor
       )) {
@@ -956,9 +960,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
           if (!insideEvery(supported, resolved.containerId)) {
             errors.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${capabilityId}"`)
-          }
-          if (resolved.screen && !resolved.screen.capabilities.includes(capabilityId)) {
-            errors.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${capabilityId}"`)
           }
         }
         if (step.actor) {

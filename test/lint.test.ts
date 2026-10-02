@@ -1390,6 +1390,8 @@ Lead.
     entity('ship-manifest', 'Ship manifest')
     // A verb acting on something the model declares reads as a command.
     entity('cancel-orders', 'Cancel orders')
+    // A declared noun spanning segments: `refund-request` is the thing approved.
+    entity('approve-refund-request', 'Approve refund request')
     // The spec's own counter-example: `order` is a thing, so the id carries no verb.
     cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/order-management'), { recursive: true })
     // The noun half is matched against things, never against a Screen's name:
@@ -1405,6 +1407,7 @@ Lead.
     expect(warnings).not.toContain('"refund-request" opens with a verb')
     expect(warnings).not.toContain('"ship-manifest" opens with a verb')
     expect(warnings).toContain('Entity id "cancel-orders" opens with a verb')
+    expect(warnings).toContain('Entity id "approve-refund-request" opens with a verb')
     expect(warnings).toContain('Capability id "order-management" reads as a noun phrase')
     expect(warnings).toContain('Capability Scenario id "refund-processing" reads as a noun phrase')
     expect(warnings).not.toContain('"browse-record" names "record"')

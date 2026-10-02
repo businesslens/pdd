@@ -1,5 +1,5 @@
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
-import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it } from 'vitest'
@@ -27,10 +27,11 @@ afterEach(async () => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 
+let output = ''
 async function start(cwd: string) {
   const child = spawn(process.execPath, [CLI, 'view', '--cwd', cwd, '--no-open'], { stdio: 'pipe' })
   children.push(child)
-  let output = ''
+  output = ''
   child.stdout.on('data', data => { output += data })
   child.stderr.on('data', data => { output += data })
   await expect.poll(() => output, { timeout: 10_000 }).toMatch(/http:\/\/127\.0\.0\.1:\d+/)
@@ -63,6 +64,20 @@ it('finds a model at a repository root initialized after view started in a subdi
   const preview = await fetch(`${url}/_businesslens/code?target=src/services/catalog.ts%23CatalogService.list`)
   expect(preview.status).toBe(200)
   await preview.text()
+})
+
+it('says once that Git refuses a repository marker instead of asking it twice a second', async () => {
+  const root = scratch()
+  cpSync(FIXTURE, root, { recursive: true })
+  // A linked worktree whose main repository was deleted: the marker exists, Git refuses it.
+  writeFileSync(join(root, '.git'), `gitdir: ${join(root, 'missing', 'worktree')}\n`)
+  const url = await start(root)
+  await expect.poll(() => output, { timeout: 5_000 }).toContain('Git could not open the repository')
+  // Six locate ticks later, still one message and no claim that the model failed.
+  await new Promise(resolve => setTimeout(resolve, 3_000))
+  expect(output.match(/Git could not open the repository/g)).toHaveLength(1)
+  expect(output).not.toContain('Could not open the Product Model')
+  expect((await state(url)).status).toBe(422)
 })
 
 it('rebinds a model already on screen when its enclosing repository is initialized', async () => {

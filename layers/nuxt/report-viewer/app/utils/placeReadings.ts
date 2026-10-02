@@ -9,13 +9,15 @@
  * standing on an Interface, an Experience or a Screen asks from.
  */
 import type {
+  AnyResourceView,
   CapabilityView,
   ExperienceView,
   InterfaceView,
   JourneyView,
   ReportWorkspace,
   ScenarioView,
-  ScreenView
+  ScreenView,
+  VariationSetView
 } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
 
@@ -26,17 +28,12 @@ import { resourceKey } from './reportWorkspace'
  * plus what is available there and exposed on no Screen, a gap `lint` grades.
  * Screen exposure never suppresses Steps placed directly on a container.
  */
-export interface PlaceCapabilities {
-  capabilities: CapabilityView[]
-  note: 'own' | 'gap' | 'direct'
-}
-
-export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceCapabilities {
+export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): CapabilityView[] {
   if (place.kind === 'screen') {
-    return { note: 'own', capabilities: place.capabilityIds.flatMap((id) => {
+    return place.capabilityIds.flatMap((id) => {
       const capability = workspace.byKey.get(resourceKey('capability', id))
       return capability?.kind === 'capability' ? [capability] : []
-    }) }
+    })
   }
   const available = workspace.capabilities.filter(capability => capability.contexts.some(context => place.kind === 'experience'
     ? context.experienceId === place.id
@@ -44,20 +41,21 @@ export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceVi
   const screens = workspace.screens.filter(screen => screen.contexts.some(context => place.kind === 'experience'
     ? context.experienceId === place.id || (place.interfaceIds.includes(context.interfaceId) && !context.experienceId)
     : context.interfaceId === place.id))
-  if (place.kind === 'interface' && !screens.length) return { note: 'direct', capabilities: available }
+  if (place.kind === 'interface' && !screens.length) return available
   const directIds = new Set(workspace.scenarios.filter(scenario =>
     scenario.scenarioType === 'capability' && stepsOn(scenario, place).length > 0
   ).map(scenario => scenario.capabilityId))
   const gapIds = new Set(available.filter(capability =>
     !screens.some(screen => screen.capabilityIds.includes(capability.id))
   ).map(capability => capability.id))
-  return { note: 'gap', capabilities: workspace.capabilities.filter(capability => directIds.has(capability.id) || gapIds.has(capability.id)) }
+  return workspace.capabilities.filter(capability => directIds.has(capability.id) || gapIds.has(capability.id))
 }
 
 /** One Capability a place delivers itself, read through its own Scenarios that happen there. */
 export interface PlaceDeliveryGroup {
   capability: CapabilityView
-  note: PlaceCapabilities['note']
+  /** A Screen's own; else placed here directly, by its Scenarios' Steps; else a gap: available here and on no Screen. */
+  note: 'own' | 'direct' | 'gap'
   /** The Capability's own Scenarios with a Step placed exactly on this place. */
   scenarios: ScenarioView[]
   /** Per Scenario key, the indexes of those Steps. */
@@ -76,8 +74,7 @@ const stepsOn = (scenario: ScenarioView, place: InterfaceView | ExperienceView |
  * Capability its Steps use, so it is read on the place (see `placeJourneys`).
  */
 export function placeDelivery(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceDeliveryGroup[] {
-  const { capabilities } = placeCapabilities(workspace, place)
-  return capabilities.map((capability) => {
+  return placeCapabilities(workspace, place).map((capability) => {
     const stepsHere: Record<string, number[]> = {}
     const scenarios = workspace.scenarios.filter((scenario) => {
       if (scenario.scenarioType !== 'capability' || scenario.capabilityId !== capability.id) return false
@@ -85,7 +82,7 @@ export function placeDelivery(workspace: ReportWorkspace, place: InterfaceView |
       if (here.length) stepsHere[scenario.key] = here
       return here.length > 0
     })
-    const note: PlaceCapabilities['note'] = place.kind === 'screen' ? 'own' : scenarios.length ? 'direct' : 'gap'
+    const note: PlaceDeliveryGroup['note'] = place.kind === 'screen' ? 'own' : scenarios.length ? 'direct' : 'gap'
     return { capability, note, scenarios, stepsHere }
   })
 }
@@ -114,6 +111,55 @@ export function placeJourneys(workspace: ReportWorkspace, place: InterfaceView |
 }
 
 export type Place = InterfaceView | ExperienceView | ScreenView
+
+/**
+ * Every place a reader standing on `place` finds in its branch: the place, the
+ * Experiences and Screens inside it, nested ones included, and for an
+ * Experience the Screens its Interfaces share with it.
+ */
+function placeScope(workspace: ReportWorkspace, place: Place): Set<string> {
+  const inside = (id: string) => id === place.id || id.startsWith(`${place.id}::`)
+  const experiences = new Set(workspace.experiences
+    .filter(item => inside(item.id) || (place.kind === 'interface' && item.interfaceIds.includes(place.id)))
+    .map(item => item.id))
+  const screens = workspace.screens.filter(screen => inside(screen.id) || screen.contexts.some(context =>
+    experiences.has(context.experienceId)
+    || (place.kind === 'interface' && context.interfaceId === place.id)
+    || (place.kind === 'experience' && !context.experienceId && place.interfaceIds.includes(context.interfaceId))))
+  return new Set([place.id, ...experiences, ...screens.map(screen => screen.id)])
+}
+
+/**
+ * Whether a resource happens anywhere in a place's branch — on the place or
+ * on one nested inside it. A tree strikes an alternative only when this is
+ * false: one delivered a level down is in the place, just not at its level.
+ */
+export function happensWithin(workspace: ReportWorkspace, resource: AnyResourceView, place: Place): boolean {
+  return happensIn(resource, placeScope(workspace, place))
+}
+
+function happensIn(resource: AnyResourceView, scope: Set<string>): boolean {
+  if (resource.kind === 'interface' || resource.kind === 'experience' || resource.kind === 'screen') return scope.has(resource.id)
+  if (resource.kind === 'capability') {
+    return resource.contexts.some(context => scope.has(context.placeId)) || resource.screenIds.some(id => scope.has(id))
+  }
+  if (resource.kind === 'journey') return resource.contexts.some(context => scope.has(context.placeId))
+  if (resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario') {
+    return resource.steps.some(step => step.contexts.some(item => scope.has(item.context.id)))
+  }
+  return false
+}
+
+/** The alternatives of a set a place's node strikes: not drawn there and happening nowhere in its branch. */
+export function absentAlternatives(workspace: ReportWorkspace, set: VariationSetView, drawn: ReadonlySet<string | undefined>, place: Place): AnyResourceView[] {
+  const scope = placeScope(workspace, place)
+  return set.alternatives
+    .flatMap((item) => {
+      const alternative = workspace.byKey.get(item.key)
+      return alternative && !drawn.has(item.key) && !happensIn(alternative, scope) ? [alternative] : []
+    })
+    .sort((a, b) => a.title.localeCompare(b.title, 'en'))
+}
 
 /** How a tree says an alternative does not happen at a place. */
 export function absenceLabel(place: Place): string {

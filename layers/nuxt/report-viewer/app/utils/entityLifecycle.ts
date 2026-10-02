@@ -104,7 +104,6 @@ export interface LifecycleRowGroup<T extends EntityArcView = EntityArcView> {
   arcs: T[]
 }
 
-/** A change belongs to its starting State exactly once. Creation is not a State. */
 /**
  * Moves in the order the Entity's Lifecycle Rows reads them — creation, then
  * by starting State in declared order, then changes naming no starting State,
@@ -129,6 +128,7 @@ export function lifecycleChangeAddress(move: Pick<EntityArcView, 'effect' | 'fro
   return [move.effect, move.from, move.to].join('~')
 }
 
+/** A change belongs to its starting State exactly once. Creation is not a State. */
 export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<EntityView, 'id' | 'states'>, arcs: T[]): LifecycleRowGroup<T>[] {
   const states: LifecycleRowGroup<T>[] = entity.states.map(state => ({
     key: stateNodeId(entity.id, state.name), title: state.name, state, arcs: []

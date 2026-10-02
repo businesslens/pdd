@@ -191,4 +191,132 @@ Prices are shown.
     expect(treeCardExpanded(card, [], { [card.key]: [] })).toEqual([card.key])
     expect(treeCardExpanded(card, [card.key], { [card.key]: [v1.id] })).toEqual([v1.id])
   })
+
+  /*
+   * The Fixture Shop with each Variation reading the merge review found wrong:
+   * Order reaches Cancelled only through the two cancellation alternatives,
+   * one of them is placed directly on the storefront while the other stays on
+   * its Order status Screen, and the Interface's shared catalog Screens vary.
+   */
+  const variedShop = () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'bl-varied-shop-'))
+    cpSync(fixture, cwd, { recursive: true })
+    const bl = join(cwd, '.businesslens')
+    const edit = (path: string, from: string, to: string) => {
+      const file = join(bl, path)
+      const text = readFileSync(file, 'utf8')
+      expect(text).toContain(from)
+      writeFileSync(file, text.replaceAll(from, to))
+    }
+    edit('capabilities/manage-orders/scenarios/merge-duplicate-orders.md',
+      '{ entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled, facts: [] }',
+      '{ entity: order, as: duplicate, effect: changes, facts: [Items ordered] }')
+    edit('capabilities/cancel-order/scenarios/cancel-your-own-unpaid-order.md',
+      'place: customer-web::storefront::order-status', 'place: customer-web::storefront')
+    edit('entities/shopper.md', '- **Checkout assignment**',
+      '- **Catalog layout assignment** — whether the catalog layout experiment shows this shopper a grid\n- **Checkout assignment**')
+    writeFileSync(join(bl, 'interfaces/customer-web/screens/catalog-grid.md'), `---
+entities:
+  - { entity: catalog-product, shows: [Name and description, Price] }
+---
+
+# Catalog grid
+
+The catalog as a grid of product tiles.
+`)
+    writeFileSync(join(bl, 'capabilities/browse-catalog/scenarios/browse-the-catalog-grid.md'), `---
+kind: primary
+routes: { web: Web }
+steps:
+  - text: The catalog is shown as a grid of product tiles
+    kind: product
+    entities: [{ entity: catalog-product, effect: reads, facts: [Name and description, Price] }]
+    contexts: { web: { place: customer-web::catalog-grid } }
+  - text: The shopper opens a product page
+    kind: actor
+    actor: shopper
+    entities: [{ entity: catalog-product, effect: reads, facts: [Name and description, Price] }]
+    contexts: { web: { place: customer-web::storefront::product-record } }
+---
+
+# Browse the catalog grid
+
+## Trigger
+
+A Shopper in the grid arm opens the storefront.
+
+## Outcome
+
+The shopper opens a product from its tile.
+`)
+    writeFileSync(join(bl, 'variations/catalog-layout.md'), `---
+kind: experiment
+of: screen
+assignmentUnit: { entity: shopper }
+assignmentMethod: Assign each signed-in Shopper randomly once. Store the arm on the Shopper.
+assignmentFact: { entity: shopper, fact: Catalog layout assignment }
+allocation: Half of eligible Shoppers in each arm.
+takesEffect: On the first catalog opening after sign-in.
+stability: The stored assignment holds until the experiment ends.
+alternatives:
+  - id: customer-web::catalog
+    selectedWhen: The Shopper's Catalog layout assignment is List, or the Shopper is a guest.
+  - id: customer-web::catalog-grid
+    selectedWhen: The Shopper's Catalog layout assignment is Grid.
+---
+
+# Catalog layout
+
+Signed-in Shoppers see the catalog as a list or as a grid.
+`)
+    return cwd
+  }
+  const variedWorkspace = () => {
+    const cwd = variedShop()
+    try {
+      const model = loadModel(cwd)
+      expect(lintModel(model, tracked).errors).toEqual([])
+      return projectReportWorkspace(compileReport(model, '2026-10-02'))
+    } finally { rmSync(cwd, { recursive: true, force: true }) }
+  }
+
+  it('reads a State reached under every alternative of a set as unconditional, in a real model', () => {
+    const workspace = variedWorkspace()
+    const order = workspace.entities.find((entity: any) => entity.id === 'order')!
+    const into = order.arcs.filter((arc: any) => arc.to === 'Cancelled' && arc.from !== 'Cancelled')
+    expect(into.length).toBeGreaterThan(1)
+    expect(into.every((arc: any) => lifecycleArcCondition(workspace, order, arc).conditional)).toBe(true)
+    expect(lifecycleStateCondition(workspace, order, 'Cancelled')).toBeNull()
+  })
+
+  it('never strikes an alternative delivered on a Screen inside the place, in the tree or the Delivery map', () => {
+    const workspace = variedWorkspace()
+    const storefront = workspace.byKey.get('experience:customer-web::storefront')!
+    const set = (nodes: any[]) => flatten(nodes).find(node => node.resource?.key === 'variation:cancellation-handling' && node.place?.key === storefront.key)
+    const inTree = set(structureChildren(workspace, storefront))
+    expect(inTree.children.map((child: any) => [child.resource.id, Boolean(child.absentFrom)])).toEqual([['cancel-order', false]])
+    // Request cancellation is delivered one level down, on Order status.
+    const status = flatten(structureChildren(workspace, storefront)).find(node => node.resource?.key === 'screen:customer-web::storefront::order-status')
+    expect(flatten(status.children).some(node => node.resource?.id === 'request-cancellation' && !node.absentFrom)).toBe(true)
+    const mapPlace = flatten([deliveryMapProjection(workspace)]).find(node => node.resource?.key === storefront.key)
+    const inMap = mapPlace.children.find((node: any) => node.resource?.key === 'variation:cancellation-handling')
+    expect(inMap.children.filter((child: any) => child.absentFrom)).toEqual([])
+    // A Screen that genuinely lacks an alternative still strikes it.
+    const mobileStatus = workspace.byKey.get('screen:customer-mobile::storefront::order-status')!
+    const struck = flatten(structureChildren(workspace, mobileStatus)).filter(node => node.absentFrom)
+    expect(struck.map(node => node.resource.id)).toContain('request-cancellation')
+  })
+
+  it('folds an Experience\'s shared Screen alternatives under their set, as its own Screens fold', () => {
+    const workspace = variedWorkspace()
+    const storefront = workspace.byKey.get('experience:customer-web::storefront')!
+    const shared = structureChildren(workspace, storefront).find((node: any) => node.title === 'Shared Screens')
+    expect(shared.children.map((node: any) => node.resource.key)).toEqual(['variation:catalog-layout'])
+    const [set] = shared.children
+    expect(set.children.map((child: any) => [child.resource.id, child.inSet, child.sharedFrom?.id, Boolean(child.absentFrom)])).toEqual([
+      ['customer-web::catalog', true, 'customer-web', false],
+      ['customer-web::catalog-grid', true, 'customer-web', false]
+    ])
+    expect(shared.count).toBe(2)
+  })
 })

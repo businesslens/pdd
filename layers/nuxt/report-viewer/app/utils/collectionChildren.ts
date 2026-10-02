@@ -15,7 +15,7 @@ import { interfaceProjection } from './topologyProjections'
 import { entityOperation, ruleAttachments } from './topologyTargets'
 import { resourceAncestors } from './reportDestinations'
 import type { TopologyBranch } from './topologyProjections'
-import { placeDelivery, placeJourneys, type Place } from './placeReadings'
+import { absentAlternatives, placeDelivery, placeJourneys, type Place } from './placeReadings'
 
 export interface RowChild {
   resource: AnyResourceView
@@ -59,8 +59,9 @@ const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): 
 /**
  * In a tree an alternative always sits under its Variation's node, named by its
  * own title: the node names the set, and its children are the alternatives
- * found here, in their first one's place. At a place, an alternative that does
- * not happen there follows them struck, with no children, so a place holding one
+ * found here, in their first one's place. At a place, an alternative that
+ * happens nowhere in its branch follows them struck, with no children; one
+ * delivered on a place nested inside is simply not drawn at this level. A place holding one
  * alternative still reads as a choice; the node's picker says where it does
  * happen. The set node is membership, not containment: each alternative keeps
  * its own children, and counts never include a struck one.
@@ -84,9 +85,7 @@ export function foldVariations(workspace: ReportWorkspace, parentId: string, nod
     for (const holder of sets.values()) {
       const set = holder.resource
       if (set?.kind !== 'variation') continue
-      const here = new Set(holder.children.map(child => child.resource?.key))
-      const absent = set.alternatives.flatMap(item => { const alternative = workspace.byKey.get(item.key); return alternative && !here.has(item.key) ? [alternative] : [] })
-        .sort((a, b) => a.title.localeCompare(b.title, 'en'))
+      const absent = absentAlternatives(workspace, set, new Set(holder.children.map(child => child.resource?.key)), place)
       holder.children.push(...absent.map(alternative => ({ id: `${holder.id}>${alternative.key}`, title: alternative.title, resource: alternative, inSet: true, absentFrom: place, children: [] })))
     }
   }
@@ -152,8 +151,9 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
     ].filter(node => node.children.length).concat(deliveryLeaves(workspace, resource))
   }
   if (resource.kind === 'experience') {
-    const shared = workspace.interfaces.filter(iface => resource.interfaceIds.includes(iface.id)).flatMap(iface =>
-      screensOf(iface).map(screen => ({ ...screenLeaf(screen), sharedFrom: iface })))
+    /* Shared Screens fold like the Experience's own: alternatives sit under their set node. */
+    const shared = foldVariations(workspace, `${resource.key}:shared-screens`, workspace.interfaces.filter(iface => resource.interfaceIds.includes(iface.id)).flatMap(iface =>
+      screensOf(iface).map(screen => ({ ...screenLeaf(screen), sharedFrom: iface }))), resource)
     return [...deliveryLeaves(workspace, resource), ...[screenGroup(resource), { ...group(`${resource.key}:shared-screens`, 'screen', shared), title: 'Shared Screens' }].filter(node => node.children.length)]
   }
   /* A Screen's own branch, as it sits in its container's tree. */

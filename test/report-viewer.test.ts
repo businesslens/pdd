@@ -1673,23 +1673,20 @@ describe('Screens on the v15 wire', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
     const exposedBy = (screens: any[], id: string) => screens.some((screen: any) => screen.capabilityIds.includes(id))
     for (const screen of workspace.screens) {
-      expect(placeCapabilities(workspace, screen)).toEqual({ note: 'own', capabilities: screen.capabilityIds.map((id: string) => workspace.byKey.get(`capability:${id}`)) })
+      expect(placeCapabilities(workspace, screen)).toEqual(screen.capabilityIds.map((id: string) => workspace.byKey.get(`capability:${id}`)))
     }
     const customerWeb = workspace.interfaces.find((item: any) => item.id === 'customer-web')!
     const gap = placeCapabilities(workspace, customerWeb)
-    expect(gap.note).toBe('gap')
     const webScreens = workspace.screens.filter((screen: any) => screen.id.startsWith('customer-web::'))
-    for (const capability of gap.capabilities) expect(exposedBy(webScreens, capability.id)).toBe(false)
+    for (const capability of gap) expect(exposedBy(webScreens, capability.id)).toBe(false)
     for (const experience of workspace.experiences) {
       const own = placeCapabilities(workspace, experience)
-      expect(own.note).toBe('gap')
-      for (const capability of own.capabilities) expect(capability.contexts.some((context: any) => context.experienceId === experience.id)).toBe(true)
+      for (const capability of own) expect(capability.contexts.some((context: any) => context.experienceId === experience.id)).toBe(true)
     }
     /* A place with no Screens delivers directly: nothing there is a finding. */
     const cli = workspace.interfaces.find((item: any) => item.id === 'operator-cli')!
     const direct = placeCapabilities(workspace, cli)
-    expect(direct.note).toBe('direct')
-    expect(direct.capabilities.length).toBeGreaterThan(0)
+    expect(direct.length).toBeGreaterThan(0)
     /* The tree rows carry the same reading. */
     const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
     /* Alternatives delivered at one place fold under their set's node; each keeps its own row inside it, and one not here is struck. */
@@ -1718,7 +1715,7 @@ describe('Screens on the v15 wire', () => {
     /* A direct delivery is ordinary rows in the place's own branch: where they sit says it, so no group heads them. */
     const cliItems = structureChildren(workspace, cli)
     expect(cliItems.some((item: any) => item.groupKind === 'capability')).toBe(false)
-    expect(cliItems.filter((item: any) => item.resource?.kind === 'capability').map((item: any) => [item.resource.id, item.note])).toEqual(direct.capabilities.map((capability: any) => [capability.id, undefined]))
+    expect(cliItems.filter((item: any) => item.resource?.kind === 'capability').map((item: any) => [item.resource.id, item.note])).toEqual(direct.map((capability: any) => [capability.id, undefined]))
     /* The delivery map: a Screen's leaves are its own Capabilities, and an Interface with no Screens delivers directly. */
     const map = flatten([deliveryMapProjection(workspace)])
     for (const screen of webScreens) {

@@ -1084,9 +1084,6 @@ export function validateProductReport(report: ProductReportV15): string[] {
           if (!insideEvery(supported, resolved.containerId)) {
             issues.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${step.capabilityId}"`)
           }
-          if (resolved.screen && !resolved.screen.capabilityIds.includes(step.capabilityId)) {
-            issues.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${step.capabilityId}"`)
-          }
         }
         if (step.actorId) {
           const supported = supportedActorsForContainer(resolved.containerId) || new Set<string>()

@@ -65,7 +65,7 @@ Experience or Interface lists Capabilities with Steps placed exactly there,
 plus availability gaps exposed on no relevant Screen. Exposure on a Screen
 never removes behavior placed directly on its container. They are ordinary rows beside the place's Screens, so
 where they sit says they are on no Screen; no group heads them. The Delivery map
-notes a direct delivery on each node, because a graph has no branch to say it.
+draws the same leaves under the same nodes, so it needs no note to say so.
 Under each Capability sit its own Capability Scenarios with a Step placed
 exactly on that place. A Journey Scenario belongs to its Journey, never to a
 Capability its Steps use, so it sits under its Journey instead: after the
@@ -720,10 +720,12 @@ expands. Trees are the exception: `foldVariations` puts every alternative —
 Screens, Experiences, the Capabilities and Journeys a place delivers, and their
 Scenarios — under its set's node, even where it is the only one there. The node
 expands to them by their own titles because each keeps its own children. At a
-place, an alternative that does not happen there follows them struck through,
-muted, with a dashed `Not on this Screen` badge (`Not in this Experience`, `Not
-in this Interface`) and no children, so a place holding one alternative still
-reads as a choice; it still opens its reading. The node's picker draws it the
+place, an alternative that happens nowhere in its branch follows them struck
+through, muted, with a dashed `Not on this Screen` badge (`Not in this
+Experience`, `Not in this Interface`) and no children, so a place holding one
+alternative still reads as a choice; it still opens its reading. One delivered
+on a place nested inside, or on a Screen its Interface shares, is not struck:
+it is in the place, read where it happens. The node's picker draws it the
 same way, after the alternatives that are here, with its condition. Counts and a
 closed row's summary never include a struck alternative or the set node.
 

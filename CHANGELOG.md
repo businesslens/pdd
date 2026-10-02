@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep directly placed behavior visible in Delivery, group Interface alternatives together, and show Lifecycle States as available when every alternative reaches them.
 - Reject ambiguous place names before importing a Blueprint, preserving Screen ownership.
+- Keep the local report responsive when Git cannot open the repository, saying so once instead of repeating an error.
 
 - Browse experiments, configuration alternatives and supported versions in a new Variations collection.
 - Read alternatives under their Variation's title and switch between them; alternative Scenarios share one card inside their Capability or Journey.

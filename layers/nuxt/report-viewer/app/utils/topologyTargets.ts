@@ -80,8 +80,14 @@ export interface AttachedRule {
  * on every place that Capability is available in.
  */
 export function attachedRules(workspace: ReportWorkspace, resource: AnyResourceView): AttachedRule[] {
+  /* A reading asks three times — its tabs, its connections, its Business Rules tab — so it is read once per workspace. */
+  let readings = attachedRulesCache.get(workspace)
+  if (!readings) attachedRulesCache.set(workspace, readings = new Map())
+  const cached = readings.get(resource.key)
+  if (cached) return cached
   const titles = (places: AnyResourceView[]) => places.map(place => place.title).join(', ')
-  return workspace.rules.flatMap((rule) => {
+  const owned = ownedSteps(workspace, resource)
+  const attached = workspace.rules.flatMap((rule) => {
     const found: AttachedRulePart[] = []
     const part = (label: string, text: string, operations: HookOperation[] = []) => found.push({ label, text, operations })
     for (const { resource: target, target: selector, contexts } of ruleAttachments(workspace, rule)) {
@@ -102,7 +108,7 @@ export function attachedRules(workspace: ReportWorkspace, resource: AnyResourceV
       }
     }
     /* Through its Steps: an Entity target selects the Steps doing its operation, and a Capability or Journey owns those Steps. */
-    const governed = governedTargets(workspace, resource, rule.id)
+    const governed = governedBy(rule, owned)
     if (governed.length) {
       part('Governs its Steps', governed.map(target => selectorPhrase(workspace, target)).join(', '),
         governed.map(target => ({ target, places: target.contexts.flatMap(context => { const place = topologyPlace(workspace, context.placeId); return place ? [place.title] : [] }), entity: true })))
@@ -112,22 +118,25 @@ export function attachedRules(workspace: ReportWorkspace, resource: AnyResourceV
     const hookLabel = found[0]!.label
     return [{ rule, hookLabel, hook: found.map(item => item.label === hookLabel ? item.text : `${item.label.toLowerCase()} ${item.text}`).join('; '), parts: found }]
   })
+  readings.set(resource.key, attached)
+  return attached
 }
 
-/**
- * The Rule's Entity targets that select Steps a Capability or Journey owns —
- * its Capability Scenarios' Steps and the Journey Steps naming it, or its
- * Journey Scenarios' Steps — each once, in authored order: what the Rule
- * governs there, read as its own selectors. The Steps are on its Scenarios.
- */
-export function governedTargets(workspace: ReportWorkspace, resource: AnyResourceView, ruleId: string): Array<Extract<ReportBusinessRuleTarget, { type: 'entity' }>> {
+const attachedRulesCache = new WeakMap<ReportWorkspace, Map<string, AttachedRule[]>>()
+
+type OwnedStep = ReportWorkspace['scenarios'][number]['steps'][number]
+
+/** The Steps a Capability or Journey owns: its Capability Scenarios' Steps and the Journey Steps naming it, or its Journey Scenarios' Steps. */
+function ownedSteps(workspace: ReportWorkspace, resource: AnyResourceView): OwnedStep[] {
   if (resource.kind !== 'capability' && resource.kind !== 'journey') return []
-  const rule = workspace.byKey.get(resourceKey('rule', ruleId))
-  if (rule?.kind !== 'rule') return []
-  const owned = workspace.scenarios.flatMap(scenario => scenario.steps.filter(step => resource.kind === 'capability'
+  return workspace.scenarios.flatMap(scenario => scenario.steps.filter(step => resource.kind === 'capability'
     ? (scenario.scenarioType === 'capability' ? scenario.capabilityId === resource.id : step.capabilityId === resource.id)
     : scenario.scenarioType === 'journey' && scenario.journeyId === resource.id))
-  const indexes = [...new Set(owned.flatMap(step => step.governedBy.filter(item => item.ruleId === ruleId).flatMap(item => item.targets)))].sort((a, b) => a - b)
+}
+
+/** The Rule's Entity targets selecting any of those Steps, each once, in authored order: what the Rule governs there, read as its own selectors. */
+function governedBy(rule: RuleView, owned: OwnedStep[]): Array<Extract<ReportBusinessRuleTarget, { type: 'entity' }>> {
+  const indexes = [...new Set(owned.flatMap(step => step.governedBy.filter(item => item.ruleId === rule.id).flatMap(item => item.targets)))].sort((a, b) => a - b)
   return indexes.flatMap((index) => {
     const target = rule.appliesTo[index]
     return target?.type === 'entity' ? [target] : []

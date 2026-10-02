@@ -2,7 +2,7 @@
 import type { AnyResourceView, CapabilityView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
-import { placeDelivery, placeJourneys, type Place } from './placeReadings'
+import { absentAlternatives, placeDelivery, placeJourneys, type Place } from './placeReadings'
 import type { TopologyAttachment } from './topologyTargets'
 import type { Diagram } from './diagram'
 import { adjacentAlternatives, variationCondition, variationConditionNote } from './variations'
@@ -81,9 +81,7 @@ export function foldBranches(workspace: ReportWorkspace, parentId: string, branc
   if (place) {
     for (const holder of sets.values()) {
       if (holder.resource?.kind !== 'variation') continue
-      const here = new Set(holder.children.map(child => child.resource?.key))
-      const absent = holder.resource.alternatives.flatMap(item => { const alternative = workspace.byKey.get(item.key); return alternative && !here.has(item.key) ? [alternative] : [] })
-        .sort((a, b) => a.title.localeCompare(b.title, 'en'))
+      const absent = absentAlternatives(workspace, holder.resource, new Set(holder.children.map(child => child.resource?.key)), place)
       holder.children.push(...absent.map(alternative => ({ id: `${holder.id}${OCCURRENCE_SEPARATOR}${alternative.key}`, title: alternative.title, resource: alternative, references: [], children: [], inSet: true, absentFrom: place })))
     }
   }

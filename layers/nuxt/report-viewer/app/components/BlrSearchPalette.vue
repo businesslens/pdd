@@ -73,7 +73,7 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
           <span :class="ui.itemLabelBase()">{{ item.label }}</span>
           <span :class="ui.itemLabelSuffix()">{{ item.suffix }}</span>
           <span v-if="item.resource.kind !== 'variation' && item.set" class="blr-search-set" data-search-variation>
-            <UIcon name="i-lucide-split" aria-hidden="true" />{{ item.set.title }}
+            <BlrKind kind="variation" :member-kind="item.set.memberKind" :facet="item.set.memberFacet" :labelled="false" size="xs" aria-hidden="true" />{{ item.set.title }}
           </span>
         </template>
         <template #empty>
@@ -88,5 +88,4 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
 
 <style scoped>
 .blr-search-set { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 8px; padding: 0 6px; border: 1px solid var(--ui-border-accented); border-radius: 5px; background: var(--ui-bg-elevated); font-size: 11px; font-weight: 500; line-height: 18px; color: var(--ui-text-highlighted); vertical-align: 1px; }
-.blr-search-set > .iconify { width: 10px; height: 10px; }
 </style>

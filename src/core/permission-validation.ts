@@ -128,7 +128,8 @@ function targetSelectsScreen(target: PermissionTarget, entity: PermissionScreenE
   // A read carries no state, so a target that selects by `from` or `to` is
   // about a state move and can never govern what a Screen presents. A
   // fact-scoped target governs a Screen only where the Screen says it shows
-  // that fact; a bare entry claims presence alone and is never selected.
+  // that fact, so it never selects a bare entry, which names no fact; an
+  // Entity-wide read still does. An entry that only collects presents nothing.
   if (target.entityId !== entity.entityId) return false
   if (!entity.shows.length && entity.collects.length) return false
   if (target.facts.length && (!target.facts.some(fact => entity.shows.includes(fact)))) return false
