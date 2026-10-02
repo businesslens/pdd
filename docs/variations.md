@@ -87,12 +87,12 @@ the product, such as picking a connector at an identity provider, is still an
 Actor Step. When two or more settings would each vary or split the same
 Scenario, whether they change the Actor's Steps or the outcome — a captcha and a
 provider password on one registration — none of them makes a Variation; each is
-a decision point. A setting that changes only the Product's own Steps — whether
+a decision point. A branch that ends in a refusal is still its own Scenario with a `condition` Step, and still counts as its setting splitting the Scenario. A setting that changes only the Product's own Steps — whether
 group sync replaces a User's Roles or adds to them — is a decision point in one
 Scenario, like any choice made during a run. When it changes the outcome —
 registration that requires email confirmation leaves the account inactive — the
 branches are separate Scenarios with a `condition` Step. If another setting also
-varies or splits that Scenario, each setting is a decision point instead. The
+varies or splits that Scenario, each setting is a decision point instead. A setting that adds an emailed link to confirm what a run already did changes the outcome, never the Actor's Steps: confirming is a later act of its own. The
 exception is a Step that must name a different alternative of another Variation,
 such as issuing a VAT invoice or a sales tax receipt: that Scenario varies with
 it.
@@ -108,7 +108,7 @@ Do not create one for:
 | What you see | Model it as |
 | --- | --- |
 | One behavior branching on what it meets — out of stock, payment declined | A `condition` Step or decision point in one Scenario |
-| A value that changes a number, not the resource | Content of the one resource — Strict and Standard refund review are two Rules; a different threshold is not |
+| A value that changes a number, not the resource | Content of the one resource — Strict and Standard refund review are two Rules; a different threshold is not. A setting that switches between a minimum length and a length plus required kinds of character does make two Rules |
 | A thing moving through phases | Entity States |
 | The same Experience on another Interface | A counterpart: same id under each Interface |
 | A visual treatment with the same facts and abilities | References on the one Screen |

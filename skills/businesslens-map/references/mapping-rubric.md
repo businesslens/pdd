@@ -21,12 +21,12 @@
   modeled the same way: one Role Entity (its name, permissions and members)
   granted through `configuredBy`, with no Capability that creates it. A
   configuration that also grants directly to people stays its own Entity, and
-  the people who hold configured roles are one acting Entity. A relation that
+  the people who hold configured roles are one acting Entity. Each role the product ships stays its own Entity that acts, even where operators also define roles or assign people to shipped roles in configuration. Where a person holds a shipped role per container, such as an organization or a project, the membership is an Entity of its own that does not act, whose Role fact names the shipped role. A relation that
   holds whatever the role (the sender of a message) is declared to each role
   Entity, with one `related` grant per role. Facts that belong to the person
   whatever their role — email, display and notification preferences — live once
-  on an Account Entity that does not act, and each role Entity relates to it;
-  they are never copied onto every role.
+  on an Account Entity that does not act, and each role Entity relates to it one-to-one;
+  they are never copied onto every role. Roles that share an Account are one audience, and a Step any of them may take names the least privileged role that may take it counting the permissions the Product sets by default but none granted later on a single resource.
 - An AI agent harness that loads a skill and acts in the repository is an Entity
   that acts: id `ai-agent`, `kind: system`, `acts: external`. It initiates, it
   reads and writes on the person's behalf, and it chooses what to inspect and
@@ -49,13 +49,13 @@
   Experiences is derived, never judged: it is divided when it serves more than
   one `access` value, or when its Actors split into groups no Capability
   available there bridges (a Capability bridges the Actors its Scenario Steps
-  name). Otherwise it holds no Experiences and availability names the
+  name, and roles sharing an Account are one group). Otherwise it holds no Experiences and availability names the
   Interface directly. `lint` decides and reports a violation as an error;
   Experiences that are alternatives in a Variation, and an Experience whose
   name also exists under another Interface — a counterpart — justify
   themselves. `access` is the most open the context can be; a setting that
   closes it (content public only while guests are allowed) is a grant's
-  `when`, never a reason for an Experience of its own. Do not equate an Experience with a page, command group, route
+  `when`, never a reason for an Experience of its own. A setting that opens it, such as anonymous access to signed-in pages, is likewise a grant's `when` and never merges contexts: access follows who is there. People not signed in, including anonymous visitors and wherever people sign in, are a public context; people signed in are an authenticated one, or a restricted one when only some of their roles may enter. Areas only some signed-in roles may enter, such as administration sections, are one restricted context, and two Experiences of one Interface that share an `access` value and an Actor are a `lint` error. Do not equate an Experience with a page, command group, route
   tree, API, or CLI.
 - Screens are optional stable views an Actor reaches: places, decided under
   "Places, not designs" below — not components, layouts, routes mechanically
@@ -67,8 +67,11 @@
 - Create Domains from the Product's own sections — its navigation, settings and
   administration areas — one per section holding two or more Capabilities (the
   finest navigation level that still holds two or more; a parent menu is a
-  section only when none of its direct children is); existing Domains are the
+  section only when none of its direct children is); a Capability no section reaches (signing in, or one only an emailed link
+  or a schedule starts) joins the section whose Capabilities change the same Entities, and has no
+  Domain when they belong to more than one section or to none; a Capability on a page of its own beside a sibling that is a section has no Domain, and a map never writes a Domain naming one Capability; existing Domains are the
   author's and are never re-cut.
+- Name every resource in the words the Product shows the people who use it — its screens, menus and messages — never its API values, code identifiers or the wording of your request: a role the screens call Editor is `editor` even where the API sends `member`.
 - Capabilities are durable Product abilities, not UI labels, Journey titles, or
   sequence steps. Map availability Contexts to an undivided Interface or an
   Experience only when the repository supports that claim.
@@ -169,9 +172,9 @@ its authoritative Reference.
   one section of the Product's navigation are one Capability however the screen
   saves them — each field on its own or one Save button — and settings in
   different sections are separate Capabilities: all notification settings are
-  one. The same verb reached from another context is the same Capability,
+  one. Settings are facts of one thing; entries of a list, such as permission entries or members, are things of their own, and adding, changing and removing them are separate Capabilities even inside a settings section. The same verb reached from another context is the same Capability,
   available there too: changing a password the Product requires at sign-in is
-  Change password, joined to sign-in by a Journey. Ways of doing one verb that
+  Change password, joined to sign-in by a Journey. An API call that replaces a whole list offers that list's add, change and remove Capabilities there, never one of its own. Ways of doing one verb that
   share all of those are Scenarios of one Capability, and the Steps of one run,
   including a link the run sends to finish it, are one Capability. A
   continuation several Capabilities share is its own: each ends its Scenarios at
@@ -208,7 +211,7 @@ its authoritative Reference.
   picking a connector at an identity provider, is still an Actor Step. When two
   or more settings would each vary or split the same Scenario, whether they
   change the Actor's Steps or the outcome — a captcha and a provider password on
-  one registration — none makes a Variation; each is a decision point. A setting
+  one registration — none makes a Variation; each is a decision point. A branch that ends in a refusal is still its own Scenario with a `condition` Step, and still counts as its setting splitting the Scenario. A setting
   that changes only the Product's own Steps — group sync replacing or adding
   Roles — is a decision point in one Scenario, as is any choice made during a
   run; the one exception is a Step that must name a different alternative of
@@ -218,7 +221,7 @@ its authoritative Reference.
   are separate Scenarios, each with a `condition` Step reading the setting, not
   a Variation. If another setting also varies or splits that Scenario, each
   setting is a decision point instead. The unconfirmed account sign-in later
-  meets is state. A resource that exists only under some alternatives or only
+  meets is state. A setting that adds an emailed link to confirm what a run already did changes the outcome, never the Actor's Steps: confirming is a later act of its own. A resource that exists only under some alternatives or only
   while a setting enables it (registration while the sign-in method is password;
   social sign-in while a provider is configured) stays ordinary; a Business Rule
   without `permits` applying to it names the Variation or the setting.
@@ -233,7 +236,7 @@ its authoritative Reference.
   `takesEffect` and `stability` once on the set; `selectedWhen` (and a
   Version's `label`) per alternative. A set exists only when two or more
   resources of one type are all supported now and something selects between
-  them; a threshold or other parameter stays content of one resource.
+  them; a threshold or other parameter stays content of one resource. A setting that switches between two statements of one constraint, such as a minimum length or a length plus required kinds of character, selects Business Rule alternatives; a value one statement reads, such as the length itself, is a parameter.
   Alternatives of a Scenario Variation share their Capability or Journey, and a
   Step is never an alternative. Link
   existing Entities and facts; never invent Entities, settings, allocations,
@@ -265,7 +268,7 @@ things into a single Entity because they share a word. Do not weigh this one —
 Entity if a single list is true of every candidate. Several the moment the list
 needs *"depending on the kind"*, or carries a fact that holds for some members
 and not others; the shared word is then a category and its members are the
-Entities.
+Entities. The test reads the facts, not what they do: a fact whose effect differs by kind, such as a permission level that also covers a folder's contents, is a Rule and never splits the Entity.
 
 Being stored, parsed and rendered the same way is not the test, and it is the
 argument that most often wins when it should not. That is how the Product

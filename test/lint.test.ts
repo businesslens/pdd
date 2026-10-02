@@ -1344,6 +1344,55 @@ Both have looked at the same order record.
     expect(bridged.errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
   })
 
+  it('keeps one context per access mode unless its audiences share no Actor', () => {
+    const cwd = fixtureCopy()
+    const promotions = join(cwd, '.businesslens/interfaces/customer-web/experiences/promotions/experience.md')
+    writeResource(promotions, `---
+actors: [shopper]
+access: public
+---
+
+# Promotions
+
+Where shoppers browse current offers.
+`)
+    expect(run(cwd).errors).toContain(
+      `${promotions}: shares \`public\` access and an Actor with customer-web::storefront; one access mode is one context unless its audiences share no Actor`
+    )
+  })
+
+  it('joins roles that share one Account into one audience', () => {
+    const cwd = fixtureCopy()
+    const entities = join(cwd, '.businesslens/entities')
+    const adminWeb = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
+    unlinkSync(join(cwd, '.businesslens/capabilities/cancel-order/scenarios/cancel-a-paid-order-before-fulfilment.md'))
+    unlinkSync(join(cwd, '.businesslens/capabilities/request-cancellation/scenarios/approve-a-cancellation-request.md'))
+    writeFileSync(adminWeb, readFileSync(adminWeb, 'utf8').replace('actors: [store-admin]', 'actors: [store-admin, shopper]'))
+    writeResource(join(entities, 'account.md'), `---
+---
+
+# Account
+
+The person behind every role they hold.
+
+## Information kept
+
+- **Email** — where the person is reached
+`)
+    const relate = (file: string) => {
+      const text = readFileSync(join(entities, file), 'utf8')
+      writeFileSync(join(entities, file), text.includes('relations:\n')
+        ? text.replace('relations:\n', 'relations:\n  - entity: account\n    verb: signs in with\n    cardinality: one-to-one\n')
+        : text.replace('---\n', '---\nrelations:\n  - entity: account\n    verb: signs in with\n    cardinality: one-to-one\n'))
+    }
+    relate('shopper.md')
+    expect(run(cwd).errors).toContain(
+      `${adminWeb}: serves Actor sets no available Capability bridges; these are Experiences, not one context`
+    )
+    relate('store-admin.md')
+    expect(run(cwd).errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
+  })
+
   it('flags a ceremonial Experience as an error, unless it is a counterpart or a Variation alternative', () => {
     const cwd = fixtureCopy()
     // As authored, customer-web's single storefront Experience is justified by

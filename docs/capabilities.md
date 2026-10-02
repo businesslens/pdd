@@ -86,6 +86,8 @@ whose grants carry that condition in `when`:
 | Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, which has no outcome without the link |
 | Confirming the email of an account that already exists | Its own: a later act on something a run produced |
 | Notification settings, each saved on its own as it changes | One: settings in one section of the Product's navigation are one Capability, however the screen saves them |
+| Adding, changing and removing permission entries on one settings page | Three: settings are facts of one thing, but entries of a list are things of their own, each added, changed and removed by its own Capability |
+| An API call that replaces a whole permission list | The same add, change and remove Capabilities, available on the API too; never one of its own |
 | Changing a password the Product requires at sign-in | The same Change password Capability, available there too, joined to sign-in by a Journey |
 | Entering a second factor after any sign-in method | Its own: a continuation several Capabilities share. Each sign-in ends its Scenario at the hand-off, and a Journey joins them |
 | Filtering, sorting and searching a list | Scenarios of the browsing Capability, unless one differs by contract |

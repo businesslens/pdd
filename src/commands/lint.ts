@@ -427,9 +427,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (reached.size) actorSets.push(reached)
     }
     /*
+     * Roles one person holds are one audience. Actors that each relate
+     * one-to-one to the same Entity that does not act — the Account keeping
+     * the person's facts — are joined by it, whichever role a Step open to
+     * every role happens to name.
+     */
+    const reachedActors = new Set(actorSets.flatMap(reached => [...reached]))
+    const holdersByAccount = new Map<string, Set<string>>()
+    for (const actorId of reachedActors) {
+      for (const relation of entitiesById.get(actorId)?.relations ?? []) {
+        if (relation.cardinality !== 'one-to-one' || entitiesById.get(relation.entity)?.acts) continue
+        holdersByAccount.set(relation.entity, (holdersByAccount.get(relation.entity) ?? new Set()).add(actorId))
+      }
+    }
+    for (const holders of holdersByAccount.values()) if (holders.size > 1) actorSets.push(holders)
+    /*
      * The audiences are disjoint when the Actors split into groups no Capability
      * bridges: more than one connected component in the graph of Actors and the
-     * Capabilities available here. Any two Capabilities with no Actor in common
+     * Capabilities available here, with roles sharing an Account joined. Any two Capabilities with no Actor in common
      * is a different, stricter question — an admin-only and a shopper-only
      * Capability never share one, however many shared Capabilities sit beside
      * them — and it is not the one the format asks.
@@ -476,6 +491,23 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(
         `${productInterface.file}: serves Actor sets no available Capability bridges; these are Experiences, not one context`
       )
+    }
+    /*
+     * One access mode is one context. Two Experiences with the same access and
+     * an Actor in common are one audience cut by area — an admin-only page
+     * beside one admins share with members — which is navigation, not a second
+     * context. Alternatives of a Variation coexist by construction.
+     */
+    const plain = owned.filter(item => !variationOf.has(`experiences:${item.id}`))
+    for (const [index, experience] of plain.entries()) {
+      const twin = plain.slice(index + 1).find(
+        other => other.access === experience.access && other.actors.some(actor => experience.actors.includes(actor))
+      )
+      if (twin) {
+        errors.push(
+          `${experience.file}: shares \`${experience.access}\` access and an Actor with ${twin.id}; one access mode is one context unless its audiences share no Actor`
+        )
+      }
     }
   }
 

@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search results name the Variation an alternative belongs to.
 - Skills give clearer guidance on Capability boundaries, Domains, Journeys, settings, roles and personal information.
 - Lint warns about resource names less often, and suggests a declared name only when exactly one fits.
+- Lint treats the roles one person holds as one audience, so it no longer asks to split an Interface by role.
+- Lint flags two Experiences of one Interface that share an access mode and an Actor.
+- Mapping works on very large repositories.
 - Model nested Screens, Screens reachable from everywhere in a context, and the languages a Product serves.
 - Record which facts a Screen shows and which it collects; a Screen's Capabilities now come from the Steps placed on it.
 - Record the facts each Scenario Step reads, changes or creates.

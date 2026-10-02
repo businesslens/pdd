@@ -210,7 +210,8 @@ none is:
 
 - it serves more than one `access` value; or
 - it serves two or more Actor sets whose Capability coverage is disjoint — no
-  Capability available there lists Actors from both sets.
+  Capability available there lists Actors from both sets, counting roles that
+  share an Account as one set.
 
 The inputs are `actors` on the Interface, `access` on an Experience, and
 `availability` on each Capability. Disjoint audiences require division; access
@@ -222,6 +223,11 @@ one coherent context and takes direct Interface availability.
 Actors split into groups when no Capability available there lists Actors from
 two of them — more than one connected component in the graph of Actors and
 Capabilities, an edge wherever a Capability's Scenario Steps name the Actor.
+Roles that each relate one-to-one to the same Account, an Entity that does not
+act, are joined by it: they are one person's roles, one audience.
+Two Experiences of one Interface with the same `access` must share no Actor,
+unless they are alternatives in a Variation: one access mode is one context, and
+an area only some of its Actors enter is navigation inside it.
 An admin-only Capability beside a shopper-only one does not divide an Interface
 that also offers a Capability both use.
 
@@ -449,7 +455,7 @@ is optional; other H2 sections are supporting content.
 that differs makes two Scenarios of one owner the alternatives, not two
 Capabilities; a different ability contract or availability makes the
 Capabilities vary; a different place makes Screens or Experiences vary; a
-difference in the facts or states the Product keeps makes Entities vary. The
+difference in the facts or states the Product keeps makes Entities vary. A setting that switches between two statements of one constraint, such as a minimum length or a length plus required kinds of character, makes the Business Rules vary; a value one statement reads, such as the length itself, is content of that Rule. The
 alternatives of a Scenario Variation share their Capability or Journey, and
 alternatives spread over several owners are a `lint` error. A Step has no id and
 is never an alternative: the Scenario is the smallest resource that holds one.
@@ -477,7 +483,7 @@ a page outside the product, such as picking a connector at an identity provider,
 is still an Actor Step. When two or more settings would each vary or split the
 same Scenario, whether they change the Actor's Steps or the outcome — a captcha
 and a provider password on one registration — none of them makes a Variation;
-each is a decision point, so no Scenario needs a set per combination. A setting
+each is a decision point, so no Scenario needs a set per combination. A branch that ends in a refusal is still its own Scenario with a `condition` Step, and still counts as its setting splitting the Scenario. A setting
 that changes only the Product's own Steps — whether group sync replaces a User's
 Roles or adds to them — is a decision point in one Scenario. The one exception
 is a Step that must name a different alternative of another Variation, which
@@ -487,7 +493,7 @@ confirmation leaves the account inactive, whose confirming is a Capability of
 its own; an unknown social account is registered or refused — the branches are
 separate Scenarios, each with a `condition` Step reading the setting, and still
 no Variation. If another setting also varies or splits that Scenario, each
-setting is a decision point instead. A decision point is also any choice or
+setting is a decision point instead. A setting that adds an emailed link to confirm what a run already did changes the outcome, never the Actor's Steps: confirming is a later act of its own. A decision point is also any choice or
 branch made during one run, and the unconfirmed account that sign-in later meets
 is state.
 
@@ -873,7 +879,7 @@ Where authorized operators manage the store and its orders.
 and every one must be supported by the owning Interface. `access` is required,
 and it is the most open the context can be. A setting that closes it — content
 public only while the store allows guests — is a grant's `when` on the
-operations it restricts; it never justifies an Experience of its own. Optional `entryPoints` key the
+operations it restricts; it never justifies an Experience of its own. A setting that opens it, such as anonymous access to signed-in pages, is likewise a grant's `when` and never merges contexts: access follows who is there. People not signed in, including anonymous visitors and wherever people sign in, are a public context; people signed in are an authenticated one, or a restricted one when only some of their roles may enter. Areas only some signed-in roles may enter, such as administration sections, are one restricted context, and two Experiences of one Interface that share an `access` value and an Actor are a `lint` error. Optional `entryPoints` key the
 owning Interface only. H1 and lead description are required; `## Intent` is
 optional. There is no `## Capability boundary`, for the reason given on the
 Interface, and one still authored is a `lint` error. There is no `exit` field
@@ -997,9 +1003,9 @@ automatically from the Product's own sections — the areas its navigation,
 settings and administration group things under — one per section holding two
 or more Capabilities, named in the Product's words. The section is the finest
 navigation level that still holds two or more Capabilities; a parent menu is a
-section only when none of its direct children is. A Capability no section
-reaches, such as one only an emailed link or a schedule starts, joins the
-section whose Entities it changes. For a Product planned before its code, the
+section only when none of its direct children is. A Capability no section reaches, such as signing in or one only an emailed link
+or a schedule starts, joins the section whose Capabilities change the same Entities; when those
+Entities belong to more than one section, or to none, it has no Domain. A Capability on a page of its own beside a sibling that is a section has no Domain, and a map never writes a Domain naming one Capability. For a Product planned before its code, the
 sections are the planned ones. Domains an author has written or regrouped are
 the author's: a map adds new Capabilities to them and never re-cuts, merges or
 renames them.
@@ -1067,7 +1073,7 @@ share a family name — document types, event kinds, payment methods — are one
 Entity when a single list of kept facts is true of all of them, and several when
 it is not. Write the list first. If it needs *"depending on the kind"*, or
 carries facts that hold for some members and not others, the shared name is a
-category and its members are the Entities.
+category and its members are the Entities. The test reads the facts, not what they do: a fact whose effect differs by kind, such as a permission level that also covers a folder's contents, is a Rule and never splits the Entity.
 
 Being stored, parsed and rendered the same way does not make them one. That is
 how the Product *handles* them; this asks what it *keeps* about them.
@@ -1409,10 +1415,10 @@ something a run already produced — confirming the email of an account that
 exists — is its own Capability. Settings in one section of the Product's
 navigation are one Capability however the screen saves them — each field on its
 own or one Save button — and settings in different sections are separate
-Capabilities: all notification settings are one. The same verb reached from
+Capabilities: all notification settings are one. Settings are facts of one thing; entries of a list, such as permission entries or members, are things of their own, and adding, changing and removing them are separate Capabilities even inside a settings section. The same verb reached from
 another context is the same Capability, available there too: changing a password
 the Product requires at sign-in is Change password, joined to sign-in by a
-Journey. A continuation shared by several Capabilities — entering a second
+Journey. An API call that replaces a whole list offers that list's add, change and remove Capabilities there, never one of its own. A continuation shared by several Capabilities — entering a second
 factor after any sign-in method — is its own Capability: the Capabilities it
 continues end their Scenarios at the hand-off and say so in their Outcome, the
 shared one starts its Scenarios from that state, and a Journey joins them,
@@ -1746,13 +1752,12 @@ role. Roles operators define in configuration, outside the product, are modeled
 the same way: one Role Entity (its name, permissions and members) granted
 through `configuredBy`, with no Capability that creates it. A configuration that
 also grants directly to people stays its own Entity, and the people who hold
-configured roles are one acting Entity. A relation that holds whatever role a
+configured roles are one acting Entity. Each role the product ships stays its own Entity that acts, even where operators also define roles or assign people to shipped roles in configuration. Where a person holds a shipped role per container, such as an organization or a project, the membership is an Entity of its own that does not act, whose Role fact names the shipped role. A relation that holds whatever role a
 person has — the sender of a message — is declared to each role Entity that can
 hold it, and ownership is one `related` grant per role: *the sender, if a
 Member*, *the sender, if a Moderator*. Facts that belong to the person whatever
 their role — email, display and notification preferences — live once on an
-Account Entity that does not act, and each role Entity relates to it; they are
-never copied onto every role. ABAC policies on attributes are likewise an Entity
+Account Entity that does not act, and each role Entity relates to it one-to-one; they are never copied onto every role. Roles that share an Account are one audience, and a Step any of them may take names the least privileged role that may take it counting the permissions the Product sets by default but none granted later on a single resource. ABAC policies on attributes are likewise an Entity
 `Policy` and the Capabilities that define and evaluate it.
 
 **What `lint` checks.** `lint` checks structural eligibility. It cannot prove

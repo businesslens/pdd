@@ -22,7 +22,7 @@ terms:
     definition: "A stable context for using the Product within one Interface, defined by who is there and what they can do, with an access mode."
   - term: Access mode
     anchor: experience-file
-    definition: "Who may enter an Experience: public, authenticated, or restricted."
+    definition: "Who may enter an Experience: anyone (public), anyone signed in (authenticated), or only some signed-in roles (restricted)."
   - term: Screen
     anchor: screens
     definition: "A place inside an Interface or Experience, named in the Product's own words, where an Actor meets facts and abilities."
@@ -167,7 +167,8 @@ Steps, Rules, and nested Screen ownership resolve unambiguously.
 test. Two rules decide it, one in each direction:
 
 - **An Interface must hold Experiences** when its Actors split into groups that
-  no Capability available there bridges. Holding none is a `lint` **error**:
+  no Capability available there bridges; roles that share an Account are one
+  group. Holding none is a `lint` **error**:
   those groups are separate contexts, not one.
 - **An Interface that holds Experiences must justify them.** Its Experiences
   differ in `access`, or its audiences are disjoint, or they are alternatives in a
@@ -176,6 +177,10 @@ test. Two rules decide it, one in each direction:
   on another platform, which justifies itself because flattening it would make
   two views of one context look unrelated. None of these, and it is a
   `lint` **error**: use direct Interface availability instead.
+- **One access mode is one context.** Two Experiences of one Interface with the
+  same `access` share no Actor, unless they are alternatives in a Variation; an
+  admin-only area beside one admins share with members is navigation inside one
+  restricted Experience. Otherwise it is a `lint` **error**.
 
 Disjoint audiences is the only input that *requires* division. `access` only justifies Experiences that already exist, because an Interface
 declares no access mode of its own.
@@ -214,7 +219,7 @@ Where authorized operators manage the Product and its users.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
-| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. A setting that closes it — content public only while the store allows guests — is a grant's `when` on the operations it restricts, never a reason for an Experience of its own. |
+| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. A setting that closes it — content public only while the store allows guests — is a grant's `when` on the operations it restricts, never a reason for an Experience of its own. A setting that opens it, such as anonymous access to signed-in pages, is likewise a grant's `when` and never merges contexts: access follows who is there. People not signed in, including anonymous visitors and wherever people sign in, are a public context; people signed in are an authenticated one, or a restricted one when only some of their roles may enter. Areas only some signed-in roles may enter, such as administration sections, are one restricted context, and two Experiences of one Interface that share an `access` value and an Actor are a `lint` error. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `navigation` | no | List this Experience's own Screens reachable from every place inside it, each as a path relative to the Experience, nested ones by their child path. Unique values; order carries no meaning. See [Navigation](#navigation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |

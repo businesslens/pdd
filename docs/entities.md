@@ -303,7 +303,7 @@ the answer falls out of whether you can finish the list.
 One Entity, if a single list is true of every member. Several, the moment the
 list needs *"depending on the kind"* or carries facts that hold for some members
 and not others. That shared word is then a category, and its members are the
-Entities.
+Entities. The test reads the facts, not what they do: a fact whose effect differs by kind, such as a permission level that also covers a folder's contents, is a Rule and never splits the Entity.
 
 Being stored, parsed and rendered the same way does not make them one thing.
 That is how the Product *handles* them; this asks what it *keeps*.
