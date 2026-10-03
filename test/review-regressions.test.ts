@@ -34,6 +34,32 @@ describe('merge review regressions', () => {
     } finally { rmSync(cwd, { recursive: true, force: true }) }
   })
 
+  it('compares an Experience beside a Variation\'s alternatives for a shared access mode, in a report too', () => {
+    const input = JSON.parse(JSON.stringify(report()))
+    const preview = input.model.experiences.find((item: any) => item.id === 'customer-mobile::catalog-preview')
+    input.model.experiences.push({ ...preview, id: 'customer-mobile::help', title: 'Help', description: 'Where shoppers find answers inside the app.', entryPoints: [] })
+    expect(validateProductReport(input).filter(issue => issue.includes('one access mode'))).toEqual([
+      'experience "customer-mobile::catalog-preview": shares `public` access and an Actor with "customer-mobile::help"; one access mode is one context',
+      'experience "customer-mobile::storefront": shares `public` access and an Actor with "customer-mobile::help"; one access mode is one context',
+    ])
+    expect(validateProductReport(report()).filter(issue => issue.includes('one access mode'))).toEqual([])
+  })
+
+  it('writes set-valued fact lists in one order, whatever order they were authored in', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'bl-fact-order-'))
+    try {
+      cpSync(fixture, cwd, { recursive: true })
+      const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replaceAll('facts: [Name and description, Price, Stock remaining]', 'facts: [Stock remaining, Price, Name and description]'))
+      const reordered = compileReport(loadModel(cwd), '2026-10-01')
+      expect(JSON.stringify(reordered)).toBe(JSON.stringify(report()))
+    } finally { rmSync(cwd, { recursive: true, force: true }) }
+    const { model } = report()
+    const steps = [...model.capabilityScenarios, ...model.journeyScenarios].flatMap((scenario: any) => scenario.steps)
+    for (const entry of steps.flatMap((step: any) => step.entities)) expect(entry.facts).toEqual([...entry.facts].sort())
+    for (const target of model.businessRules.flatMap((rule: any) => rule.appliesTo)) if (target.facts) expect(target.facts).toEqual([...target.facts].sort())
+  })
+
   it.each([false, true])('rejects an ambiguous report before filesystem writes, even with force=%s', force => {
     const input = JSON.parse(JSON.stringify(report()).replaceAll('customer-web::catalog', 'customer-web::storefront'))
     // All derived fields and references still agree; only cross-type identity is invalid.

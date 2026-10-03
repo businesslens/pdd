@@ -24,9 +24,9 @@ are ordinary resources that carry no Variation keys.
 In the report, a set is one row wherever its alternatives meet — in its
 member type's collection, or on the Refund Entity's Business Rules tab — and
 never expands in a list; the Interfaces tree still opens the Screen experiment to
-its two Screens. Every alternative carries a pill on its title naming its set,
-and pressing any pill opens a switcher that lists the alternatives with the
-condition selecting each. A set's own reading says once how one is chosen —
+its two Screens. Wherever an alternative is a title, its set is the title and a
+picker beside it names the alternative being read; the picker's menu opens the
+set and lists every alternative with the condition selecting it. A set's own reading says once how one is chosen —
 what chooses, **Takes effect** and **Stability** — and each alternative adds its
 own **Selected when**.
 

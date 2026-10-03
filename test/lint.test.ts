@@ -1361,6 +1361,28 @@ Where shoppers browse current offers.
     )
   })
 
+  it('exempts only alternatives of one Variation from the one-context-per-access-mode rule', () => {
+    const cwd = fixtureCopy()
+    // customer-mobile's storefront and catalog-preview are alternatives of the
+    // Mobile storefront Variation; an Experience beside them is still compared.
+    const help = join(cwd, '.businesslens/interfaces/customer-mobile/experiences/help.md')
+    writeResource(help, `---
+actors: [shopper]
+access: public
+---
+
+# Help
+
+Where shoppers find answers inside the app.
+`)
+    const errors = run(cwd).errors.filter(error => error.includes('one access mode is one context'))
+    const experiences = join(cwd, '.businesslens/interfaces/customer-mobile/experiences')
+    expect(errors.sort()).toEqual([
+      `${experiences}/catalog-preview.md: shares \`public\` access and an Actor with customer-mobile::help; one access mode is one context unless its audiences share no Actor`,
+      `${help}: shares \`public\` access and an Actor with customer-mobile::storefront; one access mode is one context unless its audiences share no Actor`,
+    ])
+  })
+
   it('joins roles that share one Account into one audience', () => {
     const cwd = fixtureCopy()
     const entities = join(cwd, '.businesslens/entities')
@@ -2039,6 +2061,19 @@ permits:
 permits: []`)
     expect(run(cwd).warnings.join('\n')).toMatch(/twin\.md: selects exactly what .*orders-are-never-deleted\.md selects/)
     unlinkSync(join(cwd, '.businesslens/business-rules/twin.md'))
+
+    // A set of facts is one selector in any order.
+    for (const [id, facts] of [['tax-and-margin', 'Tax, Margin'], ['margin-and-tax', 'Margin, Tax']] as const) {
+      writeRule(cwd, id, `appliesTo:
+  - type: entity
+    id: order
+    effect: reads
+    facts: [${facts}]
+permits:
+  - actors: [store-admin]`)
+    }
+    expect(run(cwd).warnings.join('\n')).toMatch(/tax-and-margin\.md: selects exactly what .*margin-and-tax\.md selects/)
+    for (const id of ['tax-and-margin', 'margin-and-tax']) unlinkSync(join(cwd, `.businesslens/business-rules/${id}.md`))
 
     writeRule(cwd, 'narrow', `appliesTo:
   - type: entity

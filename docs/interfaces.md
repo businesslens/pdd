@@ -162,14 +162,17 @@ Steps, Rules, and nested Screen ownership resolve unambiguously.
 ### When to create an Experience
 
 **Whether an Interface is divided into Experiences is derived, never judged.**
-`lint` computes it from `actors`, `access`, each Capability's
-`availability`, and its Scenarios' Steps, so the author never applies a prose
-test. Two rules decide it, one in each direction:
+It follows from who reaches the Interface's places and what each Capability
+there is available to, so the author never applies a prose test. Two rules
+decide it, one in each direction:
 
-- **An Interface must hold Experiences** when its Actors split into groups that
-  no Capability available there bridges; roles that share an Account are one
-  group. Holding none is a `lint` **error**:
-  those groups are separate contexts, not one.
+- **An Interface must hold Experiences** when it serves more than one `access`
+  value — places reached without signing in beside places reached once signed
+  in, or an area only some signed-in roles may enter — or when its Actors split
+  into groups that no Capability available there bridges; roles that share an
+  Account are one group. An Interface declares no access mode, so `lint` reads
+  `access` only from the Experiences it holds; split audiences on an undivided
+  Interface are a `lint` **error**: those groups are separate contexts, not one.
 - **An Interface that holds Experiences must justify them.** Its Experiences
   differ in `access`, or its audiences are disjoint, or they are alternatives in a
   [Variation](./variations.md), or one is a counterpart —
@@ -181,9 +184,6 @@ test. Two rules decide it, one in each direction:
   same `access` share no Actor, unless they are alternatives in a Variation; an
   admin-only area beside one admins share with members is navigation inside one
   restricted Experience. Otherwise it is a `lint` **error**.
-
-Disjoint audiences is the only input that *requires* division. `access` only justifies Experiences that already exist, because an Interface
-declares no access mode of its own.
 
 The rule protects one thing: an Experience is a context that stays meaningful
 when routes, commands, or navigation are reorganized, because it is defined by

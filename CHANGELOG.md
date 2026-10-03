@@ -20,12 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Read what a Business Rule governs, and find the Rules that govern a resource, from either end.
 - Follow Capability state changes into each Entity's Lifecycle, and see each place's Capabilities, Scenarios and Journeys.
 - Read permissions as operations and grants, with badges on the facts they restrict, and see a resource's type, ownership and Domains in a compact header.
-- Keep directly placed behavior visible in Delivery, group Interface alternatives together, and show Lifecycle States as available when every alternative reaches them.
+- See behavior that happens directly in a place, not only on its Screens, and read a State as always reachable when every alternative reaches it.
 - Keep the local report responsive when Git cannot open the repository, saying so once instead of repeating an error.
 - Reject ambiguous place names before importing a Blueprint, preserving Screen ownership.
 - Skills give clearer guidance on Capability boundaries, Domains, Journeys, settings, roles and personal information, and distinguish product behavior from visual design, with an updated example Blueprint.
 - Mapping works on very large repositories.
-- Lint warns about resource names less often and suggests a declared name only when exactly one fits, treats the roles one person holds as one audience, and flags two Experiences of one Interface that share an access mode and an Actor.
+- Verification checks each Variation's alternatives, and what selects them, against the code.
+- Fewer false warnings about resource names, and clearer checks on when an Interface needs separate Experiences.
 - **Breaking.** Screens describe their facts and behavior through relations; the former presentation, action, view-state and boundary sections, authored Capability lists, and capture state labels are no longer accepted.
 - **Breaking.** Existing models and Blueprints must be updated to the new format; older model and report formats are no longer accepted.
 

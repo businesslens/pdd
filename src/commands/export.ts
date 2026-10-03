@@ -18,10 +18,10 @@ import {
 import { cliVersion } from '../version.js'
 import { lintModel } from './lint.js'
 
-const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id))
+const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id, 'en'))
 const sorted = (items: string[]): string[] => [...items].sort()
 const contexts = (items: Array<{ place: string }>) =>
-  [...items].sort((left, right) => left.place.localeCompare(right.place)).map(item => ({ placeId: item.place }))
+  [...items].sort((left, right) => left.place.localeCompare(right.place, 'en')).map(item => ({ placeId: item.place }))
 
 const IMAGE_ASSET = /\.(png|jpe?g|gif|webp|avif|svg)$/i
 
@@ -100,7 +100,7 @@ export function compileReport(
       effect: entry.effect ?? 'changes' as const,
       from: entry.from ?? null,
       to: entry.to ?? null,
-      facts: entry.facts ?? []
+      facts: sorted(entry.facts ?? [])
     })),
     unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
@@ -187,7 +187,7 @@ export function compileReport(
         description: screen.doc.lead,
         capabilityIds: sorted(screen.capabilities),
         entities: [...screen.entities]
-          .sort((left, right) => left.entity.localeCompare(right.entity))
+          .sort((left, right) => left.entity.localeCompare(right.entity, 'en'))
           .map(entry => ({ entityId: entry.entity, shows: sorted(entry.shows), collects: sorted(entry.collects) })),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
@@ -293,7 +293,7 @@ export function compileReport(
                 effect: target.effect ?? null,
                 from: target.from ?? null,
                 to: target.to ?? null,
-                facts: target.facts,
+                facts: sorted(target.facts),
                 contexts: target.contexts.map(context => ({ placeId: context.place }))
               }
             : {
@@ -334,10 +334,10 @@ export function compileReport(
         assignmentMethod: variation.assignmentMethod,
         assignmentFact: variation.assignmentFact,
         allocation: variation.allocation,
-        settings: variation.settings,
+        settings: [...variation.settings].sort((a, b) => a.entity.localeCompare(b.entity, 'en') || a.fact.localeCompare(b.fact, 'en')),
         discriminator: variation.discriminator,
         alternatives: [...variation.alternatives]
-          .sort((a, b) => a.id.localeCompare(b.id))
+          .sort((a, b) => a.id.localeCompare(b.id, 'en'))
           .map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })),
         ...resourceContent(variation, [], assetBase)
       }))

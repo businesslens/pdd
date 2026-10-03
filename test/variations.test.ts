@@ -32,7 +32,6 @@ function selection(kind: VariationKind): Omit<VariationSet, 'id' | 'kind' | 'of'
   return { ...base, settings: [LIBRARY_FACT] }
 }
 
-/** Replace the model's Variations with one set over `ids`. */
 /** Two Scenarios that share an owner, from `[owner, id]` pairs. */
 function siblings(pairs: [string, string][]): string[] {
   const byOwner = new Map<string, string[]>()
@@ -123,7 +122,7 @@ describe('Variation resources', () => {
     Object.assign(record, { ...set, alternatives: set.alternatives.map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })) })
     const parsed = ProductReportV15Schema.safeParse(wire)
     if (parsed.success) expect(validateProductReport(wire).join('\n')).toContain(message)
-    else expect(parsed.success).toBe(false)
+    else expect(parsed.error.issues.some(issue => issue.path[0] === 'model' && issue.path[1] === 'variations')).toBe(true)
   })
 
   it('requires experiment assignment and version labels, unique ignoring case', () => {
@@ -355,7 +354,12 @@ describe('Variations in the Product Report', () => {
     // Each alternative keeps its own children; the set is not counted as something inside.
     expect(set.children.some((node: any) => node.children.length > 0)).toBe(true)
     expect(insideSummary(screens).some((entry: any) => entry.kind === 'variation')).toBe(false)
-    expect(structureChildren(workspace, workspace.byKey.get('experience:customer-web::storefront'))).toBeTruthy()
+    // The Experience's own structure reads the same set, holding both Screens.
+    const structure = structureChildren(workspace, workspace.byKey.get('experience:customer-web::storefront'))
+    const disclosure = structure.find((node: any) => node.groupKind === 'screen').children.find((node: any) => node.resource?.key === 'variation:stock-disclosure')
+    expect(disclosure.children.map((node: any) => [node.resource.key, node.inSet])).toEqual([
+      ['screen:customer-web::storefront::product-record', true], ['screen:customer-web::storefront::product-record-without-stock', true]
+    ])
     // Capabilities that vary fold where a place delivers both, so a set's title appears once.
     const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
     const admin = treeCards(workspace, 'interface', workspace.interfaces, false).find((item: any) => item.key === 'interface:admin-web')
@@ -451,7 +455,8 @@ describe('Variations in the Product Report', () => {
     expect(erd.nodes.filter((node: any) => node.group).map((node: any) => node.id)).toEqual(['variation:tax-document'])
     expect(erd.nodes.filter((node: any) => node.parent === 'variation:tax-document').map((node: any) => node.id).sort()).toEqual(['entity:sales-tax-receipt', 'entity:vat-invoice'])
     // Relations keep their concrete ends: each tax document is issued for an Order.
-    expect(erd.edges.filter((edge: any) => edge.target === 'entity:order' && edge.source.includes('tax') || edge.source.includes('vat')).length).toBe(2)
+    expect(erd.edges.filter((edge: any) => edge.target === 'entity:order').map((edge: any) => edge.source).filter((source: string) => source.includes('tax') || source.includes('vat')).sort())
+      .toEqual(['entity:sales-tax-receipt', 'entity:vat-invoice'])
   })
 
   it('never draws a Rule alternative as an unconditional prohibition', () => {

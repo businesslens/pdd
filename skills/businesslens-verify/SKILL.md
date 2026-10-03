@@ -38,8 +38,9 @@ Read before work:
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
    - named Entity, Interface, Experience, Screen, Domain, Capability, Capability
-     Scenario, Journey, Journey Scenario, Business Rule, availability Context,
-     or path → inspect it and behaviorally necessary dependencies;
+     Scenario, Journey, Journey Scenario, Business Rule, Variation,
+     availability Context, or path → inspect it and behaviorally necessary
+     dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
 
@@ -90,8 +91,19 @@ the diff.
    `permits: []` must be refused. A grant the code does not enforce is a
    `model-right` gap reported as **not established** — a green structural check
    never stands in for it. Confirm a fact-scoped Rule — a derivation, a field's
-   visibility — against the code that computes or shows the fact, at every
-   Screen presenting it and every Step citing it.
+   visibility or edit — against the code that computes, shows or writes the
+   fact, at every Screen presenting it and every Step citing it.
+
+   Verify what varies. For each Variation, confirm the code supports every
+   alternative now and chooses between them exactly as each `selectedWhen`
+   says, including a missing or unsupported choice; that the setting,
+   assignment or discriminator it names is what the code reads; and that
+   `takesEffect` and `stability` match when the code re-reads the choice and
+   what existing records or sessions keep. Hold an alternative permission
+   Rule's grants against the Steps and Screens that run under that
+   alternative only — `lint` cannot. Confirm that a Rule without `permits`
+   saying a resource exists only under some alternatives, or only while a
+   setting enables it, matches where the code offers it.
    Compare the one authored Journey Steps claim directly with repository
    behavior. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from

@@ -137,9 +137,12 @@ Steps by the keys their `entities` entry already carries: `from` is valid with
 `changes` and `removes`, `to` with `creates` and `changes`, and neither with
 `reads`. Every state named is one the Entity declares. Whether the instance is
 in some state *when the operation happens* is a condition and lives in a grant's
-`when`. `facts` names facts of the Entity by exact name; a fact-scoped Rule
-governs information — a derivation, or field-level visibility — not an
-operation. `contexts` scopes the Rule to existing places. Without `permits`,
+`when`. `facts` names facts of the Entity by exact name and narrows the
+selection to Steps that cite one of them. Without an `effect`, or with `reads`,
+a fact-scoped Rule governs information — a derivation, or field-level
+visibility; with `creates`, `changes` or `removes` it governs that operation on
+those facts only — a field-level edit. `contexts` scopes the Rule to existing
+places. Without `permits`,
 a selected place must present the Entity and at least one governed fact when
 fact-scoped, or contain a Screen that does. Permission Rules require resolvable
 places; neither a grant nor a prohibition needs an existing disclosure or

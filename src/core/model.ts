@@ -503,7 +503,7 @@ function listResources(
   }
 
   const ids = new Set([...compact.keys(), ...expanded.keys()])
-  for (const id of [...ids].sort((a, b) => a.localeCompare(b))) {
+  for (const id of [...ids].sort((a, b) => a.localeCompare(b, 'en'))) {
     const compactFile = compact.get(id)
     const directory = expanded.get(id) ?? join(parent, id)
     const expandedFile = join(directory, `${type}.md`)

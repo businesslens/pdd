@@ -215,9 +215,14 @@ none is:
   share an Account as one set.
 
 The inputs are `actors` on the Interface, `access` on an Experience, and
-`availability` on each Capability. Disjoint audiences require division; access
-modes justify Experiences already authored, because Interfaces declare no
-access mode. An Interface serving one audience through one access mode is
+`availability` on each Capability. Both conditions require division. The
+access values an Interface serves are read from who reaches its places, by the
+same rule `access` follows: places reached without signing in are `public`,
+places reached once signed in are `authenticated`, and an area only some
+signed-in roles may enter is `restricted`. An Interface declares no access
+mode, so `lint` sees the first condition only once Experiences exist — it then
+accepts Experiences that differ in `access` — while the second it checks on
+every Interface. An Interface serving one audience through one access mode is
 one coherent context and takes direct Interface availability.
 
 "Disjoint" is read over the whole Interface, not Capability by Capability: the
@@ -312,7 +317,14 @@ future format revision, but Context is not an arbitrary metadata bag.
   something that *is*, so their ids are noun phrases: `shopper`, `ordering`,
   `listing`, `customer-web`.
 
-  `lint` checks this heuristically, as warnings, on the two shapes it can
+  **Names come from the Product's own words.** A resource's id and H1 use the
+  words the Product shows the people who use it — its screens, menus and
+  messages — never its API values, code identifiers, or the wording of a
+  request: a role the screens call Editor is `editor` even where the API sends
+  `member`. A planned Product uses the words its plan shows people. `lint`
+  cannot see the Product's screens; review and `verify` hold the name to them.
+
+  `lint` checks the verb-noun shape heuristically, as warnings, on the two shapes it can
   recognise without conjugating English: a behavioural id whose last segment
   is a nominalisation (`-ing`, `-ment`, `-tion`, …) while no segment is a
   product verb, and a cross-cutting id whose first segment is a product verb.
@@ -586,7 +598,7 @@ checks structure and references, never whether conditions are exhaustive.
 
 `references` is an optional extension on every semantic resource: Product,
 Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
-Scenario, Journey Scenario, and Business Rule. It is not accepted in
+Scenario, Journey Scenario, Business Rule, and Variation. It is not accepted in
 `config.yaml`, `coverage.md`, or `taxonomies.yaml`.
 
 ```yaml
@@ -657,7 +669,7 @@ sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 9 is the only supported folder format.
+`config.yaml` has no other keys. Schema 10 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -1586,9 +1598,13 @@ Steps by the keys their `entities` entry already carries: `from` is valid with
 `changes` and `removes`, `to` with `creates` and `changes`, and neither with
 `reads`. Every state named is one the Entity declares. Whether the instance is
 in some state *when the operation happens* is a condition and lives in a grant's
-`when`. `facts` names facts of this Entity by their exact name; a fact-scoped
-Rule governs information — a derivation, or field-level visibility — not an
-operation. `contexts` scopes the Rule to existing places. For a Rule without
+`when`. `facts` names facts of this Entity by their exact name and narrows the
+selection to Steps whose entry cites one of them. With `effect` `reads` or
+absent, a fact-scoped Rule governs information — a derivation, or field-level
+visibility — and also selects Screens, below; with `creates`, `changes` or
+`removes` it governs that operation on those facts only — a field-level edit,
+such as delivery details editable while an order is unpaid. `contexts` scopes
+the Rule to existing places. For a Rule without
 `permits`, each selected place must be a Screen presenting the Entity (and at
 least one governed fact when fact-scoped), or an ancestor of one. Permission
 Rules need only resolvable Contexts: neither a grant nor a prohibition requires

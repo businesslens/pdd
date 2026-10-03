@@ -62,25 +62,22 @@ the same one. A Product Model contains none only when no such path exists.
 
 ## When you create one
 
-Create a Journey whenever all of these are true, and only then:
+Create a Journey wherever an achieved Journey Scenario carries one Actor
+through two or more Capabilities toward one outcome, by the hand-off above. That
+is the whole test, and it is structural: it reads the same way for a Journey
+mapped from code and one decided before any code exists. An orchestration,
+shared state, or a cross-Interface hand-off is how a Product usually earns one,
+but none is required, and none is enough without the hand-off. A merely
+plausible sequence of independent actions, or an administrative grouping, has
+no achieved Scenario and is not a Journey.
 
-1. one or more named Actors pursue one recognizable Goal and Success criterion;
-2. at least one achieved Journey Scenario uses two or more durable Capabilities;
-3. the Product deliberately connects those Capabilities through a handoff,
-   orchestration, shared state, navigation, command, or supported
-   cross-Interface transition;
-4. at least one achieved end-to-end Journey Scenario is evidence-backed—or
-   approved as intended behavior during ideation; and
-5. the Journey is not merely a plausible sequence or an administrative grouping.
-
-A wizard is not Journey evidence. It is
+A wizard is not evidence either way. It is
 [nested Screens](./interfaces.md#screens-nest) on the structure side, and the
 Scenario walking its steps is a Journey Scenario only where it crosses
 Capabilities; otherwise it is a
 [Capability Scenario](./capabilities.md#capability-scenarios). The two axes are
-independent. Product documentation, controller orchestration, integration
-tests, UI handoffs, and a supported transition from Git transport to a web
-pull-request flow can establish a Journey.
+independent. Whether the repository implements a Journey is
+[`businesslens-verify`](./skill-businesslens-verify.md)'s finding, never the Journey's own.
 
 “Publish a branch and open it for review” can be a Journey when the Product
 supports that handoff. “Browse source and later change notification settings”

@@ -29,6 +29,14 @@
   the Entity (Product and condition Steps, and fact-free mentions of an Actor, are exempt).
 - For a fact-scoped Rule, confirm the code at every Screen presenting the fact
   and every Step citing it — never Entity presence alone.
+- For a Variation, trace each alternative under its own `selectedWhen`: the
+  code supports it now, reads the named setting, assignment or discriminator
+  to choose it, applies the default the set states for a missing or
+  unsupported choice, and re-reads and keeps the choice as `takesEffect` and
+  `stability` say. An alternative the code no longer offers, a choice made by
+  something other than what the set names, or an undocumented default is a
+  finding. Check an alternative permission Rule's grants only against the
+  Steps and Screens that run under that alternative.
 - For `languages`, confirm the Product's list against the locales the code
   serves and each Interface's list against what that surface loads.
 - Do not claim deployed configuration, external systems, or live data state from
@@ -214,7 +222,8 @@ relationships, and get approval before writing. Do not silently remap trusted
 areas.
 
 Apply the border above to scoped mapping as well as verification, with the
-format reference's Screen and Step fact rules.
+format reference's naming, Screen and Step fact rules: name what you map in the
+words the Product shows its users, never API values or code identifiers.
 
 ## Stop safely
 

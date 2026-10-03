@@ -266,8 +266,9 @@ optional relation.
 
 ### Which structural resource type?
 
-The boundaries below are decided by rule, not by taste, and `lint` applies each
-one. Where a rule can be computed, an author never has to argue it.
+The boundaries below are decided by rule, not by taste. Where `lint` can compute
+a rule it enforces it, so an author never has to argue it; the rest are read
+from the Product the same way every time, and review holds the model to them.
 
 | Question | Rule that decides it |
 | --- | --- |
@@ -285,6 +286,11 @@ one. Where a rule can be computed, an author never has to argue it.
 Behavioral ids are **verb-noun**; cross-cutting ids are the **bare noun**.
 `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
 `order-management`; but `shopper`, `ordering`, `order`, `customer-web`.
+
+Names come from the Product's own words: an id and its H1 use what the
+Product's screens, menus and messages call the thing, never an API value, a code
+identifier or the wording of a request — a role the screens call Editor is
+`editor` even where the API sends `member`.
 
 Two further rules bind ids to vocabulary the model already declares. A
 behavioral id's **noun half names something the model declares** —

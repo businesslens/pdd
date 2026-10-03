@@ -168,9 +168,9 @@ not contain another H1 or H2.
   may enter one restricted context; two Experiences of one Interface sharing an
   `access` value and an Actor are a `lint` error; optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
-  `## Capability boundary` is an error. Disjoint audiences require
-  division; distinct access modes, counterparts or membership in a Variation
-  justify existing Experiences. A Variation may span Interfaces without
+  `## Capability boundary` is an error. More than one `access` value or
+  disjoint audiences require division; counterparts and membership in a
+  Variation justify existing Experiences. A Variation may span Interfaces without
   changing ownership.
   Their Actor union equals the Interface's Actors.
 - Capability: at least one `availability` Context — every Experience in which
@@ -220,8 +220,8 @@ not contain another H1 or H2.
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A
   Domain is a region of subject matter, classifying members of the Interface →
-  Experience → Screen and behavior hierarchies. Only Capability authors
-  `domain:`; every other Domain relation is derived. Its `## Boundary` must
+  Experience → Screen and behavior hierarchies. Only Capabilities and
+  Entities author `domain:`; every other Domain relation is derived. Its `## Boundary` must
   state something the Domain does **not** own, and a Domain naming fewer than
   two Capabilities is a warning. Create Domains from the Product's own sections
   — the areas its navigation, settings and administration group things under —
@@ -235,7 +235,11 @@ not contain another H1 or H2.
   planned Product, use the planned sections. Domains
   already in the model are the author's: add new Capabilities to them and never
   re-cut, merge or rename them.
-- Naming: a behavioral id's noun half names something the model declares —
+- Naming: ids and H1s use the words the Product shows the people who use it —
+  its screens, menus and messages — never API values, code identifiers or a
+  request's wording (Editor is `editor` even where the API sends `member`; a
+  planned Product uses its plan's words). A behavioral id's noun half names
+  something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface; the noun half comes from an Entity, Domain or Interface, never a
   Screen name. Entity, Domain and Business Rule ids never open with a verb;
@@ -312,7 +316,9 @@ not contain another H1 or H2.
   target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`: **a target
   selects; a grant conditions.** `effect`, `from` and `to` select Steps by the
   keys their `entities` entry carries (`from` with `changes|removes`, `to` with
-  `creates|changes`, neither with `reads`); `facts` names the facts it governs;
+  `creates|changes`, neither with `reads`); `facts` names the facts it governs
+  and selects only Steps citing one — with `creates|changes|removes`, a
+  field-level edit of those facts;
   `contexts` resolves to existing places. Without `permits`, each place must
   present the Entity and a governed fact when fact-scoped, or contain a Screen
   that does. Permission Rules need no matching disclosure or operation.
@@ -700,8 +706,9 @@ The list is a set; its order means nothing.
 **Vary the smallest resource that fully contains the difference.** One Step
 that differs: two Scenarios of one owner (`of: capability-scenario` or
 `journey-scenario`), never two Capabilities; a Scenario Variation whose
-alternatives have different owners is a `lint` error. The ability's contract,
-availability or Actors: Capabilities. A place: Screens or Experiences. The facts
+alternatives have different owners is a `lint` error. The ability's contract —
+who may do it, or its verb — or its availability: Capabilities; a different Actor
+alone never varies one. A place: Screens or Experiences. The facts
 or States kept: Entities. A Step is never an alternative. Steps, Screens and
 Rules name one concrete alternative, so a varying Entity carries into the
 Scenarios that touch it, selected the same way; when only the path differs, vary

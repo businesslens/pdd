@@ -697,8 +697,8 @@ function requireEntryPointInterfaces(
 export function validateProductReport(report: ProductReportV15): string[] {
   const issues: string[] = []
   const { model } = report
-  /* A Rule in a Variation applies only under its set's conditions, never unconditionally. */
-  const conditionalRules = reportVariationMembership(model)
+  /* Member key → Variation id. A Rule in a Variation applies only under its set's conditions, never unconditionally. */
+  const variationOf = reportVariationMembership(model)
   /* An Actor is an Entity that acts. Every actor reference resolves here. */
   const actorIds = new Set(model.entities.filter(item => item.acts !== null).map(item => item.id))
   const requireActing = (label: string, ids: string[]) => {
@@ -854,6 +854,18 @@ export function validateProductReport(report: ProductReportV15): string[] {
     for (const actorId of productInterface.actorIds) {
       if (!coveredActors.has(actorId)) {
         issues.push(`interface "${productInterface.id}": actor "${actorId}" needs at least one Experience context`)
+      }
+    }
+    /* One access mode is one context; only alternatives of one Variation share it. */
+    const setOf = (experience: { id: string }) => variationOf.get(`experiences:${experience.id}`)
+    for (const [index, experience] of experiences.entries()) {
+      const twin = experiences.slice(index + 1).find(
+        other => other.accessMode === experience.accessMode
+          && other.actorIds.some(actor => experience.actorIds.includes(actor))
+          && (setOf(experience) === undefined || setOf(experience) !== setOf(other))
+      )
+      if (twin) {
+        issues.push(`experience "${experience.id}": shares \`${experience.accessMode}\` access and an Actor with "${twin.id}"; one access mode is one context`)
       }
     }
   }
@@ -1635,7 +1647,7 @@ export function validateProductReport(report: ProductReportV15): string[] {
      accepting a report cannot defer a contradiction until expansion. */
   issues.push(...validatePermissionBehavior({
     rules: model.businessRules
-      .filter(rule => !conditionalRules.has(`businessRules:${rule.id}`) && rule.permits !== null
+      .filter(rule => !variationOf.has(`businessRules:${rule.id}`) && rule.permits !== null
         && rule.appliesTo.length > 0
         && rule.appliesTo.every(target => target.type === 'entity'))
       .map(rule => ({

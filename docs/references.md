@@ -26,8 +26,8 @@ the resource's Product prose.
 
 Every semantic resource supports the same optional field: Product,
 Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
-Scenario, Journey Scenario, and Business Rule. Configuration, Coverage, and
-taxonomies do not.
+Scenario, Journey Scenario, Business Rule, and Variation. Configuration,
+Coverage, and taxonomies do not.
 
 ```yaml
 references:

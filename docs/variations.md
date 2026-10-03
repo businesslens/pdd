@@ -54,7 +54,7 @@ that both seem to govern every refund.
 | --- | --- |
 | One Step of an otherwise identical path — a checkout that skips address review | Two Scenarios of that one Capability or Journey |
 | The path a thing takes — a store that approves orders before fulfilling them | Scenarios; the Entity keeps every State |
-| The ability's contract, availability or Actors | Capabilities |
+| The ability's contract — who may do it, or its verb — or where it is offered | Capabilities |
 | A goal pursued across Capabilities in two supported ways | Journeys |
 | A place — which facts it shows, which abilities it offers | Screens or Experiences |
 | The facts or States the Product keeps — an EU store's VAT invoice against a US store's sales tax receipt | Entities |

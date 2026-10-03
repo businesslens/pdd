@@ -496,12 +496,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * One access mode is one context. Two Experiences with the same access and
      * an Actor in common are one audience cut by area — an admin-only page
      * beside one admins share with members — which is navigation, not a second
-     * context. Alternatives of a Variation coexist by construction.
+     * context. Alternatives of one Variation coexist by construction; an
+     * Experience beside them, or in another Variation, is still compared.
      */
-    const plain = owned.filter(item => !variationOf.has(`experiences:${item.id}`))
-    for (const [index, experience] of plain.entries()) {
-      const twin = plain.slice(index + 1).find(
-        other => other.access === experience.access && other.actors.some(actor => experience.actors.includes(actor))
+    const setOf = (experience: { id: string }) => variationOf.get(`experiences:${experience.id}`)
+    for (const [index, experience] of owned.entries()) {
+      const twin = owned.slice(index + 1).find(
+        other => other.access === experience.access
+          && other.actors.some(actor => experience.actors.includes(actor))
+          && (setOf(experience) === undefined || setOf(experience) !== setOf(other))
       )
       if (twin) {
         errors.push(
@@ -1613,7 +1616,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   for (const rule of permissionRuleResources) {
     const key = rule.appliesTo
       .map(target => target.type === 'entity'
-        ? [target.id, target.effect ?? '', target.from ?? '', target.to ?? '', target.facts.join(','), target.contexts.map(context => context.place).join(',')].join('|')
+        ? [target.id, target.effect ?? '', target.from ?? '', target.to ?? '', [...target.facts].sort().join(','), target.contexts.map(context => context.place).sort().join(',')].join('|')
         : '')
       .sort()
       .join('\n')
