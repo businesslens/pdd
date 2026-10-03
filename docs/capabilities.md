@@ -72,7 +72,9 @@ function. **The contract decides how many there are.** Parts of an ability are
 separate Capabilities when they differ in who may do them (a permission of their
 own), where they are offered (availability), or in verb. A different Actor does
 not split one — it is offered in every Experience it is used from — and neither
-does a Business Rule that only constrains one part, such as a time limit. A
+does a Business Rule that only constrains one part, such as a time limit, or the
+State it starts from: restoring from the archive or from the trash is one
+Capability with a Scenario for each. A
 permission of its own means a separate grant of who may do it. Parts that differ
 only in which grant applies, told apart by a fact of the thing they act on — a
 channel's privacy, whether a message is the Actor's own — are one Capability

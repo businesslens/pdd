@@ -44,7 +44,10 @@ menu is a section only when none of its direct children is), named in the Produc
 words. A Capability no section reaches, such as signing in or one only an emailed link
 starts, joins the section whose Capabilities change the same Entities, or has no
 Domain when more than one section or none does; one alone on a page beside a
-sibling section has none either. A map never writes a Domain of one Capability.
+sibling section has none either. A Capability several sections reach — a
+document opened from Home, Recent and its collection — has no Domain, and
+nothing that is not a section becomes one. A map never writes a Domain of one
+Capability.
 You regroup them by hand like any file: merge, split or rename, and write your
 own Boundary. Once you have, a later map adds new Capabilities to your Domains
 and never re-cuts them. Zero Domains is valid for a Product with no sections of

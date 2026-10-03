@@ -83,7 +83,10 @@
   reaches (signing in, or one only an emailed link
   or a schedule starts) joins the section whose Capabilities change the same
   Entities, or has no Domain when more than one section or none does; one alone
-  on a page beside a sibling section has none either; a map never writes a
+  on a page beside a sibling section has none either; a Capability several
+  sections reach (a document opened from Home, Recent and its collection) has
+  none, and nothing that is not a section becomes a Domain, however many
+  Capabilities that leaves without one; a map never writes a
   Domain of one Capability; existing Domains are the
   author's and are never re-cut.
 - Name every resource in the words the Product shows the people who use it — its
@@ -248,7 +251,8 @@ its authoritative Reference.
   meets is state. A setting that adds an emailed link to confirm what a run
   already did changes the outcome, never the Actor's Steps: confirming is a
   later act of its own. A resource that exists only under some alternatives or
-  only while a setting enables it (registration while the sign-in method is
+  only while a setting, plan or licence enables it (a guest role a paid plan
+  enables; registration while the sign-in method is
   password; social sign-in while a provider is configured) stays ordinary; a
   Business Rule without `permits` applying to it names the Variation or the
   setting.

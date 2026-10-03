@@ -184,6 +184,10 @@ decide it, one in each direction:
   same `access` share no Actor, unless they are alternatives in a Variation; an
   admin-only area beside one admins share with members is navigation inside one
   restricted Experience. Otherwise it is a `lint` **error**.
+- **A public place is used by whoever is not signed in.** A Step there names
+  the Actor who is not signed in — an invitee, or any role holder before
+  signing in — and a Step that ends a session, such as signing out, stays where
+  the session was rather than on the sign-in page the person is sent to.
 
 The rule protects one thing: an Experience is a context that stays meaningful
 when routes, commands, or navigation are reorganized, because it is defined by

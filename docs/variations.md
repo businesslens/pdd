@@ -101,8 +101,9 @@ exception is a Step that must name a different alternative of another Variation,
 such as issuing a VAT invoice or a sales tax receipt: that Scenario varies with
 it.
 
-A resource that exists only under some alternatives, or only while a setting
-enables it — registration while the sign-in method is password, social sign-in
+A resource that exists only under some alternatives, or only while a setting,
+plan or licence enables it — a guest role a paid plan enables, registration
+while the sign-in method is password, social sign-in
 while a provider is configured — stays an ordinary resource. A Business Rule
 without `permits` applies to it and says so in its lead, naming the Variation
 or the setting.

@@ -1472,6 +1472,9 @@ Lead.
     cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/price-product'), { recursive: true })
     // Scenarios are behavioural ids too.
     cpSync(join(bl, 'capabilities/manage-orders/scenarios/refund-order.md'), join(bl, 'capabilities/manage-orders/scenarios/refund-processing.md'))
+    // A declared thing ending in -ment is the object, not a nominalisation, even after a verb the list lacks.
+    entity('document', 'Document')
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/duplicate-document'), { recursive: true })
 
     const warnings = run(cwd).warnings.join('\n')
     expect(warnings).not.toContain('"order-line" opens with a verb')
@@ -1481,6 +1484,7 @@ Lead.
     expect(warnings).toContain('Entity id "approve-refund-request" opens with a verb')
     expect(warnings).toContain('Capability id "order-management" reads as a noun phrase')
     expect(warnings).toContain('Capability Scenario id "refund-processing" reads as a noun phrase')
+    expect(warnings).not.toContain('"duplicate-document" reads as a noun phrase')
     expect(warnings).not.toContain('"browse-record" names "record"')
     expect(warnings).toContain('Capability id "price-product" names "product" where this model declares "catalog-product"')
   })

@@ -290,7 +290,10 @@ Behavioral ids are **verb-noun**; cross-cutting ids are the **bare noun**.
 Names come from the Product's own words: an id and its H1 use what the
 Product's screens, menus and messages call the thing, never an API value, a code
 identifier or the wording of a request — a role the screens call Editor is
-`editor` even where the API sends `member`.
+`editor` even where the API sends `member`. A Capability's verb is the one its
+control shows — Archive, Share, Publish; where the control says only Save, it is
+`edit-<thing>` for a thing's own facts and `change-<section>-settings` for a
+settings page, never `update`.
 
 Two further rules bind ids to vocabulary the model already declares. A
 behavioral id's **noun half names something the model declares** —

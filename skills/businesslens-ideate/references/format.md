@@ -165,7 +165,10 @@ not contain another H1 or H2.
   opens it (anonymous access), because access follows who is there: people not
   signed in, including wherever people sign in, are one public context, people
   signed in one authenticated context, and the areas only some of their roles
-  may enter one restricted context; two Experiences of one Interface sharing an
+  may enter one restricted context; a Step at a public place names the Actor
+  who is not signed in (an invitee or role holder is that Actor until signed
+  in), and a Step ending a session (signing out, deleting one's account) stays
+  where the session was; two Experiences of one Interface sharing an
   `access` value and an Actor are a `lint` error; optional Interface-keyed
   `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`.
   `## Capability boundary` is an error. More than one `access` value or
@@ -192,7 +195,9 @@ not contain another H1 or H2.
   Capability whose grants carry that condition in `when`. Ways of doing one verb
   that share all of those are Scenarios of one Capability, even when each
   creates a different Entity: adding an authenticator app or backup codes as a
-  second factor is one Capability. Ways a setting selects between follow the
+  second factor is one Capability. The State it starts from never splits one:
+  restoring from the archive or from the trash is one Capability with a
+  Scenario each. Ways a setting selects between follow the
   Variation rules instead: a sign-in method the deployment selects makes one
   Capability per method, while methods that coexist, the Actor choosing one at
   sign-in, are Scenarios of one. A method a setting adds beside the others still
@@ -231,14 +236,19 @@ not contain another H1 or H2.
   (signing in, or one only an emailed link or a schedule starts) joins the
   section whose Capabilities change the same Entities, or has no Domain when
   more than one section or none does; one alone on a page beside a sibling
-  section has none either; a map never writes a Domain of one Capability. For a
+  section has none either; a Capability several sections reach (a document opened from Home, Recent and
+  its collection) has none, and nothing that is not a section becomes a Domain;
+  a map never writes a Domain of one Capability. For a
   planned Product, use the planned sections. Domains
   already in the model are the author's: add new Capabilities to them and never
   re-cut, merge or rename them.
 - Naming: ids and H1s use the words the Product shows the people who use it —
   its screens, menus and messages — never API values, code identifiers or a
   request's wording (Editor is `editor` even where the API sends `member`; a
-  planned Product uses its plan's words). A behavioral id's noun half names
+  planned Product uses its plan's words). A Capability's verb is the one its
+  control shows (Archive, Share, Publish); a form that only says Save or Done
+  is `edit-<thing>` for a thing's own facts and `change-<section>-settings` for
+  a settings page, never `update`. A behavioral id's noun half names
   something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface; the noun half comes from an Entity, Domain or Interface, never a
@@ -743,9 +753,10 @@ setting also varies or splits that Scenario, each setting is a decision point
 instead. The unconfirmed account sign-in later meets is state. A setting that
 adds an emailed link to confirm what a run already did changes the outcome,
 never the Actor's Steps: confirming is a later act of its own. A resource that
-exists only under some alternatives or only while a setting enables it
-(registration while the sign-in method is password; social sign-in while a
-provider is configured) stays ordinary, and a Business Rule without `permits`
+exists only under some alternatives or only while a setting, plan or licence
+enables it (registration while the sign-in method is password; social sign-in
+while a provider is configured; a guest role a paid plan enables) stays
+ordinary and is mapped, and a Business Rule without `permits`
 applying to it names the Variation or the setting in its lead.
 
 **Each selection field has exactly one level.** All text is a non-empty Markdown

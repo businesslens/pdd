@@ -228,7 +228,8 @@ its authoritative Reference.
   meets is state. A setting that adds an emailed link to confirm what a run
   already did changes the outcome, never the Actor's Steps: confirming is a
   later act of its own. A resource that exists only under some alternatives or
-  only while a setting enables it (registration while the sign-in method is
+  only while a setting, plan or licence enables it (a guest role a paid plan
+  enables; registration while the sign-in method is
   password; social sign-in while a provider is configured) stays ordinary; a
   Business Rule without `permits` applying to it names the Variation or the
   setting.

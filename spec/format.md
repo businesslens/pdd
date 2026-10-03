@@ -321,8 +321,12 @@ future format revision, but Context is not an arbitrary metadata bag.
   words the Product shows the people who use it — its screens, menus and
   messages — never its API values, code identifiers, or the wording of a
   request: a role the screens call Editor is `editor` even where the API sends
-  `member`. A planned Product uses the words its plan shows people. `lint`
-  cannot see the Product's screens; review and `verify` hold the name to them.
+  `member`. A planned Product uses the words its plan shows people. A
+  Capability's verb is the one its control shows — Archive, Share, Publish;
+  where the control says only Save or Done, it is `edit-<thing>` for a thing's
+  own facts and `change-<section>-settings` for a settings page, never
+  `update`. `lint` cannot see the Product's screens; review and `verify` hold
+  the name to them.
 
   `lint` checks the verb-noun shape heuristically, as warnings, on the two shapes it can
   recognise without conjugating English: a behavioural id whose last segment
@@ -517,8 +521,9 @@ confirming is a later act of its own. A decision point is also any choice or
 branch made during one run, and the unconfirmed account that sign-in later meets
 is state.
 
-**A resource that exists only under some alternatives, or only while a setting
-enables it,** stays an ordinary resource. A Business Rule without `permits` that
+**A resource that exists only under some alternatives, or only while a setting,
+plan or licence enables it,** stays an ordinary resource — a role or feature
+the code supports is mapped even where the running edition hides it. A Business Rule without `permits` that
 applies to it states the dependency in its lead, naming the Variation and the
 alternatives it exists under, or the enabling setting: registration exists only
 while the sign-in method is password; social sign-in exists only while a
@@ -905,7 +910,12 @@ that opens it, such as anonymous access, is the same: access follows who is
 there. People not signed in, including anonymous visitors and wherever people
 sign in, are one public context; people signed in are one authenticated context,
 and the areas only some of their roles may enter, such as administration, one
-restricted context. Optional `entryPoints` key the
+restricted context. Who is there also names the Actor: a Step at a place in a
+public context names the Actor who is not signed in — someone accepting an
+invitation, or any role holder before signing in, is that Actor until signed
+in — and a Step that ends a session, such as signing out or deleting one's own
+account, stays where the session was, never on the public page the person is
+sent to. Optional `entryPoints` key the
 owning Interface only. H1 and lead description are required; `## Intent` is
 optional. There is no `## Capability boundary`, for the reason given on the
 Interface, and one still authored is a `lint` error. There is no `exit` field
@@ -1035,8 +1045,11 @@ section only when none of its direct children is. A Capability no section
 reaches, such as signing in or one only an emailed link
 or a schedule starts, joins the section whose Capabilities change the same
 Entities, or has no Domain when more than one section or none does; one alone on
-a page beside a sibling section has none either. A map never writes a Domain of
-one Capability. For a Product planned before its code, the
+a page beside a sibling section has none either. A Capability several sections
+reach — a document opened from Home, Recent and its collection — has no Domain,
+and nothing that is not a section becomes one: there is no Documents Domain for
+the Capabilities that leaves without one. A map never writes a Domain of one
+Capability. For a Product planned before its code, the
 sections are the planned ones. Domains an author has written or regrouped are
 the author's: a map adds new Capabilities to them and never re-cuts, merges or
 renames them.
@@ -1435,7 +1448,9 @@ they act on — a channel's privacy, whether a message is the Actor's own — ar
 one Capability whose grants carry that condition in `when`. Ways of doing one
 verb that share all of those are Scenarios of one Capability, even when each
 creates a different Entity: adding an authenticator app or backup codes as a
-second factor is one Capability. Ways a setting selects between follow the
+second factor is one Capability. Nor does the State it starts from split one:
+restoring a document from the archive or from the trash is one Capability with
+a Scenario for each. Ways a setting selects between follow the
 Variation rules instead: a sign-in method the deployment selects makes one
 Capability per method, while methods that coexist, the Actor choosing one at
 sign-in, are Scenarios of one. A method a setting adds beside the others still

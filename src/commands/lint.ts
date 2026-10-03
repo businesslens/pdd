@@ -526,18 +526,18 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   // as verb-noun however it ends — `publish-and-share-a-collection` is fine —
   // so only a nominalised id with no verb in it is flagged.
   const PRODUCT_VERBS = new Set([
-    'accept', 'activate', 'add', 'allow', 'answer', 'apply', 'approve', 'archive', 'assign', 'back', 'block', 'book', 'browse', 'build',
+    'accept', 'activate', 'add', 'allow', 'answer', 'apply', 'approve', 'archive', 'assign', 'authorize', 'back', 'block', 'book', 'browse', 'build',
     'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
     'configure', 'confirm', 'connect', 'contribute', 'create', 'deactivate', 'decide', 'decline', 'delete',
-    'deliver', 'disable', 'discover', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
+    'deliver', 'disable', 'discover', 'download', 'duplicate', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
     'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
     'keep', 'leave', 'link', 'lint', 'list', 'log', 'manage', 'map', 'mark', 'merge', 'move', 'name',
-    'open', 'order', 'organize', 'pause', 'pay', 'place', 'plan', 'preserve', 'publish', 'pull',
+    'open', 'order', 'organize', 'pause', 'pay', 'pin', 'place', 'plan', 'preserve', 'publish', 'pull',
     'read', 'receive', 'recover', 'refresh', 'refund', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
     'report', 'request', 'resend', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
     'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
-    'share', 'ship', 'show', 'sign', 'start', 'stop', 'submit', 'subscribe', 'switch',
-    'synchronize', 'track', 'transfer', 'unfollow', 'unlink', 'unlist', 'update', 'upload', 'verify',
+    'share', 'ship', 'show', 'sign', 'star', 'start', 'stop', 'submit', 'subscribe', 'switch',
+    'synchronize', 'track', 'transfer', 'unarchive', 'unfollow', 'unlink', 'unlist', 'unpin', 'unpublish', 'unresolve', 'unstar', 'unsubscribe', 'update', 'upload', 'verify',
     'view', 'withdraw', 'write'
   ])
   /*
@@ -566,7 +566,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const segments = resource.id.split('-')
     const last = segments[segments.length - 1] || ''
     const carriesVerb = segments.some(isVerbSegment)
-    if (NOMINALISED.test(last) && !carriesVerb) {
+    // A last segment the model declares is the object, not a nominalisation:
+    // `archive-document` acts on a Document, `unresolve-comment` on a Comment.
+    const declared = nounVocabulary.has(last) || nounVocabulary.has(last.replace(/s$/, ''))
+    if (NOMINALISED.test(last) && !declared && !carriesVerb) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" reads as a noun phrase; a behavioral id starts with a verb`
       )
