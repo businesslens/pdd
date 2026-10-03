@@ -60,7 +60,8 @@ Read before authoring:
    Entity if a single list is true of all of them, several the moment it needs
    *"depending on the kind"* or carries facts that hold for some and not others.
    Being stored, parsed and rendered alike is not the test — that is how the
-   Product handles them, not what it keeps about them. A fact whose effect differs by kind is a Rule, never a split. When the call is still
+   Product handles them, not what it keeps about them. A fact whose effect
+   differs by kind is a Rule, never a split. When the call is still
    close, **split**: a merge stays available to anyone later, while a collapse
    deletes the difference and leaves nothing saying it was ever a question. Put
    both shapes and their counts to the author when you can; when there is no
@@ -99,7 +100,8 @@ Read before authoring:
    parity from shared implementation. Whether an Interface is divided into
    Experiences is derived, never judged: divide it when it serves more than one
    `access` value, or when its Actors split into groups no Capability available
-   there bridges (a Capability bridges the Actors its Scenario Steps name, and roles sharing an Account are one group).
+   there bridges (a Capability bridges the Actors its Scenario Steps name, and
+   roles sharing an Account are one group).
    Otherwise it holds no Experiences and availability names the Interface
    directly. `lint` decides and reports a violation as an error; counterparts
    across Interfaces and Experiences that are alternatives in one Variation
@@ -111,9 +113,9 @@ Read before authoring:
    assignment, version or deployment fixed before the behavior selects a
    Variation; state the behavior meets, including a value kept on the thing it
    acts on, is a Scenario condition. A parameter value is plain content, and a
-   design-only difference is a visual Reference. Screens are places, authored under the paragraph below.
-   Preserve valid existing meaning in a scoped expansion. **Attach what you
-   actually read.**
+   design-only difference is a visual Reference. Screens are places, authored
+   under the paragraph below. Preserve valid existing meaning in a scoped
+   expansion. **Attach what you actually read.**
    `references` is optional in the format, and leaving it empty is the most
    common way a mapped model becomes unreviewable: attach to each resource the
    artifacts that established its meaning — the implementation you traced

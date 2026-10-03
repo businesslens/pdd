@@ -235,9 +235,10 @@ within the Entity and are cited by exact match, from three places: a
 [Business Rule](./business-rules.md)'s `facts` target and its `when` condition,
 a [Screen](./interfaces.md#what-a-screen-presents)'s `entities` entry naming
 the facts it shows and collects, and a
-[Step](./capabilities.md#what-a-step-does-to-the-products-things)'s `reads`, `changes` or `creates` entry naming the exhaustive facts it affects. A name none of them can resolve is an
-error. It is the idiom `## States` already uses, where an H3 titled `Pending`
-is cited as `from: Pending`.
+[Step](./capabilities.md#what-a-step-does-to-the-products-things)'s `reads`,
+`changes` or `creates` entry naming the exhaustive facts it affects. A name none
+of them can resolve is an error. It is the idiom `## States` already uses, where
+an H3 titled `Pending` is cited as `from: Pending`.
 
 Write *When placed* instead of `created_at TIMESTAMP`. Describe *Items ordered*
 in prose; declare relationships between Entities in `relations`. Business Rules
@@ -303,7 +304,9 @@ the answer falls out of whether you can finish the list.
 One Entity, if a single list is true of every member. Several, the moment the
 list needs *"depending on the kind"* or carries facts that hold for some members
 and not others. That shared word is then a category, and its members are the
-Entities. The test reads the facts, not what they do: a fact whose effect differs by kind, such as a permission level that also covers a folder's contents, is a Rule and never splits the Entity.
+Entities. The test reads facts, not effects: a fact whose effect differs by
+kind, such as a permission level that also covers a folder's contents, is a Rule
+and never splits the Entity.
 
 Being stored, parsed and rendered the same way does not make them one thing.
 That is how the Product *handles* them; this asks what it *keeps*.
@@ -417,7 +420,8 @@ An Entity must be changed by a Step, presented by a Screen, named as an actor �
 on a Step, an Interface, an Experience, a Journey, or a Business Rule grant — or
 read by a Business Rule, as a condition's `entity` or a `configuredBy`, which is
 how a settings Entity earns its place. A [Variation](./variations.md) choosing by
-it also counts: the Entity is its assignment unit or holds a fact it chooses by. **A Step's read never counts, and neither
+it also counts: the Entity is its assignment unit or holds a fact it chooses by.
+**A Step's read never counts, and neither
 does a relation** — a cluster of Entities referencing each other while no
 behaviour touches any of them is still vocabulary nobody uses. An Entity nothing
 points at is a `lint` error: it is either vocabulary nobody uses, or a

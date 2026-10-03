@@ -85,13 +85,17 @@ unavailable. The rest of the border classifies what you find:
   one section of the Product's navigation are one Capability however the screen
   saves them — each field on its own or one Save button — and settings in
   different sections are separate Capabilities: all notification settings are
-  one. Settings are facts of one thing; entries of a list, such as permission entries or members, are things of their own, and adding, changing and removing them are separate Capabilities even inside a settings section. The same verb reached from another context is the same Capability,
-  available there too: changing a password the Product requires at sign-in is
-  Change password, joined to sign-in by a Journey. An API call that replaces a whole list offers that list's add, change and remove Capabilities there, never one of its own. Ways of doing one verb that
-  share all of those are Scenarios of one Capability, and the Steps of one run,
-  including a link the run sends to finish it, are one Capability. A
-  continuation several Capabilities share is its own: each ends its Scenarios at
-  the hand-off, stated in their Outcome, and a Journey joins them.
+  one. Settings are facts of one thing; entries of a list, such as permission
+  entries or members, are things of their own, each added, changed and removed
+  by its own Capability, even inside a settings section or through an API call
+  that replaces the whole list. The same verb reached from another context is
+  the same Capability, available there too: changing a password the Product
+  requires at sign-in is Change password, joined to sign-in by a Journey. Ways
+  of doing one verb that share all of those are Scenarios of one Capability, and
+  the Steps of one run, including a link the run sends to finish it, are one
+  Capability. A continuation several Capabilities share is its own: each ends
+  its Scenarios at the hand-off, stated in their Outcome, and a Journey joins
+  them.
 - **Languages.** `languages` belongs to the Product, optionally narrowed by an
   Interface. Content kept in several languages is an Entity fact, and how a
   language is chosen for someone is a kept fact such as *Preferred language*
@@ -124,7 +128,9 @@ unavailable. The rest of the border classifies what you find:
   picking a connector at an identity provider, is still an Actor Step. When two
   or more settings would each vary or split the same Scenario, whether they
   change the Actor's Steps or the outcome — a captcha and a provider password on
-  one registration — none makes a Variation; each is a decision point. A branch that ends in a refusal is still its own Scenario with a `condition` Step, and still counts as its setting splitting the Scenario. A setting
+  one registration — none makes a Variation; each is a decision point. A branch
+  that ends in a refusal is still its own Scenario with a `condition` Step, and
+  still counts as its setting splitting the Scenario. A setting
   that changes only the Product's own Steps — group sync replacing or adding
   Roles — is a decision point in one Scenario, as is any choice made during a
   run; the one exception is a Step that must name a different alternative of
@@ -134,10 +140,13 @@ unavailable. The rest of the border classifies what you find:
   are separate Scenarios, each with a `condition` Step reading the setting, not
   a Variation. If another setting also varies or splits that Scenario, each
   setting is a decision point instead. The unconfirmed account sign-in later
-  meets is state. A setting that adds an emailed link to confirm what a run already did changes the outcome, never the Actor's Steps: confirming is a later act of its own. A resource that exists only under some alternatives or only
-  while a setting enables it (registration while the sign-in method is password;
-  social sign-in while a provider is configured) stays ordinary; a Business Rule
-  without `permits` applying to it names the Variation or the setting.
+  meets is state. A setting that adds an emailed link to confirm what a run
+  already did changes the outcome, never the Actor's Steps: confirming is a
+  later act of its own. A resource that exists only under some alternatives or
+  only while a setting enables it (registration while the sign-in method is
+  password; social sign-in while a provider is configured) stays ordinary; a
+  Business Rule without `permits` applying to it names the Variation or the
+  setting.
 - **Every context it is used from.** A Capability is available in every
   Experience in which one of its Actors uses it — guests reading pages in a
   public Experience and signed-in Users in an authenticated one — never only
@@ -149,7 +158,10 @@ unavailable. The rest of the border classifies what you find:
   `takesEffect` and `stability` once on the set; `selectedWhen` (and a
   Version's `label`) per alternative. A set exists only when two or more
   resources of one type are all supported now and something selects between
-  them; a threshold or other parameter stays content of one resource. A setting that switches between two statements of one constraint, such as a minimum length or a length plus required kinds of character, selects Business Rule alternatives; a value one statement reads, such as the length itself, is a parameter.
+  them; a threshold or other value one statement reads stays content of that
+  resource, but a setting that switches between two statements of one
+  constraint, such as a minimum length or a length plus required kinds of
+  character, selects Business Rule alternatives.
   Alternatives of a Scenario Variation share their Capability or Journey, and a
   Step is never an alternative. Link
   existing Entities and facts; never invent Entities, settings, allocations,

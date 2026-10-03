@@ -71,7 +71,8 @@ Read before authoring:
    Whether an Interface is divided into Experiences is derived, never judged,
    from audience and access: divide it when it serves more than one `access`
    value, or when its Actors split into groups no Capability available there
-   bridges (a Capability bridges the Actors its Scenario Steps name, and roles sharing an Account are one group). Otherwise
+   bridges (a Capability bridges the Actors its Scenario Steps name, and roles
+   sharing an Account are one group). Otherwise
    it holds no Experiences and availability names the Interface directly.
    `lint` decides and reports a violation as an error; counterparts across
    Interfaces and Experiences that are alternatives in one Variation justify

@@ -42,11 +42,13 @@ administration group things under — one per section holding two or more
 Capabilities (the finest navigation level that still holds two or more; a parent
 menu is a section only when none of its direct children is), named in the Product's
 words. A Capability no section reaches, such as signing in or one only an emailed link
-starts, joins the section whose Capabilities change the same Entities; when those Entities belong
-to more than one section, or to none, it has no Domain. A Capability on a page of its own beside a sibling that is a section has no Domain, and a map never writes a Domain naming one Capability. You regroup them by hand like any
-file: merge, split or rename, and write your own Boundary. Once you have, a
-later map adds new Capabilities to your Domains and never re-cuts them. Zero
-Domains is valid for a Product with no sections of two or more Capabilities.
+starts, joins the section whose Capabilities change the same Entities, or has no
+Domain when more than one section or none does; one alone on a page beside a
+sibling section has none either. A map never writes a Domain of one Capability.
+You regroup them by hand like any file: merge, split or rename, and write your
+own Boundary. Once you have, a later map adds new Capabilities to your Domains
+and never re-cuts them. Zero Domains is valid for a Product with no sections of
+two or more Capabilities.
 
 Splitting a Capability neither creates nor removes a Domain. If
 `manage-repositories` became create, configure, archive and delete, those four

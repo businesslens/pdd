@@ -331,12 +331,19 @@ role. Roles operators define in configuration, outside the product, are modeled
 the same way: one Role Entity (its name, permissions and members) granted
 through `configuredBy`, with no Capability that creates it. A configuration that
 also grants directly to people stays its own Entity, and the people who hold
-configured roles are one acting Entity. Each role the product ships stays its own Entity that acts, even where operators also define roles or assign people to shipped roles in configuration. Where a person holds a shipped role per container, such as an organization or a project, the membership is an Entity of its own that does not act, whose Role fact names the shipped role. A relation that holds whatever role a
-person has — the sender of a message — is declared to each role Entity that can
-hold it, and ownership is one `related` grant per role: *the sender, if a
-Member*, *the sender, if a Moderator*. Facts that belong to the person whatever
-their role — email, display and notification preferences — live once on an
-Account Entity that does not act, and each role Entity relates to it one-to-one; they are never copied onto every role. Roles that share an Account are one audience, and a Step any of them may take names the least privileged role that may take it counting the permissions the Product sets by default but none granted later on a single resource.
+configured roles are one acting Entity. Each shipped role stays an Entity that
+acts even where configuration also defines roles or assigns people to them; one
+held per container, such as an organization or a project, is held through a
+membership Entity that does not act, whose Role fact names the role. A relation
+that holds whatever role a person has — the sender of a message — is declared to
+each role Entity that can hold it, and ownership is one `related` grant per
+role: *the sender, if a Member*, *the sender, if a Moderator*. Facts that belong
+to the person whatever their role — email, display and notification preferences
+— live once on an Account Entity that does not act, and each role Entity relates
+to it one-to-one; they are never copied onto every role. Roles that share an
+Account are one audience, and a Step any of them may take names the least
+privileged role the Product's default permissions allow, ignoring grants later
+made on a single resource.
 
 ## What `lint` checks
 

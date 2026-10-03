@@ -440,9 +440,10 @@ A Step Context is concrete and most-specific. When the Step occurs on a
 Screen, its `place` names that Screen, at any depth — a
 [parent Screen](./interfaces.md#screens-nest) is a place of its own, meaning
 on it and in none of its children. Otherwise it names the leaf Experience or
-undivided Interface, even when other behavior there has Screens. An `actor` Step placed on a Screen that `reads` an
-Entity the Screen does not present is an error; a Product or condition Step
-reads what the Product consults, and a fact-free read of an Entity that acts names a
+undivided Interface, even when other behavior there has Screens. An `actor` Step
+placed on a Screen that `reads` an Entity the Screen does not present is an
+error; a Product or condition Step reads what the Product consults, and a
+fact-free read of an Entity that acts names a
 participant, so those mentions are exempt. A Step on a Screen an Interface shares across its
 Experiences names that Screen as `interface-id::screen-id`; it is inside the
 Capability's availability only when every Experience of that Interface is, and
