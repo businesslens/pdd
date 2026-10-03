@@ -1,7 +1,7 @@
 import { defaultCoverageReading, coverageFromQuery, coverageToQuery } from '../utils/coverageState'
-import { resourceNavigationKey, resourceTrail, nextResourceTrail, type ResourceVisit } from '../utils/resourceNavigation'
+import { resourceNavigationKey, resourceTabPushesHistory, resourceTrail, nextResourceTrail, type ResourceVisit } from '../utils/resourceNavigation'
 import { referenceNavigationKey, referenceTrail, localReferenceHref } from '../utils/referenceNavigation'
-import { destinationForSection, destinationForLocation } from '../utils/reportDestinations'
+import { collectionForKey, destinationForSection, destinationForLocation } from '../utils/reportDestinations'
 import { defaultTopologyReading, topologyFromQuery, topologyPushesHistory, topologyToQuery } from '../utils/topologyState'
 
 /** One gesture, one history entry, shared by the CLI and catalog hosts. */
@@ -48,7 +48,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     const replace = replacing
     replacing = false
     const next = { coverage: coverage.value, section: section.value, resource: resource.value, tab: tab.value, resourceTab: resourceTab.value, reference: reference.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
-    const push = !replace && (!same(before.coverage, next.coverage) || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology))
+    const push = !replace && (!same(before.coverage, next.coverage) || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || resourceTabPushesHistory(before, next) || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology))
     const query = { ...route.query, ...coverageToQuery(next.coverage), [sectionKey]: next.section === 'overview' && !next.resource ? undefined : next.section,
       e: next.resource ?? undefined, [tabKey]: next.tab === 'overview' ? undefined : next.tab,
       rt: next.resource && next.resourceTab !== 'overview' ? next.resourceTab : undefined,
@@ -91,13 +91,4 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     }
   })
   return { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage }
-}
-
-/** A direct resource address has a useful closing destination even without s. */
-function collectionForKey(key: string) {
-  const kind = key.split(':')[0] ?? ''
-  if (kind === 'experience' || kind === 'screen') return 'interface'
-  if (kind === 'capability-scenario') return 'capability'
-  if (kind === 'journey-scenario') return 'journey'
-  return ['entity', 'interface', 'domain', 'capability', 'journey', 'rule'].includes(kind) ? kind : 'overview'
 }

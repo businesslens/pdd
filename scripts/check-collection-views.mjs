@@ -94,7 +94,7 @@ try {
       await expect(page.locator('.blr-drawing-cards')).toHaveCount(0)
     }
     await context.close()
-    console.log(`Passed ${width}px: six collections, preview subtitles, no About or experiment controls, fixed position, legend, saved filters, refresh and keyboard.`)
+    console.log(`Passed ${width}px: every collection with drawings, preview subtitles, no About or experiment controls, fixed position, legend, saved filters, refresh and keyboard.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

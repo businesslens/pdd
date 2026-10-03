@@ -25,6 +25,17 @@ export interface ResourceOpenOptions {
 /** Open a resource at one of its readings — `lifecycle/<change>` included. The report shell provides it. */
 export const resourceOpenerKey: InjectionKey<(key: string, tab?: string, options?: ResourceOpenOptions) => void> = Symbol('businesslens:resource-opener')
 
+/**
+ * A resource reading change that is a new place for Back. Letting go of a
+ * reading's detail — `lifecycle/<change>` settling to `lifecycle` once the
+ * change is shown — stays on the same entry, so a pasted change link never
+ * leaves Back pointing at itself.
+ */
+export function resourceTabPushesHistory(before: { resource: string | null, resourceTab: string }, next: { resource: string | null, resourceTab: string }): boolean {
+  if (before.resourceTab === next.resourceTab) return false
+  return !(before.resource === next.resource && before.resourceTab.startsWith(`${next.resourceTab}/`))
+}
+
 export function resourceTrail(value: unknown): ResourceVisit[] {
   if (!Array.isArray(value)) return []
   return value.filter((item): item is ResourceVisit => Boolean(item && typeof item.resource === 'string'

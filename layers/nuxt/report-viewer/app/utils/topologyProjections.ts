@@ -394,6 +394,19 @@ export function entityRelationsProjection(workspace: ReportWorkspace): Diagram {
   }
 }
 
+/**
+ * After filtering, a frame stays only where it is itself shown and still holds
+ * two of its alternatives. An alternative whose frame is gone — filtered out, or
+ * outside a focus that reached the alternatives but not their set — stands alone
+ * and says its set; one inside a frame leaves saying it to the frame.
+ */
+export function frameShownNodes<T extends { id: string, parent?: string, group?: boolean, alternativeOf?: unknown }>(nodes: T[]): T[] {
+  const shown = new Set(nodes.map(node => node.id))
+  const held = (id: string) => shown.has(id) ? nodes.filter(node => node.parent === id).length : 0
+  return nodes.filter(node => !node.group || held(node.id) > 1)
+    .map(node => node.parent && held(node.parent) < 2 ? { ...node, parent: undefined } : node.parent ? { ...node, alternativeOf: undefined } : node)
+}
+
 /** Filtering precedes placement. Ancestor headings remain as structural context. */
 export function filterBranches(branches: TopologyBranch[], visible: (resource: AnyResourceView) => boolean): TopologyBranch[] {
   return branches.flatMap(item => {

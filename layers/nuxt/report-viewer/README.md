@@ -176,8 +176,9 @@ expands that Scenario inside its parent. Named-view actions explicitly change
 the working view and close the panel. Ownership remains visible inside the
 resource reading and is separate from its return trail. Selecting Connections
 from a Scenario reading opens its parent's Connections tab. References stays
-scoped to the inspected resource: a Scenario's `rt=references` reads that
-Scenario's attachments under its own title.
+scoped to the inspected resource: a Scenario address always opens its parent at
+Scenarios, whatever its `rt`, and the Scenario's own attachments are read on its
+card.
 
 The Product Overview's References reading is read by where references point,
 not one row per attachment, because many resources cite the same file. It works
@@ -341,10 +342,10 @@ where it left:
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
+| `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, `rule`, or `variation` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `applies-to`, `delivery`, `scenarios`, `lifecycle` (or `lifecycle/<change>` to select one change), `rules`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `alternatives`, `applies-to`, `delivery`, `scenarios`, `lifecycle` (or `lifecycle/<change>` to select one change), `rules`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `coverage` | `{ path: string \| null }` | No path |

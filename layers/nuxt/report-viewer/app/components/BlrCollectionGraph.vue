@@ -18,7 +18,7 @@ import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { ProductTopologyViewId } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
-import { deliveryMapProjection, entityRelationsProjection, filterBranches, reachTreeProjection } from '../utils/topologyProjections'
+import { deliveryMapProjection, entityRelationsProjection, filterBranches, frameShownNodes, reachTreeProjection } from '../utils/topologyProjections'
 import type { ReachKind, TopologyBranch } from '../utils/topologyProjections'
 import { diagramResource } from '../utils/diagram'
 import { topologyNeighbourhood } from '../utils/topologyFocus'
@@ -56,10 +56,7 @@ const shown = computed(() => tree.value ? filterBranches([tree.value], visible)[
 const diagram = computed(() => {
   const base = entityRelationsProjection(props.workspace)
   const shownNodes = base.nodes.filter(node => visible(props.workspace.byKey.get(node.id)!)).map(node => ({ ...diagramResource(props.workspace.byKey.get(node.id)!), ...node }))
-  /* A frame holding fewer than two of its alternatives here is dropped; one left alone says its set instead. */
-  const held = (id: string) => shownNodes.filter(node => node.parent === id).length
-  const nodes = shownNodes.filter(node => !node.group || held(node.id) > 1)
-    .map(node => node.parent && held(node.parent) < 2 ? { ...node, parent: undefined } : node.parent ? { ...node, alternativeOf: undefined } : node)
+  const nodes = frameShownNodes(shownNodes)
   const keys = new Set(nodes.map(node => node.id))
   return { ...base, nodes, edges: base.edges.filter(edge => keys.has(edge.source) && keys.has(edge.target)) }
 })

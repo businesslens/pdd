@@ -6,7 +6,8 @@ import { loadModel } from '../src/core/model.js'
 const source = (path: string) => readFileSync(join(__dirname, '../layers/nuxt/report-viewer', path), 'utf8')
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, resourceViewLinks } = await utility('reportDestinations')
+const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, collectionForKey, resourceViewLinks } = await utility('reportDestinations')
+const { resourceTabPushesHistory } = await utility('resourceNavigation')
 const { findProductTopologyView } = await utility('productTopologyViews')
 const { resourceConnectionRows } = await utility('resourceConnections')
 const { tabsFor } = await utility('pageSections')
@@ -33,6 +34,24 @@ describe('report destinations', () => {
       // Variations are rows only: a set has no derivation of its own to draw.
       expect(modes, rail).toEqual(rail === 'variation' ? [] : ['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
     }
+  })
+
+  it('closes a resource-only address to its rail collection, Variations included', () => {
+    expect(collectionForKey('variation:tax-document')).toBe('variation')
+    expect(collectionForKey('entity:order')).toBe('entity')
+    expect(collectionForKey('screen:customer-web::catalog')).toBe('interface')
+    expect(collectionForKey('capability-scenario:browse-catalog')).toBe('capability')
+    expect(collectionForKey('product:fixture-shop')).toBe('overview')
+    for (const kind of MAIN_RESOURCE_KINDS) expect(collectionForKey(`${kind}:x`)).toBe(kind)
+  })
+
+  it('lets a reading settle its detail address without a Back step of its own', () => {
+    const order = 'entity:order'
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'lifecycle/changes~Pending~Cancelled' }, { resource: order, resourceTab: 'lifecycle' })).toBe(false)
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'overview' }, { resource: order, resourceTab: 'lifecycle' })).toBe(true)
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'lifecycle' }, { resource: order, resourceTab: 'lifecycle/changes~Pending~Cancelled' })).toBe(true)
+    expect(resourceTabPushesHistory({ resource: 'capability:cancel-order', resourceTab: 'lifecycle/x' }, { resource: order, resourceTab: 'lifecycle' })).toBe(true)
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'rules' }, { resource: order, resourceTab: 'rules' })).toBe(false)
   })
 
   it('does not keep standalone matrix sections or offer matrices to other collections', () => {

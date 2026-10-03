@@ -25,6 +25,11 @@ export const destinationForLocation = (section: string, tab: string) => REPORT_D
 export const graphForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'graph')
 export const matrixForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'matrix')
 export const collectionKindFor = (kind: ReportResourceKind): ReportResourceKind => kind === 'experience' || kind === 'screen' ? 'interface' : kind === 'capability-scenario' ? 'capability' : kind === 'journey-scenario' ? 'journey' : kind
+/** A direct resource address has a useful closing destination even without s: its rail collection. */
+export const collectionForKey = (key: string): string => {
+  const kind = collectionKindFor((key.split(':')[0] ?? '') as ReportResourceKind)
+  return (MAIN_RESOURCE_KINDS as readonly string[]).includes(kind) ? kind : 'overview'
+}
 
 /** The alternatives of a set, resolved; a set holds only concrete resources. */
 const alternativesOf = (workspace: ReportWorkspace, resource: AnyResourceView) => resource.kind === 'variation'
