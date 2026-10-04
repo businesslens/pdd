@@ -1,9 +1,9 @@
 ---
 title: References
-description: Attach intent, implementation, or context artifacts to any Product Model resource without moving external material into the model.
+description: Point any resource at material kept outside the model (code, a PRD, a design, research), saying what it is and why it is attached.
 section: open-source
 group: Product Model
-order: 16
+order: 15
 terms:
   - term: Reference
     anchor: asset-or-reference
@@ -18,19 +18,65 @@ terms:
 
 # References
 
-References connect a self-contained Product Model to material maintained
-outside it. They can point to a design used while curating intent, code that
-currently implements behavior, a technical proposal, research, or related
-context. The referenced artifact is not part of the model and never replaces
-the resource's Product prose.
+**A Reference points a resource at material kept outside the model (code, a PRD,
+a design, research) and says what it is and why it is there.** The material
+stays where it is, and it never replaces the resource's own words: the model
+still says what the Product does.
 
-Every semantic resource supports the same optional field: Product,
-Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
-Scenario, Journey Scenario, Business Rule, and Variation. Configuration,
-Coverage, and taxonomies do not.
+## In practice
+
+| What you attach | `kind` | `role` |
+| --- | --- | --- |
+| The function that places an order, on the Checkout Capability | `code` | `implementation` |
+| The PRD that defined checkout | `prd` | `intent` |
+| An approved design of the Order status Screen | `visual` | `intent` |
+| A screenshot of the live Order status Screen | `visual` | `implementation` |
+| A competitor's checkout, for comparison | `visual` | `context` |
+| The payment provider's published API docs | `doc` | `context` |
+
+Every resource type can carry references. `config.yaml`, `coverage.md` and
+`taxonomies.yaml` cannot. A model may have none at all.
+
+## When you create one
+
+- **Attach where the material is about.** Code that settles a payment goes on
+  the Capability that settles it, not on the Product.
+- **A capture of a condition goes on the Scenario that reaches it.** A screenshot
+  of an empty or refused view attaches to the Scenario whose Step meets that
+  condition; the Screen carries captures of the place itself.
+- **Prefer a symbol to line numbers** in code targets: lines drift, a function
+  name rarely does.
+- **A Reference is a lead, not proof.** Nothing reads, fetches or verifies its
+  content.
+
+### Asset or Reference
+
+Use an **asset** when the model owns the file (a mockup made for this model).
+Expand the resource from `<id>.md` to `<id>/<type>.md` and put the file beside
+it; captures of this repository's running Product go under `implementation/`:
+
+```text
+screens/order-status/
+├── screen.md
+├── mockup.svg
+└── implementation/
+    └── order-status-dark.png
+```
+
+An asset needs no frontmatter. Add `assets:` only to give one a `title`.
+
+Use a **Reference** when someone else owns the material: source code, a Figma
+file, an ADR, research, a hosted design.
+
+## The file
+
+`references` is a list in any resource's frontmatter:
 
 ```yaml
 references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService.submit
   - kind: prd
     role: intent
     target: docs/prds/checkout.md
@@ -38,141 +84,54 @@ references:
   - kind: visual
     role: intent
     target: https://example.com/designs/checkout
-    title: Approved checkout direction
-  - kind: code
-    role: implementation
-    target: src/checkout/handler.ts#CheckoutHandler.submit
 ```
 
-## Asset or Reference
-
-Use an asset when the model owns the file. Expand the resource from `<id>.md` to
-`<id>/<type>.md`, then place authored assets beside `<type>.md`. Put generated
-captures describing this repository's realization under the reserved
-`implementation/` subdirectory:
-
-```text
-screens/unread-library/
-├── screen.md
-├── mockup.svg
-└── implementation/
-    └── backlog-dark.png
-```
-
-An asset needs no frontmatter entry. Add optional `assets:` metadata only when
-it needs a title:
-
-```yaml
-assets:
-  - file: mockup.svg
-    title: Approved unread backlog
-  - file: implementation/backlog-dark.png
-    title: Implemented backlog, dark
-```
-
-Use a Reference when another system or repository owns the material: source
-code, a Figma file, an ADR, research, a vendor contract, or a hosted design.
-This avoids a mirrored asset tree while keeping external material external.
-
-## Kind and role
-
-`kind` says what the artifact is:
-
-| Kind | Artifact |
+| Field | Says |
 | --- | --- |
-| `code` | A tracked source file, optional symbol, or line range |
+| `kind` (required) | What the material is |
+| `role` (required) | Why it is attached |
+| `target` (required) | Where it is: a repository-relative path or an HTTP(S) URL. Code uses `path#symbol` or `path:start-end` |
+| `title` | An optional label |
+
+### Kind and role
+
+| `kind` | The material |
+| --- | --- |
+| `code` | A tracked source file, optionally a symbol or line range |
 | `prd` | A product requirements document — see [how it differs from the model](./product-model.md#is-this-replacing-my-prd) |
-| `spec` | A product or technical specification, including a database schema — see [is this an ERD](./entities.md#is-this-an-erd) |
+| `spec` | A product or technical specification, including a database schema |
 | `proposal` | A proposed direction or change |
 | `doc` | General documentation |
 | `adr` | An architecture decision record |
-| `visual` | A screenshot, mockup, prototype, design, or diagram |
+| `visual` | A screenshot, mockup, prototype, design or diagram |
 | `research` | Product or user research |
 
-`role` says why it is attached to this resource:
-
-| Role | Meaning | Travels with a published Blueprint |
-| --- | --- | --- |
-| `intent` | Helped express or curate intended Product meaning | yes |
-| `implementation` | Points at a realized Product artifact | **no** |
-| `context` | Supplies useful background without defining intent or implementation | yes |
-
-A PRD uses `kind: prd`. Give it `role: intent` when it helped define the
-approved Product meaning on that resource, or `role: context` when it supplies
-supporting history. The Product Model remains self-contained: the PRD explains
-the decision around a resource but never replaces its authored meaning.
-
-`intent` and `context` describe the Product, so they travel with a published
-Blueprint. `implementation` describes this repository's realization of it and
-stays home — the portable projection removes every `implementation` reference,
-along with every `kind: code` reference and every repository-relative target,
-whatever its role. That is not a limitation to work around; it is what makes the
-role meaningful.
-
-## Where a capture of a condition attaches
-
-A [Screen](./interfaces.md#screens) carries the captures of the place itself: a
-mockup, the implemented view, light and dark. A capture of a *condition* of
-that view — empty, unauthorized, caught-up — attaches instead to the Scenario
-that reaches it, whose Step or Edge case meets that condition, through the
-Scenario's own `references`:
-
-```yaml
-references:
-  - kind: visual
-    role: implementation
-    target: docs/design/screenshots/library-empty.png
-    title: Library with nothing saved yet
-```
-
-The condition is then named by the behavior that produces it rather than by a
-label on the Screen, so a reader arriving from either side finds the same
-capture. A Reference or asset carries no `state` key.
-
-The distinction answers the screenshot question directly. A design screenshot
-used to define a Screen is `visual` + `intent`; a screenshot captured from the
-implemented Product is `visual` + `implementation`; a competitive example is
-usually `visual` + `context`. The same separation works for documents and code.
-A code reference may even have `role: intent` when source is being used as an
-input to curation. None of these roles means current, verified, or proven.
-
-## Target rules
-
-Code targets use `path[#symbol][:start[-end]]`:
-
-```yaml
-references:
-  - kind: code
-    role: implementation
-    target: src/routes/cart.ts#submitCart:42-88
-```
-
-The path must be repository-relative and tracked by Git. Prefer a stable symbol
-over a line range. Lint validates grammar and tracking, but not symbol or line
-existence and not behavioral alignment.
-
-Every other kind accepts an HTTP(S) URL or repository-relative path. HTTP(S)
-targets are syntax-checked but never fetched. A missing local target warns
-without failing lint. Absolute paths, `file:` URLs, unsupported schemes, and
-backslash paths are invalid. Duplicate targets on one resource are invalid.
-
-The deterministic CLI does not fetch or inspect referenced content, and a
-Reference never certifies alignment. BusinessLens skills may follow curated
-References as leads while mapping or verifying the repository, but the
-artifact is evidence to assess rather than proof to trust.
-
-## What `lint` checks
-
-| Finding | Meaning |
+| `role` | Means |
 | --- | --- |
-| missing `kind`, `role`, or `target` | Every Reference needs all three fields. |
-| unknown Reference key | Use only `kind`, `role`, `target`, and optional `title`. |
-| invalid kind or role | Choose one of the documented values. |
-| invalid code target | Use the compact grammar and a repository-relative path. |
-| `code reference path "…" is not a tracked file` | Fix or remove stale navigation. |
-| duplicate Reference target | Keep only one attachment to that target on the resource. |
-| missing local target warning | Fix the target or remove it; warnings do not fail lint. |
-| asset metadata names a missing file | Expand the resource and add the file, or remove the stale metadata. |
-| unknown asset key | Use only `file` and optional `title`. |
+| `intent` | It helped define what the Product should do |
+| `implementation` | It points at what was built |
+| `context` | Useful background, neither |
 
-There is no missing-Reference finding. A model may contain none.
+## How it connects
+
+A Reference belongs to the one resource that lists it. When the model is
+published as a [Blueprint](./cli-export.md), `intent` and `context` references
+travel with it; `implementation` references, every `code` reference and every
+repository path stay home.
+
+## What lint checks
+
+Errors:
+
+- A reference without `kind`, `role` and `target`, with any other key, or with a
+  `kind` or `role` outside the lists above.
+- A target that is an absolute path, a `file:` or other non-HTTP(S) URL, or uses
+  backslashes.
+- A `code` target whose path is not a file tracked by Git.
+- The same target twice on one resource.
+- `assets:` naming a file that is not in the resource's folder, or with a key
+  other than `file` and `title`.
+
+Warning:
+
+- A non-code target path that does not exist in the repository.

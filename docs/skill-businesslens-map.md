@@ -1,50 +1,76 @@
 ---
 title: map
-description: Create or expand a Product Model from established repository behavior without executing target code.
+description: Create or expand a Product Model from the code you already have, without running it.
 section: open-source
 group: Skills
-order: 22
+order: 17
 ---
 
 # `businesslens-map`
 
-Use map for first adoption in an existing repository, a named area absent from
-the model, an area you deliberately no longer trust, or coverage expansion.
+**Map reads your repository and writes a Product Model of what the product
+already does.**
 
-It inventories tracked files without writing or dumping the whole file list,
-then statically traces behavior from entry points through effects and outcomes.
-It treats deployables, routes, commands, APIs, and integrations as evidence—not
-automatic Interfaces—and drafts only supported Product contracts with explicit
-availability Contexts, naming Experiences where meaningful contexts exist.
-Every Capability receives direct Capability Scenario coverage. Map does
-not use Scenarios as hidden operations beneath vague umbrella Capabilities;
-independently meaningful behavior is split and may be organized by a Domain.
-Map creates an optional Journey only when repository evidence establishes one
-coherent Actor goal with an achieved multi-Capability Journey Scenario. It never
-creates a Journey for one Capability, an administrative grouping, or a merely
-possible sequence.
+Use it once, when you adopt BusinessLens in a repository that has code, and
+again only for an area the model doesn't cover yet or that you no longer trust.
+It is not a daily step: to check that the model is still current, use
+[`businesslens-verify`](./skill-businesslens-verify.md).
 
-Inspection establishes what the code does, not what the Product means, so map
-puts what the repository cannot settle to you before writing anything — which
-surfaces are supported Interfaces, whether a family of things is one Entity or
-several, where a Scenario ends and an `## Edge cases` bullet begins, and the
-Product's own name for each thing — in rounds, with a recommendation on each.
-It then presents the proposed delta for approval, explaining the selected model
-shape and its consequences. Significant omissions, consequential modeling
-boundaries, and material uncertainty remain visible in brief explanations of the
-current proposal. An **Open questions** section appears only when questions
-remain. Review output does not enumerate discarded options or repeat settled
-discussion on later runs.
+```text
+/businesslens-map
+/businesslens-map billing
+```
 
-Map writes current product meaning only inside `.businesslens/` and runs
-structural lint in an isolated runner. Generated files contain no rejected
-approaches or deliberation history, including in resource prose, supporting
-sections, limitations, or README. An unchosen option does not become a product
-exclusion. Established constraints, refusal and failure behavior, and material
-unresolved questions or missing evidence remain visible.
+The first maps the whole repository; the second maps one area and what it
+needs.
 
-Map never executes target code and never silently replaces a mature model.
-Optional implementation References can provide useful navigation, not proof.
+## What you get
 
-Do not schedule map daily. Use [`businesslens-verify`](./skill-businesslens-verify.md)
-for freshness, refactors, drift, release checks, and current-state audits.
+1. **Numbered questions, each with a recommendation.** The code says what
+   happens, not what the product means, so map asks what inspection can't
+   settle: which surfaces are supported [Interfaces](./interfaces.md), whether a
+   family of things is one [Entity](./entities.md) or several, where a Scenario
+   ends and an edge case begins, and the product's own name for each thing. It
+   asks in rounds and waits for your answers.
+2. **The proposed change.** Every resource it would add, change or remove, what
+   it left unmapped, and what it couldn't establish, before anything is written.
+3. **Files written after you approve**, only inside `.businesslens/`. A first
+   run creates the whole folder, including the model's README
+   (`.businesslens/README.md`).
+4. **Lint**, fixed until clean.
+5. **A report**: what is mapped, what is not, the limitations, and the lint
+   result.
+
+## How it reads the code
+
+Map starts at the entry points (routes, commands, handlers) and follows each
+one through to what it stores and what the person sees. Tests and docs are
+leads; it confirms every claim in the implementation. Then it sweeps four times:
+
+| Sweep | Looks for | Becomes |
+| --- | --- | --- |
+| Verbs | What people and systems can do | [Capabilities](./capabilities.md), each with Scenarios for its cases |
+| Nouns | Each thing the product keeps | Its States, the Steps that move it between them, and the [Screens](./interfaces.md#screens) that show it |
+| Permissions | Every authorization check: a role, an owner, a threshold | A grant on a [Business Rule](./business-rules.md); an operation refused to everyone is `permits: []` |
+| Hand-offs | Places where the product carries a person from one Capability into the next | A [Journey](./journeys.md) |
+
+A state nothing moves a thing into, or a thing nothing changes, becomes a
+question for you, never a guess.
+
+Flags, settings, plans and A/B tests are classified by
+[What selects](./variations.md#what-selects-decides-it): a
+[Variation](./variations.md) only when they switch between complete supported
+forms; otherwise a condition, a separate Scenario, or a condition on who may.
+
+Map attaches what it actually read as [References](./references.md) (the code
+it traced, and any PRD or spec that states the behavior) as a record of where a
+claim came from, not proof. In a repository using a spec-driven tool, it records
+those folders in `config.yaml`.
+
+## Related
+
+- [`businesslens-ideate`](./skill-businesslens-ideate.md): decide what should
+  change next.
+- [`businesslens-verify`](./skill-businesslens-verify.md): check the model and
+  code still agree.
+- [Start from your repository](./from-your-repo.md)

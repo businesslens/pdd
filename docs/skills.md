@@ -3,7 +3,7 @@ title: Overview
 description: Three self-contained skills cover adoption, intended product change, and automatic verification-to-resolution.
 section: open-source
 group: Skills
-order: 21
+order: 16
 ---
 
 # BusinessLens agent skills
@@ -20,7 +20,7 @@ Map and ideate answer opposite questions: “what already exists?” and “what
 should exist?” Verify owns the loop between those authorities after code moves.
 
 The three installed skills are self-contained. See the
-[development loop](./the-loop.md) for how ideate and verify surround your build
+[development loop](./index.md#the-development-loop) for how ideate and verify surround your build
 workflow.
 
 Catalog contribution is a deterministic CLI workflow:

@@ -1,6 +1,6 @@
 ---
 title: From your repo
-description: Map established repository behavior into an honest Product Model, then verify the current state.
+description: Map what an existing repository already does into a Product Model, review it, then check the code against it.
 section: open-source
 group: Get started
 order: 3
@@ -8,36 +8,41 @@ order: 3
 
 # Start from your repository
 
-Use this door when implementation already exists and `.businesslens/` is absent
-or deliberately untrusted.
+Use this door when you already have code and no `.businesslens/` you trust.
 
 ## Steps
 
 1. [Install the BusinessLens skills](./installation.md).
 
-2. Run the mapping skill:
+2. Run the mapping skill in your agent:
 
    ```text
    /businesslens-map
    ```
 
-   Codex: `$businesslens-map`. It statically inspects repository instructions,
-   entry points, services, persistence, integrations, configuration, and tests.
-   It never executes target code. It shows the proposed model and coverage
-   assessment before writing product meaning.
+   It reads the repository (instructions, entry points, data, integrations,
+   configuration and tests) without running any of it, and shows you the
+   proposed model before writing anything.
 
-3. Review the `.businesslens/` diff. Check that supported Interfaces are Product
-   contracts rather than discovered technologies, optional Experiences exist
-   only for meaningful contexts, Capability availability is explicit, and every
-   Capability has honest Capability Scenario coverage. Check that Capability
-   Scenarios are variations rather than hidden operations under vague umbrella
-   Capabilities. Optional Journeys should author coherent Goals rather than
-   administrative grab bags, while Capability-bearing Journey Scenario Steps
-   trace supported behavior through explicit Contexts across Interfaces. Also check unmapped areas,
-   limitations, and optional
-   implementation References.
+3. Review the `.businesslens/` diff. New to the folder? The
+   [Model overview](./product-model.md) explains it in five minutes:
 
-4. Lint and commit:
+   - Interfaces are products people or systems use (a web app, a CLI, a
+     webhook), not technologies such as a framework or a database.
+   - Each Capability is one thing the product does; its cases (success,
+     refusal, edge) are its Scenarios, not more Capabilities.
+   - Flags and settings that switch behavior appear as
+     [Variations](./variations.md), not duplicate Capabilities.
+   - Who may do what is in [Business Rules](./business-rules.md).
+   - What map couldn't see is listed in `coverage.md`.
+
+4. See what you got:
+
+   ```bash
+   npx businesslens view
+   ```
+
+5. Lint and commit:
 
    ```bash
    npx businesslens lint
@@ -45,12 +50,13 @@ or deliberately untrusted.
    git commit -m "docs: add BusinessLens Product Model"
    ```
 
-5. Run a semantic current-state audit:
+6. Check the whole product against the code once:
 
    ```text
    /businesslens-verify current
    ```
 
-`map` is not a daily command. Return to it only to expand coverage or remap a
-named area you deliberately stopped trusting. Use `verify` for routine changes,
-refactors, suspected drift, and release checks.
+`map` is not a daily command. Return to it only to cover more of the product or
+to remap an area you no longer trust. Day to day, use `verify`.
+
+Next: [Development loop](./index.md#the-development-loop) · [Model overview](./product-model.md)

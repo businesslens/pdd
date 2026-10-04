@@ -151,13 +151,12 @@ derived report projections, not additional authored relationships.
 ## Documentation
 
 - [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
-  [Development loop](./docs/the-loop.md)
+  [Development loop](./docs/index.md#the-development-loop)
 - Start [from your repo](./docs/from-your-repo.md),
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
 - [Product Model](./docs/product-model.md) · [References](./docs/references.md)
-- [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
-  [CI/CD](./docs/ci.md)
+- [Skills](./docs/skills.md) · [CLI](./docs/cli.md)
 - [Format contract](./spec/format.md) ·
   [Report contract](./spec/report.md)
 

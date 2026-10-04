@@ -1,363 +1,207 @@
 ---
 title: Model overview
-description: The .businesslens/ folder models one coherent Product with required foundations and optional contexts, views, groupings, goals, and constraints.
+description: The Product Model in five minutes (what the .businesslens/ folder holds, what each resource type is for, and how to tell them apart).
 section: open-source
 group: Product Model
-order: 7
+order: 6
 terms:
   - term: Product Model
     anchor: the-shape-of-a-model
-    definition: "The .businesslens/ folder: one coherent product described in Markdown, tracked in Git, and free to cite the repository's code."
+    definition: "The .businesslens/ folder: one product described in Markdown files, tracked in Git, and free to point at the repository's code."
   - term: Intent
     anchor: authoring-conventions
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "The model's declared scope, what it covers, approved exclusions and known gaps."
+    definition: "What the model sets out to describe, what it covers, what it leaves out on purpose, and its known gaps."
   - term: Resource type
     anchor: what-belongs-in-a-model
-    definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
+    definition: "A kind of resource, such as Entity or Capability, decided by where its file sits in the Product Model."
 ---
 
 # The Product Model
 
-The Product Model is a Git-tracked directory of Markdown describing one
-coherent Product promise: who it serves, how Actors interact with it,
-in which usage contexts, what it can do, **what it keeps** and what
-changes it, which goals matter, and what must remain true — including who may
-act.
+**A Product Model is a folder of Markdown files, `.businesslens/`, that says what
+one product does today: for whom, where, with what, and under which rules.** It
+lives in your repository, changes in pull requests, and is checked by
+[`businesslens lint`](./cli-lint.md), which reports every rule a file breaks.
+
+It describes the product, not the code: no files, frameworks or endpoints, only
+what a person using the product could confirm.
 
 ## The shape of a model
 
-Two hierarchies and two axes. One hierarchy says **where** Actors meet the
-Product, the other says **what** the Product does, and the axes classify members
-of both.
-
-Seven of them are main collections: **Entities, Interfaces, Domains,
-Capabilities, Journeys, Business Rules, and Variations**. Product describes the
-whole. Experiences and Screens are reached through Interfaces; each Capability
-or Journey owns its Scenarios. All remain distinct resource types.
+Each file is one **resource**, and the folder it sits in decides its type.
 
 ```text
-Interface
-├── Experience (when the Interface is divided)
-│   └── Screen (optional)
-│       └── Screen (nested, to any depth)
-└── Screen (direct, or shared across its Experiences)
-
-Capability ── Capability Scenario
-Journey    ── Journey Scenario
-
-Domain ── classifies Capabilities and Entities by subject
-Entity ── what the Product keeps or reasons about, including whoever acts
-Business Rule ── what must stay true, and who may
-Variation ── supported alternatives of one type, and how one is chosen
+.businesslens/
+├── product.md              # the one Product
+├── coverage.md             # what the model covers, and its gaps
+├── interfaces/             # where people and systems meet the Product
+│   └── customer-web/
+│       ├── interface.md
+│       └── experiences/storefront/
+│           ├── experience.md
+│           └── screens/order-status.md
+├── entities/               # what the Product keeps, including who acts
+├── domains/                # optional subject areas
+├── capabilities/           # what the Product can do
+│   └── place-order/
+│       ├── capability.md
+│       └── scenarios/complete-checkout.md
+├── journeys/               # goals that need several Capabilities
+├── business-rules/         # what must stay true, and who may act
+├── variations/             # supported alternatives, and what picks one
+├── config.yaml  taxonomies.yaml  README.md  .gitignore
 ```
 
-Availability joins behavior to its Interface or Experience. Domains classify
-resources without containing them. An Entity that acts is an Actor wherever it
-acts — on a Step, an Interface, a Journey, or a grant. Interfaces may be complete
-without Experiences or Screens; optional types are created only when meaningful.
+Two trees and a few cross-links. **Where**: Interface → Experience → Screen.
+**What**: Capability → Scenario, and Journey → Scenario. A Capability's
+`availability` (the places, each an Interface or Experience, where it is
+offered) joins the two, Domains group by subject, and Business Rules and
+Variations attach across everything.
 
 ## What belongs in a model
 
-The resources describe Product meaning rather than mirroring source files,
-frameworks, commands, or endpoints. Start with the required foundation, then
-add optional resources only when they communicate a real Product distinction.
-
-A resource's file path identifies its resource type, such as Entity or
-Capability. The type determines what the file describes and which fields and
-sections it can contain.
-
-| Resource type | Model requirement | What it adds |
+| Resource type | How many | What it's for |
 | --- | --- | --- |
-| [Product](./product.md) | Exactly one | The coherent value promise and its boundary |
-| [Entity](./entities.md) | At least one that acts, because every Interface names an Actor | A thing the Product keeps or reasons about — what it holds about it, the states it moves through, and whether it acts on the Product |
-| [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
-| [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, defined by who is there, what they can do, and its access mode |
-| [Screen](./interfaces.md#screens) | Optional | A place where an Actor meets facts and abilities, nested where it subdivides its parent’s working context |
-| [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Capability](./capabilities.md) | At least one | A durable Product ability reused across views, behavior contracts, or goals |
-| [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
-| [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true, and the only place that says who may act |
-| [Variation](./variations.md) | Optional | A named set of supported alternatives of one type, and how one of them is chosen |
+| [Product](./product.md) | Exactly one | The product's promise and its boundary |
+| [Entity](./entities.md) | At least one that acts | A thing the Product keeps: what it knows about it and the states it moves through. An Entity that acts (a person or a system) is an **Actor** |
+| [Interface](./interfaces.md) | At least one | A surface the Product offers: a web app, a mobile app, a CLI, an API, a webhook |
+| [Experience](./interfaces.md#experiences) | When an Interface needs dividing | A context inside one Interface with its own audience and access |
+| [Screen](./interfaces.md#screens) | Optional | A place: what an Actor sees and can do there |
+| [Domain](./domains.md) | Optional | A subject area grouping Capabilities and Entities |
+| [Capability](./capabilities.md) | At least one | Something the Product can do, proven by its Scenarios |
+| [Journey](./journeys.md) | Optional | An Actor's goal that takes several Capabilities |
+| [Business Rule](./business-rules.md) | Optional | Something that must stay true, and the only place that says who may act |
+| [Variation](./variations.md) | Optional | Two or more supported ways, and what decides which applies |
 
-Do not add an Experience, Domain, Screen, or any other resource type to make the model
-look complete. A small model can be both valid and honest.
+Capabilities and Journeys each own **Scenarios**: concrete cases with a trigger,
+**Steps** and an outcome. A Step names the place it happens: a Screen,
+Experience or Interface.
 
-Screens are deliberately visual, and deliberately not design: they say what is
-reachable, presented and possible at a place, never how it looks — see
-[Is this a design spec?](./interfaces.md#is-this-a-design-spec). A CLI or API
-needs no Command or Endpoint types either — see
-[Interfaces](./interfaces.md#when-you-create-one).
+Create an optional type only when it says something real. A small model is still
+a valid one.
 
-`taxonomies.yaml` defines the categories available as Scenario kinds, such as
-`primary` and `edge`. `config.yaml` records folder schema
-and SDD roots. `coverage.md` describes model breadth.
-`.businesslens/README.md` orients an agent that encounters the model.
+## Which type is this?
 
-Use [`businesslens view`](./cli-view.md) to browse the current model as a local
-report while editing.
-
-## Is this replacing my PRD?
-
-No — they have different jobs, and only one section overlaps.
-
-**A PRD is an argument for a change. A Product Model is a description of the
-product.**
-
-| | PRD | Product Model |
-| --- | --- | --- |
-| Tense | future — *"we will build"* | present — *"the product does"* |
-| Lifespan | written once, read during a decision, then history | true continuously, or it is wrong |
-| Scope | one initiative | the whole product, including what did not change |
-| Form | narrative, repeats context to persuade | normalized — the Actor is defined once |
-| Checkable | no, it is an argument | yes — `businesslens-verify` compares it to code |
-
-The model deliberately holds **no time** (milestones, phasing, v1 against v2),
-**no priority**, **no metrics**, **no justification** (market, competition,
-cost), **no alternatives considered**, and **no risk**. All of that is real
-product work, and none of it is *what the product does*.
-
-This applies throughout `.businesslens/`: resource prose, supporting sections,
-limitations, README, and additional files must not retain rejected approaches,
-explanations of why another option was not selected, or deliberation history.
-Keep that discussion in the conversation. An unchosen option does not become a
-product exclusion; record exclusions only when they are established or approved
-product constraints. Current constraints, refusal and failure behavior, and
-material unresolved questions or missing evidence still belong in the model.
-Business Rule rationale may explain what makes a current constraint necessary
-without recounting discarded designs. Structural lint checks the format, not
-whether prose follows this authoring boundary.
-
-What overlaps is the PRD's **requirements** section — and
-[`businesslens-ideate`](./skill-businesslens-ideate.md) produces it directly, as
-an approved model delta. The healthy division: **the PRD says why, for whom, how
-we will know, and when. The model says what.**
-
-Attach the PRD as a `prd` [Reference](./references.md) with `role: intent`. There
-is deliberately no role that would let a reference become the specification.
-
-For the same question about an ERD, see [Entities](./entities.md#is-this-an-erd).
+| What you're looking at | Model it as |
+| --- | --- |
+| A thing someone would call "this one", such as an order or a refund | An [Entity](./entities.md) |
+| A person or system that starts something in the Product | An Entity that acts |
+| Something the Product calls out to, like a payment API | No Interface: the Capability that calls it says so in its prose |
+| A surface that receives requests, such as an app, a CLI or a webhook | An [Interface](./interfaces.md) |
+| Signed-out and signed-in parts of one Interface | Two [Experiences](./interfaces.md#experiences) |
+| An empty or unauthorized view | A condition in the Scenario that meets it, not a Screen |
+| One thing the Product does | A [Capability](./capabilities.md) |
+| One case of it (success, refusal, edge) | A Scenario of that Capability |
+| A goal that takes several Capabilities | A [Journey](./journeys.md) |
+| A rule shared by two or more behaviors, or any "who may" | A [Business Rule](./business-rules.md) |
+| A constraint true of one behavior only (not a "who may") | A condition Step in its Scenario |
+| A navigation section with two or more Capabilities | A [Domain](./domains.md#when-you-create-one) |
+| A flag, plan or setting that switches between supported ways (not one that only decides who may) | A [Variation](./variations.md) |
+| Looks, layout, copy | Nothing: design, attached as a [Reference](./references.md), a link to a file or page |
 
 ## Authoring conventions
 
-A resource without assets or children is the compact file `<id>.md`. When it
-gains its first asset or typed child collection, move it to `<id>/<type>.md`;
-the folder becomes that resource's namespace. The two forms never coexist and
-derive the same id — `lint` reports both shapes at once, or a folder missing its
-`<type>.md`, as errors. A folder you have expanded but not filled yet is only a
-warning, so you can create it and add the child next. Behavior-hierarchy ids are
-the bare file or folder name; qualified Interface, Experience, and Screen ids
-carry their path joined by `::`, because Experience and Screen names may repeat
-across Interfaces. Only `product.md` declares `id:`. Scenario IDs are globally
-unique.
-
-The first and only H1 supplies a resource's title. Lead prose normally supplies its
-description. Journeys have no lead prose and instead require `## Goal` and
-`## Success criterion`; both Scenario types also have no lead prose and begin
-with the required `## Trigger` section. A recognized H2 may appear only once,
-and Journey-only sections cannot appear on Scenarios or vice versa. Other H2
-sections are preserved as structured supporting sections through export and
-expansion. Lead and H2-section bodies cannot contain another H1 or H2 heading.
-
-Relations and structure belong in frontmatter; Product meaning belongs in
-prose. Product tags and every relation list contain unique values. Structured
-Steps and Edge cases use one complete list item per physical line. The
-frontmatter schema is a strict allowlist, so `lint` reports unknown keys rather
-than silently ignoring them.
-
-`## Intent` prose explains why a resource exists and which outcome it
-protects. It is optional where documented. A Journey uses required `## Goal`
-prose for its Actor intent. Neither becomes another resource type or relationship
-graph.
-
-## Availability
-
-**Context is the one model concept for saying where Product meaning applies.**
-Its current strict shape contains one place:
-
-```yaml
-place: customer-web::shopping
-```
-
-There is no separate Product `Scope` or `Place` resource. `place` is a property
-of Context, and its value names an Interface, Experience, or Screen by
-qualified id:
-`Interface`, `Interface::Experience`, or
-`Interface::Experience::Screen` (with Screens directly under an undivided
-Interface using `Interface::Screen`, and a
-[nested Screen](./interfaces.md#screens-nest) adding one segment per level).
-`place` is the only Context property, so misspelled or speculative keys are
-reported instead of ignored.
-
-Different fields use the same Context shape at the precision their meaning
-requires:
-
-- Capability `availability` lists Contexts whose places are undivided
-  Interfaces or Experiences. These are the durable availability boundaries.
-- Scenario `steps[].contexts` maps every route to a Context at
-  [where the Step happens](./interfaces.md#where-a-step-happens), the most
-  specific place it occurs.
-- Business Rule Context selectors may name an Interface, Experience, or
-  Screen. An ancestor place includes its descendants, so an Interface selector
-  can deliberately cover Contexts beneath that Interface.
-- A Screen declares no Context field. Its path already determines its place and
-  containing availability boundary.
-
-For example:
-
-```yaml
-availability:
-  - place: customer-web::shopping
-  - place: customer-mobile::shopping
-```
-
-When an Interface has no Experiences, use an Interface place directly:
-
-```yaml
-availability:
-  - place: release-cli
-```
-
-Do not invent a ceremonial Experience for an Interface with only one coherent
-context. An Interface holds Screens directly, or Experiences, or both when a
-Screen is genuinely shared across every one of its Experiences. The Experiences
-inside an Interface must collectively cover all of its Actors. Availability is
-intended Product meaning; it is not inferred from shared code, routes, packages,
-or protocols.
-
-## Behavioral core
-
-Capabilities state what the Product can durably do. Capability Scenarios make
-each ability observable and verifiable. Every Capability
-availability Context must be covered by at least one Capability Scenario;
-appearing in a Journey Scenario does not satisfy that local acceptance
-coverage. Every model has at least one Capability.
-
-Journeys are high-level goals the Product carries an Actor through, and a model
-has one wherever such a path exists. A Journey authors only the Actors, Goal,
-and Success criterion. Journey Scenarios own concrete Capability selection,
-order, branches, repetition, correlated context routes, and terminal results.
-Every Journey needs at least one achieved Journey Scenario using at least two
-distinct Capabilities, and every Journey Actor must appear in an achieved
-Scenario. A Product Model may have zero Journeys.
-
-A Journey's Capabilities, Domains and what it
-[leaves behind](./journeys.md#the-file) are derived from its achieved Journey
-Scenarios, without claiming that a partial model covers every path.
-
-## Which behavioral resource type?
-
-These are not alternative ways to describe the same contract:
-
-| Resource type | Identity | It must contain | It must never contain |
-| --- | --- | --- | --- |
-| Capability | The smallest durable behavior that remains independently meaningful | Product behavior and supported Contexts | Unrelated operations grouped only by a vague umbrella verb |
-| Capability Scenario | One local variation of exactly one Capability | Trigger, context, Steps, and local Outcome | A Journey or multiple Capabilities |
-| Journey | One coherent Actor Goal whose achieved variations require multiple Capabilities | Actors, Goal, and Success criterion | Capability list, Steps, branches, or one concrete variation |
-| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, one ordered annotated Steps list, correlated Context routes, goal result, and Outcome | Local acceptance coverage for its Capabilities |
-
-A local case is always a Capability Scenario. A coherent multi-Capability goal
-is always a Journey. A complete variation of pursuing that goal is always a
-Journey Scenario. A file cannot switch between these meanings by adding an
-optional relation.
-
-### Which structural resource type?
-
-The boundaries below are decided by rule, not by taste. Where `lint` can compute
-a rule it enforces it, so an author never has to argue it; the rest are read
-from the Product the same way every time, and review holds the model to them.
-
-| Question | Rule that decides it |
-| --- | --- |
-| Interface, or Experience of one? | The [Experience rules](./interfaces.md#when-to-create-an-experience) determine when an Interface must be divided and when existing Experiences are justified. Otherwise, use direct Interface availability. |
-| Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no resource type. |
-| Acts, or dependency? | Direction decides. An external system acts only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
-| Screen, or Entity state? | A condition of a **view** — empty, unauthorized, caught-up — is the `condition` Step, Edge case, or Rule outcome of the Scenario that meets it there. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
-| Screen, or Child Screen? | A region is a [Child Screen](./interfaces.md#screens-nest) when it subdivides its parent’s persistent working context. Opening a destination alone does not establish ownership. The same content drawn differently is design, and one Screen. |
-| Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing changes, presents, names as an actor, reads by Rule, or chooses by in a Variation is an error. |
-| Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, a Context independent of any behavior, or an operation on a thing — and it is the only place permission is said. Anything else true of exactly one Capability is a `condition` Step or its Outcome. |
-| Domain, or no grouping? | One per section of the Product's own navigation, settings or administration that holds two or more Capabilities — see [Domains](./domains.md#when-you-create-one). Every Domain states a `## Boundary` naming what it does **not** own. |
+- **Compact or expanded.** A resource is `<id>.md`. When it gains children or
+  files of its own, move it to `<id>/<type>.md`: `place-order.md` becomes
+  `place-order/capability.md`. Never both.
+- **The path is the id**, and owns every parent: a Scenario never names its
+  Capability. Interfaces, Experiences and Screens join their path with `::`,
+  as in `customer-web::storefront::order-status`.
+- **The H1 is the title**, and the paragraph under it the description (Journeys
+  and Scenarios use their own sections instead).
+- **Frontmatter holds relations; prose holds meaning.** Unknown frontmatter keys
+  are errors, not ignored.
+- **`## Intent`** says why a resource exists and which outcome it protects
+  ("Complete a purchase without confirming an unpaid order"), not what it does.
+- **The model holds the present.** No plans, priorities, metrics, or rejected
+  options; those stay in the conversation or your planning tool.
 
 ### Naming
 
-Behavioral ids are **verb-noun**; cross-cutting ids are the **bare noun**.
-`browse-catalog`, not `catalog-browsing`; `manage-orders`, not
-`order-management`; but `shopper`, `ordering`, `order`, `customer-web`.
+- **Things that happen are verb-noun**: Capabilities, Journeys and Scenarios
+  (`browse-catalog`, not `catalog-browsing`).
+- **Everything else is a bare noun**: `shopper`, `ordering`, `customer-web`. A
+  Business Rule reads as a statement, never a command:
+  `refunds-need-an-operator`.
+- **Use the Product's own words**, from its screens and menus, never API values
+  or code names: a role the screens call Editor is `editor`, even if the API
+  sends `member`.
+- **Name a Capability after its button** (Archive, Share, Publish). Where the
+  button only says Save, never use `update`: a Profile page in Settings saved
+  with one button is `change-profile-settings`; a form editing one thing's own
+  facts is `edit-<thing>`.
+- **The title may read naturally; the id stays verb-noun**: the Capability
+  titled *Catalog browsing* has the id `browse-catalog`.
+- **Reuse declared nouns**: `install-agent-skills`, not `install-skills`, when
+  `agent-skills` is already an Interface.
 
-Names come from the Product's own words: an id and its H1 use what the Product's
-screens, menus and messages call the thing, never an API value, a code
-identifier or the wording of a request — a role the screens call Editor is
-`editor` even where the API sends `member`. A Capability's verb is the one its
-control shows — Archive, Share, Publish; where the control says only Save or
-Done, it is `edit-<thing>` for a thing's own facts and
-`change-<section>-settings` for a page in the Product's settings, the section
-named as its menu shows it, never `update`.
+## Is this replacing my PRD?
 
-Two further rules bind ids to vocabulary the model already declares. A
-behavioral id's **noun half names something the model declares** —
-`install-agent-skills`, not `install-skills`, when `agent-skills` is an
-Interface. And a cross-cutting id — Entity, Domain, Interface, Experience,
-Screen, or Business Rule — **never opens with a verb**:
-`refunds-apply-only-to-existing-orders`, not `refund-existing-orders`.
+No. **A PRD argues for a change; a Product Model describes the product.** A PRD
+is future tense, one initiative, and history once the decision is made. The
+model is present tense, covers the whole product, and is either true now or
+wrong.
 
-`lint`'s vocabulary checks are heuristics, and warnings rather than errors: a
-behavioral id whose last segment is a nominalisation (`-ing`, `-ment`, `-tion`,
-and the like) with no verb segment warns, and a cross-cutting id whose first
-segment is a verb warns unless that segment also names a thing in the model —
-`order-line` is fine when an Entity `order` exists.
-
-Capability Scenarios must remain variations rather than hidden operations. If
-`manage-repositories` produces create, configure, archive, and delete cases
-with independent Product meaning, split those into Capabilities and use a
-Domain as the optional umbrella.
+The model holds no timeline, priority, metrics, market case or risk: real
+product work, but not what the product does. The PRD's requirements section is
+the overlap, and [`businesslens-ideate`](./skill-businesslens-ideate.md) writes
+it straight into the model. Attach the PRD itself as a `prd`
+[Reference](./references.md) with `role: intent`.
 
 ## Coverage
 
-`coverage.md` records the model's intended breadth and its known gaps:
+`coverage.md` says what the model sets out to describe and what it knows it is
+missing:
 
-```md
+```md [coverage.md]
 ---
 scope: Customer purchasing and order fulfillment.
-method: Static inspection of source and supporting documentation.
+method: Static inspection of source and documentation.
 covered:
   - description: Customer checkout and order tracking.
     paths: [src/checkout/, src/orders/]
 exclusions:
-  - description: Staff payroll is deliberately outside this model.
+  - description: Staff payroll is outside this model.
     paths: [server/payroll/]
 unmapped:
-  - description: Background fulfillment jobs are not modeled.
+  - description: Background fulfillment jobs are not modeled yet.
     paths: [server/jobs/]
-limitations:
-  - description: The retry policy for failed deliveries could not be established.
-    paths: [src/orders/]
+limitations: []
 ---
 
 # Coverage
 ```
 
-| Field | Meaning |
+| Field | Says |
 | --- | --- |
-| `scope` | The boundary the model intends to describe |
-| `method` | One short note on how the model was authored, or `""` |
-| `covered` | Behavior the model represents |
-| `exclusions` | Deliberate, approved omissions — never skipped work |
-| `unmapped` | Known behavior inside the scope that is not modeled yet |
+| `scope` | What the model intends to describe |
+| `method` | How it was written, in one line, or `""` |
+| `covered` | What the model represents |
+| `exclusions` | Approved omissions, never skipped work |
+| `unmapped` | Known behavior in scope that is not modeled yet |
 | `limitations` | What could not be established |
 
-Every field is required and the body is only `# Coverage`. Each entry has a
-unique single-line `description` and its `paths`: repository-relative paths,
-directories ending in `/`, or `[]` when there is no known location. Paths cannot
-be absolute or URLs, or contain `..`, `*`, `?`, or `#` and line suffixes.
+Every field is required. Each entry has a unique one-line `description` and its
+repository `paths`, or `[]`. Known gaps never relax any other check.
 
-There is no status. An empty `unmapped` list only means no gaps are recorded,
-and known gaps never relax the structural checks. Coverage makes no claim about
-implementation; `businesslens-verify` checks semantic alignment. Blueprints keep
-every description and drop the paths.
+## What lint checks
 
-Resource files, config, taxonomy, coverage, and orientation are committed.
-The model's `.gitignore` ignores `build/` and `cache/`, which are generated and
-never committed. See [References](./references.md) for optional external
-artifacts.
+All of these are errors:
+
+- `product.md` (or `product/product.md`), `coverage.md`, `config.yaml`,
+  `taxonomies.yaml`, `README.md`
+  and a `.gitignore` ignoring `build/` and `cache/` exist; there is at least one Interface and one Capability.
+- A resource has one shape: `<id>.md` and `<id>/<type>.md` never both, and an
+  expanded folder has its `<type>.md`.
+- No unknown frontmatter keys, and each recognized `##` section at most once.
+- `coverage.md` has every field, unique descriptions, and only `# Coverage` in
+  its body.
+
+Warnings:
+
+- An expanded folder with nothing in it yet.
+- A behavioral id that reads as a noun phrase, a cross-cutting id that opens
+  with a verb, or a noun the model already declares more fully.

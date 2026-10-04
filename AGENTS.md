@@ -63,13 +63,19 @@ were costed and then chosen against, so the same argument is not had twice.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per main resource family), Integrations (one page per
-  thing you integrate with), Skills (one page per skill), and CLI (one page per
-  command).
-- Each resource type is explained in exactly one place. Its page carries its
-  narrative, when to create one, its file shape, and the `lint` findings
-  that constrain it — do not reintroduce a separate glossary, a separate
-  format page, or a separate error catalog.
+  Model (one page per main resource family), Skills (one page per skill), and
+  CLI (one page per command). The Introduction draws the development loop
+  (embedded on the site as `::development-loop`, with a plain-text fallback);
+  building is the user's own flow, so there is no Integrations group.
+- **`docs/` gives the gist; the skills carry the complexity.** A reader should
+  understand a resource type from its page in a few minutes. Each resource type
+  is explained in exactly one place, in this order: a one-sentence definition;
+  everyday examples; when to create one, as a few rules of thumb; one minimal
+  example file with its fields; how it connects; and the `lint` findings that
+  constrain it, errors and warnings marked. The full rules, edge cases and
+  case law live in `spec/format.md` and each skill's format reference, never in
+  `docs/`. Do not reintroduce a separate glossary, format page, or error
+  catalog. Aim for 120–250 lines per Product Model page.
 - **`docs/` explains the model, never the report.** A derivation is a fact about
   the model and belongs here; the surface that draws it does not.
 - Define vocabulary in the owning doc's `terms:` frontmatter. Run
@@ -102,8 +108,10 @@ costed already.
   way" argues *against* a rule.
 - **Reviewability is second, and it is not legibility.** Divergence between two
   lint-clean models concentrates in what is *absent*, which no delta shows, so
-  `docs/` is written for the reviewer: a resource type whose granularity cannot
-  be challenged from `docs/` is a candidate for removal.
+  every boundary deciding how many resources exist gets one plain rule of thumb
+  with an example in `docs/`: a resource type whose granularity cannot be
+  challenged from `docs/` is a candidate for removal. The exhaustive statement
+  stays in the spec.
 - **A determinism claim is established empirically**: map one product twice from
   one rubric, independently, then diff. Both readings defensible is a defect in
   the format and needs no adjudication; one plainly wrong against the spec is a

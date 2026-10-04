@@ -13,7 +13,10 @@ import { chromium, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
 /* The Model overview's terms sit under Product; count them from the generated registry. */
-const overviewTerms = (readFileSync(new URL('../layers/nuxt/report-viewer/app/utils/vocabulary.generated.ts', import.meta.url), 'utf8').match(/page: "product-model"/g) ?? []).length
+const registry = readFileSync(new URL('../layers/nuxt/report-viewer/app/utils/vocabulary.generated.ts', import.meta.url), 'utf8')
+const overviewTerms = (registry.match(/page: "product-model"/g) ?? []).length
+/* Definitions are authored in docs/ and change with them; read them from the registry. */
+const definitionOf = slug => registry.match(new RegExp(`"${slug}": \\{[^}]*?definition: "([^"]+)"`))?.[1] ?? ''
 
 const url = process.argv[2]
 if (!url) {
@@ -99,7 +102,7 @@ try {
   await page.keyboard.press('Enter')
   await expect(entitiesGroup).toHaveAttribute('aria-expanded', 'true')
   // The page's own term is the section's meaning: stated in its head, never a row.
-  await expect(entitiesBody).toContainText('A distinct thing the Product keeps')
+  await expect(entitiesBody).toContainText(definitionOf('entity'))
   await expect(entitiesBody.getByRole('heading', { name: 'Entity', exact: true })).toHaveCount(0)
   const entityEntry = panel.locator('[data-term="actor"]')
   await expect(entityEntry).toBeVisible()
@@ -122,7 +125,7 @@ try {
   await expect(panel.locator('[data-vocabulary-page="product-model"]')).toHaveCount(0)
   await expect(panel.locator('[data-vocabulary-page="product"] article[data-term]')).toHaveCount(overviewTerms)
   await expect(panel.locator('[data-vocabulary-page="product"]'))
-    .toContainText('The one coherent value promise this model describes')
+    .toContainText(definitionOf('product'))
   const desktopWidth = (await panel.boundingBox()).width
   await page.setViewportSize({ width: 1920, height: 1080 })
   await expect.poll(async () => (await panel.boundingBox()).width).toBeGreaterThan(desktopWidth)
@@ -288,7 +291,7 @@ try {
     const entityKind = page.getByRole('button', { name: 'Kind — what Entity kind means', exact: true })
     await entityKind.click()
     const kindDefinition = page.getByRole('dialog', { name: 'Kind — what Entity kind means', exact: true })
-    await expect(kindDefinition).toContainText('Whether an Entity that acts on the Product is a person or a system.')
+    await expect(kindDefinition).toContainText(definitionOf('entity-kind'))
     await expect(kindDefinition.getByRole('link', { name: 'Read more in docs', exact: true }))
       .toHaveAttribute('href', 'https://businesslens.io/docs/entities#actors-an-entity-that-acts')
     await page.keyboard.press('Escape')

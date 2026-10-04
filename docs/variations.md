@@ -1,133 +1,105 @@
 ---
 title: Variations
-description: A named set of supported alternatives of one resource type — an experiment, a configuration, or live versions — with how one is chosen written once on the set.
+description: Feature flags, settings, plan tiers, A/B tests and API versions, when your product works in more than one supported way and something decides which way applies.
 section: open-source
 group: Product Model
-order: 15
+order: 14
 terms:
   - term: Variation
-    definition: "A named set of two or more currently supported alternatives of one resource type, with how one of them is chosen written once on the set."
+    definition: "A product that works in more than one supported way, with what decides which way applies: a feature flag, a setting, a plan, an A/B test or a version."
   - term: Alternative
     anchor: the-file
-    definition: "One resource in a Variation, still a complete resource of its own type, with the condition that selects it."
+    definition: "One of the supported ways in a Variation, still a complete resource of its own type, with the condition that selects it."
   - term: Experiment
     anchor: subtypes
-    definition: "A Variation subtype for alternatives offered to evaluate different outcomes, with who is assigned and how."
+    definition: "A Variation whose alternatives are offered to compare outcomes, such as an A/B test, with who is assigned and how."
   - term: Configuration
     anchor: subtypes
-    definition: "A Variation subtype for alternatives selected through a Product setting or operating context."
+    definition: "A Variation chosen by a setting, feature flag, plan or deployment."
   - term: Version
     anchor: subtypes
-    definition: "A Variation subtype for distinct contracts or forms that remain supported at the same time, each with a label."
+    definition: "A Variation whose alternatives are contracts or forms that stay supported together, such as API v1 and v2, each with a label."
 ---
 
 # Variations
 
-**A Variation is one product choice with several supported answers.** Stores
-choose Standard or Strict refund review; signed-in shoppers either confirm their
-delivery address at checkout or skip straight to payment; a payment gateway
-posts either the v1 or the v2 settlement contract. Each answer is an
-**alternative**: an ordinary, complete resource of one type — a Business Rule, a
-Scenario, an Interface. The Variation names the
-choice, says why the alternatives coexist, and says once how one of them is
-chosen.
+**A Variation is when your product works in more than one supported way, and
+something decides which way applies.** Feature flags, per-customer settings,
+plan tiers, A/B tests, regional rules and API versions all end up here.
 
-A Variation is read as the type it varies. Refund review is a set of Business
-Rules; Checkout review is a set of Capability Scenarios. Nothing about an alternative
-moves: its folder, its Domain, its owner and its Scenarios stay where they are.
-Membership is a relation, never containment.
+Each supported way is an **alternative**: an ordinary, complete resource (a
+Scenario, a Screen, a Business Rule, an Interface). The Variation names the
+choice, says why the ways coexist, and says once what picks one.
 
-Interfaces, Experiences, Screens, Entities, Capabilities, Journeys, both
-Scenario types and Business Rules can vary. Product, Domain and Variation itself
-cannot.
+## In practice
+
+| In your product | The Variation | Kind |
+| --- | --- | --- |
+| A store setting picks Standard or Strict refund review | Two Business Rules | Configuration |
+| Half the shoppers skip the address review at checkout | Two Scenarios of Checkout | Experiment |
+| Partners call webhook v1 or v2, both still supported | Two Interfaces | Version |
+| EU stores issue a VAT invoice, US stores a sales tax receipt | Two Entities | Configuration |
+| A plan tier shows a product page with or without remaining stock | Two Screens | Configuration |
+
+Nothing about an alternative moves: its folder, owner and Scenarios stay where
+they are. Interfaces, Experiences, Screens, Entities, Capabilities, Journeys,
+Scenarios and Business Rules can vary.
 
 ## When you create one
 
-**Two or more resources of one type are all supported now, and something
-decides which one applies.** Create a Variation when a reader could otherwise
-see the alternatives as unrelated duplicates, or as contradictions — two Rules
-that both seem to govern every refund.
+Create one when **two or more ways are supported right now, and a setting, flag,
+plan, assignment or version decides which applies**. Without it, a reviewer would
+see two Rules that both seem to govern every refund, or two near-identical
+checkouts, and not know why.
 
 ### Vary the smallest resource that contains the difference
 
 | What differs | What varies |
 | --- | --- |
-| What an Actor does — a checkout that skips address review | Two Scenarios of that one Capability or Journey |
-| The path a thing takes — a store that approves orders before fulfilling them | Scenarios; the Entity keeps every State |
-| The ability's contract — who may do it, or its verb — or where it is offered | Capabilities |
-| A goal pursued across Capabilities in two supported ways | Journeys |
-| A place — which facts it shows, which abilities it offers | Screens or Experiences |
-| The facts or States the Product keeps — an EU store's VAT invoice against a US store's sales tax receipt | Entities |
-| Whole policies — Standard or Strict refund review, a password rule of a minimum length or of a length plus required kinds of character | Business Rules |
-| A supported contract — the v1 and v2 webhook | Interfaces |
+| What a person does, such as a checkout with or without address review | Two Scenarios of one Capability |
+| What a place shows or offers | Screens or Experiences |
+| What the Product keeps, such as a VAT invoice or a sales tax receipt | Entities |
+| A whole policy, such as Standard or Strict refund review | Business Rules |
 
-The alternatives of a Scenario Variation share their Capability or Journey.
-Scenarios of different owners are a bigger difference: their owners vary. A
-Step is never an alternative; the Scenario is the smallest resource that holds
-one.
-
-An Entity is named by Steps, Screens and Rules, and each names one concrete
-alternative. Varying an Entity therefore carries into what touches it: the
-Scenario that creates a VAT invoice and the one that creates a sales tax receipt
-are themselves alternatives, selected the same way. That is why an Entity
-varies only when the thing itself differs.
+A single Step never varies on its own; the Scenario holding it does.
 
 ### What selects decides it
 
-A Variation chooses by a fact that exists to choose — a setting, an experiment
-assignment, a version discriminator — or by the deployment, fixed before the
-behavior starts. Everything else is met inside one behavior:
+Something chosen *before* the behavior starts (a setting, a flag, a plan, an
+assignment, a version) makes a Variation when it switches between complete
+supported forms: what a person does, what a place shows or offers, what the
+Product keeps, or a whole policy. Anything the behavior meets *along the way*
+stays inside one Scenario:
 
-- **A fact describing the thing acted on is state.** A page's own editor format
-  is read by a `condition` Step or a decision point, even though someone set it.
-- **A choice that changes what an Actor does selects Scenario alternatives** — a
-  Step skipped, added or at another place — even when several settings combine
-  into that one choice, such as a person's preference falling back to the
-  workspace's. Sign-in that starts at the only provider drops the Actor's choice
-  of provider. A choice the Actor makes on a page outside the Product, such as a
-  connector at an identity provider, is still an Actor Step.
-- **A choice that changes only the Product's own Steps, or is made during a run,
-  is a decision point** in one Scenario — group sync replacing or adding Roles —
-  unless a Step must then name a different alternative of another Variation,
-  such as issuing a VAT invoice or a sales tax receipt, and that Scenario varies
-  with it.
-- **A choice that changes only the outcome makes separate Scenarios**, each with
-  a `condition` Step reading it: an unknown social account registered or
-  refused. A branch ending in a refusal counts.
-- **When two or more independent settings or assignments would each vary or
-  split one Scenario** — a captcha and a provider password on one registration —
-  each is a decision point instead, so no Scenario needs a set per combination.
-  State the Scenario meets, such as whether an account exists, is not a setting.
+- **The state of the thing** (an item out of stock, a document in a draft
+  format) is a condition in the Scenario.
+- **A choice that only changes the Product's own Steps, or only the outcome,** is
+  a decision point (a branch inside one Scenario) or a separate Scenario, not a
+  Variation.
+- **Several independent settings on one flow** (a captcha and a password policy
+  on one sign-up) are decision points, so no flow needs a Variation per
+  combination.
 
-A resource that exists only under some alternatives, or only while a setting,
-plan or licence enables it, is an ordinary resource, mapped even where the
-running edition hides it. Its lead names what it exists under — registration
-exists only while the sign-in method is password — and
-[`businesslens-verify`](./skill-businesslens-verify.md) checks it. No field or
-Rule carries the dependency.
+### Variation or not?
 
-Do not create one for:
+A flag or setting (an admin's configuration counts too) makes a Variation only
+when it switches between two complete forms. Turning one thing on or off is not
+two forms.
 
 | What you see | Model it as |
 | --- | --- |
-| One behavior branching on what it meets — out of stock, payment declined | A `condition` Step or decision point in one Scenario |
-| A value one policy reads — a threshold, a minimum length | Content of that one resource — Strict and Standard refund review are two Rules; a different threshold is not |
-| A thing moving through phases | Entity States |
-| The same Experience on another Interface | A counterpart: same id under each Interface |
-| A visual treatment with the same facts and abilities | References on the one Screen |
-| A setting that changes only who may perform one operation | A settings fact read by a grant's `when` — see [Business Rules](./business-rules.md#grant-keys) |
-| The same resource offered in several languages | `languages` on the Product and Interface — each language is not an alternative |
-| A retired version no client uses | Nothing — the model holds only what is supported |
-
-All alternatives are currently supported. None is a default, a parent or a
-historical version. When only one alternative is left, remove the Variation and
-keep any still-relevant meaning in ordinary content.
+| A flag or setting that switches between two complete forms of a place or flow, such as a product page with or without stock | A Variation |
+| A flag or setting that only turns a feature on or off | An ordinary resource whose description (the paragraph under its title) says it exists only while the flag is on |
+| A flag that only decides *who may* do something, such as refunds only on paid plans | A permission condition on a [Business Rule](./business-rules.md#grant-keys) |
+| A threshold or other value one policy reads | Content of that one resource |
+| A difference only in looks, or a setting that only changes looks, such as dark mode | Design, not modeled; attach a Reference if useful |
+| The same flow in several languages | `languages`, not alternatives |
+| A retired version nobody uses any more | Nothing: the model holds only what is supported |
 
 ## The file
 
-A Variation lives at `variations/<id>.md`; one with assets expands to
-`variations/<id>/variation.md`. The H1 names the choice and the lead says why
-the alternatives coexist. `## Intent` is optional.
+`variations/<id>.md`. The H1 names the choice; the lead says why the ways
+coexist.
 
 ```md [variations/refund-review.md]
 ---
@@ -149,63 +121,37 @@ alternatives:
 Stores choose how strictly refunds are reviewed; both policies are supported.
 ```
 
-**Membership lives only on the set.** `alternatives` lists the resources by the
-ids their own type uses — a Rule's id, a Screen's full
-`interface::experience::screen`. No alternative's file names its Variation, and
-no alternative repeats how it is chosen. The list is a set: its order means
-nothing.
+| Field | Says |
+| --- | --- |
+| `of` | The one type every alternative has: `interface`, `experience`, `screen`, `entity`, `capability`, `capability-scenario`, `journey`, `journey-scenario` or `business-rule` |
+| `alternatives` | The resources, by their own ids, each with `selectedWhen`: when this one applies, including the default |
+| `takesEffect` | When the choice is made or re-evaluated |
+| `stability` | How long the choice holds, and what happens to existing records or sessions when it changes |
 
-**Each selection field is written at exactly one level.** The set carries what
-chooses, `takesEffect` and `stability`; each alternative carries its own
-`selectedWhen` and, on a Version, its `label`. Nothing is inherited or
-overridden.
-
-| Field | Level | What it says |
-| --- | --- | --- |
-| `selectedWhen` | alternative | Eligibility and the choice selecting this one, including missing or unsupported choices and defaults |
-| `takesEffect` | set | When the choice is made or re-evaluated, including changes during use |
-| `stability` | set | How long the choice holds, and what happens to existing sessions, clients or records when it changes |
+Membership lives only here: no alternative's own file mentions the Variation.
 
 ## Subtypes
 
-The subtype says why the alternatives coexist, and decides which other fields
-the set carries. A fact reference is `{ entity: <id>, fact: <name> }` and names
-one of that [Entity](./entities.md)'s Information kept.
+| `kind` | Use it for | Extra fields |
+| --- | --- | --- |
+| `configuration` | Settings, feature flags, plans, regions, deployments | Optional `settings`: the facts that choose |
+| `experiment` | A/B tests and other trials | Required `assignmentUnit` and `assignmentMethod`; optional `assignmentFact`, `allocation` |
+| `version` | Contracts or forms live together, such as API v1 and v2 | Optional `discriminator`; each alternative needs a `label` |
 
-| `kind` | Why they coexist | Set fields | Alternative fields |
-| --- | --- | --- | --- |
-| `experiment` | To compare outcomes | Required `assignmentUnit` — `{ entity: <id> }`, or `{ description: <text> }` for a unit the model does not keep, such as a browser session — and `assignmentMethod`. Optional `assignmentFact` and `allocation`. | — |
-| `configuration` | A setting or operating context selects one | Optional `settings`: the facts that choose between the alternatives. A fact that only tunes one alternative's behavior is not a setting here. | — |
-| `version` | Contracts or forms stay live together | Optional `discriminator`: the fact identifying the selected version | Required `label` |
-
-A version selected by a setting is still a Version; an experiment enabled by a
-setting is still an Experiment. Where selection uses context the model does not
-keep — a header, a path — say so in `selectedWhen` rather than inventing an
-Entity to hold it. Never invent what the evidence does not establish: leave out
-an optional field such as `allocation`, say so in a required one such as
-`takesEffect`, and record the gap in [Coverage](./product-model.md#coverage).
-
-An Entity used only to choose — an assignment unit, a setting's holder — is
-used; it needs nothing else to belong in the model. A Variation grants no
-permission: who may use an alternative is still a [Business
-Rule](./business-rules.md). A Business Rule that is an alternative holds only
-while it is selected, never unconditionally.
+Don't invent what you don't know: leave out an optional field, say "unknown" in
+a required one, and note the gap in [Coverage](./product-model.md#coverage).
 
 ## What lint checks
 
-- `kind`, `of`, `takesEffect`, `stability` and `alternatives` are required;
-  `kind` is `experiment`, `configuration` or `version`; `of` names one of the
-  nine types that can vary: `interface`, `experience`, `screen`, `entity`,
-  `capability`, `capability-scenario`, `journey`, `journey-scenario` or
-  `business-rule`.
-- At least two alternatives, each listed once, each resolving to a resource of
-  the type `of` names. The alternatives of a Scenario Variation share their
-  Capability or Journey.
-- A resource is an alternative in at most one Variation.
-- A field outside the subtype is an error: `settings` on an Experiment, a
-  `label` outside a Version, an Experiment without `assignmentUnit` or
-  `assignmentMethod`.
-- Version labels are present and unique within the set, ignoring case.
-- Every Entity and fact reference resolves, and no fact is listed twice.
-- An Interface may hold Experiences its access and audiences alone would not
-  justify when those Experiences are alternatives in a Variation.
+All of these are errors:
+
+- `kind`, `of`, `takesEffect`, `stability` and at least two `alternatives` are
+  required, each alternative with `id` and `selectedWhen`.
+- Every alternative exists, is of the type `of` names, and appears once; a
+  resource belongs to at most one Variation.
+- The alternatives of a Scenario Variation share their Capability or Journey.
+- An Experiment has `assignmentUnit` (who is assigned, such as
+  `{ entity: shopper }`) and `assignmentMethod`, how, in words.
+- A field outside the subtype (`settings` on an Experiment, a `label` outside a
+  Version) and a Version without unique labels.
+- Every Entity and fact reference resolves.

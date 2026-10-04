@@ -1,12 +1,12 @@
 ---
 title: Journeys
-description: Optional Actor goals whose successful completion requires several Capabilities working together, with Journey Scenarios describing each path.
+description: Goals where your product carries a person from one Capability into the next, and the Journey Scenarios that walk each path.
 section: open-source
 group: Product Model
-order: 13
+order: 12
 terms:
   - term: Journey
-    definition: "An Actor goal whose successful completion requires several Capabilities working together."
+    definition: "A goal where the Product carries one person from one Capability into the next until the goal is met, such as browse and buy."
   - term: Journey Scenario
     anchor: journey-scenarios
     definition: "One path through a Journey, ending with its goal achieved or not achieved."
@@ -15,11 +15,11 @@ terms:
     definition: "How you know the Journey's goal was met."
   - term: Leaves behind
     anchor: the-file
-    definition: "The Entity instances created, changed, or removed by a Journey's achieved paths, with final States when specified."
+    definition: "What a Journey's successful paths create, change or remove, with final States where there are any."
   - term: Trigger
     on: journey-scenario
     anchor: the-journey-scenario-file
-    definition: "The observable condition that starts the Journey Scenario."
+    definition: "What starts the Journey Scenario: the person setting out after the goal."
   - term: Outcome
     on: journey-scenario
     anchor: the-journey-scenario-file
@@ -30,301 +30,196 @@ terms:
   - term: Route
     on: journey-scenario
     anchor: steps-and-routes
-    definition: "One named way the same Steps play out in different places. A route varies Context only; different Steps mean a different Journey Scenario."
+    definition: "One named way the same Steps play out in different places, such as web and mobile. Different Steps mean a different Journey Scenario."
   - term: Decision point
     on: journey-scenario
     anchor: journey-scenario-decision-points
-    definition: "A question with alternative branches that preserve the Journey Scenario's Capability sequence and outcome."
+    definition: "A question inside a Journey Scenario whose branches keep the same Capabilities and outcome."
   - term: Edge case
     on: journey-scenario
     anchor: the-journey-scenario-file
-    definition: "A condition and its consequence recorded within a Scenario, without changing its path."
+    definition: "A condition and its consequence noted within a Scenario, without changing its path."
 ---
 
 # Journeys
 
-**A Journey is an Actor goal whose successful completion requires several
-[Capabilities](./capabilities.md) working together:** contribute a code change,
-deliver an application, recover a deployment, or browse and buy.
+**A Journey is a goal where your product carries a person from one
+[Capability](./capabilities.md) into the next.** Creating a document and landing
+in its editor, or signing up and following the emailed link to confirm, are
+Journeys: the Product hands the person on.
 
-A Journey owns only its high-level Goal, Success criterion, and Actors. Concrete
-Capability selection, order, branches, repetition, and failure belong to its
-[Journey Scenario](#journey-scenarios) variations.
+A Journey states only the goal and how you know it was met. Each concrete path
+is a [Journey Scenario](#journey-scenarios). Journeys are optional: many
+products have none.
+
+## In practice
+
+| In your product | Journey? |
+| --- | --- |
+| A product page's Buy button takes the shopper straight into checkout | Yes: Browse and buy |
+| Creating a document opens it in the editor | Yes |
+| Browsing source, then later changing notification settings | No: the person chose what to do next |
+| Inviting a teammate, who then joins | No: a different person follows the link |
+| Creating a repository | No: one Capability with its Scenarios |
 
 ## When you create one
 
-Create a Journey wherever an achieved Journey Scenario carries one Actor through
-two or more Capabilities toward one outcome, with the Product itself carrying
-the Actor across — a redirect such as into the editor of what was just created,
-a required next Step, an emailed link to follow. An Actor merely choosing what
-to do next carries nobody. Neither does returning the Actor to where they were
-already going after signing in, a continuation the Product runs without the
-Actor, such as merging automatically once checks pass, or a hand-off to a
-different Actor, such as an invitation another person follows. That is the whole
-test, and it is structural: it reads the same way for a Journey mapped from code
-and one decided before any code exists. An orchestration, shared state, or a
-cross-Interface hand-off is how a Product usually earns one, but none is
-required, and none is enough without the hand-off. A Product Model contains no
-Journey only when no such path exists.
-
-A [wizard](./interfaces.md#screens-nest) is not evidence either way. Whether the
-repository implements a Journey is
-[`businesslens-verify`](./skill-businesslens-verify.md)'s finding, never the
-Journey's own.
-
-“Publish a branch and open it for review” can be a Journey when the Product
-supports that handoff. “Browse source and later change notification settings”
-is only a possible sequence. “Create a repository” is one Capability with
-Capability Scenarios, not a Journey wrapper.
-
-> **Journey vs Capability.** A Journey is a coherent Actor goal that requires
-> several abilities. A Capability is one durable ability that remains useful
-> outside that Journey.
->
-> **Journey vs Journey Scenario.** A Journey states the Goal and Success
-> criterion. A Journey Scenario states one concrete routed step sequence and result.
-> One achieved Scenario is enough for Journey coverage; the number of variations
-> does not define the Journey.
+- **The Product does the handing on**: a redirect, a required next step, an
+  emailed link to follow. A person merely choosing what to do next is not a
+  Journey.
+- **The same person throughout.** A hand-off to someone else, or a continuation
+  the Product runs alone, such as merging once checks pass, is not one.
+- **At least two Capabilities.** A goal one Capability meets is that
+  Capability's Scenario, never a Journey wrapper.
+- **Being sent back to where you were going after signing in** is not a
+  hand-off.
 
 ## The file
 
-A Journey without Scenarios or assets may stay compact at
-`journeys/<journey-id>.md`. Once it owns a Scenario or asset, it expands to
-`journeys/<journey-id>/journey.md`. The whole collection is optional.
+`journeys/<id>.md`, or `journeys/<id>/journey.md` once it owns Scenarios. The
+H1 names the goal; there is no lead paragraph.
 
-```md [journeys/contribute-a-code-change.md]
+```md [journeys/browse-and-buy/journey.md]
 ---
-actors: [repository-contributor]
-references:
-  - kind: doc
-    role: context
-    target: docs/usage/pull-requests.md
+actors: [shopper]
 ---
 
-# Contribute a code change
+# Browse and buy
 
 ## Goal
 
-A repository contributor wants to propose a code change for review.
+A shopper wants to purchase a suitable product.
 
 ## Success criterion
 
-A reviewable change proposal exists for the repository.
+A confirmed order exists for the selected product.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| `actors` | yes | Name at least one unique existing Actor who pursues the Goal. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 | yes | Name the coherent Actor goal rather than one route or variation. |
-| Lead paragraph | no | Start with a named H2; move goal prose into `## Goal`. |
-| `## Goal` | yes | State the stable Actor intent. |
-| `## Success criterion` | yes | State how achievement is recognized without prescribing a route. |
+| Field or section | Says |
+| --- | --- |
+| `actors` (required) | Who pursues the goal |
+| `## Goal` (required) | What they want, in a sentence |
+| `## Success criterion` (required) | How you know they got it, without naming a route |
+| `references` | Code or docs behind it, as [References](./references.md) |
 
-A Journey does not declare `availability`, `entryPoints`, Trigger, Steps,
-decisions, a concrete Outcome, authored Capability list, or authored Scenario
-list. `## Goal` and `## Success criterion` may each appear only once.
-Capabilities, Domains, Interfaces, and Experiences are derived from concrete
-Journey Scenario Capability-bearing steps. Product routes remain on Interfaces,
-Experiences, and Screens.
-
-A Journey's entry is derived, never authored: the entry point of the Interface
-or Experience where the first contextualized Actor Step of each achieved route
-occurs.
-
-A Journey's Capabilities and Domains are those its achieved paths use; a
-Capability met only in not-achieved paths is not one of them. **Leaves behind**
-is the set of Entity instances created, changed, or removed by achieved paths,
-with final States when specified, derived from those paths' Steps. Removals and
-changes without a named State are included; reads do not replace the last
-change. These summaries describe the modeled paths, without claiming that a
-partial model covers every path.
-
-At least one Journey Scenario must name every Journey with `result: achieved`.
-That achieved Scenario must use at least two distinct Capabilities. This gives
-the Journey acceptance coverage without pushing steps into the Journey itself.
-Every Journey Actor must participate in at least one achieved Scenario.
-
-## Relationship to code
-
-A Journey does not need one matching class, controller, route, or test. Like
-other Product resources, a Journey is a Product-level projection over code. During
-mapping, however, its Goal, Capability handoffs, and achieved path must remain
-traceable through supported behavior rather than invented from plausible
-actions.
-
-When no achieved deliberate multi-Capability composition can be established,
-omit the Journey and keep the independently verifiable Capability Scenarios.
+Everything else is derived from its achieved Scenarios: the Capabilities it
+uses, the places it passes through, and what it **leaves behind**: the things
+those paths create, change or remove, with their final States.
 
 ## Journey Scenarios
 
-**A Journey Scenario is one concrete end-to-end variation of exactly one
-Journey.** It begins with the Journey Actor's Goal, follows one ordered list of
-steps through its Capabilities, and ends with the goal achieved or not achieved.
+**A Journey Scenario is one path through a Journey,** from the person setting out
+to the goal achieved or not. A Scenario belongs to exactly one parent; one owned
+by a Capability is a
+[Capability Scenario](./capabilities.md#capability-scenarios).
 
-A Scenario always belongs to exactly one parent, and the parent decides which
-kind it is. A Scenario owned by a Journey is a Journey Scenario; a Scenario
-owned by a Capability is a
-[Capability Scenario](./capabilities.md#capability-scenarios). There is no
-unowned Scenario and no way for one Scenario to serve both parents.
-
-A Journey Scenario owns its exact sentences, Capability selection, linear
-order, correlated routes, and terminal result in one `steps` list. It verifies
-composition and handoffs without replacing the local
-[Capability Scenarios](./capabilities.md#capability-scenarios) required by each
-Capability.
-
-### When you create a Journey Scenario
-
-Create at least one achieved Journey Scenario for every Journey. Add another
-only when a condition, route, or handoff produces a materially different
-Journey-level result.
-
-A permission or validation failure belongs here only when the Scenario begins
-with the Journey Goal and explains its end-to-end consequence. Keep the local
-behavior as a Capability Scenario as well.
+Every Journey needs at least one achieved Scenario. Add another when a condition
+or hand-off changes how the Journey ends. A local failure, such as a refused
+payment, stays a Capability Scenario too.
 
 ### The Journey Scenario file
 
-Journey Scenarios normally live at
-`journeys/<journey-id>/scenarios/<id>.md`. A Scenario with assets expands to
-`<id>/journey-scenario.md`.
+`journeys/<journey-id>/scenarios/<id>.md`. The ids are unique across the whole
+model.
 
-```md [journeys/contribute-a-code-change/scenarios/publish-a-branch-and-open-a-pull-request.md]
+```md [journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md]
 ---
 kind: primary
 result: achieved
 routes:
-  git-to-web: Git to web review
+  web: Web
 steps:
-  - text: The contributor pushes the branch through Git transport
+  - text: The shopper finds an available product and chooses Buy
     kind: actor
-    actor: repository-contributor
-    capability: publish-repository-changes
+    actor: shopper
+    capability: browse-catalog
     entities:
-      - { entity: branch, effect: creates, facts: [Name] }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
-      git-to-web:
-        place: git-transport
-  - text: The contributor opens the branch comparison in the web workspace
+      web:
+        place: customer-web::storefront::product-record
+  - text: The shopper submits checkout from the product page
     kind: actor
-    actor: repository-contributor
+    actor: shopper
+    capability: place-order
     entities:
-      - { entity: branch, effect: reads, facts: [Name] }
+      - { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }
+      - { entity: cart, effect: removes }
     contexts:
-      git-to-web:
-        place: web-ui::repository-collaboration::branch-comparison
-  - text: The contributor submits the pull request
-    kind: actor
-    actor: repository-contributor
-    capability: propose-code-change
+      web:
+        place: customer-web::storefront::product-record
+  - text: The Product confirms the order once its payment settles
+    kind: product
+    actor: payment-gateway
+    capability: settle-payment
     entities:
-      - { entity: pull-request, effect: creates, to: Open, facts: [Title, Description] }
+      - { entity: order, effect: changes, from: Pending, to: Confirmed, facts: [] }
     contexts:
-      git-to-web:
-        place: web-ui::repository-collaboration::pull-request
-references:
-  - kind: code
-    role: implementation
-    target: services/pull/pull.go#NewPullRequest
+      web:
+        place: payment-webhook
 ---
 
-# Publish a branch and open a pull request
+# Browse and complete checkout
 
 ## Trigger
 
-A contributor has a local change ready to propose for review.
+The shopper wants to find and purchase an available product.
 
 ## Outcome
 
-The Journey goal is achieved: a reviewable change proposal exists.
+The goal is achieved: a confirmed order exists for the selected product.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
-| `kind` | yes | Choose a Scenario category, such as `primary` or `edge`, defined in `taxonomies.yaml`. |
-| `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
-| `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
-| `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
-| `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`; optional on a `product` or `condition` Step, where it says who the Step is attributable to. |
-| `steps[].entities` | yes | List what this Step does to the Product's things, exactly as on a [Capability Scenario Step](./capabilities.md#what-a-step-does-to-the-products-things), or `[]`. A Step whose effect is anything but a read must name the `capability` it exercises, because a Journey Step that changes a thing on its own would be behavior no Capability owns. |
-| `steps[].entities[].facts` | on reads, changes and creates | As on a Capability Scenario Step: the exhaustive named facts a `reads`, `changes` or `creates` entry affects, including `[]` for none; forbidden on `removes`. |
-| `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence. Omit it only when the Step is shared by all routes and has no Context. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
-| `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
-| `## Steps` | no | Journey Steps live only in frontmatter so their text, kind, Actor, Capability, and Context places cannot disagree. |
-| `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
-| `## Edge cases` | no | List conditions and their consequences without changing the Scenario's path. When present, use a non-empty bullet list with each item on one physical line. |
-| `## Outcome` | yes | State whether and why the Journey Goal was achieved or not achieved. |
-
-Business Rules own their Scenario relations; Journey Scenarios do not duplicate
-a `businessRules` list. Screen participation is derived from Step Contexts;
-Screens do not list Scenario IDs.
-
-A Journey Scenario cannot use `## Steps` or Journey-only `## Goal` and
-`## Success criterion` sections. Each recognized Scenario H2 may appear only
-once.
+| Field or section | Says |
+| --- | --- |
+| `kind` (required) | The Scenario kind, such as `primary` or `edge` |
+| `result` (required) | `achieved` or `not-achieved` |
+| `routes`, `steps` (required) | As on a [Capability Scenario](./capabilities.md#what-a-step-does-to-the-products-things), plus each Step's optional `capability` |
+| `## Trigger` (required) | The person setting out after the goal |
+| `## Outcome` (required) | Where the path ends, and why the goal was or wasn't met |
+| `## Decision points`, `## Edge cases` | As on a Capability Scenario |
 
 ### Steps and routes
 
-The Steps are the path. Each entry has required single-line `text` and one
-semantic kind. An Actor Step names its responsible Actor. A Step that exercises
-a Capability says so independently. Route-specific Context places stay beside
-the Step, as in the [example above](#the-journey-scenario-file).
+Steps are written exactly as on a Capability Scenario. A Step that exercises a
+Capability names it in `capability` (the Capability, never one of its
+Scenarios) and happens where that Capability is offered. A Step that creates,
+changes or removes something must name the Capability that owns the change; a
+Step that only reads, or marks a transition, needs none.
 
-An unqualified Step names no Capability. It may still carry Contexts when an
-observable condition or Product action occurs somewhere, or omit `contexts` when
-it is shared by every route and has no Context. It records a
-condition, Product-side action, or seam that matters to this end-to-end
-variation without manufacturing another Capability or Capability Scenario.
-The branch-comparison Step in that example is the Context transition between Git
-transport and the web workspace; its position makes that transition first-class.
-
-Capability-bearing steps reference Capabilities, never Capability Scenarios. A
-Capability is durable while its Scenarios split and merge as local behavior is
-refined. Composition therefore names the stable ability without turning a
-local acceptance case into a reusable operation resource.
-
-Every contextualized Step declares the same route-id set. Matching keys
-correlate the complete paths. The Context `place` is
-[where the Step happens](./interfaces.md#where-a-step-happens), and a Step that
-names a Capability must happen within that Capability's availability.
-
-Route ids are lowercase kebab-case keys declared once under `routes`, each with
-a human name. Every route has a Context at least once, and no two routes may
-repeat the same Context-place sequence. A `place` change between consecutive
-contextualized Steps is a Context transition, including Screen-to-Screen
-movement within one Experience.
-
-Steps may repeat or stop. Every achieved Journey Scenario uses at least two
-distinct Capabilities. A not-achieved Scenario may stop after one Capability
-when that behavior prevents the Goal. Split Journey Scenarios when Step text,
-kind, responsible Actor, Capability sequence, observable behavior, or
-Journey-level Outcome changes; add another named route when only Context places
-change.
-
-The path is linear. A Decision point may vary detail while preserving the same
-Capability sequence and Outcome. A branch that changes either belongs in a
-separate Journey Scenario.
-
-The Scenario Actor set is derived from every Step that names an actor —
-performing on an Actor Step, attributed on a Product or condition Step. Every
-Actor must be supported by at least one selected Context, and every selected
-availability boundary must support a Scenario Actor. The first contextualized
-Actor Step of every route must belong to a Journey Actor, so the end-to-end
-variation begins with the goal owner rather than an internal or downstream
-participant.
-
-`kind` classifies the nature of the variation; `result` records whether the
-Journey Goal was achieved. `kind: edge` with `result: achieved` and
-`kind: primary` with `result: not-achieved` are structurally valid.
+The first placed Actor Step belongs to the person pursuing the goal. Routes work
+as on Capability Scenarios: the same Steps in different places.
 
 ### Journey Scenario decision points
 
-Each Decision point asks a Product question with alternative branches that
-preserve the Journey Scenario's Capability sequence and Outcome. Give it an H3
-title, one non-empty question, and at least two `condition → outcome` branches.
-A branch that changes the Capability sequence or has a materially different
-Outcome belongs in another Journey Scenario.
+A decision point asks one question with at least two `condition → outcome`
+branches that keep the same Capabilities and outcome. A branch that changes
+either is another Journey Scenario.
+
+## How it connects
+
+- **Capabilities** are named by Steps; a Journey never lists them.
+- Every Capability keeps its own Capability Scenarios; a Journey Scenario never
+  stands in for them.
+- **Entities** change through the Steps, exactly as in Capability Scenarios.
+
+## What lint checks
+
+Errors:
+
+- A Journey needs an H1, no lead paragraph, `actors`, `## Goal` and
+  `## Success criterion`, and at least one achieved Journey Scenario that
+  includes each of its actors.
+- A Journey Scenario needs `kind`, `result`, `routes`, `steps`, `## Trigger` and
+  `## Outcome`, and at least one Step naming a Capability.
+- An achieved Journey Scenario uses at least two different Capabilities.
+- Each route's first placed Actor Step belongs to a Journey actor.
+- A Step that creates, changes or removes something names a `capability`, and a
+  Step naming one happens inside that Capability's availability.
+- Every check on a Capability Scenario's Steps applies here too.
+
+Warnings:
+
+- A Journey or Journey Scenario id that reads as a noun phrase instead of
+  starting with a verb, or that shortens the name of an Entity the model
+  declares.

@@ -1,439 +1,276 @@
 ---
 title: Capabilities
-description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
+description: The things your product lets someone do, where each is offered, and the Capability Scenarios that show each one working.
 section: open-source
 group: Product Model
-order: 12
+order: 11
 terms:
   - term: Capability
-    definition: "A durable ability of the Product: what it can do, independent of any one route, command, or module."
+    definition: "A durable thing the Product lets someone do, such as checkout or order cancellation, independent of any one route, command or module."
   - term: Capability Scenario
     anchor: capability-scenarios
-    definition: "One observable acceptance case for a Capability: a trigger, typed Steps, and an outcome."
+    definition: "One acceptance case for a Capability: what starts it, its Steps, and the outcome."
   - term: Context
     anchor: availability
-    definition: "Where behavior is available, occurs, or is constrained: one Interface, Experience, or Screen. How specific it must be depends on what uses it."
+    definition: "A place where behavior is offered or happens: one Interface, Experience or Screen."
   - term: Step
     anchor: what-a-step-does-to-the-products-things
-    definition: "One action or condition in a Scenario. Actions are performed by an Actor or the Product; effects on Entities are recorded explicitly."
+    definition: "One action or condition in a Scenario, by an Actor or the Product, saying what it does to the Product's Entities."
   - term: Ends with
     anchor: what-a-step-does-to-the-products-things
-    definition: "The last creation, change, or removal of each Entity instance in a Scenario, including the resulting State when specified."
+    definition: "Where each Entity a Scenario touches is left: its last creation, change or removal, with the resulting State when there is one."
   - term: Scenario kind
     anchor: the-capability-scenario-file
     definition: "A category for a Scenario, such as primary or edge, defined in the model's taxonomies.yaml."
   - term: Trigger
     on: capability-scenario
     anchor: the-capability-scenario-file
-    definition: "The observable condition that starts the Scenario."
+    definition: "What starts the Scenario."
   - term: Outcome
     on: capability-scenario
     anchor: the-capability-scenario-file
-    definition: "The observable result once the Scenario has run."
+    definition: "What is true once the Scenario has run."
   - term: Route
     on: capability-scenario
     anchor: routes-steps-and-context-places
-    definition: "One named way the same Steps play out in different places. A route varies Context only; different Steps mean a different Scenario."
+    definition: "One named way the same Steps play out in different places, such as web and mobile. Different Steps mean a different Scenario."
   - term: Decision point
     on: capability-scenario
     anchor: capability-scenario-decision-points
-    definition: "A question with alternative branches that lead to the same Capability Scenario outcome. A different outcome requires another Scenario."
+    definition: "A question inside a Scenario whose branches all reach the same outcome. A different outcome is another Scenario."
   - term: Edge case
     on: capability-scenario
     anchor: the-capability-scenario-file
-    definition: "A condition and its consequence recorded within a Scenario, without changing its path."
+    definition: "A condition and its consequence noted within a Scenario, without changing its path."
 ---
 
 # Capabilities
 
-**A Capability is a durable ability of the Product:** catalog search, guest
-checkout, reading-state tracking, or release approval. It completes the
-sentence “the Product can …”.
+**A Capability is something your product lets someone do, and keeps letting them
+do.** It completes the sentence "the Product can …", and it outlives any one
+route, button or code module.
 
-A Capability has no necessary beginning or end. It remains meaningful beyond
-one route, command, or implementation module and can participate in several
-Screens, Capability Scenarios, and optional [Journeys](./journeys.md).
+Each Capability is shown working by its [Capability Scenarios](#capability-scenarios):
+concrete acceptance cases, each with a start, Steps and an outcome.
 
-Capabilities and their observable
-[Capability Scenarios](#capability-scenarios) form the behavioral core of
-the Product Model. A Capability does not need a Journey, but it does need at
-least one Capability Scenario covering every availability Context.
+## In practice
+
+| In the shop | The Capability |
+| --- | --- |
+| A shopper looks through products and reads one | Catalog browsing (`browse-catalog`) |
+| A shopper turns a cart into an order | Checkout (`place-order`) |
+| A shopper or the store withdraws an order before it ships | Order cancellation (`cancel-order`) |
+| The payment gateway reports what has been paid | Payment settlement (`settle-payment`) |
+
+The title reads naturally; the id is verb-noun. A Capability needs no
+[Journey](./journeys.md).
 
 ## When you create one
 
-Create a Capability when an ability is reusable across goals or independently
-important to Product boundaries, availability, Screens, Business Rules, or
-verification. Do not create one for an implementation function, endpoint, UI
-label, or sequence step that has no durable Product meaning.
+Create one for each durable thing the Product lets someone do, not for a
+function, an endpoint, a button label or one step of a flow.
 
-A Capability is the smallest durable behavior that remains independently
-meaningful, not necessarily the smallest button, API operation, or code
-function. **The split test is the contract.** Parts of an ability are separate
-Capabilities when they differ in who may do them (a permission of their own: a
-separate grant), where they are offered (availability), or in verb. Nothing else
-splits one: not a different Actor, since one Capability is offered in every
-Experience it is used from; not a Business Rule that constrains only one part,
-such as a time limit; not which grant applies, told apart by a fact of the thing
-acted on, which is a grant's `when`; not the Entity a way creates or the State
-it starts from; and not filtering, sorting or searching within a browsing
-ability. Nor does a setting or the deployment: the ways it selects between stay
-in one Capability, as Scenario alternatives, separate Scenarios or decision
-points by [What selects](./variations.md#what-selects-decides-it), and a way it
-adds beside the others, the Actor choosing among them, is an ordinary Scenario.
+### Split by verb, permission and place
+
+Make separate Capabilities when the **verb** differs, when **who may** do it
+differs (a permission of its own), or when **where it is offered** differs.
+Everything else stays one Capability with several Scenarios: the same verb done
+different ways, from different starting states, or chosen by a setting. See
+[What selects decides it](./variations.md#what-selects-decides-it).
 
 | What you see | Capabilities |
 | --- | --- |
 | Create, configure, archive and delete repositories | Four: different verbs |
-| Switching an item's format, which needs a permission editing does not | Two: a permission of its own |
-| Changing a password the Product requires at sign-in | The same Change password Capability, available there too |
-| Adding an authenticator app or backup codes; restoring from the archive or the trash | One each: neither the Entity a way creates nor the State it starts from splits it |
-| Notification settings, each saved on its own as it changes | One: settings in one section of the Product's navigation are one Capability, however the screen saves them |
-| Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, including a link it needs to finish; confirming an existing account's email later is its own |
-| Adding, changing and removing members of a group | Three: list entries are things of their own, even through an API call that replaces the whole list |
-| Entering a second factor after any sign-in method | Its own Capability: the sign-ins it continues end their Scenarios at the hand-off, and a Journey joins them |
+| Switching an item's format needs a permission editing does not | Two: a permission of its own |
+| Restoring from the archive or from the trash | One: the starting state doesn't split it |
+| Notification settings on one settings page | One, however the page saves them |
+| Adding, changing and removing members of a group | Three: each list entry is a thing of its own |
+| Requesting a password reset, then choosing the new password from the emailed link | One: the request has no outcome without the link, so it is one run |
+| Signing up, then confirming the email from a link | Two: the account exists without the link, so confirming is its own Capability, joined by a [Journey](./journeys.md) |
+| Entering a second factor after any sign-in method | Its own Capability |
+| Searching, filtering or sorting the catalog | Part of browsing |
+| A shopper and an operator both cancel orders | One: a different Actor is not a permission of its own |
 
-Whether split Capabilities share a Domain is decided by the Product's sections,
-never by the split — see [Domains](./domains.md#when-you-create-one).
-
-Every Capability declares explicit availability Contexts, naming
-[Experiences](./interfaces.md#experiences) only where the Interface uses them.
-An optional [Domain](./domains.md) can organize it, but Domains are not
-required.
+The same verb reached from somewhere else (changing your password when sign-in
+demands it) is the same Capability, offered there too.
 
 ## The file
 
-A Capability without Scenarios or assets may stay compact at
-`capabilities/<capability-id>.md`. Once it owns a Scenario or asset, it expands
-to `capabilities/<capability-id>/capability.md`.
+`capabilities/<id>.md`, or `capabilities/<id>/capability.md` once it owns
+Scenarios. The H1 names it; the lead says what it lets someone do.
 
-```md [capabilities/checkout.md]
+```md [capabilities/place-order/capability.md]
 ---
 domain: ordering
 availability:
-  - place: customer-web::shopping
-  - place: customer-mobile::shopping
-references:
-  - kind: code
-    role: implementation
-    target: src/services/orders.ts#OrderService.submit
+  - place: customer-web::storefront
+  - place: customer-mobile::storefront
 ---
 
 # Checkout
 
-Turns a valid cart into a confirmed order.
-
-## Intent
-
-Complete a purchase without confirming an unpaid order.
+Turns a valid cart into an order awaiting settlement.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| `availability` | yes | Declare at least one strict Context with one `place`. The place is a bare undivided Interface id or an `interface-id::experience-id`. |
-| `domain` | no | Name one existing Domain when the grouping is useful. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
+| Field | Says |
+| --- | --- |
+| `availability` (required) | Where it is offered, at least one place |
+| `domain` | The one [Domain](./domains.md) it belongs to, if any |
+| `references` | Code or docs behind it, as [References](./references.md) |
 
-Capability files do not list Actors, Entities, Capability Scenarios, Journey
-Scenarios, Journeys, Screens, or Business Rules. Other resources own those
-relations, and consumers derive backlinks: what a Capability changes is what its
-Scenarios' Steps say, and an `entities` key on a Capability is an error naming
-the Step key that carries it. A Capability Scenario's containing Capability
-folder creates its direct acceptance relation, while a Journey Scenario
-annotates concrete Steps with Capabilities. Journey Capability backlinks are
-derived from those Steps rather than authored on the Journey.
+An optional `## Intent` section says why the Product offers it.
 
-Capability Scenario coverage is the only direct acceptance coverage for a
-Capability. The union of its Capability Scenarios must cover every availability
-Context the Capability declares through its Step Contexts; use by a Journey Scenario
-does not satisfy that requirement. A missing Context is an error. A
-single-Capability goal remains local Capability behavior and never requires a
-Journey wrapper. A Screen's Capabilities are
-[derived from the Steps placed on it](./interfaces.md#screen-file).
+A Capability lists no Actors, Entities, Rules or Scenarios. Its Scenarios sit in
+its folder, and what it changes is what their Steps say.
 
 ## Availability
 
-Each item is the same strict Context shape used elsewhere:
+Each `place` is an Interface without Experiences, or one
+[Experience](./interfaces.md#experiences) as `interface::experience`, never a
+Screen. List every place where someone uses the Capability: if guests browse in
+a public Experience and shoppers in a signed-in one, name both.
 
-```yaml
-availability:
-  - place: reader-web::public-discovery
-  - place: reader-web::personal-workspace
-  - place: reader-mobile::personal-workspace
-```
-
-This does not promise `public-discovery` on `reader-mobile`. Availability is
-intended Product meaning, not implementation status; `businesslens-verify`
-checks whether the implementation satisfies it.
-
-**List every Experience in which one of the Capability's Actors uses it.** When
-Guests read pages in a public Experience and signed-in Users read them in an
-authenticated one, the Capability names both, and each Experience holds its own
-counterpart Screen, unless every Experience of the Interface shares that
-Screen. A Screen reached both before and after signing in exists in each
-Experience that reaches it.
-
-For an Interface with no Experiences, use the Interface as the Context place:
-
-```yaml
-availability:
-  - place: operator-cli
-```
-
-Scenario Step Contexts select most-specific places within this availability. They do
-not alter or expand the Capability's availability, and every selected Context
-is verified independently.
+Every place listed needs a Capability Scenario that happens there. Availability
+is what the Product intends;
+[`businesslens-verify`](./skill-businesslens-verify.md) checks the code against it.
 
 ## Capability Scenarios
 
-**A Capability Scenario is one concrete, observable acceptance case for exactly
-one Capability.** It states a particular starting condition, the local behavior,
-and one terminal result for that ability.
+**A Capability Scenario is one acceptance case for one Capability:** what starts
+it, the Steps, and the outcome. It belongs to the Capability whose folder holds
+it; one owned by a Journey is a [Journey Scenario](./journeys.md#journey-scenarios).
 
-A Scenario always belongs to exactly one parent, which determines its resource
-type. A Scenario owned by a Capability is a Capability Scenario; a
-Scenario owned by a Journey is a
-[Journey Scenario](./journeys.md#journey-scenarios). There is no unowned
-Scenario and no way for one Scenario to serve both parents.
-
-Capability Scenarios are part of the behavioral core and are the only direct
-acceptance coverage for a Capability. Missing coverage is an error, whether or
-not the Product has any [Journeys](./journeys.md).
-
-## What a Step does to the Product's things
-
-A Step records one action or condition in a Scenario. Its `kind` is `actor`
-for an Actor's action, `product` for the Product's action, or `condition` for a
-condition that holds. Its effects on Entities are recorded explicitly.
-
-**`entities` is required on every Step**, and a Step that touches nothing
-writes `entities: []`, so an omission is always a claim rather than a silence.
-Each entry names an
-[Entity](./entities.md), what the Step does to it, and the states it leaves and
-lands in:
-
-```yaml
-- text: The Product refunds the order
-  kind: product
-  actor: store-admin
-  entities:
-    - { entity: order,  effect: changes, from: Confirmed, to: Refunded, facts: [] }
-    - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
-```
-
-`effect` is `creates`, `changes`, `removes`, or `reads`, defaulting to
-`changes`. State keys are explicit and never inferred from an adjacent Step:
-`creates` takes `to`, `removes` takes `from`, `changes` takes both or neither —
-neither being an information change, the rename case — and `reads` carries no
-state. Every `from` and `to` names a state the Entity declares, and there is no
-wildcard `from`: *archive from any state* is one Scenario per origin state.
-
-**A Step changes as many Entities as it changes.** One observable act can move
-two things at once, and splitting it into two Steps would turn an acceptance
-case into an implementation trace. Two instances of one Entity in a Scenario are
-told apart by `as`, a scenario-local alias — `collection (source)` and
-`collection (target)` — and once an Entity is aliased anywhere in a Scenario,
-every mention of it is. Steps chain per instance: where an earlier Step left a
-thing in a state, a later Step's `from` must equal it, or name a different
-instance.
-
-**A read is a bare mention.** `reads` carries no state, is never counted as a
-change, and never saves an Entity from being an orphan. It exists so a Step
-whose text says *the Reader chooses a saved item* also says so where a tool can
-read it. A Step whose text names an Entity's title and declares it nowhere is an
-error.
-
-**Step facts are exhaustive product claims.** Every `reads`, `changes` and
-`creates` entry requires `facts`: the unique named Entity facts read, changed or
-initialized, including product-defined defaults on creation. `facts: []` means
-no named facts, such as an existence check or state-only transition; it never
-means unspecified or all facts. Incidental implementation fields are not part
-of this list. `removes` has no authored `facts`, because it removes the whole
-Entity; clearing an individual value is a change.
-
-```yaml
-- text: The Product creates the account with its email and default preferences
-  kind: product
-  entities:
-    - { entity: account, effect: creates, facts: [Email, Preferences] }
-```
-
-Facts are never inferred from a Screen: a creation can run without one or
-initialize facts no form collects, and an Actor read must find its facts in
-[what its Screen shows](./interfaces.md#what-a-screen-presents). Verification
-checks every named Product fact the operation affects, so omitting one is a
-missing claim, not an alternative encoding of the same operation.
-
-**Ends with** is the last creation, change, or removal of each Entity instance
-in Step order. It includes the resulting State when
-specified, and also shows removals and changes without a named State. Later
-reads do not replace that result.
-
-The lifecycle of every Entity is composed from these entries across the whole
-model, and a [Business Rule](./business-rules.md) that says who may perform an
-operation is checked against the Step that performs it: a Step doing something a
-Rule forbids to everyone, or something no grant could permit its actor, is a
-`lint` error.
-
-**A Step says who it is for.** An `actor` Step names who performs it. A
-`product` or `condition` Step may also carry `actor`, meaning the Step is
-attributable to that Actor — the Product did it for them, or the condition holds
-for them. Every actor a Step names joins the Scenario's derived Actor set, and a
-Rule reads it as *who did* against its grants' *who may*. At a public place the
-Actor is whoever is not signed in — an invitee, or any role holder before
-signing in — and a Step that ends a session, such as signing out or deleting
-one's own account, stays where the session was.
-
-### Behavior nobody triggers
-
-A schedule the Product owns, an expiry, a retry — real Product behavior with no
-Actor to name. Write it as a Scenario whose **first Step is a `condition`
-carrying `unattended: true`**, and give the Capability availability where an
-Actor *observes the outcome*, never a synthetic Interface.
-
-```yaml
-steps:
-  - text: The Product's own polling schedule comes due for a followed source
-    kind: condition
-    unattended: true
-    entities:
-      - { entity: source, effect: reads, facts: [Feed address] }
-```
-
-An unattended Scenario derives no Actors, and is the only Scenario that may have
-none.
-
-### When you create a Capability Scenario
-
-Create a Capability Scenario for every materially different observable behavior
-of one Capability, including relevant primary, permission, validation,
-conflict, and external-failure cases.
-
-A Capability Scenario is a variation of one stable behavior, not an operation
-hidden beneath a vague umbrella. `create-a-private-repository`,
-`reject-a-duplicate-repository-name`, and `reject-unauthorized-creation` can be
-Scenarios of `create-repository`. Create, rename, archive, and delete are not
-automatically Scenarios of `manage-repositories`; when they carry independent
-Product meaning, they are separate Capabilities.
-
-Split a Capability Scenario when:
-
-- a condition produces a materially different local Outcome; or
-- an Interface route materially changes the observable behavior.
-
-Web and mobile may share one Capability Scenario when they promise the same
-behavior and Outcome. Checkout succeeding on Tuesday is not a separate case;
-checkout being rejected because stock is unavailable is.
+Write one for each outcome worth checking: the usual success, a refused
+permission, a failed validation, an external failure. For example, checkout
+rejected because stock ran out, not checkout succeeding on a Tuesday.
 
 ### The Capability Scenario file
 
-Capability Scenarios normally live at
-`capabilities/<capability-id>/scenarios/<id>.md`. A Scenario with assets expands
-to `<id>/capability-scenario.md`.
+`capabilities/<capability-id>/scenarios/<id>.md`. The ids are unique across the
+whole model.
 
-```md [capabilities/create-repository/scenarios/create-a-private-repository.md]
+```md [capabilities/cancel-order/scenarios/cancel-your-own-unpaid-order.md]
 ---
 kind: primary
 routes:
   web: Web
+  mobile: Mobile
 steps:
-  - text: The contributor enters a name and chooses private visibility
+  - text: The shopper cancels an order that has not been paid
     kind: actor
-    actor: repository-contributor
-    entities: []
-    contexts:
-      web:
-        place: web-ui::repository-collaboration::new-repository
-  - text: The Product checks that the name is free in the contributor's namespace
-    kind: product
+    actor: shopper
     entities:
-      - { entity: repository, effect: reads, facts: [Name] }
+      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }
     contexts:
       web:
-        place: web-ui::repository-collaboration::new-repository
-  - text: The Product creates the repository with the contributor as its owner
+        place: customer-web::storefront::order-status
+      mobile:
+        place: customer-mobile::storefront::order-status
+  - text: The Product cancels the order and releases its stock
     kind: product
-    actor: repository-contributor
+    actor: shopper
     entities:
-      - { entity: repository, effect: creates, to: Active, facts: [Name, Visibility] }
+      - { entity: order, effect: changes, from: Pending, to: Cancelled, facts: [] }
     contexts:
       web:
-        place: web-ui::repository-collaboration::repository-home
-references:
-  - kind: code
-    role: implementation
-    target: services/repository/create.go#CreateRepository
+        place: customer-web::storefront::order-status
+      mobile:
+        place: customer-mobile::storefront::order-status
 ---
 
-# Create a private repository
+# Cancel your own unpaid order
 
 ## Trigger
 
-A contributor wants a new repository that nobody else can see.
+A shopper changes their mind before payment has settled.
 
 ## Outcome
 
-An Active repository exists, owned by the contributor and visible to nobody
-else.
+The order is cancelled and nothing is charged.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
-| `kind` | yes | Choose a Scenario category, such as `primary` or `edge`, defined in `taxonomies.yaml`. |
-| `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
-| `steps` | yes | Give a non-empty ordered list of typed Steps. Each Step has one-line `text`, `kind: actor|product|condition`, and optional route-specific `contexts`. |
-| `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`. On a `product` or `condition` Step it is optional and says who the Step is attributable to. |
-| `steps[].entities` | yes | List what this Step does to the Product's things, or `[]` when it touches nothing. One entry per `(entity, as)` pair; one observable act may move several. |
-| `steps[].entities[].entity` | yes | Name an existing Entity. |
-| `steps[].entities[].as` | no | A scenario-local alias telling two instances of one Entity apart. Once an Entity is aliased in a Scenario, every mention of it is. |
-| `steps[].entities[].effect` | no | Use `creates`, `changes`, `removes`, or `reads`. Defaults to `changes`. |
-| `steps[].entities[].from`, `to` | by effect | Name states the Entity declares: `to` with `creates`, `from` with `removes`, both or neither with `changes`, and neither with `reads`. Required for `creates` and `removes` when the Entity has states. |
-| `steps[].entities[].facts` | on reads, changes and creates | Exhaustive unique named facts affected; `[]` explicitly means none. Forbidden on removal. |
-| `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence: a Screen when the Step occurs on one, otherwise the leaf Experience or undivided Interface. Omit it only when the Step is shared by all routes and has no Context. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
-| `## Trigger` | yes | State the observable starting condition. |
-| `## Steps` | no | Structured Steps live only in frontmatter. |
-| `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
-| `## Edge cases` | no | List conditions and their consequences without changing the Scenario's path. When present, use a non-empty bullet list with each item on one physical line. |
-| `## Outcome` | yes | State one local observable result of the Capability. |
+| Field or section | Says |
+| --- | --- |
+| `kind` (required) | The Scenario kind, such as `primary` or `edge`, from `taxonomies.yaml` |
+| `routes` (required) | Each route's id and name |
+| `steps` (required) | The ordered Steps, each with `text`, `kind` and `entities` |
+| `## Trigger` (required) | What starts it |
+| `## Outcome` (required) | What is true at the end |
+| `## Decision points` | Questions whose branches reach the same outcome |
+| `## Edge cases` | One-line bullets: a condition and its consequence |
 
-A Capability Scenario cannot declare `result`, `actors`, `availability`, or a
-Step `capability`; its parent Capability is implicit. A Step key of `entity`,
-`state`, `changes`, or `reads` is an error naming `entities`, whose entries
-carry all four. Both Scenario types
-require frontmatter `steps`, and neither declares its parent—the folder it sits
-in is the parent.
-It cannot use Journey-only `## Goal` or `## Success criterion` sections, and
-each recognized Scenario H2 may appear only once.
-Business Rules own their Scenario relations; Capability Scenarios do not
-duplicate a `businessRules` list. Screen participation is derived from Step
-Contexts; Screens do not list Scenario IDs.
+### What a Step does to the Product's things
 
-Journey Scenarios reference the Capability, never this Capability Scenario.
-That prevents a concrete local case from becoming a reusable operation resource.
+A Step's `kind` is `actor` (an Actor does it), `product` (the Product does it)
+or `condition` (something holds). An `actor` Step names its `actor`; a Product
+or condition Step may name the Actor it is done for.
+
+Every Step lists what it does to the Product's [Entities](./entities.md) in
+`entities`, or writes `entities: []`. Each entry has an `effect` (`creates`,
+`changes`, `removes` or `reads`), the States it moves between, where the
+Entity has States, and the `facts` it reads, changes or fills in. The facts list
+is exhaustive: `[]` means none, never "unspecified".
+
+```yaml
+- text: The Product stores the order as pending and empties the cart
+  kind: product
+  actor: shopper
+  entities:
+    - { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }
+    - { entity: cart, effect: removes }
+```
+
+A Scenario's **Ends with** is where each thing it touched is left. Across the
+whole model, Step entries make up each Entity's lifecycle.
+
+A Step at a public place names the person who isn't signed in, even if about to.
+
+### Behavior nobody triggers
+
+A schedule, expiry or retry the Product runs alone starts with a `condition`
+Step carrying `unattended: true` and no Actor; its Capability is available where
+someone sees the result.
 
 ### Routes, Steps, and Context places
 
-A route is one named supported traversal through unchanged Scenario behavior.
-Use multiple routes when the Trigger, ordered Step text, Step kinds, responsible
-Actors, and Outcome are the same but the Context places differ. If any behavior
-changes, create another Scenario.
-
-Every contextualized Step maps every route. A Step without `contexts` is shared
-by all routes and has no Context. Every route must have a Context at least once,
-and two routes cannot repeat the same Context-place sequence. Changing `place`
-between consecutive contextualized Steps is an explicit Context transition,
-including movement between Screens in one Experience.
-
-A Step Context names [where the Step happens](./interfaces.md#where-a-step-happens),
-the most specific place it occurs. Actor support, Screen participation, and
-backlinks are all derived from these Context claims.
+Each Step's `contexts` says where it happens, per route: the Screen, Experience
+or Interface. A route is the same Steps in different places (web and mobile
+above); different Steps are another Scenario.
 
 ### Capability Scenario decision points
 
-Each Decision point asks a Product question with alternative branches that
-lead to the same Capability Scenario Outcome. Give it an H3 title, one
-non-empty question, and at least two `condition → outcome` branches. A branch
-with a materially different Outcome belongs in another Capability Scenario.
+A decision point is an H3 under `## Decision points` with one question and at
+least two `condition → outcome` branches, all reaching the Scenario's outcome. A
+branch with a different outcome is another Scenario.
+
+## How it connects
+
+Entities change only through Steps, so each Entity's lifecycle comes from the
+Scenarios. Screens offer the Capabilities whose Steps happen on them.
+[Business Rules](./business-rules.md) saying who may are checked against the
+Steps that act, and [Journeys](./journeys.md) name the Capability, never one of
+its Scenarios.
+
+## What lint checks
+
+Errors:
+
+- A Capability needs an H1, a lead, and `availability` places that exist, each
+  with a Scenario happening there. It never carries `entities`.
+- An availability place never names a Screen, nor a divided Interface instead
+  of one of its Experiences.
+- A Scenario needs `kind`, `routes`, `steps`, `## Trigger` and `## Outcome`, and
+  its id is used once; every Step has `text`, `kind` and `entities`, and an
+  `actor` Step names its actor.
+- Each `entities` entry names a real Entity and its real States and facts;
+  `facts` is required, except on `removes`, which has none; a `from` matches
+  where an earlier Step left the thing.
+- Step text that names an Entity's title must list that Entity.
+- `contexts` maps every route, stays inside the Capability's availability, and
+  supports the Step's Actor; no two routes visit the same places.
+- A Scenario has an `actor` Step or an unattended first Step.
+
+Warnings:
+
+- A Capability or Scenario id that reads as a noun phrase instead of starting
+  with a verb, or that shortens the name of an Entity the model declares.

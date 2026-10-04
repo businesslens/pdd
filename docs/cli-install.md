@@ -3,76 +3,65 @@ title: install
 description: Install the bundled BusinessLens agent skills safely for selected AI harnesses and scopes.
 section: open-source
 group: CLI
-order: 26
+order: 21
 ---
 
 # `businesslens install`
 
-Install the three bundled `businesslens-*` agent skills into one or more
-supported AI harnesses:
+Install the three `businesslens-*` agent skills into your AI harnesses, once per
+project or once for your user, before you map, ideate or verify.
 
 ```bash
-npx businesslens install
+npx businesslens install [--providers <list>] [--scope project|global] [--yes] [--force]
 ```
-
-The interactive flow detects available harnesses, lets you keep or customize
-that selection, and asks whether to install into the current project or the
-current user's global configuration. When no harness is detected, Claude Code
-and Codex are the recommended defaults.
-
-See [Installation](./installation.md) for provider-specific directories and
-guidance on choosing project or global scope.
 
 ## Options
 
 | Option | Meaning |
 | --- | --- |
-| `--providers <list>` | Install for a comma-separated list of `claude,codex,cursor,gemini,github` |
-| `--scope project\|global` | Install into the current project or the current user's configuration |
-| `--yes` | Accept detected providers and use project scope when those choices were not supplied |
-| `--force` | Replace an unmarked colliding `businesslens-*` skill directory |
+| `--providers <list>` | Comma-separated harnesses: `claude,codex,cursor,gemini,github` |
+| `--scope project\|global` | Install into the current project or your user configuration |
+| `--yes` | Take the defaults for anything not given: detected harnesses (Claude Code and Codex when none are detected) and project scope |
+| `--force` | Replace a colliding `businesslens-*` skill directory that BusinessLens does not own |
 
-## Non-interactive
-
-Pass the provider and scope choices explicitly in CI or any session without an
-interactive terminal:
+Without a terminal (in CI, for example), pass `--providers` and `--scope`, or
+`--yes` to take the defaults:
 
 ```bash
-npx businesslens install \
-  --providers claude,codex \
-  --scope project \
-  --yes
+npx businesslens install --providers claude,codex --scope project
 ```
 
-`--yes` by itself selects the detected providers, or Claude Code and Codex
-when none are detected, and defaults to project scope.
+See [Installation](./installation.md) for each harness's directories and how to
+choose a scope.
 
-## Install safety
+## What it does
 
-The installer writes `.businesslens-install.json` into each managed skills
-directory. That marker records the provider, scope, package version, and owned
-skill names so a later [`update`](./cli-update.md) can find the installation.
+1. Detects which harnesses you use. Interactively, you keep that selection or
+   customize it, then choose project or global scope.
+2. Checks every selected skills directory before writing to any of them.
+3. Writes the three skills, removing any `businesslens-*` skill an earlier
+   install recorded that this release no longer ships.
+4. Writes `.businesslens-install.json` in each skills directory, recording the
+   harness, scope, version and skill names, so [`update`](./cli-update.md) can
+   find it later.
 
-**The marker is the only proof of ownership.** A `businesslens-*` directory that
-the marker does not list is somebody else's — a fork, a hand-written skill, an
-install by another tool, or an installation predating the marker — and it stops
-the run unless `--force` is explicit. BusinessLens does not read a directory's
-contents to guess that it wrote it: guessing wrong costs someone work they
-cannot recover. For the same reason, a skill this release no longer ships is
-removed only where the marker recorded a `businesslens-*` name. Bare-name skills
-and command files are outside the current installer contract.
+It installs skills only: no `.businesslens/`, no hooks, no account.
 
-**A refusal changes nothing.** Every selected harness is checked before any is
-written, so an install for two harnesses that stops on the second leaves the
-first untouched. The message names the directory that blocked the run.
+## Safety
 
-The command distributes skills only. It does not:
+**The marker is the only proof of ownership.** A `businesslens-*` directory the
+marker does not list is someone else's, so it stops the run unless you pass
+`--force`.
 
-- create `.businesslens/`;
-- install hooks;
-- connect an account; or
-- export or contribute a Product Model.
+**A refusal changes nothing.** Every harness is checked before any is written,
+and the message names the directory that blocked the run.
 
-After installation, invoke `businesslens-map` for established code,
-`businesslens-ideate` for a new product, or `businesslens-verify` for an
-existing Product Model.
+Exits 0 when the skills are installed, 1 when a collision, a missing terminal or
+a cancelled prompt stops it, and 2 for an unknown harness, scope or option.
+
+## Next
+
+- [`businesslens-map`](./skill-businesslens-map.md) for established code,
+  [`businesslens-ideate`](./skill-businesslens-ideate.md) for a new product, or
+  [`businesslens-verify`](./skill-businesslens-verify.md) for an existing model.
+- [`update`](./cli-update.md) after upgrading the package.

@@ -51,6 +51,7 @@
     "CHANGELOG.md",
     "dist",
     "docs",
+    "!docs/images",
     "layers",
     "!layers/nuxt/report-viewer-lab",
     "!layers/**/node_modules",

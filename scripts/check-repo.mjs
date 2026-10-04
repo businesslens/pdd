@@ -24,7 +24,7 @@ const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
-  'docs/cli.md', 'docs/cli-view.md', 'docs/ci.md', 'docs/integration.md',
+  'docs/cli.md', 'docs/cli-view.md',
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
   'layers/nuxt/report-viewer-lab/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
@@ -336,7 +336,6 @@ const DOC_SECTIONS = new Set(['open-source'])
 const DOC_GROUPS = new Set([
   'Get started',
   'Product Model',
-  'Integrations',
   'Skills',
   'CLI'
 ])
