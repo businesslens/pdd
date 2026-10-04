@@ -293,7 +293,7 @@ identifier or the wording of a request — a role the screens call Editor is
 `editor` even where the API sends `member`. A Capability's verb is the one its
 control shows — Archive, Share, Publish; where the control says only Save, it is
 `edit-<thing>` for a thing's own facts and `change-<section>-settings` for a
-settings page, never `update`.
+page in the Product's settings, the section named as its menu shows it, never `update`.
 
 Two further rules bind ids to vocabulary the model already declares. A
 behavioral id's **noun half names something the model declares** —

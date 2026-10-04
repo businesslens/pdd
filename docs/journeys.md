@@ -55,7 +55,7 @@ Capability selection, order, branches, repetition, and failure belong to its
 
 Create a Journey wherever an achieved Journey Scenario carries one Actor through
 two or more Capabilities toward one outcome, with the Product itself carrying
-the Actor across — a redirect, a required next Step, an emailed link to follow.
+the Actor across — a redirect such as into the editor of what was just created, a required next Step, an emailed link to follow.
 An Actor merely choosing what to do next carries nobody. Neither does returning
 the Actor to where they were already going after signing in, a continuation the
 Product runs without the Actor, such as merging automatically once checks pass,

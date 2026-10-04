@@ -207,7 +207,8 @@ Experiences when either holds, and must not when neither does:
 
 - it serves more than one `access` value, read from who reaches its places:
   places reached without signing in are `public`, places reached once signed in
-  `authenticated`, and areas only some signed-in roles may enter `restricted`; or
+  `authenticated`, and the administration area — places only the roles that
+  administer the Product, its settings or members, may enter — `restricted`; or
 - its Actors split into groups no Capability available there bridges — more
   than one connected component in the graph of Actors and Capabilities, an edge
   wherever a Capability's Scenario Steps name the Actor. Roles that each relate
@@ -216,9 +217,10 @@ Experiences when either holds, and must not when neither does:
 An Interface declares no access mode, so `lint` sees the first condition only
 once Experiences exist; the second it checks on every Interface. Two
 Experiences of one Interface with the same `access` share no Actor, unless they
-are alternatives of one Variation: within one access mode, an area only some of
-its Actors enter — an admin-only page beside one editors share — is navigation.
-Sharing one is a `lint` error.
+are alternatives of one Variation; sharing one is a `lint` error. A place some
+signed-in roles cannot enter but non-administrators can — a page guests cannot
+see — stays `authenticated`, and an admin-only page inside administration is
+navigation there: grants say who may act.
 
 **Counterparts and Variations justify existing Experiences.** An Experience whose
 name also exists under another Interface is the same context on another
@@ -306,8 +308,8 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   `member`. A planned Product uses the words its plan shows people. A
   Capability's verb is the one its control shows — Archive, Share, Publish;
   where the control says only Save or Done, it is `edit-<thing>` for a thing's
-  own facts and `change-<section>-settings` for a settings page, never
-  `update`. `lint` cannot see the Product's screens; review and `verify` hold
+  own facts and `change-<section>-settings` for a page in the Product's
+  settings, the section named as its menu shows it, never `update`. `lint` cannot see the Product's screens; review and `verify` hold
   the name to them.
 
   Ids are the format's identity mechanism: two models that name the same
@@ -459,8 +461,10 @@ discriminator — or by the deployment, fixed before the behavior starts:
   (issuing a VAT invoice or a sales tax receipt).
 - A choice that changes only the outcome makes separate Scenarios, each with a
   `condition` Step reading it: registration that leaves the account unconfirmed.
-- When two or more choices would each vary or split one Scenario, each is a
-  decision point instead, so no Scenario needs a set per combination.
+- When two or more settings or assignments would each vary or split one
+  Scenario, each is a decision point instead, so no Scenario needs a set per
+  combination. State the Scenario meets, such as whether an account exists, is
+  not a setting.
 
 **A resource that exists only under some alternatives, or only while a setting,
 plan or licence enables it,** stays an ordinary resource, mapped even where the
@@ -817,8 +821,8 @@ Where authorized operators manage the store and its orders.
 and every one must be supported by the owning Interface. `access` is required.
 People not signed in, including anonymous visitors and wherever people sign in,
 are one public context; people signed in are one authenticated context, and the
-areas only some of their roles may enter, such as administration, one
-restricted context. `access` is the most open the context can be: a setting
+administration area only the administering roles may enter is one restricted
+context. `access` is the most open the context can be: a setting
 that closes it — content public only while the store allows guests — or opens
 it, such as anonymous access, is a grant's `when` on the operations it
 restricts and never justifies an Experience of its own. Optional `entryPoints`
@@ -1886,7 +1890,7 @@ This is Journey acceptance coverage, not the source of its identity.
 
 **A Journey exists when an achieved Journey Scenario carries its Actor through
 two or more Capabilities toward one outcome.** The Product itself carries the
-Actor across — a redirect, a required next Step, an emailed link to follow —
+Actor across — a redirect such as into the editor of what was just created, a required next Step, an emailed link to follow —
 where an Actor merely choosing what to do next carries nobody. Returning the
 Actor to where they were already going after signing in is not a hand-off, and
 neither is a continuation the Product runs without the Actor, such as merging

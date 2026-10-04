@@ -65,6 +65,10 @@ Read before authoring:
      check, an ownership check, a threshold — becomes a grant on a Business
      Rule targeting the operation it guards; an operation the code refuses to
      everyone is `permits: []`.
+   - **Hand-offs.** Write a Journey wherever the Product itself carries an
+     Actor from one Capability into the next toward one outcome — creating a
+     thing and landing in its editor, a required next Step, an emailed link to
+     follow — and none elsewhere. Give each an achieved Journey Scenario.
 
    Whether a setting, assignment or deployment makes a Variation, separate
    Scenarios, a decision point or a grant's `when` is decided by **What

@@ -147,8 +147,9 @@ Lead and section-body fragments do not contain another H1 or H2.
   (`web|mobile-app|desktop-app|cli|api|webhook|messaging|voice|device|agent`)
   matching the contract; at least one `actors` entry naming an Entity that
   `acts` — **who uses** the Interface, a descriptive list, never a permission
-  claim; optional Product-facing `entryPoints` (public routes and deep links,
-  never internal navigation identifiers), each keyed by this Interface's own
+  claim; optional Product-facing `entryPoints`, a list of `- <key>: <route>`
+  (public routes and deep links, never internal navigation identifiers), each
+  keyed by this Interface's own
   type or by another Interface's id when a reader arrives from that surface;
   optional `languages`, a subset of the Product's (listing any while the
   Product declares none is an error); optional `navigation`; H1, lead
@@ -252,11 +253,12 @@ Lead and section-body fragments do not contain another H1 or H2.
   (`browse-catalog`, never `catalog-browsing`); cross-cutting ids are the bare
   noun. A Capability's verb is the one its control shows (Archive, Share,
   Publish); a form that only says Save or Done is `edit-<thing>` for a thing's
-  own facts and `change-<section>-settings` for a settings page, never
-  `update`. A behavioral id's noun half names something the model declares —
-  `install-agent-skills`, not `install-skills`, when `agent-skills` is an
-  Interface; the noun half comes from an Entity, Domain or Interface, never a
-  Screen name. Entity, Domain and Business Rule ids never open with a verb;
+  own facts and `change-<section>-settings` for a page in the Product's
+  settings, the section named as its menu shows it, never
+  `update`. When an Entity, Domain or Interface id ends with a behavioral id's
+  noun half, use the declared name — `install-agent-skills`, not
+  `install-skills`, when `agent-skills` is an Interface; a Screen name is never
+  the noun half. Entity, Domain and Business Rule ids never open with a verb;
   they name what a thing is or what must remain true. A compound noun whose
   first word can be a verb (`pull-request`, `sign-in`) is a noun.
 - Entity: H1, lead description, and at least one of `## Information kept`,
@@ -379,7 +381,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   wrapper; a wizard is a Journey only when its Scenario crosses Capabilities.
   Write every Journey the test finds: one exists wherever the Product itself
   carries an Actor from one Capability into another toward one outcome — a
-  redirect, a required next Step, an emailed link to follow — and never where
+  redirect such as into the editor of what was just created, a required next
+  Step, an emailed link to follow — and never where
   the Actor merely chooses to do something else next. Returning the Actor to
   where they were already going after signing in is not a hand-off, and neither
   is a continuation the Product runs without the Actor, such as merging
@@ -596,7 +599,8 @@ Experiences when either holds, and none when neither does:
 - it serves more than one `access` value, read from who reaches its places:
   places reached without signing in, including wherever people sign in, are
   one `public` context; places reached once signed in one `authenticated`
-  context; areas only some signed-in roles may enter one `restricted` context;
+  context; the administration area — places only the roles that administer
+  the Product, its settings or members, may enter — one `restricted` context;
 - its Actors split into groups no Capability available there bridges — a
   Capability bridges the Actors its Scenario Steps name, and roles that each
   relate one-to-one to the same Account are one audience.
@@ -605,8 +609,9 @@ An Interface declares no access mode, so `lint` sees the first condition only
 once Experiences exist: reading access from who reaches each place is the
 author's. It checks the second on every Interface. Two Experiences of one
 Interface with the same `access` share no Actor unless they are alternatives of
-one Variation: within one access mode, an area only some of its Actors enter —
-an admin-only page beside one editors share — is navigation. A counterpart (an
+one Variation. A place some signed-in roles cannot enter but non-administrators
+can (a page guests cannot see) stays `authenticated`, and an admin-only page
+inside administration is navigation there: grants say who may act. A counterpart (an
 Experience whose name also exists under another Interface) and a Variation
 alternative keep their Experience even where the conditions alone would
 flatten it. An Interface that must divide and does not, and one holding
@@ -773,9 +778,10 @@ discriminator — or by the deployment, fixed before the behavior starts:
   unconfirmed, an unknown social account registered or refused. A branch ending
   in a refusal counts. The unconfirmed account sign-in later meets is state,
   and confirming through the emailed link is a later act of its own.
-- When two or more choices would each vary or split one Scenario — a captcha
-  and a provider password on one registration — each is a decision point
-  instead, so no Scenario needs a set per combination.
+- When two or more settings or assignments would each vary or split one
+  Scenario (a captcha and a provider password on one registration), each is a
+  decision point instead, so no Scenario needs a set per combination. State the
+  Scenario meets, such as whether an account exists, is not a setting.
 
 **A resource that exists only under some alternatives, or only while a
 setting, plan or licence enables it** — registration while the sign-in method

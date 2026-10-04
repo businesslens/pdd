@@ -22,7 +22,7 @@ terms:
     definition: "A stable context for using the Product within one Interface, defined by who is there and what they can do, with an access mode."
   - term: Access mode
     anchor: experience-file
-    definition: "Who may enter an Experience: anyone (public), anyone signed in (authenticated), or only some signed-in roles (restricted)."
+    definition: "Who may enter an Experience: anyone (public), anyone signed in (authenticated), or only the roles that administer the Product (restricted)."
   - term: Screen
     anchor: screens
     definition: "A place inside an Interface or Experience, named in the Product's own words, where an Actor meets facts and abilities."
@@ -150,13 +150,13 @@ qualified ids.
 
 ### When to create an Experience
 
-**Whether an Interface is divided into Experiences is derived, never judged.**
-Two conditions decide it. An Interface must hold Experiences when either holds,
-and must not when neither does:
+**Two conditions decide whether an Interface is divided into Experiences.** It
+must hold Experiences when either holds, and must not when neither does:
 
 - **It serves more than one `access` value**, read from who reaches its places:
   places reached without signing in are `public`, places reached once signed in
-  `authenticated`, and areas only some signed-in roles may enter `restricted`.
+  `authenticated`, and the administration area — places only the roles that
+  administer the Product, its settings or members, may enter — `restricted`.
 - **Its Actors split into groups no Capability available there bridges.** Roles
   that each relate one-to-one to the same Account are one audience.
 
@@ -169,9 +169,11 @@ Interface that must divide and does not, or holds Experiences nothing
 justifies, is a `lint` **error**.
 
 **One access mode is one context.** Two Experiences of one Interface with the
-same `access` share no Actor unless they are alternatives of one Variation: an
-admin-only area beside one admins share with editors is navigation inside one
-restricted Experience. Otherwise it is a `lint` **error**.
+same `access` share no Actor unless they are alternatives of one Variation;
+otherwise it is a `lint` **error**. A page some signed-in roles cannot enter but
+non-administrators can, such as one guests cannot see, stays authenticated, and
+an admin-only page inside administration is navigation there: grants say who may
+act.
 
 The conditions protect one thing: an Experience is a context that stays
 meaningful when routes, commands, or navigation are reorganized, because it is defined by

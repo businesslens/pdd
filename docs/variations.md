@@ -90,8 +90,10 @@ behavior starts. Everything else is met inside one behavior:
 - **A choice that changes only the outcome makes separate Scenarios**, each with
   a `condition` Step reading it: registration that leaves the account
   unconfirmed.
-- **When two or more choices would each vary or split one Scenario**, each is a
-  decision point instead, so no Scenario needs a set per combination.
+- **When two or more settings or assignments would each vary or split one
+  Scenario**, each is a decision point instead, so no Scenario needs a set per
+  combination. State the Scenario meets, such as whether an account exists, is
+  not a setting.
 
 A resource that exists only under some alternatives, or only while a setting,
 plan or licence enables it, is an ordinary resource, mapped even where the
