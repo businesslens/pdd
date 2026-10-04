@@ -52,12 +52,13 @@ that both seem to govern every refund.
 
 | What differs | What varies |
 | --- | --- |
-| One Step of an otherwise identical path — a checkout that skips address review | Two Scenarios of that one Capability or Journey |
+| What an Actor does — a checkout that skips address review | Two Scenarios of that one Capability or Journey |
 | The path a thing takes — a store that approves orders before fulfilling them | Scenarios; the Entity keeps every State |
 | The ability's contract — who may do it, or its verb — or where it is offered | Capabilities |
 | A goal pursued across Capabilities in two supported ways | Journeys |
 | A place — which facts it shows, which abilities it offers | Screens or Experiences |
 | The facts or States the Product keeps — an EU store's VAT invoice against a US store's sales tax receipt | Entities |
+| Two whole statements of one constraint — Standard or Strict refund review | Business Rules |
 | A supported contract — the v1 and v2 webhook | Interfaces |
 
 The alternatives of a Scenario Variation share their Capability or Journey.
@@ -75,49 +76,40 @@ varies only when the thing itself differs.
 
 A Variation chooses by a fact that exists to choose — a setting, an experiment
 assignment, a version discriminator — or by the deployment, fixed before the
-behavior starts. A fact that describes the thing being worked on is state the
-behavior meets: a page's own editor format is read by a `condition` Step, even
-though someone set it earlier.
+behavior starts. Everything else is met inside one behavior:
 
-**Scenarios vary only when what an Actor does differs, and one choice decides
-it, even when several settings combine to make that choice.** Sign-in that
-starts at the only provider automatically drops a Step the Actor takes, so it
-selects which sign-in Scenario runs. A choice the Actor makes on a page outside
-the product, such as picking a connector at an identity provider, is still an
-Actor Step. When two or more settings would each vary or split the same
-Scenario, whether they change the Actor's Steps or the outcome — a captcha and a
-provider password on one registration — none of them makes a Variation; each is
-a decision point. A branch that ends in a refusal is still its own Scenario with
-a `condition` Step, and still counts as its setting splitting the Scenario. A
-setting that changes only the Product's own Steps — whether
-group sync replaces a User's Roles or adds to them — is a decision point in one
-Scenario, like any choice made during a run. When it changes the outcome —
-registration that requires email confirmation leaves the account inactive — the
-branches are separate Scenarios with a `condition` Step. If another setting also
-varies or splits that Scenario, each setting is a decision point instead. A
-setting that adds an emailed link to confirm what a run already did changes the
-outcome, never the Actor's Steps: confirming is a later act of its own. The
-exception is a Step that must name a different alternative of another Variation,
-such as issuing a VAT invoice or a sales tax receipt: that Scenario varies with
-it.
+- **A fact describing the thing acted on is state.** A page's own editor format
+  is read by a `condition` Step or a decision point, even though someone set it.
+- **A choice that changes what an Actor does selects Scenario alternatives** — a
+  Step skipped, added or at another place. Sign-in that starts at the only
+  provider drops the Actor's choice of provider.
+- **A choice that changes only the Product's own Steps, or is made during a run,
+  is a decision point** in one Scenario — unless a Step must then name a
+  different alternative of another Variation, such as issuing a VAT invoice or a
+  sales tax receipt, and that Scenario varies with it.
+- **A choice that changes only the outcome makes separate Scenarios**, each with
+  a `condition` Step reading it: registration that leaves the account
+  unconfirmed.
+- **When two or more choices would each vary or split one Scenario**, each is a
+  decision point instead, so no Scenario needs a set per combination.
 
 A resource that exists only under some alternatives, or only while a setting,
-plan or licence enables it — a guest role a paid plan enables, registration
-while the sign-in method is password, social sign-in
-while a provider is configured — stays an ordinary resource. A Business Rule
-without `permits` applies to it and says so in its lead, naming the Variation
-or the setting.
+plan or licence enables it, is an ordinary resource, mapped even where the
+running edition hides it. Its lead names what it exists under — registration
+exists only while the sign-in method is password — and
+[`businesslens-verify`](./skill-businesslens-verify.md) checks it. No field or
+Rule carries the dependency.
 
 Do not create one for:
 
 | What you see | Model it as |
 | --- | --- |
 | One behavior branching on what it meets — out of stock, payment declined | A `condition` Step or decision point in one Scenario |
-| A value that changes a number, not the resource | Content of the one resource — Strict and Standard refund review are two Rules; a different threshold is not. A setting that switches between a minimum length and a length plus required kinds of character does make two Rules |
+| A value that changes a number, not the resource | Content of the one resource — Strict and Standard refund review are two Rules; a different threshold is not |
 | A thing moving through phases | Entity States |
 | The same Experience on another Interface | A counterpart: same id under each Interface |
 | A visual treatment with the same facts and abilities | References on the one Screen |
-| A flag deciding whether someone may perform an operation | A settings fact read by a permission grant's `when` — see [Business Rules](./business-rules.md) |
+| A setting that changes only who may perform one operation | A settings fact read by a grant's `when` — see [Business Rules](./business-rules.md#grant-keys) |
 | The same resource offered in several languages | `languages` on the Product and Interface — each language is not an alternative |
 | A retired version no client uses | Nothing — the model holds only what is supported |
 
@@ -131,7 +123,8 @@ A Variation lives at `variations/<id>.md`; one with assets expands to
 `variations/<id>/variation.md`. The H1 names the choice and the lead says why
 the alternatives coexist. `## Intent` is optional.
 
-```yaml
+```md [variations/refund-review.md]
+---
 kind: configuration          # experiment | configuration | version
 of: business-rule            # the one type every alternative has
 settings:
@@ -208,5 +201,5 @@ while it is selected, never unconditionally.
   `assignmentMethod`.
 - Version labels are present and unique within the set, ignoring case.
 - Every Entity and fact reference resolves, and no fact is listed twice.
-- An Interface may hold Experiences its audiences alone would not justify when
-  those Experiences are alternatives in a Variation.
+- An Interface may hold Experiences its access and audiences alone would not
+  justify when those Experiences are alternatives in a Variation.

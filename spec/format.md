@@ -202,48 +202,31 @@ contained by `customer-web::storefront::onboarding`, so a Step on the child is
 inside the parent Screen. Authors never repeat the containing Interface,
 Experience, or Screen in another field.
 
-A Capability that is available through an Interface divided into Experiences
-names the intended Experiences explicitly; an undivided Interface names itself.
+**Two conditions decide whether an Interface is divided.** It must hold
+Experiences when either holds, and must not when neither does:
 
-**Whether an Interface is divided is derived, never judged.** An Interface must
-hold Experiences when either of the following is true of it, and must not when
-none is:
+- it serves more than one `access` value, read from who reaches its places:
+  places reached without signing in are `public`, places reached once signed in
+  `authenticated`, and areas only some signed-in roles may enter `restricted`; or
+- its Actors split into groups no Capability available there bridges — more
+  than one connected component in the graph of Actors and Capabilities, an edge
+  wherever a Capability's Scenario Steps name the Actor. Roles that each relate
+  one-to-one to the same Account, an Entity that does not act, are one audience.
 
-- it serves more than one `access` value; or
-- it serves two or more Actor sets whose Capability coverage is disjoint — no
-  Capability available there lists Actors from both sets, counting roles that
-  share an Account as one set.
+An Interface declares no access mode, so `lint` sees the first condition only
+once Experiences exist; the second it checks on every Interface. Two
+Experiences of one Interface with the same `access` share no Actor, unless they
+are alternatives of one Variation: within one access mode, an area only some of
+its Actors enter — an admin-only page beside one editors share — is navigation.
+Sharing one is a `lint` error.
 
-The inputs are `actors` on the Interface, `access` on an Experience, and
-`availability` on each Capability. Both conditions require division. The
-access values an Interface serves are read from who reaches its places, by the
-same rule `access` follows: places reached without signing in are `public`,
-places reached once signed in are `authenticated`, and an area only some
-signed-in roles may enter is `restricted`. An Interface declares no access
-mode, so `lint` sees the first condition only once Experiences exist — it then
-accepts Experiences that differ in `access` — while the second it checks on
-every Interface. An Interface serving one audience through one access mode is
-one coherent context and takes direct Interface availability.
-
-"Disjoint" is read over the whole Interface, not Capability by Capability: the
-Actors split into groups when no Capability available there lists Actors from
-two of them — more than one connected component in the graph of Actors and
-Capabilities, an edge wherever a Capability's Scenario Steps name the Actor.
-Roles that each relate one-to-one to the same Account, an Entity that does not
-act, are joined by it: they are one person's roles, one audience.
-Two Experiences of one Interface with the same `access` must share no Actor,
-unless they are alternatives in a Variation: one access mode is one context, and
-an area only some of its Actors enter is navigation inside it.
-An admin-only Capability beside a shopper-only one does not divide an Interface
-that also offers a Capability both use.
-
-**Counterparts and Variations justify existing Experiences.** An Experience whose name also exists
-under another Interface is the same context on another platform —
-`customer-web::storefront` and `customer-mobile::storefront` — and keeps its
-Experience even where the derivation alone would flatten it, because two views
-of one context must not look unrelated. Both findings are `lint` errors: an
-Interface that must divide and does not, and one that holds Experiences it
-must not, with neither a counterpart nor membership in a valid Variation.
+**Counterparts and Variations justify existing Experiences.** An Experience whose
+name also exists under another Interface is the same context on another
+platform — `customer-web::storefront` and `customer-mobile::storefront` — and
+keeps its Experience even where the conditions alone would flatten it; so does
+an Experience that is an alternative in a Variation, even when audiences and
+access modes coincide. Both findings are `lint` errors: an Interface that must
+divide and does not, and one that holds Experiences it must not.
 
 An Interface holds `experiences/`, or `screens/`, or **both** — the last when a
 Screen is genuinely shared across its Experiences rather than belonging to one.
@@ -261,8 +244,8 @@ Step counts as Scenario coverage for each. `lint` names the Experiences a
 Capability is missing from. A view whose Capabilities differ by Experience is
 not shared: it is two Screens, one under each Experience, which are
 counterparts.
-Contexts are closed to unknown keys. Additional dimensions may be added by a
-future format revision, but Context is not an arbitrary metadata bag.
+
+Contexts are closed to unknown keys; Context is not a metadata bag.
 
 ## Universal conventions
 
@@ -277,12 +260,9 @@ future format revision, but Context is not an arbitrary metadata bag.
   resource has no asset or child namespace.
 
   Coexisting shapes, and an expanded folder missing its `<type>.md`, are `lint`
-  errors: both are states no correct model passes through. An expanded folder
-  that owns nothing yet is a `lint` warning instead. The rule still holds — a
-  Product Report cannot carry that state, because expansion derives each
-  resource's shape from the children it actually owns, so the round trip
-  normalizes the folder back to the compact form. But an author reaches the
-  expanded shape in two steps, and the intermediate step is not a defect.
+  errors. An expanded folder that owns nothing yet is a `lint` warning, since
+  an author reaches the expanded shape in two steps; the report round trip
+  compacts it.
 
 - **ID = the logical path from the collection root.** Behavior-hierarchy ids
   (Capability, Journey, both Scenario types) and cross-cutting ids (Entity,
@@ -300,14 +280,16 @@ future format revision, but Context is not an arbitrary metadata bag.
   Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. A Screen
   nested in a Screen adds one segment per level, so the id says the whole
   placement and containment is a prefix test. Never
-  write `id:` in frontmatter — the filesystem is the id authority.
+  write `id:` in frontmatter — the filesystem is the id authority. The one
+  exception is `product.md`, whose `id:` names the Product Model (it may differ
+  from the repo name) and is limited to 64 characters. Compacting or expanding
+  a resource never changes its logical path or id.
 
   Interfaces, Experiences, and Screens share one place-id namespace. Each
   qualified id must identify exactly one place across all three types. In
   particular, a shared Screen and an Experience under the same Interface must
-  not have the same name: both would resolve to `interface-id::name`, making
-  Contexts and a nested Screen's ownership ambiguous. `lint` rejects the
-  collision and names both files; rename one place and update its references.
+  not have the same name: both would resolve to `interface-id::name`. `lint`
+  rejects the collision and names both files.
 
   **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.** A
   Capability, Capability Scenario, Journey, and Journey Scenario name something
@@ -328,47 +310,29 @@ future format revision, but Context is not an arbitrary metadata bag.
   `update`. `lint` cannot see the Product's screens; review and `verify` hold
   the name to them.
 
-  `lint` checks the verb-noun shape heuristically, as warnings, on the two shapes it can
-  recognise without conjugating English: a behavioural id whose last segment
-  is a nominalisation (`-ing`, `-ment`, `-tion`, …) while no segment is a
-  product verb, and a cross-cutting id whose first segment is a product verb.
-  A segment that names a thing this model declares is read as that thing, not
-  as a verb — `order-line` is a fine Entity id beside an Entity `order`, and
-  `order-management` carries no verb for the same reason.
-
-  This is a rule, not a style. Ids are the format's whole identity mechanism, so
-  two models of one product that name the same behavior differently cannot be
-  diffed, merged, or compared — which is what a catalog of Blueprints requires.
-  `lint` warns on a behavioral id whose first segment is not a verb.
-
-  Two independent mappings of one repository agreed on 95% of the Capabilities
-  they found and shared 29% of the ids: one wrote `install-skills` where the
-  other wrote `install-agent-skills`, one `lint-model` where the other wrote
-  `lint-product-model`. The concepts matched and the nouns did not, so two
-  further rules bind ids to vocabulary the model already declares.
+  Ids are the format's identity mechanism: two models that name the same
+  behavior differently cannot be diffed, merged or compared. `lint` checks the
+  verb-noun shape heuristically, as warnings: a behavioural id whose last
+  segment is a nominalisation (`-ing`, `-ment`, `-tion`, …) while no segment is
+  a product verb. A segment that names a thing this model declares is read as
+  that thing, not as a verb — `order-line` is a fine Entity id beside an Entity
+  `order`, and `order-management` carries no verb for the same reason.
 
   **A behavioral id's noun half names something the model declares.** When the
   noun half is the suffix of an Entity, Domain, or Interface id in the same
   model, use the declared name — `install-agent-skills`, not `install-skills`.
-  `lint` warns otherwise. It only fires where the author has declared the
-  fuller term, so it never invents vocabulary, and stays silent when two
-  declared names share the noun half, which then names their category
-  (`send-message` beside channel and direct messages). Experiences and Screens are
-  places, not the things a behavior acts on, so their names are never
-  suggested: `reset-password` is not told to become a `forgot-password` Screen.
+  `lint` warns otherwise. It stays silent when two declared names share the
+  noun half, which then names their category (`send-message` beside channel and
+  direct messages). Experience and Screen names are never suggested: they are
+  places, not the things a behavior acts on.
 
   **A cross-cutting id never opens with a verb.** Entity, Domain, and Business
-  Rule ids name what something *is* or what must remain true, so they read as
-  nouns and assertions rather than commands: `refunds-apply-only-to-existing-orders`,
-  not `refund-existing-orders`. A single-segment id such as `order` is a noun by
-  construction and is never flagged. `lint` flags an id whose first word is a
-  verb followed by something the model declares — `cancel-unpaid-orders` with
-  an Order Entity — and leaves compound nouns whose first word can be a verb,
-  such as `pull-request` or `sign-in`, alone.
- The one
-  exception is `product.md`, whose `id:` names the Product Model (it may differ
-  from the repo name) and is limited to 64 characters. Compacting or expanding
-  a resource never changes this logical path or id.
+  Rule ids name what something *is* or what must remain true:
+  `refunds-apply-only-to-existing-orders`, not `refund-existing-orders`. A
+  single-segment id such as `order` is never flagged. `lint` warns on an id
+  whose first word is a verb followed by something the model declares —
+  `cancel-unpaid-orders` with an Order Entity — and leaves compound nouns such
+  as `pull-request` or `sign-in` alone.
 
   Experience and Screen names repeat across Interfaces on purpose:
   `personal-library` on web and on mobile pursue the same goal and are different
@@ -398,11 +362,8 @@ future format revision, but Context is not an arbitrary metadata bag.
 
   `file` is relative to the expanded resource folder and cannot escape it.
   Metadata entries are unique and must name an existing asset. `title` is
-  optional, and there is no other key: a capture of a view in one condition —
-  empty, unauthorized, validation failed — attaches to the Scenario or Edge
-  case that reaches that condition, through its `references`, not to the
-  Screen under a state label. Unlisted assets remain valid so external tools
-  can write captures without editing BusinessLens frontmatter.
+  optional, and there is no other key. Unlisted assets remain valid so external
+  tools can write captures without editing BusinessLens frontmatter.
 - **H1 = title/name.** The first `# Heading` in the body is the resource's
   title (domains call it `name`) and is the file's only H1. Lead and
   section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
@@ -468,83 +429,57 @@ Stores choose how strictly refunds are reviewed; both policies are supported.
 The H1 names the choice and the lead says why the alternatives coexist. `## Intent`
 is optional; other H2 sections are supporting content.
 
-**Vary the smallest resource that fully contains the difference.** One Step
-that differs makes two Scenarios of one owner the alternatives, not two
-Capabilities; a different ability contract or availability makes the
-Capabilities vary; a different place makes Screens or Experiences vary; a
-difference in the facts or states the Product keeps makes Entities vary. A
-setting that switches between two statements of one constraint, such as a
-minimum length or a length plus required kinds of character, makes the Business
-Rules vary; a value one statement reads stays content of that Rule. The
-alternatives of a Scenario Variation share their Capability or Journey, and
+**Vary the smallest resource that fully contains the difference.** Two
+Scenarios of one owner when what an Actor does differs; Capabilities when the
+contract differs — who may do it, its verb — or where it is offered; Screens or
+Experiences when the place differs; Entities when the facts or States kept
+differ; Business Rules when a setting switches between two statements of one
+constraint, while a value one statement reads stays content of that Rule. The
+alternatives of a Scenario Variation share their Capability or Journey;
 alternatives spread over several owners are a `lint` error. A Step has no id and
-is never an alternative: the Scenario is the smallest resource that holds one.
+is never an alternative.
 
 Steps, Screens and Rules name concrete resources, so a varying Entity carries
 into what touches it: a Step that creates one alternative sits in a Scenario
-selected the same way, usually a Scenario Variation with the same selection.
-Vary an Entity only when the thing itself differs; when only the path it takes
-differs, the Scenarios vary and the Entity keeps every State.
+selected the same way. When only the path a thing takes differs, the Scenarios
+vary and the Entity keeps every State.
 
 **What selects decides whether it is a Variation.** A Variation chooses by a
 fact that exists to choose — a setting, an experiment assignment, a version
-discriminator — or by the deployment, fixed before the behavior starts. A fact
-that describes the thing the behavior acts on — a page's own editor format, an
-order's own delivery option — is state the behavior meets, and a `condition`
-Step or a decision point reads it, even when an earlier Step or an
-administrator set it.
+discriminator — or by the deployment, fixed before the behavior starts:
 
-**Scenarios vary only when what an Actor does differs, and one choice decides
-it, even when several settings combine to make that choice.** A setting that
-changes an Actor's Steps — one skipped, one added, a different place or input —
-selects Scenario alternatives: sign-in that starts at the only provider
-automatically drops the Actor's choice of provider. A choice the Actor makes on
-a page outside the product, such as picking a connector at an identity provider,
-is still an Actor Step. When two or more settings would each vary or split the
-same Scenario, whether they change the Actor's Steps or the outcome — a captcha
-and a provider password on one registration — none of them makes a Variation;
-each is a decision point, so no Scenario needs a set per combination. A branch
-that ends in a refusal is still its own Scenario with a `condition` Step, and
-still counts as its setting splitting the Scenario. A setting
-that changes only the Product's own Steps — whether group sync replaces a User's
-Roles or adds to them — is a decision point in one Scenario. The one exception
-is a Step that must name a different alternative of another Variation, which
-varies with it: issuing a VAT invoice or a sales tax receipt. When a
-Product-only setting changes the outcome — registration that requires email
-confirmation leaves the account inactive, whose confirming is a Capability of
-its own; an unknown social account is registered or refused — the branches are
-separate Scenarios, each with a `condition` Step reading the setting, and still
-no Variation. If another setting also varies or splits that Scenario, each
-setting is a decision point instead. A setting that adds an emailed link to
-confirm what a run already did changes the outcome, never the Actor's Steps:
-confirming is a later act of its own. A decision point is also any choice or
-branch made during one run, and the unconfirmed account that sign-in later meets
-is state.
+- A fact describing the thing acted on — a page's own editor format — is state;
+  a `condition` Step or decision point reads it.
+- A choice that changes what an Actor does — a Step skipped, added, or at
+  another place — selects Scenario alternatives: sign-in that starts at the only
+  provider drops the Actor's choice of provider.
+- A choice that changes only the Product's own Steps, and any choice made during
+  a run, is a decision point in one Scenario — unless a Step must name a
+  different alternative of another Variation, which then varies with it
+  (issuing a VAT invoice or a sales tax receipt).
+- A choice that changes only the outcome makes separate Scenarios, each with a
+  `condition` Step reading it: registration that leaves the account unconfirmed.
+- When two or more choices would each vary or split one Scenario, each is a
+  decision point instead, so no Scenario needs a set per combination.
 
 **A resource that exists only under some alternatives, or only while a setting,
-plan or licence enables it,** stays an ordinary resource — a role or feature
-the code supports is mapped even where the running edition hides it. A Business Rule without `permits` that
-applies to it states the dependency in its lead, naming the Variation and the
-alternatives it exists under, or the enabling setting: registration exists only
-while the sign-in method is password; social sign-in exists only while a
-provider is configured. There is no field for it, because the Rule already says
-it and `verify` checks it.
+plan or licence enables it,** stays an ordinary resource, mapped even where the
+running edition hides it. Its lead names what it exists under — registration
+exists only while the sign-in method is password — and `verify` checks it. No
+field or Rule carries the dependency.
 
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, spelled as that type's ordinary ids — a
 Business Rule's id, or a Screen's qualified `interface::experience::screen`.
 Every entry resolves. A resource belongs to at most one Variation. No member
-file names its set, and no field on a member repeats selection. Because `of` is
-written once, a set of mixed types cannot be written. The list is a set: its
-order carries no priority, default or allocation, and the report orders it by
-id.
+file names its set, and no field on a member repeats selection. The list is a
+set: its order carries no priority, default or allocation, and the report orders
+it by id. A set left with one alternative is removed.
 
 **Each selection field has exactly one level.** The set carries the mechanism,
 `takesEffect` and `stability`; each alternative carries `selectedWhen` and, on a
-Version, `label`. Nothing is inherited or overridden, because no field exists at
-both levels. All text fields are non-empty Markdown fragments without H1/H2.
-A required field the evidence does not settle says so rather than inventing an
-answer, and Coverage records the gap.
+Version, `label`. Nothing is inherited or overridden. All text fields are
+non-empty Markdown fragments without H1/H2.
 
 | Field | Level | Meaning |
 | --- | --- | --- |
@@ -560,16 +495,10 @@ resolve to an Entity and one of its Information kept facts.
 | --- | --- | --- |
 | `experiment` | Required `assignmentUnit`: `{ entity: <id> }` for an existing Entity, otherwise `{ description: <non-empty explanation> }` for an unmodeled unit such as a session. Required `assignmentMethod`. Optional `assignmentFact` (a kept assignment fact) and `allocation` (a known allocation promise). | — |
 | `configuration` | Optional non-empty `settings`: distinct fact references that choose between the alternatives. A fact that only parameterizes one alternative's behavior does not belong here. When selection uses unrecorded context, omit it and name that context in `selectedWhen`. | — |
-| `version` | Optional `discriminator`: the kept fact identifying the selected version. Header or path selection is explained in `selectedWhen`; do not invent an Entity to hold it. | Required `label`, unique across the set ignoring case. |
+| `version` | Optional `discriminator`: the kept fact identifying the selected version. Header or path selection is explained in `selectedWhen`. | Required `label`, unique across the set ignoring case. |
 
-Use a reference whenever the relevant Entity or fact is already modeled. For
-Experiment, the assignment unit is the thing receiving the choice; the
-assignment fact may be held by a different Entity. Neither field asserts an
-instance-level relationship. Do not create Entities solely to populate these
-fields. Assignment units need not act. Existing Actor relationships and
-permission Rules continue to answer who may use a resource; a Variation neither
-duplicates nor grants permission.
-
+For an Experiment, the assignment unit is the thing receiving the choice; the
+assignment fact may be held by a different Entity, and the unit need not act.
 The subtype states why alternatives coexist: Experiment evaluates outcomes;
 Configuration selects through a setting or operating context; Version keeps
 contracts or forms live together. Versions selected by a setting remain
@@ -578,26 +507,21 @@ Version; experiments enabled by a setting remain Experiment.
 **A Variation is a relation, never containment.** Folders, Domain classification,
 Experience ownership, Screen nesting and Scenario parents stay authoritative.
 Ordinary Rule targets, Steps and Contexts reference concrete resources and never
-acquire "all alternatives" meaning. Membership justifies Experiences that would
-otherwise flatten (see Availability).
+acquire "all alternatives" meaning. A Variation neither duplicates nor grants
+permission.
 
-A Business Rule that is an alternative applies only under its `selectedWhen`.
-Its grants and constraints govern only then; it is never unconditional policy.
-A grant's `when` still conditions an Entity operation; it cannot select a whole
-Rule. `lint` validates structure and references but does not evaluate
-applicability, so it does not hold an alternative permission Rule's grants
-against Steps and Screens: it cannot tell which alternative a Step runs under.
-`verify` does.
+A Business Rule that is an alternative applies only under its `selectedWhen`;
+it is never unconditional policy. Rules vary only when a setting switches
+between whole policies — refund review that is Standard or Strict. A setting
+that changes only who may perform one operation is a grant's `when` on one
+Rule.
 
-All alternatives are currently supported. None is a default, parent or
+All alternatives are currently supported; none is a default, parent or
 historical version. Do not create alternatives for every parameter value,
-Scenario outcome or visual treatment. Deleting an alternative leaves a dangling
-entry, an ordinary `lint` error; a set left with one alternative is removed, and
-still-relevant meaning moves into ordinary content.
-
-Do not invent settings, allocations, defaults or timing: an optional field the
-evidence does not establish is omitted, and a required one says so. `lint`
-checks structure and references, never whether conditions are exhaustive.
+Scenario outcome or visual treatment, and do not invent settings, allocations,
+defaults or timing: an optional field the evidence does not establish is
+omitted, a required one says so, and Coverage records the gap. `lint` checks
+structure and references, never whether conditions are exhaustive.
 
 ## References
 
@@ -646,12 +570,11 @@ file set and warns when the path is missing. HTTP(S) targets are syntax-checked
 but never fetched. Absolute filesystem paths, `file:` URLs, other URL schemes,
 and backslash paths are invalid.
 
-There is no `state` key. A capture shows a view in one condition — empty,
-unauthorized, validation failed, completed — and that condition is a Step, an
-Edge case, or a Rule outcome, so the capture attaches to the Scenario that
-reaches it. A Screen's own `references` show the view as such. Themes are
-design, so a light and a dark capture of one condition are two references on
-the same resource, told apart by `title`.
+No reference or asset carries a `state`. A capture of a view in one condition
+— empty, unauthorized, validation failed, completed — attaches to the Scenario
+that reaches that condition; a Screen's own `references` show the view as
+such. A light and a dark capture of one condition are two references on the
+same resource, told apart by `title`.
 
 References connect the self-contained Product Model to material maintained
 outside it. A model may contain no references.
@@ -718,20 +641,19 @@ its full description.
 
 `languages` is an optional unique list of the language tags the Product
 serves, each matching `^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$` — `en`, `de-DE`,
-`pt-BR`. A malformed tag is a `lint` error. A language is product, not design:
-a redesign cannot drop German. Tags are well-formed, so `verify` can hold them
-against the repository's i18n configuration. An Interface may narrow the
-list; Experiences and Screens never carry one, because a language is a fact
-about a surface, not about a context or a view inside it.
+`pt-BR`. A malformed tag is a `lint` error. A language is product, not design;
+`verify` holds the tags against the repository's i18n configuration. An
+Interface may narrow the list; Experiences and Screens never carry one.
 
-`languages` names the languages the Product's interfaces are delivered in. Two
-neighbouring meanings are ordinary content, not this field: content the
+`languages` names the languages the Product's interfaces are delivered in.
+Neighbouring meanings are ordinary content, not this field: content the
 Product keeps in several languages is an Entity fact (*Name and description —
-in each language the store sells in*), and translation work is Capabilities
-when the Product manages it; how a language is chosen for someone — a saved
-preference, the device locale, the address — is a kept fact such as *Preferred
-language* and the Steps that set and read it. Neither is a Variation: each
-language is the same resource, not an alternative form of it.
+in each language the store sells in*); translation work is Capabilities when
+the Product manages it; how a language is chosen for someone — a saved
+preference, the device locale — is a kept fact such as *Preferred language*
+and the Steps that set and read it. None is a Variation: each language is the
+same resource, not an alternative form of it.
+
 Product `limitations` are deliberate constraints of the Product; gaps and
 uncertainty in the model belong in [`coverage.md`](#coveragemd).
 
@@ -745,10 +667,8 @@ contain active content, event handlers, embedded documents, imports, or network
 references. It is rendered only as an image and is not embedded in the Product
 Report. Public Blueprints require it; general local Product Models may omit it.
 
-General Product Models may omit this metadata. A Product Report always carries
-the fields, using the full description as the summary fallback and `null` or an
-empty list for omitted optional values. The public Blueprint publication
-profile additionally requires a category, at least one tag, at least one
+General Product Models may omit this metadata. The public Blueprint publication
+profile requires a category, at least one tag, at least one
 author, a license, and `logo.svg`. There is no separate Blueprint manifest.
 
 ### `taxonomies.yaml`
@@ -813,13 +733,11 @@ not a key: that is what `type` already says. On an Experience or a Screen the ke
 names the containing Interface's id, unchanged. One field,
 one rule per resource type, both checked by `lint`. H1 and lead
 description are required; `## Intent` is optional. An Interface has no
-access mode or exit contract.
+access mode.
 
-**There is no `## Capability boundary`**, and one that is still authored is a
-`lint` error naming the resource type. `availability` on each Capability is
-already the positive claim of what an Interface offers, and a prose boundary
-beside it is a second authority that can disagree with the first. What an
-Interface does not offer is what no Capability is available on.
+**`## Capability boundary` is a `lint` error** on an Interface, an Experience
+and a Screen. `availability` on each Capability is the positive claim of what a
+surface offers; what it does not offer is what no Capability is available on.
 
 `languages` is optional and, when present, is a unique list of language tags
 that is a subset of the Product's `languages`; an Interface listing languages
@@ -833,18 +751,12 @@ Screen path relative to this Interface — `catalog`, or
 `library::by-source` for a nested Screen — and must resolve to a Screen
 whose nearest Interface-or-Experience container is this Interface: on an
 undivided Interface any of its Screens; on a divided Interface only shared
-Screens, those beside `experiences/`, and their descendants. A Screen inside a
-restricted Experience cannot be reachable from a public one, so an entry that
-names one is a `lint` error. Entries are unique, and **order carries no
-meaning**: `lint` ignores it, and a report sorts these Screens as it sorts
-everything else. `navigation` is **structure, not a relation**, in the same
-sense as folder containment: it states that a Screen is always reachable
-inside its container, without asserting a transition. It therefore creates no
-relation and narrows none, which keeps the rule
-that an authored list only ever narrows a derived relation. It is the one
-thing a Step cannot say — a Step says where behavior moves, not what is
-reachable from everywhere — and the only navigation the model authors: menus,
-back links, route trees, and the order of navigation items are design.
+Screens, those beside `experiences/`, and their descendants. Entries are
+unique, and **order carries no meaning**. `navigation` is **structure, not a
+relation**, like folder containment: it states that a Screen is always
+reachable inside its container, asserts no transition, and creates or narrows
+no relation. It is the only navigation the model authors: menus, back links,
+route trees, and the order of navigation items are design.
 
 ### Outbound dependencies
 
@@ -902,26 +814,16 @@ Where authorized operators manage the store and its orders.
 ```
 
 `actors` is a non-empty list of Entities that `acts` — who uses the Experience —
-and every one must be supported by the owning Interface. `access` is required,
-and it is the most open the context can be. A setting that closes it — content
-public only while the store allows guests — is a grant's `when` on the
-operations it restricts; it never justifies an Experience of its own. A setting
-that opens it, such as anonymous access, is the same: access follows who is
-there. People not signed in, including anonymous visitors and wherever people
-sign in, are one public context; people signed in are one authenticated context,
-and the areas only some of their roles may enter, such as administration, one
-restricted context. Who is there also names the Actor: a Step at a place in a
-public context names the Actor who is not signed in — someone accepting an
-invitation, or any role holder before signing in, is that Actor until signed
-in — and a Step that ends a session, such as signing out or deleting one's own
-account, stays where the session was, never on the public page the person is
-sent to. Optional `entryPoints` key the
-owning Interface only. H1 and lead description are required; `## Intent` is
-optional. There is no `## Capability boundary`, for the reason given on the
-Interface, and one still authored is a `lint` error. There is no `exit` field
-and no `interfaces` field — the path names
-the Interface. An Interface with one undivided usage context does not need a
-ceremonial Experience.
+and every one must be supported by the owning Interface. `access` is required.
+People not signed in, including anonymous visitors and wherever people sign in,
+are one public context; people signed in are one authenticated context, and the
+areas only some of their roles may enter, such as administration, one
+restricted context. `access` is the most open the context can be: a setting
+that closes it — content public only while the store allows guests — or opens
+it, such as anonymous access, is a grant's `when` on the operations it
+restricts and never justifies an Experience of its own. Optional `entryPoints`
+key the owning Interface only. H1 and lead description are required;
+`## Intent` is optional. The path names the Interface.
 
 Experiences form an exhaustive, potentially overlapping cover of the Interface
 that holds them. The union of their Actors must equal that Interface's Actor
@@ -931,15 +833,7 @@ Experiences.
 `navigation` is the Interface's field, relative to the Experience: each entry
 is a path to one of this Experience's own Screens, nested ones by their child
 path — `order-console`, `library::by-source` — reachable from every place
-inside the Experience. The same rules hold: entries resolve or are a `lint`
-error, they are unique, order carries no meaning, and the list is structure
-rather than a relation.
-
-#### Experiences in a Variation
-
-An Experience that is an alternative in a [Variation](#variations) justifies its
-Interface holding Experiences even when audiences and access modes coincide. A
-set can span Interfaces; ownership remains the file path.
+inside the Experience, under the Interface's rules.
 
 ### Availability
 
@@ -962,17 +856,13 @@ unless the Screen is shared by every Experience of the Interface, which puts it
 beside `experiences/`. A Screen an Actor reaches both before and after signing
 in exists in each Experience that reaches it.
 
-A **Screen does not declare availability** — its path is its placement.
-Scenarios and Journeys do not declare availability either. A Scenario Step
-names one concrete Context per route, and the Context's `place` is its resolved
-Interface, Experience, or Screen. Business Rules use the same Context object as
-a selector.
+Screens, Scenarios and Journeys declare no availability: a Screen's path is its
+placement, and a Scenario Step names one concrete Context per route.
 
 ### Where the model stops
 
 **The model says what an Actor can reach, see, do and trigger at each place. It
-never says how that looks or is built.** The test, which `docs/` and the
-rubrics state the same way:
+never says how that looks or is built.** The test:
 
 > Rebuild a view with a different component library, layout, typography,
 > colors, spacing, icons, motion and copy. Everything that would still have to
@@ -1034,34 +924,29 @@ Optional `colorSlot` and `references` frontmatter. H1 = name, lead paragraph =
 description. `## Boundary` is required and must state both what the region
 covers **and** something it explicitly does not own; a Boundary that only
 asserts inclusion is a label, not a region, and is a `lint` error. A Domain
-naming fewer than two Capabilities is a `lint` warning — one Capability is not a
-region, and splitting a Capability neither creates nor removes a Domain. The
-entire Domain collection is optional to `lint`. A map creates Domains
-automatically from the Product's own sections — the areas its navigation,
+naming fewer than two Capabilities is a `lint` warning. The entire Domain
+collection is optional to `lint`.
+
+**Domains follow the Product's own sections** — the areas its navigation,
 settings and administration group things under — one per section holding two
 or more Capabilities, named in the Product's words. The section is the finest
 navigation level that still holds two or more Capabilities; a parent menu is a
 section only when none of its direct children is. A Capability no section
-reaches, such as signing in or one only an emailed link
-or a schedule starts, joins the section whose Capabilities change the same
-Entities, or has no Domain when more than one section or none does; one alone on
-a page beside a sibling section has none either. A Capability several sections
-reach — a document opened from Home, Recent and its collection — has no Domain,
-and nothing that is not a section becomes one: there is no Documents Domain for
-the Capabilities that leaves without one. A map never writes a Domain of one
-Capability. For a Product planned before its code, the
+reaches, such as signing in or one only an emailed link or a schedule starts,
+joins the section whose Capabilities change the same Entities, or has no Domain
+when more than one section or none does; one alone on a page beside a sibling
+section has none either. A Capability several sections reach — a document
+opened from Home, Recent and its collection — has no Domain, and nothing that is
+not a section becomes a Domain. For a Product planned before its code, the
 sections are the planned ones. Domains an author has written or regrouped are
-the author's: a map adds new Capabilities to them and never re-cuts, merges or
-renames them.
+the author's: mapping adds new Capabilities to them and never re-cuts, merges
+or renames them.
 
-**Domain is an axis, not a level.** It classifies members of both the Interface →
-Experience → Screen hierarchy and the behavior hierarchy, so it neither contains
-nor is contained by anything.
-`domain` on a Capability and on an Entity are the only *authored* Domain edges
-in the model; every other Domain relation is derived. A Screen, Experience or
-Journey is about the Domains its Capabilities are about, and computing that is
-more reliable than asking an author to restate it — a second authority can
-disagree with the first. Only Capabilities count toward the two-Capability
+**Domain is an axis, not a level.** It classifies members of both hierarchies,
+so it neither contains nor is contained by anything. `domain` on a Capability
+and on an Entity are the only *authored* Domain edges; every other Domain
+relation is derived — a Screen, Experience or Journey is about the Domains its
+Capabilities are about. Only Capabilities count toward the two-Capability
 threshold: an Entity's `domain` classifies the thing, it does not make a
 region.
 
@@ -1209,8 +1094,7 @@ The processor that posts settlement results back to the Product.
 **At least one of `## Information kept`, `## States`, and `acts` must be
 present.** A thing may have information and no lifecycle worth naming, a
 lifecycle with almost nothing kept about it, or — a payment gateway — nothing
-kept at all and a reason to exist because it acts. Requiring both of the first
-two is what produced an earlier arbitrary two-state threshold.
+kept at all and a reason to exist because it acts.
 
 **An Entity that acts.** `acts` is optional and, when present, is `external` or
 `internal`, relative to the Product boundary: whether the thing acts
@@ -1242,7 +1126,7 @@ The third clause is what bounds *privilege*. **A privilege that exists only in
 code is authorization, not product meaning**, so *service X may cancel orders,
 service Y may not* is deliberately unsayable. If two roles have the same goals
 and permissions, they are one Entity. A thing that starts acting gains one
-field; there is no file move, no id change, and no migration.
+field and keeps its file and id.
 
 An external system acts only when it **initiates**. A system the Product calls
 out to is a dependency of the Capability that calls it: it has no goal inside
@@ -1298,25 +1182,17 @@ relations:
                                    # and an Item comes from exactly one Source
 ```
 
-**Both ends, because one end is not a relationship.** `many` alone says a Source
-publishes many Items and leaves unanswered whether an Item may come from two
-feeds — which is a product decision, not a storage detail. *Can I save this
-article into two collections* has an answer, and a single end cannot hold it. An
-author who needs the second end without a place to put it writes the same
-relationship twice, facing itself, which is exactly what the one-sided rule below
-exists to prevent.
+Both ends are stated because whether an Item may come from two feeds is a
+product decision a single end cannot hold.
 
 `cardinality` is `one-to-one`, `one-to-many`, or `many-to-many`.
 **`many-to-one` does not exist**: declare that relationship from the other
-Entity, where it reads `one-to-many`. Two authors cannot then encode one
-`1:N` from opposite sides, and the vocabulary shrinks instead of growing.
+Entity, where it reads `one-to-many`, so one `1:N` has one encoding.
 
-**A relation is declared on one side only** — the inverse is derived, so the two
-sides cannot disagree. Two Entities that declare relations *at each other* are a
-`lint` warning naming both files: with both ends stated that is the same
-relationship written twice, and the two can now contradict each other outright.
-It stays a warning because two genuinely different relationships between one pair
-are legal.
+**A relation is declared on one side only** — the inverse is derived. Two
+Entities that declare relations *at each other* are a `lint` warning naming
+both files; it stays a warning because two genuinely different relationships
+between one pair are legal.
 
 A relation may target this same Entity — a Comment replies to another Comment, a
 Task blocks another Task — and only a duplicate edge is invalid. A relation
@@ -1329,15 +1205,9 @@ first listed state is the one a thing starts in. **The Entity declares its
 states and nothing about the moves between them.** The lifecycle is composed
 from Scenario Steps: a Step's `entities` entry says which Entity it creates,
 changes or removes, and from and to which state, and the report draws the
-machine from every Scenario in the model. There is no `transitions` key — one
-that is still authored is a `lint` error naming the Step keys that replaced it —
-and `## Transitions` and `## Relations` are invalid sections, exactly as
-`## Steps` is invalid on a Scenario: the frontmatter and the Steps are the one
-authority, and a section beside them is a second one that can disagree.
-
-A per-Entity list could never express a combined lifecycle — *settling a payment
-confirms an Order and creates a Shipment* is one act on two things, which only a
-Step can say — and it stated a second time what a Step already states.
+machine from every Scenario in the model. A `transitions` key is a `lint` error
+pointing to the Step `entities` entry, and `## Transitions` and `## Relations`
+are invalid sections: the frontmatter and the Steps are the one authority.
 
 `lint` composes every Scenario and reports what the composition is missing:
 
@@ -1351,11 +1221,6 @@ Step can say — and it stated a second time what a Step already states.
   Entity whose instances pre-exist the model.
 
 `domain` is optional and single. H1 = name and the lead paragraph = description.
-
-No asset or `references` entry carries `state`, here or on any other resource.
-An Entity's states are lifecycle, and no artifact depicts "Confirmed" — it
-depicts the view a Scenario reaches after confirming, and the Reference
-attaches to that Scenario.
 
 **No orphans.** An Entity must be changed by a Step, presented by a Screen,
 named as an actor — on a Step, an Interface, an Experience, a Journey, or a
@@ -1403,77 +1268,49 @@ failure.
 
 **A Capability declares nothing about Entities.** What it changes is what the
 Steps of its Scenarios say it changes, and a report derives the aggregate —
-*Order · creates → Pending · changes → Confirmed · 3 Scenarios*. A file still
-carrying `entities` is refused with a message naming the replacement, the
-`entities` list on each Step. A Capability that only presents or inspects a
-thing has Steps that `reads` it, and the Screen that shows it carries
-`entities`.
+*Order · creates → Pending · changes → Confirmed · 3 Scenarios*. An `entities`
+key on a Capability is a `lint` error pointing to the Step `entities` list. A
+Capability that only presents or inspects a thing has Steps that `reads` it,
+and the Screen that shows it carries `entities`.
 
-`availability` is required and needs at least one valid
-Context. Its place is
-an undivided Interface or one Experience of a divided Interface. `domain` is
-optional and, when present, names exactly one Domain. Actors are expressed by
-Capability Scenario, Journey, Journey Scenario, Actor-bound Interface, and
-optional Experience relations. Business Rules own their applicability, so Capability
-files do not duplicate Rule IDs. Capability Scenario files own the acceptance
-relation, so Capability files do not duplicate Scenario IDs. A Capability
-Scenario is the only direct acceptance coverage for a Capability; Journey
-Scenario use does not satisfy that coverage rule. Missing coverage is always an
-error.
+`availability` is required and needs at least one Context, each naming an
+undivided Interface or one Experience of a divided Interface. `domain` is
+optional and, when present, names exactly one Domain. A Capability lists no
+Actors, Rules or Scenarios: Steps, Business Rules and Scenario folders own
+those relations. A Capability Scenario is the only direct acceptance coverage
+for a Capability; Journey Scenario use does not satisfy it. Missing coverage is
+always an error.
 
 A Capability is the smallest durable behavior that remains independently
 meaningful, not necessarily the smallest UI action or code operation. Capability
-Scenarios vary the conditions, route, or observable result of that one behavior;
-they must not act as hidden sub-capabilities. When supposed Scenarios instead
-describe independently meaningful verbs with different purposes, outcomes,
-permissions, availability, or Business Rules, split them into Capabilities. For
-example, `manage-repositories` is too broad when its cases are actually create,
-configure, archive, and delete behaviors with distinct contracts. Splitting it
-neither creates nor removes a Domain: those four Capabilities were already about
-the Repositories subject region before the split, and whether they share a
-Domain depends on the Product's sections. The split runs the other way too:
-ordinary filtering, sorting and searching within a browsing ability belong
-to its Scenarios. Apply the same split test when their purpose, permissions,
-availability or outcomes form an independently meaningful contract; the result
-set alone does not decide it.
+Scenarios vary the conditions, route, or observable result of that one
+behavior; they never hide sub-capabilities.
 
 **The split test is the contract.** Parts of an ability are separate
-Capabilities when they differ in who may do them (a permission of their own),
-where they are offered (availability), or in verb. Neither a different Actor —
-the same Capability is offered in every Experience it is used from — nor a
-Business Rule that only constrains one part — a time limit, an invariant —
-splits it: a permission of its own means a separate grant of who may do it.
-Parts that differ only in which grant applies, told apart by a fact of the thing
-they act on — a channel's privacy, whether a message is the Actor's own — are
-one Capability whose grants carry that condition in `when`. Ways of doing one
-verb that share all of those are Scenarios of one Capability, even when each
-creates a different Entity: adding an authenticator app or backup codes as a
-second factor is one Capability. Nor does the State it starts from split one:
-restoring a document from the archive or from the trash is one Capability with
-a Scenario for each. Ways a setting selects between follow the
-Variation rules instead: a sign-in method the deployment selects makes one
-Capability per method, while methods that coexist, the Actor choosing one at
-sign-in, are Scenarios of one. A method a setting adds beside the others still
-coexists with them: it is a Scenario of that Capability, and a Business Rule
-without grants says it exists only while enabled. The Steps of one run are one
-Capability, including a link or code the run sends when the run has no outcome
-for the Actor without it: requesting a password reset and choosing the new
-password are one, and resending the link is a Scenario of it. A later act on
-something a run already produced — confirming the email of an account that
-exists — is its own Capability. Settings in one section of the Product's
-navigation are one Capability however the screen saves them — each field on its
-own or one Save button — and settings in different sections are separate
-Capabilities: all notification settings are one. Settings are facts of one
-thing; entries of a list, such as permission entries or members, are things of
-their own, each added, changed and removed by its own Capability, even inside a
-settings section or through an API call that replaces the whole list. The same
-verb reached from another context is the same Capability, available there too:
-changing a password the Product requires at sign-in is Change password, joined
-to sign-in by a Journey. A continuation shared by several Capabilities —
-entering a second factor after any sign-in method — is its own Capability: the
-Capabilities it continues end their Scenarios at the hand-off and say so in
-their Outcome, the shared one starts its Scenarios from that state, and a
-Journey joins them, because no Capability Scenario names another Capability.
+Capabilities when they differ in who may do them (a permission of their own: a
+separate grant), where they are offered (availability), or in verb —
+`manage-repositories` is too broad when its cases are create, configure,
+archive and delete. Nothing else splits one: not a different Actor, since one
+Capability is offered in every Experience it is used from; not a Business Rule
+that only constrains one part, such as a time limit; not which grant applies,
+told apart by a fact of the thing acted on, which is a grant's `when`; not the
+Entity a way creates or the State it starts from — adding an authenticator app
+or backup codes, restoring from the archive or the trash, are Scenarios of one;
+and not filtering, sorting or searching within a browsing ability. Ways a
+setting or the deployment selects are Scenario alternatives of one Capability
+(see Variations). Splitting neither creates nor removes a Domain.
+
+The Steps of one run are one Capability, including a link or code the run sends
+when it has no outcome for the Actor without it — requesting a password reset
+and choosing the new password. A later act on something a run produced —
+confirming the email of an existing account — is its own. Settings in one
+section of the Product's navigation are one Capability however the screen saves
+them, and different sections are separate Capabilities; entries of a list, such
+as permission entries or members, are things of their own, each added, changed
+and removed by its own Capability. The same verb reached from another context is
+the same Capability, available there too. A continuation several Capabilities
+share — a second factor after any sign-in method — is its own Capability: the
+ones it continues end their Scenarios at the hand-off, and a Journey joins them.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
@@ -1621,23 +1458,22 @@ visibility — and also selects Screens, below; with `creates`, `changes` or
 such as delivery details editable while an order is unpaid. `contexts` scopes
 the Rule to existing places. For a Rule without
 `permits`, each selected place must be a Screen presenting the Entity (and at
-least one governed fact when fact-scoped), or an ancestor of one. Permission
-Rules need only resolvable Contexts: neither a grant nor a prohibition requires
-a matching operation or Screen disclosure to exist.
+least one governed fact when fact-scoped), or an ancestor of one. A permission
+Rule needs only to resolve: neither a grant nor a prohibition requires a
+matching operation, Screen disclosure or fact use to exist, and a prohibition
+never needs an example of the prohibited behavior.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
 own places — the union of the places its contextualized Steps name — and a
-place-scoped Rule selects it there. Reading such a Step as happening nowhere
-would let deleting a key sidestep an authorization claim, and a claim a deletion
-escapes is not a claim.
+place-scoped Rule selects it there.
 
 **The minimal selector is canonical.** A `from` that every Step landing in `to`
 already leaves from is a `lint` warning, as is a `when` state condition every
 selected Step already satisfies. Refunds only ever leave Confirmed, so
 `{ changes, to: Refunded }` is the Rule and `{ changes, from: Confirmed, to:
-Refunded }` is flagged. The minimal form is also the safe one: a refund added
-later from Pending is governed by the first and silently open under the second.
+Refunded }` is flagged: a refund added later from Pending would silently escape
+the second.
 
 **`permits`** is optional and has three states:
 
@@ -1787,8 +1623,8 @@ encoding, and each case has exactly one:
 
 | What differs | How it is modeled |
 | --- | --- |
-| Whether someone may perform an Entity operation | A settings fact read by a permission grant's `when`. One Rule; no Variation |
-| Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations) of the smallest resource containing the difference: Configuration, Experiment or Version. An A/B test whose arms differ in one Step is an Experiment of two Scenarios |
+| Only who may perform one Entity operation | A settings fact read by a permission grant's `when`. One Rule; no Variation |
+| Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations) of the smallest resource containing the difference: Configuration, Experiment or Version. Business Rules vary only between whole policies. An A/B test whose arms differ in one Step is an Experiment of two Scenarios |
 | Only how something looks | Design: `visual` References with `role: intent`. Not modeled |
 | A branch on state the behavior meets — out of stock, payment declined | Scenario conditions and outcomes; a Business Rule states constraints shared by several behaviors |
 
@@ -1798,29 +1634,24 @@ The experiment engine — allocation, metrics, results — is outside the model
 unless running experiments is the Product's purpose, when it is ordinary
 Entities and Capabilities.
 
-**A modelled product's own RBAC** is product behaviour, not this layer. A fixed,
-shipped set of roles is a closed vocabulary: Entities that act, and
-`permits.actors` works directly. User-defined roles created at runtime are
-instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
-and this layer constrains who may create one — never one Entity per customer
-role. Roles operators define in configuration, outside the product, are modeled
-the same way: one Role Entity (its name, permissions and members) granted
-through `configuredBy`, with no Capability that creates it. A configuration that
-also grants directly to people stays its own Entity, and the people who hold
-configured roles are one acting Entity. Each shipped role stays an Entity that
-acts even where configuration also defines roles or assigns people to them; one
-held per container, such as an organization or a project, is held through a
-membership Entity that does not act, whose Role fact names the role. A relation
-that holds whatever role a person has — the sender of a message — is declared to
-each role Entity that can hold it, and ownership is one `related` grant per
-role: *the sender, if a Member*, *the sender, if a Moderator*. Facts that belong
-to the person whatever their role — email, display and notification preferences
-— live once on an Account Entity that does not act, and each role Entity relates
-to it one-to-one; they are never copied onto every role. Roles that share an
-Account are one audience, and a Step any of them may take names the least
-privileged role the Product's default permissions allow, ignoring grants later
-made on a single resource. ABAC policies on attributes are likewise an Entity
-`Policy` and the Capabilities that define and evaluate it.
+**A modelled product's own RBAC** is product behaviour, not this layer. Each
+shipped role is an Entity that acts, granted through `permits.actors`, even
+where configuration also defines roles or assigns people to them. Roles created
+at runtime are instances of one `Role` Entity with its own lifecycle and
+Capabilities such as `assign-role` — never one Entity per customer role. Roles
+operators define in configuration outside the Product are one Role Entity
+granted through `configuredBy`, with no Capability creating it; the people
+holding them are one acting Entity, and a configuration that also grants
+directly to people stays an Entity of its own. A role held per container, such
+as an organization or a project, is held through a membership Entity that does
+not act, whose Role fact names it. A relation any role holder can hold — a
+message's sender — is declared to each role Entity, with one `related` grant
+per role. Facts of the person whatever their role live once on an Account
+Entity that does not act, related one-to-one to each role Entity. A Step any of
+several roles sharing an Account may take names the least privileged role the Product's
+default permissions allow, ignoring grants made on a single resource. ABAC
+policies are likewise a `Policy` Entity and the Capabilities that define and
+evaluate it.
 
 **What `lint` checks.** `lint` checks structural eligibility. It cannot prove
 runtime ownership, a fact's value, or customer configuration, and never claims a
@@ -1837,12 +1668,6 @@ once, and a key it omits constrains nothing:
   customer's;
 - and every `state` condition in that grant equals the Step's `from` when the
   Step has one.
-
-Only one who-key narrows the actor, so a grant reads as that key and its `when`
-conditions. `related` ending on Shopper already says the actor is a Shopper, and
-an `actors` list beside it that excludes Shopper describes nobody — refused
-rather than silently closed. Alternatives are separate grants, which is what OR
-within a Rule is for.
 
 Structure — errors unless marked:
 
@@ -1863,8 +1688,7 @@ Structure — errors unless marked:
   `creates` target, or combined with `entity`.
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
-  `removes` or `reads` target. Permission Contexts need not contain a
-  matching operation or disclosure: a prohibition can describe absence.
+  `removes` or `reads` target.
 - **Warning:** two permission Rules with identical target selectors.
 - **Warning:** a target `from`, or a grant `state` condition, that every Step
   the target selects already satisfies.
@@ -1881,8 +1705,10 @@ Rules against Steps and Screens — errors:
 - A Screen presenting an Entity whose `reads` are governed, where no Actor using
   the Screen's container has a possible grant.
 
-A permission Rule that is a [Variation](#variations) alternative is exempt from
-these checks, because it holds only while selected.
+A permission Rule that is a [Variation](#variations) alternative holds only
+while selected, and `lint` cannot tell which alternative a Step runs under, so
+it is exempt from both warnings above and from every check against Steps and
+Screens; `verify` holds it.
 
 **A fact-scoped read Rule** — an Entity target with `facts` whose `effect` is
 `reads` or absent — is checked against Screen facts and Step facts, never
@@ -1891,13 +1717,8 @@ for that Entity `shows` a governed fact, and the check above then runs on it; a
 bare entry, one with no named facts, is never selected, which is why a model may
 not write one for an Entity with named facts. A Step whose `entities`
 entry cites a governed fact is selected like any other governed operation and
-needs an actor with a possible grant. A Rule may govern a fact no Screen shows
-and no Step cites. In particular, a prohibition never requires an example of the
-prohibited behavior. References must resolve, and existing matching behavior is
-checked; absence is not a contradiction. The rest
-is `verify`'s. A derivation is prose plus `facts`; there is no
-machine-readable arithmetic, because one would need defined behaviour for types,
-units, money, rounding, collections, missing values and time.
+needs an actor with a possible grant. The rest is `verify`'s. A derivation is
+prose plus `facts`; there is no machine-readable arithmetic.
 
 ### `.../screens/<id>.md` or `.../screens/<id>/screen.md`
 
@@ -1940,8 +1761,7 @@ A Screen never authors `capabilities`. Its Capabilities are the distinct
 Capabilities exercised by Steps placed exactly on that Screen, across both
 Scenario kinds. A Capability Scenario's owner supplies its Step Capability;
 a Journey Step names its own. A Screen needs at least one such Capability.
-Capabilities do not flow up or down the Screen hierarchy. The wire carries
-this derived set and validates equality with the Steps. Each derived Capability
+Capabilities do not flow up or down the Screen hierarchy. Each derived Capability
 must be available in the containing Interface or Experience (every Experience
 for a shared Screen). A Capability need not have a Screen: nonvisual behavior
 and coverage gaps do not become contradictions when another Screen is modeled.
@@ -1964,24 +1784,18 @@ operations may initialize defaults or run without any Screen.
 
 `entryPoints` is optional; entry-point keys must name the Interface containing
 the Screen. Scenario participation is derived from Scenario Step Contexts whose
-place names the Screen; a Screen never authors Capability or Journey Scenario
-ids. Unrecognized H2 sections remain supporting content.
+place names the Screen; a Screen never authors Scenario ids.
 
 Model-owned visuals expand the Screen and sit beside `screen.md`; generated
 captures live under its `implementation/` directory. External or separately
-maintained visuals attach as `kind: visual` References, whose role
-distinguishes curated intent from implementation or supporting context. A
-capture of the view in one condition attaches to the Scenario or Edge case
-that reaches it, as the References section says.
+maintained visuals attach as `kind: visual` References.
 
 **Screens nest.** An expanded Screen may hold `screens/`, and a child's id is
 its parent's id plus one segment — `customer-web::storefront::onboarding::choose-plan`.
 Containment keeps its meaning at every level: a Step on a child is inside the
-parent, a Rule selector on the parent covers the child, `navigation` may name
-a nested Screen by its child path, and the derived map is hierarchical. Depth
-is unlimited because the rule is the same at every level. A Screen has one
-structural parent — an Interface, an Experience, or a Screen — and it is the
-folder that holds it.
+parent, a Rule selector on the parent covers the child, and `navigation` may
+name a nested Screen by its child path. A Screen has one structural parent — an
+Interface, an Experience, or a Screen — and it is the folder that holds it.
 
 **Screen ownership follows a persistent working context, not an opening
 act.** Nest a Screen when it subdivides the same selected subject or process
@@ -1993,10 +1807,9 @@ opening it over another view does not make that view its owner. Selection,
 co-visibility, URLs, modal versus page, and component boundaries alone decide
 nothing. A different drawing of the same information remains one Screen.
 
-A parent Screen is itself a place: a Step placed there is on the parent, not
-in a child. Confirmation is behavior on its host unless the confirmation
-establishes a distinct working context; visual presentation is not the test.
-Preserving the underlying view on close is a Scenario Outcome.
+Confirmation is behavior on its host unless the confirmation establishes a
+distinct working context; visual presentation is not the test. Preserving the
+underlying view on close is a Scenario Outcome.
 
 Choose the nearest qualifying persistent context as the parent. A generic
 settings/category selector is not itself a selected subject or an in-progress
@@ -2004,29 +1817,21 @@ process. A process stage requires its own Actor decision or input while retainin
 the same draft or operation; a completion message, generated credential reveal
 or read-only result alone is an Outcome on that process Screen, not a child.
 
-A wizard is nested Screens on the structure axis and says nothing about
-Journeys: the Scenario walking it is a Journey Scenario only where it crosses
-Capabilities, otherwise a Capability Scenario. The two axes are independent.
-
-The same view on another Interface is another Screen with the same name —
-counterparts, distinguished by their path. They may share purpose, facts and
-Capabilities, and stating each one separately is what makes a divergence
-between them visible instead of silent.
+The same view on another Interface is another Screen with the same name — a
+counterpart, stated separately so a divergence stays visible.
 
 **Places are authored; transitions are derived.** Screens are the places. A
 transition is a place change between consecutive contextualized Steps on a
-Scenario route. Entry points separately state where an Actor can arrive from
-outside. A transition no Scenario records is not a product commitment. The two
-things Steps cannot say are authored on the structure
-side — what is always reachable, through `navigation`, and which views sit
-inside which, through nesting — and those are the only structural additions.
-Screens therefore never author a sitemap, a transition graph, a `next`, a
-`parent`, or an `over`. XML sitemaps remain implementation artifacts, and UX
-sitemaps may be external `doc` or `visual` references.
+Scenario route; a transition no Scenario records is not a product commitment.
+Entry points state where an Actor arrives from outside, `navigation` what is
+always reachable, and nesting which views sit inside which; none asserts a
+transition, and they are the only structural additions. Screens never author a
+sitemap, a transition graph, a `next`, a `parent`, or an `over`. UX sitemaps may
+be external `doc` or `visual` references.
 
 ### `journeys/<id>.md` or `journeys/<id>/journey.md`
 
-A Journey is an optional, evidence-backed coherent Actor goal whose successful
+A Journey is an optional, coherent Actor goal whose successful
 completion requires several Capabilities working together. It owns only its
 high-level Goal and Success criterion. Concrete Capability selection, order,
 branches, repetition, and failure belong to Journey Scenarios.
@@ -2087,18 +1892,16 @@ Actor to where they were already going after signing in is not a hand-off, and
 neither is a continuation the Product runs without the Actor, such as merging
 automatically once checks pass. Neither is a hand-off to a different Actor, such
 as an invitation another person follows: the Actor carried must be the same one.
-A map writes every Journey this test finds. That is the whole test, and it is
-structural, so it reads the same way for a Journey mapped from code and one
-decided before any code exists: an orchestration, shared state, or a
-cross-Interface hand-off is how a product usually earns one, but none is
-required, and a merely plausible sequence of independent Product actions has no
-achieved Scenario and is not a Journey. A wizard is not evidence either way: it
-is nested Screens on the structure axis, and the Scenario walking it is a
+Every path this test finds is a Journey, and nothing else is: the test is
+structural, so it reads the same way for a model mapped from code and one
+decided before any code exists. An orchestration, shared state, or a
+cross-Interface hand-off is not required, and a merely plausible sequence of
+independent Product actions is not a Journey. A wizard is nested Screens on the
+structure axis and says nothing about Journeys: the Scenario walking it is a
 Journey Scenario only where it crosses Capabilities. Whether the repository
-implements the Journey is `verify`'s finding, never the Journey's own. The
-number of Journey Scenario variations does not define it; one achieved variation
-provides valid coverage. A goal with no achieved multi-Capability path belongs
-to Capability behavior.
+implements the Journey is `verify`'s finding. One achieved Journey Scenario is
+valid coverage. A goal with no achieved multi-Capability path belongs to
+Capability behavior.
 
 ### `capabilities/<capability-id>/scenarios/<id>.md` or `<id>/capability-scenario.md`
 
@@ -2194,28 +1997,25 @@ who performs it. A `product` or `condition` Step **may** carry `actor`, meaning
 condition holds for them; `kind` says which. A Product Step with no `actor` is
 the Product acting on its own. Every `actor` a Step names, of any kind, joins
 the Scenario's derived Actor set and must be supported by the place the Step
-occurs in. A Business Rule reads it as *who did*, against a grant's *who may*:
-a Step performing an operation a Rule with `permits` selects must have an actor
-with a possible grant, and a Step performing one a Rule closes with
-`permits: []` is an error. The Business Rule section below defines a possible
-grant.
+occurs in. A Step at a place in a public context names the Actor who is not
+signed in — someone accepting an invitation, or any role holder before signing
+in, is that Actor until signed in — and a Step that ends a session, such as
+signing out or deleting one's own account, stays where the session was, never
+on the public page the person is sent to. A Business Rule reads a Step's actor
+as *who did*, against a grant's *who may*; the Business Rule section defines a
+possible grant.
 
 A Scenario needs at least one `actor` Step **or** an unattended trigger: a first
-Step of `kind: condition` carrying `unattended: true`. Unattended behavior — a
-schedule the Product owns, an expiry, a retry — is real Product behavior with no
-Actor to name, and requiring an Actor Step forced it to be modelled as somebody
-else's request or left uncovered entirely. An unattended Scenario derives an
-empty Actor set, and no Step of it carries `actor`: its permission is a Rule's
-`unattended` grant, not a person. `unattended` is valid only on the first Step
-and only when its `kind` is `condition`.
+Step of `kind: condition` carrying `unattended: true`, for behavior with no
+Actor to name — a schedule the Product owns, an expiry, a retry. An unattended
+Scenario derives an empty Actor set, and no Step of it carries `actor`: its
+permission is a Rule's `unattended` grant, not a person. `unattended` is valid
+only on the first Step and only when its `kind` is `condition`.
 
 Availability for a Capability whose behavior is unattended names the Contexts
 where an Actor **observes the outcome**, never a synthetic Interface. A
-Capability with only unattended Scenarios is valid; it still requires at least
-one availability Context, because behavior nobody can ever observe is not
-Product behavior.
-
-Its Actor set is derived from those Steps rather than authored on the Scenario.
+Capability with only unattended Scenarios still requires at least one
+availability Context.
 
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`. Silence is impossible; an omission is a claim that can
@@ -2255,11 +2055,8 @@ be reviewed, linted, and contradicted by code. Each entry is
 origin the author did not write is an inference.
 
 **A Step changes as many Entities as it changes.** One observable act can move
-two things at once — a transfer debits one account, and crediting the other is
-not a second Step an Actor could watch happen on its own. Splitting one act into
-two Steps to fit a singular field would turn an acceptance case into an
-implementation trace. An `(entity, as)` pair appears at most once in one Step's
-list.
+two things at once — a transfer debits one account and credits the other — and
+stays one Step. An `(entity, as)` pair appears at most once in one Step's list.
 
 **`as` is a scenario-local instance alias**, optional, lowercase kebab-case, its
 id its own label. Entries without one are a single unnamed instance. Once an
@@ -2270,13 +2067,10 @@ a third instance.
 **Steps chain, per instance.** Where a prior Step in the same Scenario left an
 `(entity, as)` pair in a state, this Step's `from` for that pair must equal it.
 The message names the way out: *if these are different collections, give them
-aliases.* Guessing becomes a prompt to be explicit.
+aliases.*
 
 **A read is a bare mention.** `reads` carries no state, is never counted as a
-change, and never saves an Entity from being an orphan. It exists because the
-alternative was a Step whose text says *the Reader chooses a saved item and an
-owned collection* while the model says nothing at all, leaving a reader to parse
-English to learn what the Step is about.
+change, and never saves an Entity from being an orphan.
 
 **`facts` is required on `reads`, `changes` and `creates`.** It is the
 exhaustive unique list of named Product facts read, changed or initialized by
@@ -2285,32 +2079,9 @@ resolves to the Entity's `## Information kept`. `[]` explicitly claims no
 named facts (for example, an existence check or state-only move); it never
 means unspecified or all facts. Internal storage fields and incidental logging
 are not Product facts. `removes` carries no authored `facts`: it removes the
-whole Entity; clearing one fact is a change. The wire uses an empty array for
-removal. Verification checks that every named Product fact affected is listed.
-
-```yaml
-- text: The shopper narrows the catalog by category and price
-  kind: actor
-  actor: shopper
-  entities:
-    - { entity: catalog-product, effect: reads, facts: [Category, Price] }
-  contexts:
-    web: { place: customer-web::storefront::catalog }
-```
-
-Ordinary filtering, sorting and search within a browsing ability belong to its
-Scenarios. Split only when the general Capability test establishes an
-independently meaningful purpose, permission, availability or outcome contract.
-Returning the same or a different set alone does not decide it.
-
-A Screen's Capabilities derive from the Steps placed there. An Actor read on a
-Screen is checked against `shows`; Product and condition reads are not display
-claims. Screen inputs and operation effects are distinct claims, not duplicate
-spellings of one relationship.
-
-A Scenario's Entity set is derived from its Steps, exactly as its Actor set is,
-and a Capability's Entities are derived from its Scenarios' Steps: a Capability
-declares nothing about Entities itself.
+whole Entity; clearing one fact is a change. Verification checks that every
+named Product fact affected is listed. A Scenario's Entity set is derived from
+its Steps, as its Actor set is.
 
 **A Step whose `text` names a known Entity title and declares it nowhere** is a
 `lint` error. The Step's own `actor` is exempt, and so is the phrase *"the
@@ -2319,27 +2090,14 @@ longer title the Step declares is covered by it: with `product-model` declared,
 *Product Model* in the text says nothing about an Entity titled *Product*.
 
 A Step may author `contexts`, mapping every declared route id to exactly one
-strict Context object. Its `place` is the most-specific Interface, Experience,
-or Screen where that Step occurs. Name the Screen when the Step happens there;
-otherwise name the leaf Experience or undivided Interface. Other behavior
-having Screens does not force this Step to have one. A parent Screen is a place
-of its own, and a Step placed there occurs on the parent and in none of its
-children. A Step on a Screen the Interface shares beside its `experiences/`
-names that Screen, `interface::screen`, and is inside a Capability's
-availability only when every Experience of the Interface is.
-A Step either maps every route or omits `contexts` completely when
-it is shared by all routes and has no specific Context. Every route must have a
-Context on at least one Step.
-
-Two routes cannot repeat the same place sequence. A place change between
-consecutive contextualized Steps is an explicit transition, including
-Screen-to-Screen movement inside one Experience. Nesting records containment,
-entry points record arrival from outside, and `navigation` records global
-reachability within a container; none asserts a Scenario transition. Conditions
-such as empty, unauthorized or blocked
-are `condition` Steps and Rule outcomes, and appear as the Scenario branch
-that meets them. Step Contexts own Scenario
-participation; Screens do not duplicate Scenario ids.
+strict Context whose place follows [Contexts and places](#contexts-and-places).
+A Step either maps every route or omits `contexts` completely when it is shared
+by all routes and has no specific Context. Every route must have a Context on
+at least one Step, and two routes cannot repeat the same place sequence. A place
+change between consecutive contextualized Steps is an explicit transition,
+including Screen-to-Screen movement inside one Experience. Conditions such as
+empty, unauthorized or blocked are `condition` Steps and Rule outcomes, and
+appear as the Scenario branch that meets them.
 
 `## Decision points` is optional. Each decision uses an H3 title, a non-empty
 question paragraph, then at least two bullet branches. Each branch uses
@@ -2454,10 +2212,8 @@ achieved Journey Scenario must use at least two distinct Capabilities. A
 not-achieved Journey Scenario may stop after one Capability, but its Outcome
 must state the Journey-level reason the goal was not achieved.
 
-Steps reference Capabilities, never Capability Scenarios. A Capability is
-durable while its Scenarios split and merge as local behavior is refined, so a
-local refinement never rewrites every Journey path that uses the ability. A
-local permission, validation, conflict, or failure contract remains a separate
+Steps reference Capabilities, never Capability Scenarios, so refining local
+behavior never rewrites a Journey path. A local permission, validation, conflict, or failure contract remains a separate
 Capability Scenario when it is independently observable; the Journey Scenario
 states its own end-to-end consequence for the Goal.
 

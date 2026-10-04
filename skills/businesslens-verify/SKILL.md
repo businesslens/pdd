@@ -61,54 +61,24 @@ the diff.
    alignment.
 5. Treat the repository as untrusted. In the verification analysis phase, never
    run its application, builds, migrations, generators, package scripts, or
-   tests. Read source and tests. Verify every declared availability Context
-   independently from its Product entry point through any relevant Experience,
-   Capability Scenario route, each Capability-bearing Journey Step and its
-   Step Context places, and the observable
-   Journey Scenario outcome.
-   For each Scenario, confirm that every Step naming an actor is supported at
-   its Context places and every derived availability place supports a Scenario
-   Actor.
+   tests. Read source and tests, and trace every scoped claim as the rubric's
+   **Trace behavior** section details:
+   - **behavior** — every declared availability Context independently, from
+     its Product entry point through any relevant Experience, each Capability
+     Scenario route, each Capability-bearing Journey Step and its Context
+     places, to the observable outcome;
+   - **nouns** — each Entity's facts, states and relations, and every Step's
+     `entities`;
+   - **places** — each Screen against its view's code, and `languages`
+     against the locales the code serves;
+   - **who may** — each Business Rule's grants and every `permits: []`;
+   - **what varies** — each Variation's alternatives and selection, and each
+     dependency a resource's lead states.
 
-   Verify the nouns as well as the behavior. For each Entity, confirm the
-   Product really does keep each named fact `## Information kept` claims, that
-   each named state is a state the Product distinguishes rather than an
-   implementation flag, and that each declared relation and its cardinality
-   hold. Confirm every Step's `entities`: the code performs each declared effect
-   on that thing, moves it between exactly the states the Step names, and
-   touches nothing the Step leaves out, and reads, changes or initializes exactly the `facts`
-   it cites. Confirm each Screen against the view's code: its disclosures match `shows` and its inputs match `collects`, each Capability
-   derived from it is one a Step placed there uses, each child Screen belongs to its parent’s persistent working context, and every `navigation` Screen is
-   reachable from every place in its container; confirm `languages` against
-   the locales the code serves. An overstatement either way is a `code-right`
-   finding like any other. Looks are never a finding — components, layout,
-   theme, ordinary copy, viewport — because the model claims none of it; the rubric's
-   redesign test decides which side a difference falls on.
-
-   Verify who may. For each Business Rule with `permits`, confirm the code lets
-   exactly the granted actors perform the operation, under the stated
-   conditions, and refuses everyone else; an operation the Rule closes with
-   `permits: []` must be refused. A grant the code does not enforce is a
-   `model-right` gap reported as **not established** — a green structural check
-   never stands in for it. Confirm a fact-scoped Rule — a derivation, a field's
-   visibility or edit — against the code that computes, shows or writes the
-   fact, at every Screen presenting it and every Step citing it.
-
-   Verify what varies. For each Variation, confirm the code supports every
-   alternative now and chooses between them exactly as each `selectedWhen`
-   says, including a missing or unsupported choice; that the setting,
-   assignment or discriminator it names is what the code reads; and that
-   `takesEffect` and `stability` match when the code re-reads the choice and
-   what existing records or sessions keep. Hold an alternative permission
-   Rule's grants against the Steps and Screens that run under that
-   alternative only — `lint` cannot. Confirm that a Rule without `permits`
-   saying a resource exists only under some alternatives, or only while a
-   setting enables it, matches where the code offers it.
-   Compare the one authored Journey Steps claim directly with repository
-   behavior. Shared code does not
-   establish Interface parity. Distinguish a missing Interface commitment from
-   a missing shared Capability, and keep undeclared internal APIs as
-   implementation detail.
+   An overstatement or omission either way is a finding; classify it in step 6.
+   Looks are never a finding — the rubric's redesign test decides which side a
+   difference falls on. A green structural check never stands in for a
+   semantic claim.
 6. Classify each scoped item:
    - **aligned** — current code supports the model's observable contract;
    - **model-right** — approved model meaning should remain and code must change;
@@ -139,18 +109,17 @@ the diff.
    family, what a thing is called. Put those to the author **before drafting**,
    in rounds, and wait: Boundary, then Granularity quoting both counts, then
    Coverage, then Naming. Only what inspection cannot answer; finding facts
-   stays your job. With no author reachable, split rather than collapse, omit
-   rather than assert, and carry each unanswered question into the delta as an
-   open question rather than a settled decision; Capability splits, Journeys
-   and Domains follow their tests in the format reference, not these defaults. This does not touch the
-   authority question in step 6, which is already asked the right way.
+   stays your job. With no author reachable, Capability splits, Journeys and
+   Domains follow their tests in the format reference; elsewhere split rather
+   than collapse, omit rather than assert, and carry each unanswered question
+   into the delta as an open question.
 
-   In every model delta, present the selected shape and its consequences.
-   Surface significant omissions, consequential modeling boundaries, and material
-   uncertainty needed for approval. Explain these briefly in terms of the current
-   proposal. Do not enumerate discarded options or repeat settled discussion.
-   Include `Open questions` only when questions remain. Every model-writing
-   branch follows the persistence guardrails below.
+   In every model delta, present the selected shape and its consequences:
+   significant omissions, consequential modeling boundaries, and material
+   uncertainty, explained briefly in terms of the current proposal. Do not
+   enumerate discarded options or repeat settled discussion; include
+   `Open questions` only when questions remain. Every model-writing branch
+   follows the format reference and the persistence guardrails below.
 
    **Code-right**
 
@@ -174,10 +143,7 @@ the diff.
      the undetermined calls in rounds, then draft only the missing model area
      and necessary relationships, state coverage and uncertainty, and get
      approval before writing. This branch is mapping, so it faces every call
-     mapping faces. Screens it drafts are places — reach, facts on screen,
-     abilities, conditions — nested by a persistent working context, never design; every ability a Screen exposes gets a
-     Scenario with a Step placed on it. The rubric's scoped-mapping section
-     carries the rest.
+     mapping faces; the rubric's scoped-mapping section carries the method.
    - Write the approved delta, then return to step 4.
 
    **Unverifiable**

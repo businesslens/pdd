@@ -29,7 +29,9 @@ files are derived artifacts and must not be edited or committed.
 contains the product resources, relationships, intent, portable references,
 structured supporting sections, identity, attribution, resource counts, and
 coverage needed to reconstruct the model. Its top-level `summary` is the short
-Product description; its top-level `counts` object contains resource totals.
+Product description, falling back to the full description; its top-level
+`counts` object contains resource totals. Product identity and attribution
+fields are always present, `null` or empty when the folder omits them.
 
 The Product record — which is the report root — and every other resource record
 store unrecognized authored H2 sections as an ordered `supportingSections`
@@ -43,24 +45,20 @@ array:
 }
 ```
 
-The raw `supportingContent` string field is not part of Product Report v15.
 Supporting headings are trimmed, single-line, and cannot collide,
 case-insensitively, with structured headings for their resource type. Intent and
 supporting-section content are Markdown fragments and cannot contain H1 or H2
-headings. These constraints make expansion structural rather than dependent on
-reparsing an opaque Markdown string.
+headings, so expansion is structural.
 
-Product Report v15 has one collection for things: `entities`. There is no
-`actors` collection and no `actors` count. Each Entity record carries `id`,
+Product Report v15 has one collection for things: `entities`. Each Entity record carries `id`,
 `title`, `description`, a nullable `kind` (`person` or `system`), a nullable
 `acts` (`external` or `internal`), an `informationKept` array of
 `{ name, description }` facts whose names are unique within the record, a
 `relations` array of `{ entityId, verb, cardinality }` where `cardinality` is
 `one-to-one`, `one-to-many`, or `many-to-many` and reads source to target, an
 ordered `states` array of `{ name, content }`, and an optional `domainId`.
-`kind` is non-null exactly when `acts` is. There is no `transitions` array: the
-lifecycle is composed from Scenario steps. Entity states are the only states
-on the wire: a Screen record carries none.
+`kind` is non-null exactly when `acts` is. The lifecycle is composed from
+Scenario steps.
 
 The Product record carries `languages`, an array of language tags, empty when
 the folder declares none. An Interface record carries `languages`, an array
@@ -68,8 +66,7 @@ that is a subset of the Product's and empty when the Interface narrows
 nothing, and `navigation`, an array of full qualified Screen ids — the
 folder's Interface-relative paths resolved — each naming a Screen whose
 nearest Interface-or-Experience container is that Interface. An Experience
-record carries `navigation` under the same resolution. Neither record carries
-`capabilityBoundary`.
+record carries `navigation` under the same resolution.
 
 `model.variations` holds one record per Variation, and `counts.variations`
 counts them. A record carries `id`, `title`, `description` (the lead), `kind`,
@@ -93,17 +90,15 @@ no Variation fields, so membership has exactly one source.
 
 Selection references do not imply instance identity, inheritance, permissions,
 availability or runtime selection. A Business Rule that is an alternative is
-conditional: consumers disclose the set's selection and must not evaluate
-descriptive conditions or treat any alternative as unconditionally applicable.
-Validation therefore does not hold an alternative permission Rule's grants
-against Steps and Screens.
+conditional: consumers must not evaluate descriptive conditions or treat any
+alternative as unconditionally applicable, and validation does not hold an
+alternative permission Rule's grants against Steps and Screens.
 
 A Domain record carries `id`, `name`, `description`, a required `boundary`, and
 an optional `colorSlot`. `boundary` is the region the Domain owns stated by what
 it does not — the folder's `## Boundary`, which `lint` requires and holds to the
-same exclusion test. It is a field of its own rather than a supporting section
-because expansion must write the heading the folder requires, and a wire form
-that could omit it expanded into a `.businesslens/` that fails `lint`.
+same exclusion test. It is a field of its own, not a supporting section, so
+expansion always writes the heading the folder requires.
 
 Every actor reference in the report — a step's `actorId`, an Interface's,
 Experience's or Journey's `actorIds`, a grant's `actorIds` — names an Entity
@@ -116,22 +111,16 @@ records. Both fact arrays are required on the wire, unique, and empty when that
 aspect is absent. Both empty means presence of an Entity with no named facts.
 Read Rules select only `shows`; inputs are not disclosure. A Screen's
 `capabilityIds` is the exact set derived from Steps placed on it, never authored
-in the folder. Screen records have no `entityIds`, `information`, `actions`,
-`states`, or `capabilityBoundary`. The parent is `parentPlace(id)` and may be a
-Screen. A Capability
-record carries no Entity list: what it changes is derived from its Scenarios'
-steps. Every Scenario step carries an `entities` array, empty when the step
+in the folder. A Capability record carries no Entity list: what it changes is
+derived from its Scenarios' steps. Every Scenario step carries an `entities` array, empty when the step
 touches nothing, of `{ entityId, as, effect, from, to, facts }` records: `as` is a
 nullable scenario-local instance alias, `effect` is `creates`, `changes`,
 `removes`, or `reads` — resolved on the wire rather than defaulted, so a reader
 never has to know which value the folder omits — `from` and `to` are
 nullable state names, and `facts` is an array of fact names, empty when the
 step affects no named facts and always empty on a `removes` record. It is an
-exhaustive claim for reads, changes and creation, not an unspecified subset. One step never carries two records for one
-`(entityId, as)` pair, and a read never counts as a change for the rule that an
-Entity nothing changes, no Screen presents, nothing names as an actor, and no
-Rule reads through a condition's `entityId` or a `configuredByEntityId` is
-invalid.
+exhaustive claim for reads, changes and creation, not an unspecified subset.
+One step never carries two records for one `(entityId, as)` pair.
 
 A Business Rule record carries its `appliesTo` targets and a `permits` field.
 An Entity target is `{ type: "entity", entityId, effect, from, to, facts,
@@ -164,27 +153,23 @@ Rule may govern a fact nobody currently reads, including an explicit
 prohibition. A Rule's `from`, `to`, `facts` and condition `state` and `fact` values resolve on
 the targeted Entity; a `related` path walks declared relations and their
 inverses one unambiguous hop at a time and ends on an Entity that `acts`; and an
-Entity no step changes, no Screen presents, nothing names as an actor, and no
-Rule reads is
-invalid. The report is expanded straight into an authored folder, so a report
-that carries an edge the folder rules reject would produce a `.businesslens/`
-that fails `lint` on arrival.
+Entity no step changes, no Screen presents, nothing names as an actor, no Rule
+reads through a condition's `entityId` or a `configuredByEntityId`, and no
+Variation chooses by is invalid — a read step never counts. The report is
+expanded straight into an authored folder, so a report carrying an edge the
+folder rules reject would produce a `.businesslens/` that fails `lint`.
 
 Validation also rejects Step text naming an Entity title without declaring it
 in `entities`, using the folder rule's same title matching and exceptions:
 the Step's own Actor, “the Product”, and a title contained within a longer
 declared Entity or Actor title do not require another declaration.
 
-Two Entities declaring relations at each other is **not** refused here. It is
-usually one relationship written twice, and sometimes two genuinely different
-relationships between one pair, and nothing structural tells those apart.
-`format.md` grades the guess as a `lint` warning; the wire carries only
-refusals, and a refusal here would reject a folder `lint` accepts — which would
-break export for a lint-clean model, the opposite of the promise above.
+Two Entities declaring relations at each other is **not** refused here: it is
+a `lint` warning, and the wire carries only refusals, so refusing it would break
+export for a lint-clean model.
 
 Product Report v15 stores `capabilityScenarios` and `journeyScenarios` as
-separate resource collections and separate counts. It has no generic `scenarios`
-collection. A Journey record's `capabilityIds` and `domainIds` derive from
+separate resource collections and separate counts. A Journey record's `capabilityIds` and `domainIds` derive from
 achieved Scenario Capability-bearing steps; `failureOnlyCapabilityIds`
 separately marks Capabilities observed only in not-achieved paths. These are
 modeled coverage projections rather than authored Journey meaning.
@@ -260,28 +245,22 @@ place sequence.
 Expansion writes the shared report records as canonical frontmatter `routes`
 and `steps`, using route ids as mapping keys under each Step's `contexts`.
 Capability expansion omits its redundant step `capabilityId`; its containing
-directory already names the parent Capability. Scenarios have no authored or
-report `flow`, Scenario-wide `availability`, Scenario-wide `actors`, or
-Markdown-derived Steps field. Screen report backlinks to Scenarios are derived
-from Step Contexts whose place names the Screen and are not authored when the
-report is expanded.
+directory already names the parent Capability. Screen backlinks to Scenarios
+are derived from Step Contexts whose place names the Screen and are not
+authored when the report is expanded.
 
 One report Context is `{ "placeId": "..." }`. Capability `availability` is a
 non-empty array of these records. Business Rule resource targets use the same
 records in `contexts`, an Entity target carries them in the same field, and a
-direct Context target stores one nested `context` record. Screen records carry
-no `availability` field because their qualified id
-and path already determine their Interface, optional Experience, and parent
-Screens: a Screen's parent is `parentPlace(id)`, and it may be an Interface, an
-Experience, or a Screen. Interface, Experience, and Screen ids share one
-namespace: each id identifies exactly one place across all three collections.
-Validation rejects collisions before resolving Contexts or expanding a report;
-an Experience and a shared Screen cannot both use `interface-id::name`.
-An
-Experience's `interfaceIds` is held to exactly the Interface its own qualified id
-names, for the same reason: expansion files an Experience by that id, so a list
-saying anything else is a second encoding of containment, and a report could
-validate under one Interface and expand under another.
+direct Context target stores one nested `context` record. A Screen record
+carries no `availability`: its qualified id determines its containers, and its
+parent is `parentPlace(id)` — an Interface, an Experience, or a Screen.
+Interface, Experience, and Screen ids share one namespace: each id identifies
+exactly one place across all three collections. Validation rejects collisions
+before resolving Contexts or expanding a report; an Experience and a shared
+Screen cannot both use `interface-id::name`. An Experience's `interfaceIds` is
+held to exactly the Interface its own qualified id names, since expansion files
+an Experience by that id.
 
 Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it
@@ -295,22 +274,21 @@ A co-located Product Model asset compiles into a repository-relative workspace
 Reference; the report never embeds its bytes. Files under a resource's
 `implementation/` directory additionally compile with `role: implementation`.
 The portable projection therefore removes both forms under the same rules as
-other local References. Asset binaries are not part of Product Report v15.
+other local References.
 
 The report schema accepts only content that can expand into canonical resource
 Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Scenario
 Actors, Capabilities, route ids, and Context places resolve to existing
-resources, every contextualized Step assigns every route, every Scenario Context
-uses the most-specific place where the Step occurs (a container remains valid
-for behavior without a Screen even when other behavior has Screens), no two routes repeat the same place sequence,
+resources, every contextualized Step assigns every route, no two routes repeat
+the same place sequence,
 every achieved Journey Scenario uses at least two distinct Capabilities, every
 actor reference names an Entity that `acts`, every step's `entities` records
 and every Rule's targets and grants resolve, and Interface, Experience, Screen,
 Entity, and Capability consistency holds. Product Report v15 is the only
 accepted report version — there is no compatibility reader for an earlier one. No report profile requires a
 reference. Present references use `kind: code|prd|spec|proposal|doc|adr|visual|research`
-and `role: intent|implementation|context`, carry no `state`, and remain subject to the same strict
+and `role: intent|implementation|context` and remain subject to the same strict
 shape and target rules defined in [`format.md`](./format.md).
 
 ## Media type and version negotiation

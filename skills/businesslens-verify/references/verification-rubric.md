@@ -1,49 +1,67 @@
 # Verification rubric
 
+Every format rule — what each resource claims, how Interfaces divide into
+Experiences, the Capability split test, Business Rules, Journeys, Step and
+Screen facts, Variations and what selects them — lives in
+[format.md](format.md). This rubric holds only the verification method.
+
 ## Trace behavior
 
-- Compare the model's observable contract, not matching vocabulary.
-- Trace each Capability Scenario route through every typed Step and
-  most-specific Context place to its observable outcome.
-- Trace every Journey Scenario route from its first Actor-owned Context place
-  through each Capability-bearing Step to the terminal goal result. Verify
-  every Context place independently and confirm the correlations are supported.
-- Confirm every Actor Step is supported at its Context places and every derived
-  availability place supports at least one Scenario Actor.
-- Verify Interface Contexts independently. Shared services do not prove web,
-  mobile, CLI, or supported API parity.
-- Distinguish a missing Interface implementation from a missing shared
-  Capability. Undeclared internal APIs remain implementation details.
-- Tests corroborate source; they do not replace inspecting implementation.
-- Partial implementation is a gap, not alignment.
-- For Screens, compare places against the view's code: for each Entity listed,
-  the facts disclosed match shows and inputs match collects (a bare
-  id claims only presence, and is a finding when the Entity has named
-  facts); each derived Capability is one a Step placed on that
-  Screen uses; each child Screen subdivides its parent’s persistent working context; each
-  `navigation` Screen is reachable from every place in its container. Do not
-  require component, layout, theme, ordinary copy, viewport, or screenshot similarity:
-  the model claims none of it, and a finding about looks is not a finding.
-- For Steps, confirm each `facts` list exhaustively names what the code reads, changes
-  or initializes at that place, and that an `actor` Step's `reads` sits on a Screen presenting
-  the Entity (Product and condition Steps, and fact-free mentions of an Actor, are exempt).
-- For a fact-scoped Rule, confirm the code at every Screen presenting the fact
-  and every Step citing it — never Entity presence alone.
-- For a Variation, trace each alternative under its own `selectedWhen`: the
-  code supports it now, reads the named setting, assignment or discriminator
-  to choose it, applies the default the set states for a missing or
-  unsupported choice, and re-reads and keeps the choice as `takesEffect` and
-  `stability` say. An alternative the code no longer offers, a choice made by
-  something other than what the set names, or an undocumented default is a
-  finding. Check an alternative permission Rule's grants only against the
-  Steps and Screens that run under that alternative.
-- For `languages`, confirm the Product's list against the locales the code
-  serves and each Interface's list against what that surface loads.
-- Do not claim deployed configuration, external systems, or live data state from
-  source code.
-- External visuals and research are context; their existence is never proof.
-  Inspect an authoritative text Reference when a Rule requires exact wording;
-  if it cannot be accessed, report that requirement as unverifiable.
+Compare the model's observable contract, not matching vocabulary. Tests
+corroborate source; they do not replace inspecting implementation. Partial
+implementation is a gap, not alignment. Never claim deployed configuration,
+external systems, or live data state from source code.
+
+- **Routes.** Trace each Capability Scenario route through every typed Step and
+  most-specific Context place to its observable outcome. Trace every Journey
+  Scenario route from its first Actor-owned Context place through each
+  Capability-bearing Step to the terminal goal result, and compare the one
+  authored Steps claim directly with repository behavior. Confirm every Step
+  naming an actor is supported at its Context places and every derived
+  availability place supports a Scenario Actor.
+- **Interfaces.** Verify each availability Context independently; shared
+  services do not prove web, mobile, CLI, or API parity. Distinguish a missing
+  Interface commitment from a missing shared Capability. Undeclared internal
+  APIs remain implementation detail. Confirm each Interface's division against
+  who actually reaches its places — `lint` cannot see access until Experiences
+  exist.
+- **Nouns.** Confirm the Product keeps each named fact `## Information kept`
+  claims, that each named state is one the Product distinguishes rather than an
+  implementation flag, and that each declared relation and its cardinality
+  hold. For every Step's `entities`, confirm the code performs each declared
+  effect, moves the thing between exactly the states named, touches nothing the
+  Step leaves out, and reads, changes or initializes exactly the `facts` it
+  cites.
+- **Screens.** Compare each place against its view's code: the facts disclosed
+  match `shows` and the inputs match `collects`; each derived Capability is one
+  a Step placed there uses; each child Screen subdivides its parent's
+  persistent working context; each `navigation` Screen is reachable from every
+  place in its container. Never require component, layout, theme, ordinary
+  copy, viewport, or screenshot similarity.
+- **Languages.** Confirm the Product's `languages` against the locales the code
+  serves, and each Interface's list against what that surface loads.
+- **Who may.** For each Business Rule with `permits`, confirm the code lets
+  exactly the granted actors perform the operation, under the stated
+  conditions, and refuses everyone else; an operation closed with
+  `permits: []` must be refused. A grant the code does not enforce is reported
+  as **not established**. Confirm a fact-scoped Rule — a derivation, a field's
+  visibility or edit — against the code that computes, shows or writes the
+  fact, at every Screen presenting it and every Step citing it, never Entity
+  presence alone.
+- **What varies.** Trace each alternative under its own `selectedWhen`: the
+  code supports it now, reads the named setting, assignment or discriminator to
+  choose it, applies the stated default for a missing or unsupported choice,
+  and re-reads and keeps the choice as `takesEffect` and `stability` say. An
+  alternative the code no longer offers, a choice made by something other than
+  what the set names, or an undocumented default is a finding. Hold an
+  alternative permission Rule's grants against the Steps and Screens that run
+  under that alternative only — `lint` cannot. Where a resource's lead says it
+  exists only under some alternatives or only while a setting, plan or licence
+  enables it, confirm that is where the code offers it.
+- **Wording.** External visuals and research are context; their existence is
+  never proof. Inspect an authoritative text Reference when a Rule requires
+  exact wording; if it cannot be accessed, report that requirement as
+  unverifiable.
 
 ## The border
 
@@ -61,7 +79,7 @@ which side a difference falls on:
 A difference the redesign is free to make is never a finding. Ordinary copy is
 design; compare exact wording only when a Business Rule requires its
 authoritative Reference, and report it unverifiable when that source is
-unavailable. The rest of the border classifies what you find:
+unavailable.
 
 - **Nesting.** A child Screen subdivides its parent's persistent selected
   subject or process: changing the parent context changes or ends the child.
@@ -79,107 +97,6 @@ unavailable. The rest of the border classifies what you find:
   Edge case or Rule outcome in the Scenario that meets it, and its capture
   attaches to that Scenario. Confirmation stays behavior on its host;
   preserving the underlying view is an Outcome.
-- **Movement and reach.** Steps say movement and entry points say arrival;
-  `navigation` lists only Screens reachable from every place in its Interface
-  or Experience.
-- **Journeys and browsing.** A wizard is a Journey only when its Scenario
-  crosses Capabilities. Ordinary filtering, sorting and searching are Scenarios
-  of the browsing Capability unless they differ by contract — the split test in
-  the format reference: a permission (a separate grant of who may), availability
-  or verb of their own; a Rule that only constrains one part does not split it.
-  Parts that differ only in which grant applies, told apart by a fact of the
-  thing they act on — a channel's privacy, whether a message is the Actor's own
-  — are one Capability whose grants carry that condition in `when`. Settings in
-  one section of the Product's navigation are one Capability however the screen
-  saves them — each field on its own or one Save button — and settings in
-  different sections are separate Capabilities: all notification settings are
-  one. Settings are facts of one thing; entries of a list, such as permission
-  entries or members, are things of their own, each added, changed and removed
-  by its own Capability, even inside a settings section or through an API call
-  that replaces the whole list. The same verb reached from another context is
-  the same Capability, available there too: changing a password the Product
-  requires at sign-in is Change password, joined to sign-in by a Journey. Ways
-  of doing one verb that share all of those are Scenarios of one Capability, and
-  the Steps of one run, including a link the run sends to finish it, are one
-  Capability. A continuation several Capabilities share is its own: each ends
-  its Scenarios at the hand-off, stated in their Outcome, and a Journey joins
-  them.
-- **Languages.** `languages` belongs to the Product, optionally narrowed by an
-  Interface. Content kept in several languages is an Entity fact, and how a
-  language is chosen for someone is a kept fact such as *Preferred language*
-  with the Steps that set it; neither is `languages` or a Variation.
-- **One encoding per kind of difference.** A flag deciding whether someone may
-  perform an Entity operation is a grant's `when` (*self-service cancellation
-  on or off*). A setting, assignment or version choosing between complete,
-  supported forms of a resource is a Variation of the smallest resource that
-  contains the difference: *a checkout that skips address review for half of
-  Shoppers* is an Experiment of two Scenarios of Checkout; *a store that keeps a
-  VAT invoice or a sales tax receipt* is a Configuration of Entities, carried
-  into the Scenarios that create each. A branch on state the behavior meets —
-  out of stock, payment declined — is Scenario conditions and outcomes; a
-  difference only in looks is design. A different address or header alone
-  never makes a separate Interface.
-- **What selects.** A Variation chooses by a fact that exists to choose — a
-  setting, an experiment assignment, a version discriminator — or by the
-  deployment, fixed before the behavior starts. A fact describing the thing the
-  behavior acts on is state, read by a `condition` Step or decision point even
-  when someone set it earlier: a page's own editor format is a condition of
-  editing, while a sign-in method the deployment selects makes each method a
-  Capability in a Variation; methods that coexist, the Actor choosing one at
-  sign-in, are Scenarios of one Capability. A method a setting adds beside the
-  others still coexists with them: it is a Scenario of that Capability, and a
-  Business Rule without grants says it exists only while enabled. Scenarios vary
-  only when what an Actor does differs and one choice decides it, even when
-  several settings combine to make that choice: sign-in that starts at the only
-  provider automatically drops the Actor's choice, so it selects Scenario
-  alternatives. A choice the Actor makes on a page outside the product, such as
-  picking a connector at an identity provider, is still an Actor Step. When two
-  or more settings would each vary or split the same Scenario, whether they
-  change the Actor's Steps or the outcome — a captcha and a provider password on
-  one registration — none makes a Variation; each is a decision point. A branch
-  that ends in a refusal is still its own Scenario with a `condition` Step, and
-  still counts as its setting splitting the Scenario. A setting
-  that changes only the Product's own Steps — group sync replacing or adding
-  Roles — is a decision point in one Scenario, as is any choice made during a
-  run; the one exception is a Step that must name a different alternative of
-  another Variation, which varies with it. When such a setting changes the
-  outcome — registration requiring email confirmation leaves the account
-  inactive, an unknown social account is registered or refused — the branches
-  are separate Scenarios, each with a `condition` Step reading the setting, not
-  a Variation. If another setting also varies or splits that Scenario, each
-  setting is a decision point instead. The unconfirmed account sign-in later
-  meets is state. A setting that adds an emailed link to confirm what a run
-  already did changes the outcome, never the Actor's Steps: confirming is a
-  later act of its own. A resource that exists only under some alternatives or
-  only while a setting, plan or licence enables it (a guest role a paid plan
-  enables; registration while the sign-in method is
-  password; social sign-in while a provider is configured) stays ordinary; a
-  Business Rule without `permits` applying to it names the Variation or the
-  setting.
-- **Every context it is used from.** A Capability is available in every
-  Experience in which one of its Actors uses it — guests reading pages in a
-  public Experience and signed-in Users in an authenticated one — never only
-  in the most open. Each Experience holds its own counterpart Screen unless
-  every Experience shares it, and a Screen reached before and after signing
-  in exists in each Experience that reaches it.
-- **Variations.** One `variations/<id>.md` per set, per the shared format
-  reference: membership only in its `alternatives`; the mechanism,
-  `takesEffect` and `stability` once on the set; `selectedWhen` (and a
-  Version's `label`) per alternative. A set exists only when two or more
-  resources of one type are all supported now and something selects between
-  them; a threshold or other value one statement reads stays content of that
-  resource, but a setting that switches between two statements of one
-  constraint, such as a minimum length or a length plus required kinds of
-  character, selects Business Rule alternatives.
-  Alternatives of a Scenario Variation share their Capability or Journey, and a
-  Step is never an alternative. Link
-  existing Entities and facts; never invent Entities, settings, allocations,
-  defaults or timing. Omit an optional field the evidence does not establish,
-  say so in a required one, and record the gap in Coverage.
-- **Prohibitions.** A Rule can prohibit a fact nobody reads; it needs
-  resolvable references, not an example of the prohibited behavior.
-  Experiments and messages are ordinary Entities and behavior only when the
-  Product manages them.
 
 ## Separate scope from authority
 
@@ -203,28 +120,26 @@ the resulting decision without replaying settled alternatives on later runs.
 
 ## Internal intent resolution
 
-Both internal authoring flows write current product meaning under the format's
-persistence rule. Keep rejected approaches and selection history in the
-conversation, including when drafting resource prose, supporting sections,
-limitations, or README. Preserve current constraints and material unresolved
-questions or missing evidence; an unchosen option is not a product exclusion.
-
 Use when code-right or neither-right is chosen. Draft the smallest exact Product
-Model delta. Cover affected Interfaces, optional Experiences, Capabilities,
-  availability Contexts, Rules, Capability Scenarios, Journeys, Journey Scenarios,
-  relationships, and removals. Get approval before writing. Skip broad
-  brainstorming because the verification finding already supplies the problem.
+Model delta, covering affected Interfaces, optional Experiences, Capabilities,
+availability Contexts, Rules, Capability Scenarios, Journeys, Journey
+Scenarios, relationships, and removals. Get approval before writing. Skip broad
+brainstorming because the verification finding already supplies the problem.
 
 ## Internal scoped mapping
 
 Use only for established behavior in an absent or deliberately untrusted model
-area. Inspect it like adoption mapping, draft honest coverage and necessary
-relationships, and get approval before writing. Do not silently remap trusted
-areas.
+area. Do not silently remap trusted areas. Inspect it like adoption mapping:
+start at entry points, trace handlers, persistence and outcomes, confirm docs
+in implementation, read permissions from authorization checks rather than
+names, and read each Interface's access from who reaches its places. Draft
+every resource by the format reference, apply the border above, draft honest
+coverage and necessary relationships, and get approval before writing.
 
-Apply the border above to scoped mapping as well as verification, with the
-format reference's naming, Screen and Step fact rules: name what you map in the
-words the Product shows its users, never API values or code identifiers.
+Both internal authoring flows write current product meaning under the format's
+persistence rule: keep rejected approaches and selection history in the
+conversation; preserve current constraints and material unresolved questions
+or missing evidence; an unchosen option is not a product exclusion.
 
 ## Stop safely
 

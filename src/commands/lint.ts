@@ -1225,7 +1225,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   for (const screen of model.screens) {
     requireTitle(screen.file, screen.doc.title, screen.doc.lead)
     /* A Screen is relations only. What it shows is `entities`, what it offers
-       is `capabilities` plus the Steps placed on it, and its states are the
+       derives from the Steps placed on it, and its states are the
        Scenario branches that reach them; a prose section for any of these was
        a second encoding nothing could check. */
     validateSections(

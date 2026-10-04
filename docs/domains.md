@@ -31,27 +31,26 @@ Only Capabilities count toward the two-Capability threshold below. An Entity's
 
 ## When you create one
 
-A Domain must state a `## Boundary` naming something it does **not** own, and
-must hold at least two Capabilities. A Boundary that only asserts inclusion is a
-label rather than a region, and a Domain holding one Capability is a folder.
-`lint` checks both.
+A Domain must state a `## Boundary` naming something it does **not** own; a
+Boundary that only asserts inclusion is a label rather than a region, and `lint`
+reports it as an error. A Domain should hold at least two Capabilities: one
+holding a single Capability is a folder, and `lint` warns.
 
-Domains are made both ways. `businesslens-map` creates them automatically from
-the Product's own sections — the areas its navigation, settings and
-administration group things under — one per section holding two or more
-Capabilities (the finest navigation level that still holds two or more; a parent
-menu is a section only when none of its direct children is), named in the Product's
-words. A Capability no section reaches, such as signing in or one only an emailed link
+**Cut one Domain per Product section holding two or more Capabilities,** planned
+or built — the areas its navigation, settings and administration group things
+under, at the finest level that still holds two or more (a parent menu is a
+section only when none of its direct children is), named in the Product's words.
+For a Product planned before its code, the sections are the planned ones. A
+Capability no section reaches, such as signing in or one only an emailed link
 starts, joins the section whose Capabilities change the same Entities, or has no
 Domain when more than one section or none does; one alone on a page beside a
 sibling section has none either. A Capability several sections reach — a
 document opened from Home, Recent and its collection — has no Domain, and
-nothing that is not a section becomes one. A map never writes a Domain of one
-Capability.
-You regroup them by hand like any file: merge, split or rename, and write your
-own Boundary. Once you have, a later map adds new Capabilities to your Domains
-and never re-cuts them. Zero Domains is valid for a Product with no sections of
-two or more Capabilities.
+nothing that is not a section becomes one. Zero Domains is valid for a Product
+with no section of two or more Capabilities.
+
+You may merge, split or rename Domains and write your own Boundary; Domains an
+author has written or regrouped are never re-cut.
 
 Splitting a Capability neither creates nor removes a Domain. If
 `manage-repositories` became create, configure, archive and delete, those four

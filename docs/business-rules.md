@@ -49,6 +49,11 @@ single operation.
 
 Write something that must remain true, not a sequential step.
 
+**Ordinary copy is design; contractual wording is a Rule.** When exact words
+are required, the Rule says so and identifies the authoritative
+[Reference](./references.md). Verification checks the words, or reports them
+unverifiable when the source is unavailable.
+
 ## The file
 
 Business Rules normally live at `business-rules/<rule-id>.md`. A Rule with
@@ -87,7 +92,7 @@ own act, and the threshold is the store's decision rather than the Product's.
 | `appliesTo` | yes | Give at least one target. A behavioral target's `type` is `capability`, `capability-scenario`, `journey`, or `journey-scenario` with an `id`; a direct target's is `context`; an Entity target's is `entity` with an `id`. |
 | `permits` | no | Omit to make no authorization claim; `[]` to forbid the selected operation to everyone; a list of grants to permit it through any one of them. Valid only when every target is an Entity target. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 and lead paragraph | yes | Title the Rule with its assertion about what it selects — for a permission, the operation and who may perform it; for an invariant, what always holds. A consequence, a feature, or the mechanism behind the Rule belongs in the lead or `## Rationale`, never the title. The lead states the durable assertion. |
+| H1 and lead paragraph | yes | Title the Rule with its assertion — for a permission, the operation and who may perform it; for an invariant, what always holds — never a consequence or mechanism. The lead states the assertion. |
 | `## Intent` | no | Explain the outcome the Rule protects. |
 | `## Rationale` | no | Explain the current condition or consequence that makes the constraint necessary. Do not recount alternative designs or why they were rejected. |
 
@@ -306,14 +311,10 @@ a settings Entity and the Rule reads it — which is also what keeps that settin
 Entity from being an orphan. Dynamic configuration is the same shape again:
 the setting is a fact, and the Rule that reads it says what it changes.
 
-A flag that decides whether someone may perform an operation is exactly this:
-*self-service cancellation on or off* is a settings fact read by a grant's
-`when`. A setting or assignment that chooses between complete, supported forms
-of a resource is a [Variation](./variations.md#when-you-create-one) instead —
-two Scenarios when only one Step differs — a difference only in looks is
-design, and a branch on state the behavior meets is Scenario conditions and
-outcomes. Who is in which cohort is a fact on the Actor or
-tenant Entity.
+A setting that changes only who may perform one operation — *self-service
+cancellation on or off* — is exactly this: a settings fact read by a grant's
+`when`. Rules [vary](./variations.md#when-you-create-one) only when a setting
+switches between whole policies.
 
 `state` says *the instance is in state X when the
 operation happens*: it must be a state of the targeted Entity, it is valid on
@@ -325,28 +326,14 @@ conditions.
 
 ### A product's own roles
 
-A modelled product's own RBAC is product behaviour, not this layer. A fixed,
-shipped set of roles is a closed vocabulary: Entities that act, and
-`permits.actors` works directly. User-defined roles created at runtime are
-instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
-and this layer constrains who may create one — never one Entity per customer
-role. Roles operators define in configuration, outside the product, are modeled
-the same way: one Role Entity (its name, permissions and members) granted
-through `configuredBy`, with no Capability that creates it. A configuration that
-also grants directly to people stays its own Entity, and the people who hold
-configured roles are one acting Entity. Each shipped role stays an Entity that
-acts even where configuration also defines roles or assigns people to them; one
-held per container, such as an organization or a project, is held through a
-membership Entity that does not act, whose Role fact names the role. A relation
-that holds whatever role a person has — the sender of a message — is declared to
-each role Entity that can hold it, and ownership is one `related` grant per
-role: *the sender, if a Member*, *the sender, if a Moderator*. Facts that belong
-to the person whatever their role — email, display and notification preferences
-— live once on an Account Entity that does not act, and each role Entity relates
-to it one-to-one; they are never copied onto every role. Roles that share an
-Account are one audience, and a Step any of them may take names the least
-privileged role the Product's default permissions allow, ignoring grants later
-made on a single resource.
+A Product's own roles follow how they are defined. A fixed, shipped set is
+Entities that act, granted through `actors`; roles users create at runtime are
+instances of one Role Entity with its own Capabilities; roles operators define
+in configuration are one Role Entity granted through `configuredBy`. Facts that
+belong to the person whatever their role live once on an Account Entity that
+does not act, to which each role relates one-to-one. Roles sharing an Account
+are one audience, and a Step any of them may take names the least privileged
+one.
 
 ## What `lint` checks
 
@@ -420,6 +407,3 @@ reads. In particular, `permits: []` never requires an example of its violation.
 Coverage does not change these checks.
 
 A derivation is prose plus fact targets; there is no machine-readable arithmetic.
-Ordinary copy is external design. When exact wording is contractual, state that
-requirement in the Rule and identify its authoritative Reference. Verification
-checks the wording, or reports it unverifiable when the source is unavailable.

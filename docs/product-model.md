@@ -74,7 +74,7 @@ sections it can contain.
 | [Entity](./entities.md) | At least one that acts, because every Interface names an Actor | A thing the Product keeps or reasons about — what it holds about it, the states it moves through, and whether it acts on the Product |
 | [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
 | [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, defined by who is there, what they can do, and its access mode |
-| [Screen](./interfaces.md#screens) | Optional | A place where an Actor meets facts and abilities: the Capabilities exposed and the Entity facts presented there, nested where a region subdivides its parent’s persistent working context; non-visual Products do not need one |
+| [Screen](./interfaces.md#screens) | Optional | A place where an Actor meets facts and abilities, nested where it subdivides its parent’s working context |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
 | [Capability](./capabilities.md) | At least one | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |

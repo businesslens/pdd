@@ -47,157 +47,72 @@ Read before authoring:
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
 6. Draft Interfaces, optional Experiences, Product Screens, Domains, Entities —
-   the things the Product keeps, and the people and systems that act on it,
-   which carry `kind` and `acts` — Capabilities, Capability Scenarios, Business
-   Rules, optional Journeys and their Journey Scenarios, availability Contexts,
-   and coverage.
-   Name behavioral resources verb-noun (`browse-catalog`, never
-   `catalog-browsing`) and cross-cutting resources with the bare noun. Create an
-   Entity for a thing an Actor would point at and call *"this one"* and the
-   Product can tell apart from another — identity, not storage, and not a state
-   count. **For a family of candidates that share a word, write the
-   `## Information kept` list before deciding how many Entities there are:** one
-   Entity if a single list is true of all of them, several the moment it needs
-   *"depending on the kind"* or carries facts that hold for some and not others.
-   Being stored, parsed and rendered alike is not the test — that is how the
-   Product handles them, not what it keeps about them. A fact whose effect
-   differs by kind is a Rule, never a split. When the call is still
-   close, **split**: a merge stays available to anyone later, while a collapse
-   deletes the difference and leaves nothing saying it was ever a question. Put
-   both shapes and their counts to the author when you can; when there is no
-   author to ask, split and surface the unresolved granularity question in the
-   proposed delta.
-   Name each fact the Product keeps (`- **Name** — prose`) so a Rule can cite
-   it. **Every Step says what it does to the Product's things**: `entities` is
-   required on every Step — creates, changes, removes, or reads, with the state
-   a thing leaves and lands in — and `[]` when it touches nothing. A Capability
-   declares no Entities and an Entity declares no transitions; the lifecycle is
-   composed from Steps. Sweep the nouns after the verbs: for each Entity, which
-   Steps create it, move it between each of its states, remove it, and which
-   Screen presents it, with which facts on screen. A state no Step leaves
-   anything in, or a thing nothing changes, is a question for the author or a
-   gap in the inspection, never something to fill by inference. **Sweep
-   permissions after the nouns**: every authorization check the code performs
-   — a role check, an ownership check, a
-   threshold — becomes a grant on a Business Rule targeting the operation it
-   guards (`permits` with `actors`, `related`, `self`, `unattended`, or
-   `configuredBy`, and `when` for the condition), never a sentence in a
-   Scenario; an operation the code refuses to everyone is `permits: []`. Model
-   unattended behavior — a schedule the Product owns, an expiry, a retry — as a
-   Scenario whose first Step is a `condition` carrying `unattended: true`,
-   availability naming where an Actor observes the outcome. Give every mapped
-   Capability evidence-backed per-Capability acceptance. Write a Journey
-   wherever the Product itself carries an Actor from one Capability into
-   another toward one outcome, and none elsewhere; do not wrap a single
-   Capability in a Journey. Split Capabilities by contract and create Domains
-   from the Product's own sections, both per the format reference. Give every Journey an achieved
-   Journey Scenario whose ordered typed Steps annotate responsible Actors and
-   locally identified Capabilities, with named routes placed through
-   most-specific Contexts. Repository deployables, routes,
-   commands, APIs, and integrations
-   are evidence, not automatic Interfaces. Create an Interface only for a
-   supported Product interaction contract, and do not infer cross-Interface
-   parity from shared implementation. Whether an Interface is divided into
-   Experiences is derived, never judged: divide it when it serves more than one
-   `access` value, or when its Actors split into groups no Capability available
-   there bridges (a Capability bridges the Actors its Scenario Steps name, and
-   roles sharing an Account are one group).
-   Otherwise it holds no Experiences and availability names the Interface
-   directly. `lint` decides and reports a violation as an error; counterparts
-   across Interfaces and Experiences that are alternatives in one Variation
-   justify themselves. Do not apply a prose test of your own. For
-   A/B and other supported alternatives, write one `variations/<id>.md` per the
-   shared format reference: membership only on the set, each selection field
-   once, no keys on the alternatives. Vary the smallest resource that contains
-   the difference — two Scenarios of one owner when one Step differs. A setting,
-   assignment, version or deployment fixed before the behavior selects a
-   Variation; state the behavior meets, including a value kept on the thing it
-   acts on, is a Scenario condition. A parameter value is plain content, and a
-   design-only difference is a visual Reference. Screens are places, authored
-   under the paragraph below. Preserve valid existing meaning in a scoped
-   expansion. **Attach what you actually read.**
-   `references` is optional in the format, and leaving it empty is the most
-   common way a mapped model becomes unreviewable: attach to each resource the
-   artifacts that established its meaning — the implementation you traced
-   (`kind: code`, `role: implementation`), the spec, PRD or proposal stating
-   intended behavior (`role: intent`), and the document you took supporting
-   context from (`role: context`). A Reference says where a claim came from; it
-   never says the claim is verified and never replaces the resource's own prose.
-   A resource you can attach nothing to is a claim resting on inspection alone —
-   say so in the delta rather than leaving it unexplained.
+   the things the Product keeps, and the people and systems that act on it —
+   Capabilities, Capability Scenarios, Business Rules, optional Journeys and
+   their Journey Scenarios, availability Contexts, and coverage, following the
+   format reference for every shape and boundary and the rubric for how to find
+   them. Name everything in the Product's own words, per the format reference.
+   Sweep in this order:
+   - **Verbs.** Split Capabilities by the split test and give every mapped
+     Capability evidence-backed acceptance for each availability Context.
+     Every Step says what it does to the Product's things.
+   - **Nouns.** For each Entity, find which Steps create it, move it between
+     each of its states and remove it, and which Screen presents it, with
+     which facts on screen. A state no Step leaves anything in, or a thing
+     nothing changes, is a question for the author or a gap in the
+     inspection, never something to fill by inference.
+   - **Permissions.** Every authorization check the code performs — a role
+     check, an ownership check, a threshold — becomes a grant on a Business
+     Rule targeting the operation it guards; an operation the code refuses to
+     everyone is `permits: []`.
 
-   **Apply the rubric's product/design border.** Screen entities separate
-   `shows` from `collects`; Capabilities derive from placed Steps. Step facts
-   are exhaustive for reads, changes and creation. Screen ownership follows a
-   persistent working context, never merely the act of opening a destination.
-   Use a grant's `when` only for whether someone may perform an Entity
-   operation, and a Variation, never a condition, when a setting selects the
-   form of the behavior. Keep ordinary copy external; verify exact wording when a Rule
-   makes it contractual. Consult the rubric for the boundary cases.
+   Whether a setting, assignment or deployment makes a Variation, separate
+   Scenarios, a decision point or a grant's `when` is decided by **What
+   selects** under Variations in the format reference. Model unattended
+   behavior as an unattended Scenario. Preserve valid existing
+   meaning in a scoped expansion. **Attach what you actually read**: to each
+   resource, the implementation you traced (`kind: code`,
+   `role: implementation`), the spec, PRD or proposal stating intended behavior
+   (`role: intent`), and the document you took supporting context from
+   (`role: context`). A Reference says where a claim came from, never that it
+   is verified. A resource you can attach nothing to rests on inspection alone —
+   say so in the delta.
 
 7. **Put what the repository cannot settle to the author, in rounds, before
-   writing anything.** Inspection establishes what the code does. It cannot
-   establish what the Product *means*, and two defensible readings routinely
-   give materially different models — a different resource count, a different id
-   for one thing, information present in one and gone in the other. Those calls
-   belong to the author, and they are cheapest before a file exists.
-
-   Ask only what inspection cannot answer. **Finding facts is your job, never
-   the author's** — never ask what you could look up.
-
-   Work in rounds. Ask every question whose prerequisites are already settled,
-   then stop and wait; answers reshape what is still open, so recompute before
-   the next round. A question that depends on another still open belongs to a
-   later round.
+   writing anything.** Inspection establishes what the code does, not what the
+   Product *means*; those calls belong to the author and are cheapest before a
+   file exists. Ask only what inspection cannot answer — **finding facts is
+   your job, never the author's**. Ask every question whose prerequisites are
+   already settled, then stop and wait; recompute before the next round.
 
    - **Boundary** — which surfaces are supported Interfaces rather than
-     implementation, who the Actors are, what is in scope at all. Everything
-     else hangs off these, so they go first.
+     implementation, who the Actors are, what is in scope at all.
    - **Granularity** — an ability that could be one Capability or several; a
      family of candidates that could be one Entity or several, quoted with both
      counts; a goal that could be a Journey or a merely plausible sequence; a
      constraint that could be a Business Rule or one Capability's prose.
-   - **Coverage** — the acceptance surface, once the Capability set is settled.
-     How many Scenarios each Capability needs, and where the line falls between
-     a Scenario and an `## Edge cases` bullet for a refusal or a failure path.
-     Ask it: Scenarios are usually the largest single group in the model, and
-     nothing in the format decides where that line falls. Ask about availability
-     in the same round wherever you would offer a Capability on two Interfaces
-     because one implementation serves both — that is the parity inference the
-     rubric refuses, and it is a question, not a default.
-   - **Naming** — the Product's own word for each thing now settled. This is
-     where models stop being comparable: three independent mappings of one
-     repository agreed on about 93% of the Capabilities they found and shared
-     69% of the ids. An author answers it in seconds and no amount of inspection
-     will.
+   - **Coverage** — once the Capability set is settled, how many Scenarios
+     each Capability needs and where the line falls between a Scenario and an
+     `## Edge cases` bullet; and availability wherever you would offer a
+     Capability on two Interfaces because one implementation serves both.
+   - **Naming** — the Product's own word for each thing now settled.
 
    Number each question, give the options with what each one costs, and state
-   your recommendation — the author is correcting a draft, not filling a blank.
+   your recommendation.
 
-   **With no author reachable**, do not quietly choose. Apply the recorded
-   defaults — split rather than collapse, omit rather than assert — and carry
-   every unanswered question into `Open questions` as an open question rather
-   than a settled decision.
-
-   Those defaults key on the call being close, so a rule that appears to settle
-   one takes it out of their reach. **Size restores it**: where the two answers
-   differ by more than a couple of resources, the call is open however settled it
-   feels, and the model records it as open. A rule confident enough to decide a
-   third of the model on its own is being trusted further than any rule earns.
-   The defaults decide only what no test settles. Capability splits, Journeys
-   and Domains follow their tests in the format reference; a call that size
-   leaves open is still recorded as open, but decided by its test, not by a
-   default.
-8. Present the proposed model delta before writing. Include added, changed, and
-   removed resources; mapped and unmapped areas; limitations; and any material
-   uncertainty. Get explicit approval for product meaning. Do not silently
-   replace a mature model.
-
-   Present the selected model shape and its consequences. Surface significant
-   omissions, consequential modeling boundaries, and material uncertainty needed
-   for approval. Explain these briefly in terms of the current proposal. Do not
-   enumerate discarded options or repeat settled discussion. Include
-   `Open questions` only when questions remain.
+   **With no author reachable**, do not quietly choose. Capability splits,
+   Journeys and Domains follow their tests in the format reference; elsewhere
+   split rather than collapse and omit rather than assert. Carry every
+   unanswered question into `Open questions`. A call whose answers differ by
+   more than a couple of resources is recorded as open however settled it
+   feels.
+8. Present the proposed model delta before writing: added, changed, and removed
+   resources; mapped and unmapped areas; limitations; significant omissions,
+   consequential modeling boundaries and material uncertainty, explained
+   briefly in terms of the current proposal. Do not enumerate discarded options
+   or repeat settled discussion; include `Open questions` only when questions
+   remain. Get explicit approval for product meaning. Do not silently replace a
+   mature model.
 9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
    and `.gitignore`. Write current product meaning under the guardrails below.

@@ -111,7 +111,7 @@ The browser Interface through which shoppers browse and buy.
 | --- | --- | --- |
 | `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, `device`, or `agent`. |
 | `actors` | yes | Name at least one existing Entity that `acts` — who uses the Interface, a descriptive list, never a permission claim; do not repeat an ID. |
-| `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. Key each one with this Interface's own `type`, or with **another Interface's id** when that is where a reader arrives from — a local web report opened by a command says so here rather than in prose. |
+| `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`, each keyed by this Interface's own `type`, or by **another Interface's id** when the Actor arrives from there. |
 | `languages` | no | Narrow the [Product's languages](./product.md#the-file) to the ones this Interface serves: a unique list of tags, each one the Product declares. An Interface listing languages while the Product declares none is an error. |
 | `navigation` | no | List the Screens reachable from every place inside this Interface, each as a path relative to it — `catalog`, `library::by-source`. Unique values; order carries no meaning. See [Navigation](#navigation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -129,9 +129,7 @@ Every model needs at least one Interface.
 The type describes how Actors interact with the Product, not how the Interface
 is implemented. Use `web`, not `react`; use `mobile-app`, not `swift`. One
 Interface has exactly one type. If two interaction contracts can be supported
-and verified independently, model them as separate Interfaces. The Product
-Report uses this authored value for its Interface icons and labels; it never
-guesses from an Interface id or title.
+and verified independently, model them as separate Interfaces.
 
 An Interface does not declare one access mode: the same web application can
 contain public and restricted Experiences. It also has no success exit;
@@ -148,57 +146,43 @@ partner automation are possible Experiences.
 
 An Experience belongs to exactly one Interface, determined by its folder.
 Similar Experiences on another Interface are counterparts with separate
-qualified ids. The rules below determine when an Interface requires Experiences
-and when existing Experiences are justified.
-
-### Place names must resolve once
-
-Interfaces, Experiences, and Screens share one namespace for their qualified
-ids. An Experience and a shared Screen under the same Interface cannot have
-the same name: both would resolve to `interface-id::name`. `lint` reports the
-colliding id and both files. Rename one place and update its references so that
-Steps, Rules, and nested Screen ownership resolve unambiguously.
+qualified ids.
 
 ### When to create an Experience
 
 **Whether an Interface is divided into Experiences is derived, never judged.**
-It follows from who reaches the Interface's places and what each Capability
-there is available to, so the author never applies a prose test. Two rules
-decide it, one in each direction:
+Two conditions decide it. An Interface must hold Experiences when either holds,
+and must not when neither does:
 
-- **An Interface must hold Experiences** when it serves more than one `access`
-  value — places reached without signing in beside places reached once signed
-  in, or an area only some signed-in roles may enter — or when its Actors split
-  into groups that no Capability available there bridges; roles that share an
-  Account are one group. An Interface declares no access mode, so `lint` reads
-  `access` only from the Experiences it holds; split audiences on an undivided
-  Interface are a `lint` **error**: those groups are separate contexts, not one.
-- **An Interface that holds Experiences must justify them.** Its Experiences
-  differ in `access`, or its audiences are disjoint, or they are alternatives in a
-  [Variation](./variations.md), or one is a counterpart —
-  an Experience whose name also exists under another Interface, the same context
-  on another platform, which justifies itself because flattening it would make
-  two views of one context look unrelated. None of these, and it is a
-  `lint` **error**: use direct Interface availability instead.
-- **One access mode is one context.** Two Experiences of one Interface with the
-  same `access` share no Actor, unless they are alternatives in a Variation; an
-  admin-only area beside one admins share with members is navigation inside one
-  restricted Experience. Otherwise it is a `lint` **error**.
-- **A public place is used by whoever is not signed in.** A Step there names
-  the Actor who is not signed in — an invitee, or any role holder before
-  signing in — and a Step that ends a session, such as signing out, stays where
-  the session was rather than on the sign-in page the person is sent to.
+- **It serves more than one `access` value**, read from who reaches its places:
+  places reached without signing in are `public`, places reached once signed in
+  `authenticated`, and areas only some signed-in roles may enter `restricted`.
+- **Its Actors split into groups no Capability available there bridges.** Roles
+  that each relate one-to-one to the same Account are one audience.
 
-The rule protects one thing: an Experience is a context that stays meaningful
-when routes, commands, or navigation are reorganized, because it is defined by
+An Interface declares no access mode, so `lint` sees the first condition only
+once Experiences exist; the second it checks on every Interface. Two more things
+justify Experiences that exist: being alternatives in a
+[Variation](./variations.md), and being a counterpart — an Experience whose name
+also exists under another Interface, the same context on another platform. An
+Interface that must divide and does not, or holds Experiences nothing
+justifies, is a `lint` **error**.
+
+**One access mode is one context.** Two Experiences of one Interface with the
+same `access` share no Actor unless they are alternatives of one Variation: an
+admin-only area beside one admins share with editors is navigation inside one
+restricted Experience. Otherwise it is a `lint` **error**.
+
+The conditions protect one thing: an Experience is a context that stays
+meaningful when routes, commands, or navigation are reorganized, because it is defined by
 who is there and what they can do, not by how the surface is laid out. An
 overview page is usually a Screen, not an Experience. A command group is an
-Experience only when the rule divides its Interface, not because a parser groups
+Experience only when the conditions divide its Interface, not because a parser groups
 its commands.
 
 When nothing divides an Interface, availability names the Interface directly.
 Do not create a one-to-one Experience to satisfy the file shape or make the
-report look full; `lint` refuses it.
+model look full; `lint` refuses it.
 
 ### Experience file
 
@@ -223,7 +207,7 @@ Where authorized operators manage the Product and its users.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
-| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. A setting that closes it — content public only while the store allows guests — is a grant's `when` on the operations it restricts, never a reason for an Experience of its own. A setting that opens it, such as anonymous access, is the same: access follows who is there. People not signed in, including anonymous visitors and wherever people sign in, are one public context; people signed in are one authenticated context, and the areas only some of their roles may enter, such as administration, one restricted context. |
+| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `navigation` | no | List this Experience's own Screens reachable from every place inside it, each as a path relative to the Experience, nested ones by their child path. Unique values; order carries no meaning. See [Navigation](#navigation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -250,11 +234,6 @@ availability:
 There is no `exit` field. A persistent context does not have one useful success
 exit; Capability Scenario and Journey Scenario outcomes state what happens in
 concrete cases.
-
-### Experiences in the Product Report
-
-An Experience belongs to its Interface, and carries its own Screens, references
-to shared Screens, and the Capabilities available within it.
 
 ## Screens
 
@@ -374,20 +353,18 @@ parent itself. Rule selectors on a parent include descendants.
 
 **Ownership follows a persistent working context.** A child subdivides the same
 selected subject or process as its parent; changing that parent context also
-changes or ends the child. Tabs within a resource reading and stages of a
-wizard are examples. Merely opening a view from another view is not ownership.
+changes or ends the child. Tabs of one selected record and stages of a wizard
+are examples. Merely opening a view from another view is not ownership.
 A resource panel available from search, a collection and related resources
 belongs once at their common Interface or Experience container.
 
 | Case | Modeling |
 | --- | --- |
-| Tabs subdividing one resource reading | Child Screens of that reading |
 | Wizard stages | Child Screens of the wizard's working context |
 | Shared resource panel opened from several views | One Screen at their common container |
 | Confirmation without a distinct working context | Steps on its host |
-| Rows and Graph showing the same information | One Screen |
-| Preserving the underlying view on close | A Scenario Outcome |
-| Modal, page, inline, URL or breakpoint | Does not determine ownership |
+| A different drawing of the same information | One Screen |
+| Modal, page, inline, URL or breakpoint | Decides nothing |
 
 Choose the nearest qualifying persistent context as the parent. A generic
 settings/category selector is not itself a selected subject or an in-progress
@@ -395,8 +372,11 @@ process. A process stage requires its own Actor decision or input while retainin
 the same draft or operation; a completion message, generated credential reveal
 or read-only result alone is an Outcome on that process Screen, not a child.
 
-A wizard is a Journey only when its Scenario crosses Capabilities. Ownership
-is a semantic authoring decision assessed against this rule, not something
+A wizard is nested Screens and says nothing about which Scenario type walks
+it: a [Journey Scenario](./journeys.md#journey-scenarios) only where it crosses
+Capabilities, otherwise a
+[Capability Scenario](./capabilities.md#capability-scenarios). Ownership is a
+semantic authoring decision assessed against this rule, not something
 structural lint can establish from a folder tree alone.
 
 ### Screens shared across Experiences
@@ -474,23 +454,7 @@ never says a reader moves from one Screen to another — the Scenarios' Steps do
 
 No, and deliberately not. A design system answers how the Product looks and is
 built; the model answers what an Actor can reach, see, do and trigger at each
-place.
-
-| | Design | Product Model |
-| --- | --- | --- |
-| Which surfaces and places exist, their interaction type, and how places nest | | **yes** |
-| Who is in each context, with what access, and which languages are served | | **yes** |
-| The facts each place shows or collects, and the abilities it offers | | **yes** |
-| What is always reachable, and where behavior moves between places | | **yes** |
-| The conditions and outcomes an Actor meets, and who may act | | **yes** |
-| The Product's own vocabulary for all of it | | **yes** |
-| Component libraries, theming, layout, typography, color, spacing, radius, icons, motion | yes | never |
-| Gestures versus buttons, breakpoints, loading and hover states, navigation chrome and the order of its items | yes | never |
-| Ordinary copy and tone | yes | no |
-| Exact wording explicitly required by a Rule | | **yes, by Reference** |
-| Accessibility or performance, unless it changes what an Actor can do | yes | no |
-
-One test decides every case:
+place. One test decides every case:
 
 > Rebuild a view with a different component library, layout, typography,
 > colors, spacing, icons, motion and copy. Everything that would still have to
@@ -499,25 +463,19 @@ One test decides every case:
 > Everything the redesign is free to change is design's, and the model says
 > nothing about it.
 
-**Ordinary copy is design; contractual wording is a requirement.** The model
-normally records what an Actor must be told and under which condition. When
-exact words are required, a Business Rule identifies the authoritative Reference
-and says exactness is required. Verification checks the words; an unavailable
-source makes that requirement unverifiable.
+- **In the model:** places, their nesting and type; who is in each context and
+  with what access; the facts shown or collected and the abilities offered; what
+  is always reachable; conditions, outcomes and who may act; languages; and
+  [contractual wording](./business-rules.md#when-you-create-one), by Reference.
+- **Design's:** components, theming, layout, typography, color, spacing, icons,
+  motion, gestures, breakpoints, loading and hover states, the order of
+  navigation items, ordinary copy and tone, and accessibility or performance
+  unless it changes what an Actor can do.
 
 Everything on the design side lives in a design system and design files.
 Attach them to the Interface, Experience or Screen they shape as `visual`
 [References](./references.md) with `role: intent`, which says *helped define
 it, never is it*.
-
-## Other forms of variation
-
-Languages are [`languages`](./product.md#the-file) on the Product, which an
-Interface may narrow. Two or more complete, supported forms of one Interface,
-Experience or Screen are a [Variation](./variations.md); a flag deciding who may
-perform an operation is a [grant's `when`](./business-rules.md); a difference
-only in looks is design. A different URL or header alone never makes a separate
-Interface.
 
 ## Findings `lint` reports
 
@@ -529,10 +487,11 @@ Interface.
 - Actor reads must be shown by their Screen. Product and condition reads are
   not display claims; fact-free reads naming an Actor as a participant are exempt.
 - Languages must be valid and an Interface's list a subset of the Product's.
-- Experiences must follow the audience, access, counterpart and Variation rules.
+- Experiences must follow the access, audience, counterpart and Variation rules.
+- An Experience and a shared Screen under one Interface may not share a name:
+  both would resolve to `interface-id::name`.
 - `## Information presented`, `## Available actions`, `## View states` and
-  `## Capability boundary`, a `screens` list on an Interface or Experience, and
-  `languages` on an Experience or Screen are errors.
+  `## Capability boundary` are errors.
 
 Coverage does not relax these checks. A Capability can have no Screen; a Rule
 can prohibit behavior for which there is no example.

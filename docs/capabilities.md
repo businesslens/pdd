@@ -68,40 +68,30 @@ label, or sequence step that has no durable Product meaning.
 
 A Capability is the smallest durable behavior that remains independently
 meaningful, not necessarily the smallest button, API operation, or code
-function. **The contract decides how many there are.** Parts of an ability are
-separate Capabilities when they differ in who may do them (a permission of their
-own), where they are offered (availability), or in verb. A different Actor does
-not split one — it is offered in every Experience it is used from — and neither
-does a Business Rule that only constrains one part, such as a time limit, or the
-State it starts from: restoring from the archive or from the trash is one
-Capability with a Scenario for each. A
-permission of its own means a separate grant of who may do it. Parts that differ
-only in which grant applies, told apart by a fact of the thing they act on — a
-channel's privacy, whether a message is the Actor's own — are one Capability
-whose grants carry that condition in `when`:
+function. **The split test is the contract.** Parts of an ability are separate
+Capabilities when they differ in who may do them (a permission of their own: a
+separate grant), where they are offered (availability), or in verb. Nothing else
+splits one: not a different Actor, since one Capability is offered in every
+Experience it is used from; not a Business Rule that constrains only one part,
+such as a time limit; not which grant applies, told apart by a fact of the thing
+acted on, which is a grant's `when`; and not the Entity a way creates or the
+State it starts from.
 
 | What you see | Capabilities |
 | --- | --- |
 | Create, configure, archive and delete repositories | Four: different verbs |
 | Switching an item's format, which needs a permission editing does not | Two: a permission of its own |
-| Adding an authenticator app or backup codes as a second factor | One: ways of doing one verb, even though each creates a different Entity |
-| Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, which has no outcome without the link |
-| Confirming the email of an account that already exists | Its own: a later act on something a run produced |
+| Changing a password the Product requires at sign-in | The same Change password Capability, available there too |
+| Adding an authenticator app or backup codes; restoring from the archive or the trash | One each: neither the Entity a way creates nor the State it starts from splits it |
 | Notification settings, each saved on its own as it changes | One: settings in one section of the Product's navigation are one Capability, however the screen saves them |
-| Adding, changing and removing permission entries on one settings page | Three: settings are facts of one thing, but entries of a list are things of their own, each added, changed and removed by its own Capability |
-| An API call that replaces a whole permission list | The same add, change and remove Capabilities, available on the API too; never one of its own |
-| Changing a password the Product requires at sign-in | The same Change password Capability, available there too, joined to sign-in by a Journey |
-| Entering a second factor after any sign-in method | Its own: a continuation several Capabilities share. Each sign-in ends its Scenario at the hand-off, and a Journey joins them |
-| Filtering, sorting and searching a list | Scenarios of the browsing Capability, unless one differs by contract |
+| Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, including a link it needs to finish; confirming an existing account's email later is its own |
+| Adding, changing and removing members of a group | Three: list entries are things of their own |
+| Entering a second factor after any sign-in method | Its own Capability, joined to each sign-in by a Journey |
 
-Ways a setting selects between follow the [Variation](./variations.md) rules
-instead: a sign-in method the deployment selects makes one Capability per
-method, while methods that coexist, the Actor choosing one at sign-in, are
-Scenarios of one. A method a setting adds beside the others still coexists with
-them: it is a Scenario of that Capability, and a Business Rule without grants
-says it exists only while enabled. Splitting neither creates nor removes a
-[Domain](./domains.md): the four repository Capabilities were about Repositories
-before the split.
+Ways a setting or the deployment selects are Scenario alternatives of one
+Capability — a [Variation](./variations.md#when-you-create-one) — and ways the
+Actor chooses between are Scenarios of one. Splitting neither creates nor
+removes a [Domain](./domains.md).
 
 Every Capability declares explicit availability Contexts, naming
 [Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
@@ -155,14 +145,8 @@ Capability. The union of its Capability Scenarios must cover every availability
 Context the Capability declares through its Step Contexts; use by a Journey Scenario
 does not satisfy that requirement. A missing Context is an error. A
 single-Capability goal remains local Capability behavior and never requires a
-Journey wrapper. A wizard is
-[nested Screens](./interfaces.md#screens-nest) on the structure side, and the
-Scenario walking its steps is a Capability Scenario unless it crosses
-Capabilities, which makes it a [Journey Scenario](./journeys.md#journey-scenarios).
-
-A Screen's Capabilities derive from Steps placed exactly on that Screen, across
-both Scenario kinds. There is no authored Screen list. A Screen needs at least
-one placed Capability; unmodeled behavior belongs in Coverage.
+Journey wrapper. A Screen's Capabilities are
+[derived from the Steps placed on it](./interfaces.md#screen-file).
 
 ## Availability
 
@@ -271,12 +255,11 @@ Entity; clearing an individual value is a change.
     - { entity: account, effect: creates, facts: [Email, Preferences] }
 ```
 
-A Screen separately records what it shows and collects. A creation can run
-without a Screen or initialize facts no form collects. An Actor read placed on
-a Screen must find its named facts in `shows`; Product and condition reads may
-consult information that is not displayed. Verification checks every named
-Product fact the operation affects, so omitting one is a missing claim, not an
-alternative encoding of the same operation.
+Facts are never inferred from a Screen: a creation can run without one or
+initialize facts no form collects, and an Actor read must find its facts in
+[what its Screen shows](./interfaces.md#what-a-screen-presents). Verification
+checks every named Product fact the operation affects, so omitting one is a
+missing claim, not an alternative encoding of the same operation.
 
 **Ends with** is the last creation, change, or removal of each Entity instance
 in Step order. It includes the resulting State when
@@ -293,7 +276,10 @@ Rule forbids to everyone, or something no grant could permit its actor, is a
 `product` or `condition` Step may also carry `actor`, meaning the Step is
 attributable to that Actor — the Product did it for them, or the condition holds
 for them. Every actor a Step names joins the Scenario's derived Actor set, and a
-Rule reads it as *who did* against its grants' *who may*.
+Rule reads it as *who did* against its grants' *who may*. At a public place the
+Actor is whoever is not signed in — an invitee, or any role holder before
+signing in — and a Step that ends a session, such as signing out, stays where
+the session was.
 
 ### Behavior nobody triggers
 
@@ -358,7 +344,7 @@ steps:
   - text: The Product checks that the name is free in the contributor's namespace
     kind: product
     entities:
-      - { entity: repository, effect: reads, facts: [] }
+      - { entity: repository, effect: reads, facts: [Name] }
     contexts:
       web:
         place: web-ui::repository-collaboration::new-repository
@@ -366,7 +352,7 @@ steps:
     kind: product
     actor: repository-contributor
     entities:
-      - { entity: repository, effect: creates, to: Active, facts: [] }
+      - { entity: repository, effect: creates, to: Active, facts: [Name, Visibility] }
     contexts:
       web:
         place: web-ui::repository-collaboration::repository-home
@@ -442,14 +428,10 @@ A Step Context is concrete and most-specific. When the Step occurs on a
 Screen, its `place` names that Screen, at any depth — a
 [parent Screen](./interfaces.md#screens-nest) is a place of its own, meaning
 on it and in none of its children. Otherwise it names the leaf Experience or
-undivided Interface, even when other behavior there has Screens. An `actor` Step
-placed on a Screen that `reads` an Entity the Screen does not present is an
-error; a Product or condition Step reads what the Product consults, and a
-fact-free read of an Entity that acts names a
-participant, so those mentions are exempt. A Step on a Screen an Interface shares across its
-Experiences names that Screen as `interface-id::screen-id`; it is inside the
-Capability's availability only when every Experience of that Interface is, and
-it counts as coverage for each. Actor support, Screen participation, and
+undivided Interface, even when other behavior there has Screens. A Step on a
+Screen an Interface shares across its Experiences names that Screen as
+`interface-id::screen-id`; it is inside the Capability's availability only when
+every Experience of that Interface is, and it counts as coverage for each. Actor support, Screen participation, and
 backlinks are all derived from these Context claims.
 
 ### Capability Scenario decision points

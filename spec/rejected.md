@@ -10,9 +10,10 @@ then rejected or deferred, with the reason it lost. Nothing else. No plans, no
 status, no work item, no file or line reference — those go stale, and a stale
 record is worse than no record.
 
-**How it changes:** append only. Reopening a decision means adding an entry that
-supersedes the old one and says why the reason no longer holds; it never means
-editing the old entry into agreement. Consult it before proposing a change to
+**How it changes:** decisions are appended. Reopening one means adding an entry
+that supersedes the old one and says why the reason no longer holds; it never
+means editing the old entry into agreement. Entries may be filed under the right
+heading, merged when they record one argument, or trimmed to the costed shape. Consult it before proposing a change to
 either contract.
 
 ## The model as a whole
@@ -78,7 +79,7 @@ findings would have nothing to check the arc against.
 `collection (source)` mean a third, unnamed instance. It is the silent reading
 aliases exist to remove, and the explicit spelling costs one word.
 
-**Making an unreached state an error for a `complete` model.** Proposed to pull
+**Making an unreached state an error for a model that claims complete coverage.** Proposed to pull
 two independent authors back together on coverage. Surfacing what the composed
 machine is missing is the honest version; coercing coverage is not.
 
@@ -175,96 +176,72 @@ Product Steps. When messages are things the Product schedules, sends, retries
 or revokes, model them with ordinary Entities and Capabilities. There is no
 claim that messages cannot have behavior or a lifecycle.
 
-## Variation
-
-**Member-side Variation keys — superseded.** An anchor member carrying
-`variationKind`, other members pointing at it with `variantOf`, and every member
-carrying its own `variationUsage` put one product choice across several files
-with no name of its own. The set is now a resource, `variations/<id>.md`, and
-membership lives only there; alternatives carry no Variation keys.
-
-**A designated anchor or default member — rejected.** An anchor made deleting one
-alternative mean something different from deleting another, and read as a
-default or parent the model never claimed. Alternatives are an unordered set;
-a default, where one exists, is part of an alternative's `selectedWhen`.
-
-**Usage repeated on every alternative — rejected.** Per-member usage copied the
-same timing and stability onto each member and let a fact that only tuned one
-alternative sit among the settings that choose. Each selection field now has
-exactly one level: the mechanism, `takesEffect` and `stability` on the set,
-`selectedWhen` and a Version's `label` on the alternative. No field exists at
-both levels, so there is nothing to inherit or override.
-
-**A standalone mark on a set — rejected.** A set drawn with a glyph of its own
-read as a new kind of thing rather than the type it varies. A set wears its
-member type's mark with a Variation sub-icon; the glyph alone marks only the
-collection of every set.
-
-**Historical version archives and version-driven containment — deferred.**
-Historical snapshots and version labels that dictate containment remain outside
-the model. Older contracts still used by current clients or records are
-supported behavior, and a Version Variation, not history. Addresses and headers
-alone do not determine resource boundaries.
-
-**Free-form applicability as the only encoding — superseded.** Typed selection
-fields and Entity/fact references own selection, timing and stability. A
-separate When used prose section would duplicate them and is rejected.
-
-**A general experiment/configuration engine — deferred.** Variations state
-Product meaning and applicability. They do not run allocations, combine flags,
-negotiate versions or persist experiment results. Permission grants keep their
-Entity-operation meaning; they cannot stand in for selecting whole resources.
-
-**Cohorts as a dedicated resource type — deferred.** Actor or tenant facts can
-record membership. Experiment-management Products can model assignment and
-measurement using ordinary Entities, Capabilities and Scenarios.
-
-**Steps as Variation alternatives.** A Step has no id and means what it means
-in its position among the Steps around it. Varying one needed ids on Steps, a
-way to say which Step replaces which inside an ordered list, and rules for
-routes and Contexts across the swap: a patch language inside Scenarios. Two
-Scenarios of one owner that differ in that Step say the same thing with no new
-mechanism, and each stays a complete acceptance contract.
-
 **A Capability only in the most open Experience that admits its Actors.**
-Placing page reading once in a public Experience, for guests and signed-in
-Users alike, avoids counterpart Screens, but it makes "public" also mean "where
-signed-in Users read", and an authenticated Experience then holds only what
-nobody reaches unauthenticated. A Capability is available in every Experience
-in which one of its Actors uses it instead.
+Placing page reading once in a public Experience avoids counterpart Screens,
+but makes "public" also mean "where signed-in Users read". A Capability is
+available in every Experience in which one of its Actors uses it instead.
 
-**A Scenario in more than one Variation.** Two settings shaping the same run —
-how sign-in starts and how group sync treats Roles — would each vary the same
-Scenarios. Allowing both multiplies Scenarios with every setting and breaks the
-one set a resource's reading names. Scenarios vary only when what an Actor
-does differs; a Product-only difference is a decision point.
+## Capabilities
 
 **A setting-driven Product side effect as a Capability of its own.** Moving
 group sync into its own Capability keeps its setting from crossing sign-in's,
-but it creates Capabilities the Capability test would not make, only to host a
+but creates Capabilities the split test would not make, only to host a
 Variation.
 
-**A structured `enabledBy` field for switched-on behavior.** Naming the setting
-that enables a Capability as a fact reference would let `lint` resolve it, but
-deployment settings have no Entity to reference, and the grant-less Business
-Rule already carries the same claim for `verify`.
+## Domains
 
 **Domains cut by "the thing the Actor works on".** Two independent maps of one
-product cut the same Capabilities into three Domains and into seven: an
-account read as one area, or its passwords, second factors, registration and
-linked identities each read as a thing of its own. Both readings follow the
-wording. Domains are cut at the Product's own sections instead, which two
-readers find the same way, and an author regroups them by hand.
+product cut the same Capabilities into three Domains and into seven, both
+following the wording. The Product's own sections are found the same way by
+two readers.
 
 **Domains only when an author asks, or only as a derived report grouping.**
-Either would be deterministic, but automatic grouping has value on its own and
-so has an author's regrouping; a map that never proposes Domains leaves every
-model ungrouped, and a report-only grouping cannot be reviewed or edited as a
-file.
+A model that never proposes Domains stays ungrouped, and a report-only grouping
+cannot be reviewed or edited as a file.
 
-**A Variation for each of several settings shaping one Scenario.** A captcha and
-a provider password on one registration would each select Scenario
-alternatives. Enumerating their combinations multiplies Scenarios with every
-setting, and choosing the setting that "most changes" the Actor's Steps is a
-judgment. When more than one setting would vary a Scenario, each is a decision
-point.
+## Variation
+
+**Member-side Variation keys.** An anchor member carrying the kind and others
+pointing at it spread one product choice across several files with no name of
+its own; the set is its own resource instead.
+
+**A designated anchor or default member.** It made deleting one alternative
+mean something different from deleting another, and read as a default the
+model never claimed. A default belongs in an alternative's `selectedWhen`.
+
+**Usage repeated on every alternative.** It copied timing and stability onto
+each member and let a fact that only tunes one alternative sit among the
+settings that choose. Each selection field has exactly one level.
+
+**Free-form applicability prose as the only encoding.** A When used section
+would duplicate the typed selection fields.
+
+**Historical version archives and version-driven containment — deferred.**
+Older contracts still used by current clients or records are supported
+behavior and a Version Variation, not history. Addresses and headers alone do
+not determine resource boundaries.
+
+**A general experiment/configuration engine — deferred.** Variations state
+Product meaning and applicability; they do not run allocations, combine flags,
+negotiate versions or persist results. Permission grants cannot stand in for
+selecting whole resources.
+
+**Cohorts as a dedicated resource type — deferred.** Actor or tenant facts
+record membership; experiment-management Products model assignment and
+measurement with ordinary Entities, Capabilities and Scenarios.
+
+**Steps as Variation alternatives.** Varying a Step needs Step ids, a way to
+say which Step replaces which in an ordered list, and route rules across the
+swap: a patch language inside Scenarios. Two Scenarios of one owner say the same
+with no new mechanism.
+
+**A Scenario in more than one Variation, or a Variation per setting shaping
+one Scenario.** Two settings on one run — a captcha and a provider password on
+registration — would each select Scenario alternatives; enumerating their
+combinations multiplies Scenarios with every setting, and choosing the setting
+that "most changes" the Steps is a judgment. Each is a decision point instead.
+
+**A structured `enabledBy` field for switched-on behavior.** Naming the
+enabling setting as a fact reference would let `lint` resolve it, but
+deployment settings have no Entity to reference; the resource's lead names the
+dependency for `verify`.

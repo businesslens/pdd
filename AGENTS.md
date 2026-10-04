@@ -79,9 +79,7 @@ were costed and then chosen against, so the same argument is not had twice.
 - Experiences and Screens are sections of `docs/interfaces.md`, including their
   definitions, file shapes, and lint rules. They have no separate docs pages or
   sidebar entries. Capability Scenarios live in `docs/capabilities.md`, Journey
-  Scenarios in `docs/journeys.md`. This supersedes the earlier rule requiring
-  Experiences and Screens to have their own pages; their resource types and
-  authored containment remain unchanged.
+  Scenarios in `docs/journeys.md`.
 
 ## How format decisions are judged
 
@@ -198,10 +196,8 @@ costed already.
   with actual ownership shown separately from the return trail. The name the
   reader clicked is on the title line: as the title, as the Variation picker's
   value, or, for a Scenario, as its card inside the parent's reading, which is
-  what a Scenario address opens. This supersedes the Scenario-named header.
-  Report identity and the way home stay in the sidebar.
-- **Resources open in one complete slideover.** This supersedes the resource-page
-  navigation rule. Opening a row, relation, search result or diagram resource
+  what a Scenario address opens. Report identity and the way home stay in the sidebar.
+- **Resources open in one complete slideover.** Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
   The resource and its tab have an address independent of the working view.
   Back restores the previous resource reading; Close returns to the working
@@ -215,63 +211,26 @@ costed already.
   Interfaces, Domains, Capabilities, Journeys, Business Rules, Variations.
   Experiences and Screens are reached through Interfaces, Scenarios through
   their parent, and a collection's Graph or Matrix through its drawing selector.
-  Variations has Rows only. This supersedes the six-collection rail.
+  Variations has Rows only.
 - **A Variation reads as the type it varies, and leads its alternatives.** A
-  set wears its member type's mark with the variation sub-icon; the variation
-  glyph alone, in ink and never a hue of its own, marks only the Variations
-  collection. Wherever an alternative is a title — a reading header, a row, a
-  tree node, a Scenario card — its Variation is the title and a picker beside
-  it names the alternative being read (a Version by its label) and switches
-  it; on the set's own title the picker counts the alternatives. Its menu is
-  headed by the set, which opens the set's own reading, then lists every
-  alternative with its condition. Switching in a reading header replaces the
-  reading, with no Back step. Nothing switches alternatives with tabs.
-  Wherever two or more alternatives of one set meet in a list or tab they are
-  one set row that never expands. A tree is the exception: every alternative
-  sits under its set node, even alone, because each keeps its own children;
-  the node names them by their own titles. At a place, an alternative that
-  does not happen there follows them struck with a "Not on this Screen" badge,
-  and the node's picker marks it the same way. Strikethrough means "not at
-  this place", never retired. Alternative Scenarios are one card, switched in
-  place, whose condition leads it. References inside a reading — Step places,
-  Rule targets, relation chips — stay concrete. The Variations collection puts
-  a Scenario set under the Capability or Journey that owns its Scenarios, and
-  a set's subtitle names the place all its alternatives share. Headings count
-  concrete resources, never set rows; nothing shows a position within a set.
-  This supersedes the set pill on an alternative's title. The drawings keep
-  concrete nodes, rows and relations and add the Variation the way their lines
-  read: graph trees fold alternatives under the set's node and strike one
-  absent at a place; Entity relationships frame them; matrices set them side
-  by side under their set; and a Lifecycle change or State, or a matrix cell,
-  that some choice of alternatives leaves unsupported is dashed and says under
-  which.
-- **A resource reading separates meaning, behavior, connections and references.** Overview
-  carries the resource's explanation and contextual links, including an Entity's
-  Information kept. Scenarios follows for a Capability or
-  Journey, Lifecycle for an Entity with States. Lifecycle switches between Rows
-  and Graph; selecting a change reads what makes it and its supporting
-  Scenarios — the Rules governing it are read on the Steps they select — and
-  selecting a State reads its definition and the Scenarios that leave it there.
-  Rows uses the collection list's parent/child styling: each State contains its
-  definition and outgoing changes, including States with none. Creation and
-  changes without a starting State have separate groups. This supersedes placing
-  State definitions in Overview or stacking separate State cards below the graph.
-  Changes without specified states remain accessible beside the graph.
-  A Business Rule reads its statement once, as the Overview lead, with Who may
-  beneath it where the Rule is a permission; an Applies to tab follows with its
-  targets as a tree, each holding only the places the Rule names. Every edge
-  that tree draws is read at its other end: a resource the Rules name has a
-  Business Rules tab before Connections, each Rule with how it names it.
-  A Variation's Overview says how one is chosen; an Alternatives tab follows
-  with each alternative in its own words and its condition. An alternative's
-  Overview says how it is chosen; it has no tab of its own for its set.
-  Connections
-  follows when relationships exist and includes the complete relationship
-  list, including links also explained in Overview. References comes last when
-  attachments exist, with a count and attribution to the inspected resource;
-  a Scenario's own attachments are read on its card. This supersedes the limit
-  of one peer tab. A view comparing resources belongs to the collection, never
-  to one of them.
+  set wears its member type's mark with the variation sub-icon; the glyph alone,
+  in ink, marks only the Variations collection. Wherever an alternative is a
+  title, its Variation is the title and a picker beside it names and switches
+  the alternative; switching in a reading header replaces the reading. Nothing
+  switches alternatives with tabs. Alternatives meeting in a list are one set
+  row; a tree folds them under the set's node; references inside a reading stay
+  concrete; headings count concrete resources. Drawings keep concrete nodes and
+  add the set around them, dashing what only some alternatives support. Details
+  are in the [report viewer README](layers/nuxt/report-viewer/README.md).
+- **A resource reading separates meaning, behavior, connections and
+  references.** Overview carries the resource's explanation and contextual
+  links; behavior tabs follow (Scenarios for a Capability or Journey, Lifecycle
+  for an Entity with States, Applies to for a Business Rule, Alternatives for a
+  Variation, Delivery for a place); Business Rules lists the Rules naming the
+  resource; Connections carries the complete relationship list; References comes
+  last when attachments exist. A Scenario is read on its card inside its
+  parent. A view comparing resources belongs to the collection, never to one of
+  them. Tab order and contents are in the viewer README.
 - **The Product's page is the report Overview** — headed `Overview` like the
   rail row that opens it and qualified by
   `Product`. Its readings are About, Coverage and References, and it never
@@ -282,8 +241,7 @@ costed already.
 - **Grouping is authored, never configured.** Domain is the axis, always on
   where the type carries one. Entities that act lead their collection. The
   Variations collection alone groups by the type each set varies — its authored
-  `of` — because a Variation carries no Domain. This supersedes "Domain is the
-  only axis".
+  `of` — because a Variation carries no Domain.
 - **One filter control per axis, inside the reading it narrows**, offering only
   what the row already prints. A control says how many values it holds, never
   which; the values sit on a second row, each with its own way out. It is absent

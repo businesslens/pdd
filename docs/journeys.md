@@ -51,33 +51,25 @@ A Journey owns only its high-level Goal, Success criterion, and Actors. Concrete
 Capability selection, order, branches, repetition, and failure belong to its
 [Journey Scenario](#journey-scenarios) variations.
 
-A Journey exists wherever the Product itself carries an Actor from one
-Capability into another toward one outcome — a redirect, a required next Step,
-an emailed link to follow — and nowhere an Actor merely chooses what to do next.
-Returning the Actor to where they were already going after signing in is not a
-hand-off, and neither is a continuation the Product runs without the Actor, such
-as merging automatically once checks pass. Neither is a hand-off to a different
-Actor, such as an invitation another person follows: the Actor carried must be
-the same one. A Product Model contains none only when no such path exists.
-
 ## When you create one
 
-Create a Journey wherever an achieved Journey Scenario carries one Actor
-through two or more Capabilities toward one outcome, by the hand-off above. That
-is the whole test, and it is structural: it reads the same way for a Journey
-mapped from code and one decided before any code exists. An orchestration,
-shared state, or a cross-Interface hand-off is how a Product usually earns one,
-but none is required, and none is enough without the hand-off. A merely
-plausible sequence of independent actions, or an administrative grouping, has
-no achieved Scenario and is not a Journey.
+Create a Journey wherever an achieved Journey Scenario carries one Actor through
+two or more Capabilities toward one outcome, with the Product itself carrying
+the Actor across — a redirect, a required next Step, an emailed link to follow.
+An Actor merely choosing what to do next carries nobody. Neither does returning
+the Actor to where they were already going after signing in, a continuation the
+Product runs without the Actor, such as merging automatically once checks pass,
+or a hand-off to a different Actor, such as an invitation another person
+follows. That is the whole test, and it is structural: it reads the same way for
+a Journey mapped from code and one decided before any code exists. An
+orchestration, shared state, or a cross-Interface hand-off is how a Product
+usually earns one, but none is required, and none is enough without the
+hand-off. A Product Model contains no Journey only when no such path exists.
 
-A wizard is not evidence either way. It is
-[nested Screens](./interfaces.md#screens-nest) on the structure side, and the
-Scenario walking its steps is a Journey Scenario only where it crosses
-Capabilities; otherwise it is a
-[Capability Scenario](./capabilities.md#capability-scenarios). The two axes are
-independent. Whether the repository implements a Journey is
-[`businesslens-verify`](./skill-businesslens-verify.md)'s finding, never the Journey's own.
+A [wizard](./interfaces.md#screens-nest) is not evidence either way. Whether the
+repository implements a Journey is
+[`businesslens-verify`](./skill-businesslens-verify.md)'s finding, never the
+Journey's own.
 
 “Publish a branch and open it for review” can be a Journey when the Product
 supports that handoff. “Browse source and later change notification settings”
@@ -155,10 +147,8 @@ Every Journey Actor must participate in at least one achieved Scenario.
 
 ## Relationship to code
 
-A Journey does not need one matching class, controller, route, or test, and a
-wizard does not make one: a wizard is nested Screens, walked by whichever
-Scenario type its Capabilities call for. Like other Product resources, a
-Journey is a Product-level projection over code. During
+A Journey does not need one matching class, controller, route, or test. Like
+other Product resources, a Journey is a Product-level projection over code. During
 mapping, however, its Goal, Capability handoffs, and achieved path must remain
 traceable through supported behavior rather than invented from plausible
 actions.
@@ -212,7 +202,7 @@ steps:
     actor: repository-contributor
     capability: publish-repository-changes
     entities:
-      - { entity: branch, effect: creates, facts: [] }
+      - { entity: branch, effect: creates, facts: [Name] }
     contexts:
       git-to-web:
         place: git-transport
@@ -220,7 +210,7 @@ steps:
     kind: actor
     actor: repository-contributor
     entities:
-      - { entity: branch, effect: reads, facts: [] }
+      - { entity: branch, effect: reads, facts: [Name] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::branch-comparison
@@ -229,7 +219,7 @@ steps:
     actor: repository-contributor
     capability: propose-code-change
     entities:
-      - { entity: pull-request, effect: creates, to: Open, facts: [] }
+      - { entity: pull-request, effect: creates, to: Open, facts: [Title, Description] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::pull-request
@@ -293,7 +283,7 @@ steps:
     actor: repository-contributor
     capability: publish-repository-changes
     entities:
-      - { entity: branch, effect: creates, facts: [] }
+      - { entity: branch, effect: creates, facts: [Name] }
     contexts:
       git-to-web:
         place: git-transport
@@ -301,7 +291,7 @@ steps:
     kind: actor
     actor: repository-contributor
     entities:
-      - { entity: branch, effect: reads, facts: [] }
+      - { entity: branch, effect: reads, facts: [Name] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::branch-comparison
@@ -310,7 +300,7 @@ steps:
     actor: repository-contributor
     capability: propose-code-change
     entities:
-      - { entity: pull-request, effect: creates, to: Open, facts: [] }
+      - { entity: pull-request, effect: creates, to: Open, facts: [Title, Description] }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::pull-request
