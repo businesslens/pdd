@@ -233,7 +233,8 @@ try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' })
     const page = await context.newPage()
     page.on('pageerror', error => failures.push(`${report.id}: ${error.message}`))
-    for (const [width, height, dark] of [[1440, 1000, false], [1024, 768, true], [390, 844, false], [320, 844, true]]) {
+    // Dark mode is off (businesslens/pdd#70); restore the dark passes when it returns.
+    for (const [width, height, dark] of [[1440, 1000, false], [1024, 768, false], [390, 844, false], [320, 844, false]]) {
       await page.setViewportSize({ width: 1440, height: 1000 })
       await page.goto(viewUrl(url, 'domain-reach'))
       await expect(page.getByRole('heading', { level: 1 })).toContainText('Domains')

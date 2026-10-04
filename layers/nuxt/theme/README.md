@@ -36,6 +36,14 @@ export default defineNuxtConfig({
   family from `public/brand/icons`, including the manifest and Apple touch
   icon. Call it once in the host's root component.
 - **Nuxt UI defaults**: `size: 'sm'` and `color: 'primary'`.
+- **Dark mode is off.** The `darkMode` constant in `nuxt.config.ts` is `false`
+  until dark mode reads as well as light
+  ([#70](https://github.com/businesslens/pdd/issues/70)). While it is false, the
+  document carries `data-color-mode-forced="light"` and a global route
+  middleware forces every page to light, so a stored dark preference never
+  paints. Hosts hide their color-mode toggles behind
+  `useAppConfig().businessLens.darkMode`. The dark tokens, utilities and logo
+  twins stay in place for when it returns.
 - **Neutral badges** use Sand: a parchment fill and warm outline in light mode,
   with a subdued brown fill in dark mode. Outline, soft and subtle badges share
   `--businesslens-badge-bg`; Product Report filter and resource-link chips use
