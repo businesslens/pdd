@@ -483,7 +483,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Reader provides a collection name
+  - text: The Reader enters a name
     kind: actor
     actor: reader
     entities: []
@@ -790,6 +790,7 @@ paid plan enables — stays an ordinary resource, mapped even where the running
 edition hides it. Its lead names what it exists under, and `verify` checks it.
 No field or Rule carries the dependency.
 
+`kind`, `of`, `takesEffect`, `stability` and `alternatives` are required.
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.
 
