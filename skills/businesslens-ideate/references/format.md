@@ -245,8 +245,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   change the same Entities, or has no Domain when more than one section or none
   does; one alone on a page beside a sibling section has none either. A
   Capability several sections reach (a document opened from Home, Recent and its
-  collection) has none, and nothing that is not a section becomes a Domain; a
-  map never writes a Domain of one Capability. For a planned Product, use the
+  collection) has none, and nothing that is not a section becomes a Domain;
+  never write a Domain of one Capability. For a planned Product, use the
   planned sections. Domains already in the model are the author's: add new
   Capabilities to them and never re-cut, merge or rename them.
 - Naming: ids and H1s use the words the Product shows the people who use it —
@@ -294,7 +294,9 @@ Lead and section-body fragments do not contain another H1 or H2.
 
   An Entity is a thing an Actor points at and the Product tells apart —
   identity, not storage: a shopper says "this order", never "this order line",
-  so the lines are information kept inside Order. Never a data model: no types,
+  so the lines are information kept inside Order, and a word for all of them
+  together — "library" for every saved item — is not an Entity either:
+  containers and parts are not Entities. Never a data model: no types,
   no keys, no foreign keys. Also never a representation of another Entity (a
   serialization or export is that thing in another shape: if it can be
   regenerated, it is a projection), a receipt the Product keeps to work safely
@@ -309,7 +311,9 @@ Lead and section-body fragments do not contain another H1 or H2.
   contents, is a Rule and never splits the Entity. Being stored, parsed and
   rendered alike is not the test. Where one list is a subset of another the
   intersection proves nothing: ask whether the smaller one has an address of
-  its own — a file, a route, a scope a command accepts. Containment is storage,
+  its own — a file, a route, a scope a command accepts, an id another resource
+  cites; one with any of them is its own Entity, however firmly the larger
+  thing contains it. Containment is storage,
   and the closed-vocabulary exclusion reads against the thing you would name,
   not the classification above it. When close, split. An Entity must be
   changed by a Step, presented by a Screen, named as an actor somewhere, or
@@ -806,8 +810,8 @@ discriminator — or by the deployment, fixed before the behavior starts:
 **A resource that exists only under some alternatives, or only while a
 setting, plan or licence enables it** — registration while the sign-in method
 is password, social sign-in while a provider is configured, a guest role a
-paid plan enables — stays an ordinary resource, mapped even where the running
-edition hides it. Its lead names what it exists under, and `verify` checks it.
+paid plan enables — stays an ordinary resource, modeled even where the running
+or planned edition hides it. Its lead names what it exists under, and `verify` checks it.
 No field or Rule carries the dependency.
 
 `kind`, `of`, `takesEffect`, `stability` and `alternatives` are required, and
@@ -861,7 +865,8 @@ orphan.
 
 **Evidence, not invention.** Record only selection the evidence or approved
 intent establishes; never invent Entities, settings, allocations, defaults or
-timing. Omit an optional field the evidence does not establish, say so in a
+timing. Omit an optional field the evidence or approved intent does not
+establish, say so in a
 required one such as `takesEffect`, and record the gap as unresolved in
 Coverage. `lint` validates structure and references, never whether conditions
 are exhaustive.
