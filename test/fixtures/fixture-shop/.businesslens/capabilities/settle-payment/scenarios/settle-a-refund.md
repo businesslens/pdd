@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: payment-gateway
     entities:
-      - { entity: refund, effect: changes, from: Requested, to: Settled }
+      - { entity: refund, effect: changes, from: Requested, to: Settled, facts: [] }
     contexts:
       webhook:
         place: payment-webhook

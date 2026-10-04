@@ -13,14 +13,14 @@ if (!urls.length) throw new Error('Pass at least one running CLI viewer URL.')
 const browser = await chromium.launch()
 const failures = []
 const measurements = []
-const views = ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what']
+const views = ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'delivery-map', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what']
 /* Each drawing keeps the collection supplying its primary subjects. */
 const LOCATION = {
   'domain-reach': ['domain', 'graph'],
   'capability-reach': ['capability', 'graph'],
   'journey-reach': ['journey', 'graph'],
   'rule-reach': ['rule', 'graph'],
-  'sitemap': ['interface', 'graph'],
+  'delivery-map': ['interface', 'graph'],
   'what-it-keeps': ['entity', 'graph'],
   'delivery-by-interface': ['capability', 'matrix'],
   'what-changes-what': ['entity', 'matrix'],
@@ -166,9 +166,12 @@ async function checkTreeContext(page) {
 }
 async function geometry(page) {
   return page.locator('.vue-flow').evaluate(root => {
-    const boxes = [...root.querySelectorAll('.vue-flow__node, .blr-flow-edge-label')].map(item => ({ title: item.textContent, rect: item.getBoundingClientRect() }))
+    const boxes = [...root.querySelectorAll('.vue-flow__node, .blr-flow-edge-label')].map(item => ({ title: item.textContent, rect: item.getBoundingClientRect(), frame: Boolean(item.querySelector('[data-flow-group]')) }))
+    // A Variation's frame holds its alternatives: containment is its drawing, not a collision.
+    const holds = (outer, inner) => outer.frame && outer.rect.left <= inner.rect.left + 1 && outer.rect.top <= inner.rect.top + 1 && outer.rect.right + 1 >= inner.rect.right && outer.rect.bottom + 1 >= inner.rect.bottom
     const overlaps = []
     for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      if (holds(boxes[i], boxes[j]) || holds(boxes[j], boxes[i])) continue
       const a = boxes[i].rect, b = boxes[j].rect
       if (a.right > b.left + 1 && b.right > a.left + 1 && a.bottom > b.top + 1 && b.bottom > a.top + 1) overlaps.push([boxes[i].title, boxes[j].title])
     }
@@ -176,7 +179,8 @@ async function geometry(page) {
     return { overlaps, clipped: labels.filter(item => item.scrollHeight > item.clientHeight + 1 || item.scrollWidth > item.clientWidth + 1).map(item => item.textContent) }
   })
 }
-async function checkSitemap(page) {
+/* Every tree drawing — the Delivery map and the reach graphs — keeps one attached parent edge per node. */
+async function checkTree(page) {
   await flowReady(page)
   expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] })
   const problems = await page.locator('.vue-flow').evaluate(root => {
@@ -210,8 +214,8 @@ async function selectView(page, view) {
   await expectOpen(page, view)
   await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))) })
   if (view === 'what-it-keeps' && await page.locator('.blr-diagram').count()) { await flowReady(page); expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] }) }
-  if (view === 'sitemap' && await page.locator('.blr-diagram').count()) {
-    await checkSitemap(page)
+  if (view === 'delivery-map' && await page.locator('.blr-diagram').count()) {
+    await checkTree(page)
     if (page.viewportSize().width >= 1400) await expect.poll(() => page.locator('.vue-flow').evaluate(viewport => {
       const bounds = viewport.getBoundingClientRect()
       return [...viewport.querySelectorAll('.vue-flow__node')].filter(item => {
@@ -243,10 +247,10 @@ try {
         if (screenshotRoot && (width === 1440 || width === 390)) await page.screenshot({ path: join(screenshotRoot, `${report.id}-${width}-${view}.png`) })
       }
     }
-    // Sitemap remains a connected graph through keyboard collapse, navigation and reload.
+    // The Delivery map remains a connected tree through keyboard collapse, navigation and reload.
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto(viewUrl(url, 'sitemap'))
-    await checkSitemap(page)
+    await page.goto(viewUrl(url, 'delivery-map'))
+    await checkTree(page)
     await checkBranchCentering(page)
     await checkCenterAnimation(page)
     await checkTreeContext(page)
@@ -264,17 +268,17 @@ try {
       await expect(page.locator('.vue-flow__node')).toHaveCount(1)
       await rootToggle.click()
       await expect(page.locator('.vue-flow__node')).toHaveCount(nodeCount)
-      await checkSitemap(page)
+      await checkTree(page)
       await page.locator('.vue-flow__node:has([data-resource-key^="interface:"]) .blr-flow-node__main').first().click()
       await expect(page).toHaveURL(/e=interface/)
       await page.goBack()
-      await checkSitemap(page)
+      await checkTree(page)
     }
     await rootNode.locator('.blr-flow-node__main').click()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
     await expect(page).not.toHaveURL(/[?&](?:s|e)=/)
     await page.goBack()
-    await checkSitemap(page)
+    await checkTree(page)
     const deeper = page.locator('.vue-flow__node:has([data-resource-key^="experience:"]) .blr-flow-node__count[aria-expanded="false"]').first()
     if (await deeper.count()) {
       const before = await page.locator('.vue-flow__node').count()
@@ -282,22 +286,22 @@ try {
       await expect.poll(() => page.locator('.vue-flow__node').count()).toBeGreaterThan(before)
       await expect(page).toHaveURL(/tx=.*(?:experience|screen)/)
       const expanded = await page.locator('.vue-flow__node').count()
-      await checkSitemap(page)
+      await checkTree(page)
       await page.reload()
       await expect(page.locator('.vue-flow__node')).toHaveCount(expanded)
-      await checkSitemap(page)
+      await checkTree(page)
     }
     // A reach tree: branch expansion survives a resource visit and a reload,
     // and an occurrence opens the one page of the resource it draws.
     await page.setViewportSize({ width: 1440, height: 1000 })
     for (const view of ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach']) {
       await page.goto(viewUrl(url, view))
-      await checkSitemap(page)
+      await checkTree(page)
       const closed = page.locator('.vue-flow__node .blr-flow-node__count[aria-expanded="false"]').first()
       if (await closed.count()) {
         await closed.click()
         await expect(page).toHaveURL(/tx=/)
-        await checkSitemap(page)
+        await checkTree(page)
       }
       const before = await page.locator('.vue-flow__node').count()
       const occurrence = page.locator('.vue-flow__node [data-resource-key*=":"]:not([data-resource-key^="product:"])').last()
@@ -307,10 +311,10 @@ try {
       await expect(page).toHaveURL(new RegExp(`e=${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
       await page.goBack()
       await expectCollectionDrawing(page, 'graph')
-      await checkSitemap(page)
+      await checkTree(page)
       await expect(page.locator('.vue-flow__node')).toHaveCount(before)
       await page.reload()
-      await checkSitemap(page)
+      await checkTree(page)
       await expect(page.locator('.vue-flow__node')).toHaveCount(before)
     }
     const entity = report.model.entities.find(item => item.states.length)
@@ -327,7 +331,7 @@ try {
     await flowReady(page)
     const positions = await page.locator('.vue-flow__node').evaluateAll(items => items.map(item => item.style.cssText))
     const beforeViewport = await flowTransform(page)
-    await page.locator('.vue-flow__node').first().hover()
+    await page.locator('.vue-flow__node:not(.vue-flow__node-blr-group)').first().hover()
     await page.mouse.move(0, 0)
     expect(await page.locator('.vue-flow__node').evaluateAll(items => items.map(item => item.style.cssText))).toEqual(positions)
     expect(await flowTransform(page)).toBe(beforeViewport)
@@ -337,7 +341,7 @@ try {
     await page.mouse.move(paneBox.x + 30, paneBox.y + 30)
     await page.mouse.down(); await page.mouse.move(paneBox.x + 120, paneBox.y + 90, { steps: 8 }); await page.mouse.up()
     const changed = await flowTransform(page)
-    await page.locator('.vue-flow__node .blr-flow-node__main').first().click()
+    await page.locator('.vue-flow__node:not(.vue-flow__node-blr-group) .blr-flow-node__main').first().click()
     await expect(page).toHaveURL(/e=entity/)
     await page.goBack(); await flowReady(page)
     await expect.poll(() => flowTransform(page)).toBe(changed)
@@ -350,7 +354,8 @@ try {
     await page.route('**/*diagram.worker*', route => route.abort())
     await page.reload()
     await expect(page.getByRole('status')).toContainText('Diagram layout is unavailable', { timeout: 20000 })
-    await expect(page.locator('.blr-diagram-fallback li')).toHaveCount(report.model.entities.length)
+    // An Entity Variation's frame is a node of the drawing too, so it is listed beside its alternatives.
+    await expect(page.locator('.blr-diagram-fallback li')).toHaveCount(report.model.entities.length + (report.model.variations ?? []).filter(item => item.of === 'entity').length)
     await context.close()
   }
 
@@ -394,18 +399,18 @@ try {
     item.title += ` — ${'A longer name 資料の順序 '.repeat(index % 3 + 1)}`
   }
   await page.route('**/_businesslens/report.json', route => route.fulfill({ json: longReport }))
-  await page.goto(viewUrl(urls[0], 'sitemap'))
-  await checkSitemap(page)
+  await page.goto(viewUrl(urls[0], 'delivery-map'))
+  await checkTree(page)
   // The readable mobile opening can extend beyond the canvas. Use its public
   // Fit action to reach an offscreen branch before expanding it.
   await page.getByRole('button', { name: 'Fit map to view', exact: true }).click()
   const longBranch = page.locator('.vue-flow__node:has([data-resource-key^="experience:"]) .blr-flow-node__count[aria-expanded="false"]').first()
-  if (await longBranch.count()) { await longBranch.click(); await expect(page).toHaveURL(/tx=/); await checkSitemap(page) }
+  if (await longBranch.count()) { await longBranch.click(); await expect(page).toHaveURL(/tx=/); await checkTree(page) }
   await checkBounds(page)
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
   const treeViewport = await flowTransform(page)
   await page.reload()
-  await checkSitemap(page)
+  await checkTree(page)
   await expect.poll(() => flowTransform(page)).toBe(treeViewport)
   await selectView(page, 'what-changes-what')
   const columnPicker = page.getByRole('combobox', { name: 'Matrix column' })
@@ -433,7 +438,7 @@ try {
     await selectView(page, view)
     await checkBounds(page)
     if (isMatrix(view) || view === 'what-it-keeps') await expect(page.locator('.vue-flow')).toHaveCount(0)
-    else if (await page.locator('.blr-diagram').count()) await checkSitemap(page)
+    else if (await page.locator('.blr-diagram').count()) await checkTree(page)
     /* A tree with no subjects says so instead of drawing the Product root alone. */
     else await expect(page.locator('.blr-topology-empty')).toBeVisible()
   }

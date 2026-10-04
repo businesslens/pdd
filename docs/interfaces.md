@@ -1,396 +1,275 @@
 ---
 title: Interfaces
-description: Supported ways for Actors to interact with the Product, with behavior that can be required independently.
+description: The web apps, mobile apps, CLIs, APIs and webhooks through which people and systems reach your product, the parts inside them, and the places where facts and abilities are met.
 section: open-source
 group: Product Model
-order: 10
+order: 9
 terms:
   - term: Interface
-    definition: "A supported way for Actors to interact with the Product, such as a web app, a CLI, or a partner API."
+    definition: "A supported way for Actors to reach the Product, such as a web app, a mobile app, a CLI, a partner API or an inbound webhook."
   - term: Interface type
     anchor: the-file
     definition: "The form an Interface takes: web, mobile app, desktop app, CLI, API, webhook, messaging, voice, device, or agent."
-  - term: Capability boundary
-    anchor: the-file
-    definition: "What an Interface, Experience, or Screen supports and excludes. Capability availability is declared on each Capability."
   - term: Entry point
     aliases: [Starts at]
     anchor: the-file
-    definition: "A Product-facing route or address where an Actor arrives, such as a path, a deep link, or a command."
+    definition: "An address where an Actor arrives, such as a path, a deep link or a command."
+  - term: Navigation
+    anchor: navigation
+    definition: "The Screens an Actor can reach from anywhere inside an Interface or Experience, such as a cart or a search."
   - term: Experience
     anchor: experiences
-    definition: "A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary."
+    definition: "One part of an Interface, such as its public, signed-in or admin part, defined by who is there and what they can do."
   - term: Access mode
     anchor: experience-file
-    definition: "Who may enter an Experience: public, authenticated, or restricted."
+    definition: "Who may enter an Experience: anyone (public), anyone signed in (authenticated), or only the roles that administer the Product (restricted)."
   - term: Screen
     anchor: screens
-    definition: "A meaningful visual view, named in the Product's own words, directly under an Interface or inside one of its Experiences."
-  - term: View state
-    anchor: view-states-are-the-views-never-the-things
-    definition: "A condition of a Screen, such as empty, populated, or unauthorized. It describes the view rather than an Entity's Lifecycle."
+    definition: "A place inside an Interface or Experience, named in the Product's own words, where an Actor sees facts and finds abilities."
+  - term: Child Screen
+    aliases: [Nested Screen]
+    anchor: screens-nest
+    definition: "A Screen inside another Screen that works on the same selected thing or process, such as a tab of one record or a step of a wizard."
 ---
 
 # Interfaces
 
-**An Interface is a supported way for Actors to interact with the Product.**
-Customer web, reader mobile, operator CLI, and partner API can be
-Interfaces when the Product makes an independently meaningful commitment
-through them.
+**An Interface is a supported way people or systems reach your Product**: a web
+app, a mobile app, a CLI, a partner API, an inbound webhook. Inside it live
+**Experiences**, its parts, and **Screens**, its places: what an Actor can reach,
+see and do, never how it looks (see
+[Is this a design spec?](#is-this-a-design-spec)).
 
-Interfaces are not Product types or technology labels. One Product may expose a
-website, mobile application, CLI, and API together. They remain one Product
-when they serve one coherent value promise; the Interfaces say where particular
-behavior is promised.
+## In practice
+
+| In your product | Interface | `type` |
+| --- | --- | --- |
+| The shop's website, where shoppers browse and buy | Customer web | `web` |
+| The same shop as an app | Customer mobile | `mobile-app` |
+| The console where operators resolve orders | Admin web | `web` |
+| The endpoint the payment gateway calls to report settlements | Payment webhook | `webhook` |
+| The commands operators run in a terminal | Operator CLI | `cli` |
 
 ## When you create one
 
-Create an Interface when Actors can interact with the Product through it and
-its support can be independently required and verified. Do not create one for
-every framework, package, adapter, internal endpoint, or deployable.
-
-An API belongs in the model only when it is itself a supported interaction
-contract—for example, a partner automation API. An internal API used to
-implement the web application is an implementation detail. Apply the same test
-to command namespaces, integrations, and background system interactions.
-
-`agent` is the surface an AI coding harness reaches through installed skills or
-tools. It is a contract with its own Actors, boundary, and independently
-verifiable behavior — not the harness's own interface, and not a way to describe
-a library.
-
-## Interfaces are inbound
-
-Something *arrives* at the Product through an Interface. An outbound connection
-your Product opens to a third party is not an Interface, however stable,
-versioned, or vendor-supported that integration is.
-
-Do not create an Interface for a feed your Product polls, a payment processor it
-charges, a mail provider it sends through, or a model API it queries. Those
-external systems do not [act](./entities.md#actors-an-entity-that-acts)
-either—they have no goal in your Product and no inbound interaction contract you
-must keep stable for them.
-Model the call inside the
-[Capability](./capabilities.md) that makes it, give its availability the
-Interfaces where an Actor actually observes the result, and make the failure
-behavior a [Capability Scenario](./capabilities.md#capability-scenarios).
-
-When that same third party calls *you* back—a webhook, callback, or push
-subscription—that inbound interaction happens through an **Interface**, and
-the third party is its Actor. Direction decides, not ownership.
+- **Create one for every supported way in**: something whose behavior you could
+  require and check on its own.
+- **Inbound only.** A payment processor you charge or a mail provider you send
+  through is not one; the [Capability](./capabilities.md) that calls it says so.
+  When the third party calls *you* back (a webhook), that is an Interface, and
+  the third party is its Actor.
+- **Not every deployable.** Frameworks, packages, internal APIs that serve your
+  own web app, and background workers are implementation, not Interfaces.
+- **One type each.** A website and an app are two Interfaces, even when they do
+  the same thing.
+- **No commands or endpoints as resources.** A CLI's syntax lives in its help and
+  an API's payloads in its OpenAPI file, attached as a
+  [Reference](./references.md); the model holds the Capabilities behind them.
 
 ## The file
 
-An Interface with no assets, Experiences, or Screens lives at
-`interfaces/<interface-id>.md`. Otherwise it expands to
-`interfaces/<interface-id>/interface.md`, with `experiences/`, `screens/`, or
-both nested in that folder — both only for a [Screen shared across its
-Experiences](./interfaces.md#screens-shared-across-experiences).
+`interfaces/<id>.md`, or `interfaces/<id>/interface.md` once it holds
+Experiences or Screens.
 
-```md [interfaces/customer-web.md]
+```md [interfaces/customer-web/interface.md]
 ---
 type: web
 actors: [shopper]
 entryPoints:
   - web: /
+navigation: [catalog]
 ---
 
 # Customer web application
 
-The browser Interface through which shoppers browse and buy.
-
-## Capability boundary
-
-Supports customer shopping. It does not expose store administration.
+The browser interface through which shoppers browse and buy.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, `device`, or `agent`. |
-| `actors` | yes | Name at least one existing Entity that `acts` — who uses the Interface, a descriptive list, never a permission claim; do not repeat an ID. |
-| `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. Key each one with this Interface's own `type`, or with **another Interface's id** when that is where a reader arrives from — a local web report opened by a command says so here rather than in prose. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 | yes | Name the Interface. |
-| Lead paragraph | yes | Describe how Actors interact with the Product through this Interface. |
-| `## Capability boundary` | yes | State what the Interface supports and excludes. |
+| Field | Says |
+| --- | --- |
+| `type` (required) | `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, `device` or `agent`: how Actors interact, never the technology (`web`, not `react`) |
+| `actors` (required) | Who uses it: Entities that act |
+| `entryPoints` | Where Actors arrive, keyed by this Interface's `type`, or by another Interface's id when they arrive from there |
+| `languages` | The [Product's languages](./product.md#the-file) this Interface serves, when it serves fewer |
+| `navigation` | Screens reachable from anywhere inside it; see [Navigation](#navigation) |
 
-The Capability boundary describes what the Interface supports and excludes in
-prose. It does not list Capability names: each [Capability](./capabilities.md#availability)
-declares where it is available. Experiences and Screens also require this
-section, describing what each supports and excludes.
+## How it connects
 
-Every model needs at least one Interface.
-
-The type describes how Actors interact with the Product, not how the Interface
-is implemented. Use `web`, not `react`; use `mobile-app`, not `swift`. One
-Interface has exactly one type. If two interaction contracts can be supported
-and verified independently, model them as separate Interfaces. The Product
-Report uses this authored value for its Interface icons and labels; it never
-guesses from an Interface id or title.
-
-An Interface does not declare one access mode: the same web application can
-contain public and restricted Experiences. It also has no success exit;
-Capability Scenarios own local observable outcomes. Journey Scenarios own
-complete variations of a coherent multi-Capability goal.
+Capabilities name the Interface (or, once divided, its Experiences) in their
+[availability](./capabilities.md#availability); it never lists what it offers.
+Steps name the place they happen ([Where a Step happens](#where-a-step-happens)),
+and a Business Rule applied at a place covers everything inside it.
 
 ## Experiences
 
-**An Experience is a stable context for using the Product within one
-[Interface](./interfaces.md).** It has a defined audience, access mode, and
-capability boundary. Public discovery, personal workspace, administration,
-account management, and partner automation are possible Experiences.
-
-An Experience belongs to exactly one Interface, determined by its folder.
-Similar Experiences on another Interface are counterparts with separate
-qualified ids. The rules below determine when an Interface requires Experiences
-and when existing Experiences are justified.
+**An Experience is one part of an Interface (its public, signed-in or admin
+part), defined by who is there and what they can do.** Public browsing, a
+personal account, an administration area and partner automation are typical
+Experiences. An Interface nothing divides has none.
 
 ### When to create an Experience
 
-**Whether an Interface is divided into Experiences is derived, never judged.**
-`lint` computes it from `actors`, `access`, each Capability's `availability`,
-and its Scenarios' Steps, so the author never applies a prose test. Two rules
-decide it, one in each direction:
+- **Divide an Interface when it has a public part and a signed-in part**:
+  browsing without an account, managing orders once signed in.
+- **Divide it when it has an admin area only administrators enter**: a
+  `restricted` Experience. Administrators are whoever administers the Product,
+  its settings or members, including a customer's own workspace admins.
+- **Divide it when its people form groups that share no ability**: buyers and
+  sellers who never use a Capability in common. Roles that each relate
+  one-to-one to the same Account are one group.
+- **Otherwise, don't**, unless the Experience is a counterpart or a Variation
+  alternative, below. Capabilities name the Interface directly, and Experiences
+  nothing justifies are refused.
+- **A page only some ordinary roles may open, outside the administration area,
+  stays in the signed-in part**; who may use it is a
+  [permission](./business-rules.md#permission).
+- **The same part on web and on mobile has the same name under each Interface.**
+  The two are counterparts (Shopping on customer web and Shopping on customer
+  mobile) and keep their Experience even where nothing else would divide.
 
-- **An Interface must hold Experiences** when its Actors split into groups that
-  no Capability available there bridges. Holding none is a `lint` **error**:
-  those groups are separate contexts, not one.
-- **An Interface that holds Experiences must justify them.** Its Experiences
-  differ in `access`, or its audiences are disjoint, or one is a counterpart —
-  an Experience whose name also exists under another Interface, the same context
-  on another platform, which justifies itself because flattening it would make
-  two views of one context look unrelated. None of the three, and it is a
-  `lint` **error**: use direct Interface availability instead.
-
-Disjoint audiences is the only input that *requires* division. `access` only
-justifies Experiences that already exist, because an Interface declares no
-`access` of its own — the value lives on each Experience.
-
-The rule protects one thing: an Experience is a context that stays meaningful
-when routes, commands, or navigation are reorganized, because it is defined by
-who is there and what they can do, not by how the surface is laid out. An
-overview page is usually a Screen, not an Experience. A command group is an
-Experience only when the rule divides its Interface, not because a parser groups
-its commands.
-
-When nothing divides an Interface, availability names the Interface directly.
-Do not create a one-to-one Experience to satisfy the file shape or make the
-report look full; `lint` refuses it.
+Alternatives of a [Variation](./variations.md) are also allowed as Experiences,
+and only they may share both an access mode and an Actor.
 
 ### Experience file
 
-An Experience with no assets or Screens lives at
-`interfaces/<interface-id>/experiences/<experience-id>.md`. Otherwise it
-expands to `<experience-id>/experience.md`, with `screens/` inside its folder.
+`interfaces/<interface-id>/experiences/<id>.md`, or `<id>/experience.md` once it
+holds Screens.
 
-```md [experiences/administration.md]
+```md [interfaces/store-web/experiences/administration.md]
 ---
 actors: [store-admin]
 access: restricted
 entryPoints:
-  - admin-web: /admin
+  - store-web: /admin
 ---
 
 # Administration
 
-Where authorized operators manage the Product and its users.
-
-## Capability boundary
-
-Supports operational administration. It does not grant customer privileges.
+Where operators manage the store, its orders and its staff.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
-| `access` | yes | Use `public`, `authenticated`, or `restricted`. |
-| `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 | yes | Name the Experience. |
-| Lead paragraph | yes | Describe the coherent usage context. |
-| `## Capability boundary` | yes | State what the Experience supports and excludes. |
+A `restricted` Experience never stands alone: store web also has a public or
+signed-in Experience for its shoppers, and the two access modes divide it.
 
-The entire `experiences/` directory is optional. When an Interface contains
-Experiences, availability Contexts use their qualified places. The union of
-Actors across those Experiences must cover
-every Actor declared by the Interface; Experiences may overlap, but they cannot
-leave an Interface Actor without a usable context. An Interface with no
-Experiences uses direct availability:
+| Field | Says |
+| --- | --- |
+| `actors` (required) | Who is there; each must be an Actor of the Interface |
+| `access` (required) | `public`, `authenticated` (signed in) or `restricted` (only the roles that administer the Product) |
+| `entryPoints` | Where Actors arrive, keyed by the containing Interface's id |
+| `navigation` | This Experience's own Screens reachable from anywhere inside it |
 
-```yaml
-availability:
-  - place: release-cli
-```
-
-There is no `exit` field. A persistent context does not have one useful success
-exit; Capability Scenario and Journey Scenario outcomes state what happens in
-concrete cases.
-
-### Experiences in the Product Report
-
-An Experience belongs to its Interface, and carries its own Screens, references
-to shared Screens, and the Capabilities available within it.
+`access` is the most open the part can be. A setting that opens or closes it,
+such as content public only while the store allows guests, is a condition on a
+[permission](./business-rules.md#grant-keys), never an Experience of its own.
 
 ## Screens
 
-**A Screen is a meaningful user-visible view** where Product information or
-Capabilities are exposed. It describes what users understand and can do there,
-not how the view is implemented or drawn.
-
-Screens are optional. A visual Product may need them; a CLI, supported API, or
-other non-visual Interface may not. A Screen need not have a URL, fill a device,
-or correspond to one component, route module, or view controller.
+**A Screen is a place where a person sees facts and finds abilities**, never a
+description of how it looks. A shop's catalog, a product record, order status
+and an operator's order detail are Screens. They are optional: a CLI, API or
+webhook usually has none.
 
 ### When to create a Screen
 
-Create a Screen when a view has a stable Product purpose, meaningful
-information or actions, and a capability boundary worth preserving. Do not
-create Screens for responsive layouts, themes, hover variants, skeletons,
-components, or every route found in source.
-
-**Error, legal and other capability-free views are not Screens.** A Screen must
-name at least one Capability, and a not-found page, a privacy policy, or a terms
-page exposes none — nothing about the Product's abilities happens there. Model
-such a view as a View state of the view it interrupts, or leave it out of the
-model entirely. A repository rule that every implemented route must appear
-somewhere is a documentation rule, not a Product Model rule; do not satisfy it by
-inventing a Capability the view does not have.
-
-> **Experience vs Screen.** An [Experience](./interfaces.md#experiences) is a coherent
-> context inside one Interface. A Screen is one meaningful visual view inside
-> that context, or directly on an Interface no Experience divides.
->
-> **Screen vs Scenario.** A Screen says what is visible and possible at a view.
-> A [Capability Scenario](./capabilities.md#capability-scenarios) or
-> [Journey Scenario](./journeys.md#journey-scenarios) is a concrete observable behavior
-> contract in which that view may participate.
+- **Create one for a place with a stable purpose where at least one Capability
+  is used**, such as a product record, where shoppers add to the cart.
+- **Not for error or legal pages.** A not-found page or a privacy policy offers
+  no ability; the condition it answers belongs in a Scenario.
+- **Not for every route or component.** A modal, a page, a URL and a breakpoint
+  decide nothing, and a different drawing of the same information is one Screen.
+- **The same view on web and on mobile is two Screens with the same name**
+  (counterparts), so a difference between them stays visible.
 
 ### Screen file
 
-An assetless Screen lives at
-`interfaces/<interface-id>/experiences/<experience-id>/screens/<screen-id>.md`
-(or directly under an Interface's `screens/`: an undivided Interface's own
-Screens, or a Screen a divided Interface shares across its Experiences). A Screen with assets
-expands to `<screen-id>/screen.md`. The whole Screen collection is optional.
+`.../screens/<id>.md` inside its Interface or Experience, or `<id>/screen.md`
+once it holds child Screens or images.
 
-```md [screens/product-record.md]
+```md [interfaces/customer-web/experiences/storefront/screens/product-record.md]
 ---
-capabilities: [browse-catalog]
-entities: [catalog-product]
+entities:
+  - { entity: catalog-product, shows: [Name and description, Price, Stock remaining] }
+  - { entity: cart, shows: [Quantity chosen] }
 entryPoints:
   - customer-web: /products/:id
-  - customer-mobile: shop://products/:id
-references:
-  - kind: visual
-    role: intent
-    target: https://example.com/designs/product-record
 ---
 
 # Product record
 
-Shows the information a shopper needs to evaluate one product.
-
-## Information presented
-
-- Product name and description
-- Price and availability
-
-## Available actions
-
-- Add the product to the cart
-- Return to the catalog
-
-## View states
-
-### Available
-
-The product can be added to the cart.
-
-## Capability boundary
-
-The Screen does not change product or inventory data.
+Shows what a shopper needs to evaluate one product.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. A Screen shared beside `experiences/` needs one for every Experience of its Interface, and `lint` names the Experiences a Capability is missing from. |
-| `entities` | no | Name the [Entities](./entities.md) this Screen presents. A Rule that governs who may read one of them is checked against who reaches this Screen. |
-| `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
-| `## Information presented` | yes | Include at least one meaningful bullet item, with each item on one physical line. |
-| `## Available actions` | no | Include a bullet list when present, with each item on one physical line. |
-| `## View states` | no | Give every H3 state a description. |
-| `## Capability boundary` | yes | State what the Screen supports and excludes. |
+| Field | Says |
+| --- | --- |
+| `entities` | Which Entities' facts are on screen; see [What a Screen presents](#what-a-screen-presents) |
+| `entryPoints` | Routes or deep links, keyed by the containing Interface's id |
+| `references` | Mockups and design files, as [References](./references.md) |
 
-Screens do not declare availability and do not list Scenarios. Their folder
-path is already authoritative for their containing Interface or Experience. A
-Scenario participates in a Screen when one of its Step Contexts names that
-Screen as its most-specific `place`. When that Step names a Capability, the Screen must
-expose it. Consumers derive both Capability Scenario and Journey Scenario
-backlinks from those Step Contexts.
+A Screen never lists its Capabilities: they come from the Scenario Steps placed
+on it. Its folder says where it sits.
 
-### View states are the view's, never the thing's
+### What a Screen presents
 
-`## View states` lists conditions of a Screen, such as empty, populated,
-unauthorized, or caught-up. Include a condition when it changes what an Actor
-understands or can do in that view.
+`shows` lists facts the Product displays; `collects` lists values the person
+enters: a sign-in Screen collects Email and Password without showing them. Both
+name the Entity's [named facts](./entities.md#named-facts); a prefilled field is
+in both, and an Entity with no named facts is listed by its id alone. Facts a
+Step reads on a Screen must be in its `shows`.
 
-An [Entity's lifecycle](./entities.md#states-and-the-lifecycle-nobody-authors)
-describes the Entity's States. A Screen that presents the Entity declares it in
-`entities` and describes how its own view changes. The same Entity State can
-appear differently on different Screens.
+### Screens nest
 
-`## Information presented` follows the same split: what *this view* shows —
-counts, feedback, derived values, combinations — never a restatement of what the
-Entity keeps. Declare the Entity and let the reader follow the link.
+A Screen can hold child Screens; a child's id adds a segment, such as
+`customer-web::onboarding::choose-plan`. Nest a Screen only when it works on its
+parent's selected thing (the tabs of one order) or is a stage of the parent's
+wizard. Being opened from another Screen is not enough: a panel opened from
+search, a list and related items sits once in their common Interface or
+Experience.
 
 ### Screens shared across Experiences
 
-An Interface usually holds either `screens/` or `experiences/`. It may hold
-**both** when a Screen is genuinely common to its Experiences rather than
-belonging to one — an item reader that opens from a private library and from a
-published collection alike. A Screen beside `experiences/` is reachable from
-every Experience of that Interface, and two Screens with the same name below
-different Experiences of one Interface are counterparts exactly as they are
-across Interfaces.
+A Screen placed beside `experiences/`, directly in the Interface, is shared by
+every Experience of that Interface, such as a catalog that guests and signed-in
+shoppers both browse. Every Capability it exposes must be available in each. If
+what it shows or offers differs by Experience, it is two Screens, one in each.
 
-A shared Screen is inside every Experience of its Interface. Its id is
-`interface-id::screen-id`, every Capability it exposes must be available in
-each Experience, and a Scenario Step on it counts as coverage for each. That is
-the test for whether a view is really shared: if its Capabilities differ by
-Experience, it is two Screens, one under each Experience, which are
-counterparts. A Screen that belongs to one Experience belongs inside it.
+### Where a Step happens
 
-### Web and mobile
-
-The same view on web and on mobile is two Screen folders with the same name —
-counterparts, told apart by their path. Give them the same purpose, information
-and actions when that is the truth; stating each separately is what makes a
-divergence between them visible instead of silent.
+A Step names the most specific place it happens: the Screen, at any depth, when
+on one; otherwise the Experience or undivided Interface. A Step on a parent
+Screen happens on the parent itself, in none of its children.
 
 ### Navigation
 
-Screens are not an authored sitemap. Consumers can generate a Screen map by
-Interface and Experience, while Capability Scenarios and Journey Scenarios
-describe observable behavior and movement. Parent, next, generic transition,
-route-tree, and XML sitemap data do not belong in the Product Model. An
-information-architecture diagram can be an external `doc` or `visual`
-Reference.
+`navigation` lists the Screens reachable from anywhere inside an Interface or
+Experience (a catalog, a cart, a search), not how anyone moves; movement comes
+from Scenario Steps. A divided Interface lists only its shared Screens; each
+Experience lists its own. Menus and their order are design.
 
-Model-owned screenshots, mockups, and diagrams live beside an expanded
-`screen.md`; generated captures go under its `implementation/` directory.
-External or separately maintained artifacts such as Figma files attach through
-[References](./references.md). `lint` checks asset metadata and paths, but does
-not interpret whether a visual matches the Product.
+## Is this a design spec?
 
-A CLI or API does not need substitute Command or Endpoint resource types. Keep
-command syntax in CLI help and endpoint schemas in the API contract; model the
-durable Capabilities, both observable Scenario types, optional Journeys, and
-Rules they expose.
+No. Rebuild a view with different components, layout, colors, icons and copy:
+what would still have to be true (places, who reaches them with what access,
+facts shown and collected, abilities offered, what happens next) is the
+model's. What the redesign may change is design's; attach design files as
+`visual` [References](./references.md) with `role: intent`.
 
-### Screens in the Product Report
+## What lint checks
 
-A Screen belongs to its actual Interface and optional Experience, and a shared
-Screen belongs to one of them canonically. Containment says what holds what; it
-never says a reader moves from one Screen to another.
+All of these are errors:
+
+- The model has at least one Interface, each with a valid `type` and at least
+  one Actor.
+- An Experience has a valid `access` and only Actors its Interface lists, and
+  together an Interface's Experiences cover all of them.
+- An Interface whose Actors form groups sharing no Capability is divided;
+  Experiences need more than one access mode or audience, a counterpart or a
+  Variation; and two with the same `access` share no Actor unless they are
+  alternatives of one Variation.
+- Entry point keys, `languages` and `navigation` resolve, and a Step's place
+  lists the Step's Actor.
+- A Screen has a Capability from a Step placed on it, available wherever it
+  sits; its `entities` resolve; facts read on it are in its `shows`.
+- Place ids are unique: a shared Screen and an Experience of one Interface
+  never have the same name.
+- `## Capability boundary` is refused on all three, and `## Information
+  presented`, `## Available actions` and `## View states` on a Screen.

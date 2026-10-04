@@ -1,6 +1,7 @@
 ---
 type: web
 actors: [store-admin]
+languages: [en]
 entryPoints:
   - web: /admin
 ---
@@ -8,7 +9,3 @@ entryPoints:
 # Administrative web application
 
 The restricted browser interface used by store operators.
-
-## Capability boundary
-
-Supports order operations. It does not expose shopper-only behavior.

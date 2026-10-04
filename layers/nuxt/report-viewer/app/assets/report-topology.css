@@ -193,3 +193,44 @@
 /* Keep handles clear of row labels, resource links, and cell content. */
 .blr-topology-matrix[data-edge-handles='true'] tbody th { padding-inline-end: 20px; }
 .blr-topology-matrix[data-edge-handles='true'] :is(thead th:not(.blr-matrix-corner), td) { padding-inline: 20px; }
+
+/* Variations in a matrix. A Variation's alternatives sit side by side under one
+   band naming the set once — a one-line row above its rows, one strip across its
+   columns' tops — the collection lists' group header in small, tinted a step
+   darker than the cells — even one alternative alone, as in the trees. A cell
+   held only under some alternatives is dashed and says which first. */
+.blr-topology-matrix { --blr-matrix-band: color-mix(in oklab, var(--ui-border) 55%, var(--ui-bg)); }
+.blr-topology-matrix tr.blr-matrix-band > * { padding-block: 6px; background: var(--blr-matrix-band); border-bottom: 1px solid var(--ui-border); }
+.blr-topology-matrix tr.blr-matrix-band > td { border-inline-end: 0; }
+/* The line runs from the pinned first column across the band, over the cell beside it. */
+.blr-topology-matrix tr.blr-matrix-band > th { vertical-align: middle; white-space: nowrap; overflow: visible; }
+.blr-matrix-band-link { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; font-size: 12px; font-weight: 600; color: var(--ui-text-highlighted); }
+.blr-matrix-band-link:hover > .blr-matrix-band-name { text-decoration: underline; }
+.blr-matrix-band-link > .iconify { width: 12px; height: 12px; flex-shrink: 0; }
+/* The Variation reads at its rows' own size, with its full set mark; its alternatives a step smaller beneath it. */
+.blr-matrix-band-link.blr-matrix-band-title { gap: 8px; font-size: 14px; }
+.blr-topology-matrix :is(tr.blr-matrix-in-set > th, thead th.blr-matrix-banded) .blr-topology-link { font-size: 13px; font-weight: 500; }
+.blr-matrix-band-meta { margin-inline-start: 4px; font-size: 11px; font-weight: 400; color: var(--ui-text-muted); white-space: nowrap; }
+.blr-matrix-band-go { color: var(--ui-text-muted); }
+.blr-topology-matrix tr.blr-matrix-in-set > th { padding-inline-start: 28px; }
+.blr-topology-matrix thead th.blr-matrix-banded { padding-top: 0; }
+/* Each strip reaches over its own divider, so the band reads as one. */
+.blr-matrix-colband { display: flex; align-items: center; height: 30px; margin: 0 -15px 10px -14px; padding: 0 14px; background: var(--blr-matrix-band); border-bottom: 1px solid var(--ui-border); overflow: hidden; white-space: nowrap; }
+.blr-matrix-colband.is-last { margin-inline-end: -14px; }
+.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-colband { margin-inline: -20px -21px; padding-inline: 20px; }
+.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-colband.is-last { margin-inline-end: -20px; }
+.blr-matrix-band-line { display: inline-flex; align-items: baseline; gap: 4px; min-width: 0; }
+.blr-matrix-band-line .blr-matrix-band-meta { margin: 0; }
+/* The labelled strip lets its name run across the band, over its neighbours' strips. */
+.blr-topology-matrix thead th.blr-matrix-band-labelled { z-index: 3; clip-path: inset(0 calc((1 - var(--blr-band-span, 1)) * var(--blr-matrix-column-width)) 0 max(0px, calc(var(--blr-matrix-offset) - var(--blr-matrix-column-index) * var(--blr-matrix-column-width)))); }
+.blr-matrix-band-labelled > .blr-matrix-colband { overflow: visible; }
+.blr-matrix-band-labelled .blr-matrix-band-line { flex-shrink: 0; }
+.blr-matrix-versioned { display: inline-flex; align-items: baseline; gap: 6px; }
+.blr-matrix-version { flex-shrink: 0; white-space: nowrap; font-family: var(--font-mono); font-size: 11px; color: var(--ui-text-muted); }
+.blr-matrix-effects > .blr-matrix-badge[data-conditional] { border-style: dashed; }
+.blr-matrix-popover-condition { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--ui-text-highlighted); }
+/* Said first in the details, at the sections' own inset; a per-change line sits inside its section already. */
+.blr-matrix-popover-body > .blr-matrix-popover-condition { margin: 0; padding: 12px 16px 0; }
+.blr-matrix-popover-condition > .iconify { width: 12px; height: 12px; flex-shrink: 0; }
+.blr-matrix-route-set { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 4px; font-size: 11px; color: var(--ui-text-muted); }
+.blr-matrix-route-set > .iconify { width: 10px; height: 10px; }

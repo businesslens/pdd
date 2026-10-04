@@ -180,8 +180,6 @@ export function contextField(
 export interface ResourceAsset {
   file: string
   title?: string
-  /** Screens only: the `## View states` H3 this asset depicts. */
-  state?: string
 }
 
 export function assetsField(data: Record<string, unknown>, issues: string[], label: string): ResourceAsset[] {
@@ -199,7 +197,7 @@ export function assetsField(data: Record<string, unknown>, issues: string[], lab
       continue
     }
     const record = item as Record<string, unknown>
-    const unknown = Object.keys(record).filter(key => !['file', 'title', 'state'].includes(key))
+    const unknown = Object.keys(record).filter(key => !['file', 'title'].includes(key))
     if (unknown.length) {
       issues.push(`${label}: asset has unknown key "${unknown[0]}"`)
       continue
@@ -214,16 +212,13 @@ export function assetsField(data: Record<string, unknown>, issues: string[], lab
       continue
     }
     seen.add(file)
-    for (const key of ['title', 'state'] as const) {
-      const raw = record[key]
-      if (raw !== undefined && (typeof raw !== 'string' || !raw.trim() || /[\r\n]/.test(raw))) {
-        issues.push(`${label}: asset "${key}" must be a non-empty single-line string when present`)
-      }
+    const rawTitle = record.title
+    if (rawTitle !== undefined && (typeof rawTitle !== 'string' || !rawTitle.trim() || /[\r\n]/.test(rawTitle))) {
+      issues.push(`${label}: asset "title" must be a non-empty single-line string when present`)
     }
     result.push({
       file,
-      title: typeof record.title === 'string' ? record.title : undefined,
-      state: typeof record.state === 'string' ? record.state : undefined
+      title: typeof record.title === 'string' ? record.title : undefined
     })
   }
   return result
@@ -234,15 +229,6 @@ export interface ResourceReference {
   role: ReferenceRole
   target: string
   title?: string
-  /**
-   * The View state this artefact depicts.
-   *
-   * Screens only, and validated against that Screen's `## View states`. Six
-   * captures of one Screen are otherwise a flat list distinguishable only by
-   * free-text title; naming the state is what lets a reader — and the renderer —
-   * put each capture beside the state it shows.
-   */
-  state?: string
 }
 
 export type ReferenceKind = 'code' | 'prd' | 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
@@ -312,7 +298,7 @@ export function referencesField(data: Record<string, unknown>, issues: string[],
       continue
     }
     const record = item as Record<string, unknown>
-    const unknown = Object.keys(record).filter(key => !['kind', 'role', 'target', 'title', 'state'].includes(key))
+    const unknown = Object.keys(record).filter(key => !['kind', 'role', 'target', 'title'].includes(key))
     if (unknown.length) {
       issues.push(`${label}: reference has unknown key "${unknown[0]}"`)
       continue
@@ -337,19 +323,11 @@ export function referencesField(data: Record<string, unknown>, issues: string[],
       issues.push(`${label}: reference "title" must be a non-empty single-line string when present`)
       continue
     }
-    if (
-      record.state !== undefined
-      && (typeof record.state !== 'string' || !record.state.trim() || /[\r\n]/.test(record.state))
-    ) {
-      issues.push(`${label}: reference "state" must be a non-empty single-line string when present`)
-      continue
-    }
     result.push({
       kind: record.kind as ReferenceKind,
       role: record.role as ReferenceRole,
       target: record.target,
-      title: typeof record.title === 'string' ? record.title : undefined,
-      state: typeof record.state === 'string' ? record.state : undefined
+      title: typeof record.title === 'string' ? record.title : undefined
     })
   }
   return result

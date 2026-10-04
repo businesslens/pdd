@@ -7,24 +7,24 @@ steps:
     kind: actor
     actor: reader
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
   - text: The Product checks collection ownership
     kind: product
     actor: reader
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
   - text: The attempted membership change is rejected
     kind: condition
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
 ---
 
 # Reject adding to another owner's collection

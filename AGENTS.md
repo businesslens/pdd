@@ -63,13 +63,19 @@ were costed and then chosen against, so the same argument is not had twice.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per main resource family), Integrations (one page per
-  thing you integrate with), Skills (one page per skill), and CLI (one page per
-  command).
-- Each resource type is explained in exactly one place. Its page carries its
-  narrative, when to create one, its file shape, and the `lint` findings
-  that constrain it — do not reintroduce a separate glossary, a separate
-  format page, or a separate error catalog.
+  Model (one page per main resource family), Skills (one page per skill), and
+  CLI (one page per command). The Introduction draws the development loop
+  (embedded on the site as `::development-loop`, with a plain-text fallback);
+  building is the user's own flow, so there is no Integrations group.
+- **`docs/` gives the gist; the skills carry the complexity.** A reader should
+  understand a resource type from its page in a few minutes. Each resource type
+  is explained in exactly one place, in this order: a one-sentence definition;
+  everyday examples; when to create one, as a few rules of thumb; one minimal
+  example file with its fields; how it connects; and the `lint` findings that
+  constrain it, errors and warnings marked. The full rules, edge cases and
+  case law live in `spec/format.md` and each skill's format reference, never in
+  `docs/`. Do not reintroduce a separate glossary, format page, or error
+  catalog. Aim for 120–250 lines per Product Model page.
 - **`docs/` explains the model, never the report.** A derivation is a fact about
   the model and belongs here; the surface that draws it does not.
 - Define vocabulary in the owning doc's `terms:` frontmatter. Run
@@ -79,9 +85,7 @@ were costed and then chosen against, so the same argument is not had twice.
 - Experiences and Screens are sections of `docs/interfaces.md`, including their
   definitions, file shapes, and lint rules. They have no separate docs pages or
   sidebar entries. Capability Scenarios live in `docs/capabilities.md`, Journey
-  Scenarios in `docs/journeys.md`. This supersedes the earlier rule requiring
-  Experiences and Screens to have their own pages; their resource types and
-  authored containment remain unchanged.
+  Scenarios in `docs/journeys.md`.
 
 ## How format decisions are judged
 
@@ -104,8 +108,10 @@ costed already.
   way" argues *against* a rule.
 - **Reviewability is second, and it is not legibility.** Divergence between two
   lint-clean models concentrates in what is *absent*, which no delta shows, so
-  `docs/` is written for the reviewer: a resource type whose granularity cannot
-  be challenged from `docs/` is a candidate for removal.
+  every boundary deciding how many resources exist gets one plain rule of thumb
+  with an example in `docs/`: a resource type whose granularity cannot be
+  challenged from `docs/` is a candidate for removal. The exhaustive statement
+  stays in the spec.
 - **A determinism claim is established empirically**: map one product twice from
   one rubric, independently, then diff. Both readings defensible is a defect in
   the format and needs no adjudication; one plainly wrong against the spec is a
@@ -193,12 +199,13 @@ costed already.
   the density control without changing the saved preference. Expand all and
   Collapse all sit beside the drawing controls on desktop and inside the view
   picker on phones.
-- **Every surface names itself, with the name the reader clicked.** The main
-  H1 keeps the working view and its count or Product qualifier. A resource
-  slideover names its resource and type, with actual ownership shown separately
-  from the return trail. Report identity and the way home stay in the sidebar.
-- **Resources open in one complete slideover.** This supersedes the resource-page
-  navigation rule. Opening a row, relation, search result or diagram resource
+- **Every surface names itself.** The main H1 keeps the working view and its
+  count or Product qualifier. A resource slideover names its resource and type,
+  with actual ownership shown separately from the return trail. The name the
+  reader clicked is on the title line: as the title, as the Variation picker's
+  value, or, for a Scenario, as its card inside the parent's reading, which is
+  what a Scenario address opens. Report identity and the way home stay in the sidebar.
+- **Resources open in one complete slideover.** Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
   The resource and its tab have an address independent of the working view.
   Back restores the previous resource reading; Close returns to the working
@@ -207,29 +214,31 @@ costed already.
   the full width. Refresh and valid recompilation preserve the reading.
   Expand fills the window with the same resource reading; Restore returns to
   the panel width without losing its drawing, selected detail or graph viewport.
-- **The rail lists Overview, then six collections.** Matrix comparisons live
+- **The rail lists Overview, then seven collections.** Matrix comparisons live
   within the collection supplying their rows. The collections are Entities,
-  Interfaces, Domains, Capabilities, Journeys, Business Rules. Experiences and
-  Screens are reached through Interfaces, Scenarios through their parent, and
-  a collection's Graph or Matrix through its drawing selector.
-- **A resource reading separates meaning, behavior, connections and references.** Overview
-  carries the resource's explanation and contextual links, including an Entity's
-  Information kept. Scenarios follows for a Capability or
-  Journey, Lifecycle for an Entity with States. Lifecycle switches between Rows
-  and Graph; selecting a change reads its Rules and supporting Scenarios, and
-  selecting a State reads its definition and the Scenarios that leave it there.
-  Rows uses the collection list's parent/child styling: each State contains its
-  definition and outgoing changes, including States with none. Creation and
-  changes without a starting State have separate groups. This supersedes placing
-  State definitions in Overview or stacking separate State cards below the graph.
-  Changes without specified states remain accessible beside the graph.
-  Connections
-  follows when relationships exist and includes the complete relationship
-  list, including links also explained in Overview. References comes last when
-  attachments exist, with a count and attribution to the inspected resource,
-  including a Scenario's own attachments. This supersedes the limit
-  of one peer tab. A view comparing resources belongs to the collection, never
-  to one of them.
+  Interfaces, Domains, Capabilities, Journeys, Business Rules, Variations.
+  Experiences and Screens are reached through Interfaces, Scenarios through
+  their parent, and a collection's Graph or Matrix through its drawing selector.
+  Variations has Rows only.
+- **A Variation reads as the type it varies, and leads its alternatives.** A
+  set wears its member type's mark with the variation sub-icon; the glyph alone,
+  in ink, marks only the Variations collection. Wherever an alternative is a
+  title, its Variation is the title and a picker beside it names and switches
+  the alternative; switching in a reading header replaces the reading. Nothing
+  switches alternatives with tabs. Alternatives meeting in a list are one set
+  row; a tree folds them under the set's node; references inside a reading stay
+  concrete; headings count concrete resources. Drawings keep concrete nodes and
+  add the set around them, dashing what only some alternatives support. Details
+  are in the [report viewer README](layers/nuxt/report-viewer/README.md).
+- **A resource reading separates meaning, behavior, connections and
+  references.** Overview carries the resource's explanation and contextual
+  links; behavior tabs follow (Scenarios for a Capability or Journey, Lifecycle
+  for an Entity with States, Applies to for a Business Rule, Alternatives for a
+  Variation, Delivery for a place); Business Rules lists the Rules naming the
+  resource; Connections carries the complete relationship list; References comes
+  last when attachments exist. A Scenario is read on its card inside its
+  parent. A view comparing resources belongs to the collection, never to one of
+  them. Tab order and contents are in the viewer README.
 - **The Product's page is the report Overview** — headed `Overview` like the
   rail row that opens it and qualified by
   `Product`. Its readings are About, Coverage and References, and it never
@@ -237,8 +246,10 @@ costed already.
 - **Named views, not a view builder.** A named view picks one derivation, states
   it, and is accountable for it. A new correlation costs code, which is the
   point.
-- **Grouping is authored, never configured.** Domain is the only axis, always on
-  where the type carries one. Entities that act lead their collection.
+- **Grouping is authored, never configured.** Domain is the axis, always on
+  where the type carries one. Entities that act lead their collection. The
+  Variations collection alone groups by the type each set varies — its authored
+  `of` — because a Variation carries no Domain.
 - **One filter control per axis, inside the reading it narrows**, offering only
   what the row already prints. A control says how many values it holds, never
   which; the values sit on a second row, each with its own way out. It is absent

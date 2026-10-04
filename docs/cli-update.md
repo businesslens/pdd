@@ -3,44 +3,45 @@ title: update
 description: Refresh only BusinessLens-managed skill installations in project or global scope.
 section: open-source
 group: CLI
-order: 26
+order: 22
 ---
 
 # `businesslens update`
 
-Refresh installed BusinessLens skills from the CLI package:
+Refresh installed BusinessLens skills to the version of the package you run,
+after upgrading it.
 
 ```bash
-npx businesslens update
+npx businesslens update [--providers <list>] [--scope project|global] [--force]
 ```
-
-With no filters, the command searches every supported provider in both project
-and global scope. It updates only skills listed by a valid
-`.businesslens-install.json` ownership marker. If it finds no managed
-installation, it exits with an error and suggests running
-[`install`](./cli-install.md).
 
 ## Options
 
 | Option | Meaning |
 | --- | --- |
-| `--providers <list>` | Limit discovery to a comma-separated list of `claude,codex,cursor,gemini,github` |
-| `--scope project\|global` | Search only one installation scope |
-| `--force` | Replace an unmarked colliding `businesslens-*` directory inside a managed target |
+| `--providers <list>` | Look only in these harnesses: `claude,codex,cursor,gemini,github` |
+| `--scope project\|global` | Look only in one scope |
+| `--force` | Replace a colliding `businesslens-*` directory BusinessLens does not own inside a managed installation |
 
-For example, update only project-scoped Claude Code and Codex installations:
+With no options it looks in every harness, in both scopes:
 
 ```bash
-npx businesslens update \
-  --providers claude,codex \
-  --scope project
+npx businesslens update --providers claude,codex --scope project
 ```
 
-## What changes
+## What it does
 
-Each discovered installation receives the current three bundled skills. The
-command also refreshes its ownership marker while preserving the original
-installation timestamp.
+1. Finds every skills directory with a valid `.businesslens-install.json`
+   marker. Unmarked installations are never found or touched.
+2. Writes the current three skills into each, and removes any `businesslens-*`
+   skill the marker recorded that this release no longer ships.
+3. Refreshes the marker, keeping its original install time.
 
-`update` does not discover or overwrite unmarked installations. It never
-changes the repository's `.businesslens/` Product Model.
+It never changes your `.businesslens/` Product Model.
+
+Exits 0 when at least one installation is updated, 1 when none is found or a
+collision stops it, and 2 for an unknown harness, scope or option.
+
+## Next
+
+- [`install`](./cli-install.md) when there is nothing to update yet.

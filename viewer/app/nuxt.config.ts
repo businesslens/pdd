@@ -87,6 +87,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   css: ['~/assets/local-viewer.css'],
   alias: {
+    /* The narrower subpath first, so the broader one does not claim it as a prefix. */
+    'businesslens/report/selectors': resolve('../../src/report-selectors.ts'),
     'businesslens/report': resolve('../../src/report.ts')
   },
   nitro: { devHandlers },

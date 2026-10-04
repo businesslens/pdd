@@ -220,6 +220,36 @@
   }
 }
 
+/* An edge label that names resources is a row of badges, each the report's
+   chip with its type's mark; the label box itself goes clear so the badges
+   read as the label, the way a chip does beside a fact. It keeps the text
+   label's width, so a second badge wraps beneath rather than widening the
+   drawing. */
+.blr-flow-edge-label.blr-flow-edge-label--badges {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.blr-flow-edge-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.blr-flow-edge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 100%;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--ui-border-accented);
+  border-radius: 9999px;
+  background: var(--businesslens-badge-bg);
+  color: var(--ui-text);
+  font-size: 12px;
+  line-height: 1.25rem;
+  transition: border-color 120ms ease;
+}
+
 /* Tree rows fill their parent card, with counts aligned at the right edge. */
 .blr-tree-card-tree {
   width: 100%;
@@ -229,6 +259,15 @@
 
 /* The cards drawing of Steps: numbers on one connector line, as the
    Composition drew them, each Step a card beside its number. */
+/*
+  A numbered Step in a reading: the number keeps a narrow column of its own,
+  so the Step's text and the chip row beneath it share one left edge instead
+  of the chips falling back under the number. The Scenario reading's Steps
+  and a Screen's Changes made here draw the same grid.
+*/
+.blr-numbered-step { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); column-gap: 0.5rem; align-items: baseline; }
+.blr-numbered-step__number { font-variant-numeric: tabular-nums; text-align: end; font-weight: 500; color: var(--ui-text-muted); }
+
 .blr-steps-list { display: grid; gap: 0.75rem; }
 .blr-steps-list > li { position: relative; display: flex; align-items: flex-start; gap: 0.625rem; }
 .blr-steps-list > li:not(:last-child)::after { content: ''; position: absolute; inset-inline-start: 11px; top: 2.25rem; bottom: -0.75rem; border-inline-start: 1px solid var(--ui-border-accented); }
@@ -245,6 +284,7 @@
   --blr-slot-7: #e34948;
   --blr-slot-8: #746651;
   --blr-slot-9: #2a78d6;
+  --blr-slot-10: var(--ui-text-highlighted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -259,6 +299,7 @@
   --blr-slot-7: #e66767;
   --blr-slot-8: #ab9d81;
   --blr-slot-9: #3987e5;
+  --blr-slot-10: var(--ui-text-highlighted);
 }
 
 /* The reading's width, including its Scenario density, follows the panel. */
@@ -287,4 +328,29 @@
 @media (width < 640px) {
   .blr-drawing-controls { gap: .25rem; }
   .blr-drawing-chooser { width: 10rem; }
+}
+
+/* The variation glyph reaches the corners of its box, so at the rail's 16px it
+   reads larger than every other mark. Where it stands alone it is drawn at 14px
+   inside the same slot; the sub-icon on a set's mark and the picker keep their
+   own sizing. Scaled, so no row shifts. Scoped to the report and the overlays
+   it portals out, so a host's own use of the glyph is left alone. */
+:is(.businesslens-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-picker] *) {
+  transform: scale(0.875);
+}
+
+
+/* An alternative of a Variation that does not happen at a tree node's place:
+   the same badge on its struck row and in the node's picker. */
+.blr-absent-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px dashed var(--ui-border-accented);
+  border-radius: 0.25rem;
+  padding: 0 0.3125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+  color: var(--ui-text-muted);
+  white-space: nowrap;
 }

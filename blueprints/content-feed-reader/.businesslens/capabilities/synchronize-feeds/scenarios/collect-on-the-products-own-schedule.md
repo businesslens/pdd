@@ -3,29 +3,32 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 steps:
   - text: The Product's own polling schedule comes due for a followed source
     kind: condition
     unattended: true
     entities:
-      - { entity: source, effect: reads }
+      - { entity: source, effect: reads, facts: [] }
   - text: The Product reads the followed feed on its own
     kind: product
     entities:
-      - { entity: source, effect: reads }
+      - { entity: source, effect: reads, facts: [ Feed address ] }
   - text: Items the library does not already hold are collected
     kind: product
     entities:
-      - { entity: item, effect: creates, to: Unread }
+      - { entity: item, effect: creates, to: Unread, facts: [ Title, Published at ] }
   - text: The newly collected items are waiting in the unread backlog at the next visit
     kind: product
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
 ---
 
 # Collect on the Product's own schedule

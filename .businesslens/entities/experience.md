@@ -28,4 +28,6 @@ sees.
 - **Container** — which Interface contains it, from its path
 - **Audience** — the acting Entities it serves and the access it requires
 - **Entry points** — its own addresses
-- **Boundary** — what it supports, and what it explicitly does not
+- **Navigation** — the Screens reachable from every place inside it
+
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

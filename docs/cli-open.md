@@ -3,66 +3,59 @@ title: blueprint open
 description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
-order: 30
+order: 26
 ---
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v14, apply the portable projection, then
-expand it into a canonical folder schema 9 `.businesslens/` directory:
+Expand a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is) file you were
+given into a `.businesslens/` Product Model. For a catalog Blueprint, use
+[`blueprint pull`](./cli-pull.md) instead.
 
 ```bash
-npx businesslens blueprint open ./report.json
+npx businesslens blueprint open <report> [--force]
 ```
 
-`open` also writes the model's orientation README. Nothing outside
-`.businesslens/` is touched.
+## Options
 
-The target directory does not need to be a Git repository. Use
-`-c, --cwd <path>` to choose where `.businesslens/` will be created:
+| Option | Meaning |
+| --- | --- |
+| `<report>` | Path to a local Product Report file, resolved from your shell's directory, not from `--cwd`. A URL is refused |
+| `--force` | Move a non-empty `.businesslens/` aside to a backup first |
+
+`--cwd` picks the directory that receives `.businesslens/`; it need not be a Git
+repository:
 
 ```bash
 npx businesslens --cwd ./new-product blueprint open ./report.json
 ```
 
-## Report source
+## What it does
 
-The local report works offline and must be a regular, non-symbolic-link file no
-larger than 8 MiB. Catalog users do not download Product Reports manually; use
-[`businesslens blueprint pull`](./cli-pull.md) with the Blueprint's catalog slug.
-`pull` retrieves the report and invokes this expansion path internally.
+1. Reads the file: a regular file, not a link, at most 8 MiB.
+2. Validates it as a Product Report and applies the
+   [portable projection](./cli-export.md#portable-export).
+3. Writes the model, with its orientation `README.md`, into a temporary
+   `.businesslens-open-*` directory beside the target, and lints it there.
+4. Moves it into place as `.businesslens/` and removes the temporary directory.
 
-A relative report path resolves against the current shell directory, not
-against `--cwd`. `--cwd` chooses the repository that receives
-`.businesslens/`; the report argument is an ordinary input file. In the
-example above, `./report.json` is read from the shell's directory while the
-model is written into `./new-product`.
+Everything except repository navigation comes through (see
+[what export keeps](./cli-export.md#portable-export)). Coverage loses its paths,
+and its `method` records that the model has not been verified against this
+repository. A report carries no logo, so the Product is written compact, as
+`product.md`.
 
-## Imported navigation
+## Safety
 
-`open` uses the same [portable projection](./cli-export.md#portable-export) as
-`export`. Product behavior, relationships, availability Contexts, Capability
-Scenarios, goal-focused Journeys, annotated Journey Scenario Steps, derived Journey
-Capability projections, structured supporting sections, Product routes,
-commands, non-file deep links, and portable References are preserved.
-Repository-specific navigation is removed.
+A non-empty `.businesslens/` is refused unless you pass `--force`, which first
+renames it to a `.businesslens.backup-<timestamp>/` sibling that is never
+deleted. A `.businesslens` that is a link or a file is always refused. Nothing is
+written to the target until the expanded model lints.
 
-Coverage is preserved without its repository paths. The expanded model records
-that implementation alignment must be verified in its new repository. See
-[Coverage](./product-model.md#coverage).
+Exits 0 when the model is written, 1 when the file or the target is refused,
+and 2 when given a URL or invalid options.
 
-## Existing targets
+## Next
 
-By default, `open` refuses a non-empty `.businesslens/` directory:
-
-```bash
-npx businesslens blueprint open ./report.json --force
-```
-
-With `--force`, the existing directory is first moved to a timestamped
-`.businesslens.backup-*` sibling. The backup is not deleted. A
-`.businesslens` symbolic link or non-directory target is always refused.
-
-The report is fully expanded and linted in a temporary staging directory
-before the target is prepared. The command does not install skills, execute
-target code, connect an account, or publish anything.
+- [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt and
+  build it.

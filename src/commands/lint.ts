@@ -1,11 +1,18 @@
+import {
+  variationIssues, variationEntityReferences, variationMembership, VARIATION_COLLECTION_OF,
+  type VariationCollection
+} from '../core/variations.js'
 import { undeclaredEntityMentions } from '../core/entity-mentions.js'
+import {
+  interfaceLanguageIssues, isLanguageTag, screenEntityIssues, screenReadIssues, unknownFactIssues
+} from '../core/model-checks.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import type {
   BusinessRuleEntityTarget, BusinessRuleGrant, PddModel, RelatedSegment, ScenarioStep, ScenarioStepEntity
 } from '../core/model.js'
 import { lsFiles } from '../core/git.js'
-import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
+import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId, placeIdentityIssues, qualify } from '../core/ids.js'
 import { INTERFACE_TYPES } from '../core/interface-types.js'
 import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { allResources, resourceCollections, loadModel } from '../core/model.js'
@@ -39,6 +46,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const errors = [...model.issues]
   const warnings: string[] = [...model.notices]
   const tracked = new Set(trackedFiles)
+  /* Member key (`<collection>:<id>`) → Variation. Membership lives on the set. */
+  const variationOf = variationMembership(model.variations)
 
   const requireTitle = (label: string, title: string, lead: string) => {
     if (!title) errors.push(`${label}: missing H1 title`)
@@ -86,6 +95,23 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  const variationMembers = Object.fromEntries(Object.values(VARIATION_COLLECTION_OF)
+    .map(collection => [collection, new Set(model[collection].map(item => item.id))])) as Record<VariationCollection, Set<string>>
+  for (const issue of variationIssues(model.variations, {
+    members: variationMembers,
+    entities: model.entities,
+    scenarioOwners: new Map([
+      ...model.capabilityScenarios.map(item => [item.id, `capability:${item.capability}`] as const),
+      ...model.journeyScenarios.map(item => [item.id, `journey:${item.journey}`] as const)
+    ])
+  })) {
+    errors.push(`${model.variations.find(variation => variation.id === issue.id)!.file}: ${issue.message}`)
+  }
+  for (const variation of model.variations) {
+    requireTitle(variation.file, variation.doc.title, variation.doc.lead)
+    validateSections(variation.file, variation.doc, ['Intent'])
+  }
+
   if (model.product.id && !isId(model.product.id)) errors.push('product.md: id must be lowercase kebab-case')
   if (model.product.id.length > 64) errors.push('product.md: id must be at most 64 characters')
   if (!model.product.id) errors.push('product.md: missing id')
@@ -117,6 +143,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  /*
+   * Languages are a closed vocabulary — a tag, not a name — so the shape is
+   * checked here and the list against i18n configuration is `verify`'s.
+   */
+  for (const tag of model.product.languages) {
+    if (!isLanguageTag(tag)) errors.push(`product.md: language "${tag}" is not a language tag like "en" or "pt-BR"`)
+  }
+  const productLanguages = new Set(model.product.languages)
+
   // Coverage scope and description uniqueness are the schema's to report, once,
   // when the model loads; a Coverage that failed to parse has nothing to recheck.
 
@@ -134,8 +169,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  errors.push(...placeIdentityIssues([
+    ...model.interfaces, ...model.experiences, ...model.screens
+  ].map(place => ({ id: place.id, label: place.file }))))
+
   const entityIds = new Set(model.entities.map(item => item.id))
   const entitiesById = new Map(model.entities.map(item => [item.id, item]))
+  const namedEntities = model.entities.map(entity => ({ id: entity.id, title: entity.doc.title }))
   /*
    * An Actor is an Entity that acts. Every actor reference — a Step's `actor`,
    * an Interface's, Experience's or Journey's `actors`, a grant's `actors` —
@@ -153,6 +193,22 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
+  const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
+  /*
+   * `navigation` names what is reachable from every place inside a container.
+   * It is structure, so it resolves the way containment does: a path relative
+   * to the container, landing on a Screen the container itself holds — on a
+   * divided Interface, a shared Screen or one of its descendants.
+   */
+  const validateNavigation = (file: string, containerId: string, entries: string[], shared: boolean) => {
+    for (const entry of entries) {
+      const screen = isQualifiedId(entry) ? screensById.get(qualify(containerId, entry)) : undefined
+      if (screen && screen.containerId === containerId) continue
+      errors.push(shared
+        ? `${file}: navigation "${entry}" does not resolve to a Screen this Interface shares beside its Experiences`
+        : `${file}: navigation "${entry}" does not resolve to a Screen inside "${containerId}"`)
+    }
+  }
   const experienceScopedInterfaces = new Set(model.experiences.map(experience => experience.interface))
   /* Capability availability names a boundary: an undivided Interface or an Experience. */
   const availabilityPlaceIds = new Set<string>([
@@ -236,15 +292,21 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const productInterface of model.interfaces) {
     requireTitle(productInterface.file, productInterface.doc.title, productInterface.doc.lead)
-    validateSections(productInterface.file, productInterface.doc, ['Intent', 'Capability boundary'])
+    /* `availability` on Capabilities already says what an Interface offers; a
+       prose boundary beside it was a second, unfalsifiable encoding. */
+    validateSections(productInterface.file, productInterface.doc, ['Intent'], ['Capability boundary'])
     if (!INTERFACE_TYPE_SET.has(productInterface.type)) {
       errors.push(`${productInterface.file}: type "${productInterface.type}" must be ${INTERFACE_TYPES.join('|')}`)
     }
     if (!productInterface.actors.length) errors.push(`${productInterface.file}: needs at least one actor`)
     for (const actorId of productInterface.actors) requireActor(productInterface.file, actorId)
-    if (!productInterface.capabilityBoundary) {
-      errors.push(`${productInterface.file}: missing "## Capability boundary" section`)
+    for (const tag of productInterface.languages) {
+      if (!isLanguageTag(tag)) errors.push(`${productInterface.file}: language "${tag}" is not a language tag like "en" or "pt-BR"`)
     }
+    for (const issue of interfaceLanguageIssues(productInterface.languages.filter(isLanguageTag), productLanguages, 'product.md')) {
+      errors.push(`${productInterface.file}: ${issue}`)
+    }
+    validateNavigation(productInterface.file, productInterface.id, productInterface.navigation, experienceScopedInterfaces.has(productInterface.id))
     /*
      * F11 — one entry-point key vocabulary per resource. On an Interface the key
      * is that Interface's own `type`, or another Interface's id when a reader
@@ -268,7 +330,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const experience of model.experiences) {
     requireTitle(experience.file, experience.doc.title, experience.doc.lead)
-    validateSections(experience.file, experience.doc, ['Intent', 'Capability boundary'])
+    validateSections(experience.file, experience.doc, ['Intent'], ['Capability boundary'])
+    validateNavigation(experience.file, experience.id, experience.navigation, false)
     if (!ACCESS_MODES.has(experience.access)) {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
@@ -281,9 +344,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           errors.push(`${experience.file}: actor "${actorId}" is not supported by interface "${experience.interface}"`)
         }
       }
-    }
-    if (!experience.capabilityBoundary) {
-      errors.push(`${experience.file}: missing "## Capability boundary" section`)
     }
     validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set([experience.interface]))
   }
@@ -367,9 +427,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (reached.size) actorSets.push(reached)
     }
     /*
+     * Roles one person holds are one audience. Actors that each relate
+     * one-to-one to the same Entity that does not act — the Account keeping
+     * the person's facts — are joined by it, whichever role a Step open to
+     * every role happens to name.
+     */
+    const reachedActors = new Set(actorSets.flatMap(reached => [...reached]))
+    const holdersByAccount = new Map<string, Set<string>>()
+    for (const actorId of reachedActors) {
+      for (const relation of entitiesById.get(actorId)?.relations ?? []) {
+        if (relation.cardinality !== 'one-to-one' || entitiesById.get(relation.entity)?.acts) continue
+        holdersByAccount.set(relation.entity, (holdersByAccount.get(relation.entity) ?? new Set()).add(actorId))
+      }
+    }
+    for (const holders of holdersByAccount.values()) if (holders.size > 1) actorSets.push(holders)
+    /*
      * The audiences are disjoint when the Actors split into groups no Capability
      * bridges: more than one connected component in the graph of Actors and the
-     * Capabilities available here. Any two Capabilities with no Actor in common
+     * Capabilities available here, with roles sharing an Account joined. Any two Capabilities with no Actor in common
      * is a different, stricter question — an admin-only and a shopper-only
      * Capability never share one, however many shared Capabilities sit beside
      * them — and it is not the one the format asks.
@@ -395,7 +470,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const mustDivide = accessModes.size > 1 || disjointAudiences
 
     /*
-     * Counterpart symmetry is the one exception, and the spec states it: when
+     * Counterparts and Variations justify existing Experiences: when
      * the same Experience name exists under another Interface, the two are
      * counterparts by construction — the same context on two platforms — and
      * forcing one to flatten would make two views of one context look
@@ -407,15 +482,35 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         other => other.interface !== productInterface.id && other.id.split('::').pop() === localId
       )
     })
-    if (owned.length && !mustDivide && !hasCounterpart) {
+    if (owned.length && !mustDivide && !hasCounterpart && !owned.some(item => variationOf.has(`experiences:${item.id}`))) {
       errors.push(
-        `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability`
+        `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability`
       )
     }
     if (!owned.length && disjointAudiences) {
       errors.push(
         `${productInterface.file}: serves Actor sets no available Capability bridges; these are Experiences, not one context`
       )
+    }
+    /*
+     * One access mode is one context. Two Experiences with the same access and
+     * an Actor in common are one audience cut by area — an admin-only page
+     * beside one admins share with members — which is navigation, not a second
+     * context. Alternatives of one Variation coexist by construction; an
+     * Experience beside them, or in another Variation, is still compared.
+     */
+    const setOf = (experience: { id: string }) => variationOf.get(`experiences:${experience.id}`)
+    for (const [index, experience] of owned.entries()) {
+      const twin = owned.slice(index + 1).find(
+        other => other.access === experience.access
+          && other.actors.some(actor => experience.actors.includes(actor))
+          && (setOf(experience) === undefined || setOf(experience) !== setOf(other))
+      )
+      if (twin) {
+        errors.push(
+          `${experience.file}: shares \`${experience.access}\` access and an Actor with ${twin.id}; one access mode is one context unless its audiences share no Actor`
+        )
+      }
     }
   }
 
@@ -431,18 +526,18 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   // as verb-noun however it ends — `publish-and-share-a-collection` is fine —
   // so only a nominalised id with no verb in it is flagged.
   const PRODUCT_VERBS = new Set([
-    'add', 'answer', 'apply', 'approve', 'archive', 'assign', 'back', 'block', 'book', 'browse', 'build',
+    'accept', 'activate', 'add', 'allow', 'answer', 'apply', 'approve', 'archive', 'assign', 'authorize', 'back', 'block', 'book', 'browse', 'build',
     'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
-    'configure', 'confirm', 'connect', 'contribute', 'create', 'decide', 'decline', 'delete',
-    'deliver', 'discover', 'edit', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
+    'configure', 'confirm', 'connect', 'contribute', 'create', 'deactivate', 'decide', 'decline', 'delete',
+    'deliver', 'disable', 'discover', 'download', 'duplicate', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
     'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
-    'keep', 'leave', 'link', 'lint', 'list', 'manage', 'map', 'mark', 'merge', 'move', 'name',
-    'open', 'order', 'organize', 'pause', 'pay', 'place', 'plan', 'preserve', 'publish', 'pull',
-    'read', 'receive', 'recover', 'refresh', 'refund', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
-    'report', 'request', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
+    'keep', 'leave', 'link', 'lint', 'list', 'log', 'manage', 'map', 'mark', 'merge', 'move', 'name',
+    'open', 'order', 'organize', 'pause', 'pay', 'pin', 'place', 'plan', 'preserve', 'publish', 'pull',
+    'read', 'receive', 'recover', 'refresh', 'refund', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
+    'report', 'request', 'resend', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
     'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
-    'share', 'ship', 'show', 'sign', 'start', 'stop', 'submit', 'subscribe', 'switch',
-    'synchronize', 'track', 'transfer', 'unfollow', 'unlist', 'update', 'upload', 'verify',
+    'share', 'ship', 'show', 'sign', 'star', 'start', 'stop', 'submit', 'subscribe', 'switch',
+    'synchronize', 'track', 'transfer', 'unarchive', 'unfollow', 'unlink', 'unlist', 'unpin', 'unpublish', 'unresolve', 'unstar', 'unsubscribe', 'update', 'upload', 'verify',
     'view', 'withdraw', 'write'
   ])
   /*
@@ -456,6 +551,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const leaf = resource.id.split('::').pop()
     if (leaf) nounVocabulary.add(leaf)
   }
+  const thingVocabulary = new Set([...model.entities, ...model.domains, ...model.interfaces].map(resource => resource.id))
   // A word this model declares as a thing is read as that thing, not as a verb:
   // `order` in `order-management` names the Order, so the id carries no verb.
   const isVerbSegment = (segment: string) => PRODUCT_VERBS.has(segment) && !nounVocabulary.has(segment)
@@ -470,7 +566,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const segments = resource.id.split('-')
     const last = segments[segments.length - 1] || ''
     const carriesVerb = segments.some(isVerbSegment)
-    if (NOMINALISED.test(last) && !carriesVerb) {
+    // A last segment the model declares is the object, not a nominalisation:
+    // `archive-document` acts on a Document, `unresolve-comment` on a Comment.
+    const declared = nounVocabulary.has(last) || nounVocabulary.has(last.replace(/s$/, ''))
+    if (NOMINALISED.test(last) && !declared && !carriesVerb) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" reads as a noun phrase; a behavioral id starts with a verb`
       )
@@ -494,11 +593,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // Suffix only. A declared term that merely *starts* with the noun half is
     // usually a different thing — `blueprint-portability` is a Domain, and
     // `contribute-blueprint` is correctly about a blueprint, not about the Domain.
-    const fuller = [...nounVocabulary]
-      .filter(term => term.endsWith(`-${object}`))
-      // Prefer the plain leaf: an id is written unqualified, so suggesting
-      // `local-report-web::product-topology` would not be usable as one.
-      .sort((left, right) => left.length - right.length)[0]
+    // Only things a behavior acts on: an Experience or Screen names a place.
+    const candidates = [...thingVocabulary]
+      .filter(term => term.endsWith(`-${object}`) && term !== resource.id)
+    // Two declared kinds sharing the noun make it their category:
+    // `send-message` beside channel and direct messages names both.
+    const fuller = candidates.length === 1 ? candidates[0] : undefined
     if (fuller) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" names "${object}" where this model declares "${fuller}"; use the declared name`
@@ -522,7 +622,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // though the same word is a verb elsewhere.
     if (segments.length < 2) continue
     const first = segments[0] || ''
-    if (isVerbSegment(first)) {
+    // A verb only commands when it acts on something the model declares:
+    // `cancel-unpaid-orders` does, while `pull-request` and `sign-in` are nouns.
+    // A declared noun can span segments: `approve-refund-request` acts on a Refund request.
+    const rest = segments.slice(1)
+    const nouns = [...rest, ...rest.map((_, index) => rest.slice(index).join('-'))]
+    const actsOnDeclared = nouns.some(noun => nounVocabulary.has(noun) || nounVocabulary.has(noun.replace(/s$/, '')))
+    if (isVerbSegment(first) && actsOnDeclared) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
       )
@@ -557,13 +663,19 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
   const presentedOn = new Map<string, string[]>()
   for (const screen of model.screens) {
-    for (const id of screen.entities) {
-      if (!entityIds.has(id)) errors.push(`${screen.file}: names missing entity "${id}"`)
-      presentedOn.set(id, [...(presentedOn.get(id) || []), screen.id])
+    for (const entry of screen.entities) {
+      const entity = entitiesById.get(entry.entity)
+      if (!entity) {
+        errors.push(`${screen.file}: names missing entity "${entry.entity}"`)
+        continue
+      }
+      presentedOn.set(entry.entity, [...(presentedOn.get(entry.entity) || []), screen.id])
+      for (const issue of screenEntityIssues(entry.entity, entry, entity)) errors.push(`${screen.file}: ${issue}`)
     }
   }
   /* A settings or policy Entity that only Rules read is still in use: a
      condition reads a fact of it, or a grant is gated by it. */
+  const citedByVariation = new Set(model.variations.flatMap(variation => variationEntityReferences(variation)))
   const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
     ...(grant.configuredBy ? [grant.configuredBy] : []),
     ...grant.when.flatMap(condition => [
@@ -668,8 +780,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // somebody forgot to declare, and both are worth an error. A read never
     // counts; acting does.
     if (!changedEntities.has(entity.id) && !(presentedOn.get(entity.id) || []).length
-      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id)) {
-      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it`)
+      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id) && !citedByVariation.has(entity.id)) {
+      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation chooses by it`)
     }
   }
 
@@ -690,14 +802,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (experience) return new Set(experience.actors)
     const productInterface = interfacesById.get(place)
     return productInterface ? new Set(productInterface.actors) : undefined
-  }
-
-  const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
-  const screensByContainer = new Map<string, typeof model.screens>()
-  for (const screen of model.screens) {
-    const siblings = screensByContainer.get(screen.containerId) || []
-    siblings.push(screen)
-    screensByContainer.set(screen.containerId, siblings)
   }
 
   /*
@@ -727,17 +831,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (screen) return { place: placeId, containerId: screen.containerId, screen }
     const experience = experiencesById.get(placeId)
     if (experience) {
-      if ((screensByContainer.get(placeId) || []).length) {
-        errors.push(`${label}: Experience "${placeId}" owns Screens, so the Context must name one of its Screens`)
-      }
       return { place: placeId, containerId: placeId, screen: undefined }
     }
     const productInterface = interfacesById.get(placeId)
     if (productInterface) {
       if (experienceScopedInterfaces.has(placeId)) {
         errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them, one of their Screens, or a Screen it shares`)
-      } else if ((screensByContainer.get(placeId) || []).length) {
-        errors.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
       return { place: placeId, containerId: placeId, screen: undefined }
     }
@@ -826,6 +925,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           errors.push(`${label}: "${entry.entity}" is ${priorMode === 'aliased' ? 'aliased' : 'bare'} elsewhere in this Scenario; once an Entity is aliased, every mention of it is`)
         }
         aliasModes.set(entry.entity, mode)
+        for (const issue of unknownFactIssues(entry.entity, entry.facts, entity)) errors.push(`${label}: ${issue}`)
 
         const hasStates = entity.states.length > 0
         for (const [key, value] of [['from', entry.from], ['to', entry.to]] as const) {
@@ -862,7 +962,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
        */
       for (const entity of undeclaredEntityMentions(
         step.text,
-        model.entities.map(entity => ({ id: entity.id, title: entity.doc.title })),
+        namedEntities,
         step.entities.map(entry => entry.entity),
         step.actor
       )) {
@@ -898,9 +998,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
           if (!insideEvery(supported, resolved.containerId)) {
             errors.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${capabilityId}"`)
-          }
-          if (resolved.screen && !resolved.screen.capabilities.includes(capabilityId)) {
-            errors.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${capabilityId}"`)
           }
         }
         if (step.actor) {
@@ -1106,15 +1203,37 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  /*
+   * Every Step placed exactly on a Screen, by Screen id. "Exactly": a Step on a
+   * child Screen is inside its parent, but it is the child's own claim, and a
+   * parent Screen with Steps of its own is a place in its own right.
+   */
+  const stepsOnScreen = new Map<string, Array<{ label: string, step: ScenarioStep, capabilityId: string | undefined }>>()
+  for (const scenario of allScenarios) {
+    const implicitCapability = 'capability' in scenario ? scenario.capability : undefined
+    for (const [index, step] of scenario.steps.entries()) {
+      const capabilityId = implicitCapability ?? step.capability
+      for (const place of new Set(step.contexts.map(context => context.place))) {
+        if (!screensById.has(place)) continue
+        const placed = stepsOnScreen.get(place) || []
+        placed.push({ label: `${scenario.file}: step ${index + 1}`, step, capabilityId })
+        stepsOnScreen.set(place, placed)
+      }
+    }
+  }
+
   for (const screen of model.screens) {
     requireTitle(screen.file, screen.doc.title, screen.doc.lead)
+    /* A Screen is relations only. What it shows is `entities`, what it offers
+       derives from the Steps placed on it, and its states are the
+       Scenario branches that reach them; a prose section for any of these was
+       a second encoding nothing could check. */
     validateSections(
       screen.file,
       screen.doc,
-      ['Intent', 'Information presented', 'Available actions', 'View states', 'Capability boundary']
+      ['Intent'],
+      ['Information presented', 'Available actions', 'View states', 'Capability boundary']
     )
-    validateListSection(screen.file, screen.doc, 'Information presented', 'bullet')
-    validateListSection(screen.file, screen.doc, 'Available actions', 'bullet')
     if (!availabilityPlacesOf(screen.containerId).every(place => availabilityPlaceIds.has(place))) {
       errors.push(`${screen.file}: containing place "${screen.containerId}" must be an Interface or an Experience`)
     }
@@ -1136,31 +1255,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       screen.entryPoints,
       new Set([interfaceOf(screen.containerId)])
     )
-    if (!screen.information.length) {
-      errors.push(`${screen.file}: "## Information presented" needs at least one bullet item`)
-    }
-    if (!screen.capabilityBoundary) errors.push(`${screen.file}: missing "## Capability boundary" section`)
-    if (section(screen.doc, 'Available actions') !== undefined && !screen.actions.length) {
-      errors.push(`${screen.file}: "## Available actions" needs at least one bullet item when present`)
-    }
-    if (section(screen.doc, 'View states') !== undefined && !screen.states.length) {
-      errors.push(`${screen.file}: "## View states" needs at least one H3 state when present`)
-    }
-    const stateNames = new Set<string>()
-    for (const state of screen.states) {
-      const normalized = state.title.toLowerCase()
-      if (stateNames.has(normalized)) errors.push(`${screen.file}: duplicate view state "${state.title}"`)
-      stateNames.add(normalized)
-    }
-    // A capture that names a state it does not depict is worse than one that
-    // names nothing, so the state has to resolve to an authored H3.
-    for (const reference of screen.references) {
-      if (reference.state === undefined) continue
-      if (!stateNames.has(reference.state.toLowerCase())) {
-        errors.push(`${screen.file}: reference state "${reference.state}" is not a view state of this Screen`)
-      }
+
+    const placed = stepsOnScreen.get(screen.id) || []
+    const presented = new Map(screen.entities.map(entry => [entry.entity, entry]))
+    for (const { label, step } of placed) {
+      const reads = { kind: step.kind, entities: step.entities.map(entry => ({ entityId: entry.entity, effect: entry.effect ?? 'changes', facts: entry.facts })) }
+      for (const issue of screenReadIssues(screen.id, presented, reads, actorIds)) errors.push(`${label}: ${issue}`)
     }
   }
+
 
   /*
    * A `related` path starts at the Rule's one Entity target and walks declared
@@ -1262,16 +1365,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
               errors.push(`${label}: "${stateKey}: ${value}" is not a state of entity "${target.id}"`)
             }
           }
-          for (const fact of target.facts) {
-            if (!entity.informationKept.some(item => item.name === fact)) {
-              errors.push(`${label}: "${fact}" is not a fact of entity "${target.id}"`)
-            }
-          }
+          for (const issue of unknownFactIssues(target.id, target.facts, entity)) errors.push(`${label}: ${issue}`)
         }
         /* An Entity has no availability. A place-scoped Entity Rule is about
-           visibility, so the selector names a Screen presenting the Entity, or
-           an ancestor of one. */
-        const presenting = model.screens.filter(screen => screen.entities.includes(target.id)).map(screen => screen.id)
+           visibility, so the selector names a Screen presenting the Entity —
+           with the governed fact, where the Rule names one — or an ancestor. */
+        const presenting = model.screens.filter(screen => screen.entities.some(entry =>
+          entry.entity === target.id
+          && (!target.facts.length || [...entry.shows, ...entry.collects].some(fact => target.facts.includes(fact)))
+        )).map(screen => screen.id)
         const seenEntityContextPlaces: string[] = []
         for (const [contextIndex, context] of target.contexts.entries()) {
           const contextLabel = `${label}: Context ${contextIndex + 1}`
@@ -1284,7 +1386,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
             errors.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
           }
           seenEntityContextPlaces.push(place)
-          if (placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
+          if (rule.permits === undefined && placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
             errors.push(`${contextLabel}: Context place "${place}" presents entity "${target.id}" nowhere`)
           }
         }
@@ -1440,11 +1542,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * Step's actor when every who-key it carries could be that actor — `actors`
    * lists it, `related` ends on its type, `self` is the targeted thing itself,
    * `unattended` is what the Scenario is — and every state condition matches
-   * the Step's origin where it has one. Fact-scoped Rules select no Step, since
-   * a Step cannot cite a fact; they are checked by Screen reach and by `verify`.
+   * the Step's origin where it has one. A fact-scoped Rule selects the Steps
+   * that cite one of its facts and the Screens that list one. A permission
+   * Rule that is a Variation alternative holds only while selected, and lint
+   * cannot tell which alternative a Step runs under, so it is left to verify.
    */
   const permissionRuleResources = model.businessRules.filter(
-    rule => rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
+    rule => !variationOf.has(`businessRules:${rule.id}`) && rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
   )
   const permissionTarget = (target: BusinessRuleEntityTarget): PermissionTarget => ({
     entityId: target.id,
@@ -1482,6 +1586,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     effect: entry.effect ?? 'changes',
     from: entry.from ?? null,
     to: entry.to ?? null,
+    facts: entry.facts ?? [],
     contextPlaces: operationPlaces(
       step.contexts.map(context => context.place),
       scenarioPlaces.get(scenarioFile) ?? []
@@ -1514,7 +1619,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   for (const rule of permissionRuleResources) {
     const key = rule.appliesTo
       .map(target => target.type === 'entity'
-        ? [target.id, target.effect ?? '', target.from ?? '', target.to ?? '', target.facts.join(','), target.contexts.map(context => context.place).join(',')].join('|')
+        ? [target.id, target.effect ?? '', target.from ?? '', target.to ?? '', [...target.facts].sort().join(','), target.contexts.map(context => context.place).sort().join(',')].join('|')
         : '')
       .sort()
       .join('\n')
@@ -1567,7 +1672,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       label: screen.file,
       id: screen.id,
       containerId: screen.containerId,
-      entityIds: screen.entities,
+      entities: screen.entities.map(entry => ({ entityId: entry.entity, shows: entry.shows, collects: entry.collects })),
       actorIds: [...(supportedActorsForContainer(screen.containerId) ?? [])]
     }))
   }))
@@ -1586,25 +1691,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   */
   for (const resource of resources) {
     const present = new Set(resource.assets)
-    const stateNames = new Set(
-      model.screens.find(screen => screen.file === resource.file)?.states.map(state => state.title.toLowerCase()) ?? []
-    )
-    const isScreen = model.screens.some(screen => screen.file === resource.file)
     for (const asset of resource.assetMeta) {
       if (!present.has(asset.file)) {
         errors.push(`${resource.file}: asset "${asset.file}" is not a file in this resource's expanded folder`)
-      }
-      if (asset.state === undefined) continue
-      if (!isScreen) {
-        errors.push(`${resource.file}: asset "state" is only valid on a Screen`)
-      } else if (!stateNames.has(asset.state.toLowerCase())) {
-        errors.push(`${resource.file}: asset state "${asset.state}" is not a view state of this Screen`)
       }
     }
   }
 
   const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...resources]
-  const screenFiles = new Set(model.screens.map(screen => screen.file))
   for (const resource of referenceHosts) {
     const targets = new Set<string>()
     for (const reference of resource.references) {
@@ -1612,11 +1706,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${resource.file}: duplicate reference target "${reference.target}"`)
       }
       targets.add(reference.target)
-      // View states are a Screen concept; nowhere else has an H3 set for a
-      // state to resolve against, so the key would mean nothing there.
-      if (reference.state !== undefined && !screenFiles.has(resource.file)) {
-        errors.push(`${resource.file}: reference "state" is only valid on a Screen`)
-      }
       const path = repositoryReferencePath(reference)
       if (!path || tracked.has(path)) continue
       if (reference.kind === 'code') {

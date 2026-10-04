@@ -1,49 +1,74 @@
 ---
 title: ideate
-description: Explore or define intended behavior, then write only the exact Product Model delta the user approves.
+description: Explore or define intended behavior, then write only the exact Product Model change you approve.
 section: open-source
 group: Skills
-order: 22
+order: 18
 ---
 
 # `businesslens-ideate`
 
-Use ideate for a blank-slate product or a desired behavior change.
+**Ideate decides what the product should do and writes that decision into the
+Product Model.**
 
-- **Explore:** propose ranked, genuinely different product directions and write
-  nothing.
-- **Converge:** draft Entities and Interfaces, optional Experiences, Screens, and
-  Domains, plus Capabilities, availability Contexts, Capability Scenarios,
-  Business Rules, optional coherent Journeys, Journey Scenarios, and removals;
-  get approval; then write.
-- **Granularity:** keep Capability Scenarios as variations of one durable
-  behavior. Split independently meaningful operations into Capabilities and use
-  an optional Domain when their umbrella helps navigation.
-- **Verification resolution:** when verify already supplies the gap and authority
-  decision, skip brainstorming and draft the smallest exact model delta.
+Use it for a new product or for any change in behavior, before you build. If
+the repository already has code but no model, it stops and asks you to run
+[`businesslens-map`](./skill-businesslens-map.md) first: it won't plan against
+behavior nobody has described.
 
-A thorough convergence works the open decisions in rounds and waits after each,
-because an answer reshapes what is still open: **boundary** first — what the
-Product is, who it is for, which surfaces are supported Interfaces — then
-**granularity**, including whether a family of things is one Entity or several,
-quoted with both counts; then **coverage**, where the line falls between a
-Scenario and an `## Edge cases` bullet; then **naming**, the Product's own word
-for each thing, which is what makes two models of one product comparable at all.
-A quick change keeps its three batched questions instead: a small specific
-change has no frontier.
+```text
+/businesslens-ideate guest checkout
+```
 
-The proposed delta explains the selected model shape and its consequences.
-Significant omissions, consequential modeling boundaries, and material
-uncertainty remain visible in brief explanations of the current proposal. An
-**Open questions** section appears only when questions remain. Review output
-does not enumerate discarded options or repeat settled discussion on later runs.
+## What you get
 
-Exploration and comparisons stay in the conversation. Generated model files
-contain current, approved product meaning without rejected approaches or
-deliberation history, including in resource prose, supporting sections,
-limitations, or README. An unchosen option does not become a product exclusion.
-Approved constraints, refusal and failure behavior, and material unresolved
-questions or missing evidence remain visible.
+1. **Questions, each with a recommendation.** A small, specific change gets at
+   most three, asked together. A new product or a broad change is worked in
+   rounds, waiting after each: **boundary** first (what the product is, who it
+   is for, which surfaces are supported [Interfaces](./interfaces.md)), then
+   **granularity**, such as whether a family of things is one
+   [Entity](./entities.md) or several, quoted with both counts; then
+   **coverage**, which cases each [Capability](./capabilities.md) needs; then
+   **naming**, the product's own word for each thing.
+2. **The proposed change.** Every resource added, changed or removed, each
+   Capability's Scenarios, the implementation work it implies, and any open
+   questions.
+3. **Files written after you approve**, only inside `.businesslens/`.
+4. **Lint**, fixed until clean.
+5. **The acceptance contract for your build**: the approved change and its
+   Scenarios, which your build must satisfy and
+   [`businesslens-verify`](./skill-businesslens-verify.md) will check.
 
-Ideate never implements. Its output is the approved Product contract for the
-plan/build flow between ideate and verify.
+Ideate never writes code.
+
+## Modes
+
+- **Explore**: no specific change yet. It proposes three to five genuinely
+  different directions and writes nothing.
+- **Converge**: a named outcome or behavior. It works the questions above,
+  then writes the approved change.
+- **Resolve**: verify has already found a gap and you decided the model should
+  change. It skips brainstorming and drafts the smallest exact change.
+
+## What it decides
+
+Beyond what the product does and where, ideate settles:
+
+- **Who may** do each thing, always as a grant on a
+  [Business Rule](./business-rules.md), never a sentence in a Scenario.
+- **Flags, plans and A/B tests**: whether each makes a
+  [Variation](./variations.md), by
+  [What selects](./variations.md#what-selects-decides-it).
+- **Granularity**: Scenarios are cases of one behavior. Something meaningful
+  on its own becomes its own Capability, grouped by a
+  [Domain](./domains.md) when that helps.
+
+It attaches the PRD, spec or design the decision came from as a
+[Reference](./references.md) with `role: intent`, so the source stays linked
+without being copied. See
+[Is this replacing my PRD?](./product-model.md#is-this-replacing-my-prd)
+
+## Related
+
+- [Development loop](./index.md#the-development-loop): ideate, build, verify.
+- [Start from an idea](./from-an-idea.md)

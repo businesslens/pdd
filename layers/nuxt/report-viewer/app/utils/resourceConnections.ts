@@ -11,9 +11,11 @@ import type {
   ReportWorkspace,
   RuleView,
   ScenarioView,
-  ScreenView
+  ScreenView,
+  VariationSetView
 } from './reportWorkspace'
 import { topologyRelations } from './topologyRelations'
+import { attachedRules } from './topologyTargets'
 
 export interface RelationRow {
   label: string
@@ -23,13 +25,15 @@ export interface RelationRow {
   direction: 'Incoming' | 'Outgoing'
 }
 
-const incomingLabels = new Set(['Actors', 'Experiences within', 'Capabilities available', 'Screens available', 'Journeys available', 'Journeys via linked Journey Scenarios', 'Journeys via exposed Capabilities', 'Changed by', 'Read by', 'Presented on', 'Governed by', 'Journeys reached', 'Screens reached', 'Rules', 'Exercised by Journey Scenarios', 'Used by Journeys', 'Exposed by Screens', 'Constrained by Rules', 'Shown on Screens'])
+const incomingLabels = new Set(['Actors', 'Experiences within', 'Capabilities available', 'Screens available', 'Journeys available', 'Journeys via linked Journey Scenarios', 'Journeys via exposed Capabilities', 'Changed by', 'Read by', 'Presented on', 'Governed by', 'Journeys reached', 'Screens reached', 'Rules', 'Exercised by Journey Scenarios', 'Used by Journeys', 'Exposed by Screens', 'Constrained by Rules', 'Shown on Screens', 'Governing its Steps'])
 const notation = { 'one-to-one': '1:1', 'one-to-many': '1:N', 'many-to-many': 'M:N' }
 
 export function resourceConnectionRows(workspace: ReportWorkspace, resource: AnyResourceView): RelationRow[] {
   const row = (label: string, kind: ReportResourceKind, ids: string[], derived: boolean, direction?: RelationRow['direction']): RelationRow =>
     ({ label, kind, ids, derived, direction: direction ?? (resource.kind === 'domain' || (resource.kind !== 'rule' && incomingLabels.has(label)) ? 'Incoming' : 'Outgoing') })
   const all: RelationRow[] = []
+  /* A place a Rule names — as a Context target or by narrowing a target to it — lists that Rule. */
+  const namingRules = () => row('Business Rules naming it', 'rule', attachedRules(workspace, resource).map(item => item.rule.id), false, 'Incoming')
   switch (resource.kind) {
     case 'interface': {
       const item = resource as InterfaceView
@@ -38,7 +42,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Experiences within', 'experience', item.experienceIds, true),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
-        row('Journeys available', 'journey', item.journeyIds, true)
+        row('Journeys available', 'journey', item.journeyIds, true),
+        namingRules()
       )
       break
     }
@@ -49,7 +54,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Interfaces', 'interface', item.interfaceIds, false),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
-        row('Journeys available', 'journey', item.journeyIds, true)
+        row('Journeys available', 'journey', item.journeyIds, true),
+        namingRules()
       )
       break
     }
@@ -61,7 +67,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Capability Scenarios', 'capability-scenario', screen.capabilityScenarioIds, false),
         row('Journey Scenarios', 'journey-scenario', screen.journeyScenarioIds, false),
         row('Journeys via linked Journey Scenarios', 'journey', screen.scenarioJourneyIds, true),
-        row('Journeys via exposed Capabilities', 'journey', screen.capabilityJourneyIds, true)
+        row('Journeys via exposed Capabilities', 'journey', screen.capabilityJourneyIds, true),
+        namingRules()
       )
       break
     }
@@ -107,7 +114,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Exercised by Journey Scenarios', 'journey-scenario', capability.journeyScenarioIds, true),
         row('Used by Journeys', 'journey', capability.journeyIds, true),
         row('Exposed by Screens', 'screen', capability.screenIds, true),
-        row('Constrained by Rules', 'rule', capability.ruleIds, true)
+        row('Constrained by Rules', 'rule', capability.ruleIds, true),
+        row('Governing its Steps', 'rule', capability.stepRuleIds.filter(id => !capability.ruleIds.includes(id)), true)
       )
       break
     }
@@ -121,7 +129,8 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Changes', 'entity', journey.entityIds, true),
         row('Scenarios', 'journey-scenario', journey.scenarioIds, true),
         row('Screens', 'screen', journey.screenIds, true),
-        row('Constrained by Rules', 'rule', journey.ruleIds, true)
+        row('Constrained by Rules', 'rule', journey.ruleIds, true),
+        row('Governing its Steps', 'rule', journey.stepRuleIds.filter(id => !journey.ruleIds.includes(id)), true)
       )
       break
     }
@@ -136,8 +145,14 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
           ? row('Capability', 'capability', [scenario.capabilityId], false)
           : row('Journey', 'journey', [scenario.journeyId], false),
         row('Shown on Screens', 'screen', scenario.screenIds, true),
-        row('Constrained by Rules', 'rule', scenario.ruleIds, true)
+        row('Constrained by Rules', 'rule', scenario.ruleIds, true),
+        row('Governing its Steps', 'rule', scenario.stepRuleIds.filter(id => !scenario.ruleIds.includes(id)), true)
       )
+      break
+    }
+    case 'variation': {
+      const set = resource as VariationSetView
+      all.push(row('Alternatives', set.memberKind, set.alternatives.map(item => item.id), false, 'Outgoing'))
       break
     }
     case 'rule': {
@@ -157,7 +172,12 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
         row('Domains through targets', 'domain', rule.domainIds, true),
         row('Parent Capabilities', 'capability', rule.derivedCapabilityIds, true),
         row('Parent Journeys', 'journey', rule.derivedJourneyIds, true),
-        row('Screens reached', 'screen', derivedScreens, true)
+        row('Screens reached', 'screen', derivedScreens, true),
+        /* What its Entity targets govern: the owners of the Steps they select. */
+        row('Capabilities through selected Steps', 'capability', rule.stepCapabilityIds.filter(id => !reachedCapabilities.has(id)), true),
+        row('Journeys through selected Steps', 'journey', rule.stepJourneyIds.filter(id => !reachedJourneys.has(id)), true),
+        row('Capability Scenarios through selected Steps', 'capability-scenario', rule.stepCapabilityScenarioIds.filter(id => !rule.capabilityScenarioIds.includes(id)), true),
+        row('Journey Scenarios through selected Steps', 'journey-scenario', rule.stepJourneyScenarioIds.filter(id => !rule.journeyScenarioIds.includes(id)), true)
       )
       break
     }
@@ -169,7 +189,7 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
     if (relation.source !== resource.key && relation.target !== resource.key) continue
     const direction = relation.source === resource.key ? 'Outgoing' : 'Incoming'
     const other = workspace.byKey.get(direction === 'Outgoing' ? relation.target : relation.source)!
-    if (all.some(item => item.kind === other.kind && item.ids.includes(other.id))) continue
+    if (!relation.label.startsWith('chooses by ') && all.some(item => item.kind === other.kind && item.ids.includes(other.id))) continue
     const key = JSON.stringify([direction, other.kind, relation.label])
     const existing = additional.get(key)
     if (existing) { if (!existing.ids.includes(other.id)) existing.ids.push(other.id) }

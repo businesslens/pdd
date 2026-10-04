@@ -2,7 +2,6 @@
 /** Complete Product and Coverage readings, using the authored field names. */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
-import { entityFacetOf } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -92,6 +91,15 @@ const coverage = defineModel<CoverageReading>('coverage', { default: defaultCove
                 </ul>
               </dd>
             </div>
+            <!-- A closed vocabulary of tags, never a name: the languages the Product is delivered in. -->
+            <div v-if="workspace.identity.languages.length" data-product-languages>
+              <dt class="text-sm font-medium text-muted">Languages</dt>
+              <dd class="mt-1">
+                <ul class="flex flex-wrap gap-1.5">
+                  <li v-for="tag in workspace.identity.languages" :key="tag" class="rounded border border-default px-2 py-0.5 font-mono text-sm">{{ tag }}</li>
+                </ul>
+              </dd>
+            </div>
             <div v-if="workspace.identity.license">
               <dt class="text-sm font-medium text-muted">License</dt>
               <dd class="mt-1">{{ workspace.identity.license }}</dd>
@@ -101,18 +109,7 @@ const coverage = defineModel<CoverageReading>('coverage', { default: defaultCove
             <h3 class="text-base font-semibold text-highlighted">Actors</h3>
             <p class="text-xs text-muted">Derived from Entities that act on the Product.</p>
             <div class="flex flex-wrap items-center gap-2">
-              <UButton
-                v-for="actor in workspace.actingEntities"
-                :key="actor.key"
-                color="neutral"
-                variant="outline"
-                size="sm"
-                class="rounded-full text-sm"
-                @click="emit('select', actor)"
-              >
-                <BlrKind kind="entity" :facet="entityFacetOf(actor)" :acts="actor.acts" :labelled="false" size="xs" />
-                {{ actor.title }}
-              </UButton>
+              <BlrEntityChip v-for="actor in workspace.actingEntities" :key="actor.key" :entity="actor" @select="emit('select', $event)" />
             </div>
           </section>
         </aside>

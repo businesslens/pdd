@@ -2,10 +2,15 @@
 /** Rows nests outgoing changes under their starting States; Graph inspects the same lifecycle. */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
-import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle, lifecycleRestrictionMarker } from '../utils/entityLifecycle'
+import { buildEntityLifecycle, groupEntityLifecycle, lifecycleArcCondition, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleArcTitle, lifecycleChangeAddress, lifecycleConditionNote, lifecycleStateCondition } from '../utils/entityLifecycle'
 
-const props = defineProps<{ workspace: ReportWorkspace, resource: EntityView }>()
-const emit = defineEmits<{ open: [resource: AnyResourceView], ready: [] }>()
+const props = defineProps<{
+  workspace: ReportWorkspace
+  resource: EntityView
+  /** A change asked for by address (`lifecycle/<change>`), shown once in the drawing on screen. */
+  change?: string
+}>()
+const emit = defineEmits<{ open: [resource: AnyResourceView], ready: [], 'update:change': [address: string] }>()
 const lifecycle = computed(() => buildEntityLifecycle(props.workspace, props.resource))
 const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, 'lifecycle', props.resource.key]))
 const { element: rowsPane, save, restore } = useBlrTopologyScroll(scrollKey)
@@ -39,11 +44,15 @@ const drawnEdgeIds = computed(() => new Set(lifecycle.value.edges.map(edge => ed
 const arcs = computed(() => props.resource.arcs.map((arc, index) => {
   const label = lifecycleArcLabel(props.workspace, props.resource, index)
   return { ...arc, id: lifecycleArcEdgeId(props.resource.id, arc), title: lifecycleArcTitle(arc),
-    destination: arc.effect === 'removes' ? 'Removed' : arc.to ? arc.to === arc.from ? 'State unchanged' : arc.to : 'Information changed',
-    capabilities: label.capabilities.join(', '), marker: lifecycleRestrictionMarker(label),
+    /* A row sits under the State it leaves, so its phrase names only where it goes — unless it stays. */
+    rowMention: { effect: arc.effect, from: arc.to && arc.to === arc.from ? arc.from : '', to: arc.to },
+    capabilities: label.capabilities,
+    /* "Only under …" where some choice of alternatives leaves nothing making it. */
+    condition: (() => { const condition = lifecycleArcCondition(props.workspace, props.resource, arc); return condition.conditional ? lifecycleConditionNote([condition]) : '' })(),
     drawn: drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc)) }
 }))
 const groups = computed(() => groupEntityLifecycle(props.resource, arcs.value))
+const stateCondition = (name: string) => lifecycleStateCondition(props.workspace, props.resource, name)
 const unplaced = computed(() => arcs.value.filter(arc => !arc.drawn))
 const prohibitions = computed(() => props.resource.prohibitions.map(prohibition => ({
   ...prohibition,
@@ -63,11 +72,26 @@ const inspectorHeading = useTemplateRef('inspectorHeading')
 const inspectorPane = useTemplateRef('inspectorPane')
 let returnFocus: HTMLElement | null = null
 
-function inspect(key: string) {
+/* The part of a change the reader reached for from its graph label: its Capability, or — from a Forbidden mark — the Rule forbidding it. */
+const highlight = ref<'capability' | 'rule' | null>(null)
+let highlightTimer: ReturnType<typeof setTimeout> | undefined
+function inspect(key: string, badge?: string) {
   if (!inspectorPane.value?.contains(document.activeElement)) returnFocus = document.activeElement as HTMLElement | null
   reading.value.selected = key
-  void nextTick(() => { inspectorPane.value?.scrollTo(0, 0); inspectorHeading.value?.focus({ preventScroll: true }) })
+  clearTimeout(highlightTimer)
+  highlight.value = badge === 'capability' ? 'capability' : badge === 'mark' ? 'rule' : null
+  void nextTick(() => {
+    const pane = inspectorPane.value
+    pane?.scrollTo(0, 0)
+    inspectorHeading.value?.focus({ preventScroll: true })
+    pane?.scrollIntoView({ block: 'nearest' })
+    const part = highlight.value && pane?.querySelector(`[data-change-part="${highlight.value}"]`)
+    if (!part) { highlight.value = null; return }
+    part.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    highlightTimer = setTimeout(() => { highlight.value = null }, 1600)
+  })
 }
+onBeforeUnmount(() => clearTimeout(highlightTimer))
 function closeInspector() {
   reading.value.selected = null
   if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
@@ -113,6 +137,22 @@ function openRule(id: string) {
 }
 watch(() => props.workspace, () => { save(); void restore() }, { flush: 'pre' })
 onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
+
+/* A change asked for from another reading — a Capability's move — is shown in
+   whichever drawing is on screen, then the address is let go: the reading
+   keeps the selection from there, as it does for one chosen here. */
+watch(() => props.change, (address) => {
+  if (!address) return
+  const arc = arcs.value.find(item => lifecycleChangeAddress(item) === address)
+  emit('update:change', '')
+  if (!arc) return
+  if (reading.value.drawing === 'graph') { inspect(arc.id); return }
+  const group = groups.value.find(item => item.arcs.some(other => other.id === arc.id))
+  if (group) reading.value.closedGroups = reading.value.closedGroups.filter(key => key !== group.key)
+  if (!reading.value.expandedChanges.includes(arc.id)) reading.value.expandedChanges = [...reading.value.expandedChanges, arc.id]
+  reading.value.selected = arc.id
+  void nextTick(() => rowsPane.value?.querySelector(`[data-occurrence-id="${CSS.escape(arc.id)}"]`)?.scrollIntoView({ block: 'nearest' }))
+}, { immediate: true })
 </script>
 
 <template>
@@ -150,9 +190,11 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
                 <UButton color="neutral" variant="ghost" size="sm" block data-group-header
                   class="w-full justify-start rounded-none px-3 py-2 text-start"
                   :aria-label="`${open ? 'Collapse' : 'Expand'} ${group.title}, ${group.arcs.length} ${group.arcs.length === 1 ? 'change' : 'changes'}`">
-                  <span v-if="group.state" class="mx-1 size-2.5 shrink-0 rounded-full border-2 border-accented" aria-hidden="true" />
-                  <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
-                  <span class="min-w-0 text-sm font-semibold tracking-tight text-highlighted">{{ group.title }}</span>
+                  <BlrEntityState v-if="group.state" :name="group.state.name" />
+                  <template v-else>
+                    <UIcon name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
+                    <span class="min-w-0 text-sm font-semibold tracking-tight text-highlighted">{{ group.title }}</span>
+                  </template>
                   <span class="blr-meta ms-auto">{{ group.arcs.length }}</span>
                   <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="open && 'rotate-180'" />
                 </UButton>
@@ -163,6 +205,7 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
                     <BlrProse v-if="group.state?.content" :text="group.state.content" />
                     <p v-else-if="group.explanation" class="text-sm text-muted">{{ group.explanation }}</p>
                     <p v-if="group.state && !group.state.reached" class="text-xs text-muted">No Scenario leaves it in this state.</p>
+                    <p v-if="group.state && stateCondition(group.state.name)" class="flex items-center gap-1 text-xs text-muted" data-state-condition><UIcon name="i-lucide-split" class="size-3 shrink-0" />Reached {{ stateCondition(group.state.name)!.replace(/^Only/, 'only') }}</p>
                     <details v-if="group.state && (group.state.capabilityScenarioIds.length || group.state.journeyScenarioIds.length)" class="text-sm"
                       :open="reading.expandedProvenance.includes(group.key)" @toggle="setProvenanceOpen(group.key, ($event.target as HTMLDetailsElement).open)">
                       <summary class="cursor-pointer text-xs text-muted">Scenarios that leave it here · {{ group.state.capabilityScenarioIds.length + group.state.journeyScenarioIds.length }}</summary>
@@ -174,18 +217,18 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
                   </div>
                   <ul v-if="group.arcs.length" class="space-y-2">
                     <li v-for="arc in group.arcs" :key="arc.id" :data-occurrence-id="arc.id" data-lifecycle-change
-                      class="overflow-hidden rounded-[0.625rem] border border-default bg-default" :class="{ 'border-dashed': arc.forbiddenByRuleIds.length > 0 }">
+                      class="overflow-hidden rounded-[0.625rem] border border-default bg-default" :class="{ 'border-dashed': arc.forbiddenByRuleIds.length > 0 || arc.condition }">
                       <button type="button" class="blr-resource-row group flex w-full items-start gap-3 rounded-[0.625rem] px-4 py-3 text-start transition hover:bg-elevated/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
                         :aria-label="`${reading.expandedChanges.includes(arc.id) ? 'Collapse' : 'Expand'} ${arc.title}`" :aria-expanded="reading.expandedChanges.includes(arc.id)" @click="toggleChange(arc.id)">
-                        <UIcon name="i-lucide-arrow-right" class="mt-0.5 size-4 shrink-0 text-muted" />
                         <span class="min-w-0 flex-1">
-                          <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span class="text-[15px] font-semibold tracking-tight text-highlighted">{{ arc.destination }}</span>
-                            <span v-if="arc.marker" class="text-xs text-muted">{{ arc.marker }}</span>
+                          <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                            <BlrEntityEffect :mention="arc.rowMention" />
                             <span v-if="arc.forbiddenByRuleIds.length" class="text-xs text-primary">forbidden by Rule</span>
+                            <span v-if="arc.condition" class="inline-flex items-center gap-1 text-xs text-muted" data-change-condition><UIcon name="i-lucide-split" class="size-3 shrink-0" />{{ arc.condition }}</span>
                           </span>
-                          <span v-if="!reading.expandedChanges.includes(arc.id) && arc.capabilities" class="mt-1 flex items-center gap-1.5 text-sm text-muted">
-                            <BlrKind kind="capability" :labelled="false" size="xs" />{{ arc.capabilities }}
+                          <!-- The Capabilities making it, as the graph's badge and the details' chips draw them; the row itself is the control. -->
+                          <span v-if="!reading.expandedChanges.includes(arc.id) && arc.capabilities.length" class="mt-2 flex flex-wrap gap-1.5">
+                            <span v-for="title in arc.capabilities" :key="title" class="blr-chip"><BlrKind kind="capability" :labelled="false" size="xs" class="shrink-0" /><span class="min-w-0 truncate">{{ title }}</span></span>
                           </span>
                         </span>
                         <UIcon name="i-lucide-chevron-down" class="mt-0.5 size-3.5 shrink-0 text-dimmed transition-transform" :class="reading.expandedChanges.includes(arc.id) && 'rotate-180'" />
@@ -203,13 +246,19 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
 
       <aside v-if="showInspector" ref="inspectorPane" class="blr-lifecycle-inspector min-w-0 overflow-auto rounded-lg border border-default bg-elevated/30 p-3" aria-label="Lifecycle details" data-lifecycle-inspector>
         <div class="mb-3 flex items-start justify-between gap-2">
-          <h3 ref="inspectorHeading" tabindex="-1" class="pt-1 text-sm font-semibold text-highlighted outline-none">{{ selectedState?.name ?? selectedArc?.title ?? 'Forbidden change' }}</h3>
+          <!-- A State wears its badge and a change reads as every other change does; the plain title stays their accessible name. -->
+          <h3 ref="inspectorHeading" tabindex="-1" class="pt-1 text-sm font-semibold text-highlighted outline-none" :aria-label="selectedState?.name ?? selectedArc?.title ?? 'Forbidden change'">
+            <BlrEntityState v-if="selectedState" :name="selectedState.name" />
+            <BlrEntityEffect v-else-if="selectedArc" :mention="selectedArc" class="font-normal" />
+            <template v-else>Forbidden change</template>
+          </h3>
           <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close lifecycle details" @click="closeInspector" />
         </div>
-        <BlrLifecycleChangeDetails v-if="selectedArc" :workspace="workspace" :resource="resource" :change="selectedArc" @open="emit('open', $event)" />
+        <BlrLifecycleChangeDetails v-if="selectedArc" :workspace="workspace" :resource="resource" :change="selectedArc" :highlight="highlight" @open="emit('open', $event)" />
         <div v-else-if="selectedState" class="space-y-4">
           <BlrProse :text="selectedState.content" />
           <p v-if="!selectedState.reached" class="text-sm text-muted">No Scenario leaves it in this state.</p>
+          <p v-if="stateCondition(selectedState.name)" class="flex items-center gap-1.5 text-sm font-medium text-highlighted" data-state-condition><UIcon name="i-lucide-split" class="size-3.5 shrink-0" />Reached {{ stateCondition(selectedState.name)!.replace(/^Only/, 'only') }}</p>
           <section v-if="selectedState.capabilityScenarioIds.length || selectedState.journeyScenarioIds.length" class="space-y-2">
             <h4 class="blr-field"><BlrTerm slug="left-here-by" /></h4>
             <BlrLinks :workspace="workspace" :ids="selectedState.capabilityScenarioIds" kind="capability-scenario" interactive @select="emit('open', $event)" />
@@ -217,7 +266,13 @@ onMounted(() => { if (reading.value.drawing === 'rows') emit('ready') })
           </section>
           <section v-if="stateArcs.length" class="space-y-2">
             <h4 class="blr-field">Changes involving this state</h4>
-            <ul class="space-y-1"><li v-for="arc in stateArcs" :key="arc.id"><button type="button" class="text-start text-sm underline decoration-dotted underline-offset-2" @click="inspect(arc.id)">{{ arc.title }}</button></li></ul>
+            <ul class="space-y-1">
+              <li v-for="arc in stateArcs" :key="arc.id">
+                <button type="button" class="-mx-1.5 rounded-md px-1.5 py-1 text-start text-sm transition-colors hover:bg-elevated/60 focus-visible:outline-2 focus-visible:outline-primary" :aria-label="`Inspect ${arc.title}`" @click="inspect(arc.id)">
+                  <BlrEntityEffect :mention="arc" />
+                </button>
+              </li>
+            </ul>
           </section>
         </div>
         <div v-else-if="selectedProhibition" class="space-y-2 text-sm">

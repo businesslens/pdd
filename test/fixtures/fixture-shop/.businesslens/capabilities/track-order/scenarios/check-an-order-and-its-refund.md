@@ -8,7 +8,7 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }
     contexts:
       web:
         place: customer-web::storefront::order-status
@@ -18,8 +18,8 @@ steps:
     kind: product
     actor: shopper
     entities:
-      - { entity: order, effect: reads }
-      - { entity: refund, effect: reads }
+      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }
+      - { entity: refund, effect: reads, facts: [Amount, Reason] }
     contexts:
       web:
         place: customer-web::storefront::order-status

@@ -4,12 +4,13 @@ Send one self-contained packet to the harness-supplied builder:
 
 - **Expected behavior:** the exact approved model contract.
 - **Affected model resources:** IDs of relevant Interfaces, Experiences,
-  Capabilities, Capability Scenarios, Rules, Journeys, Journey Scenarios, and
-  declared availability Contexts.
+  Screens, Entities, Capabilities, Capability Scenarios, Rules, Journeys,
+  Journey Scenarios, Variations, and declared availability Contexts.
 - **Observed gap:** current behavior and why it differs.
 - **Acceptance criteria:** observable trigger, typed steps, decisions, outcome,
-  edge cases, applicable invariants, and each Scenario route's most-specific
-  Context places where relevant.
+  edge cases, applicable invariants, each Scenario route's most-specific
+  Context places where relevant, and for a Variation each alternative's
+  `selectedWhen`.
 - **File leads:** inspected paths and symbols as leads, never mandatory design.
 - **Constraints:** do not edit `.businesslens/`; preserve unrelated user work;
   follow repository instructions; surface uncertainty rather than changing

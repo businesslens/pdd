@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v14 renderer used by `businesslens view` and exported
+The stable Product Report v15 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -19,12 +19,12 @@ Back restores the previous resource and its tab and reading position.
 Close, Escape or a click outside returns to the preserved working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view actions beside Expand and Close.
-Related Domains appear as linked names with their type icons in every resource
-header, keeping that context visible across tabs and separate from ownership.
-The first Domain always appears by name; any remaining Domains open from a
-`+N more` button. A single Domain needs no overflow button. The same first Domain
-stays visible at every panel width, with an ellipsis for a long name when space
-is tight and its full name available on hover. The popover preserves normal resource links;
+Under the title, one short line says where the resource belongs: its type, then
+the nearest place containing it with that place's own mark — `Screen in [Screen]
+Add source` — and its related Domains as marks. The full containing path is the
+nearest place's tooltip, and the place opens. The first Domain mark opens its
+Domain and names it on hover; any remaining Domains open from a `+N` count, and
+a single Domain needs none. The popover preserves normal resource links;
 Escape dismisses it before the resource reading.
 Entities and Capabilities show their assigned Domain; other resources show the
 Domains reached through their Capabilities or Rule targets. A Scenario uses its
@@ -33,21 +33,133 @@ own Capabilities, so it does not borrow Domains from its parent's other cases.
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
 and Journey readings add Scenarios.
-Interfaces have an Experiences & Screens tab; Experiences have a Screens tab.
-Both use the collection's tree rows, chevrons, resource links and expansion
-controls. The selected resource is already named in the header, so each tree
-starts with its children. Shared Screens occur once under their Interface in the
-full tree; an Experience's Screens tab shows shared references with “From” and
-an owner link. These tabs hold containment and availability; Overview holds
-audience and Connections holds capability exposure. Screens have no containment tab.
+Every place reads itself: what is authored on it and what happens exactly
+there, never a sum of the places nested inside it. An Interface or Experience
+Overview carries no Delivery list; its facts strip counts the Capabilities
+available inside it, and where each is delivered reads in its containment tree.
+The facts strip adds
+the Languages an Interface serves: its own list where it narrows the Product's,
+otherwise the Product's list marked "all of the Product's", so an Interface that
+narrows nothing never reads as serving none. It is absent only when the Product
+declares no languages. The Product Overview's About reading lists the Product's
+languages. `node scripts/check-languages.mjs <viewer-url>` checks both against
+the Fixture Shop.
+A Screen Overview separates Presents (facts the Product shows) from Collects
+(input the Actor supplies), grouping each by Entity and omitting empty sections.
+A prefilled editable fact appears in both; a bare Entity entry appears only in
+Presents. Section counts name Entities, not facts. A Screen's facts strip counts
+Entities under Presents and Collects separately, omitting empty groups, and the
+Capabilities it exposes. There are no Information presented,
+Available actions, View states or Capability boundary readings, and References
+carry no state badge.
+Screens nest. A nested Screen appears as a child of its parent Screen in the
+Delivery tabs and the Interfaces tree card; its header trail names the parent Screens
+after the container. A Screen named in its container's `navigation` wears an
+Always reachable mark — a small anchor badge, an unreserved glyph — in those
+trees, in its own header and in its facts strip. Navigation is
+never drawn as an edge.
+The Interfaces tree says what each place delivers, as ordinary items in its
+own branch, exactly as the Delivery map does: a Screen lists its own
+Capabilities first, never a child's, then the Screens nested inside it; an
+Experience or Interface lists Capabilities with Steps placed exactly there,
+plus availability gaps exposed on no relevant Screen. Exposure on a Screen
+never removes behavior placed directly on its container. They are ordinary rows beside the place's Screens, so
+where they sit says they are on no Screen; no group heads them. The Delivery map
+draws the same leaves under the same nodes, so it needs no note to say so.
+Under each Capability sit its own Capability Scenarios with a Step placed
+exactly on that place. A Journey Scenario belongs to its Journey, never to a
+Capability its Steps use, so it sits under its Journey instead: after the
+place's Capabilities come the Journeys passing through it, each holding its
+Scenarios with a Step placed there, once each; where it sits says it has Steps
+there, so no row repeats which. Scenarios start folded, under a Capability or
+a Journey alike. A nested place reads its own; nothing is summed. Every item opens its
+reading.
+On the Interfaces collection the Capabilities filter marks the matching items.
+Interfaces, Experiences and Screens have a Delivery tab (`delivery`) after
+Overview: the place's own branch of that tree, with the collection's tree rows,
+chevrons, resource links and expansion controls. The selected resource is
+already named in the header, so each tree starts with its children. Shared
+Screens occur once under their Interface in the full tree; an Experience's
+Delivery tab shows shared references with “From” and an owner link.
+A Business Rule's Overview is its statement, read once as the lead. Where the
+Rule is a permission, Who may follows it, because the grants restate the
+statement in structured form. It lists each operation the Rule selects, one row
+per Entity target — the Entity's chip, then the operation in the present with
+the Steps' State badges (`[Collection] change to [Published]`), then its governed
+facts as fact tags and its places as a Step's Where breadcrumb — and then each grant from its parts, alternatives joined by a
+visible or: acting Entities as chips; a `related` path as words over one hop
+(`[Reader] who owns it`) and in the format's own arrows past it; the thing
+itself; the Product's own schedule; whoever a settings Entity configures; and
+each condition as while and a State badge, or when, the Entity's chip, the
+fact, the operator and the value — a threshold as its settings Entity's chip.
+A permission may target several Entities; a grant that needs one “it” — a
+`related` path, a State condition, the target's own fact — needs exactly one.
+Its Rationale and Intent close the Overview. An Applies to tab (`applies-to`)
+follows, counting the Rule's targets, drawn with the same tree rows: targets
+grouped by type in rail order. A target holds only the places the Rule itself
+names — the Contexts it narrows the target to, noted “Only in”, each noted with
+the Interface and Experience it sits in because places repeat titles across
+Interfaces. A target the Rule does not narrow is noted “Every supported
+Context” and holds nothing: those places are the target's own, read on its
+page. An Entity target notes its operation and governed facts; a Context target
+is the place itself. Groups start open and targets folded.
+Every edge that tree draws is read at its other end. A Capability, Journey,
+Entity, Interface, Experience or Screen has a Business Rules tab (`rules`)
+before Connections, counting the Rules that name it — by targeting it or one of
+its Scenarios, or, for a place, by narrowing a target to it or targeting it as
+a Context. Each is the Business Rules collection's row — name and statement —
+whose hook line says how it names the resource: Where, Selects, On, or Here,
+for — an operation drawn as Who may draws it, the Entity left out where the page
+is that Entity. The row carries no metrics: the Rule's reach is its own reading's. A
+place's Connections list the same Rules. On an
+Entity, a fact a Rule governs keeps its place in the Information kept grid and
+carries one small badge per Rule naming the kind of claim — Read restricted,
+Change restricted, Never read or changed, or Constraint for a Rule that grants
+nothing. Clicking the badge opens the claim: who alone may read or change it and
+where (`Read only by [Reader] who owns it in [Personal library › Collection
+workspace]`), that no one may, or the Rule's statement, with the Rule's chip as
+its source. The Overview signals; the Rule and the Business Rules tab explain.
+A fact reads as one tag wherever it stands: a Step cites it, a Screen presents
+it, a Rule governs it. Reach through targets is not naming, so a Rule on a Capability is not
+listed on every place that Capability is available in; the Rule reach graph
+draws that.
+An Entity target selects Steps — the format's own reading, decided by the
+selector lint and the report validator share — so a Rule also governs the
+Steps doing its operation, in their own places or, where a Step names none, in
+its Scenario's. Each such Step names its Rules under Governed by, in both Steps
+drawings. A Capability lists the Rule in its Business Rules tab when it owns a
+governed Step — its Capability Scenarios' Steps and the Journey Steps naming it
+— and a Journey when one of its Journey Scenarios does, with the hook Governs
+its Steps and the Rule's selectors that select them: “changes Collection”,
+“reads Collection · Public address · Only in Collection workspace”. Their
+Connections list these Rules as Governing its Steps, and a Rule's Connections
+list what owns the Steps it selects, all marked derived. An Entity target
+without an operation selects every Step touching the Entity.
 An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
 Each State carries its definition, including States with no outgoing changes.
 Creation and changes without a starting State have separate groups. Groups and
 changes expand and collapse individually or together, with expansion remembered.
-Rows expand each change's Capabilities, Rules, co-effects and supporting
-Scenarios. Graph nodes and edges open those details in a local inspector;
+Rows expand each change's Capabilities, co-effects and supporting Scenarios.
+A change reads as it does in a Capability's What it changes and a Step's
+Entity effects — `changed [Unlisted] → [Published]` through the same component
+— in the details heading and under Changes involving this state. A Rows change
+sits under the State it leaves, so it names only where it goes (`changed
+[Published]`, `created [Private]`), with its Capabilities as chips. A State
+wears the same badge wherever it stands: in a change, heading its Rows group,
+and heading its details.
+A change is read by what makes it: the Rules governing it are read on the Steps
+they select, never on the transition. A change no Rule permits anyone to make
+is the exception, since no Capability makes it: it is drawn dashed and names
+its forbidding Rule. A Graph edge's label is a badge, the report's chip wearing
+the Capability's mark, or a Forbidden mark. Hovering or focusing a label or
+its line dims what is unrelated, as hovering a State does: it lights that one
+change and the two States it joins, never another change the same Capability
+makes. Clicking a label selects its
+change; the details head each part in the badge's order and marks — Made
+through its Capabilities, or Forbidden by its Rule — and briefly mark the part
+whose badge was clicked, scrolling it into view. Graph nodes and edges open those details in a local inspector;
 selecting a State explains it and lists the Scenarios that leave the Entity
 there. Changes without specified states remain accessible beside the graph.
 The inspector sits below the drawing in a narrow panel and beside it when
@@ -64,8 +176,9 @@ expands that Scenario inside its parent. Named-view actions explicitly change
 the working view and close the panel. Ownership remains visible inside the
 resource reading and is separate from its return trail. Selecting Connections
 from a Scenario reading opens its parent's Connections tab. References stays
-scoped to the inspected resource: a Scenario's `rt=references` reads that
-Scenario's attachments under its own title.
+scoped to the inspected resource: a Scenario address always opens its parent at
+Scenarios, whatever its `rt`, and the Scenario's own attachments are read on its
+card.
 
 The Product Overview's References reading is read by where references point,
 not one row per attachment, because many resources cite the same file. It works
@@ -206,7 +319,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV14` from `businesslens/report`. There is
+`report` must be a `ProductReportV15` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -229,18 +342,18 @@ where it left:
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
+| `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, `rule`, or `variation` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `structure`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `alternatives`, `applies-to`, `delivery`, `scenarios`, `lifecycle` (or `lifecycle/<change>` to select one change), `rules`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `coverage` | `{ path: string \| null }` | No path |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
 Every one is optional; bind the ones the host wants in its URL. A Scenario key
-selects that Scenario inside its parent reading, or its own References when
-requested, while the section stays on the originating working view.
+opens its parent's reading at Scenarios with that Scenario's card open, its own
+References on the card, while the section stays on the originating working view.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
 It returns these eight models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
@@ -269,7 +382,7 @@ nothing else is configurable: the reading and its grouping are decided by the
 report rather than auditioned on every visit.
 
 A collection is one set with shared drawings, selected with `section` and `tab`
-and no resource key. The rail lists Overview and six collections. The filters
+and no resource key. The rail lists Overview and seven collections. The filters
 narrow the collection, and a dropdown beside them changes how
 that set is drawn. Its preview cards name each view and explain it with a short
 subtitle, without a separate help button or About section. The picker stays at
@@ -280,7 +393,7 @@ Matrix is offered only by the three collections whose resources supply its rows.
 | Section | Rows (`overview`) | Graph (`graph`) | Matrix (`matrix`) |
 | --- | --- | --- | --- |
 | `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships | What changes what: Entities × Capabilities |
-| `interface` | one tree card per Interface, its Experiences and Screens | Interface map | — |
+| `interface` | one tree card per Interface or Interface Variation, alternatives retaining their delivery trees | Delivery map | — |
 | `domain` | one tree card per Domain, its Capabilities and Entities | Domain reach | — |
 | `capability` | one row per Capability, grouped by Domain | Capability reach | Compare delivery: Capabilities × Interfaces |
 | `journey` | one row per Journey | Journey reach | — |
@@ -332,12 +445,29 @@ expansion control includes the Step and detail counts; there is no separate
 details toggle. Resource links and definitions work independently of expansion.
 Each Entity appears once in the terminal reading, with its
 last creation, change or removal, and Entities only read sit separately.
+Every Entity effect — a Step's Entity effects, Ends with, Leaves behind,
+Changes made here and a Capability's What it changes — reads Entity first: the
+Entity chip, a plain verb, then each State as a badge, as in
+`[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]` or
+`[Collection] read`. An ending names where the thing rests: `[Item] in [Unread]`.
+What it changes names each Entity once and each distinct move on a row of its
+own, with the number of Scenarios making it; moves are never joined into a
+run, since two moves that meet are made by different Scenarios and a chain
+would tell a story none of them tells. The moves read in the Entity's Lifecycle
+Rows order — creation, then by starting State in declared order — and each
+opens that change in the Entity's Lifecycle (`rt=lifecycle/<change>`), selected
+in whichever drawing is on screen.
+The facts a Step cites on a read, change or creation follow the phrase; the terminal
+reading names none.
 Scenario titles use 16px semibold text, section labels 13px semibold, and body
 text 14px regular. Step cards use the selected Guided flow layout: visible labels for
-Action or Condition, Who, Entity effects, Where and Capability, with effects
-spelled out in words. Where reuses the original Context breadcrumbs — Interface,
+Action or Condition, Who, Entity effects, Where and Capability. Where reuses the original Context breadcrumbs — Interface,
 Experience and Screen — without route-name prefixes. The Step card variant
 selector has been retired.
+Scenario Steps are read in authored order, with their Actors, Entity effects,
+places, Capabilities and governing Rules. Decisions, edge cases and attachments
+remain inside the Scenario reading.
+
 Resource readings and the Product Overview share Nuxt UI's link-style tabs on a
 transparent header. The slideover places the resource tab strip above its scroll
 pane, with a subtle upper divider and a full-width lower separator aligned with
@@ -352,10 +482,18 @@ page and graph toolbars.
 
 Domain and Interface cards are trees inside translucent containers, without a
 separate header. Their borderless tree rows fill each card's width and use the
-parent's background, with a subtle row highlight on hover. The Experiences & Screens and Screens tabs use the
+parent's background, with a subtle row highlight on hover. The Delivery tabs use the
 same component. Each group has its matching resource-type icon and a count beside
 its name: Experiences, Screens, Shared Screens, Capabilities or Entities. Resource
-roots have no mixed total. Expansion chevrons sit before the type icons.
+roots have no mixed total while open. A closed row says what opening it would
+find, faded after its name, as a closed folder does in Coverage: the distinct
+resources anywhere below it, one type icon and count per kind in rail order,
+so a Capability exposed on two Screens counts once. A group names only what
+lies deeper than its own count. The summary disappears once the row opens,
+clicking it opens the row, and the chevron's label reads it aloud, so the row
+keeps one tab stop. Expansion chevrons sit before the type icons. A nested
+Screen sits directly under its parent Screen with no group between, and an
+always-reachable Screen carries its mark after its name.
 
 A resource name opens its reading directly, including roots with no children.
 Chevrons toggle expansion; group labels also toggle their group. Arrow keys
@@ -386,14 +524,18 @@ report has no home for opens the Overview rather than landing the reader
 somewhere else without saying so. Resource links retain their ids, and
 Inspecting an Experience or Screen preserves the originating rail selection.
 
-Interface map and the four reach graphs follow a containment tree: measured
-nodes in horizontal tiers, parents above children, shared orthogonal branches,
-and a distinct Product root. A reach graph draws occurrences, so a Screen
-reached by three Capabilities appears under each of them.
-Vue Flow provides its canvas, resource styling, zoom, and pan. Collapsed branches
-show corner count badges, with the expansion choice preserved in the URL.
-Expansion, collapse, and Fit smoothly centre the visible graph after layout;
-centering is immediate when the reader prefers reduced motion.
+The four reach graphs follow a containment tree: measured nodes in horizontal
+tiers, parents above children, shared orthogonal branches, and a distinct
+Product root. A reach graph draws occurrences, so a Screen reached by three
+Capabilities appears under each of them.
+
+The Interfaces Graph is the delivery map: containment rooted at the Product,
+like the reach trees, with each Screen's own Capabilities as leaves, a gap
+leaf under an Experience or Interface for a Capability available there and on
+no Screen of its own, plus direct leaves for behavior with Steps placed exactly
+on that Interface or Experience, even when the same Capability uses a Screen.
+A Capability exposed on five Screens is a leaf under each.
+
 The renderer never runs Diagram Design or generates model-controlled HTML.
 HTML readings remain available while graph geometry loads. A locally bundled
 ELK worker arranges Entity relationships and Lifecycle; it loads on demand and
@@ -525,6 +667,148 @@ access, tooltips, saved state, utilities and the independent mobile drawer.
 
 
 Check the collection preview picker against a running local viewer with
-`node scripts/check-collection-views.mjs <viewer-url>`. This covers all six
+`node scripts/check-collection-views.mjs <viewer-url>`. This covers all seven
 collections, desktop and phone layouts, subtitles without About, saved filters,
 keyboard selection and the fixed position beside the legend.
+
+## Variations
+
+A Variation is a resource: a named set of same-type alternatives with how one
+is chosen written once on the set. It has its own rail collection, **Variations**,
+marked with the variation glyph in ink — a Variation modifies a type, so it
+takes no hue — drawn at 14px inside the usual 16px slot, since the glyph reaches
+the corners of its box. Its rows group by the type each set varies —
+Interfaces, Screens, Business Rules, Scenarios and so on — and show the set's mark, name,
+picker, purpose, alternatives and what chooses between them (`Chosen by`,
+`Assigned per` or `Discriminator`). A Scenario is never read without its owner,
+so a Scenario set sits under a one-line link to the Capability or Journey its
+alternatives share (`variationsByOwner`); `lint` keeps them under one. The
+collection has Rows only: a set has no derivation of its own to draw.
+
+**A set reads as the type it varies.** Its mark is the member type's mark with
+the variation sub-icon in the corner the viewer badges an Interface's type or an
+Entity's facet with (`BlrVariationMark`, through `BlrKind`'s `memberKind`). On
+an Interface set the sub-icon takes the type's corner; each alternative keeps
+its own type where it is read. The reading's subtitle names it the same way,
+with its subtype and, where all its alternatives sit in one place, that place
+and its Domains: `Capability Scenario variation · Experiment in Checkout`
+(`resourceAncestors` and `resourceDomains` of a set).
+
+**The set is the title; the picker names the alternative.** Wherever an
+alternative is a title — a reading header, a row, a tree node, a Scenario card —
+the title names its Variation (`titledBy`) and the picker beside it
+(`BlrVariationPicker`) names the alternative being read: its title, or a
+Version's label (`v2`). On a set's own title the picker counts the alternatives
+(`2 alternatives`). There are no position numbers: alternatives are a set.
+Pressing the picker opens a switcher. Its first row is the set — the variation
+glyph in its own ink, the set's name with an arrow, its subtype and what
+chooses — and opens the set's own reading; it is checked while that reading is
+open. Every alternative follows with its condition, the one being read checked.
+The set is named once in the menu. The picker has three modes. In a row or tree
+node it opens the picked alternative; in a reading header it replaces the
+reading under the same title, with no Back step (`ResourceNavigation.replace`);
+on a Scenario card it switches the card in place. Nothing switches alternatives
+with tabs. The picker is its own button beside the row's full-card link, never
+inside it. References inside a reading — Step places, Rule targets, relation
+chips — stay concrete.
+
+**Where alternatives meet, they are one row.** `collapseVariations` replaces two
+or more alternatives of one set in a list with the set's row, at the first one's
+place; a lone alternative keeps its own row, titled by its set. This applies to
+every collection list and to the Business Rules tab. Heading counts stay
+concrete — `Business Rules 14` while thirteen rows show. A set row never
+expands. Trees are the exception: `foldVariations` puts every alternative —
+Screens, Experiences, the Capabilities and Journeys a place delivers, and their
+Scenarios — under its set's node, even where it is the only one there. The node
+expands to them by their own titles because each keeps its own children. At a
+place, an alternative that happens nowhere in its branch follows them struck
+through, muted, with a dashed `Not on this Screen` badge (`Not in this
+Experience`, `Not in this Interface`) and no children, so a place holding one
+alternative still reads as a choice; it still opens its reading. One delivered
+on a place nested inside, or on a Screen its Interface shares, is not struck:
+it is in the place, read where it happens. The node's picker draws it the
+same way, after the alternatives that are here, with its condition. Counts and a
+closed row's summary never include a struck alternative or the set node.
+
+**Scenarios are read in their parent.** A Scenario address opens its parent's
+reading at Scenarios, with its card open and in view; its own References are read
+on the card. Alternative Scenarios are one card at the first one's place, titled
+by their set, with **Selected when** leading it. The card reads the alternative
+the address asked for, else the reader's last pick for this parent, else the
+first by title; switching in place follows an address that names the set,
+without a history entry. The Scenarios tab still counts every Scenario.
+
+**Readings.** A Variation's Overview carries its purpose and **How one is
+chosen** (`BlrVariationSelection`): the Entities and facts it chooses by, any
+assignment, Takes effect and Stability. Its Alternatives tab reads each
+alternative in its own words with its label and Selected when, and where each
+sits when owners differ. An alternative's Overview carries **How this one is
+chosen** (`BlrVariationChoice`): what chooses and its own condition, with a link
+to the set for timing and stability. There is no Variations tab on an
+alternative. Connections reads a set's Alternatives and what it chooses by
+(`chooses by setting: …`), and an alternative's `alternative in` its set —
+never alternatives to each other.
+
+A Business Rule that is an alternative is conditional: its lifecycle
+prohibitions are never drawn as unconditional, and its fact badges read
+`Conditional Rule`. Also on keeps its own meaning.
+
+Interface root cards fold alternatives under their Variation, including a lone
+alternative left by a filter. Each alternative keeps its concrete name and
+children. Counts remain concrete. New set roots retain the old alternative
+cards' saved expansion until the set has its own saved choice.
+
+A Lifecycle State's conditional styling uses the union of all incoming Scenario
+supporters. Complementary alternatives on different incoming changes can make
+the State unconditional while those changes stay conditional individually.
+
+**In the drawings.** Nodes, rows, columns and relations stay concrete; the
+Variation is added around them, the way each drawing's lines already read.
+- *Graph trees* — the four reach graphs and the Delivery map — fold as the
+  Interfaces tree does (`foldBranches`): sibling alternatives sit under their
+  Variation's node, drawn in the member type's color with its mark and the
+  sub-icon, subtitled `Capability variation`, which opens the set. Its lines to
+  its alternatives are dashed — "one of", never containment — and say
+  `alternatives` once where they fork, on a chip with the split mark, as every
+  dashed line that depends on a Variation carries it. When a focus or filter
+  hides some, the chip says `1 of 2 alternatives`. The
+  Delivery map folds at every level, from Interfaces at the root to Scenarios at
+  a place, and at a place an alternative that does not happen there follows the
+  others struck, with the same badge as the tree. Reach trees fold their
+  subjects and what each reaches — places, Rules and targets — the same way; a
+  subject is not a place, so nothing under it is struck. The `+N` on a closed
+  node counts concrete resources only (`concreteBranches`). Only the Entity
+  graph and the matrices draw an alternative on its own, naming its set.
+- *Entity relationships* — every line is an authored relation, so an Entity
+  Variation is a frame around its alternatives, headed by the set; relations
+  keep their concrete ends. A frame holding fewer than two alternatives in scope
+  is dropped.
+- *Lifecycle* — a change is conditional when some choice of alternatives leaves
+  no Scenario making it (`variationCondition`): a Scenario runs only when it,
+  or its Capability or Journey, is chosen. A conditional change is dashed and
+  its Capability badge leads with the sub-icon; a State only conditional
+  changes reach is dashed and says `Only under Cancellation request`. Every
+  change's details group its Scenarios by alternative, `Always` first. The
+  Entity's own Variation is never counted again.
+- *Matrices* — alternatives on an axis sit side by side at the first one's
+  place (`adjacentAlternatives`) under one band naming the Variation once, as a
+  collection list's group header does, tinted a step darker than the cells: a
+  one-line band row above its rows — name, subtype and size, and a chevron into
+  it — and one band across its columns' tops, named on the first of them in view
+  so paging never hides it; a Version's columns carry their labels before their
+  names (`v1 Payment webhook`). A lone alternative sits under its band too, as in
+  the trees; when the table holds only some of a set's alternatives, the band
+  says how many (`Experiment · 1/2 in table`). A cell held only under some alternatives beyond its own
+  row's and column's is dashed, and its details say which first; in What
+  changes what, a single change inside a solid cell says so on its own line.
+  Rule attachments are authored, so their cells are never dashed.
+
+Search keeps the name that matched: a Variation wears its set mark, and an
+alternative adds a chip naming its Variation.
+
+Check it against the Fixture Shop with `node scripts/check-variations.mjs
+<viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the
+collection and its owner lines, set rows in a list and a tab, the switcher by
+keyboard, set-first titles, switching in a header without a Back step, the set's
+readings, the Scenario card and a Scenario address, Escape, the tree, the
+graphs, the Lifecycle, the matrices and phone width.

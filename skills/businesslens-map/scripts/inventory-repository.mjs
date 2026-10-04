@@ -12,6 +12,8 @@ function git(root, ...args) {
   return execFileSync('git', args, {
     cwd: root,
     encoding: 'utf8',
+    // A large repository lists more paths than the default 1 MiB buffer holds.
+    maxBuffer: 512 * 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe']
   })
 }

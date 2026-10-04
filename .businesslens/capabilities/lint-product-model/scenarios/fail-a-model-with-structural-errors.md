@@ -7,15 +7,15 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The model breaks a structural rule, such as a Capability availability place with no Scenario covering it in a complete model, or a Step that moves a thing from a state it was not left in
+  - text: The model breaks a structural rule, such as a Capability availability place with no Scenario covering it , or a Step that moves a thing from a state it was not left in
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: capability, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
+      - { entity: capability, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli

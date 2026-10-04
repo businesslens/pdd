@@ -7,17 +7,17 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: business-rule, effect: reads }
+      - { entity: business-rule, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
   - text: The Product shows its direct Capability, Journey, Scenario, Entity, and Context attachments
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: capability, effect: reads }
-      - { entity: journey, effect: reads }
-      - { entity: entity, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
+      - { entity: capability, effect: reads, facts: [] }
+      - { entity: journey, effect: reads, facts: [] }
+      - { entity: entity, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -25,14 +25,14 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: entity, effect: reads }
+      - { entity: entity, effect: reads, facts: [Kept information, States] }
     contexts:
       local:
         place: local-report-web::resource-collection
   - text: The Product retains every authored selector and its scope with the target and provides links to the target or Rule page
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       local:
         place: local-report-web::resource-collection

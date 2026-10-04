@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
   "type": "module",
   "license": "MIT",
@@ -30,6 +30,10 @@
       "types": "./dist/report-digest.d.ts",
       "default": "./dist/report-digest.js"
     },
+    "./report/selectors": {
+      "types": "./dist/report-selectors.d.ts",
+      "default": "./dist/report-selectors.js"
+    },
     "./logo": {
       "types": "./dist/logo.d.ts",
       "default": "./dist/logo.js"
@@ -47,6 +51,7 @@
     "CHANGELOG.md",
     "dist",
     "docs",
+    "!docs/images",
     "layers",
     "!layers/nuxt/report-viewer-lab",
     "!layers/**/node_modules",

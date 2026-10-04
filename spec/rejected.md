@@ -10,10 +10,11 @@ then rejected or deferred, with the reason it lost. Nothing else. No plans, no
 status, no work item, no file or line reference — those go stale, and a stale
 record is worse than no record.
 
-**How it changes:** append only. Reopening a decision means adding an entry that
-supersedes the old one and says why the reason no longer holds; it never means
-editing the old entry into agreement. Consult it before proposing a change to
-either contract.
+**How it changes:** decisions are appended. Reopening one means adding an entry
+that supersedes the old one and says why the reason no longer holds; it never
+means editing the old entry into agreement. Entries may be filed under the right
+heading, merged when they record one argument, or trimmed to the costed shape.
+Consult it before proposing a change to either contract.
 
 ## The model as a whole
 
@@ -78,7 +79,7 @@ findings would have nothing to check the arc against.
 `collection (source)` mean a third, unnamed instance. It is the silent reading
 aliases exist to remove, and the explicit spelling costs one word.
 
-**Making an unreached state an error for a `complete` model.** Proposed to pull
+**Making an unreached state an error for a model that claims complete coverage.** Proposed to pull
 two independent authors back together on coverage. Surfacing what the composed
 machine is missing is the honest version; coercing coverage is not.
 
@@ -147,3 +148,116 @@ product decision, not an omission: such a field becomes a ranking signal —
 shipped product is not better than a well-reasoned one nobody has built.
 Stripping every `kind: code` reference and every repository-relative target is
 therefore the point rather than a lossy compromise.
+
+## Interfaces, Experiences and Screens
+
+**Authored transitions beside Scenario Steps.** A separate `next` or transition
+list would repeat movement already expressed by consecutive contextualized
+Steps. Entry points and always-reachable destinations state different facts.
+
+**Visual layout fields on Screens.** Layout, styling and presentation belong
+in visual References. The model records displayed facts, collected inputs and
+behavior independently of those designs. Contractual wording remains an
+explicit Rule with an authoritative Reference and is verified when required.
+
+**A bare Entity id meaning all facts.** Bare Screen entries mean only presence
+of an Entity without named facts. Named facts use explicit shows/collects lists.
+
+**Authored Screen capabilities beside placed Steps.** The current contract
+requires supporting behavior, so the list has no valid independent meaning.
+Derive it from placed Steps instead; missing behavior belongs in Coverage.
+
+**Counterpart inheritance for twin Screens — deferred.** Separate authored
+information makes divergence visible. A shared declaration needs a precise
+rule for overrides before it could replace that property.
+
+**A dedicated messages collection — deferred.** Ordinary notifications can be
+Product Steps. When messages are things the Product schedules, sends, retries
+or revokes, model them with ordinary Entities and Capabilities. There is no
+claim that messages cannot have behavior or a lifecycle.
+
+**A Capability only in the most open Experience that admits its Actors.**
+Placing page reading once in a public Experience avoids counterpart Screens,
+but makes "public" also mean "where signed-in Users read". A Capability is
+available in every Experience in which one of its Actors uses it instead.
+
+**`restricted` as any area only some signed-in roles may enter.** Superseded.
+Pages closed to guests and pages only administrators open both qualified, and
+two independent maps of one product cut different restricted Experiences.
+`restricted` is the administration area alone; other pages stay
+`authenticated`, with grants saying who may act.
+
+## Capabilities
+
+**A setting-driven Product side effect as a Capability of its own.** Moving
+group sync into its own Capability keeps its setting from crossing sign-in's,
+but creates Capabilities the split test would not make, only to host a
+Variation.
+
+## Domains
+
+**Domains cut by "the thing the Actor works on".** Two independent maps of one
+product cut the same Capabilities into three Domains and into seven, both
+following the wording. The Product's own sections are found the same way by
+two readers.
+
+**Domains only when an author asks, or only as a derived report grouping.**
+A model that never proposes Domains stays ungrouped, and a report-only grouping
+cannot be reviewed or edited as a file.
+
+## Variation
+
+**Member-side Variation keys.** An anchor member carrying the kind and others
+pointing at it spread one product choice across several files with no name of
+its own; the set is its own resource instead.
+
+**A designated anchor or default member.** It made deleting one alternative
+mean something different from deleting another, and read as a default the
+model never claimed. A default belongs in an alternative's `selectedWhen`.
+
+**Usage repeated on every alternative.** It copied timing and stability onto
+each member and let a fact that only tunes one alternative sit among the
+settings that choose. Each selection field has exactly one level.
+
+**Free-form applicability prose as the only encoding.** A When used section
+would duplicate the typed selection fields.
+
+**Historical version archives and version-driven containment — deferred.**
+Older contracts still used by current clients or records are supported
+behavior and a Version Variation, not history. Addresses and headers alone do
+not determine resource boundaries.
+
+**A general experiment/configuration engine — deferred.** Variations state
+Product meaning and applicability; they do not run allocations, combine flags,
+negotiate versions or persist results. Permission grants cannot stand in for
+selecting whole resources.
+
+**Cohorts as a dedicated resource type — deferred.** Actor or tenant facts
+record membership; experiment-management Products model assignment and
+measurement with ordinary Entities, Capabilities and Scenarios.
+
+**Steps as Variation alternatives.** Varying a Step needs Step ids, a way to
+say which Step replaces which in an ordered list, and route rules across the
+swap: a patch language inside Scenarios. Two Scenarios of one owner say the same
+with no new mechanism.
+
+**A Scenario in more than one Variation, or a Variation per setting shaping
+one Scenario.** Two settings on one run — a captcha and a provider password on
+registration — would each select Scenario alternatives; enumerating their
+combinations multiplies Scenarios with every setting, and choosing the setting
+that "most changes" the Steps is a judgment. Each is a decision point instead.
+
+**A structured `enabledBy` field for switched-on behavior.** Naming the setting
+that enables a Capability as a fact reference would let `lint` resolve it, but
+deployment settings have no Entity to reference, and the grant-less Business
+Rule already carries the same claim for `verify`.
+
+**A grant-less Business Rule saying a resource exists only while enabled.**
+Superseded. It targeted one resource, which `lint` itself warns belongs to that
+resource; the resource's lead names the dependency instead, and `verify` checks
+it.
+
+**One Capability per sign-in method a deployment selects.** Superseded. The
+methods share verb, permission and availability, so the split test makes them
+one Capability; the Variation rules decide whether they are Scenario
+alternatives, separate Scenarios or decision points.

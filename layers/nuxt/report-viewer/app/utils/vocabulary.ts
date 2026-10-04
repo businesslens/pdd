@@ -88,7 +88,8 @@ export const KIND_TERM: Record<ReportResourceKind, VocabularySlug> = {
   journey: 'journey',
   'capability-scenario': 'capability-scenario',
   'journey-scenario': 'journey-scenario',
-  rule: 'business-rule'
+  rule: 'business-rule',
+  variation: 'variation'
 }
 
 /** A Scenario's own words, chosen by the type of Scenario being read. */
@@ -111,15 +112,14 @@ export interface VocabularyPage {
   items: VocabularyItem[]
 }
 
-/** Browsing groups model-wide terms under Product; documentation links keep their owner. */
+/** Browsing groups terms by their documentation owner; Model overview supplies the Product terms. */
 export function vocabularySection(slug: VocabularySlug): string {
   const page = VOCABULARY[slug].page
   return page === 'product-model' ? 'product' : page
 }
 
 /**
- * Browsing follows documentation order, with Model overview folded into Product.
- * Product leads that combined section; all other sections retain their page lead.
+ * Browsing follows documentation order.
  *
  * Search does not group. A reader who typed a word wants that word ranked, so
  * the flat list keeps every term as a row, leads included.

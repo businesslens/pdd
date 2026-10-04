@@ -9,7 +9,7 @@ import type { TopologyBranch } from './topologyProjections'
  * Focus is a narrowing a resource page hands to a graph: "this one, and what
  * touches it". Every authored relation counts as a hop, and inside a
  * containment tree so does the whole subtree under a focused node, because a
- * focused Interface without its Screens is not the Interface.
+ * focused Interface includes its Screens.
  */
 export function topologyNeighbourhood(workspace: ReportWorkspace, focus: string[], branches: TopologyBranch[] = []): Set<string> | null {
   if (!focus.length) return null

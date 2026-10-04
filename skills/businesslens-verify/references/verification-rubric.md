@@ -1,28 +1,88 @@
 # Verification rubric
 
+Every format rule — what each resource claims, how Interfaces divide into
+Experiences, the Capability split test, Business Rules, Journeys, Step and
+Screen facts, Variations and what selects them — lives in
+[format.md](format.md). This rubric holds only the verification method.
+
 ## Trace behavior
 
-- Compare the model's observable contract, not matching vocabulary.
-- Trace each Capability Scenario route through every typed Step and
-  most-specific Context place to its observable outcome.
-- Trace every Journey Scenario route from its first Actor-owned Context place
-  through each Capability-bearing Step to the terminal goal result. Verify
-  every Context place independently and confirm the correlations are supported.
-- Confirm every Actor Step is supported at its Context places and every derived
-  availability place supports at least one Scenario Actor.
-- Verify Interface Contexts independently. Shared services do not prove web,
-  mobile, CLI, or supported API parity.
-- Distinguish a missing Interface implementation from a missing shared
-  Capability. Undeclared internal APIs remain implementation details.
-- Tests corroborate source; they do not replace inspecting implementation.
-- Partial implementation is a gap, not alignment.
-- For Screens, compare product-visible information, actions, meaningful states,
-  and capability boundaries. Do not require component, layout, theme, viewport,
-  or screenshot similarity that the Product Model does not claim.
-- Do not claim deployed configuration, external systems, or live data state from
-  source code.
-- External visuals and research are context. Do not capture or fetch them as a
-  verification workflow, and never treat their existence as proof.
+Compare the model's observable contract, not matching vocabulary. Tests
+corroborate source; they do not replace inspecting implementation. Partial
+implementation is a gap, not alignment. Never claim deployed configuration,
+external systems, or live data state from source code.
+
+- **Routes.** Trace each Capability Scenario route through every typed Step and
+  most-specific Context place to its observable outcome. Trace every Journey
+  Scenario route from its first Actor-owned Context place through each
+  Capability-bearing Step to the terminal goal result, and compare the one
+  authored Steps claim directly with repository behavior. Confirm every Step
+  naming an actor is supported at its Context places and every derived
+  availability place supports a Scenario Actor.
+- **Interfaces.** Verify each availability Context independently; shared
+  services do not prove web, mobile, CLI, or API parity. Distinguish a missing
+  Interface commitment from a missing shared Capability. Undeclared internal
+  APIs remain implementation detail. Confirm each Interface's division against
+  who actually reaches its places — `lint` cannot see access until Experiences
+  exist.
+- **Nouns.** Confirm the Product keeps each named fact `## Information kept`
+  claims, that each named state is one the Product distinguishes rather than an
+  implementation flag, and that each declared relation and its cardinality
+  hold. For every Step's `entities`, confirm the code performs each declared
+  effect, moves the thing between exactly the states named, touches nothing the
+  Step leaves out, and reads, changes or initializes exactly the `facts` it
+  cites.
+- **Screens.** Compare each place against its view's code: the facts disclosed
+  match `shows` and the inputs match `collects`; each derived Capability is one
+  a Step placed there uses; each child Screen subdivides its parent's
+  persistent working context; each `navigation` Screen is reachable from every
+  place in its container. Never require component, layout, theme, ordinary
+  copy, viewport, or screenshot similarity.
+- **Languages.** Confirm the Product's `languages` against the locales the code
+  serves, and each Interface's list against what that surface loads.
+- **Who may.** For each Business Rule with `permits`, confirm the code lets
+  exactly the granted actors perform the operation, under the stated
+  conditions, and refuses everyone else; an operation closed with
+  `permits: []` must be refused. A grant the code does not enforce is reported
+  as **not established**. Confirm a fact-scoped Rule — a derivation, a field's
+  visibility or edit — against the code that computes, shows or writes the
+  fact, at every Screen presenting it and every Step citing it, never Entity
+  presence alone.
+- **What varies.** Trace each alternative under its own `selectedWhen`: the
+  code supports it now, reads the named setting, assignment or discriminator to
+  choose it, applies the stated default for a missing or unsupported choice,
+  and re-reads and keeps the choice as `takesEffect` and `stability` say. An
+  alternative the code no longer offers, a choice made by something other than
+  what the set names, or an undocumented default is a finding. Hold an
+  alternative permission Rule's grants against the Steps and Screens that run
+  under that alternative only — `lint` cannot. Where a resource's lead says it
+  exists only under some alternatives or only while a setting, plan or licence
+  enables it, confirm that is where the code offers it.
+- **Wording.** External visuals and research are context; their existence is
+  never proof. Inspect an authoritative text Reference when a Rule requires
+  exact wording; if it cannot be accessed, report that requirement as
+  unverifiable.
+
+## The border
+
+The model records what an Actor can reach, see, supply, do and trigger at each
+place. It never says how that looks or is built. The redesign test decides
+which side a difference falls on:
+
+> Rebuild a view with a different component library, layout, typography,
+> colors, spacing, icons, motion and copy. Everything that would still have to
+> be true is the model's: who can reach the view, what facts it shows, what
+> abilities it offers, what conditions change that, and what happens next.
+> Everything the redesign is free to change is design's, and the model says
+> nothing about it.
+
+A difference the redesign is free to make is never a finding: component
+libraries, theming, layout, typography, color, iconography, motion, copy,
+gestures, breakpoints, loading and hover states, navigation chrome and order
+belong in `visual` References with `role: intent`. Ordinary copy is design;
+compare exact wording only when a Business Rule requires its
+authoritative Reference, and report it unverifiable when that source is
+unavailable.
 
 ## Separate scope from authority
 
@@ -46,29 +106,26 @@ the resulting decision without replaying settled alternatives on later runs.
 
 ## Internal intent resolution
 
-Both internal authoring flows write current product meaning under the format's
-persistence rule. Keep rejected approaches and selection history in the
-conversation, including when drafting resource prose, supporting sections,
-limitations, or README. Preserve current constraints and material unresolved
-questions or missing evidence; an unchosen option is not a product exclusion.
-
 Use when code-right or neither-right is chosen. Draft the smallest exact Product
-Model delta. Cover affected Interfaces, optional Experiences, Capabilities,
-  availability Contexts, Rules, Capability Scenarios, Journeys, Journey Scenarios,
-  relationships, and removals. Get approval before writing. Skip broad
-  brainstorming because the verification finding already supplies the problem.
+Model delta, covering affected Interfaces, optional Experiences, Capabilities,
+availability Contexts, Rules, Capability Scenarios, Journeys, Journey
+Scenarios, relationships, and removals. Get approval before writing. Skip broad
+brainstorming because the verification finding already supplies the problem.
 
 ## Internal scoped mapping
 
 Use only for established behavior in an absent or deliberately untrusted model
-area. Inspect it like adoption mapping, draft honest coverage and necessary
-relationships, and get approval before writing. Do not silently remap trusted
-areas.
+area. Do not silently remap trusted areas. Inspect it like adoption mapping:
+start at entry points, trace handlers, persistence and outcomes, confirm docs
+in implementation, read permissions from authorization checks rather than
+names, and read each Interface's access from who reaches its places. Draft
+every resource by the format reference, apply the border above, draft honest
+coverage and necessary relationships, and get approval before writing.
 
 ## Stop safely
 
-- Builder unavailable: return a complete handoff packet.
-- Same build-directed gap unchanged after one attempt: stop the loop.
-- Source cannot establish runtime/external behavior: report unverifiable.
+Beyond the stops in the skill's steps 7–9 (no builder, an unchanged
+build-directed gap, unverifiable evidence):
+
 - Product authority remains undecided: wait for that decision.
 - Structural blocker prevents model comparison: report the lint finding first.

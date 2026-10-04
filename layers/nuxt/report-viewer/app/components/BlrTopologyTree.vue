@@ -4,8 +4,9 @@ import type { TopologyReading } from '../utils/topologyState'
 import type { Diagram } from '../utils/diagram'
 import { diagramResource } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
-import { ENTITY_KIND_META } from '../utils/reportWorkspace'
-const props = withDefaults(defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string, label?: string, relation?: string }>(), { label: 'Interface map', relation: 'Contained by' })
+import { branchChildrenLabel, concreteBranches } from '../utils/topologyProjections'
+import { absenceLabel } from '../utils/placeReadings'
+const props = withDefaults(defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string, label?: string, relation?: string }>(), { label: 'reach', relation: 'Reached from' })
 const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean, ids: string[]], ready: [] }>()
 const isOpen = (node: TopologyBranch) => {
   if (props.reading.expanded.includes(node.id)) return true
@@ -44,11 +45,15 @@ const initialDepth = computed(() => {
 
 /* Every branch below the root: the root stays open, or nothing would show. */
 const branchIds = computed(() => all.value.filter(node => node.children.length && node.id !== props.tree.id).map(node => node.id))
-function childrenLabel(children: TopologyBranch[]) {
-  const kind = children[0]?.resource?.kind
-  if (!kind || children.some(child => child.resource?.kind !== kind)) return 'branches'
-  return children.length === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural
+/* The fork names what its dashed lines lead to, and says how many of the set's
+   alternatives are shown when a focus or filter hides some. A struck one is
+   still drawn, so it counts as shown. */
+const forkLabel = (node: TopologyBranch) => {
+  const total = node.resource?.kind === 'variation' ? node.resource.alternatives.length : 0
+  const shown = originals.value.get(node.id)?.children.length ?? 0
+  return shown < total ? `${shown} of ${total} alternatives` : 'alternatives'
 }
+const originals = computed(() => new Map(all.value.map(node => [node.id, node])))
 const diagram = computed<Diagram>(() => {
   const originals = new Map(all.value.map(node => [node.id, node]))
   const visible = flatten(visibleTree.value)
@@ -56,9 +61,16 @@ const diagram = computed<Diagram>(() => {
     /* An occurrence keeps its branch id, so the same resource drawn under two
        parents is two nodes; `resourceKey` still opens the one page. */
     nodes: visible.map(node => ({ ...(node.resource ? { ...diagramResource(node.resource), id: node.id } : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),
+      ...(node.note ? { note: node.note } : {}),
+      /* Under its set's node an alternative names only itself; one not at the place is struck. */
+      ...(node.inSet ? { alternativeOf: undefined } : {}),
+      ...(node.absentFrom ? { absent: absenceLabel(node.absentFrom) } : {}),
       description: parents.value.has(node.id) ? `${props.relation} ${parents.value.get(node.id)!.title}.` : 'Product root.',
-      branch: originals.get(node.id)!.children.length ? { id: node.id, count: originals.get(node.id)!.children.length, open: isOpen(node), childrenLabel: childrenLabel(originals.get(node.id)!.children) } : undefined })),
-    edges: visible.flatMap(node => node.children.map(child => ({ id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false }))) }
+      branch: originals.get(node.id)!.children.length ? { id: node.id, count: concreteBranches(originals.get(node.id)!.children).length, open: isOpen(node), childrenLabel: branchChildrenLabel(originals.get(node.id)!.children) } : undefined })),
+    /* A Variation's lines to its alternatives are dashed, and say "alternatives" once where they fork. */
+    edges: visible.flatMap(node => node.children.map((child, index) => node.resource?.kind === 'variation'
+      ? { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: index ? '' : forkLabel(node), badges: index ? undefined : [{ icon: 'i-lucide-split', text: forkLabel(node) }], arrow: false, alternative: true }
+      : { id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false })) }
 })
 </script>
 <template>

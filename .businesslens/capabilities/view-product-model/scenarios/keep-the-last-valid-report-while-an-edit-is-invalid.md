@@ -7,14 +7,14 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-reading
   - text: A save leaves the model temporarily unable to pass its structural check
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       local:
         place: local-report-web::resource-reading
@@ -27,7 +27,7 @@ steps:
   - text: The Product recompiles once the edit is fixed and returns the reader to what they were reading
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       local:
         place: local-report-web::resource-reading

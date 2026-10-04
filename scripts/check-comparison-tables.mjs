@@ -9,6 +9,13 @@ import { selectCollectionDrawing, expectCollectionDrawing } from './report-view-
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI report URL with mutation and Rule data.')
 const report = await fetch(`${origin}/_businesslens/report.json`).then(response => response.json())
+/* Rows draw two or more alternatives of one set as that set's single row. */
+const setOfKey = new Map(report.model.variations.flatMap(set => set.alternatives.map(item =>
+  [`${set.of === 'business-rule' ? 'rule' : set.of}:${item.resourceId}`, `variation:${set.id}`])))
+const asRows = keys => [...new Set(keys.map(key => {
+  const set = setOfKey.get(key)
+  return set && keys.filter(other => setOfKey.get(other) === set).length > 1 ? set : key
+}))]
 const browser = await chromium.launch()
 const errors = []
 const observeErrors = page => page.on('pageerror', error => errors.push(error.message))
@@ -91,18 +98,18 @@ try {
         expect(await toolbar.locator('.blr-chip').allTextContents()).toEqual(selection)
         if (drawing !== 'rows') await expect(scoped).toHaveURL(new RegExp(`[?&]t=${drawing}(?:&|$)`))
         if (drawing === 'matrix') {
-          await expect(scoped.locator('.blr-topology-matrix tbody tr')).toHaveCount(1)
-          await expect(scoped.locator('.blr-topology-matrix tbody th [data-resource-key]')).toHaveAttribute('data-resource-key', `${section}:${selected.id}`)
+          await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(1)
+          await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band) th [data-resource-key]')).toHaveAttribute('data-resource-key', `${section}:${selected.id}`)
         }
       }
       await expect(scoped).toHaveURL(/[?&]t=matrix(?:&|$)/)
       await scoped.reload()
       await expectCollectionDrawing(scoped, 'matrix')
       await expect(count).toHaveText(`1 / ${resources.length}`)
-      await expect(scoped.locator('.blr-topology-matrix tbody tr')).toHaveCount(1)
+      await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(1)
       await toolbar.locator('.blr-chip').click()
       await expect(count).toHaveText(String(resources.length))
-      await expect(scoped.locator('.blr-topology-matrix tbody tr')).toHaveCount(resources.length)
+      await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(resources.length)
     }
     // A relation selects the same subjects in Rows, Graph and Matrix. Discover
     // a real cell so this works on any report with the named relationships.
@@ -132,10 +139,10 @@ try {
         expect(await toolbar.locator('.blr-chip').allTextContents()).toEqual(chips)
         if (drawing === 'rows') {
           const keys = await scoped.locator('.blr-resource-row[data-resource-key]').evaluateAll(rows => [...new Set(rows.map(row => row.dataset.resourceKey))])
-          expect(keys.sort()).toEqual(matching.sort())
+          expect(keys.sort()).toEqual(asRows(matching).sort())
         }
       }
-      expect(await scoped.locator('tbody th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey).sort())).toEqual(matching.sort())
+      expect(await scoped.locator('tbody tr:not(.blr-matrix-band) th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey).sort())).toEqual(matching.sort())
       await expect(scoped).toHaveURL(/[?&]t=matrix(?:&|$)/)
       await scoped.reload()
       await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
@@ -170,13 +177,14 @@ try {
       await selectCollectionResource(scoped, 'Available in', selected.title)
       const heading = await scoped.getByRole('heading', { level: 1 }).textContent()
       const rowKeys = await scoped.locator('.blr-resource-row[data-resource-key]').evaluateAll(rows => [...new Set(rows.map(row => row.dataset.resourceKey))].sort())
-      if (location === availableScreen) expect(rowKeys).toEqual(selected.capabilityIds.map(id => `capability:${id}`).sort())
+      if (location === availableScreen) expect(rowKeys).toEqual(asRows(selected.capabilityIds.map(id => `capability:${id}`)).sort())
       for (const drawing of ['graph', 'matrix']) {
         await selectCollectionDrawing(scoped, drawing)
         await expect(scoped).toHaveURL(new RegExp(`[?&]t=${drawing}(?:&|$)`))
         await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
       }
-      expect(await scoped.locator('tbody th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey).sort())).toEqual(rowKeys)
+      // The matrix sets alternatives side by side; Rows draws them as their set.
+      expect(asRows(await scoped.locator('tbody tr:not(.blr-matrix-band) th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey))).sort()).toEqual(rowKeys)
       expect(await scoped.locator('thead [data-resource-key]').evaluateAll(columns => columns.every(column => column.dataset.resourceKey.startsWith('interface:')))).toBe(true)
       await scoped.reload()
       await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
@@ -195,7 +203,7 @@ try {
     await expect(scoped).toHaveURL(/[?&]s=capability(?:&|$)/)
     await expect(scoped).toHaveURL(/[?&]t=matrix(?:&|$)/)
     await expect(scoped.locator('[data-collection-toolbar] .blr-chip')).toContainText(iface.title)
-    expect(await scoped.locator('.blr-topology-matrix tbody tr').count()).toBeGreaterThan(0)
+    expect(await scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)').count()).toBeGreaterThan(0)
     await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]')).toHaveAttribute('data-resource-key', `interface:${iface.id}`)
     for (const drawing of ['rows', 'matrix']) await selectCollectionDrawing(scoped, drawing)
     await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]')).toHaveAttribute('data-resource-key', `interface:${iface.id}`)
@@ -208,8 +216,8 @@ try {
       await expect(collectionFilters.locator('.blr-chip')).toHaveCount(0)
       await closeFilterSheet(scoped)
     } else await collectionFilters.getByRole('button', { name: 'Clear every filter', exact: true }).click()
-    await expect(scoped.locator('.blr-topology-matrix tbody tr')).toHaveCount(report.model.capabilities.length)
-    await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]')).toHaveCount(report.model.interfaces.length)
+    await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(report.model.capabilities.length)
+    await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]:not([data-resource-key^="variation:"])')).toHaveCount(report.model.interfaces.length)
     expect(await scoped.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await context.close()
   }

@@ -7,6 +7,8 @@ const props = defineProps<{
   accessibleLabel: string
   viewKey: string
   contentKey: unknown
+  /** "Only under …": held only under some alternatives, drawn dashed and said first in its details. */
+  condition?: string
 }>()
 const emit = defineEmits<{ open: [key: string] }>()
 const open = ref(false)
@@ -35,7 +37,7 @@ function onCloseAutoFocus(event: Event) {
   <UPopover v-model:open="open"
     :content="{ align: 'start', collisionPadding: 16, onCloseAutoFocus }"
     :ui="{ content: 'blr-matrix-popover' }">
-    <button ref="trigger" type="button" class="blr-matrix-badge blr-matrix-tone" :data-effect="label" :data-tone="tone" :aria-label="accessibleLabel">
+    <button ref="trigger" type="button" class="blr-matrix-badge blr-matrix-tone" :data-effect="label" :data-tone="tone" :data-conditional="condition ? '' : undefined" :aria-label="condition ? `${accessibleLabel} (${condition})` : accessibleLabel">
       {{ label }}<UIcon name="i-lucide-chevron-down" aria-hidden="true" />
     </button>
     <template #content>
@@ -43,7 +45,10 @@ function onCloseAutoFocus(event: Event) {
         <h3 class="blr-matrix-popover-resource"><slot name="heading" :follow="follow" /></h3>
         <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="xs" aria-label="Close badge details" @click="open = false" />
       </div>
-      <div class="blr-matrix-popover-body"><slot :follow="follow" /></div>
+      <div class="blr-matrix-popover-body">
+        <p v-if="condition" class="blr-matrix-popover-condition" data-matrix-condition><UIcon name="i-lucide-split" aria-hidden="true" />{{ condition }}</p>
+        <slot :follow="follow" />
+      </div>
     </template>
   </UPopover>
 </template>

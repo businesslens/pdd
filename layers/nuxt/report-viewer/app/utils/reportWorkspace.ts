@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV14,
+  ProductReportV15,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -19,9 +19,10 @@ import type {
   ReportJourneyScenario,
   ReportReference,
   ReportScreen,
-  ReportScreenState,
-  ReportSupportingSection
+  ReportSupportingSection,
+  ReportVariation
 } from 'businesslens/report'
+import { operationPlaces, permissionTargetSelectsOperation, reportVariationMembership } from 'businesslens/report/selectors'
 
 /** Split an authored `cardinality` into its two ends. */
 export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {
@@ -44,6 +45,7 @@ export type ReportResourceKind =
   | 'capability-scenario'
   | 'journey-scenario'
   | 'rule'
+  | 'variation'
 
 /** The two Scenario collections are separate kinds, not one kind with a flag. */
 export type ReportScenarioKind = 'capability-scenario' | 'journey-scenario'
@@ -90,6 +92,8 @@ export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
   'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
   'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
   rule: { kind: 'rule', label: 'Business Rule', plural: 'Business Rules', icon: 'i-lucide-scale', slot: 8 },
+  /* The glyph alone marks the collection, in ink; a set wears its member type's mark with this as a sub-icon. */
+  variation: { kind: 'variation', label: 'Variation', plural: 'Variations', icon: 'i-lucide-split', slot: 10 },
   /* Product is the Overview, and the Overview is where a reader lands and returns. */
   product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-house', slot: 9 }
 }
@@ -141,7 +145,16 @@ export const ACTOR_ACTS_META: Record<ActingSide, { label: string }> = {
   internal: { label: 'Internal' }
 }
 
-/** One resolved Context place; an empty Experience id means an Interface place. */
+/** The place one segment up: `a::b::c` → `a::b`, `a` → ``. */
+export function parentPlace(id: string): string {
+  return id.split('::').slice(0, -1).join('::')
+}
+
+/**
+ * One resolved Context place; an empty Experience id means an Interface place.
+ * A Screen's place is the Screen itself; its Interface and Experience are the
+ * nearest container above it, however many parent Screens sit between.
+ */
 export interface ContextView {
   placeId: string
   placeKind: 'interface' | 'experience' | 'screen'
@@ -163,7 +176,44 @@ export interface EntryPointView {
   key: string
 }
 
+export type VariationKind = ReportVariation['kind']
+
+/** An alternative's own part of a Variation: its set, and what selects it. */
+export interface MemberVariationView {
+  /** The set's key and id. */
+  key: ReportResourceKey
+  id: string
+  title: string
+  kind: VariationKind
+  selectedWhen: string
+  /** A Version's label; null on every other subtype. */
+  label: string | null
+}
+
+export interface VariationAlternativeView {
+  key: ReportResourceKey
+  id: string
+  selectedWhen: string
+  label: string | null
+}
+
+/** Report view kind for each authored member type. */
+export const VARIATION_MEMBER_KIND: Record<ReportVariation['of'], ReportResourceKind> = {
+  interface: 'interface',
+  experience: 'experience',
+  screen: 'screen',
+  entity: 'entity',
+  capability: 'capability',
+  'capability-scenario': 'capability-scenario',
+  journey: 'journey',
+  'journey-scenario': 'journey-scenario',
+  'business-rule': 'rule'
+}
+
 interface ResourceBase {
+  /** Present only on an alternative in a Variation. */
+  variation?: MemberVariationView
+
   key: ReportResourceKey
   id: string
   kind: ReportResourceKind
@@ -180,9 +230,13 @@ export interface InterfaceView extends ResourceBase {
   interfaceType: ReportInterface['type']
   actorIds: string[]
   entryPoints: EntryPointView[]
-  capabilityBoundary: string
+  /** Narrows the Product's languages; empty means the Product's list applies. */
+  languages: string[]
+  /** Screens reachable from every place inside, by full id. A mark, never an edge. */
+  navigationIds: string[]
   experienceIds: string[]
   capabilityIds: string[]
+  /** Every Screen inside, nested ones included. */
   screenIds: string[]
   journeyIds: string[]
 }
@@ -193,28 +247,42 @@ export interface ExperienceView extends ResourceBase {
   interfaceIds: string[]
   accessMode: 'public' | 'authenticated' | 'restricted'
   entryPoints: EntryPointView[]
-  capabilityBoundary: string
+  /** Screens reachable from every place inside, by full id. A mark, never an edge. */
+  navigationIds: string[]
   capabilityIds: string[]
+  /** Every Screen inside, nested ones included. */
   screenIds: string[]
   journeyIds: string[]
   /** Subject regions reached through the Capabilities available here. Never authored. */
   domainIds: string[]
 }
 
+/** One Entity a Screen presents; `facts` is null for a bare entry. */
+export interface ScreenEntityView {
+  entityId: string
+  shows: string[]
+  collects: string[]
+}
+
 export interface ScreenView extends ResourceBase {
-  /** The Entities this view presents, as authored. */
+  /** The Entities this Screen presents, in authored order. */
   entityIds: string[]
+  /** What it presents, with the facts on screen where the model names them. */
+  entities: ScreenEntityView[]
   kind: 'screen'
+  /** The nearest Interface or Experience above it. */
   contexts: ContextView[]
+  /** The parent Screen's id, or empty where the parent is the container. */
+  parentScreenId: string
+  /** Screens nested directly inside this one, in authored order. */
+  childScreenIds: string[]
+  /** Named in its container's `navigation`: reachable from everywhere inside. */
+  alwaysReachable: boolean
   capabilityIds: string[]
   capabilityScenarioIds: string[]
   journeyScenarioIds: string[]
   scenarioIds: string[]
   entryPoints: EntryPointView[]
-  information: string[]
-  actions: string[]
-  states: ReportScreenState[]
-  capabilityBoundary: string
   /** Journeys reached through explicitly linked Journey Scenarios. */
   scenarioJourneyIds: string[]
   /** Journeys inferred from the Capabilities the Screen exposes. */
@@ -280,8 +348,6 @@ export interface EntityArcView {
   capabilityIds: string[]
   capabilityScenarioIds: string[]
   journeyScenarioIds: string[]
-  /** Rules with grants that select this operation. */
-  ruleIds: string[]
   /** A Rule closing this operation to everyone; the arc is drawn as forbidden. */
   forbiddenByRuleIds: string[]
   coEffects: Array<{ entityId: string, effect: 'creates' | 'changes' | 'removes', to: string }>
@@ -336,7 +402,8 @@ export interface EntityView extends ResourceBase {
 /** What one Capability does to one Entity, aggregated over its Scenarios. */
 export interface CapabilityEntityEffectView {
   entityId: string
-  effects: Array<{ effect: 'creates' | 'changes' | 'removes', from: string, to: string }>
+  /** Each distinct move once, with the Scenarios whose Steps make it — never joined into a run no Scenario tells. */
+  effects: Array<{ effect: 'creates' | 'changes' | 'removes', from: string, to: string, scenarioIds: string[] }>
   scenarioIds: string[]
 }
 
@@ -356,6 +423,8 @@ export interface CapabilityView extends ResourceBase {
   journeyIds: string[]
   screenIds: string[]
   ruleIds: string[]
+  /** Rules governing Steps it owns — its Scenarios' and the Journey Steps naming it — through an Entity target. Derived. */
+  stepRuleIds: string[]
   interfaceIds: string[]
   experienceIds: string[]
 }
@@ -376,6 +445,8 @@ export interface JourneyView extends ResourceBase {
   leavesBehind: ScenarioStepEntityView[]
   screenIds: string[]
   ruleIds: string[]
+  /** Rules governing its Scenarios' Steps through an Entity target. Derived. */
+  stepRuleIds: string[]
   interfaceIds: string[]
   experienceIds: string[]
   /** Total steps across the Journey's Scenarios — a rough weight for layout. */
@@ -390,6 +461,8 @@ export interface ScenarioStepEntityView {
   effect: 'creates' | 'changes' | 'removes' | 'reads'
   from: string
   to: string
+  /** The facts the Step reads or edits; empty when none are cited. */
+  facts: string[]
 }
 
 export interface ScenarioView extends ResourceBase {
@@ -424,6 +497,8 @@ export interface ScenarioView extends ResourceBase {
       routeId: string
       context: ResolvedContextView
     }>
+    /** The Rules whose Entity targets select this Step, each with the entries it selects. Derived. */
+    governedBy: StepRuleView[]
   }>
   decisionPoints: ReportDecisionPoint[]
   outcome: string
@@ -431,6 +506,17 @@ export interface ScenarioView extends ResourceBase {
   result: 'achieved' | 'not-achieved' | ''
   screenIds: string[]
   ruleIds: string[]
+  /** Rules governing any of its Steps through an Entity target. Derived. */
+  stepRuleIds: string[]
+}
+
+/** A Rule governing one Step: which of the Step's Entity entries its targets select. */
+export interface StepRuleView {
+  ruleId: string
+  /** Indexes into the Step's `entities`. */
+  entries: number[]
+  /** Indexes into the Rule's `appliesTo`: the targets selecting those entries. */
+  targets: number[]
 }
 
 export interface ResolvedContextView {
@@ -485,11 +571,36 @@ export interface RuleView extends ResourceBase {
   scenarioIds: string[]
   derivedCapabilityIds: string[]
   derivedJourneyIds: string[]
+  /** What owns the Steps its Entity targets select. Derived. */
+  stepCapabilityIds: string[]
+  stepJourneyIds: string[]
+  stepCapabilityScenarioIds: string[]
+  stepJourneyScenarioIds: string[]
   contexts: ContextView[]
   appliesTo: ReportBusinessRuleTarget[]
 }
 
+/** A named set of same-type alternatives. Selection is written once, here. */
+export interface VariationSetView extends ResourceBase {
+  kind: 'variation'
+  variationKind: VariationKind
+  /** The one resource kind every alternative has. */
+  memberKind: ReportResourceKind
+  /** An Entity set's facet, when every alternative plays the same one: its mark is drawn by it. */
+  memberFacet: EntityFacet | null
+  alternatives: VariationAlternativeView[]
+  takesEffect: string
+  stability: string
+  assignmentUnit: ReportVariation['assignmentUnit']
+  assignmentMethod: string | null
+  assignmentFact: ReportVariation['assignmentFact']
+  allocation: string | null
+  settings: ReportVariation['settings']
+  discriminator: ReportVariation['discriminator']
+}
+
 export type AnyResourceView =
+  | VariationSetView
   | InterfaceView
   | ExperienceView
   | ScreenView
@@ -515,6 +626,8 @@ export interface ReportIdentity {
   supportingSections: ReportSupportingSection[]
   references: ReportReference[]
   referenceProfile: 'workspace' | 'portable'
+  /** The languages the Product is delivered in; empty when the model says nothing. */
+  languages: string[]
   limitations: string[]
   generatedAt: string
   generator: { name: string, version: string }
@@ -535,12 +648,12 @@ export interface WorkspaceCounts {
   journeyScenarios: number
   scenarios: number
   rules: number
+  variations: number
   /** Derived depth measures the counts block never carries. */
   steps: number
   decisionPoints: number
   branches: number
   edgeCases: number
-  screenStates: number
   entryPoints: number
   references: number
   availabilityContexts: number
@@ -572,6 +685,7 @@ export interface ReportWorkspace {
   journeyScenarios: ScenarioView[]
   scenarios: ScenarioView[]
   rules: RuleView[]
+  variations: VariationSetView[]
   /** Every distinct Context declared or derived in the model. */
   contexts: ContextView[]
   /** All references in the model, each tagged with the resource that owns it. */
@@ -590,6 +704,13 @@ export interface ReportWorkspace {
 
 const titleOf = (items: Array<{ id: string, title?: string, name?: string }>, id: string): string =>
   items.find(item => item.id === id)?.title ?? items.find(item => item.id === id)?.name ?? id
+
+/** Append in place: the bucket is built before any view reads it, and copying it per push made a long bucket quadratic. */
+const push = (table: Map<string, string[]>, key: string, value: string) => {
+  const bucket = table.get(key)
+  if (bucket) bucket.push(value)
+  else table.set(key, [value])
+}
 
 /** One context, keyed by its own id. */
 export function contextKey(interfaceId: string, experienceId: string): string {
@@ -616,30 +737,78 @@ export function humanize(value: string): string {
   return `${label.charAt(0).toUpperCase()}${label.slice(1)}`
 }
 
-function expandContexts(
-  contexts: ReportContext[],
-  interfaces: ReportInterface[],
-  experiences: ReportExperience[],
-  screens: ReportScreen[]
-): ContextView[] {
-  return contexts.map((context) => {
-    const screen = screens.find(item => item.id === context.placeId)
-    const containerId = screen ? context.placeId.split('::').slice(0, -1).join('::') : context.placeId
-    const experience = experiences.find(item => item.id === containerId)
+/**
+ * Every place the model can name, indexed once. A projection resolves a place
+ * per Step Context and per Screen, so each lookup must cost a map read, never a
+ * scan of the Screen list: the Screen count and the Step count grow together.
+ */
+interface PlaceIndex {
+  interfaceById: Map<string, ReportInterface>
+  experienceById: Map<string, ReportExperience>
+  screenById: Map<string, ReportScreen>
+  /** The parent segment of each Screen id, split once. */
+  parentOfScreen: Map<string, string>
+  /** Screens nested directly inside each place, in authored order. */
+  childScreensByParent: Map<string, string[]>
+  /** The nearest Interface or Experience above each Screen. */
+  containerOfScreen: Map<string, string>
+}
+
+function indexPlaces(interfaces: ReportInterface[], experiences: ReportExperience[], screens: ReportScreen[]): PlaceIndex {
+  const screenById = new Map(screens.map(item => [item.id, item]))
+  const parentOfScreen = new Map<string, string>()
+  const childScreensByParent = new Map<string, string[]>()
+  const containerOfScreen = new Map<string, string>()
+  for (const screen of screens) {
+    const parentId = parentPlace(screen.id)
+    parentOfScreen.set(screen.id, parentId)
+    push(childScreensByParent, parentId, screen.id)
+  }
+  /* A parent's container is its child's; walking up memoised makes the whole pass linear in Screens. */
+  const containerOf = (screenId: string): string => {
+    const known = containerOfScreen.get(screenId)
+    if (known !== undefined) return known
+    const parentId = parentOfScreen.get(screenId) ?? parentPlace(screenId)
+    const container = parentId && screenById.has(parentId) ? containerOf(parentId) : parentId
+    containerOfScreen.set(screenId, container)
+    return container
+  }
+  for (const screen of screens) containerOf(screen.id)
+  return {
+    interfaceById: new Map(interfaces.map(item => [item.id, item])),
+    experienceById: new Map(experiences.map(item => [item.id, item])),
+    screenById,
+    parentOfScreen,
+    childScreensByParent,
+    containerOfScreen
+  }
+}
+
+/** One Context per distinct place: the same place resolves to the same view however many Steps name it. */
+function contextResolver(places: PlaceIndex): (context: ReportContext) => ContextView {
+  const views = new Map<string, ContextView>()
+  return (context) => {
+    const known = views.get(context.placeId)
+    if (known) return known
+    const screen = places.screenById.get(context.placeId)
+    const containerId = screen ? places.containerOfScreen.get(screen.id)! : context.placeId
+    const experience = places.experienceById.get(containerId)
     const interfaceId = experience?.interfaceIds[0] || containerId
     const experienceId = experience?.id || ''
-    return {
+    const view: ContextView = {
       placeId: context.placeId,
       placeKind: screen ? 'screen' : experience ? 'experience' : 'interface',
       interfaceId,
       experienceId,
       screenId: screen?.id || '',
-      interfaceTitle: titleOf(interfaces, interfaceId),
+      interfaceTitle: places.interfaceById.get(interfaceId)?.title ?? interfaceId,
       experienceTitle: experience?.title || '',
       screenTitle: screen?.title || '',
       key: context.placeId
     }
-  })
+    views.set(context.placeId, view)
+    return view
+  }
 }
 
 function entryPoints(
@@ -657,21 +826,29 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV14): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV15): ReportWorkspace {
   const model = report.model
+  const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
-    const productInterface = model.interfaces.find(item => item.id === interfaceId)
+    const productInterface = places.interfaceById.get(interfaceId)
     if (!productInterface) throw new Error(`Unknown Interface "${interfaceId}" in Context place`)
     return productInterface
   }
-  const contextsOf = (contexts: ReportContext[]) =>
-    expandContexts(contexts, model.interfaces, model.experiences, model.screens)
-  const resolveContext = (context: ReportContext): ContextView => contextsOf([context])[0]!
+  const resolveContext = contextResolver(places)
+  const contextsOf = (contexts: ReportContext[]) => contexts.map(resolveContext)
+  const isScreen = (id: string) => places.screenById.has(id)
+  const resolvedPlaces = new Map<string, ResolvedContextView>()
   const placeOf = (placeId: string): ResolvedContextView => {
-    const screen = model.screens.find(item => item.id === placeId)
+    const known = resolvedPlaces.get(placeId)
+    if (known) return known
+    const place = resolvePlace(placeId)
+    resolvedPlaces.set(placeId, place)
+    return place
+  }
+  const resolvePlace = (placeId: string): ResolvedContextView => {
+    const screen = places.screenById.get(placeId)
     if (screen) {
-      const containerId = screen.id.split('::').slice(0, -1).join('::')
-      const context = resolveContext({ placeId: containerId })
+      const context = resolveContext({ placeId: places.containerOfScreen.get(screen.id)! })
       const productInterface = interfaceOf(context.interfaceId)
       return {
         id: placeId,
@@ -686,7 +863,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
         boundary: context
       }
     }
-    const experience = model.experiences.find(item => item.id === placeId)
+    const experience = places.experienceById.get(placeId)
     if (experience) {
       const interfaceId = experience.interfaceIds[0] || ''
       const productInterface = interfaceOf(interfaceId)
@@ -725,12 +902,25 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
 
   const kindBySlot = new Map(model.taxonomies.scenarioKinds.map(kind => [kind.id, kind]))
   const allReportScenarios = [...model.capabilityScenarios, ...model.journeyScenarios]
-  const journeyScenariosOf = (journeyId: string) =>
-    model.journeyScenarios.filter(scenario => scenario.journeyId === journeyId)
-  const journeyContexts = (journeyId: string) => uniqueContexts(
-    journeyScenariosOf(journeyId).filter(scenario => scenario.result === 'achieved').flatMap(scenario =>
-      scenarioContexts(scenario))
-  )
+  const journeyScenariosByJourney = new Map<string, ReportJourneyScenario[]>()
+  for (const scenario of model.journeyScenarios) {
+    const bucket = journeyScenariosByJourney.get(scenario.journeyId)
+    if (bucket) bucket.push(scenario)
+    else journeyScenariosByJourney.set(scenario.journeyId, [scenario])
+  }
+  const journeyScenariosOf = (journeyId: string) => journeyScenariosByJourney.get(journeyId) ?? []
+  /* Asked once per Journey by the Journey, and again by every Interface and Experience. */
+  const journeyContextsById = new Map<string, ContextView[]>()
+  const journeyContexts = (journeyId: string) => {
+    const known = journeyContextsById.get(journeyId)
+    if (known) return known
+    const contexts = uniqueContexts(
+      journeyScenariosOf(journeyId).filter(scenario => scenario.result === 'achieved').flatMap(scenario =>
+        scenarioContexts(scenario))
+    )
+    journeyContextsById.set(journeyId, contexts)
+    return contexts
+  }
   const journeyEntryPoints = (journeyId: string): EntryPointView[] => {
     const points = journeyScenariosOf(journeyId)
       .filter(scenario => scenario.result === 'achieved')
@@ -740,14 +930,13 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
         return first.contexts.flatMap((context) => {
           const place = placeOf(context.placeId)
           const contextual = place.experienceId
-            ? model.experiences.find(item => item.id === place.experienceId)
+            ? places.experienceById.get(place.experienceId)
               ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
             : []
           const available = contextual.length
             ? contextual
-            : model.interfaces
-                .find(item => item.id === place.interfaceId)
-                ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
+            : places.interfaceById.get(place.interfaceId)
+              ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
           return entryPoints(available, model.interfaces, place)
         })
       })
@@ -758,15 +947,19 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
   // never depends on the order the collections happen to be projected in.
   const experiencesByInterface = new Map<string, string[]>()
   for (const experience of model.experiences) {
-    for (const interfaceId of experience.interfaceIds) {
-      experiencesByInterface.set(interfaceId, [...(experiencesByInterface.get(interfaceId) || []), experience.id])
-    }
+    for (const interfaceId of experience.interfaceIds) push(experiencesByInterface, interfaceId, experience.id)
   }
 
   const capabilityById = new Map(model.capabilities.map(item => [item.id, item]))
   const journeyById = new Map(model.journeys.map(item => [item.id, item]))
+  const entityById = new Map(model.entities.map(item => [item.id, item]))
   const capabilityScenarioById = new Map(model.capabilityScenarios.map(item => [item.id, item]))
   const journeyScenarioById = new Map(model.journeyScenarios.map(item => [item.id, item]))
+  /* Authored positions, so a set gathered through an index lists in the collection's own order. */
+  const journeyIndex = new Map(model.journeys.map((item, index) => [item.id, index]))
+  const journeyScenarioIndex = new Map(model.journeyScenarios.map((item, index) => [item.id, index]))
+  const capabilityScenariosByCapability = new Map<string, string[]>()
+  const screensByEntity = new Map<string, string[]>()
   const journeysByCapability = new Map<string, string[]>()
   const screensByCapability = new Map<string, string[]>()
   const rulesByCapability = new Map<string, string[]>()
@@ -781,10 +974,6 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
   const capabilityScenariosByActor = new Map<string, string[]>()
   const journeyScenariosByActor = new Map<string, string[]>()
   const journeyScenariosByCapability = new Map<string, string[]>()
-
-  const push = (table: Map<string, string[]>, key: string, value: string) => {
-    table.set(key, [...(table.get(key) || []), value])
-  }
 
   const ruleRelationsById = new Map(model.businessRules.map((rule) => {
     const targetIds = (type: 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario') =>
@@ -816,7 +1005,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     ])
     const domainIds = unique([
       ...domainCapabilityIds.map(id => capabilityById.get(id)?.domainId),
-      ...entityIds.map(id => model.entities.find(entity => entity.id === id)?.domainId)
+      ...entityIds.map(id => entityById.get(id)?.domainId)
     ].filter((id): id is string => Boolean(id)))
     const contexts = uniqueContexts(rule.appliesTo.flatMap((target) => {
       if (target.type === 'context') return [resolveContext(target.context)]
@@ -866,9 +1055,12 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     for (const scenarioId of [...screen.capabilityScenarioIds, ...screen.journeyScenarioIds]) {
       push(screensByScenario, scenarioId, screen.id)
     }
+    /* A Screen presents a thing once however many entries name it. */
+    for (const entityId of new Set(screen.entities.map(entry => entry.entityId))) push(screensByEntity, entityId, screen.id)
   }
   for (const scenario of model.capabilityScenarios) {
     for (const actorId of scenario.actorIds) push(capabilityScenariosByActor, actorId, scenario.id)
+    push(capabilityScenariosByCapability, scenario.capabilityId, scenario.id)
   }
   for (const scenario of model.journeyScenarios) {
     for (const actorId of scenario.actorIds) push(journeyScenariosByActor, actorId, scenario.id)
@@ -887,6 +1079,18 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     for (const entityId of relations.entityIds) push(rulesByEntity, entityId, rule.id)
   }
 
+  /* A Rule in a Variation is conditional; membership lives only on the set. */
+  const membership = reportVariationMembership(model)
+  const variationById = new Map(model.variations.map(variation => [variation.id, variation]))
+  const variationOf = (collection: string, id: string): MemberVariationView | undefined => {
+    const set = variationById.get(membership.get(`${collection}:${id}`) ?? '')
+    const alternative = set?.alternatives.find(item => item.resourceId === id)
+    return set && alternative
+      ? { key: resourceKey('variation', set.id), id: set.id, title: set.title, kind: set.kind, selectedWhen: alternative.selectedWhen, label: alternative.label }
+      : undefined
+  }
+
+
   const interfaces: InterfaceView[] = model.interfaces.map((item: ReportInterface) => {
     const experienceIds = experiencesByInterface.get(item.id) || []
     const declares = (contexts: ReportContext[]) =>
@@ -894,6 +1098,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
       key: resourceKey('interface', item.id),
+      variation: variationOf('interfaces', item.id),
       id: item.id,
       kind: 'interface',
       title: item.title,
@@ -904,7 +1109,8 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       references: item.references,
       actorIds: item.actorIds,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
-      capabilityBoundary: item.capabilityBoundary,
+      languages: item.languages,
+      navigationIds: item.navigation,
       experienceIds,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
@@ -920,8 +1126,10 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     const declares = (contexts: ReportContext[]) =>
       contexts.some(context => context.placeId === item.id)
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
+    const capabilityIds = model.capabilities.filter(c => declares(c.availability)).map(c => c.id)
     return {
       key: resourceKey('experience', item.id),
+      variation: variationOf('experiences', item.id),
       id: item.id,
       kind: 'experience',
       title: item.title,
@@ -933,25 +1141,32 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       interfaceIds: item.interfaceIds,
       accessMode: item.accessMode,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
-      capabilityBoundary: item.capabilityBoundary,
-      capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
+      navigationIds: item.navigation,
+      capabilityIds,
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
       journeyIds: model.journeys.filter(j => journeyContexts(j.id).some(context => context.experienceId === item.id)).map(j => j.id),
-      domainIds: domainsOfCapabilities(model.capabilities.filter(c => declares(c.availability)).map(c => c.id))
+      domainIds: domainsOfCapabilities(capabilityIds)
     }
   })
 
+  /* A container's `navigation` names full Screen ids, so one set answers for every Screen. */
+  const navigationIds = new Set([...model.interfaces, ...model.experiences].flatMap(item => item.navigation))
+  const byIndex = (index: Map<string, number>) => (left: string, right: string) => index.get(left)! - index.get(right)!
   const screens: ScreenView[] = model.screens.map((screen: ReportScreen) => {
-    const contexts = contextsOf([{ placeId: screen.id.split('::').slice(0, -1).join('::') }])
-    const scenarioJourneyIds = unique(model.journeyScenarios
-      .filter(scenario => screen.journeyScenarioIds.includes(scenario.id))
-      .map(scenario => scenario.journeyId))
-    const capabilityJourneyIds = unique(model.journeys
-      .filter(journey => journey.capabilityIds.some(id => screen.capabilityIds.includes(id)))
-      .map(journey => journey.id))
+    const parentId = places.parentOfScreen.get(screen.id)!
+    const contexts = contextsOf([{ placeId: places.containerOfScreen.get(screen.id)! }])
+    /* Both lists read in the collection's own order, as a scan of it would. */
+    const scenarioJourneyIds = unique(unique(screen.journeyScenarioIds)
+      .filter(id => journeyScenarioIndex.has(id))
+      .sort(byIndex(journeyScenarioIndex))
+      .map(id => journeyScenarioById.get(id)!.journeyId))
+    const capabilityJourneyIds = unique(screen.capabilityIds.flatMap(id => journeysByCapability.get(id) ?? []))
+      .sort(byIndex(journeyIndex))
     return {
       key: resourceKey('screen', screen.id),
-      entityIds: screen.entityIds,
+      variation: variationOf('screens', screen.id),
+      entityIds: screen.entities.map(entry => entry.entityId),
+      entities: screen.entities.map(entry => ({ entityId: entry.entityId, shows: entry.shows, collects: entry.collects })),
       id: screen.id,
       kind: 'screen',
       title: screen.title,
@@ -960,15 +1175,14 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       supportingContent: supportingMarkdown(screen.supportingSections),
       references: screen.references,
       contexts,
+      parentScreenId: isScreen(parentId) ? parentId : '',
+      childScreenIds: [...(places.childScreensByParent.get(screen.id) ?? [])],
+      alwaysReachable: navigationIds.has(screen.id),
       capabilityIds: screen.capabilityIds,
       capabilityScenarioIds: screen.capabilityScenarioIds,
       journeyScenarioIds: screen.journeyScenarioIds,
       scenarioIds: [...screen.capabilityScenarioIds, ...screen.journeyScenarioIds],
       entryPoints: entryPoints(screen.entryPoints, model.interfaces, placeOf(screen.id)),
-      information: screen.information,
-      actions: screen.actions,
-      states: screen.states,
-      capabilityBoundary: screen.capabilityBoundary,
       scenarioJourneyIds,
       capabilityJourneyIds,
       journeyIds: unique([...scenarioJourneyIds, ...capabilityJourneyIds]),
@@ -986,22 +1200,35 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
   const scenariosByState = new Map<string, { capability: string[], journey: string[] }>()
   const changedBy = new Map<string, Set<string>>()
   const readBy = new Map<string, Set<string>>()
-  type ArcAccumulator = Omit<EntityArcView, 'capabilityIds' | 'capabilityScenarioIds' | 'journeyScenarioIds' | 'ruleIds' | 'forbiddenByRuleIds' | 'coEffects'> & {
+  type ArcAccumulator = Omit<EntityArcView, 'capabilityIds' | 'capabilityScenarioIds' | 'journeyScenarioIds' | 'forbiddenByRuleIds' | 'coEffects'> & {
     capabilityIds: Set<string>
     capabilityScenarioIds: Set<string>
     journeyScenarioIds: Set<string>
     coEffects: Map<string, EntityArcView['coEffects'][number]>
   }
   const arcsByEntity = new Map<string, Map<string, ArcAccumulator>>()
+  const addTo = (table: Map<string, Set<string>>, key: string, value: string) => {
+    const bucket = table.get(key)
+    if (bucket) bucket.add(value)
+    else table.set(key, new Set([value]))
+  }
+  /* Every Step each Capability owns, in Scenario order: its own Scenarios' Steps and the Journey Steps that name it. */
+  type OwnedStep = { scenario: ReportCapabilityScenario | ReportJourneyScenario, step: (ReportCapabilityScenario | ReportJourneyScenario)['steps'][number] }
+  const stepsByCapability = new Map<string, OwnedStep[]>()
   for (const scenario of allReportScenarios) {
     for (const step of scenario.steps) {
       const owner = scenarioOwner(scenario, step)
+      if (owner) {
+        const owned = stepsByCapability.get(owner)
+        if (owned) owned.push({ scenario, step })
+        else stepsByCapability.set(owner, [{ scenario, step }])
+      }
       for (const entry of step.entities) {
         if (entry.effect === 'reads') {
-          if (owner) readBy.set(entry.entityId, new Set([...(readBy.get(entry.entityId) ?? []), owner]))
+          if (owner) addTo(readBy, entry.entityId, owner)
           continue
         }
-        if (owner) changedBy.set(entry.entityId, new Set([...(changedBy.get(entry.entityId) ?? []), owner]))
+        if (owner) addTo(changedBy, entry.entityId, owner)
         if (entry.to) {
           const key = `${entry.entityId}\u0000${entry.to}`
           const found = scenariosByState.get(key) ?? { capability: [], journey: [] }
@@ -1036,6 +1263,56 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
   }
 
 
+  /*
+   * The Steps each Rule's Entity targets select — the format's own reading ("a
+   * target selects; a grant conditions"), decided by the selector lint and the
+   * report validator share. A Step happens in its own places, or in its
+   * Scenario's where it names none. Every Rule is read, not only permissions:
+   * an invariant on a thing governs every Step that touches it the same way.
+   */
+  const stepRuleKey = (scenario: ReportCapabilityScenario | ReportJourneyScenario, index: number) =>
+    `${isCapabilityScenario(scenario) ? 'capability' : 'journey'}\u0000${scenario.id}\u0000${index}`
+  const governedSteps = new Map<string, StepRuleView[]>()
+  type StepOwners = { capabilityIds: Set<string>, journeyIds: Set<string>, capabilityScenarioIds: Set<string>, journeyScenarioIds: Set<string> }
+  const stepOwnersByRule = new Map<string, StepOwners>()
+  const entityTargetsByRule = model.businessRules.map(rule => ({
+    id: rule.id,
+    targets: rule.appliesTo.flatMap((target, index) => target.type === 'entity' ? [{
+      index,
+      entityId: target.entityId,
+      effect: target.effect,
+      from: target.from,
+      to: target.to,
+      facts: target.facts,
+      contextPlaces: target.contexts.map(context => context.placeId)
+    }] : [])
+  })).filter(rule => rule.targets.length)
+  for (const scenario of allReportScenarios) {
+    const places = [...new Set(scenario.steps.flatMap(step => step.contexts.map(context => context.placeId)))]
+    scenario.steps.forEach((step, index) => {
+      const operations = step.entities.map(entry => ({
+        label: '', actorId: step.actorId ?? null, unattended: false, entityId: entry.entityId, alias: entry.as ?? null,
+        effect: entry.effect, from: entry.from ?? null, to: entry.to ?? null, facts: entry.facts,
+        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places)
+      }))
+      for (const rule of entityTargetsByRule) {
+        const selecting = rule.targets.filter(target => operations.some(operation => permissionTargetSelectsOperation(target, operation)))
+        if (!selecting.length) continue
+        const entries = operations.flatMap((operation, entry) => selecting.some(target => permissionTargetSelectsOperation(target, operation)) ? [entry] : [])
+        const key = stepRuleKey(scenario, index)
+        governedSteps.set(key, [...(governedSteps.get(key) ?? []), { ruleId: rule.id, entries, targets: selecting.map(target => target.index) }])
+        const owners = stepOwnersByRule.get(rule.id) ?? { capabilityIds: new Set(), journeyIds: new Set(), capabilityScenarioIds: new Set(), journeyScenarioIds: new Set() }
+        const owner = scenarioOwner(scenario, step)
+        if (owner) owners.capabilityIds.add(owner)
+        if (isCapabilityScenario(scenario)) owners.capabilityScenarioIds.add(scenario.id)
+        else { owners.journeyScenarioIds.add(scenario.id); owners.journeyIds.add(scenario.journeyId) }
+        stepOwnersByRule.set(rule.id, owners)
+      }
+    })
+  }
+  const rulesOwning = (has: (owners: StepOwners) => boolean) =>
+    entityTargetsByRule.filter(rule => { const owners = stepOwnersByRule.get(rule.id); return owners ? has(owners) : false }).map(rule => rule.id)
+
   const targetSelects = (
     target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>,
     entityId: string,
@@ -1048,9 +1325,10 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     && (target.effect === null || target.effect === effect)
     && (target.from === null || target.from === from)
     && (target.to === null || target.to === to)
-  const rulesSelecting = (entityId: string, effect: string, from: string, to: string, closed: boolean) =>
+  /* A Rule closing an operation to everyone: the arc is drawn as forbidden, since no Capability may make it. */
+  const rulesForbidding = (entityId: string, effect: string, from: string, to: string) =>
     model.businessRules
-      .filter(rule => rule.permits !== null && (closed ? rule.permits.length === 0 : rule.permits.length > 0)
+      .filter(rule => !membership.has(`businessRules:${rule.id}`) && rule.permits !== null && rule.permits.length === 0
         && rule.appliesTo.some(target => target.type === 'entity' && targetSelects(target, entityId, effect, from, to)))
       .map(rule => rule.id)
 
@@ -1064,13 +1342,12 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       capabilityIds: [...arc.capabilityIds].sort(),
       capabilityScenarioIds: [...arc.capabilityScenarioIds],
       journeyScenarioIds: [...arc.journeyScenarioIds],
-      ruleIds: rulesSelecting(entity.id, arc.effect, arc.from, arc.to, false),
-      forbiddenByRuleIds: rulesSelecting(entity.id, arc.effect, arc.from, arc.to, true),
+      forbiddenByRuleIds: rulesForbidding(entity.id, arc.effect, arc.from, arc.to),
       coEffects: [...arc.coEffects.values()]
     }))
     const produced = new Set(arcs.map(arc => arc.to).filter(Boolean))
     const prohibitions: EntityProhibitionView[] = model.businessRules
-      .filter(rule => rule.permits !== null && rule.permits.length === 0)
+      .filter(rule => !membership.has(`businessRules:${rule.id}`) && rule.permits !== null && rule.permits.length === 0)
       .flatMap(rule => rule.appliesTo
         .filter((target): target is Extract<ReportBusinessRuleTarget, { type: 'entity' }> =>
           target.type === 'entity' && target.entityId === entity.id)
@@ -1080,6 +1357,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       .map(rule => rule.id)
     return {
       key: resourceKey('entity', entity.id),
+      variation: variationOf('entities', entity.id),
       id: entity.id,
       kind: 'entity' as const,
       title: entity.title,
@@ -1114,7 +1392,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
           }))),
       changedByIds: [...(changedBy.get(entity.id) ?? [])].sort(),
       readByIds: [...(readBy.get(entity.id) ?? [])].filter(id => !changedBy.get(entity.id)?.has(id)).sort(),
-      presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
+      presentedOnIds: screensByEntity.get(entity.id) || [],
       ruleIds: rulesByEntity.get(entity.id) || [],
       states: entity.states.map(state => ({
         name: state.name,
@@ -1155,7 +1433,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       experienceIds: unique(model.capabilities
         .filter(c => c.domainId === domain.id)
         .flatMap(c => c.availability.map(context => context.placeId))
-        .filter(placeId => model.experiences.some(experience => experience.id === placeId))),
+        .filter(placeId => places.experienceById.has(placeId))),
       ruleIds: unique([
         ...(rulesByDomain.get(domain.id) || []),
         ...capabilityIds.flatMap(id => rulesByCapability.get(id) || [])
@@ -1168,26 +1446,27 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     /* What a Capability does to each thing, read off every Step of every Scenario that belongs to it — its own, and Journey Steps that name it. */
     const effects = new Map<string, CapabilityEntityEffectView>()
     const readIds = new Set<string>()
-    for (const scenario of allReportScenarios) {
-      for (const step of scenario.steps) {
-        if (scenarioOwner(scenario, step) !== capability.id) continue
-        for (const entry of step.entities) {
-          if (entry.effect === 'reads') {
-            readIds.add(entry.entityId)
-            continue
-          }
-          const line = effects.get(entry.entityId) ?? { entityId: entry.entityId, effects: [], scenarioIds: [] }
-          if (!line.effects.some(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))) {
-            line.effects.push({ effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '' })
-          }
-          if (!line.scenarioIds.includes(scenario.id)) line.scenarioIds.push(scenario.id)
-          effects.set(entry.entityId, line)
+    for (const { scenario, step } of stepsByCapability.get(capability.id) ?? []) {
+      for (const entry of step.entities) {
+        if (entry.effect === 'reads') {
+          readIds.add(entry.entityId)
+          continue
         }
+        const line = effects.get(entry.entityId) ?? { entityId: entry.entityId, effects: [], scenarioIds: [] }
+        let move = line.effects.find(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))
+        if (!move) {
+          move = { effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '', scenarioIds: [] }
+          line.effects.push(move)
+        }
+        if (!move.scenarioIds.includes(scenario.id)) move.scenarioIds.push(scenario.id)
+        if (!line.scenarioIds.includes(scenario.id)) line.scenarioIds.push(scenario.id)
+        effects.set(entry.entityId, line)
       }
     }
     const entityIds = [...effects.keys()].sort()
     return {
       key: resourceKey('capability', capability.id),
+      variation: variationOf('capabilities', capability.id),
       id: capability.id,
       entityIds,
       readEntityIds: [...readIds].filter(id => !effects.has(id)).sort(),
@@ -1200,13 +1479,12 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       references: capability.references,
       domainId: capability.domainId,
       contexts,
-      scenarioIds: model.capabilityScenarios
-        .filter(scenario => scenario.capabilityId === capability.id)
-        .map(scenario => scenario.id),
+      scenarioIds: capabilityScenariosByCapability.get(capability.id) || [],
       journeyScenarioIds: journeyScenariosByCapability.get(capability.id) || [],
       journeyIds: journeysByCapability.get(capability.id) || [],
       screenIds: screensByCapability.get(capability.id) || [],
       ruleIds: rulesByCapability.get(capability.id) || [],
+      stepRuleIds: rulesOwning(owners => owners.capabilityIds.has(capability.id)),
       interfaceIds: unique(contexts.map(context => context.interfaceId)),
       experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean))
     }
@@ -1227,7 +1505,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
   const scenarioSteps = (
     scenario: ReportCapabilityScenario | ReportJourneyScenario
   ): ScenarioView['steps'] =>
-    scenario.steps.map(step => ({
+    scenario.steps.map((step, index) => ({
       text: step.text,
       stepKind: step.kind,
       actorId: step.actorId ?? '',
@@ -1237,12 +1515,14 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
         as: entry.as ?? '',
         effect: entry.effect,
         from: entry.from ?? '',
-        to: entry.to ?? ''
+        to: entry.to ?? '',
+        facts: entry.facts
       })),
       contexts: step.contexts.map(context => ({
         routeId: context.routeId,
         context: placeOf(context.placeId)
-      }))
+      })),
+      governedBy: governedSteps.get(stepRuleKey(scenario, index)) ?? []
     }))
 
   const journeys: JourneyView[] = model.journeys.map((journey: ReportJourney) => {
@@ -1251,6 +1531,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
       key: resourceKey('journey', journey.id),
+      variation: variationOf('journeys', journey.id),
       id: journey.id,
       kind: 'journey',
       title: journey.title,
@@ -1282,6 +1563,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
         ...(rulesByJourney.get(journey.id) || []),
         ...scenarioIds.flatMap(id => rulesByScenario.get(id) || [])
       ]),
+      stepRuleIds: rulesOwning(owners => owners.journeyIds.has(journey.id)),
       interfaceIds: unique(contexts.map(context => context.interfaceId)),
       experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean)),
       stepCount: journeyScenarios.reduce((total, scenario) => total + scenario.steps.length, 0)
@@ -1290,8 +1572,10 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
 
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
+    const steps = scenarioSteps(scenario)
     return {
       key: resourceKey('capability-scenario', scenario.id),
+      variation: variationOf('capabilityScenarios', scenario.id),
       id: scenario.id,
       kind: 'capability-scenario',
       entityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId))),
@@ -1304,7 +1588,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       references: scenario.references,
       scenarioType: 'capability',
       capabilityId: scenario.capabilityId,
-      capabilityTitle: titleOf(model.capabilities, scenario.capabilityId),
+      capabilityTitle: capabilityById.get(scenario.capabilityId)?.title ?? scenario.capabilityId,
       actorIds: scenario.actorIds,
       journeyId: '',
       journeyTitle: '',
@@ -1314,21 +1598,24 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
-      steps: scenarioSteps(scenario),
-      outcomeStates: outcomeStates(scenarioSteps(scenario)),
+      steps,
+      outcomeStates: outcomeStates(steps),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
       result: '',
       screenIds: screensByScenario.get(scenario.id) || [],
-      ruleIds: rulesByScenario.get(scenario.id) || []
+      ruleIds: rulesByScenario.get(scenario.id) || [],
+      stepRuleIds: unique(steps.flatMap(step => step.governedBy.map(item => item.ruleId)))
     }
   })
 
   const journeyScenarios: ScenarioView[] = model.journeyScenarios.map((scenario: ReportJourneyScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
+    const steps = scenarioSteps(scenario)
     return {
       key: resourceKey('journey-scenario', scenario.id),
+      variation: variationOf('journeyScenarios', scenario.id),
       id: scenario.id,
       kind: 'journey-scenario',
       entityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId))),
@@ -1344,27 +1631,28 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       capabilityTitle: '',
       actorIds: scenario.actorIds,
       journeyId: scenario.journeyId,
-      journeyTitle: titleOf(model.journeys, scenario.journeyId),
+      journeyTitle: journeyById.get(scenario.journeyId)?.title ?? scenario.journeyId,
       kindId: scenario.kindId,
       kindName: kind?.name ?? humanize(scenario.kindId),
       kindSlot: kind?.colorSlot ?? 1,
       contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
-      steps: scenarioSteps(scenario),
-      outcomeStates: outcomeStates(scenarioSteps(scenario)),
+      steps,
+      outcomeStates: outcomeStates(steps),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
       result: scenario.result,
       screenIds: screensByScenario.get(scenario.id) || [],
-      ruleIds: rulesByScenario.get(scenario.id) || []
+      ruleIds: rulesByScenario.get(scenario.id) || [],
+      stepRuleIds: unique(steps.flatMap(step => step.governedBy.map(item => item.ruleId)))
     }
   })
 
   const scenarios: ScenarioView[] = [...capabilityScenarios, ...journeyScenarios]
 
-  const entityTitle = (id: string) => titleOf(model.entities, id)
+  const entityTitle = (id: string) => entityById.get(id)?.title ?? id
   const describeValue = (value: ReportGrantCondition['value']): string => {
     if (value === null) return ''
     if (typeof value === 'object') return `the ${entityTitle(value.configuredByEntityId)} threshold`
@@ -1427,6 +1715,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       grants: (rule.permits ?? []).map(grant => describeGrant(grant, targetId)),
       prohibits: rule.permits !== null && rule.permits.length === 0,
       key: resourceKey('rule', rule.id),
+      variation: variationOf('businessRules', rule.id),
       id: rule.id,
       kind: 'rule',
       title: rule.title,
@@ -1443,9 +1732,47 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       journeyScenarioIds: relations.journeyScenarioIds,
       scenarioIds: [...relations.capabilityScenarioIds, ...relations.journeyScenarioIds],
       derivedCapabilityIds: relations.derivedCapabilityIds,
+      stepCapabilityIds: [...(stepOwnersByRule.get(rule.id)?.capabilityIds ?? [])],
+      stepJourneyIds: [...(stepOwnersByRule.get(rule.id)?.journeyIds ?? [])],
+      stepCapabilityScenarioIds: [...(stepOwnersByRule.get(rule.id)?.capabilityScenarioIds ?? [])],
+      stepJourneyScenarioIds: [...(stepOwnersByRule.get(rule.id)?.journeyScenarioIds ?? [])],
       derivedJourneyIds: relations.derivedJourneyIds,
       contexts: relations.contexts,
       appliesTo: rule.appliesTo
+    }
+  })
+
+  const variations: VariationSetView[] = model.variations.map(variation => {
+    const memberKind = VARIATION_MEMBER_KIND[variation.of]
+    const facets = memberKind === 'entity'
+      ? [...new Set(variation.alternatives.map(item => entityFacetOf(entities.find(entity => entity.id === item.resourceId))))]
+      : []
+    return {
+      key: resourceKey('variation', variation.id),
+      id: variation.id,
+      kind: 'variation' as const,
+      title: variation.title,
+      lead: variation.description,
+      intent: variation.intent,
+      supportingContent: supportingMarkdown(variation.supportingSections),
+      references: variation.references,
+      variationKind: variation.kind,
+      memberKind,
+      memberFacet: facets.length === 1 ? facets[0] ?? null : null,
+      alternatives: variation.alternatives.map(item => ({
+        key: resourceKey(memberKind, item.resourceId),
+        id: item.resourceId,
+        selectedWhen: item.selectedWhen,
+        label: item.label
+      })),
+      takesEffect: variation.takesEffect,
+      stability: variation.stability,
+      assignmentUnit: variation.assignmentUnit,
+      assignmentMethod: variation.assignmentMethod,
+      assignmentFact: variation.assignmentFact,
+      allocation: variation.allocation,
+      settings: variation.settings,
+      discriminator: variation.discriminator
     }
   })
 
@@ -1458,7 +1785,8 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     ...capabilities,
     ...journeys,
     ...scenarios,
-    ...rules
+    ...rules,
+    ...variations
   ]
 
   const references: ReferenceGroup[] = [
@@ -1517,6 +1845,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     journeyScenarios: model.journeyScenarios.length,
     scenarios: allReportScenarios.length,
     rules: model.businessRules.length,
+    variations: model.variations.length,
     steps: allReportScenarios.reduce((total, item) => total + item.steps.length, 0),
     decisionPoints: allReportScenarios.reduce((total, item) => total + item.decisionPoints.length, 0),
     branches: allReportScenarios.reduce(
@@ -1524,7 +1853,6 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       0
     ),
     edgeCases: allReportScenarios.reduce((total, item) => total + item.edgeCases.length, 0),
-    screenStates: model.screens.reduce((total, item) => total + item.states.length, 0),
     entryPoints: [...model.interfaces, ...model.experiences, ...model.screens]
       .reduce((total, item) => total + item.entryPoints.length, 0),
     references: references.length,
@@ -1539,33 +1867,28 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     count: allReportScenarios.filter(scenario => scenario.kindId === kind.id).length
   }))
 
+  const group = <T>(table: Map<string, T[]>, key: string, value: T) => {
+    const bucket = table.get(key)
+    if (bucket) bucket.push(value)
+    else table.set(key, [value])
+  }
   const scenariosByJourney = new Map<string, ScenarioView[]>()
   for (const scenario of scenarios) {
-    if (!scenario.journeyId) continue
-    scenariosByJourney.set(scenario.journeyId, [...(scenariosByJourney.get(scenario.journeyId) || []), scenario])
+    if (scenario.journeyId) group(scenariosByJourney, scenario.journeyId, scenario)
   }
 
   /* Both parents index their children the same way: the Product Report reads a
      Capability's Scenarios exactly where it reads a Journey's. */
   const scenariosByCapability = new Map<string, ScenarioView[]>()
   for (const scenario of scenarios) {
-    if (!scenario.capabilityId) continue
-    scenariosByCapability.set(
-      scenario.capabilityId,
-      [...(scenariosByCapability.get(scenario.capabilityId) || []), scenario]
-    )
+    if (scenario.capabilityId) group(scenariosByCapability, scenario.capabilityId, scenario)
   }
 
   const capabilitiesByDomain = new Map<string, CapabilityView[]>()
-  for (const capability of capabilities) {
-    const key = capability.domainId ?? ''
-    capabilitiesByDomain.set(key, [...(capabilitiesByDomain.get(key) || []), capability])
-  }
+  for (const capability of capabilities) group(capabilitiesByDomain, capability.domainId ?? '', capability)
 
   const resourcesById = new Map<string, AnyResourceView[]>()
-  for (const resource of allResources) {
-    resourcesById.set(resource.id, [...(resourcesById.get(resource.id) ?? []), resource])
-  }
+  for (const resource of allResources) group(resourcesById, resource.id, resource)
 
   return {
     identity: {
@@ -1583,6 +1906,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
       supportingSections: report.supportingSections,
       references: report.references,
       referenceProfile: report.referenceProfile,
+      languages: report.languages,
       limitations: report.limitations,
       generatedAt: report.generatedAt,
       generator: report.generator,
@@ -1603,6 +1927,7 @@ export function projectReportWorkspace(report: ProductReportV14): ReportWorkspac
     journeyScenarios,
     scenarios,
     rules,
+    variations,
     contexts: [...contextSeen.values()].sort((left, right) =>
       left.interfaceId.localeCompare(right.interfaceId) || left.experienceId.localeCompare(right.experienceId)),
     references,
@@ -1690,6 +2015,8 @@ export interface ScenarioStepRow {
   routeNeutral: boolean
   /** One cell per route, in authored route order. */
   cells: ScenarioStepCell[]
+  /** The Rules whose Entity targets select this Step. */
+  ruleIds: string[]
 }
 
 export interface ScenarioStepMatrix {
@@ -1722,7 +2049,8 @@ export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
       capabilityId: step.capabilityId,
       mentions: step.entities,
       routeNeutral: step.contexts.length === 0,
-      cells
+      cells,
+      ruleIds: step.governedBy.map(item => item.ruleId)
     }
   })
   return { routes: scenario.routes, steps }

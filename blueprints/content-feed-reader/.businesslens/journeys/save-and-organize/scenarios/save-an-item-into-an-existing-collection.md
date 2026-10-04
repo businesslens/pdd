@@ -7,38 +7,45 @@ steps:
     actor: reader
     capability: save-item
     entities:
-      - { entity: item }
+      - { entity: item, facts: [ Saved at ] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile-to-web:
         place: reader-mobile::personal-library::unread-library
+      mobile-to-web-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: The Reader selects an owned collection
     kind: actor
     actor: reader
     capability: organize-collection
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [ Name ] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
       mobile-to-web:
+        place: reader-web::personal-library::collection-workspace
+      mobile-to-web-source-focused:
         place: reader-web::personal-library::collection-workspace
   - text: The saved item is added at the chosen position
     kind: product
     actor: reader
     capability: organize-collection
     entities:
-      - { entity: collection }
-      - { entity: item, effect: reads }
+      - { entity: collection, facts: [ Item order ] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
       mobile-to-web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
+      mobile-to-web-source-focused:
+        place: reader-web::personal-library::collection-workspace::items
 routes:
   web: Web
   mobile-to-web: Mobile to web
+  mobile-to-web-source-focused: Mobile to web — source-focused
 ---
 
 # Save an item into an existing collection

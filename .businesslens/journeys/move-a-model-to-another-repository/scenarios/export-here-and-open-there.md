@@ -9,7 +9,7 @@ steps:
     actor: developer
     capability: export-blueprint
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       transfer:
         place: businesslens-cli
@@ -17,8 +17,8 @@ steps:
     kind: product
     capability: export-blueprint
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: blueprint, effect: creates, to: Exported }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
+      - { entity: blueprint, effect: creates, to: Exported, facts: [Schema version, Product identity, Product meaning, Coverage] }
     contexts:
       transfer:
         place: businesslens-cli
@@ -27,7 +27,7 @@ steps:
     actor: developer
     capability: open-blueprint
     entities:
-      - { entity: blueprint, effect: reads }
+      - { entity: blueprint, effect: reads, facts: [] }
     contexts:
       transfer:
         place: businesslens-cli
@@ -36,8 +36,8 @@ steps:
     actor: developer
     capability: open-blueprint
     entities:
-      - { entity: blueprint, effect: reads }
-      - { entity: product-model, effect: creates }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       transfer:
         place: businesslens-cli

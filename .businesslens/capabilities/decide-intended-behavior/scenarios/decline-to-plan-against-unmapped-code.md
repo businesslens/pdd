@@ -6,7 +6,7 @@ steps:
   - text: The repository has established implementation and no Product Model
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       harness:
         place: agent-skills

@@ -27,6 +27,7 @@ export function resourcesOfKind(workspace: ReportWorkspace, kind: ReportResource
     case 'capability-scenario': return workspace.capabilityScenarios
     case 'journey-scenario': return workspace.journeyScenarios
     case 'rule': return workspace.rules
+    case 'variation': return workspace.variations
     default: return []
   }
 }
@@ -215,6 +216,13 @@ export function collectionGroups<T extends AnyResourceView>(
   kind: ReportResourceKind,
   resources: T[]
 ): Array<ResourceGroup<T>> {
+  /* Variations group by the type they vary: `of` is authored, so the axis is too. */
+  if (kind === 'variation') {
+    return (Object.keys(ENTITY_KIND_META) as ReportResourceKind[]).flatMap((memberKind) => {
+      const members = resources.filter(resource => resource.kind === 'variation' && resource.memberKind === memberKind)
+      return members.length ? [{ key: memberKind, title: ENTITY_KIND_META[memberKind].plural, kind: memberKind, resources: members }] : []
+    })
+  }
   const by = GROUPING_KIND[kind]
   if (!by) return [{ key: '', title: '', kind: null, resources }]
   const unassigned = `No ${ENTITY_KIND_META[by].label}`

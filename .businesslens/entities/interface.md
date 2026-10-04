@@ -31,4 +31,7 @@ expensive to correct later.
 - **Type** — its one interaction type, from a closed vocabulary
 - **Actors** — the acting Entities it admits
 - **Entry points** — the product-facing addresses it answers on
-- **Boundary** — what it supports, and what it explicitly does not
+- **Navigation** — the Screens reachable from every place inside it
+- **Languages** — the language tags it serves, narrowing the Product's
+
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

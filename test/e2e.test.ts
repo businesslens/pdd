@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV14Schema } from '../src/core/portable.js'
+import { ProductReportV15Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,31 +41,33 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV14Schema.parse(output)
+    const parsed = ProductReportV15Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '14.0.0',
+      schemaVersion: '15.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
       license: 'MIT'
     })
     expect(parsed.counts).toEqual({
-      interfaces: 5,
-      experiences: 2,
-      screens: 6,
+      interfaces: 6,
+      experiences: 3,
+      screens: 7,
       domains: 1,
-      entities: 8,
-      capabilities: 6,
-      capabilityScenarios: 12,
-      journeys: 1,
-      journeyScenarios: 2,
-      businessRules: 12
+      entities: 10,
+      capabilities: 7,
+      capabilityScenarios: 18,
+      journeys: 2,
+      journeyScenarios: 4,
+      businessRules: 14,
+      variations: 10
     })
-    // `capabilityIds` comes from the achieved variation; `cancel-order`
-    // appears only in the not-achieved one, so it is failure-only.
+    // `capabilityIds` comes from the achieved Scenarios, the manual-confirmation
+    // alternative included; `cancel-order` appears only in the not-achieved one,
+    // so it is failure-only.
     expect(parsed.model.journeys[0]).toMatchObject({
-      capabilityIds: ['browse-catalog', 'place-order', 'settle-payment'],
+      capabilityIds: ['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'],
       failureOnlyCapabilityIds: ['cancel-order']
     })
     // An Actor is an Entity that acts; the wire says which of the two it is.
@@ -85,10 +87,13 @@ describe('end to end on a real git repo', () => {
     const screen = parsed.model.screens.find(item => item.id === 'customer-web::storefront::product-record')
     expect(screen).toMatchObject({
       capabilityIds: ['browse-catalog', 'place-order'],
-      capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment', 'sell-the-last-available-unit'],
-      journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'],
-      information: ['Product name and description', 'Price and availability']
+      capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'complete-checkout-without-review', 'decline-checkout-payment', 'sell-the-last-available-unit'],
+      journeyScenarioIds: ['browse-and-complete-checkout', 'browse-and-complete-checkout-with-manual-confirmation', 'buy-and-follow-the-order', 'cancel-an-order-before-fulfilment']
     })
+    // A Screen names the facts on screen; the wire carries them by Entity.
+    expect(screen?.entities.find(entry => entry.entityId === 'catalog-product')?.shows).toEqual(
+      expect.arrayContaining(['Price'])
+    )
     expect(parsed.model.capabilities.find(item => item.id === 'place-order')?.availability).toEqual([
       { placeId: 'customer-mobile::storefront' },
       { placeId: 'customer-web::storefront' }

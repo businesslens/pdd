@@ -3,7 +3,7 @@ references:
   - kind: code
     role: implementation
     target: src/services/catalog.ts#CatalogService
-availability: [{ place: customer-web::storefront }, { place: customer-mobile::storefront }]
+availability: [{ place: customer-web::storefront }, { place: customer-mobile::storefront }, { place: customer-mobile::catalog-preview }]
 ---
 
 # Catalog browsing

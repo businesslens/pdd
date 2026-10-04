@@ -38,20 +38,24 @@ const tabs = computed(() => tabsFor(props.workspace, props.resource))
 const tab = defineModel<string>('tab', { default: 'overview' })
 const active = ref<PageTabId>('overview')
 const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id === id)
+/* Lifecycle may carry its selected change after a slash. */
+const tabId = (value: string) => value.split('/')[0] ?? value
+const tabDetail = computed(() => tab.value.includes('/') ? tab.value.slice(tab.value.indexOf('/') + 1) : '')
 
-/* A Scenario address defaults to its parent's Scenarios reading. An explicit
-   References address reads the attachments owned by that Scenario. */
+/* A Scenario address is its parent's Scenarios reading with its card open;
+   the Scenario's own References are read on that card. */
 watch([tabs, requestedChild, tab], () => {
-  if (requestedChild.value && (tab.value !== 'references' || !isTab('references')) && isTab('scenarios')) {
+  if (requestedChild.value && isTab('scenarios')) {
     active.value = 'scenarios'
     return
   }
-  active.value = isTab(tab.value) ? tab.value : 'overview'
+  const requested = tabId(tab.value)
+  active.value = isTab(requested) ? requested : 'overview'
 }, { immediate: true })
 
 function select(id: string) {
   if (!isTab(id)) return
-  if (id !== 'scenarios' && id !== 'references' && requestedChild.value) emit('open', subject.value)
+  if (id !== 'scenarios' && requestedChild.value) emit('open', subject.value)
   active.value = id
   tab.value = id
 }
@@ -73,7 +77,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         v-if="tabs.length > 1"
         :model-value="active"
         :items="tabs"
-        :label="`${ENTITY_KIND_META[resource.kind].label} readings`"
+        :label="`${ENTITY_KIND_META[subject.kind].label} readings`"
         :class="!tabsTarget && 'mb-5'"
         @update:model-value="select"
       >
@@ -119,6 +123,8 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         v-else-if="current?.id === 'lifecycle' && subject.kind === 'entity'"
         :workspace="workspace"
         :resource="(subject as EntityView)"
+        :change="tabDetail"
+        @update:change="tab = 'lifecycle'"
         @open="emit('open', $event)"
         @ready="emit('ready')"
       />
@@ -128,7 +134,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           v-for="id in current?.blocks ?? []"
           :key="id"
           :workspace="workspace"
-          :resource="current?.id === 'references' ? resource : subject"
+          :resource="subject"
           :id="id"
           :heading="current?.id === 'overview'"
           @open="emit('open', $event)"

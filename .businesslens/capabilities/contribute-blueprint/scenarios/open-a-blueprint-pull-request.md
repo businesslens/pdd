@@ -7,15 +7,15 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product checks the model, exports it portably, regenerates a canonical model from that report, and shows the name it would be proposed under
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
-      - { entity: blueprint, effect: creates, to: Exported }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
+      - { entity: blueprint, effect: creates, to: Exported, facts: [Schema version, Product identity, Product meaning, Coverage] }
     contexts:
       terminal:
         place: businesslens-cli
@@ -29,7 +29,7 @@ steps:
   - text: The Product prepares the contribution outside the repository it was asked from, pushes only its own branch, and opens the pull request
     kind: product
     entities:
-      - { entity: blueprint, effect: changes, from: Exported, to: Proposed }
+      - { entity: blueprint, effect: changes, from: Exported, to: Proposed, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli

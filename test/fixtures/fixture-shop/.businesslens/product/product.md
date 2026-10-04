@@ -6,6 +6,7 @@ tags: [commerce, fixture]
 authors:
   - name: BusinessLens
 license: MIT
+languages: [en, de]
 limitations: []
 ---
 

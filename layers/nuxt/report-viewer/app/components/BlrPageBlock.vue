@@ -28,7 +28,7 @@ const entryPoints = computed(() => props.resource.kind === 'journey' ? props.res
 const counterparts = computed(() => counterpartsOf(props.workspace, props.resource))
 const facts = computed(() => resourceFacts(props.workspace, props.resource).filter(fact => fact.value))
 const audience = computed(() => (props.resource.kind === 'interface' || props.resource.kind === 'experience')
-  ? props.resource.actorIds.flatMap(id => { const actor = props.workspace.byKey.get(`entity:${id}`); return actor ? [actor] : [] }) : [])
+  ? props.resource.actorIds.flatMap(id => { const actor = props.workspace.byKey.get(`entity:${id}`); return actor?.kind === 'entity' ? [actor] : [] }) : [])
 </script>
 
 <template>
@@ -41,13 +41,13 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
         <BlrTerm v-if="fact.term" :slug="fact.term" :text="fact.label" />
         <template v-else>{{ fact.label }}</template>
       </dt>
-      <dd class="mt-0.5 truncate text-sm font-medium text-highlighted">{{ fact.value }}</dd>
+      <dd class="mt-0.5 truncate text-sm font-medium text-highlighted">{{ fact.value }}<span v-if="fact.note" class="font-normal text-muted" data-fact-note> · {{ fact.note }}</span></dd>
     </div>
   </dl>
 
   <div v-else-if="id === 'audience' && audience.length" class="flex flex-wrap items-center gap-2" data-resource-audience>
     <span class="text-xs text-muted">Entered by</span>
-    <BlrTopologyResource v-for="actor in audience" :key="actor.key" :resource="actor" @open="emit('open', actor)" />
+    <BlrEntityChip v-for="actor in audience" :key="actor.key" :entity="actor" @select="emit('open', $event)" />
   </div>
 
   <BlrContexts
@@ -80,6 +80,23 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
       @open="emit('open', $event)"
     />
   </div>
+
+  <section v-else-if="id === 'selection' && resource.kind === 'variation'" class="space-y-2" data-variation-how>
+    <p class="blr-block-heading">How one is chosen
+      <span class="ms-2 font-normal text-dimmed"><BlrTerm :slug="resource.variationKind" /></span>
+    </p>
+    <div class="rounded-lg border border-default p-4">
+      <BlrVariationSelection :workspace="workspace" :set="resource" @open="emit('open', $event)" />
+    </div>
+  </section>
+
+  <BlrVariationChoice v-else-if="id === 'variation-choice'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+
+  <BlrVariationAlternatives v-else-if="id === 'alternatives' && resource.kind === 'variation'" :workspace="workspace" :set="resource" @open="emit('open', $event)" />
+
+  <BlrAttachedRules v-else-if="id === 'rules'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
+
+  <BlrRuleScope v-else-if="id === 'rule-scope' && resource.kind === 'rule'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
 
   <BlrResourceStructure v-else-if="id === 'structure'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
 

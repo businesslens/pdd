@@ -6,7 +6,7 @@ steps:
   - text: Inspection finds behavior that is intended and working, while the model still describes something else
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       harness:
         place: agent-skills
@@ -28,7 +28,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: product-model, effect: changes }
+      - { entity: product-model, effect: changes, facts: [Coverage, Method] }
     contexts:
       harness:
         place: agent-skills
@@ -36,7 +36,7 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       harness:
         place: agent-skills

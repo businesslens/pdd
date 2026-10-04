@@ -8,8 +8,8 @@ steps:
     kind: actor
     actor: store-admin
     entities:
-      - { entity: order, as: duplicate, effect: reads }
-      - { entity: order, as: original, effect: reads }
+      - { entity: order, as: duplicate, effect: reads, facts: [] }
+      - { entity: order, as: original, effect: reads, facts: [] }
     contexts:
       web:
         place: admin-web::order-detail
@@ -19,8 +19,8 @@ steps:
     kind: product
     actor: store-admin
     entities:
-      - { entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled }
-      - { entity: order, as: original, effect: changes }
+      - { entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled, facts: [] }
+      - { entity: order, as: original, effect: changes, facts: [Items ordered] }
     contexts:
       web:
         place: admin-web::order-detail

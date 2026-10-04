@@ -3,99 +3,64 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 32
+order: 28
 ---
 
 # `businesslens blueprint contribute`
 
-Propose your Product Model for the public Blueprint catalog:
+Propose your Product Model for the catalog as a
+[Blueprint](./from-a-blueprint.md#what-a-blueprint-is), by opening a pull request.
 
 ```bash
-npx businesslens blueprint contribute
+npx businesslens blueprint contribute [--yes]
 ```
-
-A [Blueprint](./cli-export.md) is a portable Product Report. This command
-validates the current model and opens a pull request containing its portable
-content.
-
-Authentication uses your GitHub identity through the
-[GitHub CLI](https://cli.github.com):
-
-```bash
-gh auth login
-```
-
-`contribute` refuses to run without it, rather than failing halfway through.
 
 ## Options
 
-| Option | Effect |
+| Option | Meaning |
 | --- | --- |
-| `--yes` | Skip the confirmation prompt; required when no interactive terminal is available. |
+| `--yes` | Skip the confirmation prompt; required without an interactive terminal |
 
-## A good Blueprint
+## Before you run it
 
-A Blueprint should be small enough to build end to end and complete enough that
-a coding agent can produce a recognizable product from the pulled model alone.
+- The [GitHub CLI](https://cli.github.com), signed in with `gh auth login`.
+- A model with no lint errors.
+- In the Product's frontmatter: a category, at least one tag, at least one
+  author, and an SPDX license.
+- A logo. Move a compact `.businesslens/product.md` to
+  `.businesslens/product/product.md` and add `logo.svg` beside it. See
+  [Logo and publishing](./product.md#logo-and-publishing).
 
-Before contributing, add a category, at least one tag, at least one author, and
-an SPDX license identifier to `.businesslens/product/product.md`, plus
-`.businesslens/product/logo.svg` beside it.
-
-Check these before contributing:
-
-- **Focused scope:** one product, not a platform or suite.
-- **Complete contract:** all necessary Entities, Capabilities, Business Rules,
-  meaningful local Capability Scenarios, plus only coherent multi-Capability
-  Journeys and end-to-end Journey Scenarios the Product deliberately supports.
-- **Honest granularity:** Capability Scenarios vary one durable behavior; they
-  do not hide unrelated operations beneath a vague umbrella Capability.
-- **Observable cases:** each Capability Scenario and Journey Scenario can be
-  checked against implementation. Prefer “submitting an empty cart shows an
-  error and keeps the cart” over “cart validation works.”
-- **Product-level prose:** describe what users observe, not frameworks,
-  databases, or architecture.
-- **Generic shape:** model an archetype rather than a named third-party product.
-- **Portable content:** no code or implementation References, local Reference
-  targets, Coverage paths, or repository-relative entry points.
-
-The portability rules are enforced automatically. Author a greenfield model
-with [`businesslens-ideate`](./skill-businesslens-ideate.md), then test it by
-pulling it into an empty directory and asking an agent to build it without extra
-product instructions.
+Your Product id becomes the Blueprint's catalog slug, and the name others pull.
 
 ## What it does
 
-1. Loads and lints the Product Model. Lint errors stop the run.
-2. Exports it through the [portable projection](./cli-export.md#portable-export).
-3. Expands that Blueprint into canonical `.businesslens/` files.
-4. Uses the Product ID as the canonical catalog slug.
-5. Writes `blueprints/<product-id>/.businesslens/` on a
-   `blueprint/<product-id>` branch.
-6. Opens or updates the pull request and prints its URL.
+1. Checks `gh` and lints the model. Any failure stops the run.
+2. Exports the model, as [`blueprint export`](./cli-export.md) does, and checks
+   the metadata and logo above.
+3. Regenerates the model from that portable report in a temporary directory, so
+   the pull request holds exactly what `blueprint pull` will produce. Code
+   References, local paths and Coverage paths are dropped by the
+   [projection](./cli-export.md#portable-export), not refused.
+4. Asks you to confirm, unless you pass `--yes`.
+5. Forks the upstream into your account and syncs it with the upstream (or, if
+   you own the upstream, clones it directly). A fork that cannot be synced
+   stops the run.
+6. Writes `blueprints/<slug>/.businesslens/` on a `blueprint/<slug>` branch and
+   force-pushes that branch, which only this command uses.
+7. Opens the pull request, or updates the open one, and prints its URL. Run it
+   again to revise; leave the fork in place until the pull request is merged.
 
-## Your repo is safe
+Your repository gains only the gitignored export files; the branch, commit and
+fork all live elsewhere. The upstream is `businesslens/pdd` unless
+`BUSINESSLENS_CONTRIBUTE_UPSTREAM` names another `owner/repo`.
 
-The contribution is prepared in a temporary directory. Your repository is only
-read; it does not gain a branch, remote, commit, or catalog files.
+Merging approves the Blueprint. A maintainer then publishes it to the catalog;
+listing it is a separate decision.
 
-Only the canonical portable expansion is submitted, so repository-specific
-source navigation is never copied into the pull request.
+Exits 0 when the pull request is opened or updated, 1 when a check fails, you
+decline, or GitHub refuses, and 2 without a terminal and without `--yes`.
 
-## Contributing again
+## Next
 
-Run the same command to revise a contribution. It syncs the fork, force-pushes
-only the command-owned `blueprint/<product-id>` branch, and updates an existing
-pull request when one is open. If the fork cannot be synchronized, the command
-stops.
-
-Leave the fork in your GitHub account until the pull request is merged.
-
-## Destination and publication
-
-The default upstream is `businesslens/pdd`. Set
-`BUSINESSLENS_CONTRIBUTE_UPSTREAM` to another `owner/repo` when contributing to
-a custom catalog source.
-
-Merging approves the Blueprint. A maintainer publishes it to the catalog, and
-catalog listing remains a separate decision.
+- [`blueprint pull`](./cli-pull.md) your slug into an empty folder to test it.

@@ -1,0 +1,59 @@
+---
+kind: primary
+routes:
+  web: Web
+  mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
+steps:
+  - text: The Reader narrows the unread items to one source and a span of publication dates
+    kind: actor
+    actor: reader
+    entities:
+      - { entity: item, effect: reads, facts: [ Published at ] }
+      - { entity: source, effect: reads, facts: [ Name ] }
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
+  - text: The Product presents only the unread items that match
+    kind: product
+    actor: reader
+    entities:
+      - { entity: item, effect: reads, facts: [ Title, Published at ] }
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
+  - text: The unread count still counts the whole backlog, and no item's reading state changes
+    kind: condition
+    entities:
+      - { entity: item, effect: reads, facts: [] }
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
+---
+
+# Narrow the backlog by source and date
+
+## Trigger
+
+The Reader wants to work through one source's recent items before the rest.
+
+## Outcome
+
+The Reader sees only the unread items from the chosen source in the chosen
+span, and the backlog itself is unchanged.
+
+## Edge cases
+
+- No unread item matches → the Reader is told that nothing in the backlog matches, and the narrowing stays available to change.

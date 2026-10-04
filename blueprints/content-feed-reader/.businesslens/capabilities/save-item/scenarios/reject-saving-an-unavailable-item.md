@@ -3,16 +3,19 @@ kind: validation
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 steps:
   - text: The Product confirms that the item is unavailable
     kind: product
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: No saved record is created
     kind: condition
     entities: []
@@ -21,16 +24,20 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
   - text: The Reader sees that the item cannot be saved
     kind: actor
     actor: reader
     entities:
-      - { entity: item, effect: reads }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::unread-library
 ---
 
 # Reject saving an unavailable item

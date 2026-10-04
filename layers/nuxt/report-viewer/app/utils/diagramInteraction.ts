@@ -20,12 +20,19 @@ export function diagramContext(diagram: Pick<Diagram, 'nodes' | 'edges' | 'layou
   const edges = new Set<string>()
 
   if (diagram.layout !== 'tree') {
+    /* A frame stands for what it holds: hovering it reads every edge in or out of the contents. */
+    const parents = new Map(diagram.nodes.map(node => [node.id, node.parent]))
+    const ancestors = (id: string) => { const path: string[] = []; for (let parent = parents.get(id); parent; parent = parents.get(parent)) path.push(parent); return path }
+    for (const node of diagram.nodes) if (ancestors(node.id).includes(active.id)) occurrences.add(node.id)
+    for (const id of occurrences) nodes.add(id)
     for (const edge of diagram.edges) {
-      if (edge.source !== active.id && edge.target !== active.id) continue
+      if (!occurrences.has(edge.source) && !occurrences.has(edge.target)) continue
       nodes.add(edge.source)
       nodes.add(edge.target)
       edges.add(edge.id)
     }
+    /* A frame never dims around a highlighted node inside it. */
+    for (const id of [...nodes]) ancestors(id).forEach(parent => nodes.add(parent))
     return { nodes, edges, occurrences }
   }
 
@@ -54,4 +61,20 @@ export function diagramContext(diagram: Pick<Diagram, 'nodes' | 'edges' | 'layou
     }
   }
   return { nodes, edges, occurrences }
+}
+
+/**
+ * Highlight an edge's context the way a node's is: the edge and the nodes it
+ * joins stay lit, everything else dims. Only this edge: another edge naming
+ * the same Capability is another change, and lighting it would answer a
+ * question the reader did not ask of this one.
+ */
+export function diagramEdgeContext(diagram: Pick<Diagram, 'nodes' | 'edges'>, activeId: string | null) {
+  const active = diagram.edges.find(edge => edge.id === activeId)
+  if (!active) return null
+  const nodes = new Set([active.source, active.target])
+  /* A frame never dims around a lit node inside it. */
+  const parents = new Map(diagram.nodes.map(node => [node.id, node.parent]))
+  for (const id of [...nodes]) for (let parent = parents.get(id); parent; parent = parents.get(parent)) nodes.add(parent)
+  return { nodes, edges: new Set([active.id]), occurrences: new Set<string>() }
 }

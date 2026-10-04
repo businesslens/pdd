@@ -29,3 +29,5 @@ what it changes is what its Steps say.
 - **Purpose** — why it exists and which outcome it protects
 - **Availability** — where it is available, as Contexts
 - **Domain** — its subject Domain, when it has one
+
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

@@ -1,7 +1,9 @@
 /** The Entity's state machine, composed from everything the model holds. */
 import type { EntityArcView, EntityStateView, EntityView, ReportWorkspace } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
-import type { Diagram, DiagramNode, DiagramEdge } from './diagram'
+import type { Diagram, DiagramNode, DiagramEdge, DiagramEdgeBadge } from './diagram'
+import type { AnyResourceView } from './reportWorkspace'
+import { variationCondition, variationConditionNote, type VariationCondition } from './variations'
 
 interface LifecycleState { name: string, reached: boolean, terminal: 'start' | 'end' | null }
 
@@ -22,19 +24,16 @@ function stateNode(entity: EntityView, data: LifecycleState): DiagramNode {
   }
 }
 
-/** One Rule with grants selecting an arc, read the way the Rule's own page reads it. */
-export interface LifecycleArcRule {
-  id: string
-  title: string
-  /** Each grant as a full sentence, its `when` conditions included — never the bare who, which reads "the Shopper" where the Rule says "the Shopper while Pending". */
-  grants: string[]
-}
-
+/*
+ * A change is drawn by what makes it — its Capabilities. The Rules that govern
+ * it are read on the Steps they select, and so on those Steps' Scenarios and
+ * Capabilities, never on the transition: a Rule governs Steps, and an arc is
+ * only where some of them land. A change no one may make is the exception: no
+ * Capability makes it, so its forbidding Rule is all there is to draw.
+ */
 export interface LifecycleArcLabel {
   /** The Capabilities whose Steps draw the arc, by title. */
   capabilities: string[]
-  /** Every Rule with grants selecting the arc, each kept apart. */
-  rules: LifecycleArcRule[]
   /** "also creates Refund" — what the same Steps do to other things. */
   coEffects: string[]
   forbidden: boolean
@@ -43,24 +42,48 @@ export interface LifecycleArcLabel {
 /** The words an arc carries, shared by the canvas edge and the list under it. */
 export function lifecycleArcLabel(workspace: ReportWorkspace, entity: EntityView, arcIndex: number): LifecycleArcLabel {
   const arc = entity.arcs[arcIndex]!
-  const titleOf = (kind: 'capability' | 'entity' | 'rule', id: string) => resolveResource(workspace, kind, id)?.title ?? id
-  const rules = arc.ruleIds.flatMap((id) => {
-    const rule = resolveResource(workspace, 'rule', id)
-    return rule?.kind === 'rule' ? [{ id, title: rule.title, grants: rule.grants.map(grant => grant.sentence) }] : []
-  })
+  const titleOf = (kind: 'capability' | 'entity', id: string) => resolveResource(workspace, kind, id)?.title ?? id
   return {
     capabilities: arc.capabilityIds.map(id => titleOf('capability', id)),
-    rules,
     coEffects: arc.coEffects.map(co => `also ${co.effect} ${titleOf('entity', co.entityId)}${co.to ? ` → ${co.to}` : ''}`),
     forbidden: arc.forbiddenByRuleIds.length > 0
   }
 }
 
-/** The one word the canvas carries for a restriction, and how many Rules stand behind it when more than one does. */
-export function lifecycleRestrictionMarker(label: LifecycleArcLabel): string {
-  if (!label.rules.length) return ''
-  return label.rules.length > 1 ? `restricted by ${label.rules.length} Rules` : 'restricted'
+/**
+ * Under which alternatives a change is made, read from the Scenarios making it:
+ * one runs only when its alternative — or its Capability's or Journey's — is
+ * chosen. The Entity's own Variation is said once, in its header, never again here.
+ */
+export function lifecycleArcCondition(workspace: ReportWorkspace, entity: EntityView, arc: Pick<EntityArcView, 'capabilityScenarioIds' | 'journeyScenarioIds'>): VariationCondition<AnyResourceView> {
+  const supporters = [
+    ...arc.capabilityScenarioIds.map(id => workspace.byKey.get(`capability-scenario:${id}`)),
+    ...arc.journeyScenarioIds.map(id => workspace.byKey.get(`journey-scenario:${id}`))
+  ].filter((item): item is AnyResourceView => Boolean(item))
+  return variationCondition(workspace, supporters, new Set(entity.variation ? [entity.variation.key] : []))
 }
+
+/** What a conditional change or State says about when it holds: its one alternative, or that it takes some. */
+export function lifecycleConditionNote(conditions: VariationCondition<AnyResourceView>[]): string {
+  return variationConditionNote(conditions)
+}
+
+/** A State is conditional only when its combined incoming support is incomplete. */
+export function lifecycleStateCondition(workspace: ReportWorkspace, entity: EntityView, state: string): string | null {
+  const into = entity.arcs.filter(arc => arc.to === state && arc.from !== state)
+  if (!into.length) return null
+  const condition = lifecycleArcCondition(workspace, entity, {
+    capabilityScenarioIds: [...new Set(into.flatMap(arc => arc.capabilityScenarioIds))],
+    journeyScenarioIds: [...new Set(into.flatMap(arc => arc.journeyScenarioIds))]
+  })
+  if (!condition.conditional) return null
+  /* A State box is narrow: it names the alternatives alone; its details say their sets. */
+  const alternatives = new Set(condition.groups.map(group => group.choices.map(choice => choice.alternative.title).join(' · ')))
+  return alternatives.size === 1 ? `Only under ${[...alternatives][0]}` : 'Only under some alternatives'
+}
+
+/** A change no one may make is marked, not attributed: no Capability draws it. */
+const FORBIDDEN_BADGE: DiagramEdgeBadge = { icon: 'i-lucide-ban', text: 'Forbidden' }
 
 /** The canvas edge drawn for one arc, so the list under the machine can tell a listed arc from a drawn one. */
 export function lifecycleArcEdgeId(entityId: string, arc: Pick<EntityArcView, 'key'>): string {
@@ -81,6 +104,30 @@ export interface LifecycleRowGroup<T extends EntityArcView = EntityArcView> {
   arcs: T[]
 }
 
+/**
+ * Moves in the order the Entity's Lifecycle Rows reads them — creation, then
+ * by starting State in declared order, then changes naming no starting State,
+ * then those naming an undeclared one — and, within a group, as the Entity
+ * lists its changes. A Capability's What it changes follows it, so the same
+ * moves read in the same order on both pages whatever order Steps were written in.
+ */
+export function lifecycleRowOrder<T extends Pick<EntityArcView, 'effect' | 'from' | 'to'>>(entity: Pick<EntityView, 'states' | 'arcs'>, moves: T[]): T[] {
+  const states = entity.states.map(state => state.name)
+  const group = (move: T) => {
+    if (move.effect === 'creates') return 0
+    if (!move.from) return states.length + 1
+    const index = states.indexOf(move.from)
+    return index >= 0 ? index + 1 : states.length + 2
+  }
+  const listed = (move: T) => entity.arcs.findIndex(arc => arc.effect === move.effect && arc.from === move.from && arc.to === move.to)
+  return [...moves].sort((a, b) => group(a) - group(b) || listed(a) - listed(b))
+}
+
+/** A change's address inside its Entity's Lifecycle reading: `lifecycle/<address>` selects it. */
+export function lifecycleChangeAddress(move: Pick<EntityArcView, 'effect' | 'from' | 'to'>): string {
+  return [move.effect, move.from, move.to].join('~')
+}
+
 /** A change belongs to its starting State exactly once. Creation is not a State. */
 export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<EntityView, 'id' | 'states'>, arcs: T[]): LifecycleRowGroup<T>[] {
   const states: LifecycleRowGroup<T>[] = entity.states.map(state => ({
@@ -99,11 +146,10 @@ export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<Entit
 
 /** Build the placed graph for one Entity's composed lifecycle. */
 export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityView): Diagram {
-  const nodes: DiagramNode[] = entity.states.map((state) => stateNode(entity, {
-    name: state.name,
-    reached: state.reached,
-    terminal: null
-  }))
+  const nodes: DiagramNode[] = entity.states.map((state) => {
+    const conditional = lifecycleStateCondition(workspace, entity, state.name)
+    return { ...stateNode(entity, { name: state.name, reached: state.reached, terminal: null }), ...(conditional ? { conditional } : {}) }
+  })
   const present = new Set(nodes.map(node => node.id))
   const edges: DiagramEdge[] = []
   let hasStart = false
@@ -113,9 +159,13 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
   const caption = (label: LifecycleArcLabel): string => {
     if (label.forbidden) return 'forbidden'
     const [first = '', ...rest] = label.capabilities
-    const capabilities = rest.length ? `${first} +${rest.length}` : first
-    const marker = lifecycleRestrictionMarker(label)
-    return marker ? `${capabilities} · ${marker}` : capabilities
+    return rest.length ? `${first} +${rest.length}` : first
+  }
+  /* The same words as a badge wearing the Capability's mark. */
+  const badges = (label: LifecycleArcLabel): DiagramEdgeBadge[] => {
+    if (label.forbidden) return [FORBIDDEN_BADGE]
+    const [first, ...rest] = label.capabilities
+    return first ? [{ kind: 'capability', text: rest.length ? `${first} +${rest.length}` : first }] : []
   }
   entity.arcs.forEach((arc, index) => {
     const label = lifecycleArcLabel(workspace, entity, index)
@@ -127,8 +177,11 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if ((source !== LIFECYCLE_START && !present.has(source)) || (target !== LIFECYCLE_END && !present.has(target))) return
     if (arc.effect === 'creates') hasStart = true
     if (arc.effect === 'removes') hasEnd = true
+    /* A change only some alternatives make is dashed, and its label wears the variation mark. */
+    const conditional = !label.forbidden && lifecycleArcCondition(workspace, entity, arc).conditional
     edges.push({
-      source, target, label: caption(label),
+      source, target, label: caption(label), badges: conditional ? badges(label).map((badge, index) => index ? badge : { ...badge, varied: true }) : badges(label),
+      ...(conditional ? { conditional: true } : {}),
       id: lifecycleArcEdgeId(entity.id, arc),
       inspectionKey: lifecycleArcEdgeId(entity.id, arc),
       inspectionLabel: lifecycleArcTitle(arc),
@@ -148,7 +201,7 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (source === LIFECYCLE_START) hasStart = true
     if (target === LIFECYCLE_END) hasEnd = true
     edges.push({
-      source, target, label: 'forbidden',
+      source, target, label: 'forbidden', badges: [FORBIDDEN_BADGE],
       id: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
       inspectionKey: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
       inspectionLabel: `Forbidden: ${prohibition.from || 'Created'} → ${prohibition.to || 'Removed'}`,

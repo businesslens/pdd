@@ -16,6 +16,7 @@ Entity relationships for Entities, the Interface map for Interfaces, and a reach
 tree from the Product for Domains, Capabilities, Journeys and Business Rules.
 Matrix compares the same filtered subjects: What changes what in Entities,
 Compare delivery in Capabilities, and Rule attachments in Business Rules.
+Variations has Rows only: a set has no derivation of its own to draw.
 Collection filters, selections and counts stay the same across drawings;
 Changed by, Available in and Attached to select matching subjects in every
 drawing and the Matrix's target columns. Available in groups Interfaces,
@@ -24,10 +25,9 @@ the Matrix compares the corresponding Interfaces and matching routes. Capabiliti
 have no separate Screen or Scenario filter. Attached to combines exact targets and
 whole resource types in one searchable picker, with OR within the picker and AND
 with other filters. Context restrictions and inherited reach are not attachments.
-With no relationship selection, subjects without relationships remain visible. The rail lists Overview and the six collections.
-There is no view of the
-whole model: the rail names every collection with its count, and a resource's
-own connections belong to its page. Each Graph states the question it answers
+With no relationship selection, subjects without relationships remain visible. The rail lists Overview and the seven collections.
+The rail names every collection with its count, and a resource's own connections
+belong to its reading. Each Graph states the question it answers
 and explains its derivation. The Developer can expand branches, narrow the
 visible resources, inspect a resource’s incoming and outgoing connections, and
 open any included resource’s reading. The selected drawing survives returning

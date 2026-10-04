@@ -3,7 +3,7 @@ title: Overview
 description: Install skills, lint and view a Product Model locally, and move Blueprints between repositories with the BusinessLens CLI.
 section: open-source
 group: CLI
-order: 24
+order: 20
 ---
 
 # BusinessLens CLI
@@ -16,36 +16,45 @@ npx businesslens <command> [options]
 
 | Command | Purpose |
 | --- | --- |
-| [`install`](./cli-install.md) | Install map, ideate, and verify |
-| [`update`](./cli-update.md) | Refresh marked skill installations |
-| [`lint`](./cli-lint.md) | Check Product Model structure without semantic claims |
-| [`view`](./cli-view.md) | Render a Product Model on localhost without exporting it, local or from GitHub |
-| [`blueprint export`](./cli-export.md) | Compile a portable Product Report (a Blueprint) |
-| [`blueprint open`](./cli-open.md) | Expand a local Blueprint into `.businesslens/` |
-| [`blueprint pull`](./cli-pull.md) | Pull a catalog Blueprint by name |
-| [`blueprint contribute`](./cli-contribute.md) | Propose a Blueprint by pull request |
+| [`install`](./cli-install.md) | Install BusinessLens skills |
+| [`update`](./cli-update.md) | Update managed skill installations |
+| [`lint`](./cli-lint.md) | Lint a Product Model |
+| [`view`](./cli-view.md) | View a Product Model locally, from your checkout or from GitHub |
+| [`blueprint export`](./cli-export.md) | Export a Blueprint |
+| [`blueprint open`](./cli-open.md) | Open a local Blueprint |
+| [`blueprint pull`](./cli-pull.md) | Pull a catalog Blueprint |
+| [`blueprint contribute`](./cli-contribute.md) | Contribute a Blueprint |
+| `help [command]` | Show help for a command |
 
-Global options are `-c, --cwd <path>`, `-h, --help`, and `-V, --version`.
-Only documented commands and options are accepted; removed spellings produce
-normal usage errors. Installation scope uses `--scope project|global`.
-Each command's help lists only the arguments and options that command accepts:
+The `blueprint` commands move a Product Model between repositories as a
+[Blueprint](./from-a-blueprint.md#what-a-blueprint-is).
+
+## Global options
+
+| Option | Meaning |
+| --- | --- |
+| `-c, --cwd <path>` | Run from another directory (see below) |
+| `-h, --help` | Show help for the command |
+| `-V, --version` | Show the CLI version |
+
+Each command's help lists only what that command accepts:
 
 ```bash
-npx businesslens view --help
+npx businesslens help view
 npx businesslens blueprint pull --help
 ```
 
 ## Choosing the Product Model
 
 `lint`, `view`, `blueprint export`, and `blueprint contribute` start from the
-current directory. If that directory directly contains `.businesslens/`, that
-model is used; otherwise BusinessLens checks the Git repository root. This lets
-a nested Blueprint take precedence when the command runs from its directory,
-while ordinary repository subdirectories still use the repository model.
+current directory. If it directly contains `.businesslens/`, that model is used;
+otherwise BusinessLens uses the one at the Git repository root. So a nested
+Blueprint wins when you run from its directory, while ordinary subdirectories
+use the repository's model.
 
-Pass `-c, --cwd <path>` to run from another directory. `--cwd .` is identical
-to omitting the option. Point to the directory containing `.businesslens/`, not
-to `.businesslens/` itself.
+`--cwd <path>` runs from another directory; `--cwd .` is the same as leaving it
+out. Point it at the directory that contains `.businesslens/`, not at
+`.businesslens/` itself.
 
 ```bash
 # A nested Blueprint in the current repository
@@ -55,12 +64,19 @@ npx businesslens view --cwd ./blueprints/example-product
 npx businesslens lint --cwd ../fixture-shop --json
 ```
 
-`view` can instead take a GitHub repository, branch, or pull request; the model
-is then looked up from that snapshot's root, and `--cwd` does not apply. See
-[`view`](./cli-view.md#a-github-repository).
+`view` can instead take a GitHub repository, branch, or pull request, and then
+`--cwd` does not apply. See [`view`](./cli-view.md#a-github-repository).
 
-For `blueprint open` and `blueprint pull`, `--cwd` is instead the exact target
-directory where `.businesslens/` will be created. For `install` and `update`, it
-is the project used for harness detection and project-scoped skill installation.
+For `blueprint open` and `blueprint pull`, `--cwd` is the directory where
+`.businesslens/` will be created. For `install` and `update`, it is the project
+used for harness detection and project-scoped skills.
 
-Exit codes: `0` success, `1` operation failure, and `2` invalid usage.
+## Environment
+
+| Variable | Used by | Meaning |
+| --- | --- | --- |
+| `BUSINESSLENS_CATALOG_URL` | `blueprint pull` | Catalog origin when `--catalog` is not given; defaults to `https://businesslens.io` |
+| `BUSINESSLENS_CONTRIBUTE_UPSTREAM` | `blueprint contribute` | `owner/repo` the pull request targets; defaults to `businesslens/pdd` |
+
+Exit codes: `0` success, `1` the command failed or was refused, `2` invalid
+usage. Each command page says which cases map to which.

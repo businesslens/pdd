@@ -57,7 +57,7 @@ function kindGroups(origin: Origin): Node[] {
   return Object.entries(KIND_LABEL).flatMap(([kind, label]) => {
     const children = props.references.flatMap((reference, index): Node[] => {
       if (reference.kind !== kind || originOf(reference) !== origin) return []
-      const value = JSON.stringify([reference.kind, reference.target, reference.role, reference.state, index])
+      const value = JSON.stringify([reference.kind, reference.target, reference.role, index])
       return [{ value, kind: reference.kind, label: isExternal(reference.target) ? reference.title || reference.target : reference.target, reference, referenceIndex: index,
         children: isLocalImage(reference)
           ? [{ value: `${value}:preview`, kind: reference.kind, label: `Preview: ${reference.title || reference.target}`, reference, preview: true }]
@@ -164,7 +164,6 @@ const select = (event: Event, item: Node) => {
                   </template>
                   <UIcon v-if="isExternal(item.reference.target)" name="i-lucide-external-link" class="ms-1 inline-block size-3 align-baseline text-dimmed" aria-hidden="true" data-external-reference />
                 </component>
-                <UBadge v-if="item.reference.state" color="neutral" variant="outline" size="sm" :title="`Depicts the ${item.reference.state} product state`">{{ item.reference.state }}</UBadge>
                 <UBadge :color="ROLE_TONE[item.reference.role] || 'neutral'" variant="subtle" size="sm">{{ item.reference.role }}</UBadge>
                 <span
                   v-if="isExternal(item.reference.target) && item.reference.title && item.reference.title !== item.reference.target"

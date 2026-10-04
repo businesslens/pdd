@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: visitor
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::public-reading::public-collection
@@ -15,7 +15,7 @@ steps:
     kind: product
     actor: visitor
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::public-reading::public-collection
@@ -23,7 +23,7 @@ steps:
     kind: product
     actor: visitor
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::public-reading::public-collection

@@ -10,13 +10,17 @@ const props = defineProps<{
   viewKey: string
 }>()
 const emit = defineEmits<{ open: [key: string] }>()
+/* The badge is dashed when every change it holds is made only under some alternatives. */
+const condition = computed(() => props.mutation.variants.every(variant => variant.condition)
+  ? [...new Set(props.mutation.variants.map(variant => variant.condition))].length === 1 ? props.mutation.variants[0]!.condition : 'Only under some alternatives'
+  : undefined)
 const title = computed(() => `${{ creates: 'Creates', changes: 'Changes', removes: 'Removes' }[props.mutation.effect]} ${props.entityTitle}`)
 </script>
 
 <template>
   <BlrMatrixBadge :label="mutation.effect" :tone="mutation.effect"
     :accessible-label="`${title} · ${capabilityTitle}: show scenarios`"
-    :view-key="viewKey" :content-key="mutation" @open="emit('open', $event)">
+    :view-key="viewKey" :content-key="mutation" :condition="condition" @open="emit('open', $event)">
     <template #heading><BlrKind kind="capability" :labelled="false" size="xs" /><span>{{ capabilityTitle }}</span></template>
     <template #default="{ follow }">
       <section v-for="(variant, index) in mutation.variants" :key="JSON.stringify([variant.from, variant.to])" class="blr-matrix-popover-section">
@@ -27,6 +31,7 @@ const title = computed(() => `${{ creates: 'Creates', changes: 'Changes', remove
           <template v-if="variant.from && variant.to"><strong>{{ variant.from }}</strong> <span aria-label="to">→</span> <strong>{{ variant.to }}</strong></template>
           <template v-else>Changes information</template>
         </p>
+        <p v-if="variant.condition && !condition" class="blr-matrix-popover-condition" data-matrix-condition><UIcon name="i-lucide-split" aria-hidden="true" />{{ variant.condition }}</p>
         <p class="blr-matrix-popover-caption">{{ variant.evidence.length }} {{ variant.evidence.length === 1 ? 'Scenario' : 'Scenarios' }}</p>
         <ul class="blr-matrix-popover-links"><li v-for="scenario in variant.evidence" :key="scenario.key"><BlrTopologyResource :resource="scenario" @open="follow" /></li></ul>
       </section>

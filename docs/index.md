@@ -8,48 +8,51 @@ order: 1
 
 # BusinessLens: Product-Driven Development for coding agents
 
-BusinessLens is Product-Driven Development for coding agents. It stores the
-durable Product contract in `.businesslens/`: Entities and Interfaces, optional
-Experiences, Screens, and Domains, followed by Capabilities, Business Rules,
-local Capability Scenarios, optional multi-Capability Journeys, and their
-end-to-end Journey Scenarios.
+BusinessLens is Product-Driven Development for coding agents. It keeps a
+durable Product contract in `.businesslens/`: what your product does, for whom,
+where, and under which rules, including where it works more than one way
+([Variations](./variations.md): feature flags, plan tiers, A/B tests, API
+versions). The [Model overview](./product-model.md) explains the folder in five
+minutes.
 
 The Product Model says what the product is intended to do. It does not prescribe
 the stack or replace your plan mode, SDD framework, coding agent, or tests.
 
-## Three ways in
+## The development loop
 
-| Starting point | Use |
-| --- | --- |
-| Existing repository, no trusted model | `businesslens-map` |
-| Blank idea or desired behavior change | `businesslens-ideate` |
-| Reviewed reusable starting point | `businesslens blueprint pull <name>` |
+Every product change runs the same loop:
 
-All three create the same artifact. After that, changes use one loop:
-
+::development-loop
 ```text
-ideate → your plan/build flow → verify (including final lint) → merge
+ideate → build → verify
+   ▲                 │
+   └── next change ──┘
+
+build: plan mode, an SDD tool, or freestyle
+```
+::
+
+## See the model at any time
+
+At any point in the loop, open the model as a local report in your browser:
+
+```bash
+npx businesslens view
 ```
 
-See the [development loop](./the-loop.md) for the everyday workflow and the
-[`verify` skill](./skill-businesslens-verify.md) for inspection and resolution
-modes.
+![The local report open on a Blueprint's overview page](./images/report-overview.webp)
 
-## Two checks
+It updates as the files change, so you can keep it open while you ideate,
+review a change, or verify. See [`view`](./cli-view.md) for the options.
 
-- `businesslens lint` is deterministic structure: files, fields, availability, relationships,
-  grammar, and tracked code-reference paths.
-- `businesslens-verify` is semantic inspection: whether current code supports
-  the model's observable contract.
+## What BusinessLens never does
 
-A green lint result never claims model/code agreement.
+- Run your code: the skills read it, they never execute it.
+- Write outside `.businesslens/`, or edit your AGENTS.md, CLAUDE.md or README.
+- Commit for you.
 
-## Coverage and evidence
+## Next
 
-[Coverage](./product-model.md#coverage) describes how much intended Product
-breadth is modeled. [References](./references.md) attach optional external
-material. Neither claims implementation alignment.
-
-Choose your starting door: [from your repo](./from-your-repo.md),
-[from a Blueprint](./from-a-blueprint.md), or [from an idea](./from-an-idea.md).
-Then follow the [development loop](./the-loop.md).
+- [Installation](./installation.md): install the skills into your coding agent.
+- [Model overview](./product-model.md): the `.businesslens/` folder in five
+  minutes.

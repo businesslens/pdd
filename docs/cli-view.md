@@ -3,49 +3,47 @@ title: view
 description: Open a Product Model as a private local report, from your checkout or from a GitHub repository.
 section: open-source
 group: CLI
-order: 28
+order: 24
 ---
 
 # `businesslens view`
 
+Open a Product Model as a read-only report in your browser, while you write it
+or to review someone else's branch or pull request.
+
 ```bash
-npx businesslens view
-npx businesslens view owner/repo --pr 12
+npx businesslens view [repository] [--branch <name> | --pr <number>] [--no-open] [--port <port>]
 ```
-
-`view` opens a Product Model as a read-only report on localhost. It does not
-alter the model, write `.businesslens/build/report.json`, or send report data
-to BusinessLens.
-
-The server listens only on `127.0.0.1` and stops when the command exits.
 
 ## Options
 
-| Option | Effect |
+| Option | Meaning |
 | --- | --- |
-| `[repository]` | View a GitHub repository instead of the working directory |
+| `[repository]` | A GitHub repository to view instead of your checkout |
 | `--branch <name>` | Branch or tag of that repository |
-| `--pr <number>` | Pull request of that repository |
-| `--no-open` | Print the URL without launching the default browser |
-| `--port <port>` | Listen on a specific port from 1 through 65535 |
-| `-c, --cwd <path>` | Start local model lookup from another directory |
+| `--pr <number>` | Pull request of that repository; not with `--branch` |
+| `--no-open` | Print the URL without opening the browser |
+| `--port <port>` | Port from 1 to 65535; by default a free port the system picks |
+
+## What it does
+
+1. Starts a server on `127.0.0.1` only, and opens the report.
+2. Compiles the model in memory. It writes nothing (no
+   `.businesslens/build/report.json`) and sends nothing to BusinessLens.
+3. Keeps running until you press Ctrl+C.
 
 ## Your checkout
 
-Without a repository, `view` uses the model in the current directory, or at
-the Git repository root. Valid edits appear automatically while the viewer is
-open; a lint error keeps the last valid report on screen until it is fixed.
-With no model yet, or one that does not lint, the page waits and shows the
-report once there is a valid one.
-Initializing Git after opening the viewer, or staging referenced files, also
-updates the report without restarting it.
-See [Choosing the Product Model](./cli.md#choosing-the-product-model) for
-`--cwd`.
+With no repository, `view` uses your local model. See
+[Choosing the Product Model](./cli.md#choosing-the-product-model). The report
+follows your edits: each valid save appears, and a save that does not lint shows
+why until it does. With no model yet, the page waits for one.
 
 ## A GitHub repository
 
-Pass a repository as `owner/repo`, a `https://github.com/owner/repo` URL, or
-`git@github.com:owner/repo.git` to fetch over SSH. Only GitHub is supported.
+Pass `owner/repo`, a `https://github.com/owner/repo` URL, or
+`git@github.com:owner/repo.git` to fetch over SSH. Only GitHub is supported, and
+`git` must be installed.
 
 ```bash
 npx businesslens view acme/checkout                      # default branch
@@ -54,17 +52,19 @@ npx businesslens view acme/checkout --pr 12
 npx businesslens view https://github.com/acme/checkout/pull/12
 ```
 
-A `.../tree/<branch>` or `.../pull/<number>` URL selects the revision by
-itself; do not combine it with `--branch` or `--pr`.
+A `.../tree/<branch>` or `.../pull/<number>` URL already picks the revision; do
+not add `--branch` or `--pr`. A pull request from a fork shows the fork's
+content.
 
-A pull request shows its head as GitHub holds it, so a pull request opened from
-a fork shows the fork's content without naming the fork.
+The revision is fetched shallowly into a temporary directory, with your own Git
+credentials, and deleted when you stop. Nothing from it runs. Its model must
+lint before the report opens, and the report does not refresh. Run the command
+again for a newer revision. `--cwd` does not apply.
 
-The revision is fetched shallowly into a temporary directory and deleted when
-the command exits. Nothing from the repository runs. Private repositories use
-your own Git credentials. The model must pass structural lint before the viewer
-opens, and the report does not refresh; run the command again
-for a newer revision. `--cwd` does not apply.
+Exits 0 when you stop it, 1 when the port cannot be opened or a repository
+cannot be fetched or does not lint, and 2 for conflicting or invalid options.
 
-Use [`blueprint export`](./cli-export.md) when you need to write a source-free,
-portable Product Report.
+## Next
+
+- [`lint`](./cli-lint.md) to see every error in the terminal.
+- [`blueprint export`](./cli-export.md) to write a portable report file.

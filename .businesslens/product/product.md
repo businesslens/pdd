@@ -7,6 +7,7 @@ authors:
   - name: BusinessLens
     url: https://businesslens.io
 license: MIT
+languages: [en]
 limitations:
   - BusinessLens never implements product behavior. Building is left to whatever plan, spec, or coding flow the harness already provides.
   - Structural linting is deterministic; deciding whether code and model agree is a separate semantic workflow that a person must approve.

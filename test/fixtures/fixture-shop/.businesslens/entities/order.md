@@ -31,6 +31,11 @@ cancellation or refund.
 
 Submitted and awaiting payment settlement. No stock has been committed yet.
 
+### Cancellation requested
+
+Its shopper asked to withdraw it while unpaid, and a store operator has not yet
+decided. Nothing is charged while it waits.
+
 ### Confirmed
 
 Paid and accepted. Stock is committed and the order is queued for fulfilment.

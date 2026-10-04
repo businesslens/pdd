@@ -72,7 +72,22 @@ Lead.
 ## Information kept
 
 - **Delivery address** — where their orders are sent
+- **Product presentation assignment** — the named product-detail experiment arm assigned to this shopper
+- **Checkout assignment** — the checkout review experiment arm assigned to this shopper
+- **Post-purchase assignment** — the post-purchase experiment arm assigned to this shopper
 `
+}
+
+/** Drop the mobile catalog preview and its Variation, for tests that reshape customer-mobile. */
+function withoutCatalogPreview(bl: string) {
+  unlinkSync(join(bl, 'variations/mobile-storefront.md'))
+  unlinkSync(join(bl, 'interfaces/customer-mobile/experiences/catalog-preview.md'))
+  const capability = join(bl, 'capabilities/browse-catalog/capability.md')
+  writeFileSync(capability, readFileSync(capability, 'utf8').replace(', { place: customer-mobile::catalog-preview }', ''))
+  const scenario = join(bl, 'capabilities/browse-catalog/scenarios/browse-catalog.md')
+  writeFileSync(scenario, readFileSync(scenario, 'utf8')
+    .replace('  preview: Mobile catalog preview\n', '')
+    .replaceAll('      preview:\n        place: customer-mobile::catalog-preview\n', ''))
 }
 
 function writeRule(cwd: string, id: string, frontmatter: string) {
@@ -87,36 +102,16 @@ Lead.
 }
 
 describe('lintModel', () => {
-  it('accepts a reference state that names a View state, and rejects one that does not', () => {
+  it('refuses the retired reference and asset state keys everywhere', () => {
     const cwd = fixtureCopy()
     const screen = join(cwd, '.businesslens', 'interfaces', 'customer-web', 'experiences', 'storefront', 'screens', 'product-record.md')
-    const source = readFileSync(screen, 'utf8')
-
-    // product-record.md declares "### Ready to buy" and "### Purchase blocked".
-    const withState = source.replace(
+    writeFileSync(screen, readFileSync(screen, 'utf8').replace(
       '    title: Product record visual reference',
       '    title: Product record visual reference\n    state: Ready to buy'
-    )
-    writeFileSync(screen, withState)
-    expect(run(cwd).errors).toEqual([])
-
-    writeFileSync(screen, withState.replace('state: Ready to buy', 'state: Nonexistent'))
-    const bad = run(cwd)
-    expect(bad.ok).toBe(false)
-    expect(bad.errors.some(e => e.includes('reference state "Nonexistent" is not a view state'))).toBe(true)
-  })
-
-  it('rejects a reference state on a resource that is not a Screen', () => {
-    const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens', 'capabilities', 'browse-catalog', 'capability.md')
-    const source = readFileSync(capability, 'utf8')
-    writeFileSync(capability, source.replace(
-      '    target: src/services/catalog.ts#CatalogService',
-      '    target: src/services/catalog.ts#CatalogService\n    state: Available'
     ))
-    const result = run(cwd)
-    expect(result.ok).toBe(false)
-    expect(result.errors.some(e => e.includes('reference "state" is only valid on a Screen'))).toBe(true)
+    // A capture of a condition attaches to the Scenario that reaches it; a
+    // Screen has no states for a key to resolve against.
+    expect(run(cwd).errors).toContain(`${screen}: reference has unknown key "state"`)
   })
 
   it('reports an unexpected collection entry instead of silently dropping it', () => {
@@ -213,16 +208,16 @@ describe('lintModel', () => {
     expect(result.warnings).toEqual([])
     expect(result.ok).toBe(true)
     expect(result.counts).toEqual({
-      interfaces: 5,
-      experiences: 2,
-      screens: 6,
+      interfaces: 6,
+      experiences: 3,
+      screens: 7,
       domains: 1,
-      entities: 8,
-      capabilities: 6,
-      capabilityScenarios: 12,
-      journeys: 1,
-      journeyScenarios: 2,
-      businessRules: 12
+      entities: 10,
+      capabilities: 7,
+      capabilityScenarios: 18,
+      journeys: 2,
+      journeyScenarios: 4,
+      businessRules: 14
     })
   })
 
@@ -277,16 +272,16 @@ describe('lintModel', () => {
 
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
-    for (const schema of [5, 8, 10, 11]) {
+    for (const schema of [5, 8, 9]) {
       writeFileSync(join(cwd, '.businesslens/config.yaml'), `schema: ${schema}\nsdd:\n  paths: []\n`)
-      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 9)`)
+      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 10)`)
     }
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 9)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 10)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -430,7 +425,7 @@ Lead.
 - **Weight** — how heavy it is
 `)
     expect(run(cwd).errors.join('\n')).toContain(
-      'ghost-thing.md: no Step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it'
+      'ghost-thing.md: no Step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation chooses by it'
     )
   })
 
@@ -467,11 +462,38 @@ Lead.
     compactResource(join(bl, 'interfaces/admin-web/interface.md'), join(bl, 'interfaces/admin-web.md'))
     walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8')
       .replaceAll('customer-web::catalog', 'customer-web::storefront')
-      .replaceAll('::product-record', '')
+      .replace(/::product-record(?:-without-stock)?/g, '')
       .replaceAll('::order-status', '')
       .replaceAll('admin-web::order-detail', 'admin-web')))
-    const margin = join(bl, 'business-rules/margin-is-for-operators.md')
-    writeFileSync(margin, readFileSync(margin, 'utf8').replace('    contexts:\n      - place: admin-web\n', ''))
+    // The experiment's routes differ only by Screen; without Screens the
+    // existing browse Scenario already covers their single remaining place.
+    unlinkSync(join(bl, 'capabilities/browse-catalog/scenarios/read-a-product-without-its-stock.md'))
+    // The stock disclosure experiment varies Screens, which no longer exist,
+    // and the checkout route through its second Screen collapses onto web.
+    unlinkSync(join(bl, 'variations/stock-disclosure.md'))
+    for (const name of ['complete-checkout', 'complete-checkout-without-review']) {
+      const file = join(bl, `capabilities/place-order/scenarios/${name}.md`)
+      writeFileSync(file, readFileSync(file, 'utf8')
+        .replace('  web-without-stock: Web without stock\n', '')
+        .replace(/ {6}web-without-stock:\n {8}place: [^\n]*\n/g, ''))
+    }
+    /* With no Screen anywhere, nothing is reachable from everywhere, and a
+       governed fact is checkable only where a Step cites it. */
+    const web = join(bl, 'interfaces/customer-web/interface.md')
+    writeFileSync(web, readFileSync(web, 'utf8').replace(/^navigation:.*\n/m, ''))
+    const status = join(bl, 'capabilities/track-order/scenarios/check-an-order-and-its-refund.md')
+    writeFileSync(status, readFileSync(status, 'utf8').replace(
+      '- { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
+      '- { entity: order, effect: reads, facts: [Total charged] }'
+    ).replace(
+      '- { entity: refund, effect: reads, facts: [Amount, Reason] }',
+      '- { entity: refund, effect: reads, facts: [Amount] }'
+    ))
+    const console = join(bl, 'capabilities/manage-orders/scenarios/refund-order.md')
+    writeFileSync(console, readFileSync(console, 'utf8').replace(
+      '- { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
+      '- { entity: order, effect: reads, facts: [Margin] }'
+    ))
 
     const result = run(cwd)
     expect(result.errors).toEqual([])
@@ -485,6 +507,7 @@ Lead.
 
     // Promote every Experience-contained Screen up to its Interface and drop the
     // Experiences, leaving each Interface undivided.
+    withoutCatalogPreview(bl)
     for (const interfaceId of ['customer-web', 'customer-mobile']) {
       const from = join(bl, 'interfaces', interfaceId, 'experiences', 'storefront', 'screens')
       cpSync(from, join(bl, 'interfaces', interfaceId, 'screens'), { recursive: true })
@@ -576,10 +599,6 @@ entryPoints:
 # Order desk
 
 Where an operator works through orders from the command line.
-
-## Capability boundary
-
-Supports order operations. It does not expose a shopper's account.
 `
     )
     // A second access mode is what makes the CLI a divided Interface; a lone
@@ -596,10 +615,6 @@ entryPoints:
 # Status desk
 
 Read-only status an operator can query without a session.
-
-## Capability boundary
-
-Reads status only. It changes nothing.
 `
     )
     for (const relative of [
@@ -880,8 +895,8 @@ Filed away.
     const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
     const source = readFileSync(refund, 'utf8')
     writeFileSync(refund, source.replace(
-      '      - { entity: order, effect: reads }',
-      '      - { entity: order, effect: changes, from: Pending, to: Confirmed }'
+      '      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
+      '      - { entity: order, effect: changes, from: Pending, to: Confirmed, facts: [] }'
     ).replace('from: Confirmed, to: Refunded', 'from: Pending, to: Refunded'))
     expect(run(cwd).errors.join('\n')).toContain(
       '"order" was left in "Confirmed" by an earlier Step, not "Pending"; if these are different instances, give them aliases'
@@ -889,8 +904,8 @@ Filed away.
 
     const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
     writeFileSync(merge, readFileSync(merge, 'utf8').replace(
-      '{ entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled }',
-      '{ entity: order, effect: changes, from: Pending, to: Cancelled }'
+      '{ entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled, facts: [] }',
+      '{ entity: order, effect: changes, from: Pending, to: Cancelled, facts: [] }'
     ))
     expect(run(cwd).errors.join('\n')).toContain(
       '"order" is aliased elsewhere in this Scenario; once an Entity is aliased, every mention of it is'
@@ -924,8 +939,8 @@ Filed away.
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      '    entities:\n      - { entity: catalog-product, effect: reads }\n    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens',
-      '    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens'
+      '    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper opens',
+      '    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper opens'
     ))
     expect(run(cwd).errors.join('\n')).toContain('step 1: needs "entities" — what this Step does to the Product\'s things, or [] when it touches nothing')
   })
@@ -955,7 +970,7 @@ Filed away.
     const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
     const source = readFileSync(scenario, 'utf8')
 
-    writeFileSync(scenario, source.replace('{ entity: catalog-product, effect: reads }', '{ entity: ghost, effect: reads }'))
+    writeFileSync(scenario, source.replace('{ entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }', '{ entity: ghost, effect: reads, facts: [] }'))
     expect(run(cwd).errors.join('\n')).toContain('step 1: references missing entity "ghost"')
 
     writeFileSync(scenario, source)
@@ -968,26 +983,26 @@ Filed away.
     const source = readFileSync(refund, 'utf8')
     const withEntry = (entry: string) => {
       writeFileSync(refund, source.replace(
-        '      - { entity: refund, effect: creates, to: Requested }',
-        `      - { entity: refund, effect: creates, to: Requested }\n      - ${entry}`
+        '      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }',
+        `      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }\n      - ${entry}`
       ))
       return run(cwd).errors.join('\n')
     }
 
-    expect(withEntry('{ entity: refund, effect: reads }')).toContain('"refund" already appears in this Step')
-    expect(withEntry('{ entity: cart, effect: reads, to: Full }')).toContain('a "reads" entry carries no "from" or "to"')
-    expect(withEntry('{ entity: cart, effect: creates, from: Empty }')).toContain('a "creates" entry has no "from"')
+    expect(withEntry('{ entity: refund, effect: reads, facts: [] }')).toContain('"refund" already appears in this Step')
+    expect(withEntry('{ entity: cart, effect: reads, to: Full, facts: [] }')).toContain('a "reads" entry carries no "from" or "to"')
+    expect(withEntry('{ entity: cart, effect: creates, from: Empty, facts: [] }')).toContain('a "creates" entry has no "from"')
     expect(withEntry('{ entity: cart, effect: removes, to: Empty }')).toContain('a "removes" entry has no "to"')
-    expect(withEntry('{ entity: cart, effect: changes, to: Full }')).toContain('a "changes" entry carries both "from" and "to", or neither')
-    expect(withEntry('{ entity: cart, effect: changes, from: Full, to: Empty }')).toContain('names a state, and entity "cart" declares none')
-    expect(withEntry('{ entity: catalog-product, effect: creates }')).toContain('creating "catalog-product" needs "to", the state it starts in')
+    expect(withEntry('{ entity: cart, effect: changes, to: Full, facts: [] }')).toContain('a "changes" entry carries both "from" and "to", or neither')
+    expect(withEntry('{ entity: cart, effect: changes, from: Full, to: Empty, facts: [] }')).toContain('names a state, and entity "cart" declares none')
+    expect(withEntry('{ entity: catalog-product, effect: creates, facts: [] }')).toContain('creating "catalog-product" needs "to", the state it starts in')
     expect(withEntry('{ entity: catalog-product, effect: removes }')).toContain('removing "catalog-product" needs "from", the state it ends in')
-    expect(withEntry('{ entity: catalog-product, effect: changes, from: Available, to: Sold }')).toContain('"Sold" is not a state of entity "catalog-product"')
+    expect(withEntry('{ entity: catalog-product, effect: changes, from: Available, to: Sold, facts: [] }')).toContain('"Sold" is not a state of entity "catalog-product"')
   })
 
   it('requires Capability Scenario coverage for every availability Context', () => {
     const cwd = fixtureCopy()
-    for (const name of ['complete-checkout', 'decline-checkout-payment', 'sell-the-last-available-unit']) {
+    for (const name of ['complete-checkout', 'complete-checkout-without-review', 'decline-checkout-payment', 'sell-the-last-available-unit']) {
       const file = join(cwd, `.businesslens/capabilities/place-order/scenarios/${name}.md`)
       writeFileSync(
         file,
@@ -1068,6 +1083,9 @@ Filed away.
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace('actors: [shopper]', 'actors: [shopper, store-admin]'))
+    // The manual-confirmation alternative is where an operator acts; without it, none does.
+    unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout-with-manual-confirmation.md'))
+    unlinkSync(join(cwd, '.businesslens/variations/order-confirmation.md'))
 
     expect(run(cwd).errors.join('\n')).toContain(
       'actor "store-admin" needs an achieved Journey Scenario'
@@ -1109,11 +1127,6 @@ Filed away.
         '# Nested structural title'
       ))
 
-    const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
-    writeFileSync(screen, readFileSync(screen, 'utf8').replace(
-      '- Product name and description',
-      '- Product name and description\n  with a continuation that is not a second item'
-    ))
     const coverage = join(cwd, '.businesslens/coverage.md')
     editCoverage(coverage, { rationale: '## Notes\n\nThis section would be dropped.' })
 
@@ -1125,7 +1138,6 @@ Filed away.
     expect(errors).toContain('"## Edge cases" must contain only single-line bullet-list items')
     expect(errors).toContain('"## Edge cases" needs at least one bullet item when present')
     expect(errors).toContain('"## Recovery note" content must not contain an H1 or H2 heading')
-    expect(errors).toContain('"## Information presented" must contain only single-line bullet-list items')
     expect(errors).toContain('coverage.md: body must contain only "# Coverage"')
   })
 
@@ -1139,23 +1151,27 @@ Filed away.
       .replace('actors: [shopper]', 'actors: [shopper, shopper]'))
     const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
     writeFileSync(screen, readFileSync(screen, 'utf8')
-      .replace('  - browse-catalog\n', '  - browse-catalog\n  - browse-catalog\n'))
+      .replace('shows: [Name and description, Price, Stock remaining]', 'shows: [Price, Price]'))
 
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('product.md: "tags" contains duplicate "commerce"')
     expect(errors).toContain('"actors" contains duplicate "shopper"')
-    expect(errors).toContain('"capabilities" contains duplicate "browse-catalog"')
+    expect(errors).toContain('"shows" contains duplicate "Price"')
   })
 
-  it('validates Screen relationships and product content', () => {
+  it('validates Screen relationships and refuses the retired prose sections', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), `---
 availability:
   - interface: missing-interface
     experiences: [missing-experience]
-capabilities: []
 capabilityScenarios: [missing-capability-scenario]
 journeyScenarios: [missing-journey-scenario]
+entities:
+  - { entity: catalog-product, shows: [Price, Colour] }
+  - ghost
+  - catalog-product
+  - { entity: cart, shows: [] }
 ---
 
 # Product record
@@ -1164,34 +1180,42 @@ Lead.
 
 ## Information presented
 
-No bullet.
+- Price
+
+## Available actions
+
+- Buy
 
 ## View states
 
 ### Empty
 
+Nothing here.
+
 ## Capability boundary
+
+Prose.
 `)
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('needs at least one capability')
     expect(errors).toContain('unknown frontmatter key "availability"')
     expect(errors).toContain('unknown frontmatter key "capabilityScenarios"')
     expect(errors).toContain('unknown frontmatter key "journeyScenarios"')
-    expect(errors).toContain('"## Information presented" needs at least one bullet item')
-    expect(errors).toContain('view state "Empty" needs a description')
-    expect(errors).toContain('missing "## Capability boundary" section')
+    /* A Screen is relations only: what it shows is `entities`, its facts are
+       the Entity's own, and the prose sections that restated them are gone. */
+    expect(errors).toContain('"Colour" is not a fact of entity "catalog-product"')
+    expect(errors).toContain('names missing entity "ghost"')
+    expect(errors).toContain('"catalog-product" already appears in this Screen\'s entities')
+    expect(errors).toContain('"shows" must be a non-empty list when present')
+    for (const heading of ['Information presented', 'Available actions', 'View states', 'Capability boundary']) {
+      expect(errors).toContain(`"## ${heading}" is not allowed on this resource type`)
+    }
   })
 
-  it('requires Scenario Screen Contexts to expose their step Capability', () => {
+  it('derives Screen Capabilities from placed Steps', () => {
     const cwd = fixtureCopy()
-    const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
-    writeFileSync(
-      screen,
-      readFileSync(screen, 'utf8').replace('  - place-order\n', '')
-    )
-
-    const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('Screen "customer-web::storefront::product-record" does not expose capability "place-order"')
+    const screen = loadModel(cwd).screens.find(item => item.id === 'customer-web::storefront::product-record')!
+    expect(screen.capabilities).toEqual(['browse-catalog', 'place-order'])
+    expect(run(cwd).errors).toEqual([])
   })
 
   it('reads a Screen shared beside experiences/ as inside every Experience of its Interface', () => {
@@ -1209,10 +1233,6 @@ entryPoints:
 # Account
 
 Lead.
-
-## Capability boundary
-
-Orders only.
 `)
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain(
@@ -1265,8 +1285,10 @@ permits:
     const adminWeb = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
     // admin-web now serves shoppers too; manage-orders is reached by the admin,
     // cancel-order by the shopper, and nothing bridges them. (The fixture's
-    // admin-cancels-a-paid-order Scenario would bridge them, so it goes.)
+    // admin-cancels-a-paid-order and cancellation-request Scenarios would bridge
+    // them, so they go.)
     unlinkSync(join(cwd, '.businesslens/capabilities/cancel-order/scenarios/cancel-a-paid-order-before-fulfilment.md'))
+    unlinkSync(join(cwd, '.businesslens/capabilities/request-cancellation/scenarios/approve-a-cancellation-request.md'))
     writeFileSync(adminWeb, readFileSync(adminWeb, 'utf8').replace('actors: [store-admin]', 'actors: [store-admin, shopper]'))
     const disjoint = run(cwd)
     expect(disjoint.errors).toContain(
@@ -1292,7 +1314,7 @@ steps:
     kind: actor
     actor: store-admin
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [] }
     contexts:
       web:
         place: admin-web::order-detail
@@ -1300,7 +1322,7 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [] }
     contexts:
       web:
         place: admin-web::order-detail
@@ -1322,10 +1344,82 @@ Both have looked at the same order record.
     expect(bridged.errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
   })
 
-  it('flags a ceremonial Experience as an error, unless it is a counterpart', () => {
+  it('keeps one context per access mode unless its audiences share no Actor', () => {
+    const cwd = fixtureCopy()
+    const promotions = join(cwd, '.businesslens/interfaces/customer-web/experiences/promotions/experience.md')
+    writeResource(promotions, `---
+actors: [shopper]
+access: public
+---
+
+# Promotions
+
+Where shoppers browse current offers.
+`)
+    expect(run(cwd).errors).toContain(
+      `${promotions}: shares \`public\` access and an Actor with customer-web::storefront; one access mode is one context unless its audiences share no Actor`
+    )
+  })
+
+  it('exempts only alternatives of one Variation from the one-context-per-access-mode rule', () => {
+    const cwd = fixtureCopy()
+    // customer-mobile's storefront and catalog-preview are alternatives of the
+    // Mobile storefront Variation; an Experience beside them is still compared.
+    const help = join(cwd, '.businesslens/interfaces/customer-mobile/experiences/help.md')
+    writeResource(help, `---
+actors: [shopper]
+access: public
+---
+
+# Help
+
+Where shoppers find answers inside the app.
+`)
+    const errors = run(cwd).errors.filter(error => error.includes('one access mode is one context'))
+    const experiences = join(cwd, '.businesslens/interfaces/customer-mobile/experiences')
+    expect(errors.sort()).toEqual([
+      `${experiences}/catalog-preview.md: shares \`public\` access and an Actor with customer-mobile::help; one access mode is one context unless its audiences share no Actor`,
+      `${help}: shares \`public\` access and an Actor with customer-mobile::storefront; one access mode is one context unless its audiences share no Actor`,
+    ])
+  })
+
+  it('joins roles that share one Account into one audience', () => {
+    const cwd = fixtureCopy()
+    const entities = join(cwd, '.businesslens/entities')
+    const adminWeb = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
+    unlinkSync(join(cwd, '.businesslens/capabilities/cancel-order/scenarios/cancel-a-paid-order-before-fulfilment.md'))
+    unlinkSync(join(cwd, '.businesslens/capabilities/request-cancellation/scenarios/approve-a-cancellation-request.md'))
+    writeFileSync(adminWeb, readFileSync(adminWeb, 'utf8').replace('actors: [store-admin]', 'actors: [store-admin, shopper]'))
+    writeResource(join(entities, 'account.md'), `---
+---
+
+# Account
+
+The person behind every role they hold.
+
+## Information kept
+
+- **Email** — where the person is reached
+`)
+    const relate = (file: string) => {
+      const text = readFileSync(join(entities, file), 'utf8')
+      writeFileSync(join(entities, file), text.includes('relations:\n')
+        ? text.replace('relations:\n', 'relations:\n  - entity: account\n    verb: signs in with\n    cardinality: one-to-one\n')
+        : text.replace('---\n', '---\nrelations:\n  - entity: account\n    verb: signs in with\n    cardinality: one-to-one\n'))
+    }
+    relate('shopper.md')
+    expect(run(cwd).errors).toContain(
+      `${adminWeb}: serves Actor sets no available Capability bridges; these are Experiences, not one context`
+    )
+    relate('store-admin.md')
+    expect(run(cwd).errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
+  })
+
+  it('flags a ceremonial Experience as an error, unless it is a counterpart or a Variation alternative', () => {
     const cwd = fixtureCopy()
     // As authored, customer-web's single storefront Experience is justified by
-    // customer-mobile's counterpart. Rename the mobile one and both stand alone.
+    // customer-mobile's counterpart. Rename the mobile one and web stands alone,
+    // while mobile stays justified by the Mobile storefront Variation.
     const bl = join(cwd, '.businesslens')
     renameSync(join(bl, 'interfaces/customer-mobile/experiences/storefront'), join(bl, 'interfaces/customer-mobile/experiences/shop'))
     const walk = (directory: string) => {
@@ -1339,8 +1433,11 @@ Both have looked at the same order record.
     }
     walk(bl)
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability')
-    expect(errors).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
+    expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability')
+    expect(errors).not.toContain('interfaces/customer-mobile/interface.md: holds Experiences')
+    withoutCatalogPreview(bl)
+    rmSync(join(bl, 'variations/mobile-storefront.md'), { force: true })
+    expect(run(cwd).errors.join('\n')).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
   })
 
   it('reads a word the model declares as a thing, not as a verb, in id vocabulary checks', () => {
@@ -1360,19 +1457,36 @@ Lead.
     // `order` and `refund` name Entities here, so these open with a noun.
     entity('order-line', 'Order line')
     entity('refund-request', 'Refund request')
-    // `ship` names nothing in this model, so this one does open with a verb.
+    // A compound noun whose first word can be a verb is still a noun.
     entity('ship-manifest', 'Ship manifest')
+    // A verb acting on something the model declares reads as a command.
+    entity('cancel-orders', 'Cancel orders')
+    // A declared noun spanning segments: `refund-request` is the thing approved.
+    entity('approve-refund-request', 'Approve refund request')
     // The spec's own counter-example: `order` is a thing, so the id carries no verb.
     cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/order-management'), { recursive: true })
+    // The noun half is matched against things, never against a Screen's name:
+    // `record` ends the `product-record` Screen but names no Entity.
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/browse-record'), { recursive: true })
+    // `product` ends the `catalog-product` Entity, so the declared name is suggested.
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/price-product'), { recursive: true })
     // Scenarios are behavioural ids too.
     cpSync(join(bl, 'capabilities/manage-orders/scenarios/refund-order.md'), join(bl, 'capabilities/manage-orders/scenarios/refund-processing.md'))
+    // A declared thing ending in -ment is the object, not a nominalisation, even after a verb the list lacks.
+    entity('document', 'Document')
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/duplicate-document'), { recursive: true })
 
     const warnings = run(cwd).warnings.join('\n')
     expect(warnings).not.toContain('"order-line" opens with a verb')
     expect(warnings).not.toContain('"refund-request" opens with a verb')
-    expect(warnings).toContain('Entity id "ship-manifest" opens with a verb')
+    expect(warnings).not.toContain('"ship-manifest" opens with a verb')
+    expect(warnings).toContain('Entity id "cancel-orders" opens with a verb')
+    expect(warnings).toContain('Entity id "approve-refund-request" opens with a verb')
     expect(warnings).toContain('Capability id "order-management" reads as a noun phrase')
     expect(warnings).toContain('Capability Scenario id "refund-processing" reads as a noun phrase')
+    expect(warnings).not.toContain('"duplicate-document" reads as a noun phrase')
+    expect(warnings).not.toContain('"browse-record" names "record"')
+    expect(warnings).toContain('Capability id "price-product" names "product" where this model declares "catalog-product"')
   })
 
   it('warns on a Rule that governs exactly one behaviour with no narrowing', () => {
@@ -1550,6 +1664,7 @@ Lead.
   it('fails when a Journey loses all achieved Journey Scenarios', () => {
     const cwd = fixtureCopy()
     unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'))
+    unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout-with-manual-confirmation.md'))
     expect(run(cwd).errors.some(error => error.includes('at least one achieved Journey Scenario'))).toBe(true)
   })
 
@@ -1645,7 +1760,7 @@ Lead.
     role: implementation
     target: src/models/order.ts
     state: Pending`).errors.join('\n'))
-      .toContain('reference "state" is only valid on a Screen')
+      .toContain('reference has unknown key "state"')
 
     // The tracked code target is real, so a clean list is accepted.
     writeFileSync(order, source.replace('domain: ordering', `domain: ordering
@@ -1842,7 +1957,7 @@ permits: []`)).toContain('"to" selects nothing on a "removes" target')
     contexts:
       - place: customer-web::storefront::product-record
 permits:
-  - actors: [shopper]`)).toContain('Context place "customer-web::storefront::product-record" presents entity "order" nowhere')
+  - actors: [shopper]`)).toBe('')
 
     expect(errorsWith(`appliesTo:
   - type: entity
@@ -1916,14 +2031,14 @@ permits:
     const cwd = fixtureCopy()
     const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
     writeFileSync(refund, readFileSync(refund, 'utf8').replace(
-      `      - { entity: refund, effect: creates, to: Requested }
+      `      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
     contexts:
       web:
         place: admin-web::order-detail
       cli:
         place: operator-cli
 `,
-      '      - { entity: refund, effect: creates, to: Requested }\n'
+      '      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }\n'
     ))
     expect(run(cwd).errors).toEqual([])
 
@@ -1950,6 +2065,19 @@ permits:
 permits: []`)
     expect(run(cwd).warnings.join('\n')).toMatch(/twin\.md: selects exactly what .*orders-are-never-deleted\.md selects/)
     unlinkSync(join(cwd, '.businesslens/business-rules/twin.md'))
+
+    // A set of facts is one selector in any order.
+    for (const [id, facts] of [['tax-and-margin', 'Tax, Margin'], ['margin-and-tax', 'Margin, Tax']] as const) {
+      writeRule(cwd, id, `appliesTo:
+  - type: entity
+    id: order
+    effect: reads
+    facts: [${facts}]
+permits:
+  - actors: [store-admin]`)
+    }
+    expect(run(cwd).warnings.join('\n')).toMatch(/tax-and-margin\.md: selects exactly what .*margin-and-tax\.md selects/)
+    for (const id of ['tax-and-margin', 'margin-and-tax']) unlinkSync(join(cwd, `.businesslens/business-rules/${id}.md`))
 
     writeRule(cwd, 'narrow', `appliesTo:
   - type: entity
@@ -1985,4 +2113,228 @@ permits: []`)
     expect(run(cwd).errors.join('\n')).toContain('presents "refund", which rule "gateway-reads" forbids anyone to read')
   })
 
+  /*
+   * The experience border: a Screen is relations only, its facts are the
+   * Entity's own, places nest, and what is reachable from everywhere is
+   * structure. Each rule below is decidable from the folder alone.
+   */
+  describe('places, facts and variation', () => {
+    const PRODUCT_RECORD = '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
+    const screenSource = (entities: string) => `---
+entities:
+${entities}
+entryPoints:
+  - customer-web: /products/:id
+---
+
+# Product record
+
+Lead.
+`
+
+    it('nests a Screen inside a Screen, one id segment per level, and contains Steps and Rule selectors through it', () => {
+      const cwd = fixtureCopy()
+      const compact = join(cwd, PRODUCT_RECORD)
+      const parent = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screen.md')
+      expandResource(compact, parent)
+      writeResource(join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screens/reviews.md'), `---
+entities:
+  - { entity: catalog-product, shows: [Price] }
+---
+
+# Reviews
+
+What other shoppers said, opened from the product record.
+`)
+      const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record',
+        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper reads its reviews\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Price] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record::reviews'
+      ))
+      const result = run(cwd)
+      expect(result.errors).toEqual([])
+      expect(result.counts.screens).toBe(8)
+
+      /* A selector on the parent covers the child. */
+      writeRule(cwd, 'reviews-are-public', `appliesTo:
+  - type: entity
+    id: catalog-product
+    effect: reads
+    facts: [Price]
+    contexts:
+      - place: customer-web::storefront::product-record
+permits:
+  - actors: [shopper]`)
+      expect(run(cwd).errors).toEqual([])
+
+      /* A child that is not a Screen folder is still refused. */
+      mkdirSync(join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/notes'))
+      expect(run(cwd).errors).toContain(
+        'interfaces/customer-web/experiences/storefront/screens/product-record/notes/ is not a recognized child directory'
+      )
+    })
+
+    it('resolves navigation to a Screen the container itself holds, shared only on a divided Interface', () => {
+      const cwd = fixtureCopy()
+      const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
+      const source = readFileSync(productInterface, 'utf8').replace(/^navigation:.*\n/m, '')
+      writeFileSync(productInterface, source.replace('actors: [shopper]', 'actors: [shopper]\nnavigation: [catalog, storefront::product-record, ghost]'))
+      const errors = run(cwd).errors
+      expect(errors).toContain(`${productInterface}: navigation "storefront::product-record" does not resolve to a Screen this Interface shares beside its Experiences`)
+      expect(errors).toContain(`${productInterface}: navigation "ghost" does not resolve to a Screen this Interface shares beside its Experiences`)
+      expect(errors.some(error => error.includes('navigation "catalog"'))).toBe(false)
+
+      const experience = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
+      writeFileSync(experience, readFileSync(experience, 'utf8').replace('access: public', 'access: public\nnavigation: [product-record, catalog]'))
+      const settled = run(cwd).errors
+      expect(settled).toContain(`${experience}: navigation "catalog" does not resolve to a Screen inside "customer-web::storefront"`)
+      expect(settled.some(error => error.includes('navigation "product-record"'))).toBe(false)
+    })
+
+    it('checks every fact a Screen or Step cites against the Entity, and requires facts on every Screen entry', () => {
+      const cwd = fixtureCopy()
+      writeFileSync(join(cwd, PRODUCT_RECORD), screenSource('  - { entity: catalog-product, shows: [Price] }\n  - order'))
+      const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }',
+        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Stock remaining, Colour] }'
+      ))
+      const errors = run(cwd).errors.join('\n')
+      expect(errors).toContain(`${join(cwd, PRODUCT_RECORD)}: presents "order" without naming its facts; a Screen says which facts it shows or collects`)
+      expect(errors).toContain('step 2: "Colour" is not a fact of entity "catalog-product"')
+      expect(errors).toContain('step 2: reads "Stock remaining" of "catalog-product" on Screen "customer-web::storefront::product-record", which does not show that fact')
+    })
+
+    it('allows named facts on creation', () => {
+      const cwd = fixtureCopy()
+      const scenario = join(cwd, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+        '- { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }',
+        '- { entity: order, effect: creates, to: Pending, facts: [Total charged] }'
+      ))
+      expect(run(cwd).errors).toEqual([])
+    })
+
+    it('requires what an Actor reads on a Screen to be presented there, and nothing else', () => {
+      const cwd = fixtureCopy()
+      writeFileSync(join(cwd, PRODUCT_RECORD), screenSource('  - { entity: catalog-product, shows: [Price] }'))
+      const errors = run(cwd).errors.join('\n')
+      // The shopper submits checkout reading the cart on this Screen.
+      expect(errors).toContain('reads "cart" on Screen "customer-web::storefront::product-record", which does not present it')
+      // The Product asking the payment gateway is not a claim about the screen.
+      expect(errors).not.toContain('reads "payment-gateway" on Screen')
+      expect(errors).not.toContain('reads "catalog-product" on Screen')
+    })
+
+    it('rejects authored Screen Capabilities', () => {
+      const cwd = fixtureCopy()
+      const catalog = join(cwd, '.businesslens/interfaces/customer-web/screens/catalog.md')
+      writeFileSync(catalog, readFileSync(catalog, 'utf8').replace('entities:', 'capabilities: [browse-catalog]\nentities:'))
+      expect(run(cwd).errors.join('\n')).toContain('unknown frontmatter key "capabilities"')
+    })
+
+    it('allows a Capability with container-level placement beside modeled Screens', () => {
+      const cwd = fixtureCopy()
+      // Cancel order is available on the storefront; its Steps use that
+      // container, without claiming a Screen. No reverse coverage obligation.
+      const model = loadModel(cwd)
+      for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
+        for (const step of scenario.steps) {
+          if (('capability' in scenario ? scenario.capability : step.capability) !== 'cancel-order') continue
+          for (const context of Object.values(step.contexts)) {
+            const screen = model.screens.find(item => item.id === context.place)
+            if (screen) context.place = screen.containerId
+          }
+        }
+      }
+      for (const screen of model.screens) screen.capabilities = screen.capabilities.filter(id => id !== 'cancel-order')
+      expect(lintModel(model, TRACKED).errors).toEqual([])
+    })
+
+    it('checks a fact-scoped read Rule against the facts on screen and the facts a Step cites', () => {
+      const cwd = fixtureCopy()
+      /* A prohibition remains valid without a modeled example. */
+      writeResource(join(cwd, '.businesslens/entities/voucher.md'), `---
+{}
+---
+
+# Voucher
+
+Lead.
+
+## Information kept
+
+- **Code** — what the shopper types to redeem it
+`)
+      const checkout = join(cwd, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
+      writeFileSync(checkout, readFileSync(checkout, 'utf8').replace(
+        '      - { entity: shopper, effect: changes, facts: [Delivery address] }',
+        '      - { entity: shopper, effect: changes, facts: [Delivery address] }\n      - { entity: voucher, facts: [] }'
+      ))
+      writeRule(cwd, 'codes-are-secret', `appliesTo:
+  - type: entity
+    id: voucher
+    facts: [Code]
+permits:
+  - actors: [store-admin]`)
+      const unseen = `${join(cwd, '.businesslens/business-rules/codes-are-secret.md')}: appliesTo item 1: governs "Code" of "voucher", which no Screen presents and no Step cites`
+      expect(run(cwd).errors).toEqual([])
+
+      /* Citing the fact on the Step selects it, and the shopper has no grant. */
+      writeFileSync(checkout, readFileSync(checkout, 'utf8').replace('      - { entity: voucher, facts: [] }', '      - { entity: voucher, facts: [Code] }'))
+      const cited = run(cwd).errors
+      expect(cited).not.toContain(unseen)
+      expect(cited.join('\n')).toContain('actor "shopper" changes "voucher", and no grant of rule "codes-are-secret" can permit it')
+
+      /* A Screen listing the fact is selected; a bare entry is not. */
+      writeFileSync(join(cwd, PRODUCT_RECORD), screenSource('  - { entity: catalog-product, shows: [Price] }\n  - { entity: cart, shows: [Quantity chosen] }\n  - { entity: voucher, shows: [Code] }'))
+      expect(run(cwd).errors.join('\n')).toContain(
+        'presents "voucher" facts "Code", and no actor of "customer-web::storefront" has a grant to read it in rule "codes-are-secret"'
+      )
+      writeFileSync(join(cwd, PRODUCT_RECORD), screenSource('  - { entity: catalog-product, shows: [Price] }\n  - { entity: cart, shows: [Quantity chosen] }\n  - voucher'))
+      const bare = run(cwd).errors.join('\n')
+      expect(bare).toContain('presents "voucher" without naming its facts')
+      expect(bare).not.toContain('has a grant to read it in rule "codes-are-secret"')
+    })
+
+    it('accepts a scoped read prohibition without disclosing the forbidden fact', () => {
+      const cwd = fixtureCopy()
+      writeRule(cwd, 'margin-is-secret', `appliesTo:
+  - type: entity
+    id: order
+    effect: reads
+    facts: [Margin]
+    contexts:
+      - place: customer-web::storefront
+permits:
+  - actors: [store-admin]`)
+      expect(run(cwd).errors).toEqual([])
+    })
+
+    it('checks language tags and narrows them from the Product to an Interface', () => {
+      const cwd = fixtureCopy()
+      // The fixture serves English and German, with the admin console English-only.
+      expect(run(cwd).errors.filter(error => error.includes('language'))).toEqual([])
+      const product = join(cwd, '.businesslens/product/product.md')
+      const admin = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
+      writeFileSync(product, readFileSync(product, 'utf8').replace('languages: [en, de]\n', ''))
+      writeFileSync(admin, readFileSync(admin, 'utf8').replace('languages: [en]\n', ''))
+      const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
+      writeFileSync(productInterface, readFileSync(productInterface, 'utf8').replace('type: web', 'type: web\nlanguages: [en, de-DE]'))
+      expect(run(cwd).errors).toContain(`${productInterface}: lists languages, and product.md declares none`)
+
+      writeFileSync(product, readFileSync(product, 'utf8').replace('tags:', 'languages: [en, English]\ntags:'))
+      const errors = run(cwd).errors
+      expect(errors).toContain('product.md: language "English" is not a language tag like "en" or "pt-BR"')
+      expect(errors).toContain(`${productInterface}: language "de-DE" is not one of the Product's languages`)
+      expect(errors.some(error => error.includes('language "en"'))).toBe(false)
+    })
+
+    it('rejects Experience version metadata', () => {
+      const cwd = fixtureCopy()
+      const file = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
+      writeFileSync(file, readFileSync(file, 'utf8').replace('access: public', 'access: public\nversion: v2'))
+      expect(run(cwd).errors.join('\n')).toContain('unknown frontmatter key "version"')
+    })
+  })
 })

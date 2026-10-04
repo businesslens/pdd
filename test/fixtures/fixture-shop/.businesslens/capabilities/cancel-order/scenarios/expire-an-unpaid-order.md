@@ -7,11 +7,11 @@ steps:
     kind: condition
     unattended: true
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [When placed] }
   - text: The order is cancelled and its stock released
     kind: product
     entities:
-      - { entity: order, effect: changes, from: Pending, to: Cancelled }
+      - { entity: order, effect: changes, from: Pending, to: Cancelled, facts: [] }
     contexts:
       admin:
         place: admin-web::order-detail

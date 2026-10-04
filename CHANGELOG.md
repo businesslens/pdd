@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-10-04
+
+- Model experiments, configuration choices and supported versions as Variations of an Interface, Experience, Screen, Entity, Capability, Journey, Scenario or Business Rule, and browse them in a new Variations collection.
+- Read every alternative under its Variation's name (in readings, lists, trees, graphs, matrices, Lifecycles and search) and switch between them in place; what holds only under some alternatives is dashed and says which.
+- Model nested Screens, Screens reachable from anywhere in an Interface or Experience, and the languages a Product serves.
+- Record the facts a Screen shows and collects, and the facts each Scenario Step reads, changes or creates; a Screen's Capabilities now come from the Steps placed on it.
+- Read what a Business Rule applies to, and find every Rule that names a resource from that resource.
+- See each place's Capabilities, Scenarios and Journeys, including what happens directly on it, and follow Capability state changes into Entity Lifecycles.
+- Read permissions as operations and grants, with badges on the facts they restrict.
+- Mapping no longer fails on very large repositories, and draws Capabilities, Domains, Journeys, settings and roles more consistently.
+- Verification checks each Variation's alternatives, and what selects them, against the code.
+- Fewer false lint warnings about resource names.
+- The local report keeps running when Git cannot open the repository, saying so once.
+- Blueprints with ambiguous place names are rejected before import.
+- Shorter, simpler documentation: the introduction shows the development loop and the local report, each Product Model page leads with everyday examples, and a new Variations page covers feature flags, plan tiers, A/B tests and API versions.
+- **Breaking.** Models and Blueprints must be updated to the new format; older model and report formats are rejected. Screens describe what they show and offer through relations instead of prose sections and Capability lists; Interfaces and Experiences drop their Capability boundary sections and Screen lists; References drop state labels.
+
 ## [0.22.0] - 2026-09-23
 
 - Coverage now records scope, modeled behavior, approved exclusions, gaps and uncertainty instead of a completeness status. Existing models need the new Coverage format.
@@ -824,7 +841,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/businesslens/pdd/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/businesslens/pdd/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/businesslens/pdd/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/businesslens/pdd/compare/v0.19.0...v0.20.0

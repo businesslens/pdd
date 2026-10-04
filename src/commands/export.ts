@@ -1,14 +1,16 @@
+import type { VariationKind, VariationMemberType } from '../core/variations.js'
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV14 } from '../core/portable.js'
+import type { ProductReportV15 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingSections } from '../core/markdown.js'
 import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
+import { qualify } from '../core/ids.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV14Schema,
+  ProductReportV15Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -16,10 +18,10 @@ import {
 import { cliVersion } from '../version.js'
 import { lintModel } from './lint.js'
 
-const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id))
+const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id, 'en'))
 const sorted = (items: string[]): string[] => [...items].sort()
 const contexts = (items: Array<{ place: string }>) =>
-  [...items].sort((left, right) => left.place.localeCompare(right.place)).map(item => ({ placeId: item.place }))
+  [...items].sort((left, right) => left.place.localeCompare(right.place, 'en')).map(item => ({ placeId: item.place }))
 
 const IMAGE_ASSET = /\.(png|jpe?g|gif|webp|avif|svg)$/i
 
@@ -39,8 +41,7 @@ function assetReferences(resource: ResourceFile, modelRoot: string) {
       kind: (IMAGE_ASSET.test(file) ? 'visual' : 'doc') as 'visual' | 'doc',
       role: (file.startsWith('implementation/') ? 'implementation' : 'intent') as 'implementation' | 'intent',
       target: relative(modelRoot, join(resource.directory, file)).split(sep).join('/'),
-      ...(declared?.title ? { title: declared.title } : {}),
-      ...(declared?.state ? { state: declared.state } : {})
+      ...(declared?.title ? { title: declared.title } : {})
     }
   })
 }
@@ -53,8 +54,7 @@ function resourceContent(resource: ResourceFile, recognized: string[], modelRoot
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
-      ...(reference.title ? { title: reference.title } : {}),
-      ...(reference.state ? { state: reference.state } : {})
+      ...(reference.title ? { title: reference.title } : {})
     }))
   }
 }
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV14 {
+): ProductReportV15 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -99,7 +99,8 @@ export function compileReport(
       as: entry.as ?? null,
       effect: entry.effect ?? 'changes' as const,
       from: entry.from ?? null,
-      to: entry.to ?? null
+      to: entry.to ?? null,
+      facts: sorted(entry.facts ?? [])
     })),
     unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
@@ -113,7 +114,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV14 = {
+  const report: ProductReportV15 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -128,11 +129,11 @@ export function compileReport(
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
-      ...(reference.title ? { title: reference.title } : {}),
-      ...(reference.state ? { state: reference.state } : {})
+      ...(reference.title ? { title: reference.title } : {})
     })),
     referenceProfile: 'workspace',
     tags: sorted(model.product.tags),
+    languages: sorted(model.product.languages),
     generatedAt: today,
     generator: { name: 'businesslens-cli', version: cliVersion() },
     counts: {
@@ -145,7 +146,8 @@ export function compileReport(
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
       journeyScenarios: model.journeyScenarios.length,
-      businessRules: model.businessRules.length
+      businessRules: model.businessRules.length,
+      variations: model.variations.length
     },
     limitations: model.product.limitations,
     model: {
@@ -164,8 +166,9 @@ export function compileReport(
         type: productInterface.type as InterfaceType,
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
-        capabilityBoundary: productInterface.capabilityBoundary,
-        ...resourceContent(productInterface, ['Capability boundary'], assetBase)
+        languages: sorted(productInterface.languages),
+        navigation: sorted(productInterface.navigation.map(entry => qualify(productInterface.id, entry))),
+        ...resourceContent(productInterface, [], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
         id: experience.id,
@@ -175,23 +178,21 @@ export function compileReport(
         interfaceIds: [experience.interface],
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
-        capabilityBoundary: experience.capabilityBoundary,
-        ...resourceContent(experience, ['Capability boundary'], assetBase)
+        navigation: sorted(experience.navigation.map(entry => qualify(experience.id, entry))),
+        ...resourceContent(experience, [], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
         id: screen.id,
         title: screen.doc.title,
         description: screen.doc.lead,
         capabilityIds: sorted(screen.capabilities),
-        entityIds: sorted(screen.entities),
+        entities: [...screen.entities]
+          .sort((left, right) => left.entity.localeCompare(right.entity, 'en'))
+          .map(entry => ({ entityId: entry.entity, shows: sorted(entry.shows), collects: sorted(entry.collects) })),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
-        information: screen.information,
-        actions: screen.actions,
-        states: screen.states,
-        capabilityBoundary: screen.capabilityBoundary,
-        ...resourceContent(screen, ['Information presented', 'Available actions', 'View states', 'Capability boundary'], assetBase)
+        ...resourceContent(screen, [], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
@@ -292,7 +293,7 @@ export function compileReport(
                 effect: target.effect ?? null,
                 from: target.from ?? null,
                 to: target.to ?? null,
-                facts: target.facts,
+                facts: sorted(target.facts),
                 contexts: target.contexts.map(context => ({ placeId: context.place }))
               }
             : {
@@ -319,6 +320,26 @@ export function compileReport(
           configuredByEntityId: grant.configuredBy ?? null
         })),
         ...resourceContent(rule, ['Rationale'], assetBase)
+      })),
+      /* Alternatives are a set: the wire orders them by id, never by authoring. */
+      variations: byId(model.variations).map(variation => ({
+        id: variation.id,
+        title: variation.doc.title,
+        description: variation.doc.lead,
+        kind: variation.kind as VariationKind,
+        of: variation.of as VariationMemberType,
+        takesEffect: variation.takesEffect,
+        stability: variation.stability,
+        assignmentUnit: variation.assignmentUnit,
+        assignmentMethod: variation.assignmentMethod,
+        assignmentFact: variation.assignmentFact,
+        allocation: variation.allocation,
+        settings: [...variation.settings].sort((a, b) => a.entity.localeCompare(b.entity, 'en') || a.fact.localeCompare(b.fact, 'en')),
+        discriminator: variation.discriminator,
+        alternatives: [...variation.alternatives]
+          .sort((a, b) => a.id.localeCompare(b.id, 'en'))
+          .map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })),
+        ...resourceContent(variation, [], assetBase)
       }))
     },
     coverage: {
@@ -331,24 +352,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV14Schema.parse(report)
+  const parsed = ProductReportV15Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV14
+  report: ProductReportV15
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV14 {
+export function compileWorkspaceReport(cwd: string): ProductReportV15 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV14 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV15 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

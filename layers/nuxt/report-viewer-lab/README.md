@@ -9,6 +9,33 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **Variation mark** audition is decided: Ink split 14px is the stable mark.
+Where the variation glyph stands alone — the rail, a collection heading, search —
+it is the split glyph in the report ink, drawn at 14px inside the usual 16px
+slot so it sits level with the other marks. A Variation modifies a type rather
+than being a subject area, so it takes no hue of its own; its ink matches the
+sub-icon on a set's mark. The teal slot, the ink-at-16px and the two fork
+alternatives, the row, cookie composable, variant list and lab stylesheet have
+been removed.
+
+The **Resource heading** audition is decided: Nearest place is the stable
+header. Under the title, one short line names the type and the nearest place
+containing the resource, with that place's own mark — `Screen in [Screen] Add
+source` — and the Domains as marks, the first opening its Domain and the rest
+behind a count. The full containing path is the nearest place's tooltip. The
+stable `BlrResourceContext` draws it inside `BlrResourceHeading`; the two-line
+path, eyebrow, path title and type chip alternatives, the row, cookie
+composable, variant list and shadows have been removed.
+
+The **Entity effect** audition is decided: Entity first is the stable phrasing.
+The Entity chip comes first, then a plain verb, then each State as a badge —
+`[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]`,
+`[Collection] read`; an ending reads `[Item] in [Unread]`. It lives in the
+stable `BlrStepEntity` and `BlrEntityEffect`, so a Step's Entity effects, a
+Scenario's Ends with, Changes made here, Leaves behind and a Capability's What
+it changes all say it the same way. The alternatives, row, cookie composable,
+variant list and shadow have been removed.
+
 The **Coverage icons** audition is decided: Signals is the stable Coverage mark.
 Each category is drawn as its own icon with its own outline — a checked circle
 for Covered, a square with a minus for Exclusions, a dashed circle for Unmapped

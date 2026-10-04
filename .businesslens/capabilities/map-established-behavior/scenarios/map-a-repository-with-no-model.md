@@ -35,7 +35,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: product-model, effect: creates }
+      - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       harness:
         place: agent-skills

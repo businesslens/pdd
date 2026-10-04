@@ -5,7 +5,8 @@ import { loadModel } from '../src/core/model.js'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { entityRelationsProjection } = await utility('topologyProjections')
+const { entityRelationsProjection, frameShownNodes } = await utility('topologyProjections')
+const { topologyNeighbourhood } = await utility('topologyFocus')
 const { buildEntityLifecycle } = await utility('entityLifecycle')
 const { diagramLayoutInput } = await utility('diagram')
 const elkPath = 'elkjs/lib/elk.bundled.js'
@@ -40,7 +41,9 @@ function verifyGeometry(graph: any) {
       for (let index = 1; index < points.length; index++) {
         const a = points[index - 1], b = points[index]
         expect(Math.abs(a.x - b.x) < epsilon || Math.abs(a.y - b.y) < epsilon, `${edge.id} orthogonal`).toBe(true)
-        for (const node of nodes.filter((node: any) => !edge.sources.includes(node.id) && !edge.targets.includes(node.id))) {
+        /* An edge leaving a frame's alternative crosses that frame by construction. */
+        const holds = (node: any) => (node.children ?? []).some((child: any) => edge.sources.includes(child.id) || edge.targets.includes(child.id))
+        for (const node of nodes.filter((node: any) => !edge.sources.includes(node.id) && !edge.targets.includes(node.id) && !holds(node))) {
           const enters = Math.abs(a.x - b.x) < epsilon
             ? a.x > node.x + epsilon && a.x < node.x + node.width - epsilon && Math.max(a.y, b.y) > node.y + epsilon && Math.min(a.y, b.y) < node.y + node.height - epsilon
             : a.y > node.y + epsilon && a.y < node.y + node.height - epsilon && Math.max(a.x, b.x) > node.x + epsilon && Math.min(a.x, b.x) < node.x + node.width - epsilon
@@ -57,10 +60,36 @@ describe('routed diagram geometry', () => {
     const diagrams = [entityRelationsProjection(workspace), ...workspace.entities.filter((entity: any) => entity.states.length).map((entity: any) => buildEntityLifecycle(workspace, entity))]
     for (const diagram of diagrams) {
       const graph = await layout(diagram)
-      expect(graph.children.map((node: any) => node.id)).toEqual(diagram.nodes.map((node: any) => node.id))
-      expect(graph.edges.map((edge: any) => edge.id)).toEqual(diagram.edges.map((edge: any) => edge.id))
+      /* A frame nests what it holds, and ELK may keep an edge in the frame holding both ends. */
+      const nodes = (node: any): string[] => (node.children ?? []).flatMap((child: any) => [child.id, ...nodes(child)])
+      const edges = (node: any): string[] => [...(node.edges ?? []).map((edge: any) => edge.id), ...(node.children ?? []).flatMap(edges)]
+      expect(nodes(graph).sort()).toEqual(diagram.nodes.map((node: any) => node.id).sort())
+      expect(edges(graph).sort()).toEqual(diagram.edges.map((edge: any) => edge.id).sort())
       verifyGeometry(graph)
     }
+  })
+
+  it('lays out Entity relationships focused on an Entity that relates to alternatives but not their set', async () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, 'fixtures/fixture-shop')), '2026-09-07'))
+    const neighbourhood = topologyNeighbourhood(workspace, ['entity:order'])
+    const base = entityRelationsProjection(workspace)
+    const shown = base.nodes.filter((node: any) => neighbourhood.has(node.id))
+    /* Both tax documents relate to Order; their Variation's frame is not in the neighbourhood. */
+    expect(shown.filter((node: any) => node.parent).map((node: any) => node.id).sort()).toEqual(['entity:sales-tax-receipt', 'entity:vat-invoice'])
+    expect(shown.some((node: any) => node.group)).toBe(false)
+    const nodes = frameShownNodes(shown)
+    expect(nodes.filter((node: any) => node.parent)).toEqual([])
+    const keys = new Set(nodes.map((node: any) => node.id))
+    const diagram = { ...base, nodes, edges: base.edges.filter((edge: any) => keys.has(edge.source) && keys.has(edge.target)) }
+    const graph = await layout(diagram)
+    expect((graph.children ?? []).map((child: any) => child.id).sort()).toEqual([...keys].sort())
+    verifyGeometry(graph)
+  })
+
+  it('keeps a frame that is shown and holds two alternatives', () => {
+    const nodes = [{ id: 'set', group: true }, { id: 'a', parent: 'set', alternativeOf: 'set' }, { id: 'b', parent: 'set', alternativeOf: 'set' }, { id: 'c' }]
+    expect(frameShownNodes(nodes)).toEqual([{ id: 'set', group: true }, { id: 'a', parent: 'set', alternativeOf: undefined }, { id: 'b', parent: 'set', alternativeOf: undefined }, { id: 'c' }])
+    expect(frameShownNodes(nodes.filter(node => node.id !== 'b')).map((node: any) => [node.id, node.parent])).toEqual([['a', undefined], ['c', undefined]])
   })
 
   it('routes cycles, parallel edges, self-loops and isolated nodes repeatably', async () => {

@@ -55,5 +55,5 @@ not a state anything here moves it through.
 ## Information kept
 
 - **Product** — which Product it describes, with that Product's identity and attribution
-- **Coverage** — the declared scope, represented behavior, approved exclusions and known missing areas
-- **Inspection** — the authoring method, known gaps inside scope, and its limitations
+- **Coverage** — the declared scope, and the covered behavior, approved exclusions, unmapped behavior and limitations, each at the paths it names
+- **Method** — the short note on how the model was produced

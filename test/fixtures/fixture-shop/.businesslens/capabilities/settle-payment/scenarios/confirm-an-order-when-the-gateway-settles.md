@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: payment-gateway
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [] }
     contexts:
       webhook:
         place: payment-webhook
@@ -15,7 +15,7 @@ steps:
     kind: product
     actor: payment-gateway
     entities:
-      - { entity: order, effect: changes, from: Pending, to: Confirmed }
+      - { entity: order, effect: changes, from: Pending, to: Confirmed, facts: [] }
     contexts:
       webhook:
         place: payment-webhook

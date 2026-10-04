@@ -16,13 +16,15 @@ const props = withDefaults(defineProps<{
   size?: 'xs' | 'sm'
   /** A concrete Interface can retain its kind and disclose its authored type. */
   interfaceType?: ReportInterface['type'] | null
-  /** An Entity instance is drawn by its facet; a kind heading passes none. */
+  /** An Entity instance, or an Entity set, is drawn by its facet; a kind heading passes none. */
   facet?: EntityFacet | null
   acts?: ActingSide | null
   /** Suppress the text label only where a nearby label already names the kind. */
   labelled?: boolean
   /** False where the surface names the kind: a sub-marked kind drops its glyph. */
   withKind?: boolean
+  /** A Variation set: drawn as the kind it varies, badged. */
+  memberKind?: ReportResourceKind | null
 }>(), {
   count: null,
   size: 'sm',
@@ -30,7 +32,8 @@ const props = withDefaults(defineProps<{
   facet: null,
   acts: null,
   labelled: true,
-  withKind: true
+  withKind: true,
+  memberKind: null
 })
 
 const colorMode = useColorMode()
@@ -43,7 +46,8 @@ const meta = computed(() => ENTITY_KIND_META[props.kind])
 /* A sub-mark explains itself — "Web Interface", "External person that acts on
    the Product" — so the wrapper must not stack a plainer tooltip beneath it. */
 const subMarked = computed(() => (props.kind === 'entity' && props.facet !== null)
-  || (props.kind === 'interface' && props.interfaceType !== null))
+  || (props.kind === 'interface' && props.interfaceType !== null)
+  || (props.kind === 'variation' && props.memberKind !== null))
 const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMode.value === 'dark'))
 </script>
 
@@ -53,8 +57,14 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     :data-size="size"
     :title="subMarked ? undefined : meta.label"
   >
+    <BlrVariationMark
+      v-if="kind === 'variation' && memberKind"
+      :kind="memberKind"
+      :facet="facet"
+      :size="size"
+    />
     <BlrEntityMark
-      v-if="kind === 'entity' && facet"
+      v-else-if="kind === 'entity' && facet"
       :facet="facet"
       :acts="acts"
       :size="size"

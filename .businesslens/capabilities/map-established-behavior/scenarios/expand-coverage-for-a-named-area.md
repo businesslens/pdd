@@ -6,7 +6,7 @@ steps:
   - text: A Product Model already exists and an area of it is absent or deliberately no longer trusted
     kind: condition
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       harness:
         place: agent-skills
@@ -21,7 +21,7 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
     contexts:
       harness:
         place: agent-skills
@@ -36,7 +36,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: product-model, effect: changes }
+      - { entity: product-model, effect: changes, facts: [Coverage, Method] }
     contexts:
       harness:
         place: agent-skills

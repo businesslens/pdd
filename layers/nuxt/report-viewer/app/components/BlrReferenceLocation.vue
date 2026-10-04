@@ -234,7 +234,6 @@ const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
             </BlrResourceLink>
             <span v-else class="text-default">{{ citation.ownerTitle }}</span>
             <UBadge :color="ROLE_TONE[citation.reference.role] || 'neutral'" variant="subtle" size="sm">{{ citation.reference.role }}</UBadge>
-            <UBadge v-if="citation.reference.state" color="neutral" variant="outline" size="sm" :title="`Depicts the ${citation.reference.state} product state`">{{ citation.reference.state }}</UBadge>
             <a
               v-if="citation.anchor"
               :href="hrefFor(citation)"

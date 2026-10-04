@@ -38,8 +38,9 @@ Read before work:
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
    - named Entity, Interface, Experience, Screen, Domain, Capability, Capability
-     Scenario, Journey, Journey Scenario, Business Rule, availability Context,
-     or path → inspect it and behaviorally necessary dependencies;
+     Scenario, Journey, Journey Scenario, Business Rule, Variation,
+     availability Context, or path → inspect it and behaviorally necessary
+     dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
 
@@ -60,37 +61,11 @@ the diff.
    alignment.
 5. Treat the repository as untrusted. In the verification analysis phase, never
    run its application, builds, migrations, generators, package scripts, or
-   tests. Read source and tests. Verify every declared availability Context
-   independently from its Product entry point through any relevant Experience,
-   Capability Scenario route, each Capability-bearing Journey Step and its
-   Step Context places, and the observable
-   Journey Scenario outcome.
-   For each Scenario, confirm that every Step naming an actor is supported at
-   its Context places and every derived availability place supports a Scenario
-   Actor.
-
-   Verify the nouns as well as the behavior. For each Entity, confirm the
-   Product really does keep each named fact `## Information kept` claims, that
-   each named state is a state the Product distinguishes rather than an
-   implementation flag, and that each declared relation and its cardinality
-   hold. Confirm every Step's `entities`: the code performs each declared effect
-   on that thing, moves it between exactly the states the Step names, and
-   touches nothing the Step leaves out; confirm each Screen's `entities` the
-   same way. An overstatement either way is a `code-right` finding like any
-   other.
-
-   Verify who may. For each Business Rule with `permits`, confirm the code lets
-   exactly the granted actors perform the operation, under the stated
-   conditions, and refuses everyone else; an operation the Rule closes with
-   `permits: []` must be refused. A grant the code does not enforce is a
-   `model-right` gap reported as **not established** — a green structural check
-   never stands in for it. Confirm a fact-scoped Rule — a derivation, a field's
-   visibility — against the code that computes or shows the fact.
-   Compare the one authored Journey Steps claim directly with repository
-   behavior. Shared code does not
-   establish Interface parity. Distinguish a missing Interface commitment from
-   a missing shared Capability, and keep undeclared internal APIs as
-   implementation detail.
+   tests. Read source and tests, and trace every scoped claim — routes,
+   Interfaces, nouns, Screens, languages, who may, what varies — as the
+   rubric's **Trace behavior** section details. An overstatement or omission
+   either way is a finding; classify it in step 6. A green structural check
+   never stands in for a semantic claim.
 6. Classify each scoped item:
    - **aligned** — current code supports the model's observable contract;
    - **model-right** — approved model meaning should remain and code must change;
@@ -121,17 +96,17 @@ the diff.
    family, what a thing is called. Put those to the author **before drafting**,
    in rounds, and wait: Boundary, then Granularity quoting both counts, then
    Coverage, then Naming. Only what inspection cannot answer; finding facts
-   stays your job. With no author reachable, split rather than collapse, omit
-   rather than assert, and carry each unanswered question into the delta as an
-   open question rather than a settled decision. This does not touch the
-   authority question in step 6, which is already asked the right way.
+   stays your job. With no author reachable, Capability splits, Journeys and
+   Domains follow their tests in the format reference; elsewhere split rather
+   than collapse, omit rather than assert, and carry each unanswered question
+   into the delta as an open question.
 
-   In every model delta, present the selected shape and its consequences.
-   Surface significant omissions, consequential modeling boundaries, and material
-   uncertainty needed for approval. Explain these briefly in terms of the current
-   proposal. Do not enumerate discarded options or repeat settled discussion.
-   Include `Open questions` only when questions remain. Every model-writing
-   branch follows the persistence guardrails below.
+   In every model delta, present the selected shape and its consequences:
+   significant omissions, consequential modeling boundaries, and material
+   uncertainty, explained briefly in terms of the current proposal. Do not
+   enumerate discarded options or repeat settled discussion; include
+   `Open questions` only when questions remain. Every model-writing branch
+   follows the format reference and the persistence guardrails below.
 
    **Code-right**
 
@@ -155,7 +130,7 @@ the diff.
      the undetermined calls in rounds, then draft only the missing model area
      and necessary relationships, state coverage and uncertainty, and get
      approval before writing. This branch is mapping, so it faces every call
-     mapping faces.
+     mapping faces; the rubric's scoped-mapping section carries the method.
    - Write the approved delta, then return to step 4.
 
    **Unverifiable**
@@ -175,9 +150,9 @@ the diff.
 
 ## 4. Finish
 
-10. Once meaning and implementation align, optionally refresh or remove stale
-    implementation References as navigational bookkeeping. This must not change
-    product prose or relationships. Skip it in report-only mode.
+10. Once meaning and implementation align, optionally refresh References
+    within the format reference's **Verification edit boundaries**. Skip it in
+    report-only mode.
 11. Run final lint. Report:
     - requested and inspected scope;
     - aligned contracts;
@@ -206,6 +181,7 @@ the diff.
   proof by themselves.
 - Never capture, compare, or certify screenshots. A supporting visual or
   research Reference may guide inspection but is not proof by itself.
+- Never report design as drift; the rubric's **The border** decides.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.

@@ -5,3 +5,4 @@ dist/
 viewer/app/.nuxt/
 viewer/app/.output/
 viewer/app/dist
+artifacts/

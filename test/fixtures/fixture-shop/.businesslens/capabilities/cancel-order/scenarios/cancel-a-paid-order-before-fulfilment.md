@@ -6,12 +6,12 @@ steps:
   - text: Reconciliation shows a confirmed order cannot be fulfilled
     kind: condition
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [] }
   - text: The store admin cancels the order before anything ships
     kind: actor
     actor: store-admin
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [] }
     contexts:
       admin:
         place: admin-web::order-detail
@@ -19,8 +19,8 @@ steps:
     kind: product
     actor: store-admin
     entities:
-      - { entity: order, effect: changes, from: Confirmed, to: Cancelled }
-      - { entity: refund, effect: creates, to: Requested }
+      - { entity: order, effect: changes, from: Confirmed, to: Cancelled, facts: [] }
+      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
     contexts:
       admin:
         place: admin-web::order-detail

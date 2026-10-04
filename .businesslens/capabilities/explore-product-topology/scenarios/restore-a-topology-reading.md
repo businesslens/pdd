@@ -13,7 +13,7 @@ steps:
   - text: The Product restores the selected reading and its scroll position or graph zoom and pan
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -27,7 +27,7 @@ steps:
   - text: The Product retains surviving selections and explicit group choices and clears references to resources removed by the edit
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -46,7 +46,7 @@ The Developer resumes the same reading after navigation, refresh, or a valid rec
 ## Edge cases
 
 - Scenario card expansion choices survive navigation and refresh within the browser session; selecting a Scenario by its address opens that card.
-- Expansion choices in the Experiences & Screens and Screens tabs survive opening a resource, returning, and refreshing.
+- Expansion choices in the Delivery tabs survive opening a resource, returning, and refreshing.
 
 - Opening a resource preserves the selected collection or comparison, drawing, filters, expansion and viewport behind its reading.
 - Following Journey → Entity → Business Rule and using Back restores each previous resource’s tab, expanded Scenario and reading position. Close dismisses the resource reading and returns to the original working view.

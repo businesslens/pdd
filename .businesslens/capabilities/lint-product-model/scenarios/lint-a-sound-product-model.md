@@ -7,14 +7,14 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product locates the model in the current directory, or at the repository root when the current directory has none
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli

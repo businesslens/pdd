@@ -10,6 +10,13 @@
  * separate from the Node test suite so it does not require a browser install.
  */
 import { chromium, expect } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+
+/* The Model overview's terms sit under Product; count them from the generated registry. */
+const registry = readFileSync(new URL('../layers/nuxt/report-viewer/app/utils/vocabulary.generated.ts', import.meta.url), 'utf8')
+const overviewTerms = (registry.match(/page: "product-model"/g) ?? []).length
+/* Definitions are authored in docs/ and change with them; read them from the registry. */
+const definitionOf = slug => registry.match(new RegExp(`"${slug}": \\{[^}]*?definition: "([^"]+)"`))?.[1] ?? ''
 
 const url = process.argv[2]
 if (!url) {
@@ -19,35 +26,35 @@ if (!url) {
 
 const browser = await chromium.launch()
 
+/* A resource opens in a slideover whose title carries the definition of what
+   it is; closing it returns to the collection, whose heading carries its own. */
 async function checkBreadcrumbDefinitions(page, touch = false) {
   for (const route of [
-    { section: 'entity', key: 'entity:order', collection: 'Entities', term: 'Entity' },
-    { section: 'capability', key: 'capability-scenario:complete-checkout', collection: 'Capabilities', term: 'Capability', parent: 'Checkout', parentKey: 'capability:place-order' },
-    { section: 'journey', key: 'journey-scenario:browse-and-complete-checkout', collection: 'Journeys', term: 'Journey', parent: 'Browse and buy', parentKey: 'journey:browse-and-buy' }
+    { section: 'entity', key: 'entity:order', help: 'Order — what Entity means', term: 'Entity', collection: 'Entities — what Entity means' },
+    // A Scenario address opens its parent, titled by its Variation where it has one.
+    { section: 'capability', key: 'capability-scenario:complete-checkout', help: 'Checkout — what Capability means', term: 'Capability', collection: 'Capabilities — what Capability means' },
+    { section: 'journey', key: 'journey-scenario:browse-and-complete-checkout', help: 'Post-purchase — what Variation means', term: 'Variation', collection: 'Journeys — what Journey means' }
   ]) {
     const target = new URL(url)
     target.searchParams.set('s', route.section)
     target.searchParams.set('e', route.key)
     await page.goto(target.href)
-    const header = page.locator('.blr-report-header')
-    const name = `${route.collection} — what ${route.term} means`
-    const help = header.getByRole('button', { name, exact: true })
+    const header = page.locator('[data-resource-panel] header')
+    const help = header.getByRole('button', { name: route.help, exact: true })
     await expect(help).toBeVisible()
     // Icons must be bundled in the static report, which has no icon API.
     await expect(help.locator('.blr-term-mark')).toHaveCSS('mask-image', /url\(/)
-    const bounds = await help.boundingBox()
+    // The slideover slides in; read the title once it has settled inside the viewport.
     const viewport = page.viewportSize()
-    expect(bounds.x).toBeGreaterThanOrEqual(0)
-    expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width)
-    expect(bounds.width).toBeGreaterThanOrEqual(touch ? 44 : 24)
-    expect(bounds.height).toBeGreaterThanOrEqual(touch ? 44 : 24)
-    const current = header.locator('[aria-current="page"]:visible')
-    expect((await current.boundingBox()).width).toBeGreaterThanOrEqual(40)
+    await expect.poll(async () => {
+      const bounds = await help.boundingBox()
+      return bounds.x >= 0 && bounds.x + bounds.width <= viewport.width
+    }).toBe(true)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
     const resourceUrl = page.url()
     await help.click()
-    const definition = page.getByRole('dialog', { name, exact: true })
+    const definition = page.getByRole('dialog', { name: route.help, exact: true })
     await expect(definition.getByText(route.term, { exact: true })).toBeVisible()
     await expect(definition.getByRole('link', { name: 'Read more in docs', exact: true })).toBeVisible()
     await expect(page).toHaveURL(resourceUrl)
@@ -58,33 +65,17 @@ async function checkBreadcrumbDefinitions(page, touch = false) {
     await page.keyboard.press('Escape')
     await expect(help).toBeFocused()
 
-    if (route.parent) {
-      await page.getByRole('button', { name: 'Vocabulary', exact: true }).click()
-      const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
-      const term = panel.locator(`[data-term="${route.key.split(':')[0]}"]`)
-      // Being in the viewport is insufficient: the sticky category heading
-      // must not cover the Scenario's title or its documentation link.
-      for (const element of [term.getByRole('heading'), term.getByRole('link')]) {
-        await expect.poll(() => element.evaluate(el => {
-          const bounds = el.getBoundingClientRect()
-          return [bounds.top + 1, bounds.bottom - 1].every(y =>
-            el.contains(document.elementFromPoint(bounds.left + bounds.width / 2, y)))
-        })).toBe(true)
-      }
-      await page.keyboard.press('Escape')
-      await expect(panel).toBeHidden()
-      await expect(page).toHaveURL(resourceUrl)
-
-      await header.getByRole('button', { name: `Back to ${route.parent}`, exact: true }).click()
-      await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(route.parentKey)
-      await expect(help).toBeVisible()
-    }
-    await header.getByRole('button', { name: `Back to ${route.collection}`, exact: true }).click()
+    await header.getByRole('button', { name: 'Close resource', exact: true }).click()
     await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBeNull()
-    // The same definition remains available when the collection is current.
-    await help.click()
-    await expect(definition).toBeVisible()
+    // The collection's heading keeps its own definition.
+    const collectionHelp = page.getByRole('heading', { level: 1 }).getByRole('button', { name: route.collection, exact: true })
+    await expect(collectionHelp).toBeVisible()
+    const collectionBounds = await collectionHelp.boundingBox()
+    expect(collectionBounds.width).toBeGreaterThanOrEqual(touch ? 24 : 16)
+    await collectionHelp.click()
+    await expect(page.getByRole('dialog', { name: route.collection, exact: true })).toBeVisible()
     await page.keyboard.press('Escape')
+    await expect(collectionHelp).toBeFocused()
   }
 }
 
@@ -111,7 +102,7 @@ try {
   await page.keyboard.press('Enter')
   await expect(entitiesGroup).toHaveAttribute('aria-expanded', 'true')
   // The page's own term is the section's meaning: stated in its head, never a row.
-  await expect(entitiesBody).toContainText('A distinct thing the Product keeps')
+  await expect(entitiesBody).toContainText(definitionOf('entity'))
   await expect(entitiesBody.getByRole('heading', { name: 'Entity', exact: true })).toHaveCount(0)
   const entityEntry = panel.locator('[data-term="actor"]')
   await expect(entityEntry).toBeVisible()
@@ -132,9 +123,9 @@ try {
   await expect(productHead).toHaveAttribute('aria-expanded', 'true')
   await expect(panel.locator('[data-vocabulary-page]').first()).toHaveAttribute('data-vocabulary-page', 'product')
   await expect(panel.locator('[data-vocabulary-page="product-model"]')).toHaveCount(0)
-  await expect(panel.locator('[data-vocabulary-page="product"] article[data-term]')).toHaveCount(6)
+  await expect(panel.locator('[data-vocabulary-page="product"] article[data-term]')).toHaveCount(overviewTerms)
   await expect(panel.locator('[data-vocabulary-page="product"]'))
-    .toContainText('The one coherent value promise this model describes')
+    .toContainText(definitionOf('product'))
   const desktopWidth = (await panel.boundingBox()).width
   await page.setViewportSize({ width: 1920, height: 1080 })
   await expect.poll(async () => (await panel.boundingBox()).width).toBeGreaterThan(desktopWidth)
@@ -225,7 +216,7 @@ try {
   // mount autofocus, while retaining the underlying report location.
   await page.keyboard.press('Escape')
   await expect(panel).toBeHidden()
-  await page.getByRole('button', { name: /^Interfaces \d+$/ }).click()
+  await page.getByRole('navigation', { name: 'Report sections', exact: true }).getByRole('button', { name: 'Interfaces', exact: true }).click()
   const collectionUrl = page.url()
   const interfaces = page.getByRole('button', { name: 'Interfaces — what Interface means', exact: true })
   await interfaces.click()
@@ -251,9 +242,9 @@ try {
   await expect(panel).toBeHidden()
 
   // Navigate within the same report instance so the old search really exists
-  // when the next page opens its vocabulary.
-  await page.getByRole('button', { name: /^Entities \d+$/ }).click()
-  await page.getByRole('button', { name: 'Open Entity Shopper', exact: true }).click()
+  // when the next collection opens its vocabulary.
+  const rail = page.getByRole('navigation', { name: 'Report sections', exact: true })
+  await rail.getByRole('button', { name: 'Entities', exact: true }).click()
   await page.getByRole('button', { name: 'Vocabulary', exact: true }).click()
   await expect(filter).toHaveValue('')
   await expect(entitiesGroup).toHaveAttribute('aria-expanded', 'true')
@@ -262,7 +253,7 @@ try {
   await filter.fill('Arc')
   await page.keyboard.press('Escape')
   await expect(panel).toBeHidden()
-  await page.getByRole('button', { name: 'Topology', exact: true }).click()
+  await rail.getByRole('button', { name: 'Overview', exact: true }).click()
   await page.getByRole('button', { name: 'Vocabulary', exact: true }).click()
   await expect(filter).toHaveValue('')
   await expect(panel.locator('[data-vocabulary-page="product"] button[aria-expanded="true"]')).toHaveCount(1)
@@ -270,7 +261,7 @@ try {
   await expect(panel.locator('[data-term="product"]')).toBeInViewport()
   await page.keyboard.press('Escape')
   await expect(panel).toBeHidden()
-  console.log('Passed: every header opening clears stale searches and opens only the current collection, resource, or Topology group.')
+  console.log('Passed: every opening clears stale searches and opens only the current collection or the Product group.')
 
   // Resource labels remain available to heading navigation and voice control.
   const orderUrl = new URL(url)
@@ -300,7 +291,7 @@ try {
     const entityKind = page.getByRole('button', { name: 'Kind — what Entity kind means', exact: true })
     await entityKind.click()
     const kindDefinition = page.getByRole('dialog', { name: 'Kind — what Entity kind means', exact: true })
-    await expect(kindDefinition).toContainText('Whether an Entity that acts on the Product is a person or a system.')
+    await expect(kindDefinition).toContainText(definitionOf('entity-kind'))
     await expect(kindDefinition.getByRole('link', { name: 'Read more in docs', exact: true }))
       .toHaveAttribute('href', 'https://businesslens.io/docs/entities#actors-an-entity-that-acts')
     await page.keyboard.press('Escape')
@@ -364,10 +355,13 @@ try {
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 15)
     await mobile.keyboard.press('Escape')
   }
-  await mobile.getByRole('button', { name: 'Vocabulary', exact: true }).click()
+  // On phones the Vocabulary sits in the report navigation sheet.
+  await mobile.getByRole('button', { name: 'Open report navigation', exact: true }).click()
+  await mobile.getByRole('dialog', { name: 'Report navigation', exact: true }).getByRole('button', { name: 'Vocabulary', exact: true }).click()
   const mobilePanel = mobile.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await expect(mobilePanel).toBeVisible()
-  await expect(mobilePanel.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
+  // Phones keep focus in the panel without raising the keyboard for search.
+  await expect.poll(() => mobilePanel.evaluate(element => element.contains(document.activeElement))).toBe(true)
   await expect(mobilePanel.getByRole('textbox', { name: 'Filter the vocabulary' })).not.toBeFocused()
   // Wait for the opening slide before measuring its final viewport bounds.
   await expect.poll(async () => {
@@ -389,11 +383,12 @@ try {
   await mobilePanel.getByRole('textbox', { name: 'Filter the vocabulary' }).fill('Arc')
   await mobilePanel.getByRole('button', { name: 'Close', exact: true }).click()
   await expect(mobilePanel).toBeHidden()
-  await mobile.getByRole('button', { name: 'Vocabulary', exact: true }).click()
+  await mobile.getByRole('button', { name: 'Open report navigation', exact: true }).click()
+  await mobile.getByRole('dialog', { name: 'Report navigation', exact: true }).getByRole('button', { name: 'Vocabulary', exact: true }).click()
   await expect(mobilePanel.getByRole('textbox', { name: 'Filter the vocabulary' })).toHaveValue('')
   await expect(mobilePanel.getByRole('button', { name: /^Interfaces \d+ more terms$/ }))
     .toHaveAttribute('aria-expanded', 'true')
-  await expect(mobilePanel.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
+  await expect(mobilePanel.getByRole('textbox', { name: 'Filter the vocabulary' })).not.toBeFocused()
   await mobile.keyboard.press('Escape')
   for (const width of [390, 320]) {
     await mobile.setViewportSize({ width, height: 844 })

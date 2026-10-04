@@ -7,16 +7,19 @@
  * it answers *what* the reading touches and never *which Step does it*.
  *
  * Both ends of a move are authored on the Step — nothing is inferred from a
- * neighbour — so the chip reads `Unread → Read` exactly as written. An alias
- * tells two instances of one thing apart: `Collection (source)`.
+ * neighbour — so it reads `[Item] changed [Unread] → [Read]` exactly as
+ * written. An alias tells two instances of one thing apart:
+ * `Collection (source)`.
  *
- * Drawn as a reference to a resource, exactly as the Step's Actor is — the
- * Entity's own mark inside a chip that opens it. States are not resources, so
- * they stay plain terminal readings rather than second targets competing with
- * the first.
+ * The Entity comes first, as the shared chip that opens it — exactly as the
+ * Step's Actor is drawn — and the effect follows outside it, so the same
+ * phrase reads the same in a Step, Changes made here, Ends with and Leaves
+ * behind. States are not resources, so they are badges, never second chips.
+ * The facts a read or change cites follow as small marks; an end-state
+ * summary says where a thing was left and names none.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioStepEntityView } from '../utils/reportWorkspace'
-import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
+import { resolveResource } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -32,18 +35,6 @@ const entity = computed<EntityView | undefined>(() => {
   return resource?.kind === 'entity' ? resource : undefined
 })
 
-/* `changes` is the default and the ordinary case, so it is the one effect that
-   costs no word — a label on every chip would separate nothing. */
-const effectLabel = computed(() => ({
-  creates: 'created',
-  changes: '',
-  removes: 'removed',
-  /* Past participle, as the others are: the label says what happened to the
-     thing, not what the Step does. "Collection reads" read as the Collection
-     doing the reading. */
-  reads: 'read'
-}[props.mention.effect]))
-
 /* A read is a mention, not a claim about what can alter the thing. It reads at
    a lower weight than a change so a row of both cannot be misread as a row of
    changes — absence of a read means nothing, and it must not look like it does. */
@@ -53,6 +44,8 @@ const label = computed(() => {
   const title = entity.value?.title ?? props.mention.entityId
   return props.mention.as ? `${title} (${props.mention.as})` : title
 })
+
+const facts = computed(() => props.outcome ? [] : props.mention.facts ?? [])
 
 const description = computed(() => {
   const name = label.value
@@ -74,34 +67,26 @@ const description = computed(() => {
   if (!props.mention.to) return `This Step changes ${name}`
   return `This Step moves ${name} from "${props.mention.from}" to "${props.mention.to}"`
 })
+
+const factsDescription = computed(() => facts.value.length
+  ? `${description.value}; the facts it ${props.mention.effect === 'reads' ? 'reads' : 'edits'}: ${facts.value.join(', ')}`
+  : description.value)
 </script>
 
 <template>
-  <UTooltip v-if="entity" :text="description" :delay-duration="150">
-    <BlrResourceLink
-      :resource-key="entity.key"
-      class="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      :class="isRead
-        ? 'border-dashed border-muted bg-transparent font-normal text-muted hover:border-default hover:text-default'
-        : 'border-default bg-elevated/60 font-medium text-highlighted hover:border-accented hover:bg-elevated'"
-      :aria-label="`Open Entity ${entity.title}`"
-      @open="emit('select', entity)"
-    >
-      <BlrEntityMark
-        :facet="entityFacetOf(entity) ?? 'kept'"
-        :acts="entity?.acts"
-        size="xs"
-        class="shrink-0"
-        :style="{ opacity: isRead ? 0.55 : 1 }"
-      />
-      <span class="min-w-0 truncate">{{ label }}</span>
-      <span v-if="effectLabel" class="shrink-0 font-normal text-muted">{{ effectLabel }}</span>
-      <template v-if="mention.to">
-        <span v-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
-        <UIcon v-if="mention.from && !outcome" name="i-lucide-arrow-right" class="size-3 shrink-0 text-dimmed" />
-        <span class="min-w-0 truncate text-default">{{ mention.to }}</span>
+  <UTooltip :text="factsDescription" :delay-duration="150">
+    <span class="blr-step-entity" :data-effect="mention.effect" data-step-entity>
+      <BlrEntityChip v-if="entity" :entity="entity" :label="label" :muted="isRead" @select="emit('select', $event)" />
+      <span v-else>{{ label }}</span>
+      <BlrEntityEffect :mention="mention" :outcome="outcome" />
+      <template v-if="facts.length">
+        <span aria-hidden="true" class="text-dimmed">·</span>
+        <BlrFactTag v-for="fact in facts" :key="fact" :name="fact" data-step-fact />
       </template>
-      <span v-else-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
-    </BlrResourceLink>
+    </span>
   </UTooltip>
 </template>
+
+<style scoped>
+.blr-step-entity { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.375rem; min-width: 0; max-width: 100%; font-family: var(--font-sans); }
+</style>

@@ -1,10 +1,13 @@
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
+const source = (path: string) => readFileSync(join(__dirname, '../layers/nuxt/report-viewer', path), 'utf8')
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, resourceViewLinks } = await utility('reportDestinations')
+const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, collectionForKey, resourceViewLinks } = await utility('reportDestinations')
+const { resourceTabPushesHistory } = await utility('resourceNavigation')
 const { findProductTopologyView } = await utility('productTopologyViews')
 const { resourceConnectionRows } = await utility('resourceConnections')
 const { tabsFor } = await utility('pageSections')
@@ -15,7 +18,7 @@ const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname,
 
 describe('report destinations', () => {
   it('gives every drawing one collection home, with matrices owned by their row subject', () => {
-    expect(MAIN_RESOURCE_KINDS).toEqual(['entity', 'interface', 'domain', 'capability', 'journey', 'rule'])
+    expect(MAIN_RESOURCE_KINDS).toEqual(['entity', 'interface', 'domain', 'capability', 'journey', 'rule', 'variation'])
     const homes = new Set<string>(MAIN_RESOURCE_KINDS)
     const matrices = REPORT_DESTINATIONS.filter((item: any) => item.mode === 'matrix')
     expect(matrices.map((item: any) => [item.rail, item.view])).toEqual([
@@ -28,8 +31,27 @@ describe('report destinations', () => {
     }
     for (const rail of homes) {
       const modes = REPORT_DESTINATIONS.filter((item: any) => item.rail === rail).map((item: any) => item.mode)
-      expect(modes, rail).toEqual(['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
+      // Variations are rows only: a set has no derivation of its own to draw.
+      expect(modes, rail).toEqual(rail === 'variation' ? [] : ['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
     }
+  })
+
+  it('closes a resource-only address to its rail collection, Variations included', () => {
+    expect(collectionForKey('variation:tax-document')).toBe('variation')
+    expect(collectionForKey('entity:order')).toBe('entity')
+    expect(collectionForKey('screen:customer-web::catalog')).toBe('interface')
+    expect(collectionForKey('capability-scenario:browse-catalog')).toBe('capability')
+    expect(collectionForKey('product:fixture-shop')).toBe('overview')
+    for (const kind of MAIN_RESOURCE_KINDS) expect(collectionForKey(`${kind}:x`)).toBe(kind)
+  })
+
+  it('lets a reading settle its detail address without a Back step of its own', () => {
+    const order = 'entity:order'
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'lifecycle/changes~Pending~Cancelled' }, { resource: order, resourceTab: 'lifecycle' })).toBe(false)
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'overview' }, { resource: order, resourceTab: 'lifecycle' })).toBe(true)
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'lifecycle' }, { resource: order, resourceTab: 'lifecycle/changes~Pending~Cancelled' })).toBe(true)
+    expect(resourceTabPushesHistory({ resource: 'capability:cancel-order', resourceTab: 'lifecycle/x' }, { resource: order, resourceTab: 'lifecycle' })).toBe(true)
+    expect(resourceTabPushesHistory({ resource: order, resourceTab: 'rules' }, { resource: order, resourceTab: 'rules' })).toBe(false)
   })
 
   it('does not keep standalone matrix sections or offer matrices to other collections', () => {
@@ -51,7 +73,7 @@ describe('report destinations', () => {
   it('offers a resource only the views its own subject appears in', () => {
     const sections = (resource: any) => resourceViewLinks(resource, workspace).map((item: any) => item.section)
     expect(sections(workspace.entities[0])).toContain('entity-relationships')
-    expect(sections(workspace.interfaces[0])).toEqual(expect.arrayContaining(['interface-map', 'delivery']))
+    expect(sections(workspace.interfaces[0])).toEqual(expect.arrayContaining(['delivery-map', 'delivery']))
     expect(sections(workspace.domains[0])).toContain('domain-reach')
     expect(sections(workspace.journeys[0])).toContain('journey-reach')
     expect(sections(workspace.rules[0])).toEqual(['rule-reach', 'rule-attachments'])
@@ -122,12 +144,12 @@ describe('resource readings', () => {
     expect(tabsFor(isolated, resource).map((tab: any) => tab.id)).toEqual(['overview'])
   })
 
-  it('keeps Scenario References and their count scoped to their owner', () => {
+  it('reads a Scenario address as its parent, References included; the Scenario\'s own are on its card', () => {
     const parent = workspace.byKey.get('capability:browse-catalog')
     const scenario = workspace.byKey.get('capability-scenario:browse-catalog')
+    expect(scenario.references).toHaveLength(2)
     expect(tabsFor(workspace, parent).at(-1)).toMatchObject({ id: 'references', count: 1 })
-    expect(tabsFor(workspace, scenario).at(-1)).toMatchObject({ id: 'references', count: 2 })
-    const withoutReferences = { ...scenario, references: [] }
-    expect(tabsFor(workspace, withoutReferences).map((tab: any) => tab.id)).toEqual(['overview', 'scenarios', 'connections'])
+    expect(tabsFor(workspace, scenario)).toEqual(tabsFor(workspace, parent))
+    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrRefs :references="scenario.references"')
   })
 })

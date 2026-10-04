@@ -14,7 +14,7 @@ steps:
     kind: product
     actor: reader
     entities:
-      - { entity: collection, effect: creates, to: Private }
+      - { entity: collection, effect: creates, to: Private, facts: [Name, Item order] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
@@ -22,7 +22,7 @@ steps:
     kind: condition
     actor: reader
     entities:
-      - { entity: collection, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

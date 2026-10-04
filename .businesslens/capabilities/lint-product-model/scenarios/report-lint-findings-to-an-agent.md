@@ -13,7 +13,7 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli

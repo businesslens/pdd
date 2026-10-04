@@ -3,108 +3,61 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 31
+order: 27
 ---
 
 # `businesslens blueprint pull`
 
-Pull a Blueprint into the current directory:
+Pull a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is) from the catalog by
+name into `.businesslens/`, to start a product from a reviewed model.
 
 ```bash
-npx businesslens blueprint pull <blueprint-slug>
+npx businesslens blueprint pull <name> [--catalog <origin>] [--force]
 ```
 
-The argument is the Blueprint's catalog slug: lowercase kebab-case, at most 80
-characters. **No account, sign-in, or credential is involved** — the catalog is
-anonymous to read.
+## Options
 
-`pull` fetches and validates the Blueprint and its optional Product logo from
-the same catalog, then passes them to [`open`](./cli-open.md) for portable
-expansion.
+| Option | Meaning |
+| --- | --- |
+| `<name>` | The Blueprint's catalog slug: lowercase kebab-case, at most 80 characters |
+| `--catalog <origin>` | Catalog to pull from. Otherwise `BUSINESSLENS_CATALOG_URL`, then `https://businesslens.io` |
+| `--force` | Move a non-empty `.businesslens/` aside to a backup first |
 
-## Result
+`--cwd` picks the directory that receives `.businesslens/`.
 
-The Blueprint becomes a canonical `.businesslens/` Product Model with its
-orientation README. It follows the same
-[portable projection](./cli-export.md#portable-export) and Coverage handling as
-`open`. Nothing outside `.businesslens/` is touched.
+## What it does
 
-Use `-c, --cwd <path>` to choose the target directory. By default `pull`
-refuses a non-empty `.businesslens/`; `--force` first moves it to a timestamped
-backup.
-
-## Choosing a catalog
-
-```bash
-npx businesslens blueprint pull <slug> --catalog http://localhost:3200
-```
-
-Precedence is `--catalog`, then `BUSINESSLENS_CATALOG_URL`, then the public
-catalog at `https://businesslens.io`.
-
-You may run your own catalog. Its URL must be a bare origin without credentials,
-a path, a query, or a fragment. HTTPS is required except for a loopback
-development host.
+1. Fetches the report from the catalog, anonymously (no account or sign-in).
+2. Checks it, then fetches the Product logo if the catalog has one. A missing or
+   invalid logo is skipped, not an error.
+3. Expands it exactly as [`blueprint open`](./cli-open.md) does, with the logo
+   restored as `.businesslens/product/logo.svg`.
 
 ## Safety
 
-Before writing any Product Model files, `pull` refuses:
+`pull` writes only after the report matches its digest, its Blueprint name, this
+CLI's report version and the 8 MiB limit, and it never follows a redirect. A
+refusal writes nothing.
 
-- a slug that is not lowercase kebab-case;
-- a plaintext catalog origin that is not loopback;
-- redirects;
-- reports larger than 8 MiB;
-- a missing or malformed report digest, or one that does not match the body;
-- a response served for a different Blueprint;
-- a report served for a different Product Report version than this CLI reads;
-  and
-- not-found, withdrawn, and catalog-unavailable responses.
+A catalog origin must be bare (no credentials, path, query or fragment) and
+use HTTPS, except on `localhost`, `127.x.x.x` or `::1`.
 
-## Catalog contract
+Exits 0 when the model is written, 1 when the catalog, the network or the
+target refuses it, and 2 for an invalid name, catalog origin or option.
 
-```text
-GET /api/v1/blueprints/:slug/report.json
-GET /api/v1/blueprints/:slug/logo.svg
-```
+## Run your own catalog
 
-Both requests are anonymous and carry `user-agent: businesslens/<version>`, so
-catalog operators can tell a CLI pull from a page view. A successful report
-response is the Product Report body and must include
-`x-businesslens-blueprint` and `x-businesslens-report-digest`. The logo endpoint
-keeps visual identity on the same catalog and revision as the report; a missing
-logo does not prevent the Product Model itself from being pulled.
+Serve two anonymous endpoints:
 
-### Report version
-
-`pull` asks for the one Product Report version it reads, by name:
-
-```text
-accept: application/vnd.businesslens.report+json; version=14, application/json
-```
-
-The `version` parameter is the report schema's major alone, and it is the whole
-compatibility statement: there is no compatibility reader, so a report of
-another major is refused rather than migrated. `application/json` is the
-fallback for a catalog that does not negotiate media types.
-
-Answer with either content type. If you answer with the report media type,
-carry the `version` parameter of the report you are serving — a response whose
-`version` differs from the one asked for is refused before its body is read,
-naming both versions. A response with no `version` parameter is read, and a
-mismatched `schemaVersion` inside the body is refused by validation instead.
-
-If you serve more than one report version, use the requested `version` to choose
-the representation. Any other failing status is reported with its code and, when
-the body is JSON, its `message`.
-
-| Status | Meaning |
+| Request | Answer |
 | --- | --- |
-| `200` | The Product Report |
-| `404` | No such Blueprint |
-| `410` | The Blueprint was withdrawn from the catalog |
-| `503` | The catalog is temporarily unavailable |
+| `GET /api/v1/blueprints/:slug/report.json` | The report, with `x-businesslens-blueprint: <slug>` and `x-businesslens-report-digest: <sha-256 hex of the canonical report JSON>`; `404` unknown, `410` withdrawn, `503` unavailable |
+| `GET /api/v1/blueprints/:slug/logo.svg` | The Product logo, optional |
 
-## After pulling
+`pull` asks for `application/vnd.businesslens.report+json; version=15` and
+also accepts `application/json`.
 
-Continue with [Start from a Blueprint](./from-a-blueprint.md) to review, adapt,
-build, and verify the model.
+## Next
+
+- [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt and
+  build it.

@@ -1,10 +1,15 @@
 <script setup lang="ts">
-/** A parent's Scenarios as expandable cards with labelled Steps in authored order. */
-import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+/**
+ * A parent's Scenarios as expandable cards with labelled Steps in authored order.
+ * Alternative Scenarios of one Variation are one card, at the first one's place,
+ * switched in place from its title; the tab still counts every Scenario.
+ */
+import type { AnyResourceView, ReportWorkspace, ScenarioView, VariationSetView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { childrenOf } from '../utils/pageSections'
+import { resourceOpenerKey } from '../utils/resourceNavigation'
+import { collapseVariations } from '../utils/variations'
 import type { ColumnChoice } from '../composables/useColumns'
-import { scenarioTerm } from '../utils/vocabulary'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -15,20 +20,53 @@ const props = defineProps<{
   revealSelected?: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
+const opener = inject(resourceOpenerKey, null)
 
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
-const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
+interface Card { key: string, set?: VariationSetView, alternatives: ScenarioView[] }
+const cards = computed<Card[]>(() => collapseVariations(props.workspace, scenarios.value).map(item => item.kind === 'variation'
+  ? { key: item.key, set: item, alternatives: scenarios.value.filter(scenario => scenario.variation?.key === item.key)
+      .sort((a, b) => a.title.localeCompare(b.title, 'en') || a.key.localeCompare(b.key, 'en')) }
+  : { key: item.key, alternatives: [item as ScenarioView] }))
+const selectedCard = computed(() => cards.value.find(card => card.alternatives.some(item => item.key === props.selectedKey))?.key ?? null)
+
+/* The alternative each set card reads: the one the address asked for, the
+   reader's last pick, or the first by title — display order, never a default. */
+const scope = computed(() => JSON.stringify([props.workspace.identity.id, props.resource.key]))
+const picks = useState<Record<string, Record<string, string>>>('blr:scenario-picks', () => ({}))
+const picked = computed(() => picks.value[scope.value] ?? {})
+function remember(card: string, scenario: string) {
+  picks.value = { ...picks.value, [scope.value]: { ...picked.value, [card]: scenario } }
+  try { sessionStorage.setItem(`blr:scenario-picks:${location.pathname}:${scope.value}`, JSON.stringify(picks.value[scope.value])) } catch { /* Optional persistence. */ }
+}
+onMounted(() => {
+  if (picks.value[scope.value]) return
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(`blr:scenario-picks:${location.pathname}:${scope.value}`) ?? 'null')
+    if (saved && typeof saved === 'object') picks.value = { ...picks.value, [scope.value]: saved }
+  } catch { /* Start from the address or the first alternative. */ }
+})
+watch(() => props.selectedKey, (key) => {
+  const card = cards.value.find(item => item.set && item.alternatives.some(alternative => alternative.key === key))
+  if (card && key) remember(card.key, key)
+}, { immediate: true })
+const current = (card: Card) => card.alternatives.find(item => item.key === picked.value[card.key]) ?? card.alternatives[0]!
+/* Switching keeps the parent's reading; an address naming this set follows the pick without a history entry. */
+function choose(card: Card, scenario: AnyResourceView) {
+  remember(card.key, scenario.key)
+  if (opener && props.selectedKey && card.alternatives.some(item => item.key === props.selectedKey)) opener(scenario.key, undefined, { replace: true })
+}
 
 /* One expansion opens Steps, decisions and edge cases.
    Scenario cards start closed, as rows do everywhere else. */
 const openScenarios = useBlrScenarioExpansion(
-  computed(() => JSON.stringify([props.workspace.identity.id, props.resource.key])),
-  computed(() => scenarios.value.map(item => item.key)),
-  computed(() => props.selectedKey ?? null)
+  scope,
+  computed(() => cards.value.map(item => item.key)),
+  selectedCard
 )
 const scenariosRoot = useTemplateRef('scenariosRoot')
 
-watch([scenariosRoot, () => props.selectedKey], async ([root, key], _previous, onCleanup) => {
+watch([scenariosRoot, selectedCard], async ([root, key], _previous, onCleanup) => {
   if (!root || !key || props.revealSelected === false) return
   let cancelled = false
   onCleanup(() => { cancelled = true })
@@ -42,12 +80,12 @@ watch([scenariosRoot, () => props.selectedKey], async ([root, key], _previous, o
   })
 }, { flush: 'post' })
 
-const isOpen = (scenario: ScenarioView) => openScenarios.value.includes(scenario.key)
-function toggleScenario(scenario: ScenarioView) {
-  openScenarios.value = isOpen(scenario) ? openScenarios.value.filter(key => key !== scenario.key) : [...openScenarios.value, scenario.key]
+const isOpen = (card: Card) => openScenarios.value.includes(card.key)
+function toggleScenario(card: Card) {
+  openScenarios.value = isOpen(card) ? openScenarios.value.filter(key => key !== card.key) : [...openScenarios.value, card.key]
 }
 function toggleAll(open: boolean) {
-  openScenarios.value = open ? scenarios.value.map(item => item.key) : []
+  openScenarios.value = open ? cards.value.map(item => item.key) : []
 }
 
 /* The page places the list controls beside its tabs. Expansion is remembered
@@ -57,10 +95,6 @@ const rowGrid = computed(() => props.columns > 1
   ? { display: 'grid', gridTemplateColumns: `repeat(${props.columns}, minmax(0, 1fr))`, gap: '0.5rem', alignItems: 'start' }
   : undefined)
 
-/* The vocabulary slug for a Scenario word, as the page resolves it. */
-const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-case') =>
-  scenarioTerm(scenarioKind.value === 'journey-scenario' ? 'journey' : 'capability', word)
-
 </script>
 
 <template>
@@ -69,51 +103,21 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
   </p>
   <div v-else ref="scenariosRoot" data-scenarios>
     <div class="space-y-2" :style="rowGrid" data-collection-rows>
-      <div v-for="scenario in scenarios" :key="scenario.key" class="blr-row-tree" :data-row-key="scenario.key">
+      <div v-for="card in cards" :key="card.key" class="blr-row-tree" :data-row-key="card.key">
         <!-- The cards drawing: the Scenario itself is read on the card, open
              or closed — what starts it, how it ends, what it touches and where
              it leaves each thing. Opening it adds Steps and details. -->
         <BlrScenarioSummary
           :workspace="workspace"
-          :scenario="scenario"
-          :expanded="isOpen(scenario)"
-          @toggle="toggleScenario(scenario)"
+          :scenario="current(card)"
+          :expanded="isOpen(card)"
+          :switchable="Boolean(card.set)"
+          @toggle="toggleScenario(card)"
           @open="emit('open', $event)"
+          @pick="choose(card, $event)"
         >
-          <ol class="blr-steps-list">
-            <li v-for="(step, index) in scenario.steps" :key="index" :data-step="index + 1">
-              <span class="blr-steps-number">{{ index + 1 }}</span>
-              <BlrScenarioStep :workspace="workspace" :scenario="scenario" :step="step" :index="index" @open="emit('open', $event)" />
-            </li>
-          </ol>
-          <template #details>
-            <section v-if="scenario.decisionPoints.length" class="space-y-2">
-              <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /></h4>
-              <div class="grid gap-3 @min-[640px]:grid-cols-2">
-                <div v-for="point in scenario.decisionPoints" :key="point.title" class="rounded-xl border border-dashed border-accented p-4">
-                  <p class="flex items-center gap-2 text-sm font-semibold text-highlighted">
-                    <UIcon name="i-lucide-git-branch" class="size-4 text-muted" />{{ point.title }}
-                  </p>
-                  <BlrProse :text="point.question" class="mt-2" />
-                  <ul class="mt-3 space-y-2">
-                    <li v-for="branch in point.branches" :key="branch.condition" class="flex items-start gap-2 text-sm">
-                      <code class="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-highlighted">{{ branch.condition }}</code>
-                      <UIcon name="i-lucide-arrow-right" class="mt-1 size-3 shrink-0 text-dimmed" />
-                      <span class="text-default">{{ branch.outcome }}</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-            <section v-if="scenario.edgeCases.length" class="space-y-1">
-              <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('edge-case')" text="Edge cases" /></h4>
-              <ul class="max-w-3xl space-y-1.5 text-sm text-default">
-                <li v-for="edgeCase in scenario.edgeCases" :key="edgeCase" class="flex gap-2">
-                  <span class="mt-2 size-1.5 shrink-0 rounded-full bg-(--ui-border-accented)" />{{ edgeCase }}
-                </li>
-              </ul>
-            </section>
-          </template>
+          <BlrScenarioSteps :workspace="workspace" :scenario="current(card)" @open="emit('open', $event)" />
+          <template #details><BlrScenarioDetails :scenario="current(card)" /></template>
         </BlrScenarioSummary>
       </div>
     </div>

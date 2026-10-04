@@ -7,21 +7,21 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: blueprint, effect: reads }
+      - { entity: blueprint, effect: reads, facts: [] }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product reads the report, refusing anything that is not a plain file within its size limit, or written under a contract it does not speak
     kind: product
     entities:
-      - { entity: blueprint, effect: reads }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product expands it into a complete model in a staging area and checks that the result is structurally sound
     kind: product
     entities:
-      - { entity: blueprint, effect: reads }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
     contexts:
       terminal:
         place: businesslens-cli
@@ -29,7 +29,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: product-model, effect: creates }
+      - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       terminal:
         place: businesslens-cli

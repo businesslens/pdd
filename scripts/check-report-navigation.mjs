@@ -100,13 +100,16 @@ try {
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
       await expandCollection(page)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
-      for (const resource of resources) {
+      // Variation root cards are exercised with their concrete children in check-variations.
+      const alternativeIds = new Set(report.model.variations.filter(set => set.of === kind).flatMap(set => set.alternatives.map(alt => alt.resourceId)))
+      for (const resource of resources.filter(resource => !alternativeIds.has(resource.id))) {
         const title = kind === 'domain' ? resource.name : resource.title
         const card = page.locator(`[data-card-key="${kind}:${resource.id}"]`)
         const subject = card.getByRole('treeitem').first()
         const toggle = subject.getByRole('button')
         await expect(subject.getByText(title, { exact: true })).toBeVisible()
-        const folders = card.locator('[role="treeitem"][aria-level="2"][aria-expanded]')
+        /* Folders are the named groups; an expandable resource item, such as a Capability holding its Scenarios, opens on its label. */
+        const folders = card.locator('[role="treeitem"][aria-level="2"][aria-expanded]').filter({ hasNot: page.locator('[data-slot="linkLabel"] a[data-resource-key]') })
         const folderStates = () => folders.evaluateAll(items => items.map(item => item.getAttribute('aria-expanded')))
         const before = await folderStates()
         /* Every displayed folder has items and toggles on its label. */
@@ -134,7 +137,8 @@ try {
           await subject.press('ArrowRight')
           await expect(subject).toHaveAttribute('aria-expanded', 'true')
         }
-        await expect(card.getByText('Overview', { exact: true })).toHaveCount(0)
+        /* No synthetic Overview row; a real resource named Overview is a link. */
+        await expect(card.locator('span', { hasText: /^Overview$/ }).filter({ hasNot: page.locator('a') })).toHaveCount(0)
         await subject.getByRole('link', { name: title, exact: true }).click()
         await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
         await expect(page.locator('[data-resource-heading]')).toContainText(title)
@@ -157,7 +161,9 @@ try {
     await choose(page, 'Interfaces')
     await expect(page.locator('[data-interface-directory]')).toHaveCount(0)
     /* Interfaces and Domains read as one tree card per subject. */
-    await expect(page.locator('[data-tree-card]')).toHaveCount(report.model.interfaces.length)
+    const interfaceSets = report.model.variations.filter(set => set.of === 'interface')
+    const rootCount = report.model.interfaces.length - interfaceSets.reduce((sum, set) => sum + set.alternatives.length - 1, 0)
+    await expect(page.locator('[data-tree-card]')).toHaveCount(rootCount)
     const experience = report.model.experiences.find(item => report.model.screens.some(screen => screen.id.startsWith(`${item.id}::`)))
     if (experience) {
       const item = page.getByRole('treeitem').filter({ has: page.getByText(experience.title, { exact: true }) }).first()
@@ -187,9 +193,9 @@ try {
       await expect(page.locator('[data-resource-heading]')).toContainText(screen.title)
       await expect(page.locator('[data-resource-panel]')).toContainText('Screen')
       await capture(page, `${width}-screen-page`)
-      /* One tab switches nothing, so no strip renders — and the ways out stay. */
-      await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
-      await page.getByRole('button', { name: 'Interface map', exact: true }).click()
+      /* A Screen reads its own Delivery, and the way out to the Delivery map stays. */
+      await expect(page.locator('[data-resource-panel]').getByRole('tab', { name: 'Delivery', exact: true })).toHaveCount(1)
+      await page.getByRole('button', { name: 'Delivery map', exact: true }).click()
       await expect(page).toHaveURL(/s=interface.*t=graph/)
     }
     await choose(page, 'Capabilities')
@@ -232,7 +238,7 @@ try {
     await expect(about.getByRole('heading', { name: 'Description', exact: true })).toBeVisible()
     await expect(about.getByRole('heading', { name: 'Intent', exact: true })).toBeVisible()
     const metadata = about.getByRole('complementary', { name: 'Product details' })
-    await expect(metadata.locator('dt')).toHaveText(['ID', 'Category', 'Tags', 'Authors', 'License'])
+    await expect(metadata.locator('dt')).toHaveText(['ID', 'Category', 'Tags', 'Authors', ...(report.languages?.length ? ['Languages'] : []), 'License'])
     await expect(metadata.getByText(report.id, { exact: true }).first()).toBeVisible()
     for (const author of report.authors) {
       if (author.url) await expect(metadata.getByRole('link', { name: author.url, exact: true })).toBeVisible()
@@ -287,7 +293,9 @@ try {
       if (!parent) continue
       const scenario = report.model[`${kind}Scenarios`].find(item => item[`${kind}Id`] === parent.id)
       await page.goto(resourceUrl(kind, parent.id, '&rt=scenarios'))
-      const card = page.locator(`[data-row-key="${kind}-scenario:${scenario.id}"] [data-scenario-card]`)
+      const scenarioSet = report.model.variations.find(set => set.of === `${kind}-scenario` && set.alternatives.some(alt => alt.resourceId === scenario.id))
+      const cardKey = scenarioSet ? `variation:${scenarioSet.id}` : `${kind}-scenario:${scenario.id}`
+      const card = page.locator(`[data-row-key="${cardKey}"] [data-scenario-card]`)
       const toggle = card.locator('.blr-summary-toggle')
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
       await toggle.click()
@@ -333,7 +341,7 @@ try {
     }
     const iface = report.model.interfaces.find(item => report.model.experiences.some(experience => experience.id.startsWith(`${item.id}::`))) ?? report.model.interfaces[0]
     if (iface) {
-      await page.goto(resourceUrl('interface', iface.id, '&rt=structure'))
+      await page.goto(resourceUrl('interface', iface.id, '&rt=delivery'))
       await expect(page.locator('[data-resource-structure]')).toBeVisible()
       await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
       const toggle = page.locator('[data-resource-structure] button[aria-expanded]').first()
@@ -346,7 +354,7 @@ try {
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
       }
       await capture(page, `${width}-interface-structure`)
-      await page.getByRole('button', { name: 'Interface map', exact: true }).click()
+      await page.getByRole('button', { name: 'Delivery map', exact: true }).click()
       await expect(page).toHaveURL(/s=interface.*t=graph.*tf=interface/)
       await expect(page.locator('[data-flow-ready=true]')).toBeVisible()
       await page.goBack()
@@ -369,7 +377,7 @@ try {
     if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
-    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Experiences & Screens.`)
+    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Delivery.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

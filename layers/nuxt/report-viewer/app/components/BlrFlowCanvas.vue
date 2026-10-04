@@ -3,10 +3,10 @@ import { VueFlow, MarkerType, Position, getTransformForBounds, useVueFlow } from
 import { Background } from '@vue-flow/background'
 import type { Node, Edge, ViewportTransform } from '@vue-flow/core'
 import type { DiagramLayout, DiagramNode } from '../utils/diagram'
-import { diagramBounds, diagramContext } from '../utils/diagramInteraction'
+import { diagramBounds, diagramContext, diagramEdgeContext } from '../utils/diagramInteraction'
 
 const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, branches?: boolean, selected?: string | null }>()
-const emit = defineEmits<{ open: [key: string], inspect: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
+const emit = defineEmits<{ open: [key: string], inspect: [key: string, part?: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const id = useId()
 const viewerId = inject<string>('businesslens:viewer', '')
 const shell = ref<HTMLElement>()
@@ -14,6 +14,10 @@ const ready = ref(false)
 const active = ref<string | null>(null)
 let hovered: string | null = null
 let focused: string | null = null
+/* An edge lights its context the way a node does; a node under the pointer wins. */
+const activeEdge = ref<string | null>(null)
+let hoveredEdge: string | null = null
+let focusedEdge: string | null = null
 const { zoomIn, zoomOut, viewport, setViewport, onNodesInitialized, onViewportChangeStart, onViewportChangeEnd } = useVueFlow(id)
 let resize: ResizeObserver | undefined
 let width = 0, height = 0
@@ -26,20 +30,24 @@ let centering = false
 let centerRequest = 0
 const signature = computed(() => JSON.stringify([props.viewportKey, props.layout.nodes.map(node => [node.id, node.x, node.y, node.width, node.height])]))
 const storageKey = () => `businesslens:flow:${location.pathname}:${viewerId}:${props.viewportKey}`
-const context = computed(() => diagramContext({ ...props.layout, layout: props.tree ? 'tree' : undefined }, active.value))
+const context = computed(() => diagramContext({ ...props.layout, layout: props.tree ? 'tree' : undefined }, active.value)
+  ?? diagramEdgeContext(props.layout, activeEdge.value))
 const nodes = computed<Node<DiagramNode & { dimmed: boolean, highlighted: boolean }>[]>(() => {
+  /* Frames sit under their contents by depth; every leaf and edge sits above every frame. */
+  const parents = new Map(props.layout.nodes.map(node => [node.id, node.parent]))
+  const depth = (id: string) => { let level = 0; for (let parent = parents.get(id); parent; parent = parents.get(parent)) level++; return level }
   return props.layout.nodes.map(node => {
-    return { id: node.id, type: 'blr', position: { x: node.x, y: node.y },
+    return { id: node.id, type: node.group ? 'blr-group' : 'blr', position: { x: node.x, y: node.y },
       width: node.width, height: node.height, style: { width: `${node.width}px`, height: `${node.height}px` },
       sourcePosition: props.direction === 'DOWN' ? Position.Bottom : Position.Right,
       targetPosition: props.direction === 'DOWN' ? Position.Top : Position.Left,
-      selectable: false, draggable: false, connectable: false, focusable: false, zIndex: 10,
+      selectable: false, draggable: false, connectable: false, focusable: false, zIndex: node.group ? depth(node.id) : 10,
       data: { ...node, dimmed: Boolean(context.value && !context.value.nodes.has(node.id)), highlighted: Boolean(context.value?.occurrences.has(node.id) || (node.inspectionKey && node.inspectionKey === props.selected)) } }
   })
 })
 const edges = computed<Edge[]>(() => props.layout.edges.map(edge => ({ id: edge.id, source: edge.source, target: edge.target, type: 'blr-routed',
   markerEnd: edge.arrow === false ? undefined : { type: MarkerType.ArrowClosed, color: 'var(--ui-text-muted)', width: 14, height: 14 },
-  selectable: false, focusable: false, data: { ...edge,
+  selectable: false, focusable: false, zIndex: 10, data: { ...edge,
     dimmed: Boolean(context.value && !context.value.edges.has(edge.id)), quiet: Boolean(props.quiet && !context.value), selected: Boolean(edge.inspectionKey && edge.inspectionKey === props.selected) } })))
 
 function hoverNode(id: string | null) {
@@ -49,6 +57,14 @@ function hoverNode(id: string | null) {
 function focusNode(id: string | null) {
   focused = id
   active.value = id ?? hovered
+}
+function hoverEdge(id: string | null) {
+  hoveredEdge = id
+  activeEdge.value = id ?? focusedEdge
+}
+function focusEdge(id: string | null) {
+  focusedEdge = id
+  activeEdge.value = id ?? hoveredEdge
 }
 function toggle(id: string, open: boolean) {
   save()
@@ -164,7 +180,8 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
       :nodes-connectable="false" :nodes-draggable="false" :edges-updatable="false" :zoom-on-double-click="false"
       :prevent-scrolling="true" @node-mouse-enter="hoverNode($event.node.id)" @node-mouse-leave="hoverNode(null)">
       <template #node-blr="nodeProps"><BlrFlowNode v-bind="nodeProps" @open="save(); emit('open', $event)" @inspect="save(); emit('inspect', $event)" @toggle="toggle" @focus="focusNode" /></template>
-      <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" @inspect="save(); emit('inspect', $event)" /></template>
+      <template #node-blr-group="nodeProps"><BlrFlowGroup v-bind="nodeProps" @open="save(); emit('open', $event)" @inspect="save(); emit('inspect', $event)" @toggle="toggle" @focus="focusNode" /></template>
+      <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" @open="save(); emit('open', $event)" @inspect="(key, part) => { save(); emit('inspect', key, part) }" @hover="hoverEdge" @focus="focusEdge" /></template>
       <Background :gap="30" :size="1.5" variant="dots" pattern-color="var(--blr-flow-dot)" />
     </VueFlow>
     <UFieldGroup class="blr-flow-controls bg-default" orientation="vertical" size="sm" role="group" aria-label="Map controls">
@@ -188,6 +205,8 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
 }
 .dark .blr-flow, .dark .blr-flow-measure { --blr-slot-0: #3987e5; --blr-slot-1: #d95926; --blr-slot-2: #199e70; --blr-slot-3: #c98500; --blr-slot-4: #d55181; --blr-slot-5: #008300; --blr-slot-6: #9085e9; --blr-slot-7: #e66767; --blr-slot-8: #ab9d81; --blr-slot-9: #3987e5; }
 .blr-flow .vue-flow__edge { pointer-events: none; }
+/* Labels sit above every node, frames included; ELK keeps them clear of the nodes themselves. */
+.blr-flow .vue-flow__edge-labels { z-index: 11; }
 .blr-flow .blr-flow-route { stroke: var(--ui-text-muted); stroke-width: 1.5; }
 .blr-flow-controls { position: absolute; right: 12px; bottom: 12px; z-index: 30; }
 .blr-flow-edge-label { width: max-content; max-width: 200px; box-sizing: border-box; padding: 3px 6px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; color: var(--ui-text-muted); background: var(--ui-bg-elevated); border-radius: 4px; pointer-events: none; }

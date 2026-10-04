@@ -1,31 +1,35 @@
 <script setup lang="ts">
-/** One expandable box for a Scenario's story, Entity results and ordered Steps. */
-import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
+/**
+ * One expandable box for a Scenario's story, Entity results and ordered Steps.
+ *
+ * Alternative Scenarios of one Variation are one card: the Variation is its
+ * title, the picker beside it names the Scenario being read and switches it in
+ * place, and the condition that selects it leads the card.
+ */
+import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
+import { variationSetOf } from '../utils/variations'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   scenario: ScenarioView
   expanded: boolean
+  /** True where the card holds every alternative of its set and switches between them. */
+  switchable?: boolean
 }>()
-const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [] }>()
+const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [], pick: [resource: AnyResourceView] }>()
+const set = computed(() => variationSetOf(props.workspace, props.scenario))
 const expansionId = useId()
 const trigger = computed(() => props.scenario.trigger || props.scenario.lead)
 const word = (name: 'trigger' | 'outcome') => scenarioTerm(props.scenario.scenarioType, name)
-const results = computed(() => props.scenario.outcomeStates.map(ending => {
-  const entity = resolveResource(props.workspace, 'entity', ending.entityId)
-  const title = entity?.title ?? ending.entityId
-  const result = ending.effect === 'removes' ? 'Removed'
-    : ending.effect === 'creates' ? (ending.to ? `Created in ${ending.to}` : 'Created')
-      : ending.to ? `In state ${ending.to}` : 'Changed'
-  return { ...ending, entity, label: ending.as ? `${title} (${ending.as})` : title, result }
-}))
+const entityOf = (id: string): EntityView | undefined => {
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' ? resource : undefined
+}
 /* These are the Entities the Scenario only reads; changed instances already
    appear once above, with their last creation, change or removal. */
-const reads = computed(() => props.scenario.readEntityIds.map(id => ({
-  id, entity: resolveResource(props.workspace, 'entity', id)
-})))
+const reads = computed(() => props.scenario.readEntityIds.map(id => ({ id, entity: entityOf(id) })))
 const detailLabel = computed(() => [
   props.scenario.decisionPoints.length ? `${props.scenario.decisionPoints.length} ${props.scenario.decisionPoints.length === 1 ? 'decision' : 'decisions'}` : '',
   props.scenario.edgeCases.length ? `${props.scenario.edgeCases.length} ${props.scenario.edgeCases.length === 1 ? 'edge case' : 'edge cases'}` : ''
@@ -34,7 +38,6 @@ const expansionLabel = computed(() => [
   `${props.scenario.steps.length} ${props.scenario.steps.length === 1 ? 'step' : 'steps'}`,
   detailLabel.value
 ].filter(Boolean).join(' · '))
-const open = (key: string) => { const resource = props.workspace.byKey.get(key); if (resource) emit('open', resource) }
 </script>
 
 <template>
@@ -42,9 +45,21 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
   <div class="blr-scenario-summary hover:bg-elevated/40" data-scenario-summary>
     <div class="blr-summary-header">
       <div class="blr-summary-identity">
-        <BlrKind :kind="scenario.kind" :labelled="false" class="mt-0.5 shrink-0" />
+        <BlrKind :kind="set ? 'variation' : scenario.kind" :member-kind="set ? scenario.kind : undefined" :labelled="false" class="mt-0.5 shrink-0" />
         <div class="blr-summary-heading">
-          <h3 class="blr-summary-title">{{ scenario.title }}</h3>
+          <h3 v-if="set" class="blr-summary-title" data-scenario-title>
+            <BlrResourceLink :resource-key="set.key" class="hover:underline" @open="emit('open', set)">{{ set.title }}</BlrResourceLink>
+          </h3>
+          <h3 v-else class="blr-summary-title" data-scenario-title>{{ scenario.title }}</h3>
+          <!-- The Scenario being read; its Steps are what differ between the alternatives. -->
+          <BlrVariationPicker
+            v-if="set"
+            :workspace="workspace"
+            :resource="scenario"
+            :mode="switchable ? 'switch' : 'open'"
+            @open="emit('open', $event)"
+            @pick="emit('pick', $event)"
+          />
           <UBadge v-if="scenario.kindName" color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
         </div>
       </div>
@@ -65,6 +80,11 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
       </div>
     </div>
 
+    <dl v-if="set && scenario.variation" class="blr-summary-selected" data-selected-when>
+      <dt class="blr-summary-label">Selected when</dt>
+      <dd>{{ scenario.variation.selectedWhen }}</dd>
+    </dl>
+
     <dl v-if="trigger || scenario.outcome || scenario.result" class="blr-summary-story">
       <div v-if="trigger">
         <dt class="blr-summary-label"><BlrTerm :slug="word('trigger')" text="Trigger" /></dt>
@@ -79,18 +99,13 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
       </div>
     </dl>
 
-    <dl v-if="results.length || reads.length" class="blr-summary-entities">
-      <div v-if="results.length" class="blr-summary-entity-row">
+    <dl v-if="scenario.outcomeStates.length || reads.length" class="blr-summary-entities">
+      <div v-if="scenario.outcomeStates.length" class="blr-summary-entity-row">
         <dt class="blr-summary-label"><BlrTerm slug="ends-with" /></dt>
         <dd>
           <ul class="blr-summary-endings">
-            <li v-for="ending in results" :key="`${ending.entityId}-${ending.as}`" class="blr-summary-ending">
-              <BlrResourceLink v-if="ending.entity" :resource-key="ending.entity.key" class="blr-topology-link" :aria-label="`Open Entity ${ending.label}`" @open="emit('open', ending.entity)">
-                <BlrEntityMark :facet="entityFacetOf(ending.entity) ?? 'kept'" :acts="ending.entity.kind === 'entity' ? ending.entity.acts : undefined" size="xs" />
-                <span>{{ ending.label }}</span>
-              </BlrResourceLink>
-              <span v-else>{{ ending.label }}</span>
-              <span class="blr-summary-ending-result">{{ ending.result }}</span>
+            <li v-for="ending in scenario.outcomeStates" :key="`${ending.entityId}-${ending.as}`" class="blr-summary-ending">
+              <BlrStepEntity :workspace="workspace" :mention="ending" outcome @select="emit('open', $event)" />
             </li>
           </ul>
         </dd>
@@ -99,7 +114,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         <dt class="blr-summary-label">Reads</dt>
         <dd class="blr-summary-reads">
           <template v-for="read in reads" :key="read.id">
-            <BlrTopologyResource v-if="read.entity" :resource="read.entity" @open="open" />
+            <BlrEntityChip v-if="read.entity" :entity="read.entity" muted @select="emit('open', $event)" />
             <span v-else>{{ read.id }}</span>
           </template>
         </dd>
@@ -111,6 +126,10 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
     <template v-if="expanded">
       <div class="p-4" data-scenario-steps><slot /></div>
       <div v-if="detailLabel" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
+      <!-- The Scenario's own attachments: a Scenario is read only on its card. -->
+      <div v-if="scenario.references.length" class="border-t border-muted p-4" data-scenario-references>
+        <BlrRefs :references="scenario.references" :scope="JSON.stringify([workspace.identity.id, scenario.key])" />
+      </div>
     </template>
   </div>
   </div>
@@ -130,6 +149,8 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-summary-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; min-width: 0; }
 .blr-summary-heading h3 { min-width: 0; }
 .blr-summary-title { min-width: 0; text-align: start; font-size: 1rem; font-weight: 600; line-height: 1.5; color: var(--ui-text-highlighted); overflow-wrap: anywhere; }
+.blr-summary-selected { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.25rem 1rem; margin-top: 0.75rem; align-items: baseline; }
+.blr-summary-selected dd { max-width: 75ch; color: var(--ui-text-muted); overflow-wrap: anywhere; }
 .blr-summary-story { display: grid; gap: 1rem 2rem; margin-top: 1rem; }
 .blr-summary-story > div { min-width: 0; }
 .blr-summary-label { font-size: 0.8125rem; font-weight: 600; color: var(--ui-text-highlighted); }
@@ -140,16 +161,15 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-summary-entity-row { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.25rem 1rem; align-items: start; }
 .blr-summary-entity-row > dd { min-width: 0; }
 .blr-summary-endings, .blr-summary-reads { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
-.blr-summary-ending { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.25rem 0.5rem; min-width: 0; max-width: 100%; }
-.blr-summary-ending-result { color: var(--ui-text-muted); overflow-wrap: anywhere; }
-.blr-summary-entities :deep(.blr-topology-link) { font-size: inherit; line-height: inherit; }
+.blr-summary-ending { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-width: 0; max-width: 100%; }
+.blr-summary-endings, .blr-summary-reads { align-items: center; }
 @container (min-width: 48rem) {
   .blr-summary-story:has(> div:nth-child(2)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 }
 @container (max-width: 26rem) {
   .blr-summary-header { flex-wrap: wrap; gap: 0.625rem; }
   .blr-summary-actions { margin-inline-start: auto; }
-  .blr-summary-entity-row { grid-template-columns: minmax(0, 1fr); }
+  .blr-summary-entity-row, .blr-summary-selected { grid-template-columns: minmax(0, 1fr); }
   .blr-summary-endings { flex-direction: column; }
 }
 </style>

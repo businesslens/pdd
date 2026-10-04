@@ -24,7 +24,7 @@ const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
-  'docs/cli.md', 'docs/cli-view.md', 'docs/ci.md', 'docs/integration.md',
+  'docs/cli.md', 'docs/cli-view.md',
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
   'layers/nuxt/report-viewer-lab/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
@@ -300,6 +300,17 @@ for (const skill of expectedSkills) {
   }
 }
 
+// Installed authoring instructions and the parser must name the same folder schema.
+const modelSource = await readFile(resolve(root, 'src/core/model.ts'), 'utf8')
+const folderSchema = modelSource.match(/export const FOLDER_SCHEMA = (\d+)/)?.[1]
+for (const file of ['spec/format.md', ...expectedSkills.map(skill => `skills/${skill}/references/format.md`)]) {
+  const source = await readFile(resolve(root, file), 'utf8')
+  const declarations = [...source.matchAll(/schema: (\d+)/g)].map(match => match[1])
+  if (!folderSchema || !declarations.length || declarations.some(version => version !== folderSchema)) {
+    errors.push(`${file} must teach folder schema ${folderSchema}`)
+  }
+}
+
 // Every workflow that can create a model carries the same orientation text.
 // Skills are installed independently, so their copies must be self-contained;
 // this check prevents those necessary copies from drifting from the CLI writer.
@@ -325,7 +336,6 @@ const DOC_SECTIONS = new Set(['open-source'])
 const DOC_GROUPS = new Set([
   'Get started',
   'Product Model',
-  'Integrations',
   'Skills',
   'CLI'
 ])

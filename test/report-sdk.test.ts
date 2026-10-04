@@ -10,14 +10,14 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV14, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV15, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
 ) as { exports?: Record<string, unknown>, dependencies?: Record<string, string> }
 
 describe('report SDK entry point', () => {
-  it('is exposed as the ./report and ./report/digest subpath exports', () => {
+  it('is exposed as the ./report, ./report/digest and ./report/selectors subpath exports', async () => {
     expect(packageJson.exports?.['./report']).toEqual({
       types: './dist/report.d.ts',
       default: './dist/report.js'
@@ -26,12 +26,19 @@ describe('report SDK entry point', () => {
       types: './dist/report-digest.d.ts',
       default: './dist/report-digest.js'
     })
+    /* The Step selector alone, so a browser bundle takes it without the report schemas. */
+    expect(packageJson.exports?.['./report/selectors']).toEqual({
+      types: './dist/report-selectors.d.ts',
+      default: './dist/report-selectors.js'
+    })
+    const selectors = await import('../src/report-selectors.js')
+    expect(Object.keys(selectors).sort()).toEqual(['operationPlaces', 'permissionTargetSelectsOperation', 'reportVariationMembership'])
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('14.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('15.0.0')
     for (const name of [
-      'ProductReportV14Schema',
+      'ProductReportV15Schema',
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
       'ReportGrantSchema',
@@ -46,7 +53,7 @@ describe('report SDK entry point', () => {
       'ReportCapabilitySchema',
       'ReportCapabilityScenarioSchema',
       'ReportScreenSchema',
-      'ReportScreenStateSchema',
+      'ReportScreenEntitySchema',
       'ReportJourneyScenarioSchema',
       'ReportScenarioRouteSchema',
       'ReportScenarioStepContextSchema',
@@ -100,9 +107,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV14
+  let report: ProductReportV15
 
-  const allReferences = (value: ProductReportV14): ReportReference[] => [
+  const allReferences = (value: ProductReportV15): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -158,6 +165,14 @@ describe('projectPortableReport', () => {
 
   it('accepts direct Interface availability when no Experiences divide an Interface', () => {
     const direct = structuredClone(report)
+    // The mobile catalog preview exists only as a Variation alternative; flattening drops it.
+    direct.model.variations = direct.model.variations.filter(set => set.id !== 'mobile-storefront')
+    direct.counts.variations = direct.model.variations.length
+    for (const capability of direct.model.capabilities) capability.availability = capability.availability.filter(context => context.placeId !== 'customer-mobile::catalog-preview')
+    for (const scenario of direct.model.capabilityScenarios) {
+      scenario.routes = scenario.routes.filter(route => route.id !== 'preview')
+      for (const step of scenario.steps) step.contexts = step.contexts.filter(context => context.routeId !== 'preview')
+    }
     direct.model.experiences = []
     direct.counts.experiences = 0
     for (const collection of [
@@ -186,6 +201,9 @@ describe('projectPortableReport', () => {
     }
     for (const screen of direct.model.screens) {
       screen.id = directScreenIds.get(screen.id)!
+    }
+    for (const variation of direct.model.variations.filter(item => item.of === 'screen')) {
+      for (const alternative of variation.alternatives) alternative.resourceId = directScreenIds.get(alternative.resourceId)!
     }
 
     expect(sdk.validateProductReport(direct)).toEqual([])
@@ -240,9 +258,10 @@ describe('projectPortableReport', () => {
       withFailure.model.screens.find(screen => screen.id === screenId)!.journeyScenarioIds.push('checkout-needs-operator-help')
     }
     withFailure.counts.journeyScenarios += 1
-    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order', 'manage-orders']
+    // Manual confirmation is an achieved alternative, so Order management is primary, not failure-only.
+    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order']
 
-    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'place-order', 'settle-payment'])
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'])
     expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
@@ -500,19 +519,19 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const cart = (value: ProductReportV14) => value.model.entities.find(item => item.id === 'cart')!
+    const cart = (value: ProductReportV15) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV14) => void]> = [
+    const cases: Array<[string, (value: ProductReportV15) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
       ['references missing entity "ghost"', (value) => {
-        value.model.screens[0]!.entityIds = ['ghost']
+        value.model.screens[0]!.entities = [{ entityId: 'ghost', shows: [], collects: [] }]
       }],
-      ['no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it', (value) => {
+      ['no step changes it, no Screen presents it, nothing names it as an actor, no Rule reads it, and no Variation chooses by it', (value) => {
         const entity = cart(value)
         for (const screen of value.model.screens) {
-          screen.entityIds = screen.entityIds.filter(entityId => entityId !== entity.id)
+          screen.entities = screen.entities.filter(entry => entry.entityId !== entity.id)
         }
         for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
           for (const step of scenario.steps) {
@@ -556,7 +575,7 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const moveOf = (value: ProductReportV14) => {
+    const moveOf = (value: ProductReportV15) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
           const entry = step.entities.find(item => item.from !== null && item.to !== null)
@@ -634,7 +653,7 @@ describe('projectPortableReport', () => {
    * every path, every fact — and never a claim that a grant is satisfied.
    */
   it('resolves a permission Rule the way the folder does', () => {
-    const rule = (value: ProductReportV14, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV15, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
     rule(behavioural, 'payment-before-confirmation').appliesTo = [
@@ -664,7 +683,7 @@ describe('projectPortableReport', () => {
   })
 
   it('applies permission Rules to the Steps and Screens they govern', () => {
-    const rule = (value: ProductReportV14, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV15, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const forbidden = structuredClone(report)
     rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
@@ -716,7 +735,7 @@ describe('projectPortableReport', () => {
     const unreadable = structuredClone(report)
     rule(unreadable, 'margin-is-for-operators').permits = []
     expect(sdk.validateProductReport(unreadable).join('\n')).toContain(
-      'screen "admin-web::order-detail": presents "order", which rule "margin-is-for-operators" forbids anyone to read'
+      'screen "admin-web::order-detail": presents "order" facts "Margin", which rule "margin-is-for-operators" forbids anyone to read'
     )
   })
 
@@ -803,7 +822,7 @@ describe('projectPortableReport', () => {
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
       expect(() => sdk.parseProductReport(legacy)).toThrow(
-        `This is a Product Report of schema version ${schemaVersion}; only 14.0.0 is accepted`
+        `This is a Product Report of schema version ${schemaVersion}; only 15.0.0 is accepted`
       )
     }
     // Any other shape failure names the first offending path, never Zod's issue array.

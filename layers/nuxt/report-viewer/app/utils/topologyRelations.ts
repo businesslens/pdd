@@ -1,5 +1,6 @@
 /** Resolved relations behind a focused reading, with explicit derivation verbs. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
+import { variationSelectionReferences } from './variations'
 import { resourceKey } from './reportWorkspace'
 import { ruleAttachments } from './topologyTargets'
 
@@ -19,6 +20,13 @@ function directRelations(workspace: ReportWorkspace, resource: AnyResourceView):
     }
   }
 
+  /* Membership is a relation, never containment: an alternative points at its set. */
+  if (resource.variation) push(resource.key, resource.variation.key, 'alternative in')
+  if (resource.kind === 'variation') {
+    for (const ref of variationSelectionReferences(resource)) {
+      push(resource.key, resourceKey('entity', ref.entity), `chooses by ${ref.label.toLowerCase()}${ref.fact ? ': ' + ref.fact : ''}`)
+    }
+  }
   switch (resource.kind) {
     case 'interface': {
       for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'enters')

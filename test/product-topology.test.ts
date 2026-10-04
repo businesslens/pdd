@@ -19,6 +19,8 @@ const { topologyRelations } = await utility('topologyRelations')
 const state = await utility('topologyState')
 const { PRODUCT_TOPOLOGY_VIEWS } = await utility('productTopologyViews')
 const { MAIN_RESOURCE_KINDS, collectionKindFor } = await utility('reportDestinations')
+// Matrix axes set a Variation's alternatives side by side.
+const { adjacentAlternatives } = await utility('variations')
 const teachingRoot = join(__dirname, '..', 'blueprints', 'content-feed-reader')
 const shopRoot = join(__dirname, 'fixtures', 'fixture-shop')
 const reportOf = (root = teachingRoot) => compileReport(loadModel(root), '2026-09-07')
@@ -78,8 +80,8 @@ describe('named topology semantics', () => {
     const relation = collectionRelation(workspace, 'capability')
     for (const screen of workspace.screens) {
       const matrix = collectionRelationDrawing(relation, [screen.key])
-      expect(matrix.rows).toEqual(workspace.capabilities.filter((capability: any) => screen.capabilityIds.includes(capability.id)))
-      expect(matrix.columns).toEqual(workspace.interfaces.filter((iface: any) => screen.interfaceIds.includes(iface.id)))
+      expect(matrix.rows).toEqual(adjacentAlternatives(workspace.capabilities).filter((capability: any) => screen.capabilityIds.includes(capability.id)))
+      expect(matrix.columns).toEqual(adjacentAlternatives(workspace.interfaces).filter((iface: any) => screen.interfaceIds.includes(iface.id)))
       for (const cell of matrix.cells) {
         expect(cell.evidence).toEqual([screen])
         expect(cell.labels).toEqual(['on screen'])
@@ -92,18 +94,18 @@ describe('named topology semantics', () => {
     const relation = collectionRelation(workspace, 'capability')
     for (const experience of workspace.experiences) {
       const screens = workspace.screens.filter((screen: any) => screen.experienceIds.includes(experience.id))
-      const expected = workspace.capabilities.filter((capability: any) =>
+      const expected = adjacentAlternatives(workspace.capabilities).filter((capability: any) =>
         capability.contexts.some((context: any) => context.experienceId === experience.id)
         || screens.some((screen: any) => screen.capabilityIds.includes(capability.id)))
       const matrix = collectionRelationDrawing(relation, [experience.key])
       expect(matrix.rows).toEqual(expected)
-      expect(matrix.columns).toEqual(workspace.interfaces.filter((iface: any) => experience.interfaceIds.includes(iface.id)))
+      expect(matrix.columns).toEqual(adjacentAlternatives(workspace.interfaces).filter((iface: any) => experience.interfaceIds.includes(iface.id)))
       expect(matrix.cells.every((cell: any) => cell.evidence.every((item: any) => item.key === experience.key || screens.includes(item)))).toBe(true)
     }
     const selections = ['type:screen', workspace.interfaces[0].key]
     const screenRows = collectionRelationDrawing(relation, ['type:screen']).rows
     const interfaceRows = collectionRelationDrawing(relation, [workspace.interfaces[0].key]).rows
-    expect(collectionRelationDrawing(relation, selections).rows).toEqual(workspace.capabilities.filter((capability: any) => screenRows.includes(capability) || interfaceRows.includes(capability)))
+    expect(collectionRelationDrawing(relation, selections).rows).toEqual(adjacentAlternatives(workspace.capabilities).filter((capability: any) => screenRows.includes(capability) || interfaceRows.includes(capability)))
     for (const kind of ['interface', 'experience', 'screen']) {
       const individual = relation.source.columns.filter((item: any) => item.kind === kind).map((item: any) => item.key)
       expect(collectionRelationDrawing(relation, [`type:${kind}`])).toEqual(collectionRelationDrawing(relation, individual))
@@ -136,17 +138,17 @@ describe('named topology semantics', () => {
     const workspace = workspaceOf(shopRoot)
     const sparse = { ...workspace, capabilities: [], interfaces: [], rules: workspace.rules.map((rule: any) => ({ ...rule, appliesTo: [] })) }
     const entities = projections.mutationProjection(sparse)
-    expect(entities.rows).toEqual(workspace.entities)
+    expect(entities.rows).toEqual(adjacentAlternatives(workspace.entities))
     expect(entities.columns).toEqual([])
     expect(entities.cells).toEqual([])
     const delivery = projections.deliveryMatrixProjection({ ...workspace, interfaces: [] })
-    expect(delivery.rows).toEqual(workspace.capabilities)
+    expect(delivery.rows).toEqual(adjacentAlternatives(workspace.capabilities))
     expect(delivery.columns).toEqual([])
     expect(delivery.cells).toEqual([])
   })
 
-  it('keeps nine questions with explicit diagram types and stable view IDs', () => {
-    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
+  it('keeps ten questions with explicit diagram types and stable view IDs', () => {
+    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'delivery-map', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
     expect(PRODUCT_TOPOLOGY_VIEWS.every((view: any) => view.question.endsWith('?') && view.diagramType && view.note)).toBe(true)
   })
 
@@ -178,9 +180,11 @@ describe('named topology semantics', () => {
     const workspace = workspaceOf(shopRoot)
     const tree = projections.reachTreeProjection(workspace, kind)
     expect(tree.id).toBe(`product:${workspace.identity.id}`)
-    const subjects = tree.children.filter((item: any) => item.resource)
+    /* A Variation's subjects sit under its node, at the first one's place. */
+    const subjects = tree.children.filter((item: any) => item.resource).flatMap((item: any) => item.resource.kind === 'variation' ? item.children : [item])
     const all = { domain: workspace.domains, capability: workspace.capabilities, journey: workspace.journeys, rule: workspace.rules }[kind]
-    expect(subjects.map((item: any) => item.id)).toEqual(all.map((item: any) => item.key))
+    expect(subjects.map((item: any) => item.id)).toEqual(adjacentAlternatives(all).map((item: any) => item.key))
+    expect(tree.children.filter((item: any) => item.resource?.kind === 'variation').every((item: any) => item.children.every((child: any) => child.inSet && child.resource.variation?.key === item.resource.key))).toBe(true)
     const ids = new Set<string>()
     for (const node of flatten(tree.children)) {
       expect(ids.has(node.id), node.id).toBe(false)
@@ -227,16 +231,18 @@ describe('named topology semantics', () => {
   it('reaches a Domain through the places its members are available in, and keeps the rest directly under it', () => {
     const workspace = workspaceOf()
     const tree = projections.reachTreeProjection(workspace, 'domain')
+    /* A Variation's node holds its alternatives; it is membership, never a member or a place itself. */
+    const unfold = (nodes: any[]): any[] => nodes.flatMap(node => node.resource?.kind === 'variation' ? node.children.filter((child: any) => !child.absentFrom) : [node])
     for (const branch of tree.children) {
-      const members = new Map(flatten(branch.children).filter((node: any) => node.resource && !['interface', 'experience', 'screen'].includes(node.resource.kind)).map((node: any) => [node.resource.key, node]))
+      const members = new Map(flatten(branch.children).filter((node: any) => node.resource && !node.absentFrom && !['interface', 'experience', 'screen', 'variation'].includes(node.resource.kind)).map((node: any) => [node.resource.key, node]))
       const expected = branch.resource
         ? [...branch.resource.capabilityIds.map((id: string) => `capability:${id}`), ...branch.resource.journeyIds.map((id: string) => `journey:${id}`), ...branch.resource.ruleIds.map((id: string) => `rule:${id}`)]
         : [...workspace.capabilities.filter((item: any) => !item.domainId), ...workspace.journeys.filter((item: any) => !item.domainIds.length), ...workspace.rules.filter((item: any) => !item.domainIds.length)].map((item: any) => item.key)
       expect([...members.keys()].sort()).toEqual([...new Set(expected)].sort())
-      for (const place of branch.children.filter((node: any) => ['interface', 'experience', 'screen'].includes(node.resource?.kind))) {
-        for (const member of place.children) expect(projections.placesOf(workspace, member.resource.contexts).map((item: any) => item.key)).toContain(place.resource.key)
+      for (const place of unfold(branch.children).filter((node: any) => ['interface', 'experience', 'screen'].includes(node.resource?.kind))) {
+        for (const member of unfold(place.children)) expect(projections.placesOf(workspace, member.resource.contexts).map((item: any) => item.key)).toContain(place.resource.key)
       }
-      for (const direct of branch.children.filter((node: any) => node.resource && !['interface', 'experience', 'screen'].includes(node.resource.kind))) {
+      for (const direct of unfold(branch.children).filter((node: any) => node.resource && !['interface', 'experience', 'screen'].includes(node.resource.kind))) {
         expect(projections.placesOf(workspace, direct.resource.contexts)).toEqual([])
       }
     }
@@ -420,7 +426,7 @@ describe('named topology semantics', () => {
       { ...source, key: 'journey-scenario:read-only', steps: [step('export-blueprint', 'reads', '')] }
     ]
     const capability = workspace.capabilities.find((item: any) => item.id === 'export-blueprint')
-    capability.entityEffects.find((item: any) => item.entityId === 'blueprint').effects.push({ effect: 'creates', from: '', to: 'Proposed' })
+    capability.entityEffects.find((item: any) => item.entityId === 'blueprint').effects.push({ effect: 'creates', from: '', to: 'Proposed', scenarioIds: ['shared'] })
     const cell = projections.mutationProjection(workspace).cells.find((item: any) => item.id === 'entity:blueprint->capability:export-blueprint')
     const variants = cell.mutations[0].variants
     expect(variants.map((item: any) => item.to)).toEqual(['Exported', 'Proposed'])
@@ -463,7 +469,7 @@ describe('named topology semantics', () => {
 
 describe('topology reading state', () => {
   it('round trips qualified IDs as repeated query values without delimiter ambiguity', () => {
-    const reading = { ...state.defaultTopologyReading(), view: 'sitemap', focus: ['screen:a::b::c', 'entity:a,b'], expanded: ['kind:entity'], collapsed: ['kind:rule'] }
+    const reading = { ...state.defaultTopologyReading(), view: 'delivery-map', focus: ['screen:a::b::c', 'entity:a,b'], expanded: ['kind:entity'], collapsed: ['kind:rule'] }
     expect(state.topologyFromQuery(state.topologyToQuery(reading))).toEqual(reading)
     expect(Object.values(state.topologyToQuery(state.defaultTopologyReading())).every(value => value === undefined)).toBe(true)
     expect(state.topologyFromQuery({ tv: 'made-up', th: ['not-a-kind'] })).toEqual(state.defaultTopologyReading())
@@ -489,7 +495,7 @@ describe('topology reading state', () => {
   })
   it('pushes navigation and replaces filter/group-only changes', () => {
     const before = state.defaultTopologyReading()
-    expect(state.topologyPushesHistory(before, { ...before, view: 'sitemap' })).toBe(true)
+    expect(state.topologyPushesHistory(before, { ...before, view: 'delivery-map' })).toBe(true)
     expect(state.topologyPushesHistory(before, { ...before, focus: ['entity:order'] })).toBe(true)
     expect(state.topologyPushesHistory(before, { ...before, hiddenKinds: ['entity'] })).toBe(false)
     expect(state.topologyPushesHistory(before, { ...before, expanded: ['kind:entity'] })).toBe(false)

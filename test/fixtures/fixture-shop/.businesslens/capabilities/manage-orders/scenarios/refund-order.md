@@ -8,7 +8,7 @@ steps:
     kind: actor
     actor: store-admin
     entities:
-      - { entity: order, effect: reads }
+      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }
     contexts:
       web:
         place: admin-web::order-detail
@@ -18,8 +18,8 @@ steps:
     kind: product
     actor: store-admin
     entities:
-      - { entity: order, effect: changes, from: Confirmed, to: Refunded }
-      - { entity: refund, effect: creates, to: Requested }
+      - { entity: order, effect: changes, from: Confirmed, to: Refunded, facts: [] }
+      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
     contexts:
       web:
         place: admin-web::order-detail

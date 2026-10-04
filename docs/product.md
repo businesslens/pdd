@@ -1,9 +1,9 @@
 ---
 title: Product
-description: The coherent value promise named by one Product Model, including its identity, attribution, intent, classification, limitations, and optional References.
+description: The one product a Product Model describes (its name, its promise, the languages it is delivered in, its known boundaries, and what it needs to be published as a Blueprint).
 section: open-source
 group: Product Model
-order: 8
+order: 7
 terms:
   - term: Product
     definition: "The one coherent value promise this model describes, and the boundary drawn around it."
@@ -11,79 +11,111 @@ terms:
 
 # The Product
 
-**The Product is the one coherent value promise described by a Product Model.**
-Its manifest gives that promise a stable identity and states what the Product
-does before the model explains its audiences, interaction forms, behavior, and
-constraints.
+**The Product is the one thing a Product Model describes: what it promises, and
+where its boundary lies.** Every model has exactly one, in `product.md`. The
+rest of the model (who uses it, where, what it can do and under which rules)
+explains that promise.
 
-## When you create one
+## In practice
 
-Every `.businesslens/` model has exactly one Product in `product.md`. Create a
-separate model only when a repository contains genuinely independent value
-promises. Repository structure does not make that decision: several packages
-or deployables may implement one Product, while one repository may contain
-several Products with independent model roots.
+The fixture shop's Product:
 
-Website, mobile application, CLI, and supported API are usually
-[Interfaces](./interfaces.md) of one Product, not separate Products. An
-internal API supporting another Interface normally stays outside the model; a
-partner API becomes an Interface when independent Actors use it and its
-behavior matters as a Product boundary.
-
-## The file
-
-The Product lives at `product.md` while it has no logo:
-
-```md [product.md]
+```md [product/product.md]
 ---
-id: acme-shop
-summary: Discover products and complete purchases with confidence.
+id: fixture-shop
+summary: Browse a product catalog, buy products, and manage the resulting orders.
 category: commerce
-tags: [commerce]
+tags: [commerce, fixture]
 authors:
-  - name: Acme
-    url: https://example.com
+  - name: BusinessLens
 license: MIT
-limitations: [In-store purchasing is outside this Product]
-references:
-  - kind: doc
-    role: intent
-    target: https://example.com/product-brief
+languages: [en, de]
+limitations: []
 ---
 
-# Acme Shop
+# Fixture Shop
 
-A storefront where shoppers discover products and complete purchases.
+A tiny webshop where shoppers browse a catalog and buy products, and store admins manage the resulting orders.
 
 ## Intent
 
-Let shoppers move from discovery to a confirmed order with confidence.
+Exercise the complete BusinessLens report contract with a small deterministic product.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| `product.md` | yes | Provide exactly one Product manifest. |
-| `id` | yes | Use lowercase kebab-case with at most 64 characters. The Product ID may differ from the repository name. |
-| `summary` | no | Supply a single-line short description up to 400 characters. Reports fall back to the lead description when omitted. |
-| `category` | no | Use a lowercase kebab-case Product classification. |
-| `tags` | no | List unique Product classification tags. |
-| `authors` | no | List attribution records with a required `name` and optional HTTP(S) `url`. |
-| `license` | no | Use one SPDX license identifier such as `MIT`. |
-| `limitations` | no | State known Product boundaries. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 and lead paragraph | yes | Name and describe the Product. |
-| `## Intent` | no | Explain the outcome the Product shape protects. |
+## One Product or several?
 
-Unrecognized H2 sections are kept in order as structured supporting sections
-when the model is exported and expanded. A recognized H2 such as `## Intent`
-may appear only once.
+A website, a mobile app, a CLI and a public API are usually
+[Interfaces](./interfaces.md) of one Product, not separate Products. Make a
+separate model only when one repository holds products with genuinely separate
+promises.
 
-Product `limitations` are deliberate constraints of the Product itself; gaps
-and uncertainty in the model belong in [Coverage](./product-model.md#coverage).
+Repository layout doesn't decide it: several packages may build one Product,
+and one repository may hold several, each with its own `.businesslens/`.
 
-## Visual identity
+## The file
 
-Adding a logo expands the Product: move the manifest to
-`.businesslens/product/product.md` and add
-`.businesslens/product/logo.svg` beside it. Public Blueprints require this
-expanded form; a local Product Model without a logo stays compact.
+`product.md`, or `product/product.md` once it has a logo. The H1 is the
+Product's name and the paragraph under it the description. An optional
+`## Intent` says the outcome the Product protects.
+
+| Field | Says |
+| --- | --- |
+| `id` | The Product's id, in kebab-case; it may differ from the repository name. Required |
+| `summary` | One line, for listings |
+| `category`, `tags` | What kind of product it is, for the Blueprint catalog |
+| `authors` | Who made it: each a `name` and an optional `url` |
+| `license` | One SPDX identifier, such as `MIT` |
+| `languages` | The languages the Interfaces are delivered in; an [Interface](./interfaces.md#the-file) may narrow it |
+| `limitations` | What the Product deliberately does not do |
+| `references` | Outside material, as [References](./references.md) |
+
+Content kept in several languages is a fact of an Entity, and how someone's
+language is chosen is a kept fact such as *Preferred language*. Neither belongs
+in `languages`.
+
+### Limitations vs Coverage
+
+`limitations` are deliberate boundaries of the Product itself: "In-store
+purchasing is outside this Product". Gaps and uncertainty in the *model* belong
+in [Coverage](./product-model.md#coverage).
+
+## Logo and publishing
+
+A logo expands the Product into a folder:
+
+```text
+.businesslens/product/
+├── product.md
+└── logo.svg
+```
+
+A model without a logo stays compact, as `product.md`. To publish the model as
+a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is), it needs a `category`,
+at least one tag, at least one author, a `license`, and `logo.svg`.
+
+## How it connects
+
+- [Interfaces](./interfaces.md) are where the Product meets people and systems;
+  each may narrow its `languages`.
+- [Coverage](./product-model.md#coverage) says how much of the Product the
+  model describes.
+- [References](./references.md) attach outside material, such as a product
+  brief with `role: intent`.
+
+## What lint checks
+
+All of these are errors:
+
+- Exactly one manifest: `product.md` or `product/product.md`, never both.
+- `product/` holds only `product.md` and `logo.svg`, and a `product/` folder
+  needs its logo. Without one, use `product.md`.
+- No unknown frontmatter keys, and `## Intent` at most once.
+- `id` is present, lowercase kebab-case and at most 64 characters; the H1 and
+  description are present.
+- `summary` is one line of at most 400 characters; `category` is kebab-case of
+  at most 60; `license` is one SPDX identifier.
+- Each author has a `name` of 1–120 characters, an optional HTTP(S) `url`, and
+  nothing else.
+- Every language is a well-formed tag, like `en` or `pt-BR`, listed once.
+- `logo.svg` is a plain file of at most 256 KiB with a `viewBox`: shapes only,
+  with no scripts, animation, text, external links or embedded content.

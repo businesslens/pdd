@@ -89,13 +89,16 @@ function resolveSource(cwd: string, options: ViewOptions): ViewSource {
  * Look for a model or a newly initialized repository without polling Git.
  */
 const LOCATE_INTERVAL_MS = 500
+/* A repository Git refuses — a deleted worktree, an unsafe owner — is asked again only this often, or when a marker changes. */
+const GIT_RETRY_MS = 30_000
 
 /** Everything the server needs to serve one resolved model. */
-function bindingFor(resolved: ModelRoot): LocalViewerBinding {
+/** A snapshot is fixed: nothing in it changes, so it is neither watched nor asked for its Git index. */
+function bindingFor(resolved: ModelRoot, live = true): LocalViewerBinding {
   return {
     compile: () => compileResolvedWorkspaceReport(resolved),
-    watchRoot: join(resolved.modelRoot, '.businesslens'),
-    gitIndexFile: resolved.gitRoot
+    watchRoot: live ? join(resolved.modelRoot, '.businesslens') : undefined,
+    gitIndexFile: live && resolved.gitRoot
       ? resolve(resolved.gitRoot, git(resolved.gitRoot, 'rev-parse', '--git-path', 'index'))
       : undefined,
     logoFile: join(resolved.modelRoot, '.businesslens', 'product', 'logo.svg'),
@@ -128,7 +131,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
       port: options.port,
       initialReport,
       waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use businesslens-map for established code or businesslens-ideate for a new product.`,
-      ...(resolved ? { ...bindingFor(resolved), ...(snapshot ? { watchRoot: undefined, gitIndexFile: undefined } : {}) } : {})
+      ...(resolved ? bindingFor(resolved, !snapshot) : {})
     })
     console.log(`Viewing ${source.subject} at ${viewer.url}`)
     if (!resolved) {
@@ -150,10 +153,20 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
         markers.push(join(directory, '.git'))
         if (dirname(directory) === directory) break
       }
+      let refused: { markers: string, at: number, message: string } | undefined
       locating = setInterval(() => {
         try {
-          if (!discoveredGitRoot && markers.some(marker => existsSync(marker))) {
-            discoveredGitRoot = repoRoot(cwd)
+          const present = discoveredGitRoot ? '' : markers.filter(marker => existsSync(marker)).join('\n')
+          if (present && (!refused || refused.markers !== present || Date.now() - refused.at >= GIT_RETRY_MS)) {
+            try {
+              discoveredGitRoot = repoRoot(cwd)
+              refused = undefined
+            } catch (error) {
+              const message = (error as Error).message
+              // Said once: the model is still served, only without its repository.
+              if (refused?.message !== message) console.error(`Git could not open the repository, so the report runs without it: ${message}`)
+              refused = { markers: present, at: Date.now(), message }
+            }
           }
           const found = bound
             ? { ...bound, gitRoot: discoveredGitRoot }

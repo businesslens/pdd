@@ -1,3 +1,4 @@
+import { AssignmentUnitSchema, VariationFactSchema, type VariationAlternative, type VariationFact, type VariationSet } from './variations.js'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
@@ -20,7 +21,7 @@ import {
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
-  bulletList, decisionPoints, parseMarkdown, screenStates, section
+  bulletList, decisionPoints, namedStates, parseMarkdown, section
 } from './markdown.js'
 
 export interface ResourceFile {
@@ -45,13 +46,24 @@ export interface ResourceFile {
   assetMeta: ResourceAsset[]
 }
 
+/** A named set of same-type alternatives, authored in `variations/`. */
+export interface VariationResource extends ResourceFile, VariationSet {}
+
 export interface InterfaceResource extends ResourceFile {
   type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
-  capabilityBoundary: string
-  /** Optional reading order over this Interface's own direct Screens. */
-  screens: string[]
+  /**
+   * Language tags this Interface serves, narrowing the Product's. Empty means
+   * the Product's list applies unchanged.
+   */
+  languages: string[]
+  /**
+   * Screens reachable from every place inside this Interface, as paths relative
+   * to it. Structure, not a relation: it says nothing about movement, and its
+   * order carries no meaning.
+   */
+  navigation: string[]
 }
 
 export interface ExperienceResource extends ResourceFile {
@@ -60,9 +72,8 @@ export interface ExperienceResource extends ResourceFile {
   interface: string
   access: string
   entryPoints: CompactEntryPoint[]
-  capabilityBoundary: string
-  /** Optional reading order over this Experience's own Screens. */
-  screens: string[]
+  /** Screens reachable from every place inside this Experience, as paths relative to it. */
+  navigation: string[]
 }
 
 export interface DomainResource extends ResourceFile {
@@ -138,20 +149,28 @@ export interface EntityResource extends ResourceFile {
    */
   acts?: string
   relations: EntityRelation[]
-  states: ReturnType<typeof screenStates>
+  states: ReturnType<typeof namedStates>
+}
+
+/** Information disclosed and inputs collected are separate product claims. */
+export interface ScreenEntity {
+  entity: string
+  shows: string[]
+  collects: string[]
 }
 
 export interface ScreenResource extends ResourceFile {
-  /** The Entities this view presents. */
-  entities: string[]
-  /** The Interface or Experience that owns it, read from the path. Never authored. */
+  /** The Entities this view presents, with the facts on screen. */
+  entities: ScreenEntity[]
+  /**
+   * The nearest Interface or Experience above it, read from the path. Never
+   * authored. Availability, audience and sharing resolve against this.
+   */
   containerId: string
+  /** The direct parent: the container, or the Screen this one nests inside. */
+  parentId: string
   capabilities: string[]
   entryPoints: CompactEntryPoint[]
-  information: string[]
-  actions: string[]
-  states: ReturnType<typeof screenStates>
-  capabilityBoundary: string
 }
 
 interface ScenarioResource extends ResourceFile {
@@ -212,6 +231,8 @@ export interface ScenarioStepEntity {
   effect?: ScenarioStepEffect
   from?: string
   to?: string
+  /** Exhaustive named facts affected; empty for presence/state-only operations and removal. */
+  facts: string[]
 }
 
 export interface ScenarioStep {
@@ -356,6 +377,8 @@ export interface PddModel {
     authors: ProductAuthor[]
     license?: string
     limitations: string[]
+    /** Language tags the Product serves. Interfaces may narrow the list. */
+    languages: string[]
     doc: MarkdownDoc
     references: ResourceReference[]
   }
@@ -371,6 +394,7 @@ export interface PddModel {
   businessRules: BusinessRuleResource[]
   journeys: JourneyResource[]
   journeyScenarios: JourneyScenarioResource[]
+  variations: VariationResource[]
   issues: string[]
   notices: string[]
 }
@@ -400,7 +424,8 @@ export function resourceCollections(model: PddModel): Record<ResourceCollectionN
     capabilityScenarios: model.capabilityScenarios,
     businessRules: model.businessRules,
     journeys: model.journeys,
-    journeyScenarios: model.journeyScenarios
+    journeyScenarios: model.journeyScenarios,
+    variations: model.variations
   }
 }
 
@@ -414,7 +439,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 9
+export const FOLDER_SCHEMA = 10
 
 /**
  * The two channels a model load reports into.
@@ -478,7 +503,7 @@ function listResources(
   }
 
   const ids = new Set([...compact.keys(), ...expanded.keys()])
-  for (const id of [...ids].sort((a, b) => a.localeCompare(b))) {
+  for (const id of [...ids].sort((a, b) => a.localeCompare(b, 'en'))) {
     const compactFile = compact.get(id)
     const directory = expanded.get(id) ?? join(parent, id)
     const expandedFile = join(directory, `${type}.md`)
@@ -702,7 +727,7 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       continue
     }
     const item = entry as Record<string, unknown>
-    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to'], issues, entryLabel)
+    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to', 'facts'], issues, entryLabel)
     const entity = stringField(item, 'entity', issues, entryLabel) || ''
     if (!entity) {
       issues.push(`${entryLabel}: needs an "entity"`)
@@ -747,7 +772,59 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       issues.push(`${entryLabel}: a "changes" entry carries both "from" and "to", or neither`)
       continue
     }
-    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to })
+    const facts = uniqueStringListField(item, 'facts', issues, entryLabel)
+    if (resolved === 'removes') {
+      if (item.facts !== undefined) issues.push(`${entryLabel}: a "removes" entry carries no "facts"`)
+    } else if (!Array.isArray(item.facts)) {
+      issues.push(`${entryLabel}: "facts" is required as a list, including [] when no named facts are affected`)
+    }
+    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts })
+  }
+  return entries
+}
+
+/** Screen entries use named disclosures and inputs; a bare id claims presence only. */
+function screenEntitiesField(data: Record<string, unknown>, issues: string[], label: string): ScreenEntity[] {
+  const value = data.entities
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "entities" must be a list`)
+    return []
+  }
+  const entries: ScreenEntity[] = []
+  const seen = new Set<string>()
+  for (const [index, raw] of value.entries()) {
+    const entryLabel = `${label}: entity ${index + 1}`
+    let entry: ScreenEntity | undefined
+    if (typeof raw === 'string') {
+      entry = { entity: raw, shows: [], collects: [] }
+    } else if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+      const item = raw as Record<string, unknown>
+      rejectUnknownKeys(item, ['entity', 'shows', 'collects'], issues, entryLabel)
+      const entity = stringField(item, 'entity', issues, entryLabel) || ''
+      if (!entity) {
+        issues.push(`${entryLabel}: needs an "entity"`)
+        continue
+      }
+      const shows = uniqueStringListField(item, 'shows', issues, entryLabel)
+      const collects = uniqueStringListField(item, 'collects', issues, entryLabel)
+      for (const key of ['shows', 'collects'] as const) {
+        if (item[key] !== undefined && (!Array.isArray(item[key]) || !(item[key] as unknown[]).length)) {
+          issues.push(`${entryLabel}: "${key}" must be a non-empty list when present`)
+        }
+      }
+      if (!shows.length && !collects.length) issues.push(`${entryLabel}: needs shows or collects; write an Entity with no named facts as its bare id`)
+      entry = { entity, shows, collects }
+    } else {
+      issues.push(`${entryLabel}: must be an Entity id or { entity, shows?, collects? }`)
+      continue
+    }
+    if (seen.has(entry.entity)) {
+      issues.push(`${entryLabel}: "${entry.entity}" already appears in this Screen's entities`)
+      continue
+    }
+    seen.add(entry.entity)
+    entries.push(entry)
   }
   return entries
 }
@@ -1024,7 +1101,7 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 9 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 10 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -1110,7 +1187,7 @@ export function loadModel(cwd: string): PddModel {
   }
 
   let product: PddModel['product'] = {
-    id: '', tags: [], authors: [], limitations: [], doc: { title: '', lead: '', sections: [] }, references: []
+    id: '', tags: [], authors: [], limitations: [], languages: [], doc: { title: '', lead: '', sections: [] }, references: []
   }
   const compactProductFile = join(root, 'product.md')
   const productDirectory = join(root, 'product')
@@ -1146,7 +1223,7 @@ export function loadModel(cwd: string): PddModel {
     const { data, body } = splitFrontmatter(source, issues, 'product.md')
     rejectUnknownKeys(
       data,
-      ['id', 'summary', 'category', 'tags', 'authors', 'license', 'limitations', 'references'],
+      ['id', 'summary', 'category', 'tags', 'authors', 'license', 'limitations', 'languages', 'references'],
       issues,
       'product.md'
     )
@@ -1184,6 +1261,7 @@ export function loadModel(cwd: string): PddModel {
       authors,
       license: stringField(data, 'license', issues, 'product.md'),
       limitations: stringListField(data, 'limitations', issues, 'product.md'),
+      languages: uniqueStringListField(data, 'languages', issues, 'product.md'),
       doc: parseMarkdown(body),
       references: referencesField(data, issues, 'product.md')
     }
@@ -1195,7 +1273,7 @@ export function loadModel(cwd: string): PddModel {
     scope: '', exclusions: [], method: '', covered: [], unmapped: [], limitations: []
   }
   const coverageFile = join(root, 'coverage.md')
-  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 9)')
+  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 10)')
   if (existsSync(coverageFile)) {
     const { data, body } = splitFrontmatter(readFileSync(coverageFile, 'utf8'), issues, 'coverage.md')
     if (body.trim() !== '# Coverage') issues.push('coverage.md: body must contain only "# Coverage"; put scope, reasons and limitations in frontmatter')
@@ -1222,16 +1300,23 @@ export function loadModel(cwd: string): PddModel {
   const experiences: ExperienceResource[] = []
   const screens: ScreenResource[] = []
 
-  const readScreens = (parent: string, containerId: string, label: string) => {
-    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
+  /*
+    Screens nest. An expanded Screen may hold `screens/`, and a child's id adds
+    one segment to its parent's, so containment stays a prefix test at every
+    depth. The container — the nearest Interface or Experience — is carried down
+    unchanged, since availability and audience never belong to a Screen.
+  */
+  const readScreens = (parent: string, containerId: string, parentId: string, label: string) => {
+    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`, ['screens'])) {
       const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
-        ['capabilities', 'entities', 'entryPoints'],
+        ['entities', 'entryPoints'],
         issues
       )
+      const id = qualify(parentId, location.id)
       screens.push({
-        entities: uniqueStringListField(data, 'entities', issues, location.file),
-        id: qualify(containerId, location.id),
+        entities: screenEntitiesField(data, issues, location.file),
+        id,
         file: location.file,
         doc,
         references,
@@ -1239,13 +1324,11 @@ export function loadModel(cwd: string): PddModel {
         assets,
         assetMeta,
         containerId,
-        capabilities: uniqueStringListField(data, 'capabilities', issues, location.file),
-        entryPoints: entryPointsField(data, issues, location.file),
-        information: bulletList(section(doc, 'Information presented') || ''),
-        actions: bulletList(section(doc, 'Available actions') || ''),
-        states: screenStates(section(doc, 'View states') || '', issues, location.file),
-        capabilityBoundary: section(doc, 'Capability boundary') || ''
+        parentId,
+        capabilities: [],
+        entryPoints: entryPointsField(data, issues, location.file)
       })
+      if (location.expanded) readScreens(location.directory, containerId, id, `${label}/screens/${location.id}`)
     }
   }
 
@@ -1258,7 +1341,7 @@ export function loadModel(cwd: string): PddModel {
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readResource(
       productInterface,
-      ['type', 'actors', 'entryPoints', 'screens'],
+      ['type', 'actors', 'entryPoints', 'languages', 'navigation'],
       issues
     )
     interfaces.push({
@@ -1272,8 +1355,8 @@ export function loadModel(cwd: string): PddModel {
       type: stringField(data, 'type', issues, productInterface.file) || '',
       actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
       entryPoints: entryPointsField(data, issues, productInterface.file),
-      capabilityBoundary: section(doc, 'Capability boundary') || '',
-      screens: uniqueStringListField(data, 'screens', issues, productInterface.file)
+      languages: uniqueStringListField(data, 'languages', issues, productInterface.file),
+      navigation: uniqueStringListField(data, 'navigation', issues, productInterface.file)
     })
 
     const experienceLocations = listResources(
@@ -1286,7 +1369,7 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -1299,17 +1382,16 @@ export function loadModel(cwd: string): PddModel {
         interface: productInterface.id,
         access: stringField(parsed.data, 'access', issues, location.file) || '',
         entryPoints: entryPointsField(parsed.data, issues, location.file),
-        capabilityBoundary: section(parsed.doc, 'Capability boundary') || '',
-        screens: uniqueStringListField(parsed.data, 'screens', issues, location.file)
+        navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file)
       })
-      readScreens(location.directory, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
+      readScreens(location.directory, experienceId, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
 
     // Screens beside experiences/ are shared across every Experience of this
     // Interface. A view common to several Experiences would otherwise have to be
     // duplicated into each of them.
     if (existsSync(join(productInterface.directory, 'screens'))) {
-      readScreens(productInterface.directory, productInterface.id, `interfaces/${productInterface.id}`)
+      readScreens(productInterface.directory, productInterface.id, productInterface.id, `interfaces/${productInterface.id}`)
     }
   }
 
@@ -1335,7 +1417,7 @@ export function loadModel(cwd: string): PddModel {
         issues.push(`${file}: "transitions" is gone; a Step's "entities" entry says which state it moves the thing from and to`)
       }
       const informationKept = entityFacts(section(doc, 'Information kept'), issues, file)
-      const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
+      const states = namedStates(section(doc, 'States') || '', issues, file)
       const hasStates = section(doc, 'States') !== undefined
 
       const kind = stringField(data, 'kind', issues, file)
@@ -1522,6 +1604,34 @@ export function loadModel(cwd: string): PddModel {
     }
   })
 
+  const variations: VariationResource[] = listResources(
+    join(root, 'variations'),
+    'variation',
+    findings,
+    'variations'
+  ).map((location) => {
+    const { id, file } = location
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, [
+      'kind', 'of', 'takesEffect', 'stability', 'assignmentUnit', 'assignmentMethod', 'assignmentFact',
+      'allocation', 'settings', 'discriminator', 'alternatives'
+    ], issues)
+    return { file, doc, references, directory, assets, assetMeta, ...variationSetFields(id, data, issues, file) }
+  })
+
+  // One authority: both Scenario kinds contribute the Capabilities exercised here.
+  const screensById = new Map(screens.map(screen => [screen.id, screen]))
+  for (const scenario of [...capabilityScenarios, ...journeyScenarios]) {
+    for (const step of scenario.steps) {
+      const capability = 'capability' in scenario ? scenario.capability : step.capability
+      if (!capability) continue
+      for (const context of Object.values(step.contexts)) {
+        const screen = screensById.get(context.place)
+        if (screen && !screen.capabilities.includes(capability)) screen.capabilities.push(capability)
+      }
+    }
+  }
+  for (const screen of screens) screen.capabilities.sort()
+
   return {
     root,
     config,
@@ -1538,7 +1648,78 @@ export function loadModel(cwd: string): PddModel {
     businessRules,
     journeys,
     journeyScenarios,
+    variations,
     issues,
     notices
+  }
+}
+
+function factField(raw: unknown, issues: string[], label: string): VariationFact | null {
+  if (raw === undefined || raw === null) return null
+  const parsed = VariationFactSchema.safeParse(raw)
+  if (!parsed.success) {
+    issues.push(`${label} must be { entity: <id>, fact: <name> }`)
+    return null
+  }
+  return parsed.data
+}
+
+function variationAlternativesField(data: Record<string, unknown>, issues: string[], label: string): VariationAlternative[] {
+  const raw = data.alternatives
+  if (raw === undefined || raw === null) {
+    issues.push(`${label}: "alternatives" is required`)
+    return []
+  }
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "alternatives" must be a list`)
+    return []
+  }
+  return raw.flatMap((entry, index) => {
+    const where = `${label}: alternatives[${index}]`
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      issues.push(`${where} must be { id, selectedWhen, label? }`)
+      return []
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['id', 'selectedWhen', 'label'], issues, where)
+    const id = stringField(item, 'id', issues, where)
+    const selectedWhen = stringField(item, 'selectedWhen', issues, where)
+    if (!id) issues.push(`${where}: "id" is required`)
+    if (selectedWhen === undefined) issues.push(`${where}: "selectedWhen" is required`)
+    return id ? [{ id, selectedWhen: selectedWhen ?? '', label: stringField(item, 'label', issues, where) ?? null }] : []
+  })
+}
+
+/** Reads a Variation's frontmatter; `lint` owns every rule beyond value shapes. */
+function variationSetFields(id: string, data: Record<string, unknown>, issues: string[], label: string): VariationSet {
+  const required = (key: string) => {
+    const value = stringField(data, key, issues, label)
+    if (value === undefined) issues.push(`${label}: "${key}" is required`)
+    return value ?? ''
+  }
+  let assignmentUnit: VariationSet['assignmentUnit'] = null
+  if (data.assignmentUnit !== undefined && data.assignmentUnit !== null) {
+    const parsed = AssignmentUnitSchema.safeParse(data.assignmentUnit)
+    if (parsed.success) assignmentUnit = parsed.data
+    else issues.push(`${label}: assignmentUnit must be { entity: <id> } or { description: <text> }`)
+  }
+  let settings: VariationFact[] = []
+  if (data.settings !== undefined && data.settings !== null) {
+    if (!Array.isArray(data.settings) || data.settings.length === 0) issues.push(`${label}: settings must be a non-empty list of { entity, fact }`)
+    else settings = data.settings.flatMap((raw, index) => factField(raw, issues, `${label}: settings[${index}]`) ?? [])
+  }
+  return {
+    id,
+    kind: required('kind'),
+    of: required('of'),
+    takesEffect: required('takesEffect'),
+    stability: required('stability'),
+    assignmentUnit,
+    assignmentMethod: stringField(data, 'assignmentMethod', issues, label) ?? null,
+    assignmentFact: factField(data.assignmentFact, issues, `${label}: assignmentFact`),
+    allocation: stringField(data, 'allocation', issues, label) ?? null,
+    settings,
+    discriminator: factField(data.discriminator, issues, `${label}: discriminator`),
+    alternatives: variationAlternativesField(data, issues, label)
   }
 }

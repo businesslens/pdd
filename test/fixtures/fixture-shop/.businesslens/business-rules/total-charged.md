@@ -5,7 +5,7 @@ appliesTo:
     facts: [Total charged]
 ---
 
-# Total charged
+# Total charged equals subtotal plus tax minus discount
 
 Total charged always equals Subtotal plus Tax minus Discount.
 

@@ -7,7 +7,7 @@ steps:
     actor: shopper
     capability: browse-catalog
     entities:
-      - { entity: catalog-product, effect: reads }
+      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
@@ -18,7 +18,7 @@ steps:
     actor: shopper
     capability: place-order
     entities:
-      - { entity: order, effect: creates, to: Pending }
+      - { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }
       - { entity: cart, effect: removes }
     contexts:
       web-to-admin:
@@ -30,7 +30,7 @@ steps:
     actor: payment-gateway
     capability: settle-payment
     entities:
-      - { entity: order, effect: changes, from: Pending, to: Confirmed }
+      - { entity: order, effect: changes, from: Pending, to: Confirmed, facts: [] }
     contexts:
       web-to-admin:
         place: payment-webhook
@@ -44,8 +44,8 @@ steps:
     actor: store-admin
     capability: cancel-order
     entities:
-      - { entity: order, effect: changes, from: Confirmed, to: Cancelled }
-      - { entity: refund, effect: creates, to: Requested }
+      - { entity: order, effect: changes, from: Confirmed, to: Cancelled, facts: [] }
+      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
     contexts:
       web-to-admin:
         place: admin-web::order-detail

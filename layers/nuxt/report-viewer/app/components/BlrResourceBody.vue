@@ -3,12 +3,8 @@
 import type {
   AnyResourceView,
   CapabilityView,
-  ExperienceView,
-  InterfaceView,
   JourneyView,
-  ContextView,
   ReportWorkspace,
-  ReportResourceKind,
   RuleView,
   ScenarioStepCell,
   ScenarioStepRow,
@@ -16,8 +12,10 @@ import type {
   EntityView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { entityFacetOf, isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
+import { lifecycleChangeAddress, lifecycleRowOrder } from '../utils/entityLifecycle'
+import { resourceOpenerKey } from '../utils/resourceNavigation'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
@@ -46,9 +44,7 @@ const asScenario = computed(() => props.resource as ScenarioView)
 const asRule = computed(() => props.resource as RuleView)
 const isScenario = computed(() => isScenarioKind(props.resource.kind))
 
-/* An Entity chip is drawn by the facet the thing plays. The relation beside it
-   already says it is an Entity, so the type glyph would spend the mark on the
-   sentence it sits inside. */
+/* The resolved Entity behind an id, for the shared chip that names it. */
 function entityChip(id: string) {
   const resource = resolveResource(props.workspace, 'entity', id)
   return resource?.kind === 'entity' ? resource : undefined
@@ -59,37 +55,65 @@ function entityChip(id: string) {
 const scenarioWord = (word: 'trigger' | 'outcome' | 'route' | 'decision-point' | 'edge-case') =>
   scenarioTerm(asScenario.value.scenarioType, word)
 
-const capabilityBoundary = computed(() => {
-  if (props.resource.kind === 'interface') return (props.resource as InterfaceView).capabilityBoundary
-  if (props.resource.kind === 'experience') return (props.resource as ExperienceView).capabilityBoundary
-  if (props.resource.kind === 'screen') return asScreen.value.capabilityBoundary
-  return ''
-})
+/* DELIVERY: what is available in this container, and on which Screen. The
+   model holds it once — availability on the Capability, capabilities on the
+   Screen — and this is the same fact read from the place's side. */
 
-function openRule(id: string) {
+/* Screen disclosure and input have separate sections. Bare entries state presence. */
+const screenEntities = computed(() => props.resource.kind !== 'screen'
+  ? []
+  : asScreen.value.entities.map(entry => ({
+      ...entry,
+      entity: entityChip(entry.entityId),
+      title: resolveResource(props.workspace, 'entity', entry.entityId)?.title ?? entry.entityId
+    })))
+const presents = computed(() => screenEntities.value.filter(entry => entry.shows.length || !entry.collects.length))
+const collects = computed(() => screenEntities.value.filter(entry => entry.collects.length))
+
+const factRule = (id: string) => {
   const rule = resolveResource(props.workspace, 'rule', id)
-  if (rule) emit('select', rule)
+  return rule?.kind === 'rule' ? rule : null
 }
-const factRuleTitles = (ruleIds: string[]) =>
-  ruleIds.map(id => resolveResource(props.workspace, 'rule', id)?.title ?? id).join(', ')
 
-/* One line per Entity a Capability touches, never a lifecycle fragment each. */
+/*
+ * One group per Entity a Capability touches, one row per distinct move with
+ * the Scenarios making it. Moves are never joined into a run: two moves that
+ * meet are made by different Scenarios, and a chain would tell a story no
+ * Scenario tells. They read in the Entity's Lifecycle Rows order, and each
+ * opens that change in the Lifecycle.
+ */
 const capabilityEffects = computed(() => props.resource.kind !== 'capability'
   ? []
-  : asCapability.value.entityEffects.map(line => ({
-      ...line,
-      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId,
-      readings: line.effects.map(item => item.effect === 'creates'
-        ? `creates${item.to ? ` → ${item.to}` : ''}`
-        : item.effect === 'removes'
-          ? `removes${item.from ? ` ${item.from} →` : ''}`
-          : item.to ? `${item.from} → ${item.to}` : 'changes')
-    })))
-
-function openEntity(id: string) {
-  const entity = resolveResource(props.workspace, 'entity', id)
-  if (entity) emit('select', entity)
+  : asCapability.value.entityEffects.map((line) => {
+      const entity = resolveResource(props.workspace, 'entity', line.entityId)
+      return {
+        ...line,
+        title: entity?.title ?? line.entityId,
+        effects: entity?.kind === 'entity' ? lifecycleRowOrder(entity, line.effects) : line.effects,
+        lifecycle: entity?.kind === 'entity' && entity.states.length > 0
+      }
+    }))
+const openResource = inject(resourceOpenerKey, null)
+function openChange(entityId: string, move: { effect: 'creates' | 'changes' | 'removes', from: string, to: string }) {
+  const key = `entity:${entityId}`
+  if (openResource) openResource(key, `lifecycle/${lifecycleChangeAddress(move)}`)
+  else { const entity = props.workspace.byKey.get(key); if (entity) emit('select', entity) }
 }
+
+/* The Entities a Capability only reads, as one row beneath the changes; and
+   how many of its Scenarios — its own, or a Journey's Steps naming it — read
+   any of them, counted the way each change row counts its Scenarios. */
+const capabilityReads = computed(() => props.resource.kind !== 'capability'
+  ? []
+  : asCapability.value.readEntityIds.map(id => ({ id, entity: entityChip(id) })))
+const readScenarioCount = computed(() => {
+  if (props.resource.kind !== 'capability' || !capabilityReads.value.length) return 0
+  const capabilityId = asCapability.value.id
+  const readIds = new Set(capabilityReads.value.map(read => read.id))
+  return props.workspace.scenarios.filter(scenario => scenario.steps.some(step =>
+    (scenario.scenarioType === 'journey' ? step.capabilityId : scenario.capabilityId) === capabilityId
+    && step.entities.some(entry => entry.effect === 'reads' && readIds.has(entry.entityId)))).length
+})
 /* One authored Scenario sequence, with named Context routes as columns. */
 const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
 
@@ -140,7 +164,7 @@ const selectedCell = (step: ScenarioStepRow): ScenarioStepCell | undefined => vi
 const routeItems = computed(() => (stepMatrix.value?.routes ?? []).map(route => ({
   label: route.name,
   value: route.id,
-  icon: 'i-lucide-split'
+  icon: 'i-lucide-signpost'
 })))
 
 const routeWindowItems = computed(() => {
@@ -150,7 +174,7 @@ const routeWindowItems = computed(() => {
   return routes.slice(0, lastStart + 1).map((route, index) => ({
     value: route.id,
     label: routes.slice(index, index + count).map(item => item.name).join(' · '),
-    icon: 'i-lucide-split'
+    icon: 'i-lucide-signpost'
   }))
 })
 
@@ -233,65 +257,9 @@ const stepActor = (actorId: string | undefined): EntityView | undefined => {
   return resource?.kind === 'entity' && resource.acts ? resource : undefined
 }
 
-const selectStepActor = (actorId: string | undefined) => {
-  const actor = stepActor(actorId)
-  if (actor) emit('select', actor)
-}
-
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
   context.screenTitle || context.experienceTitle || context.interfaceTitle
 
-type RuleTargetKind = Extract<ReportResourceKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario' | 'entity'>
-
-interface RuleBinding {
-  key: string
-  targetKind: RuleTargetKind | null
-  targetId: string
-  /** What an Entity target selects: the operation, or the facts it governs. */
-  selector: string
-  contexts: ContextView[]
-}
-
-const ruleBindings = computed<RuleBinding[]>(() => {
-  if (props.resource.kind !== 'rule') return []
-  const contextByPlace = new Map(props.workspace.contexts.map(context => [context.placeId, context]))
-  const resolve = (contexts: Array<{ placeId: string }>) => contexts
-    .map(context => contextByPlace.get(context.placeId))
-    .filter((context): context is ContextView => Boolean(context))
-  return asRule.value.appliesTo.map((target, index) => {
-    if (target.type === 'context') {
-      const context = contextByPlace.get(target.context.placeId)
-      return {
-        key: `context:${target.context.placeId}:${index}`,
-        targetKind: null,
-        targetId: '',
-        selector: '',
-        contexts: context ? [context] : []
-      }
-    }
-    if (target.type === 'entity') {
-      const operation = [
-        target.effect ?? 'every operation',
-        target.from ? `from ${target.from}` : '',
-        target.to ? `to ${target.to}` : ''
-      ].filter(Boolean).join(' ')
-      return {
-        key: `entity:${target.entityId}:${index}`,
-        targetKind: 'entity' as const,
-        targetId: target.entityId,
-        selector: target.facts.length ? `${operation} · ${target.facts.join(', ')}` : operation,
-        contexts: resolve(target.contexts)
-      }
-    }
-    return {
-      key: `${target.type}:${target.id}:${index}`,
-      targetKind: target.type,
-      targetId: target.id,
-      selector: '',
-      contexts: resolve(target.contexts)
-    }
-  })
-})
 
 /** True when this component would render nothing at all. One predicate, shared
     with the page composer, so the two can never disagree about a kind again. */
@@ -300,76 +268,43 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
 <template>
   <div v-if="!empty" class="space-y-10">
-    <section v-if="resource.kind === 'rule'" class="space-y-3">
-      <h2 class="blr-page-heading">Rule statement</h2>
-      <div class="rounded-xl border-s-3 border-primary bg-elevated/45 p-5">
-        <BlrProse :text="asRule.statement" size="base" />
-      </div>
-      <div v-if="asRule.rationale" class="space-y-2">
-        <h3 class="text-sm font-semibold text-highlighted">Rationale</h3>
-        <BlrProse :text="asRule.rationale" />
-      </div>
-
-      <div class="space-y-2 pt-2">
-        <h3 class="text-sm font-semibold text-highlighted"><BlrTerm slug="applies-to" /></h3>
-        <div class="space-y-2">
-          <article
-            v-for="binding in ruleBindings"
-            :key="binding.key"
-            class="space-y-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-3"
-          >
-            <BlrLinks
-              v-if="binding.targetKind"
-              :workspace="workspace"
-              :ids="[binding.targetId]"
-              :kind="binding.targetKind"
-              interactive
-              @select="emit('select', $event)"
-            />
-            <p v-if="binding.selector" class="blr-meta">{{ binding.selector }}</p>
-            <p v-if="binding.targetKind && binding.targetKind !== 'entity' && !binding.contexts.length" class="blr-meta">
-              Every supported Context
-            </p>
-            <div v-else-if="binding.contexts.length" class="space-y-1.5">
-              <p v-if="binding.targetKind" class="blr-field"><BlrTerm slug="context" text="Only in" /></p>
-              <p v-else class="blr-field"><BlrTerm slug="context" /></p>
-              <div class="flex flex-wrap gap-1.5">
-                <BlrContextPlace
-                  v-for="context in binding.contexts"
-                  :key="context.key"
-                  :workspace="workspace"
-                  :context="context"
-                  @select="emit('select', $event)"
-                />
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <!--
-        Permission is a kind of Rule. The grants are read back as sentences so a
-        reader who never saw the format can tell one is wrong; an empty list is
-        a claim of its own, and says so.
-      -->
-      <div v-if="asRule.permits !== null" class="space-y-2 pt-2">
-        <h3 class="text-sm font-semibold text-highlighted"><BlrTerm slug="who-may" /></h3>
-        <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
-          <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
-          Nobody. This operation is forbidden to everyone.
-        </p>
-        <ul v-else class="space-y-1.5">
-          <li
-            v-for="(grant, index) in asRule.grants"
-            :key="index"
-            class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default"
-          >
-            <UIcon name="i-lucide-key-round" class="mt-0.5 size-4 shrink-0 text-muted" />
-            <span>{{ grant.sentence }}</span>
+    <!--
+      A Rule's lead is its statement; what it applies to is its own tab.
+      Permission is a kind of Rule, and its grants restate the statement in
+      structured form, so they follow it here under a heading naming the
+      operation they permit. They are read back as sentences so a reader who
+      never saw the format can tell one is wrong; an empty list is a claim of
+      its own, and says so.
+    -->
+    <section v-if="resource.kind === 'rule' && asRule.permits !== null" class="space-y-3" data-rule-grants>
+      <h2 class="blr-page-heading"><BlrTerm slug="who-may" /></h2>
+      <p v-if="asRule.variation" class="text-sm text-muted">These permissions apply only while this Rule is the selected alternative in {{ asRule.variation.title }}.</p>
+      <!-- What may be done: each operation the Rule selects, as the Entity chip and the Steps' State badges. -->
+      <ul class="space-y-1.5" data-rule-operations>
+        <li v-for="(target, index) in asRule.entityTargets" :key="index" class="text-sm">
+          <BlrRuleOperation :workspace="workspace" :target="target" :contexts="target.contexts" @select="emit('select', $event)" />
+        </li>
+      </ul>
+      <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
+        <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
+        Nobody. This operation is forbidden to everyone.
+      </p>
+      <!-- Who may: each grant from its parts, alternatives joined by a visible "or". -->
+      <ul v-else class="space-y-1.5">
+        <template v-for="(grant, index) in asRule.permits" :key="index">
+          <li v-if="index" aria-hidden="true" class="ps-3.5 text-xs text-muted">or</li>
+          <li class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default">
+            <UIcon name="i-lucide-key-round" class="mt-1 size-4 shrink-0 text-muted" />
+            <BlrRuleGrant :workspace="workspace" :grant="grant" :target-id="asRule.entityTargets.length === 1 ? asRule.entityTargets[0]!.entityId : ''" @select="emit('select', $event)" />
           </li>
-        </ul>
-        <p v-if="asRule.grants.length > 1" class="blr-meta">Any one grant permits it. Every Rule selecting the same operation must also permit it.</p>
-      </div>
+        </template>
+      </ul>
+      <p v-if="asRule.grants.length > 1" class="blr-meta">Any one grant permits it. Every Rule selecting the same operation must also permit it.</p>
+    </section>
+
+    <section v-if="resource.kind === 'rule' && asRule.rationale" class="space-y-2">
+      <h2 class="blr-page-heading">Rationale</h2>
+      <BlrProse :text="asRule.rationale" class="max-w-3xl" />
     </section>
 
     <section v-if="resource.intent" class="space-y-2">
@@ -396,39 +331,53 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     </section>
 
     <!-- CAPABILITY: what it does to each thing, one line per Entity. -->
-    <section v-if="resource.kind === 'capability' && capabilityEffects.length" class="space-y-2">
+    <section v-if="resource.kind === 'capability' && (capabilityEffects.length || capabilityReads.length)" class="space-y-2">
       <h2 class="blr-page-heading">
         <BlrTerm slug="operation" text="What it changes" />
-        <span class="blr-meta ms-1">{{ capabilityEffects.length }}</span>
+        <span class="blr-meta ms-1">{{ capabilityEffects.length + (capabilityReads.length ? 1 : 0) }}</span>
       </h2>
       <ul class="space-y-1.5">
         <li
           v-for="line in capabilityEffects"
           :key="line.entityId"
-          class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          class="blr-capability-effect rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          data-capability-effect
         >
-          <BlrResourceLink :resource-key="`entity:${line.entityId}`" class="blr-chip" @open="openEntity(line.entityId)">
-            <BlrEntityMark
-              :facet="entityFacetOf(entityChip(line.entityId)) ?? 'kept'"
-              :acts="entityChip(line.entityId)?.acts"
-              size="xs"
-            />{{ line.title }}
-          </BlrResourceLink>
-          <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
-          <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
+          <span class="blr-capability-effect-entity">
+            <BlrEntityChip v-if="entityChip(line.entityId)" :entity="entityChip(line.entityId)!" @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ line.title }}</span>
+          </span>
+          <ul class="blr-capability-effect-moves">
+            <li v-for="effect in line.effects" :key="`${effect.effect}-${effect.from}-${effect.to}`" class="blr-capability-effect-move" data-capability-move>
+              <BlrResourceLink
+                v-if="line.lifecycle"
+                :resource-key="`entity:${line.entityId}`"
+                :tab="`lifecycle/${lifecycleChangeAddress(effect)}`"
+                class="-mx-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-elevated/60 focus-visible:outline-2 focus-visible:outline-primary"
+                :aria-label="`Open this change in the ${line.title} Lifecycle`"
+                @open="openChange(line.entityId, effect)"
+              ><BlrEntityEffect :mention="effect" /></BlrResourceLink>
+              <BlrEntityEffect v-else :mention="effect" />
+              <span class="blr-meta ms-auto shrink-0">{{ effect.scenarioIds.length }} {{ effect.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
+            </li>
+          </ul>
+        </li>
+        <!-- Reads share the list's shape: one left edge, the chips first, the
+             reading where the changes put theirs. Dashed, so a row of reads
+             is never mistaken for a row of changes. -->
+        <li
+          v-if="capabilityReads.length"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          data-capability-reads
+        >
+          <template v-for="read in capabilityReads" :key="read.id">
+            <BlrEntityChip v-if="read.entity" :entity="read.entity" muted @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ read.id }}</span>
+          </template>
+          <BlrEntityEffect :mention="{ effect: 'reads', from: '', to: '' }" />
+          <span v-if="readScenarioCount" class="blr-meta ms-auto">{{ readScenarioCount }} {{ readScenarioCount === 1 ? 'Scenario' : 'Scenarios' }}</span>
         </li>
       </ul>
-      <p v-if="asCapability.readEntityIds.length" class="flex flex-wrap items-baseline gap-x-2 blr-meta">
-        <span>Reads only</span>
-        <BlrLinks :workspace="workspace" :ids="asCapability.readEntityIds" kind="entity" interactive @select="emit('select', $event)" />
-      </p>
-    </section>
-
-    <section v-if="capabilityBoundary" class="space-y-2">
-      <h2 class="blr-page-heading"><BlrTerm slug="capability-boundary" /></h2>
-      <div class="max-w-3xl rounded-xl border border-default bg-elevated/35 p-4 text-default">
-        <BlrProse :text="capabilityBoundary" />
-      </div>
     </section>
 
     <!-- SCENARIO: the ordered reading, in the order it happens. -->
@@ -494,7 +443,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 value-key="value"
                 size="sm"
                 variant="outline"
-                icon="i-lucide-split"
+                icon="i-lucide-signpost"
                 class="min-w-44 max-w-full"
                 aria-label="Route to show"
                 @update:model-value="setRouteWindow(String($event))"
@@ -531,7 +480,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   value-key="value"
                   size="sm"
                   variant="outline"
-                  icon="i-lucide-split"
+                  icon="i-lucide-signpost"
                   class="w-48 max-w-full"
                   aria-label="Visible route window"
                   @update:model-value="setRouteWindow(String($event))"
@@ -587,7 +536,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 >
                   <div class="flex min-w-0 items-center gap-2">
                     <UTooltip text="Named route — one way this Scenario can run" :delay-duration="150">
-                      <UIcon name="i-lucide-split" class="size-3.5 shrink-0 text-dimmed" />
+                      <UIcon name="i-lucide-signpost" class="size-3.5 shrink-0 text-dimmed" />
                     </UTooltip>
                     <span class="truncate text-xs font-medium text-default" :title="route.name">{{ route.name }}</span>
                   </div>
@@ -604,7 +553,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   context="row"
                   class="border-e border-default bg-default px-4 py-3 font-normal"
                 >
-                  <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+                  <div class="blr-numbered-step">
+                  <span class="blr-numbered-step__number">{{ step.index + 1 }}.</span>
+                  <div class="min-w-0">
+                  <p class="text-sm font-medium text-highlighted">{{ step.text }}</p>
 
                   <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                     <template v-if="stepActor(step.actorId)">
@@ -615,19 +567,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                         </span>
                       </UTooltip>
                       <span v-if="step.stepKind !== 'actor'">for</span>
-                      <BlrResourceLink
-                        :resource-key="`entity:${step.actorId}`"
-                        class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        :aria-label="`Open ${stepActor(step.actorId)!.title}`"
-                        @open="selectStepActor(step.actorId)"
-                      >
-                        <BlrEntityMark
-                          :facet="stepActor(step.actorId)!.entityKind!"
-                          :acts="stepActor(step.actorId)!.acts!"
-                          size="xs"
-                        />
-                        <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
-                      </BlrResourceLink>
+                      <BlrEntityChip :entity="stepActor(step.actorId)!" @select="emit('select', $event)" />
                       <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                         <span>action</span>
                       </UTooltip>
@@ -664,6 +604,18 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     interactive
                     @select="emit('select', $event)"
                   />
+                  <BlrLinks
+                    v-if="step.ruleIds.length"
+                    :workspace="workspace"
+                    :ids="step.ruleIds"
+                    kind="rule"
+                    label="Governed by"
+                    interactive
+                    data-step-rules
+                    @select="emit('select', $event)"
+                  />
+                  </div>
+                  </div>
                 </th>
                 <td
                   v-if="step.routeNeutral"
@@ -712,7 +664,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <div v-else class="divide-y divide-default overflow-hidden rounded-xl border border-default">
           <article v-for="step in stepMatrix.steps" :key="step.index">
             <div class="bg-default px-4 py-3">
-              <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+              <div class="blr-numbered-step">
+              <span class="blr-numbered-step__number">{{ step.index + 1 }}.</span>
+              <div class="min-w-0">
+              <p class="text-sm font-medium text-highlighted">{{ step.text }}</p>
 
               <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                 <template v-if="stepActor(step.actorId)">
@@ -723,19 +678,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     </span>
                   </UTooltip>
                   <span v-if="step.stepKind !== 'actor'">for</span>
-                  <BlrResourceLink
-                    :resource-key="`entity:${step.actorId}`"
-                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    :aria-label="`Open ${stepActor(step.actorId)!.title}`"
-                    @open="selectStepActor(step.actorId)"
-                  >
-                    <BlrEntityMark
-                      :facet="stepActor(step.actorId)!.entityKind!"
-                      :acts="stepActor(step.actorId)!.acts!"
-                      size="xs"
-                    />
-                    <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
-                  </BlrResourceLink>
+                  <BlrEntityChip :entity="stepActor(step.actorId)!" @select="emit('select', $event)" />
                   <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                     <span>action</span>
                   </UTooltip>
@@ -772,6 +715,18 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 interactive
                 @select="emit('select', $event)"
               />
+              <BlrLinks
+                v-if="step.ruleIds.length"
+                :workspace="workspace"
+                :ids="step.ruleIds"
+                kind="rule"
+                label="Governed by"
+                interactive
+                data-step-rules
+                @select="emit('select', $event)"
+              />
+              </div>
+              </div>
             </div>
 
             <div class="border-t border-muted bg-elevated/20 px-4 py-3">
@@ -869,63 +824,47 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
     </template>
 
-    <!-- SCREEN: what it is about, what it shows, what can be done, what states it has. -->
+    <!-- SCREEN: what the Product presents and what the Actor supplies. -->
     <template v-if="resource.kind === 'screen'">
-      <!--
-        `## Information presented` is what *this view* shows and never a
-        restatement of what the Entity keeps, so the Entity has to be named
-        before that list can be read as the narrower thing it is.
-      -->
-      <section v-if="asScreen.entityIds.length" class="space-y-2">
-        <h2 class="blr-page-heading">Presents</h2>
-        <BlrLinks
-          :workspace="workspace"
-          :ids="asScreen.entityIds"
-          kind="entity"
-          interactive
-          @select="emit('select', $event)"
-        />
-      </section>
-      <section v-if="asScreen.information.length" class="space-y-2">
+      <section v-if="presents.length" class="space-y-2" data-screen-presents>
         <h2 class="blr-page-heading">
-          Information presented <span class="blr-meta ms-1">{{ asScreen.information.length }}</span>
+          Presents
+          <span class="blr-meta ms-1">{{ presents.length }}</span>
         </h2>
-        <ul class="grid gap-2 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
+        <ul class="space-y-1.5">
           <li
-            v-for="item in asScreen.information"
-            :key="item"
-            class="rounded-lg border border-default px-3 py-2.5 text-sm text-default"
+            v-for="entry in presents"
+            :key="entry.entityId"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            :data-entity-id="entry.entityId"
           >
-            {{ item }}
+            <BlrEntityChip v-if="entry.entity" :entity="entry.entity" @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ entry.title }}</span>
+            <BlrFactTag v-for="fact in entry.shows" :key="fact" :name="fact" data-screen-fact />
+            <span v-if="!entry.shows.length" class="blr-meta">no facts named</span>
           </li>
         </ul>
       </section>
-      <section v-if="asScreen.actions.length" class="space-y-2">
+
+      <section v-if="collects.length" class="space-y-2" data-screen-collects>
         <h2 class="blr-page-heading">
-          Available actions <span class="blr-meta ms-1">{{ asScreen.actions.length }}</span>
+          Collects
+          <span class="blr-meta ms-1">{{ collects.length }}</span>
         </h2>
-        <ul class="grid gap-x-8 gap-y-2 @min-[480px]:grid-cols-2">
-          <li v-for="item in asScreen.actions" :key="item" class="flex items-start gap-2 text-sm text-default">
-            <UIcon name="i-lucide-mouse-pointer-click" class="mt-0.5 size-4 shrink-0 text-muted" />{{ item }}
+        <ul class="space-y-1.5">
+          <li
+            v-for="entry in collects"
+            :key="entry.entityId"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            :data-entity-id="entry.entityId"
+          >
+            <BlrEntityChip v-if="entry.entity" :entity="entry.entity" @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ entry.title }}</span>
+            <BlrFactTag v-for="fact in entry.collects" :key="fact" :name="fact" data-screen-input />
           </li>
         </ul>
       </section>
-      <section v-if="asScreen.states.length" class="space-y-2">
-        <h2 class="blr-page-heading">
-          <BlrTerm slug="view-state" text="View states" />
-          <span class="blr-meta ms-1">{{ asScreen.states.length }}</span>
-        </h2>
-        <div class="grid gap-3 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
-          <div
-            v-for="state in asScreen.states"
-            :key="state.title"
-            class="rounded-xl border border-default bg-elevated/30 p-4"
-          >
-            <p class="text-sm font-semibold text-highlighted">{{ state.title }}</p>
-            <BlrProse :text="state.description" class="mt-1.5" />
-          </div>
-        </div>
-      </section>
+
     </template>
 
     <!-- ENTITY: what the Product keeps. States and their changes are in Lifecycle. -->
@@ -946,20 +885,21 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <li
             v-for="fact in asEntity.informationKept"
             :key="fact.name"
-            class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            class="flex flex-col gap-1.5 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           >
-            <span class="font-medium text-highlighted">{{ fact.name }}</span>
-            <span class="text-default">{{ fact.description }}</span>
-            <!-- A fact a Rule governs says so here and nothing more; the Rule page is the reading. -->
-            <BlrResourceLink
-              v-if="fact.ruleIds.length"
-              :resource-key="`rule:${fact.ruleIds[0]!}`"
-              class="blr-chip ms-auto"
-              :title="factRuleTitles(fact.ruleIds)"
-              @open="openRule(fact.ruleIds[0]!)"
-            >
-              <UIcon name="i-lucide-scale" class="size-3.5" />{{ fact.ruleIds.length }} {{ fact.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
-            </BlrResourceLink>
+            <p class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="font-medium text-highlighted">{{ fact.name }}</span>
+              <span class="text-default">{{ fact.description }}</span>
+            </p>
+            <!--
+              A fact a Rule governs carries one badge per Rule, naming the kind
+              of claim; the claim itself opens from it. The list stays a list.
+            -->
+            <div v-if="fact.ruleIds.length" class="flex flex-wrap gap-1.5" data-fact-rules>
+              <template v-for="id in fact.ruleIds" :key="id">
+                <BlrFactRuleBadge v-if="factRule(id)" :workspace="workspace" :entity-id="asEntity.id" :fact="fact.name" :rule="factRule(id)!" @select="emit('select', $event)" />
+              </template>
+            </div>
           </li>
         </ul>
       </section>
@@ -970,6 +910,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 </template>
 
 <style scoped>
+/* The Entity once, then each of its moves on a row of its own, the counts on one right edge. */
+.blr-capability-effect { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0.25rem 0.75rem; }
+.blr-capability-effect-moves { display: grid; gap: 0.375rem; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.blr-capability-effect-move { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; min-width: 0; }
+@container (max-width: 30rem) {
+  .blr-capability-effect { grid-template-columns: minmax(0, 1fr); }
+}
 .blr-page-heading {
   font-size: 1rem;
   font-weight: 650;

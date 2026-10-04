@@ -10,7 +10,8 @@ export interface MarkdownDecisionPoint {
   branches: Array<{ condition: string, outcome: string }>
 }
 
-export interface MarkdownScreenState {
+/** One named state of an Entity: an H3 title and the prose beneath it. */
+export interface MarkdownNamedState {
   title: string
   description: string
 }
@@ -172,28 +173,22 @@ export function decisionPoints(
   })
 }
 
-/** Parse Screen view states: one H3 name followed by non-empty prose. */
-export function screenStates(
-  body: string,
-  issues: string[],
-  label: string,
-  heading = 'View states',
-  noun = 'view state'
-): MarkdownScreenState[] {
+/** Parse named states — an Entity's `## States` — as one H3 name followed by non-empty prose. */
+export function namedStates(body: string, issues: string[], label: string): MarkdownNamedState[] {
   if (!body.trim()) return []
   const lines = body.split('\n')
   const chunks: Array<{ title: string, lines: string[] }> = []
   let current: { title: string, lines: string[] } | undefined
 
   for (const line of lines) {
-    const heading = line.match(/^### (.+)$/)
-    if (heading) {
+    const title = line.match(/^### (.+)$/)
+    if (title) {
       if (current) chunks.push(current)
-      current = { title: heading[1]!.trim(), lines: [] }
+      current = { title: title[1]!.trim(), lines: [] }
       continue
     }
     if (!current) {
-      if (line.trim()) issues.push(`${label}: "## ${heading}" content must begin with an H3 title`)
+      if (line.trim()) issues.push(`${label}: "## States" content must begin with an H3 title`)
       continue
     }
     current.lines.push(line)
@@ -202,8 +197,8 @@ export function screenStates(
 
   return chunks.map((chunk) => {
     const description = chunk.lines.join('\n').trim()
-    if (!chunk.title) issues.push(`${label}: ${noun} needs a title`)
-    if (!description) issues.push(`${label}: ${noun} "${chunk.title}" needs a description`)
+    if (!chunk.title) issues.push(`${label}: entity state needs a title`)
+    if (!description) issues.push(`${label}: entity state "${chunk.title}" needs a description`)
     return { title: chunk.title, description }
   })
 }

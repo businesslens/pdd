@@ -15,7 +15,7 @@ if (screenshots) mkdirSync(screenshots, { recursive: true })
 const chosenEntity = report.model.entities.find(item => item.id === 'order') ?? report.model.entities[0]
 const cases = [
   ['entity', `1 / ${report.model.entities.length}`, ['List', 'Relationships', 'Changes']],
-  ['interface', String(report.model.interfaces.length), ['List', 'Structure']],
+  ['interface', String(report.model.interfaces.length), ['List', 'Delivery map']],
   ['domain', String(report.model.domains.length), ['List', 'Reach']],
   ['capability', String(report.model.capabilities.length), ['List', 'Reach', 'Delivery']],
   ['journey', String(report.model.journeys.length), ['List', 'Reach']],
@@ -94,7 +94,7 @@ try {
       await expect(page.locator('.blr-drawing-cards')).toHaveCount(0)
     }
     await context.close()
-    console.log(`Passed ${width}px: six collections, preview subtitles, no About or experiment controls, fixed position, legend, saved filters, refresh and keyboard.`)
+    console.log(`Passed ${width}px: every collection with drawings, preview subtitles, no About or experiment controls, fixed position, legend, saved filters, refresh and keyboard.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

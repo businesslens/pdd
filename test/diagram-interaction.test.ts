@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
-const { diagramBounds, diagramContext } = await utility('diagramInteraction')
+const { diagramBounds, diagramContext, diagramEdgeContext } = await utility('diagramInteraction')
 
 const node = (id: string, resourceKey = id) => ({ id, title: id, resourceKey })
 const edge = (source: string, target: string) => ({ id: `${source}->${target}`, source, target, label: '' })
@@ -49,6 +49,23 @@ describe('diagram context', () => {
     expect(context.edges).toEqual(new Set(['a->b', 'c->a', 'a->a', 'parallel']))
   })
 
+  it('reads a frame as what it holds, and never dims a frame around a highlighted node', () => {
+    const map = {
+      nodes: [node('entry'), { ...node('web'), group: true }, { ...node('web::store'), group: true, parent: 'web' }, { ...node('web::catalog'), parent: 'web' },
+        { ...node('web::store::product'), parent: 'web::store' }, { ...node('web::store::status'), parent: 'web::store' }, node('hook'), node('cli')],
+      edges: [edge('entry', 'web::catalog'), edge('web::catalog', 'web::store::product'), edge('web::store::product', 'hook'), edge('hook', 'web::store::status')]
+    }
+    const leaf = diagramContext(map, 'hook')
+    expect(leaf.occurrences).toEqual(new Set(['hook']))
+    expect(leaf.nodes).toEqual(new Set(['hook', 'web::store::product', 'web::store::status', 'web::store', 'web']))
+    expect(leaf.edges).toEqual(new Set(['web::store::product->hook', 'hook->web::store::status']))
+    const frame = diagramContext(map, 'web::store')
+    expect(frame.occurrences).toEqual(new Set(['web::store', 'web::store::product', 'web::store::status']))
+    expect(frame.nodes).toEqual(new Set(['web::store', 'web::store::product', 'web::store::status', 'web::catalog', 'hook', 'web']))
+    expect(frame.edges).toEqual(new Set(['web::catalog->web::store::product', 'web::store::product->hook', 'hook->web::store::status']))
+    expect(diagramContext(map, 'cli').nodes).toEqual(new Set(['cli']))
+  })
+
   it('clears context for a removed node and handles an isolated node', () => {
     expect(diagramContext(tree, null)).toBeNull()
     expect(diagramContext(tree, 'removed')).toBeNull()
@@ -68,5 +85,19 @@ describe('diagram centering bounds', () => {
 
   it('handles an empty layout', () => {
     expect(diagramBounds({ nodes: [] })).toEqual({ x: 0, y: 0, width: 0, height: 0 })
+  })
+
+  it('lights only the hovered edge and the nodes it joins, never another edge naming the same Capability', () => {
+    const badged = (source: string, target: string) => ({ ...edge(source, target), badges: [{ kind: 'capability', text: 'Collection publication' }] })
+    const machine = {
+      nodes: ['created', 'private', 'published', 'unlisted'].map(id => node(id)),
+      edges: [badged('created', 'private'), badged('private', 'published'), badged('published', 'unlisted'), badged('unlisted', 'published')]
+    }
+    const context = diagramEdgeContext(machine, 'private->published')
+    expect([...context.edges]).toEqual(['private->published'])
+    expect([...context.nodes].sort()).toEqual(['private', 'published'])
+    expect(context.occurrences.size).toBe(0)
+    expect(diagramEdgeContext(machine, null)).toBeNull()
+    expect(diagramEdgeContext(machine, 'missing')).toBeNull()
   })
 })

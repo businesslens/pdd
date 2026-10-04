@@ -12,7 +12,11 @@ const browser = await chromium.launch()
 const errors = []
 const panelOf = page => page.locator('[data-resource-panel]')
 const urlValue = (page, key) => new URL(page.url()).searchParams.get(key)
-const title = (page, value) => expect(panelOf(page).locator('[data-resource-heading]')).toHaveText(value)
+const title = async (page, value) => {
+  const varied = value === 'Browse and buy'
+  await expect(panelOf(page).locator('[data-resource-title]')).toHaveText(varied ? 'Post-purchase' : value)
+  if (varied) await expect(panelOf(page).getByRole('button', { name: 'Post-purchase alternative: Browse and buy', exact: true })).toBeVisible()
+}
 try {
   for (const width of [1440, 390]) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce' })
@@ -102,7 +106,7 @@ try {
     await expect.poll(() => urlValue(page, 'rt')).toBe('connections')
     await page.reload()
     await expect(connections).toBeVisible()
-    await panel.getByRole('button', { name: 'Back to Browse and complete checkout', exact: true }).click()
+    await panel.getByRole('button', { name: 'Back to Post-purchase', exact: true }).click()
     await expect(panel.getByRole('tab', { name: /^Scenarios/ })).toHaveAttribute('aria-selected', 'true')
     expect(urlValue(page, 'e')).toBe('journey-scenario:browse-and-complete-checkout')
 
@@ -118,7 +122,7 @@ try {
 
     // Return to the precise expanded Scenario and scroll after two linked-resource lookups.
     await page.goto(`${origin}/?s=journey&e=journey:browse-and-buy&rt=scenarios`)
-    const scenario = panel.locator('[data-row-key="journey-scenario:browse-and-complete-checkout"]')
+    const scenario = panel.locator('[data-row-key="variation:order-confirmation"]')
     const scenarioToggle = scenario.locator('.blr-summary-toggle')
     if (await scenarioToggle.getAttribute('aria-expanded') !== 'true') await scenarioToggle.click()
     const order = scenario.locator('.blr-steps-list a[data-resource-key="entity:order"]').last()
@@ -134,7 +138,7 @@ try {
     await panel.getByRole('button', { name: 'Back to Order', exact: true }).click()
     await title(page, 'Order')
     await expect(panel.getByRole('tab', { name: 'Connections', exact: true })).toHaveAttribute('aria-selected', 'true')
-    await panel.getByRole('button', { name: 'Back to Browse and buy', exact: true }).click()
+    await panel.getByRole('button', { name: 'Back to Post-purchase', exact: true }).click()
     await title(page, 'Browse and buy')
     await expect(scenario.locator('.blr-summary-toggle')).toHaveAttribute('aria-expanded', 'true')
     await expect.poll(() => panel.locator('[data-resource-scroll]').evaluate(item => item.scrollTop)).toBeCloseTo(top, 0)
@@ -165,7 +169,10 @@ try {
     expect(urlValue(page, 'rt')).toBe('lifecycle')
     await panel.getByRole('button', { name: 'Draw as rows', exact: true }).click()
     await panel.getByRole('button', { name: /Confirmed → Cancelled/ }).click()
+    // Governing Rules are read on Steps; the Lifecycle links only prohibitions.
+    await panel.locator('summary').filter({ hasText: /^Prohibitions/ }).click()
     const link = panel.locator('a[data-resource-key^="rule:"]').first()
+    await expect(link).toBeVisible()
     const href = await link.getAttribute('href')
     expect(href).toContain('e=rule')
     const opened = context.waitForEvent('page')

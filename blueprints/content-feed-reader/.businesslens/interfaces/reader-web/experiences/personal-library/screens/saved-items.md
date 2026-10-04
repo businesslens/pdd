@@ -1,42 +1,14 @@
 ---
 entities:
-  - item
-  - collection
-capabilities:
-  - read-content
-  - save-item
+  - { entity: item, shows: [Title, Published at, Saved at] }
+  - { entity: source, shows: [Name] }
+  - { entity: collection, shows: [Name] }
 entryPoints:
   - reader-web: /saved
 ---
 
 # Saved items
 
-Presents the durable items a Reader chose to keep and provides a direct way to
-return to their content.
-
-## Information presented
-
-- Saved items with source and publication context
-- The time each item was saved
-- Whether an item belongs to any owned collection
-
-## Available actions
-
-- Open and read a saved item
-- Remove an item's saved state
-- Continue to collection organization
-
-## View states
-
-### Saved items available
-
-The Reader can revisit kept content independently of unread state.
-
-### Nothing saved
-
-The Reader sees that the saved library is empty and can return to unread items.
-
-## Capability boundary
-
-Presents and removes saved items. It does not silently change reading state or
-collection membership.
+Presents the durable items a Reader chose to keep, with their source and
+publication context and the owned collections they belong to, and provides a
+direct way to return to their content.

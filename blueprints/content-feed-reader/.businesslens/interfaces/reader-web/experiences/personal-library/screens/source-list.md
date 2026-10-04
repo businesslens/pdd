@@ -1,54 +1,17 @@
 ---
 entities:
-  - source
-capabilities:
-  - follow-source
-  - synchronize-feeds
+  - { entity: source, shows: [Name, Last read] }
 entryPoints:
   - reader-web: /sources
 ---
 
 # Source list
 
-Shows which feeds contribute to the Reader's library, provides the place to
-follow another one, and lets the Reader read them again on demand.
+Shows which feeds contribute to the Reader's library and whether each could be
+read at the last refresh, lets the Reader read them all again on demand, and
+opens one source to inspect it or stop following it.
 
 ## Intent
 
 Give the Reader one place to decide which sources may contribute items and to
 ask for their new items now.
-
-## Information presented
-
-- Followed source names and feed addresses
-- Validation feedback for a proposed feed address
-- Whether a source could not be read at the last refresh
-
-## Available actions
-
-- Follow a source by feed address
-- Refresh the followed sources
-- Unfollow an existing source
-
-## View states
-
-### Sources followed
-
-The Reader can review the feeds currently contributing items.
-
-### Address rejected
-
-The submitted address remains available to correct and no partial source is
-added.
-
-### Source unreachable
-
-The Reader sees which source could not be read and that its earlier items are
-still in the library. The Product keeps trying on its own schedule, and the
-Reader can unfollow the source rather than wait.
-
-## Capability boundary
-
-Controls which feeds are followed and when they are read. Collecting new items
-adds to the unread backlog; it never changes the reading state of items already
-in the library, saved items, or collections.

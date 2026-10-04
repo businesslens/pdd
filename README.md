@@ -24,6 +24,7 @@ resolution loop.
 ├── capabilities/<id>.md      # or <id>/capability.md with scenarios/ or assets
 ├── journeys/<id>.md          # or <id>/journey.md with scenarios/ or assets; optional
 ├── business-rules/<id>.md    # or <id>/business-rule.md with assets
+├── variations/<id>.md        # optional; one set of alternatives each
 └── coverage.md
 ```
 
@@ -103,10 +104,10 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 - Experiences are optional coherent usage contexts, each belonging to exactly
   one Interface. Availability is a list of strict Context objects whose
   `place` is an undivided Interface or an Experience.
-- Domains are optional regions of subject matter. Only a Capability authors
-  `domain:`; every other Domain relation is derived.
-- Screens are optional platform-neutral product views, nested in the Interface
-  or Experience that contains them. Their path supplies their place. Product
+- Domains are optional regions of subject matter. Only Capabilities and
+  Entities author `domain:`; every other Domain relation is derived.
+- Screens are optional platform-neutral product views, nested in the Interface,
+  Experience or parent Screen that contains them. Their path supplies their place. Product
   assets sit beside the resource they describe; anything
   under `implementation/` describes this realization and stays home.
 - `lint` checks format, required content, relationships, Reference grammar, and
@@ -150,13 +151,12 @@ derived report projections, not additional authored relationships.
 ## Documentation
 
 - [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
-  [Development loop](./docs/the-loop.md)
+  [Development loop](./docs/index.md#the-development-loop)
 - Start [from your repo](./docs/from-your-repo.md),
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
 - [Product Model](./docs/product-model.md) · [References](./docs/references.md)
-- [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
-  [CI/CD](./docs/ci.md)
+- [Skills](./docs/skills.md) · [CLI](./docs/cli.md)
 - [Format contract](./spec/format.md) ·
   [Report contract](./spec/report.md)
 

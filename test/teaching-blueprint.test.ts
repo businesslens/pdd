@@ -13,15 +13,15 @@ describe('Content Feed Reader teaching Blueprint', () => {
     expect(result.warnings).toEqual([])
     expect(result.counts).toEqual({
       interfaces: 2,
-      experiences: 3,
-      screens: 9,
+      experiences: 4,
+      screens: 22,
       domains: 3,
-      entities: 5,
-      capabilities: 10,
-      capabilityScenarios: 30,
+      entities: 6,
+      capabilities: 11,
+      capabilityScenarios: 34,
       journeys: 4,
       journeyScenarios: 8,
-      businessRules: 5
+      businessRules: 8
     })
     expect(Object.values(result.counts).every(count => count >= 2)).toBe(true)
   })

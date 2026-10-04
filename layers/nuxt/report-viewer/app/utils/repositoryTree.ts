@@ -9,7 +9,7 @@ export interface RepositoryTreeNode {
 
 const MODEL_COLLECTIONS: Record<string, ReportResourceKind> = {
   entities: 'entity', interfaces: 'interface', domains: 'domain',
-  capabilities: 'capability', journeys: 'journey', 'business-rules': 'rule'
+  capabilities: 'capability', journeys: 'journey', 'business-rules': 'rule', variations: 'variation'
 }
 const CHILD_COLLECTIONS: Partial<Record<ReportResourceKind, Record<string, ReportResourceKind>>> = {
   interface: { experiences: 'experience', screens: 'screen' },

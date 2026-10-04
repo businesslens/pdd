@@ -1,6 +1,6 @@
 ---
 title: From a Blueprint
-description: Pull a reviewed Product Model, preserve its completeness, adapt it if needed, then build and verify.
+description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then build and verify.
 section: open-source
 group: Get started
 order: 4
@@ -8,43 +8,51 @@ order: 4
 
 # Start from a Blueprint
 
-[Install the BusinessLens skills](./installation.md), browse
-[businesslens.io/blueprints](https://businesslens.io/blueprints), then pull a
-catalog slug:
+Use this door when your product is a familiar kind (a webshop, a booking app, a
+help desk) and you would rather adapt a reviewed model than write one from
+nothing.
 
-```bash
-mkdir my-product && cd my-product
-git init
-npx businesslens blueprint pull your-blueprint-slug
-```
+## What a Blueprint is
 
-The command writes only `.businesslens/`, including its orientation README, and
-applies the [portable projection](./cli-export.md#portable-export).
+**A Blueprint is a reviewed Product Model for a common kind of product, shared
+through a catalog, that you pull instead of starting blank.** It holds only
+product meaning: no code, no file paths, nothing tied to the repository it came
+from.
 
-Lint the imported structure:
+Its life in one line: someone [exports](./cli-export.md) a model and
+[contributes](./cli-contribute.md) it, it is reviewed into the catalog, and you
+[pull](./cli-pull.md) it by name, or [open](./cli-open.md) a Blueprint file you
+were given.
 
-```bash
-npx businesslens lint
-```
+## Steps
 
-Read `product.md` or `product/product.md`, then its Entities and Interfaces,
-optional Experiences, Screens, and Domains, followed by Capabilities, Capability
-Scenarios, Business Rules, optional Journeys, and Journey Scenarios. Confirm that every Capability
-has direct local acceptance coverage and that its Scenarios are genuine
-variations rather than hidden operations. Confirm that every Journey defines a
-deliberate Goal and every Journey Scenario traces a supported multi-Capability
-route. If the contract fits, send the model to your normal plan/build flow. If
-you want adjacent behavior, run `businesslens-ideate`, approve the model delta,
-then build.
+1. Browse [businesslens.io/blueprints](https://businesslens.io/blueprints),
+   create the project, [install the skills](./installation.md) into it, and
+   pull the Blueprint by name:
 
-After implementation, invoke:
+   ```bash
+   mkdir my-product && cd my-product
+   git init
+   npx businesslens install
+   npx businesslens blueprint pull your-blueprint-slug
+   ```
 
-```text
-/businesslens-verify
-```
+   It writes only `.businesslens/`; nothing else in the repo changes.
 
-Verify treats the existing model as the intended contract. See the
-[`verify` skill](./skill-businesslens-verify.md) for scope and resolution modes.
+2. Read the Product (`.businesslens/product/product.md`, or `product.md` when
+   the Blueprint has no logo), then skim the rest with:
 
-Next: [Development loop](./the-loop.md) ·
-[`blueprint contribute`](./cli-contribute.md)
+   ```bash
+   npx businesslens view
+   ```
+
+3. If it fits, hand it to your normal plan and build flow. If you want
+   something more or different, run `/businesslens-ideate`, approve the model
+   change, then build.
+
+4. After building, check the code against the model:
+
+   ```text
+   /businesslens-verify
+   ```
+

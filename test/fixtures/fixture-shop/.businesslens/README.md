@@ -9,7 +9,9 @@ intended product behavior.
 - Read `product.md` or `product/product.md` first, then the Entities — the
   things the product keeps, including the people and systems that act on it —
   and the Interfaces, optional Experiences, Screens, and Domains, followed by
-  Capabilities, Business Rules, Journeys, and both Scenario collections.
+  Capabilities, Business Rules, Journeys, both Scenario collections, and the
+  Variations, which say where the product works more than one supported way
+  and what selects each.
 - Expect leaf resources as `<id>.md`; `<id>/<type>.md` means that resource owns
   child resources or assets.
 - Treat Capability Scenarios as local acceptance contracts, Journey Scenarios

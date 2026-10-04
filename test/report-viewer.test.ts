@@ -6,6 +6,7 @@ import { loadModel } from '../src/core/model.js'
 
 const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
+const entityEffectPhraseModulePath = '../layers/nuxt/report-viewer/app/utils/entityEffectPhrase.ts'
 const resourceFactsModulePath = '../layers/nuxt/report-viewer/app/utils/resourceFacts.ts'
 const resourceFacetsModulePath = '../layers/nuxt/report-viewer/app/utils/resourceFacets.ts'
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
@@ -13,7 +14,7 @@ const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSecti
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const { resourceFacts } = await import(resourceFactsModulePath)
 const { REPORT_ENTITY_KINDS, ENTITY_KIND_META, INTERFACE_TYPE_META } = await import(workspaceModulePath)
-const { hasAuthoredBody, tabsFor } = await import(pageSectionsModulePath)
+const { hasAuthoredBody, parentOf, tabsFor } = await import(pageSectionsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 function source(path: string): string {
@@ -79,6 +80,7 @@ describe('stable Product Report', () => {
     // so the Scenario also reaches the Interface itself.
     expect(workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!.contexts
       .map((context: any) => context.key).sort()).toEqual([
+      'customer-mobile::catalog-preview',
       'customer-mobile::storefront',
       'customer-web',
       'customer-web::storefront'
@@ -133,7 +135,7 @@ describe('stable Product Report', () => {
     // Facts are named, and a Rule that governs one is marked on it.
     expect(order.informationKept.map((fact: any) => fact.name)).toContain('When placed')
     expect(order.informationKept.find((fact: any) => fact.name === 'Total charged').ruleIds).toEqual(['total-charged'])
-    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Cancelled', 'Refunded'])
+    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Cancellation requested', 'Confirmed', 'Cancelled', 'Refunded'])
     // A thing that does not act says nothing; one that does says which.
     expect(order.acts).toBeNull()
     expect(workspace.entities.find((item: any) => item.id === 'payment-gateway')).toMatchObject({ entityKind: 'system', acts: 'external' })
@@ -158,10 +160,11 @@ describe('stable Product Report', () => {
       .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
 
     // The lifecycle is composed from Steps: every arc names the Capability
-    // whose Step draws it, the Rules that constrain it, and its co-effects.
+    // whose Step draws it and its co-effects. The Rules governing it are read
+    // on the Steps they select.
     const arc = (from: string, to: string) => order.arcs.find((item: any) => item.from === from && item.to === to)
-    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['settle-payment'])
-    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'], ruleIds: ['refunds-need-an-operator', 'who-may-change-an-order'] })
+    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['manage-orders', 'settle-payment'])
+    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'] })
     expect(arc('Confirmed', 'Refunded').coEffects).toEqual([{ entityId: 'refund', effect: 'creates', to: 'Requested' }])
     expect(order.arcs.find((item: any) => item.effect === 'creates').to).toBe('Pending')
     expect(order.states.every((state: any) => state.reached)).toBe(true)
@@ -170,7 +173,7 @@ describe('stable Product Report', () => {
     expect(order.noCreation).toBe(false)
 
     // Both relations are derived from the Steps and Screens, never authored here.
-    expect(order.changedByIds).toEqual(['cancel-order', 'manage-orders', 'place-order', 'settle-payment'])
+    expect(order.changedByIds).toEqual(['cancel-order', 'manage-orders', 'place-order', 'request-cancellation', 'settle-payment'])
     expect(order.readByIds).toEqual(['track-order'])
     expect(order.presentedOnIds).toEqual([
       'admin-web::order-detail',
@@ -196,12 +199,14 @@ describe('stable Product Report', () => {
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
     // Lifecycle is specific to things with States; Connections remains a separate reading.
-    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'connections'])
+    /* The Rules that name an Entity are a tab of their own, before Connections. */
+    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'rules', 'connections'])
     expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview', 'connections'])
 
-    // A Screen's own states stay the view's, never the thing's lifecycle.
-    const screen = workspace.screens.find((item: any) => item.states.length)
-    expect(screen.states.map((state: any) => state.title)).not.toContain('Pending')
+    // A Screen is relations only: it has no view states of its own to count.
+    const screen = workspace.screens.find((item: any) => item.id === 'customer-web::storefront::product-record')!
+    expect(screen).not.toHaveProperty('states')
+    expect(resourceFacts(workspace, screen).map((fact: any) => fact.label)).toEqual(['Presents', 'Capabilities'])
   })
 
   /*
@@ -265,7 +270,7 @@ describe('stable Product Report', () => {
     // The row the page renders carries changes and reads together, told apart.
     const row = scenarioStepMatrix(browse).steps[0]!
     expect(row.mentions).toEqual([
-      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '' }
+      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '', facts: ['Name and description', 'Price', 'Stock remaining'] }
     ])
 
     // "What can alter this thing" keeps its answer: browsing is not in it.
@@ -308,17 +313,17 @@ describe('stable Product Report', () => {
     const cancelStep = cancel.steps.at(-1)!
     cancel.steps[cancel.steps.length - 1] = {
       ...cancelStep,
-      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded' }]
+      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded', facts: [] }]
     }
     const workspace = projectReportWorkspace(report)
 
     const order = workspace.entities.find((item: any) => item.id === 'order')!
     const stateOf = (name: string) => order.states.find((state: any) => state.name === name)!
 
-    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-when-the-gateway-settles'])
-    expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'])
+    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-through-the-v2-contract', 'confirm-an-order-when-the-gateway-settles'])
+    expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'browse-and-complete-checkout-with-manual-confirmation', 'buy-and-follow-the-order', 'cancel-an-order-before-fulfilment'])
     expect(stateOf('Refunded').journeyScenarioIds).toEqual(['cancel-an-order-before-fulfilment'])
-    expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'sell-the-last-available-unit'])
+    expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'complete-checkout-without-review', 'sell-the-last-available-unit'])
 
     // A state nothing lands in says so by holding nothing, not by guessing —
     // and, past the first, is marked unreached.
@@ -349,8 +354,8 @@ describe('stable Product Report', () => {
 
     // A Domain classifies Entities, though the Entity is the side that says so.
     const ordering = workspace.domains.find((item: any) => item.id === 'ordering')!
-    expect(ordering.entityIds).toEqual(['cart', 'order', 'refund'])
-    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order', 'refund'])
+    expect(ordering.entityIds).toEqual(['cart', 'order', 'refund', 'sales-tax-receipt', 'vat-invoice'])
+    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order', 'refund', 'sales-tax-receipt', 'vat-invoice'])
 
     // An Entity that acts is reachable from where it acts, and the other way.
     const shopper = workspace.entities.find((item: any) => item.id === 'shopper')!
@@ -392,12 +397,20 @@ describe('stable Product Report', () => {
     expect(workspace.capabilities.find((item: any) => item.id === 'place-order')!.entityIds)
       .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
 
-    // A Capability page reads one aggregate line per Entity, never a lifecycle fragment each.
+    // A Capability page reads one group per Entity, each distinct move once with the Scenarios making it.
     const settle = workspace.capabilities.find((item: any) => item.id === 'settle-payment')!
-    expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects, line.scenarioIds.length])).toEqual([
-      ['order', [{ effect: 'changes', from: 'Pending', to: 'Confirmed' }], 3],
-      ['refund', [{ effect: 'changes', from: 'Requested', to: 'Settled' }], 1]
+    expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects.map((move: any) => [move.effect, move.from, move.to, move.scenarioIds.length]), line.scenarioIds.length])).toEqual([
+      ['order', [['changes', 'Pending', 'Confirmed', 5]], 5],
+      ['refund', [['changes', 'Requested', 'Settled', 1]], 1],
+      ['sales-tax-receipt', [['creates', '', '', 1]], 1],
+      ['vat-invoice', [['creates', '', '', 1]], 1]
     ])
+    for (const capability of workspace.capabilities) {
+      for (const line of capability.entityEffects) {
+        for (const move of line.effects) expect(move.scenarioIds.every((id: string) => line.scenarioIds.includes(id))).toBe(true)
+        expect(new Set(line.effects.flatMap((move: any) => move.scenarioIds))).toEqual(new Set(line.scenarioIds))
+      }
+    }
   })
 
   it('derives backlinks without mutating the canonical report', () => {
@@ -456,7 +469,8 @@ describe('stable Product Report', () => {
     /* Parallel lanes are not transitions; a Step that moves to the webhook is one, on both. */
     expect(matrix.steps[1].cells.map((cell: any) => cell.contextChanged)).toEqual([false, false])
     expect(matrix.steps[2].cells.map((cell: any) => cell.contextChanged)).toEqual([true, true])
-    expect(scenarioStepMatrix(workspace.capabilityScenarios[0]).routes).toHaveLength(2)
+    // Checkout runs on web, on mobile, and on the web Screen of the Stock disclosure arm that hides stock.
+    expect(scenarioStepMatrix(workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')).routes.map((route: any) => route.id)).toEqual(['web', 'mobile', 'web-without-stock'])
   })
 
   it('gives both Scenario types one Steps table while keeping their Context semantics distinct', () => {
@@ -486,7 +500,7 @@ describe('stable Product Report', () => {
        a Product or condition Step, and the chip is the same reference. */
     expect(body).toContain('v-if="stepActor(step.actorId)"')
     expect(body).toContain('<span v-if="step.stepKind !== \'actor\'">for</span>')
-    expect(body).toContain('{{ stepActor(step.actorId)!.title }}')
+    expect(body).toContain('<BlrEntityChip :entity="stepActor(step.actorId)!"')
     expect(body).not.toContain('label="Performed by"')
     expect(body).toContain('Product action')
     expect(body).toContain('Condition')
@@ -499,10 +513,11 @@ describe('stable Product Report', () => {
     expect(body).toContain('scenarioRouteColumnCount')
     expect(body).toContain('visibleRouteWindow.start + 1')
     expect(body).toContain('aria-label="Number of route columns"')
-    /* A named route is one way a Scenario can run, not a Journey, so it does
-       not wear the Journey's mark. */
-    expect(body).toContain("icon: 'i-lucide-split'")
+    /* A named route is one way a Scenario can run — neither a Journey nor a
+       Variation — so it wears neither type's reserved mark. */
+    expect(body).toContain("icon: 'i-lucide-signpost'")
     expect(body).not.toContain('i-lucide-route')
+    expect(body).not.toContain('i-lucide-split')
     expect(body.match(/aria-label="Show previous route"/g)).toHaveLength(2)
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
@@ -602,10 +617,9 @@ describe('stable Product Report', () => {
     expect(cardPresentation).not.toContain('`${entity.entityKind} · ${entity.acts}`')
     expect(cardPresentation).toContain('badge: entity.acts')
 
-    /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
-       that opens it, not a dimmed generic glyph beside plain text. */
-    expect(resourceBody).toContain('<BlrEntityMark')
-    expect(resourceBody).toContain(':facet="stepActor(step.actorId)!.entityKind!"')
+    /* A Step names an Actor, so it renders one: the shared Entity chip, which
+       carries the Actor's own mark and opens it. */
+    expect(resourceBody).toContain('<BlrEntityChip :entity="stepActor(step.actorId)!"')
     /* The Entity page draws its composed state machine on the shared canvas,
        on its own tab, with every arc routed along the layout's points. */
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
@@ -659,8 +673,9 @@ describe('stable Product Report', () => {
     expect(checkoutStep.contexts.map((context: any) => context.context.screenTitle)).toEqual(['Product record', 'Product record'])
 
     const capabilityScenario = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
+    // The mobile catalog preview has no Screens, so its route names none.
     expect(capabilityScenario.steps[0].contexts.map((context: any) => context.context.screenTitle))
-      .toEqual(['Catalog', 'Product record'])
+      .toEqual(['Catalog', 'Product record', ''])
   })
 
   it('marks a Context place transition and preserves its previous Context, per route', async () => {
@@ -687,7 +702,7 @@ describe('stable Product Report', () => {
   it('derives Journey Contexts only from achieved flows', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios[0]!
-    report.model.journeyScenarios[0] = { ...scenario, result: 'not-achieved' }
+    report.model.journeyScenarios = report.model.journeyScenarios.map(item => item.journeyId === scenario.journeyId ? { ...item, result: 'not-achieved' as const } : item)
 
     const workspace = projectReportWorkspace(report)
     const journey = workspace.journeys.find((item: any) => item.id === scenario.journeyId)!
@@ -700,7 +715,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV14')
+    expect(renderer).toContain('ProductReportV15')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -1035,9 +1050,14 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('@select="openResourcePage"')
     expect(page).toContain('<BlrPageBlock')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrResourceBody')
-    for (const marker of ['stepMatrix.steps', 'asScreen.states', 'asRule.statement']) {
+    for (const marker of ['stepMatrix.steps', 'data-screen-presents', 'asRule.rationale']) {
       expect(body, marker).toContain(marker)
     }
+    /* A Rule's lead is its statement, read once, with who may beside it; what it applies to is its Applies to tab. */
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrRuleScope')
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrAttachedRules')
+    /* A fact a Rule governs carries one badge per Rule naming the kind of claim; the claim opens from it. */
+    expect(body).toContain('<BlrFactRuleBadge v-if="factRule(id)"')
   })
 
   it('keeps Context where it answers an Overview question', () => {
@@ -1080,11 +1100,12 @@ describe('stable Product Report', () => {
     expect(block).toContain("props.resource.kind === 'journey' ? props.resource.entryPoints : []")
 
     /* Scenario Context belongs to its route cells; a Rule selector belongs to
-       the authored applicability binding rather than a generic roll-up. */
+       the authored applicability target in the Rule's Applies to tree rather
+       than a generic roll-up. */
     expect(body).toContain('<BlrStepContext')
-    expect(body).toContain('Every supported Context')
-    expect(body).toContain('<BlrContextPlace')
-    expect(body).toContain('Only in')
+    const scope = source('app/utils/collectionChildren.ts')
+    expect(scope).toContain('Every supported Context')
+    expect(scope).toContain('Only in')
   })
 
 
@@ -1116,7 +1137,8 @@ describe('stable Product Report', () => {
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
   })
 
-  it('keeps Connections after Overview and the resource’s behavior reading', () => {
+  it('keeps Connections after Overview and the resource’s behavior reading', async () => {
+    const { attachedRules } = await import(join(VIEWER, 'app/utils/topologyTargets.ts'))
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
@@ -1124,7 +1146,9 @@ describe('stable Product Report', () => {
     for (const resource of [...workspace.capabilities, ...workspace.journeys]) {
       const tabs = tabsFor(workspace, resource)
       expect(tabs.map((tab: any) => [tab.id, tab.label])).toEqual([
-        ['overview', 'Overview'], ['scenarios', 'Scenarios'], ['connections', 'Connections'],
+        ['overview', 'Overview'], ['scenarios', 'Scenarios'],
+        ...(attachedRules(workspace, resource).length ? [['rules', 'Business Rules']] : []),
+        ['connections', 'Connections'],
         ...(resource.references.length ? [['references', 'References']] : [])
       ])
       const children = resource.kind === 'capability'
@@ -1134,15 +1158,17 @@ describe('stable Product Report', () => {
     }
     for (const resource of workspace.byKey.values()) {
       const tabs = tabsFor(workspace, resource)
+      /* A Scenario address reads its parent; the Scenario's own References are on its card. */
+      const subject = parentOf(workspace, resource) ?? resource
       expect(tabs[0].blocks).not.toContain('connections')
       expect(tabs[0].blocks).not.toContain('references')
       const connections = tabs.find((tab: any) => tab.id === 'connections')
       if (connections) {
-        expect(tabs.at(resource.references.length ? -2 : -1)).toBe(connections)
+        expect(tabs.at(subject.references.length ? -2 : -1)).toBe(connections)
         expect(connections.blocks).toEqual(['connections'])
       }
-      if (resource.references.length) {
-        expect(tabs.at(-1)).toMatchObject({ id: 'references', count: resource.references.length, blocks: ['references'] })
+      if (subject.references.length) {
+        expect(tabs.at(-1)).toMatchObject({ id: 'references', count: subject.references.length, blocks: ['references'] })
       } else expect(tabs.some((tab: any) => tab.id === 'references')).toBe(false)
     }
     expect(sections).not.toContain("id: 'diagram'")
@@ -1187,9 +1213,9 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('v-model:tab="resourceTab"')
     expect(page).toContain("defineModel<string>('tab'")
     expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
-    /* Opening a page opens its Overview; the tab is reset in the same tick as
-       the page, so one gesture is one history entry. */
-    expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = 'overview'")
+    /* Opening a page opens its Overview unless a reading was asked for; the tab
+       is set in the same tick as the page, so one gesture is one history entry. */
+    expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = tab")
   })
 
   /*
@@ -1239,7 +1265,8 @@ describe('composed lifecycle', () => {
     expect(groups.flatMap((group: any) => group.arcs.map((arc: any) => arc.key)).sort()).toEqual(order.arcs.map((arc: any) => arc.key).sort())
     expect(groups[0].title).toBe('Creation')
     expect(groups[0].arcs.every((arc: any) => arc.effect === 'creates')).toBe(true)
-    expect(groups.find((group: any) => group.title === 'Pending').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Confirmed'])
+    expect(groups.find((group: any) => group.title === 'Pending').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancellation requested', 'Cancelled', 'Confirmed'])
+    expect(groups.find((group: any) => group.title === 'Cancellation requested').arcs.map((arc: any) => arc.to)).toEqual(['Cancelled'])
     expect(groups.find((group: any) => group.title === 'Confirmed').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Refunded'])
     expect(groups.find((group: any) => group.title === 'Cancelled').arcs).toEqual([])
     expect(groups.find((group: any) => group.title === 'No specified state').arcs.map((arc: any) => arc.effect)).toEqual(['changes'])
@@ -1273,7 +1300,8 @@ describe('composed lifecycle', () => {
   const addStep = (report: any, capabilityId: string, entities: Array<Record<string, unknown>>) => {
     const scenario = report.model.capabilityScenarios.find((item: any) => item.capabilityId === capabilityId)!
     const template = scenario.steps[scenario.steps.length - 1]
-    scenario.steps.push({ ...structuredClone(template), text: 'The test moves it.', entities })
+    /* A wire entry always carries its cited facts, empty when it cites none. */
+    scenario.steps.push({ ...structuredClone(template), text: 'The test moves it.', entities: entities.map(entry => ({ facts: [], ...entry })) })
   }
 
   it('draws terminals for a thing that is created and removed, and a self-transition as a loop', async () => {
@@ -1305,7 +1333,7 @@ describe('composed lifecycle', () => {
     const index = arcOf(order, 'Cancelled', '', 'removes')
 
     expect(order.arcs[index].forbiddenByRuleIds).toEqual(['orders-are-never-deleted'])
-    expect(lifecycleArcLabel(workspace, order, index)).toMatchObject({ forbidden: true, rules: [] })
+    expect(lifecycleArcLabel(workspace, order, index)).toMatchObject({ forbidden: true })
     const edge = buildEntityLifecycle(workspace, order).edges.find((item: any) => item.target === LIFECYCLE_END)
     expect(edge).toMatchObject({ label: 'forbidden', forbidden: true })
   })
@@ -1320,8 +1348,8 @@ describe('composed lifecycle', () => {
     const stateless = order.arcs.find((arc: any) => arc.effect === 'changes' && !arc.to)
     expect(stateless.capabilityIds).toEqual(['manage-orders'])
     expect(drawn.has(lifecycleArcEdgeId(order.id, stateless))).toBe(false)
-    expect(order.arcs).toHaveLength(6)
-    expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(5)
+    expect(order.arcs).toHaveLength(8)
+    expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(7)
     /* Graph keeps changes without specified states accessible alongside its edges. */
     const component = source('app/components/BlrEntityLifecycle.vue')
     expect(component).toContain('drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc))')
@@ -1330,58 +1358,65 @@ describe('composed lifecycle', () => {
   })
 
   /*
-   * Grants within a Rule are OR; Rules selecting one operation are AND. The
-   * fixture's Confirmed → Cancelled is selected by one Rule whose four grants
-   * mostly hold only while Pending, so "Shopper or admin or gateway or
-   * schedule" was three grants wider than the truth. Each Rule is read apart,
-   * with every grant's conditions, and the canvas carries only the marker.
+   * A change is drawn by what makes it. The Rules governing it are read on the
+   * Steps they select — a target selects Steps — and so on those Steps'
+   * Scenarios and Capabilities, never on the transition. Only a change no one
+   * may make keeps its Rule, since no Capability makes it.
    */
-  it('reads restrictions per Rule with each grant in full, never flattened across Rules', async () => {
-    const { buildEntityLifecycle, lifecycleArcLabel, lifecycleRestrictionMarker } = await import(lifecycleModulePath)
+  it('draws a change by its Capability and reads its governing Rules on the Steps they select', async () => {
+    const { buildEntityLifecycle, lifecycleArcLabel } = await import(lifecycleModulePath)
+    const { attachedRules } = await import(join(VIEWER, 'app/utils/topologyTargets.ts'))
     const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
     const order = entityOf(workspace, 'order')
 
     const cancel = lifecycleArcLabel(workspace, order, arcOf(order, 'Confirmed', 'Cancelled'))
-    expect(cancel).not.toHaveProperty('restriction')
-    expect(cancel.rules).toEqual([{
-      id: 'who-may-change-an-order',
-      title: 'Who may change an order',
-      grants: [
-        'the Shopper related by owns while Pending',
-        'Store admin',
-        'Payment gateway while Pending',
-        "the Product's own schedule while Pending"
-      ]
-    }])
-    expect(cancel.rules[0].grants.filter((grant: string) => grant.includes('Pending'))).toHaveLength(3)
-    expect(lifecycleRestrictionMarker(cancel)).toBe('restricted')
+    expect(cancel).not.toHaveProperty('rules')
+    expect(order.arcs.every((arc: any) => !('ruleIds' in arc))).toBe(true)
 
-    const refund = lifecycleArcLabel(workspace, order, arcOf(order, 'Confirmed', 'Refunded'))
-    expect(refund.rules.map((rule: any) => rule.id)).toEqual(['refunds-need-an-operator', 'who-may-change-an-order'])
-    expect(refund.rules[0].grants).toEqual([
+    const edges = buildEntityLifecycle(workspace, order).edges
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded')).toMatchObject({ label: 'Order management' })
+    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
+      .toMatchObject({ label: 'Order cancellation' })
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
+    /* On the canvas the label is a badge wearing the Capability's mark; the text stays its alternative. */
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded').badges).toEqual([{ kind: 'capability', text: 'Order management' }])
+    expect(edges.every((edge: any) => edge.badges.every((badge: any) => badge.kind !== 'rule'))).toBe(true)
+    for (const edge of edges.filter((item: any) => item.forbidden)) expect(edge.badges).toEqual([{ icon: 'i-lucide-ban', text: 'Forbidden' }])
+
+    /* The Rules that restricted the transition govern the Steps making it, and so their Scenarios and Capability. */
+    const refunding = workspace.scenarios.flatMap((scenario: any) => scenario.steps.map((step: any) => ({ scenario, step })))
+      .filter(({ step }: any) => step.entities.some((entry: any) => entry.entityId === 'order' && entry.from === 'Confirmed' && entry.to === 'Refunded'))
+    expect(refunding.length).toBeGreaterThan(0)
+    for (const { scenario, step } of refunding) {
+      expect(step.governedBy.map((item: any) => item.ruleId)).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
+      expect(scenario.stepRuleIds).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
+      for (const item of step.governedBy) expect(item.entries.every((index: number) => step.entities[index])).toBe(true)
+    }
+    const manage = workspace.capabilities.find((item: any) => item.id === 'manage-orders')
+    expect(manage.stepRuleIds).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
+    expect(attachedRules(workspace, manage).find((item: any) => item.rule.id === 'refunds-need-an-operator'))
+      .toMatchObject({ hookLabel: 'Governs its Steps', hook: 'changes Order to Refunded' })
+    const rule = workspace.rules.find((item: any) => item.id === 'refunds-need-an-operator')
+    expect(rule.stepCapabilityIds).toContain('manage-orders')
+    /* The grants are the Rule's own reading, each in full. */
+    expect(rule.grants.map((grant: any) => grant.sentence)).toEqual([
       'Store admin when Total charged at most 100',
       'whoever Store settings configures when Total charged over the Store settings threshold'
     ])
-    expect(refund.rules[1].grants).toHaveLength(4)
-    expect(lifecycleRestrictionMarker(refund)).toBe('restricted by 2 Rules')
 
-    const edges = buildEntityLifecycle(workspace, order).edges
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded'))
-      .toMatchObject({ label: 'Order management · restricted by 2 Rules' })
-    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
-      .toMatchObject({ label: 'Order cancellation · restricted' })
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
+    /* The measuring copy and the canvas draw the same label, so the reserved box is the drawn box. */
+    expect(source('app/components/BlrDiagram.vue')).toContain('<BlrFlowEdgeLabel :edge="edge" />')
+    expect(source('app/components/BlrFlowRoutedEdge.vue')).toContain('<BlrFlowEdgeLabel :edge="data" />')
 
-    /* Both drawings use the same detail, retaining each Rule and how they compose. */
-    const component = source('app/components/BlrLifecycleChangeDetails.vue')
-    expect(component).toContain('v-for="rule in arc.rules"')
-    expect(component).toContain("@open=\"open('rule', rule.id)\"")
-    expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')
-    expect(component).toContain('Each Rule must permit it; within a Rule, any one grant does.')
-    expect(component).not.toContain('arc.restriction')
+    expect(source('app/components/BlrDiagram.vue')).toContain("emit('inspect', key, part)")
+    const lifecycle = source('app/components/BlrEntityLifecycle.vue')
+    expect(lifecycle).toContain(':highlight="highlight"')
+    /* Where the governed change happens: each Step names the Rules selecting it, in both Steps drawings. */
+    expect(source('app/components/BlrScenarioStep.vue')).toContain('data-step-rules')
+    expect(source('app/components/BlrResourceBody.vue')).toContain('label="Governed by"')
   })
 
-  it('does not restrict the machine by a Rule scoped to a place', async () => {
+  it('does not restrict the machine by a Rule scoped to a place, and governs only the Steps it selects there', async () => {
     const { lifecycleArcLabel } = await import(lifecycleModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const template = report.model.businessRules.find((rule: any) => rule.id === 'refunds-need-an-operator')!
@@ -1399,10 +1434,18 @@ describe('composed lifecycle', () => {
     const order = entityOf(workspace, 'order')
     const index = arcOf(order, 'Pending', 'Confirmed')
 
-    expect(order.arcs[index].ruleIds).toEqual(['who-may-change-an-order'])
-    expect(lifecycleArcLabel(workspace, order, index).rules.map((rule: any) => rule.id)).toEqual(['who-may-change-an-order'])
-    /* It still reaches the Entity page as a Rule relation; only the machine leaves it off. */
+    expect(lifecycleArcLabel(workspace, order, index)).not.toHaveProperty('rules')
+    /* It still reaches the Entity page as a Rule relation. */
     expect(order.ruleIds).toContain('operators-settle-at-the-console')
+    /* A place-scoped Rule governs only the Steps it selects there: a confirmation elsewhere is not its business. */
+    const confirming = workspace.scenarios.flatMap((scenario: any) => scenario.steps)
+      .filter((step: any) => step.entities.some((entry: any) => entry.entityId === 'order' && entry.from === 'Pending' && entry.to === 'Confirmed'))
+    expect(confirming.length).toBeGreaterThan(0)
+    const governed = (step: any) => step.governedBy.some((item: any) => item.ruleId === 'operators-settle-at-the-console')
+    for (const step of confirming) {
+      if (step.contexts.length && !step.contexts.some((item: any) => item.context.id.startsWith('admin-web::order-detail'))) expect(governed(step)).toBe(false)
+    }
+    expect(confirming.some((step: any) => !governed(step))).toBe(true)
   })
 
   it('draws the same machine from the same report every time', async () => {
@@ -1423,5 +1466,321 @@ describe('composed lifecycle', () => {
     expect(workspaceSource).not.toContain('ScenarioStepMentionView')
     expect(workspaceSource).toContain('mentions: ScenarioStepEntityView[]')
     expect(source('app/components/BlrStepEntity.vue')).toContain('mention: ScenarioStepEntityView')
+  })
+})
+
+/*
+ * Product Report v15: a Screen presents facts, Screens nest, a container leads
+ * with what it delivers, and navigation is a mark. The nested Screen is built by
+ * hand on top of the fixture so the reading is pinned to the wire, not to
+ * whichever fixture happens to nest today.
+ */
+describe('Screens on the v15 wire', () => {
+  const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
+  const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
+  const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'
+  const destinationsModulePath = '../layers/nuxt/report-viewer/app/utils/reportDestinations.ts'
+  const PARENT = 'customer-web::storefront::product-record'
+  const CHILD = `${PARENT}::reviews`
+
+  /* One Step that changes something moves from the parent Screen to a child nested inside it. */
+  function nestedReport() {
+    const report = compileReport(loadModel(FIXTURE), '2026-09-21')
+    const parent = report.model.screens.find(screen => screen.id === PARENT)!
+    const scenario = report.model.capabilityScenarios.find(item => item.steps.some(step =>
+      step.entities.some(entry => entry.effect !== 'reads') && step.contexts.some(context => context.placeId === PARENT)))!
+    const step = scenario.steps.find(step =>
+      step.entities.some(entry => entry.effect !== 'reads') && step.contexts.some(context => context.placeId === PARENT))!
+    for (const context of step.contexts) if (context.placeId === PARENT) context.placeId = CHILD
+    report.model.screens.push({
+      ...parent,
+      id: CHILD,
+      title: 'Reviews',
+      description: 'What other shoppers said about the product.',
+      capabilityIds: [scenario.capabilityId],
+      entities: [{ entityId: 'catalog-product', shows: [], collects: [] }],
+      capabilityScenarioIds: [scenario.id],
+      journeyScenarioIds: [],
+      entryPoints: [],
+      references: []
+    })
+    report.model.experiences.find(item => item.id === 'customer-web::storefront')!.navigation = [CHILD]
+    return { report, scenario, step }
+  }
+
+  it('reads what a Screen presents as Entities with the facts on screen', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const screen = workspace.screens.find((item: any) => item.id === 'customer-web::catalog')!
+    expect(screen.entities).toEqual([{ entityId: 'catalog-product', shows: ['Name and description', 'Price'], collects: [] }])
+    expect(screen.entityIds).toEqual(['catalog-product'])
+    expect(workspace.entities.find((item: any) => item.id === 'catalog-product')!.presentedOnIds).toContain(screen.id)
+  })
+
+  it('names an Entity with one chip wherever it is a reference', () => {
+    const body = source('app/components/BlrResourceBody.vue')
+    /* Presents and What it changes. */
+    const presents = body.slice(body.indexOf('data-screen-presents'), body.indexOf('<!-- ENTITY:'))
+    expect(presents).toContain('<BlrEntityChip v-if="entry.entity" :entity="entry.entity"')
+    const changes = body.slice(body.indexOf('text="What it changes"'), body.indexOf('<!-- SCENARIO:'))
+    expect(changes).toContain('<BlrEntityChip v-if="entityChip(line.entityId)"')
+    /* The Step Actor, an Entity effect on a Step, and every Entity relation row. */
+    expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrEntityChip v-if="actor"')
+    expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityChip v-if="entity" :entity="entity" :label="label" :muted="isRead"')
+    expect(source('app/components/BlrLinks.vue')).toContain('<BlrEntityChip v-if="interactive && asEntity(resource)"')
+  })
+
+  it('phrases every Entity effect Entity first, with States as badges', async () => {
+    const { entityEffectParts } = await import(entityEffectPhraseModulePath)
+    const words = (parts: any[]) => parts.map(part => part.t === 'arrow' ? '→' : part.t === 'state' ? `[${part.text}]` : part.text).join(' ')
+    expect(words(entityEffectParts({ effect: 'creates', from: '', to: 'Reachable' }))).toBe('created [Reachable]')
+    expect(words(entityEffectParts({ effect: 'creates', from: '', to: 'Reachable' }, true))).toBe('created [Reachable]')
+    expect(words(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }))).toBe('changed [Read] → [Unread]')
+    expect(words(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }, true))).toBe('in [Unread]')
+    expect(words(entityEffectParts({ effect: 'changes', from: '', to: '' }))).toBe('changed')
+    expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }))).toBe('removed from [Archived]')
+    expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }, true))).toBe('removed')
+    expect(words(entityEffectParts({ effect: 'reads', from: '', to: '' }))).toBe('read')
+    expect(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }).filter((part: any) => part.from)).toHaveLength(1)
+    /* A Rule's selector reads in the present, with the same badges, never as a string naming an Entity and a State. */
+    const { entitySelectorParts } = await import(entityEffectPhraseModulePath)
+    expect(words(entitySelectorParts({ effect: 'changes', from: null, to: 'Published' }))).toBe('change to [Published]')
+    expect(words(entitySelectorParts({ effect: 'changes', from: 'Confirmed', to: 'Refunded' }))).toBe('change [Confirmed] → [Refunded]')
+    expect(words(entitySelectorParts({ effect: 'changes', from: 'Cancelled', to: null }))).toBe('change from [Cancelled]')
+    expect(words(entitySelectorParts({ effect: 'creates', from: null, to: 'Pending' }))).toBe('create as [Pending]')
+    expect(words(entitySelectorParts({ effect: 'removes', from: null, to: null }))).toBe('remove')
+    expect(words(entitySelectorParts({ effect: 'reads', from: null, to: null }))).toBe('read')
+    expect(words(entitySelectorParts({ effect: null, from: null, to: null }))).toBe('any operation')
+    /* A Capability's moves are never joined into a run: each is one row, in its Entity's Lifecycle Rows order. */
+    const lifecycleUtility = '../layers/nuxt/report-viewer/app/utils/entityLifecycle.ts'
+    const { lifecycleRowOrder, lifecycleChangeAddress } = await import(lifecycleUtility)
+    const move = (from: string, to: string) => ({ effect: 'changes', from, to })
+    const entity = { states: [{ name: 'Draft' }, { name: 'Live' }, { name: 'Gone' }], arcs: [move('Live', 'Draft'), move('Draft', 'Gone'), move('Draft', 'Live')] }
+    const order = (moves: any[]) => lifecycleRowOrder(entity, moves).map((item: any) => `${item.effect}:${item.from}→${item.to}`)
+    expect(order([move('Draft', 'Live'), move('Live', 'Draft'), { effect: 'creates', from: '', to: 'Draft' }, move('Draft', 'Gone'), move('', 'Live'), move('Unknown', 'Live')]))
+      .toEqual(['creates:→Draft', 'changes:Draft→Gone', 'changes:Draft→Live', 'changes:Live→Draft', 'changes:→Live', 'changes:Unknown→Live'])
+    expect(lifecycleChangeAddress(move('Private', 'Published'))).toBe('changes~Private~Published')
+    const body = source('app/components/BlrResourceBody.vue')
+    expect(body).toContain(':tab="`lifecycle/${lifecycleChangeAddress(effect)}`"')
+    expect(source('app/components/BlrResourcePage.vue')).toContain(':change="tabDetail"')
+  })
+
+  it('carries the facts a Step cites into its Entity chip', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const cited = workspace.scenarios.flatMap((scenario: any) => scenario.steps.flatMap((step: any) => step.entities))
+      .filter((entry: any) => entry.facts.length)
+    expect(cited.length).toBeGreaterThan(0)
+    expect(cited.every((entry: any) => entry.effect === 'reads' || entry.effect === 'changes' || entry.effect === 'creates')).toBe(true)
+    const chip = source('app/components/BlrStepEntity.vue')
+    expect(chip).toContain("props.outcome ? [] : props.mention.facts")
+  })
+
+  it('files a nested Screen under its parent Screen in every containment reading', async () => {
+    const { structureChildren, childScreens } = await import(collectionChildrenModulePath)
+    const { interfaceProjection } = await import(projectionsModulePath)
+    const { resourceAncestors } = await import(destinationsModulePath)
+    const workspace = projectReportWorkspace(nestedReport().report)
+    const child = workspace.screens.find((item: any) => item.id === CHILD)!
+    const parent = workspace.screens.find((item: any) => item.id === PARENT)!
+    expect(child.parentScreenId).toBe(PARENT)
+    expect(parent.childScreenIds).toEqual([CHILD])
+    expect(childScreens(workspace, parent)).toEqual([child])
+    // The nearest container is found through the parent Screen, not assumed one segment up.
+    expect(child.contexts.map((context: any) => [context.interfaceId, context.experienceId, context.screenId]))
+      .toEqual([['customer-web', 'customer-web::storefront', '']])
+    expect(child.interfaceIds).toEqual(['customer-web'])
+    expect(resourceAncestors(workspace, child).map((item: any) => item.key))
+      .toEqual(['interface:customer-web', 'experience:customer-web::storefront', `screen:${PARENT}`])
+
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    const experience = workspace.experiences.find((item: any) => item.id === 'customer-web::storefront')!
+    const tree = structureChildren(workspace, experience)
+    const parentNode = flatten(tree).find((node: any) => node.resource?.key === parent.key)!
+    expect(parentNode.children.filter((node: any) => node.resource?.kind === 'screen').map((node: any) => node.resource.key)).toEqual([child.key])
+    expect(tree[0].children.some((node: any) => node.resource?.key === child.key)).toBe(false)
+    const branch = interfaceProjection(workspace).find((item: any) => item.id === 'interface:customer-web')!
+    const parentBranch = flatten(branch.children).find((node: any) => node.resource?.key === parent.key)!
+    expect(parentBranch.children.map((node: any) => node.resource.key)).toEqual([child.key])
+
+  })
+
+  it('reads a place\'s Delivery through the Scenarios placed exactly there, never on a nested place', async () => {
+    const { placeDelivery, placeJourneys } = await import(placeReadingsModulePath)
+    const { report, scenario, step } = nestedReport()
+    const workspace = projectReportWorkspace(report)
+    const parent = workspace.screens.find((item: any) => item.id === PARENT)!
+    const child = workspace.screens.find((item: any) => item.id === CHILD)!
+    const placedOn = (item: any, screen: any) => item.steps.some((entry: any) => entry.contexts.some((context: any) => context.context.id === screen.id))
+    for (const screen of [parent, child]) {
+      const groups = placeDelivery(workspace, screen)
+      expect(groups.map((group: any) => group.capability.id)).toEqual(screen.capabilityIds)
+      for (const group of groups) {
+        /* Exactly the Capability's own Scenarios with a Step placed on this Screen, and those Steps. */
+        const expected = workspace.scenarios.filter((item: any) => item.scenarioType === 'capability' && item.capabilityId === group.capability.id && placedOn(item, screen))
+        expect(new Set(group.scenarios.map((item: any) => item.key))).toEqual(new Set(expected.map((item: any) => item.key)))
+        for (const item of group.scenarios) {
+          for (const index of group.stepsHere[item.key]) expect(item.steps[index].contexts.some((context: any) => context.context.id === screen.id)).toBe(true)
+        }
+      }
+      /* A Journey Scenario belongs to its Journey: it passes through the place once, under its Journey, with the Steps it takes there. */
+      const journeys = placeJourneys(workspace, screen)
+      const passing = workspace.scenarios.filter((item: any) => item.scenarioType === 'journey' && placedOn(item, screen))
+      expect(journeys.map((item: any) => item.journey.id)).toEqual(workspace.journeys.filter((journey: any) => passing.some((item: any) => item.journeyId === journey.id)).map((journey: any) => journey.id))
+      expect(journeys.flatMap((item: any) => item.scenarios.map(({ scenario: entry }: any) => entry.key)).sort()).toEqual(passing.map((item: any) => item.key).sort())
+      for (const { journey, scenarios } of journeys) {
+        for (const { scenario: item, steps } of scenarios) {
+          expect(item.journeyId).toBe(journey.id)
+          expect(steps).toEqual(item.steps.flatMap((entry: any, index: number) => entry.contexts.some((context: any) => context.context.id === screen.id) ? [index] : []))
+        }
+      }
+    }
+    /* The Step moved to the child is read there, and no longer on the parent. */
+    const index = scenario.steps.indexOf(step)
+    const onChild = placeDelivery(workspace, child).find((group: any) => group.capability.id === scenario.capabilityId)!
+    expect(onChild.stepsHere[`capability-scenario:${scenario.id}`]).toContain(index)
+    const onParent = placeDelivery(workspace, parent).find((group: any) => group.capability.id === scenario.capabilityId)
+    expect(onParent?.stepsHere[`capability-scenario:${scenario.id}`] ?? []).not.toContain(index)
+    /* A tab, after Overview, where a place delivers itself. */
+    expect(tabsFor(workspace, child).map((tab: any) => tab.id).slice(0, 2)).toEqual(['overview', 'delivery'])
+    /* The tab is the Screen's own branch of the tree: each Capability holds those Scenarios as items,
+       an alternative under its set's node even where it is the only one here, and one not here struck after it. */
+    const { structureChildren } = await import(collectionChildrenModulePath)
+    const unfold = (nodes: any[]): any[] => nodes.flatMap(item => item.resource?.kind === 'variation' ? item.children.filter((child: any) => !child.absentFrom) : [item])
+    for (const node of structureChildren(workspace, child).filter((item: any) => item.resource?.kind === 'capability')) {
+      const group = placeDelivery(workspace, child).find((item: any) => item.capability.key === node.resource.key)!
+      expect(unfold(node.children).map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
+      expect(unfold(node.children).every((item: any) => item.id === `${node.id}>${item.resource.key}`)).toBe(true)
+      expect(node.children.every((item: any) => item.resource.kind !== 'variation' || item.children.every((alternative: any) => alternative.inSet))).toBe(true)
+    }
+  })
+
+  it('gives an Interface with no Screens a Delivery tab of what it delivers directly', async () => {
+    const { placeDelivery } = await import(placeReadingsModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const cli = workspace.interfaces.find((item: any) => item.id === 'operator-cli')!
+    const groups = placeDelivery(workspace, cli)
+    expect(groups.length).toBeGreaterThan(0)
+    expect(groups.every((group: any) => group.note === 'direct' && group.scenarios.length > 0)).toBe(true)
+    expect(tabsFor(workspace, cli).map((tab: any) => tab.id)).toContain('delivery')
+    /* A place with Screens reads its Delivery through its tree, whether or not it delivers anything itself. */
+    const web = workspace.interfaces.find((item: any) => item.id === 'customer-web')!
+    expect(tabsFor(workspace, web).map((tab: any) => tab.id)).toContain('delivery')
+  })
+
+  it('carries each place\'s own Capabilities where it sits in the tree and the delivery map', async () => {
+    const { placeCapabilities, placeDelivery, placeJourneys } = await import(placeReadingsModulePath)
+    const { deliveryMapProjection } = await import(projectionsModulePath)
+    const { structureChildren } = await import(collectionChildrenModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const exposedBy = (screens: any[], id: string) => screens.some((screen: any) => screen.capabilityIds.includes(id))
+    for (const screen of workspace.screens) {
+      expect(placeCapabilities(workspace, screen)).toEqual(screen.capabilityIds.map((id: string) => workspace.byKey.get(`capability:${id}`)))
+    }
+    const customerWeb = workspace.interfaces.find((item: any) => item.id === 'customer-web')!
+    const gap = placeCapabilities(workspace, customerWeb)
+    const webScreens = workspace.screens.filter((screen: any) => screen.id.startsWith('customer-web::'))
+    for (const capability of gap) expect(exposedBy(webScreens, capability.id)).toBe(false)
+    for (const experience of workspace.experiences) {
+      const own = placeCapabilities(workspace, experience)
+      for (const capability of own) expect(capability.contexts.some((context: any) => context.experienceId === experience.id)).toBe(true)
+    }
+    /* A place with no Screens delivers directly: nothing there is a finding. */
+    const cli = workspace.interfaces.find((item: any) => item.id === 'operator-cli')!
+    const direct = placeCapabilities(workspace, cli)
+    expect(direct.length).toBeGreaterThan(0)
+    /* The tree rows carry the same reading. */
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    /* Alternatives delivered at one place fold under their set's node; each keeps its own row inside it, and one not here is struck. */
+    const unfold = (nodes: any[]): any[] => nodes.flatMap(item => item.resource?.kind === 'variation' ? item.children.filter((child: any) => !child.absentFrom) : [item])
+    for (const node of flatten(structureChildren(workspace, customerWeb)).filter((item: any) => item.resource?.kind === 'screen')) {
+      const children = unfold(node.children)
+      const items = children.filter((item: any) => item.resource?.kind === 'capability')
+      expect(items.map((item: any) => item.resource.id)).toEqual(node.resource.capabilityIds)
+      expect(items.every((item: any) => item.id === `${node.resource.key}>${item.resource.key}`
+        && item.children.every((scenario: any) => scenario.resource.kind === 'capability-scenario'
+          || (scenario.resource.kind === 'variation' && scenario.children.every((alternative: any) => alternative.resource.kind === 'capability-scenario'))))).toBe(true)
+      /* Its own Capabilities come first, then the Journeys passing through, then the Screens nested inside it. */
+      expect(children.slice(0, items.length)).toEqual(items)
+      const journeys = placeJourneys(workspace, node.resource)
+      const passing = children.slice(items.length, items.length + journeys.length)
+      expect(passing.map((item: any) => [item.id, item.resource.kind])).toEqual(journeys.map(({ journey }: any) => [`${node.resource.key}>${journey.key}`, 'journey']))
+      for (const [index, { scenarios }] of journeys.entries()) {
+        // Alternatives of one set fold under its node; each keeps its own row inside it.
+        // Where it sits says it has Steps here, so no row repeats which.
+        const rows = unfold(passing[index].children)
+        expect(rows.map((item: any) => [item.id, item.resource.kind, item.note])).toEqual(scenarios.map(({ scenario }: any) =>
+          [`${passing[index].id}>${scenario.key}`, 'journey-scenario', undefined]))
+      }
+      expect(children.slice(items.length + journeys.length).every((item: any) => item.resource?.kind === 'screen')).toBe(true)
+    }
+    /* A direct delivery is ordinary rows in the place's own branch: where they sit says it, so no group heads them. */
+    const cliItems = structureChildren(workspace, cli)
+    expect(cliItems.some((item: any) => item.groupKind === 'capability')).toBe(false)
+    expect(cliItems.filter((item: any) => item.resource?.kind === 'capability').map((item: any) => [item.resource.id, item.note])).toEqual(direct.map((capability: any) => [capability.id, undefined]))
+    /* The delivery map: a Screen's leaves are its own Capabilities, and an Interface with no Screens delivers directly. */
+    const map = flatten([deliveryMapProjection(workspace)])
+    for (const screen of webScreens) {
+      const node = map.find((item: any) => item.id === screen.key)!
+      expect(unfold(node.children).filter((item: any) => item.resource?.kind === 'capability').map((item: any) => item.resource.id)).toEqual(screen.capabilityIds)
+      /* Each Capability leaf holds the Scenarios placed exactly on this Screen, as its tree branch does. */
+      for (const group of placeDelivery(workspace, screen)) {
+        const leaf = unfold(node.children).find((item: any) => item.resource?.key === group.capability.key)!
+        expect(unfold(leaf.children).map((item: any) => item.resource.key)).toEqual(group.scenarios.map((item: any) => item.key))
+      }
+      /* The Journeys passing through follow, each holding its Scenarios placed there. */
+      const journeys = unfold(node.children).filter((item: any) => item.resource?.kind === 'journey')
+      expect(journeys.map((item: any) => [item.resource.key, unfold(item.children).map((entry: any) => entry.resource.key)]))
+        .toEqual(placeJourneys(workspace, screen).map(({ journey, scenarios }: any) => [journey.key, scenarios.map(({ scenario }: any) => scenario.key)]))
+    }
+    /* Where a Capability sits says it is delivered directly; the graph no longer repeats it on the node. */
+    const cliNode = map.find((item: any) => item.id === cli.key)!
+    expect(unfold(cliNode.children).every((item: any) => item.resource?.kind === 'journey'
+      || (item.resource?.kind === 'capability' && !item.note))).toBe(true)
+  })
+
+  it('marks a Screen named in its container\'s navigation as always reachable, and never draws it as an edge', async () => {
+    const { interfaceProjection } = await import(projectionsModulePath)
+    const { report } = nestedReport()
+    const workspace = projectReportWorkspace(report)
+    const catalog = workspace.screens.find((item: any) => item.id === 'customer-web::catalog')!
+    const nested = workspace.screens.find((item: any) => item.id === CHILD)!
+    expect(catalog.alwaysReachable).toBe(true)
+    expect(nested.alwaysReachable).toBe(true)
+    expect(workspace.screens.filter((item: any) => item.alwaysReachable).map((item: any) => item.id).sort()).toEqual([CHILD, 'customer-web::catalog'].sort())
+    expect(resourceFacts(workspace, catalog).map((fact: any) => [fact.label, fact.value])).toEqual([
+      ['Presents', '1'], ['Capabilities', String(catalog.capabilityIds.length)], ['Navigation', 'Always reachable']
+    ])
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    const branches = flatten(interfaceProjection(workspace))
+    expect(branches.find((node: any) => node.resource?.key === catalog.key).note).toBe('Shared Screen · Always reachable')
+    expect(branches.find((node: any) => node.resource?.key === nested.key).note).toBe('Always reachable')
+    expect(source('nuxt.config.ts')).toContain("'lucide:anchor'")
+    expect(source('app/components/BlrResourceTree.vue')).toContain('<BlrNavigationMark')
+    expect(source('app/components/BlrResourceHeading.vue')).toContain('<BlrNavigationMark')
+
+  })
+
+  it('reads languages without exposing version metadata', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-09-21')
+    report.languages = ['en', 'de-DE']
+    report.model.interfaces.find(item => item.id === 'customer-web')!.languages = ['en']
+    const [storefront] = report.model.experiences
+    const workspace = projectReportWorkspace(report)
+    expect(workspace.identity.languages).toEqual(['en', 'de-DE'])
+    expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'customer-web')).map((fact: any) => fact.label))
+      .toEqual(['Type', 'Experiences', 'Screens', 'Capabilities', 'Languages'])
+    const languages = (id: string) => resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === id)).find((fact: any) => fact.label === 'Languages')
+    // Narrowed: its own list, alone. The fixture's admin console is English-only.
+    expect(languages('customer-web')).toMatchObject({ value: 'en' })
+    expect(languages('admin-web')).toMatchObject({ value: 'en' })
+    expect(languages('admin-web').note).toBeUndefined()
+    // Not narrowed: the Product's whole list, said as such rather than as nothing.
+    expect(languages('customer-mobile')).toMatchObject({ value: 'en, de-DE', note: 'all of the Product’s' })
+    // With no Product languages there is nothing to say.
+    const silent = projectReportWorkspace({ ...report, languages: [], model: { ...report.model, interfaces: report.model.interfaces.map(item => ({ ...item, languages: [] })) } })
+    expect(resourceFacts(silent, silent.interfaces.find((item: any) => item.id === 'customer-mobile')).map((fact: any) => fact.label))
+      .toEqual(['Type', 'Experiences', 'Screens', 'Capabilities'])
+    expect(resourceFacts(workspace, workspace.experiences.find((item: any) => item.id === storefront!.id)).map((fact: any) => [fact.label, fact.value]))
+      .not.toContainEqual(['Version', 'v2'])
+    expect(workspace.counts).not.toHaveProperty('screenStates')
   })
 })

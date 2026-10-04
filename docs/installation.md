@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install the BusinessLens skills into a supported AI harness at project or global scope.
+description: Install the BusinessLens skills into your coding agent at project or global scope.
 section: open-source
 group: Get started
 order: 2
@@ -15,12 +15,25 @@ BusinessLens is installed once per repository (or once per machine) with the
 npx businesslens install
 ```
 
-The installer detects supported AI harnesses, lets you customize the
+The installer detects the coding agents you use (Claude Code, Codex, Cursor and
+others), lets you customize the
 selection, asks for project or global scope, and installs only the
-BusinessLens skills. Building the Product Model happens later through those
-skills.
+BusinessLens skills. It never creates `.businesslens/`; the skills do that.
 
-## Supported harnesses
+| Skill | What it does |
+| --- | --- |
+| [`businesslens-map`](./skill-businesslens-map.md) | Reads an existing repository and drafts its Product Model |
+| [`businesslens-ideate`](./skill-businesslens-ideate.md) | Turns an idea or a change into an approved model change |
+| [`businesslens-verify`](./skill-businesslens-verify.md) | Checks the code against the model and resolves what disagrees |
+
+You run them inside your coding agent, not in the terminal: `/businesslens-map`
+in Claude Code and most agents, `$businesslens-map` in Codex. These pages show
+the `/` form.
+
+Check it worked: in your agent type `/businesslens-` and the three skills
+appear (Codex: `$businesslens-`).
+
+## Supported agents
 
 | Provider | Project skills directory |
 | --- | --- |
@@ -57,5 +70,8 @@ adding this repository as a marketplace:
 The plugin and the CLI installer deliver the same skills; use one or the other,
 not both.
 
-Next, pick your door: [From your repo](./from-your-repo.md),
-[From a Blueprint](./from-a-blueprint.md), or [From an idea](./from-an-idea.md).
+Next:
+
+- Have code already? → [From your repo](./from-your-repo.md)
+- Want a known product shape? → [From a Blueprint](./from-a-blueprint.md)
+- Starting fresh? → [From an idea](./from-an-idea.md)

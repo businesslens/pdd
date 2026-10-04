@@ -1,9 +1,9 @@
 ---
 title: Domains
-description: Optional regions of the Product's subject matter that classify Capabilities, Entities, Screens and Journeys without owning any of them.
+description: Optional subject areas, such as ordering or billing, that follow the Product's own sections and group its Capabilities and Entities without owning them.
 section: open-source
 group: Product Model
-order: 11
+order: 10
 terms:
   - term: Domain
     definition: "A subject area of the Product, such as ordering or billing, that classifies related Capabilities and Entities."
@@ -14,52 +14,56 @@ terms:
 
 # Domains
 
-**A Domain is a subject area of the Product**, such as ordering, catalog, or
-billing. It classifies related Capabilities and Entities, with its own
-vocabulary and constraints. Name it in Product language rather than after code
-directories, services, teams, or deployment boundaries.
+**A Domain is a subject area of the Product (ordering, catalog, billing) that
+groups the Capabilities and Entities about it.** It follows the sections the
+Product itself shows people, and it classifies without containing: nothing moves
+into a Domain's folder.
 
-A Domain is an **axis, not a level**. It classifies; it does not contain. Two
-resource types name the one Domain they are about — a
-[Capability](./capabilities.md) and an [Entity](./entities.md) — and every other
-Domain relation is derived from those: a Screen is about the Domains of the
-Capabilities it exposes, a Journey about the Domains its Scenarios traverse.
-Nothing has to restate what can be computed, and nothing can contradict it.
+## In practice
 
-Only Capabilities count toward the two-Capability threshold below. An Entity's
-`domain` classifies the thing; it does not make a region.
+| In your product | The Domain |
+| --- | --- |
+| The shop's order area: checkout, payment, tracking, cancellation, refunds | Ordering |
+| A Settings menu with Billing and Team pages, each with several things to do | Billing and Team |
+| A catalog page whose only Capability is Browse catalog | None: one Capability is not a region |
+| A document opened from Home, Recent and its collection | None: several sections reach it |
+
+In the fixture shop, six Capabilities and five Entities, such as Order and
+Refund, name `ordering`. `browse-catalog` names no Domain.
 
 ## When you create one
 
-A Domain must state a `## Boundary` naming something it does **not** own, and
-must hold at least two Capabilities. A Boundary that only asserts inclusion is a
-label rather than a region, and a Domain holding one Capability is a folder.
-`lint` checks both.
+**One Domain per section of the Product's navigation, settings or administration
+that holds two or more Capabilities**, named the way the Product names that
+section. A Product with no such section has no Domains, and that is valid.
 
-Create a Domain when a region of the Product has a boundary you can state — what
-it covers and what it explicitly does not. Zero Domains is valid, and a small
-Product often needs none.
+- **Use the finest section that still holds two.** Settings with Billing and Team
+  pages, each holding several Capabilities, is two Domains, not one Settings
+  Domain.
+- **Something several sections reach has no Domain**, and nothing that is not a
+  section becomes one. A Capability alone on a page beside a sibling section has
+  no Domain either.
+- **Something no section reaches** (signing in, a link in an email, a scheduled
+  job) joins the one section whose Capabilities change the same Entities, or has
+  no Domain.
+- **Splitting a Capability never changes the Domains.** If `manage-orders`
+  became four Capabilities, they share a Domain only if the Product's sections
+  say so.
+- **An author's Domains are kept.** Once someone has written or regrouped
+  Domains, mapping adds new Capabilities to them and never re-cuts, merges or
+  renames them.
 
-Do not create a Domain to re-gather Capabilities you have just split. If
-`manage-repositories` was too broad and became create, configure, archive and
-delete, those four were already about the Repositories region before the split.
-A Domain that exists only to hold them is a folder, not a region.
-
-> **Domain vs Capability.** A Domain is what a part of the Product is *about*; a
-> [Capability](./capabilities.md) is something the Product can *do*.
+Team ownership, compliance concerns or code structure never make a Domain; the
+model describes the Product, not the organization building it.
 
 ## The file
 
-Domains normally live at `domains/<domain-id>.md`. A Domain with assets expands
-to `domains/<domain-id>/domain.md`. The entire collection is optional.
+`domains/<id>.md`. The H1 names the Domain, the lead says what it is about, and
+`## Boundary` says what it covers and what it does not.
 
 ```md [domains/ordering.md]
 ---
 colorSlot: 4
-references:
-  - kind: code
-    role: implementation
-    target: src/services/orders.ts
 ---
 
 # Ordering
@@ -69,46 +73,37 @@ Everything between a full cart and a fulfilled order.
 ## Boundary
 
 Owns cart contents, order state, and the transition between them. It does not
-own catalog information, payment instruments, or fulfilment logistics.
+own catalog information or fulfilment logistics.
 ```
 
-| Field or section | Required | Constraint |
-| --- | --- | --- |
-| Filename | yes | Use a lowercase kebab-case stem as the Domain ID. |
-| `colorSlot` | no | Provide a display hint when useful. |
-| `references` | no | Use the documented [Reference](./references.md) shape. |
-| H1 and lead paragraph | yes | Name and describe the Domain. |
-| `## Boundary` | yes | State what the region covers and what it explicitly does not. |
-
-Every Domain ID named by a Capability must have a corresponding file.
-
-## What a Domain answers
-
-Because the relation is derived in both directions, one Domain answers *"show me
-everything about ordering"* across the whole model — the Capabilities and
-Entities that are about it, their Scenarios, the Screens that expose them, the
-Journeys that traverse them, and the Business Rules that constrain them. These
-connections let a reader explore the subject across resource types. The Domain
-must still meet the Boundary and Capability requirements above.
-
-## Grouping that is not subject matter
-
-Three questions group Capabilities, and each has its own answer:
-
-| Question | Mechanism |
+| Field or section | Says |
 | --- | --- |
-| What is it about? | **Domain** |
-| Where can you reach it? | [availability](./capabilities.md) |
-| What does it participate in over time? | [Journey](./journeys.md) |
+| H1 and lead (required) | The Domain's name and what it is about |
+| `## Boundary` (required) | What it owns, and at least one thing it does **not** own |
+| `colorSlot` | An optional display hint |
+| `references` | Optional [References](./references.md) |
 
-Anything else — team ownership, compliance concerns, delivery maturity — has no
-home in the Product Model and should stay in the system that already tracks it.
-The model describes the Product, not the organization building it.
+## How it connects
 
-## Referenced by
+Only two resources name a Domain, each with an optional single `domain:` (a
+[Capability](./capabilities.md) and an [Entity](./entities.md)). Everything else
+follows from those: a Screen or Journey is about the Domains of the Capabilities
+it uses. So one Domain gathers everything about its subject across the model.
 
-| From | Key | Cardinality |
-| --- | --- | --- |
-| [Capabilities](./capabilities.md) | `domain:` | Zero or one |
-| [Entities](./entities.md) | `domain:` | Zero or one |
-| [Screens](./interfaces.md#screens) · [Journeys](./journeys.md) | derived through Capabilities | Zero or more |
+A Domain is what a part of the Product is *about*; a Capability is something it
+can *do*. Where a Capability can be reached is its `availability`, not its
+Domain.
+
+## What lint checks
+
+Errors:
+
+- A missing H1, lead paragraph or `## Boundary`.
+- A `## Boundary` that never says what the Domain does not own.
+- A Capability or Entity naming a Domain that has no file.
+
+Warnings:
+
+- A Domain named by fewer than two Capabilities: it is a folder, not a region.
+  Entities don't count.
+- A Domain id that opens with a verb acting on something the model declares.

@@ -1,5 +1,5 @@
 /**
- * `businesslens/report` — strict Product Report v14 contract as a library.
+ * `businesslens/report` — strict Product Report v15 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
@@ -12,6 +12,10 @@ export {
 export type {
   InterfaceType,
 } from './core/interface-types.js'
+
+export {
+  reportVariationMembership,
+} from './core/variation-membership.js'
 
 export {
   REPORT_SCHEMA_VERSION,
@@ -31,7 +35,7 @@ export {
   ReportEntityFactSchema,
   ReportEntityRelationSchema,
   ReportCapabilitySchema,
-  ReportScreenStateSchema,
+  ReportScreenEntitySchema,
   ReportScreenSchema,
   ReportJourneySchema,
   ReportDecisionPointSchema,
@@ -47,9 +51,11 @@ export {
   ReportJourneyScenarioSchema,
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
+  ReportVariationSchema,
+  ReportVariationAlternativeSchema,
   ReportCoverageSchema,
   ReportUnmappedAreaSchema,
-  ProductReportV14Schema,
+  ProductReportV15Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -59,7 +65,7 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV14,
+  ProductReportV15,
   ProductReport,
   ReportCoverage,
   ReportUnmappedArea,
@@ -75,7 +81,7 @@ export type {
   ReportCapability,
   ReportContext,
   ReportScreen,
-  ReportScreenState,
+  ReportScreenEntity,
   ReportJourney,
   ReportCapabilityScenario,
   ReportScenarioRoute,
@@ -86,6 +92,8 @@ export type {
   ReportGrantCondition,
   ReportJourneyScenario,
   ReportBusinessRule,
+  ReportVariation,
+  ReportVariationAlternative,
   ReportBusinessRuleTarget,
   ReportDecisionPoint,
   ReportReference,

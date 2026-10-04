@@ -13,7 +13,7 @@ steps:
   - text: The Product presents the view with the question it answers, readable resource titles, and its available derivation
     kind: product
     entities:
-      - { entity: product-model, effect: reads }
+      - { entity: product-model, effect: reads, facts: [] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -42,7 +42,7 @@ page.
 
 ## Edge cases
 
-- Interface map is a connected tree: the Product root branches into Interfaces and their actual Experiences and Screens. Every visible non-root node has a containment connector to its parent, including on narrow screens. Expanding a branch reveals connected children; selecting a node opens its resource reading.
+- Delivery map is a connected tree: the Product root branches into Interfaces and their actual Experiences and Screens, and each Screen into its own Capabilities and their Scenarios. Every visible non-root node has a containment connector to its parent, including on narrow screens. Expanding a branch reveals connected children; selecting a node opens its resource reading.
 - A reach tree roots at the Product and branches through each Domain, Capability, Journey or Business Rule to the places it is reached in and the Rules attached to it. A place reached from two subjects is drawn under each; selecting either opens the one page.
 - What changes what shows each Capability's creates, changes, and removes effects on Entities, with the supporting Scenarios. Reads do not become mutations.
 - Compare delivery is a Capability by Interface matrix stating the authored route for each cell. A row with more than one cell is delivered by more than one Interface; a row with one is exclusive to it. An empty cell claims only that no Context authorises that delivery.
@@ -50,7 +50,7 @@ page.
 - A delayed or unavailable diagram arrangement leaves the complete resource and relationship reading available.
 
 - A Graph states its question once, below the drawing: the collection heading names the subject and the switch names the drawing, so the reading never titles itself a third time. Switching back to Rows keeps the filters and the count.
-- Matrix is the third drawing in Capabilities for Compare delivery, Entities for What changes what, and Business Rules for Rule attachments. The rail lists Overview and the six collections.
+- Matrix is the third drawing in Capabilities for Compare delivery, Entities for What changes what, and Business Rules for Rule attachments. The rail lists Overview and the seven collections.
 - Switching drawings preserves the collection heading, count, filters and selections. Shared relationship filters select matching subjects in every drawing and the Matrix columns. With no relationship filter, resources without relationships remain visible.
 - Each Matrix keeps only the collection heading. A dropdown presents each available drawing as a named preview card with a short explanatory subtitle. It has no separate help button or About section, and stays in place when the legend appears. One toolbar offers Changed by, Available in or Attached to in every drawing. Attached to combines whole resource types and individual exact targets with OR, and other axes with AND.
 - A contextual comparison link from an Interface opens Compare delivery in Capabilities, narrowed to that Interface's column.

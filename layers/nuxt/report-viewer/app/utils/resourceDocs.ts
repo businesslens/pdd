@@ -16,7 +16,8 @@ const DOCS_SLUG: Record<ReportResourceKind, string> = {
   journey: 'journeys',
   'capability-scenario': 'capabilities',
   'journey-scenario': 'journeys',
-  rule: 'business-rules'
+  rule: 'business-rules',
+  variation: 'variations'
 }
 
 const DOCUMENTED_AS: Partial<Record<ReportResourceKind, ReportResourceKind>> = {

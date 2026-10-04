@@ -1,8 +1,9 @@
 /** Resource readings separate explanation, behavior, relationships and references. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
-import { structureChildren, structureLabel } from './collectionChildren'
+import { structureChildren } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
+import { attachedRules } from './topologyTargets'
 
 export type PageBlockId =
   | 'lead'
@@ -11,12 +12,17 @@ export type PageBlockId =
   | 'contexts'
   | 'detail'
   | 'counterparts'
+  | 'selection'
+  | 'alternatives'
+  | 'variation-choice'
   | 'connections'
   | 'structure'
+  | 'rule-scope'
+  | 'rules'
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'structure' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'applies-to' | 'alternatives' | 'delivery' | 'scenarios' | 'lifecycle' | 'rules' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -28,9 +34,9 @@ export interface PageTab {
 /* Whether BlrResourceBody would render anything. */
 export function hasAuthoredBody(resource: AnyResourceView): boolean {
   if (isScenarioKind(resource.kind)) return true
-  if (resource.kind === 'screen' || resource.kind === 'entity' || resource.kind === 'rule' || resource.kind === 'journey') return true
+  if (resource.kind === 'screen' || resource.kind === 'entity' || resource.kind === 'journey') return true
+  if (resource.kind === 'rule') return Boolean(resource.rationale || resource.intent || resource.permits !== null)
   if (resource.intent) return true
-  if ('capabilityBoundary' in resource && (resource as { capabilityBoundary: string }).capabilityBoundary) return true
   return resource.kind === 'capability'
 }
 
@@ -40,7 +46,7 @@ export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView
   return []
 }
 
-/** A Scenario shares its parent's readings while retaining its own References. */
+/** A Scenario is read inside its parent: its address shares the parent's readings, References included. */
 export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResourceView): PageTab[] {
   const resource = parentOf(workspace, requestedResource) ?? requestedResource
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
@@ -50,6 +56,10 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   const hasOverviewContexts = resource.kind === 'capability' && resource.contexts.length > 0
   const hasEntryPoints = resource.kind === 'journey' && resource.entryPoints.length > 0
   if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')
+
+  /* A set says how one is chosen; an alternative says how it is chosen. */
+  if (resource.kind === 'variation') overviewBlocks.push('selection')
+  if (resource.variation) overviewBlocks.push('variation-choice')
 
   if (hasAuthoredBody(resource)) overviewBlocks.push('detail')
 
@@ -62,6 +72,15 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
     blocks: overviewBlocks
   }]
 
+  /* A Variation's alternatives, each in its own words. */
+  if (resource.kind === 'variation') tabs.push({ id: 'alternatives', label: 'Alternatives', count: resource.alternatives.length, blocks: ['alternatives'] })
+
+  /* What a Rule governs: its own reading, beside its statement. */
+  if (resource.kind === 'rule') tabs.push({ id: 'applies-to', label: 'Applies to', count: resource.appliesTo.length, blocks: ['rule-scope'] })
+
+  /* Delivery: the place's own branch of the Interfaces tree — its Capabilities with the Scenarios that happen there, then what it holds. */
+  if (structureChildren(workspace, resource).length) tabs.push({ id: 'delivery', label: 'Delivery', blocks: ['structure'] })
+
   const children = childrenOf(workspace, resource)
   if (resource.kind === 'capability' || resource.kind === 'journey') {
     tabs.push({ id: 'scenarios', label: 'Scenarios', count: children.length, blocks: [] })
@@ -69,12 +88,14 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
-  if (structureChildren(workspace, resource).length) tabs.push({ id: 'structure', label: structureLabel(resource), blocks: ['structure'] })
+  /* The Rules that name it, each saying how: its own reading, so a reader who asks "what constrains this?" finds it by name. */
+  const rules = attachedRules(workspace, resource)
+  if (rules.length) tabs.push({ id: 'rules', label: 'Business Rules', count: rules.length, blocks: ['rules'] })
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }
-  if (requestedResource.references.length) {
-    tabs.push({ id: 'references', label: 'References', count: requestedResource.references.length, blocks: ['references'] })
+  if (resource.references.length) {
+    tabs.push({ id: 'references', label: 'References', count: resource.references.length, blocks: ['references'] })
   }
 
   return tabs

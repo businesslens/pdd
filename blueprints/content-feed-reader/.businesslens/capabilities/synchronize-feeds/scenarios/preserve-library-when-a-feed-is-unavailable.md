@@ -3,46 +3,55 @@ kind: edge
 routes:
   web: Web
   mobile: Mobile
+  mobile-source-focused: Mobile — source-focused
 steps:
   - text: The Reader refreshes their sources while one followed feed cannot be read.
     kind: actor
     actor: reader
     entities:
-      - { entity: source, effect: reads }
+      - { entity: source, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The Product reports that the source could not be reached
     kind: product
     entities:
-      - { entity: source, from: Reachable, to: Unreachable }
+      - { entity: source, from: Reachable, to: Unreachable, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: Existing items, reading state, saved state, and collections remain unchanged
     kind: condition
     actor: reader
     entities:
-      - { entity: collection, effect: reads }
-      - { entity: item, effect: reads }
+      - { entity: collection, effect: reads, facts: [] }
+      - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: The source remains followed for a later refresh
     kind: condition
     entities:
-      - { entity: source, effect: reads }
+      - { entity: source, effect: reads, facts: [] }
     contexts:
       web:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
 ---
 
 # Preserve the library when a feed is unavailable

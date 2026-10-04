@@ -42,7 +42,8 @@ const pageKinds: Partial<Record<string, ReportResourceKind>> = {
   domains: 'domain',
   capabilities: 'capability',
   journeys: 'journey',
-  'business-rules': 'rule'
+  'business-rules': 'rule',
+  variations: 'variation'
 }
 
 const props = defineProps<{
