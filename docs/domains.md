@@ -41,16 +41,17 @@ or built — the areas its navigation, settings and administration group things
 under, at the finest level that still holds two or more (a parent menu is a
 section only when none of its direct children is), named in the Product's words.
 For a Product planned before its code, the sections are the planned ones. A
-Capability no section reaches, such as signing in or one only an emailed link
-starts, joins the section whose Capabilities change the same Entities, or has no
-Domain when more than one section or none does; one alone on a page beside a
-sibling section has none either. A Capability several sections reach — a
-document opened from Home, Recent and its collection — has no Domain, and
-nothing that is not a section becomes one. Zero Domains is valid for a Product
-with no section of two or more Capabilities.
+Capability no section reaches, such as signing in or one only an emailed link or
+a schedule starts, joins the section whose Capabilities change the same
+Entities, or has no Domain when more than one section or none does; one alone on
+a page beside a sibling section has none either. A Capability several sections
+reach — a document opened from Home, Recent and its collection — has no Domain,
+and nothing that is not a section becomes one. Zero Domains is valid for a
+Product with no section of two or more Capabilities.
 
-You may merge, split or rename Domains and write your own Boundary; Domains an
-author has written or regrouped are never re-cut.
+You may merge, split or rename Domains and write your own Boundary. Domains an
+author has written or regrouped are the author's: mapping adds new Capabilities
+to them and never re-cuts, merges or renames them.
 
 Splitting a Capability neither creates nor removes a Domain. If
 `manage-repositories` became create, configure, archive and delete, those four

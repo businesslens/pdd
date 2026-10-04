@@ -76,27 +76,13 @@ which side a difference falls on:
 > Everything the redesign is free to change is design's, and the model says
 > nothing about it.
 
-A difference the redesign is free to make is never a finding. Ordinary copy is
-design; compare exact wording only when a Business Rule requires its
+A difference the redesign is free to make is never a finding: component
+libraries, theming, layout, typography, color, iconography, motion, copy,
+gestures, breakpoints, loading and hover states, navigation chrome and order
+belong in `visual` References with `role: intent`. Ordinary copy is design;
+compare exact wording only when a Business Rule requires its
 authoritative Reference, and report it unverifiable when that source is
 unavailable.
-
-- **Nesting.** A child Screen subdivides its parent's persistent selected
-  subject or process: changing the parent context changes or ends the child.
-  Tabs within one resource reading and wizard stages qualify. Choose the
-  nearest qualifying context as the parent. A process stage needs its own Actor
-  decision or input on the same draft or operation; a completion message, a
-  generated credential reveal or a read-only result is an Outcome on the
-  process Screen, not a child. A generic settings or category selector is
-  neither a selected subject nor a process. Opening a destination from a view
-  does not make that view its owner: a panel opened from several views sits
-  once at their common Interface or Experience. URLs, co-visibility, modal
-  versus page, and different drawings of the same information decide nothing.
-  Treat ambiguous ownership as a question for the author.
-- **Conditions.** An empty, unauthorized or blocked view is a `condition` Step,
-  Edge case or Rule outcome in the Scenario that meets it, and its capture
-  attaches to that Scenario. Confirmation stays behavior on its host;
-  preserving the underlying view is an Outcome.
 
 ## Separate scope from authority
 
@@ -136,15 +122,10 @@ names, and read each Interface's access from who reaches its places. Draft
 every resource by the format reference, apply the border above, draft honest
 coverage and necessary relationships, and get approval before writing.
 
-Both internal authoring flows write current product meaning under the format's
-persistence rule: keep rejected approaches and selection history in the
-conversation; preserve current constraints and material unresolved questions
-or missing evidence; an unchosen option is not a product exclusion.
-
 ## Stop safely
 
-- Builder unavailable: return a complete handoff packet.
-- Same build-directed gap unchanged after one attempt: stop the loop.
-- Source cannot establish runtime/external behavior: report unverifiable.
+Beyond the stops in the skill's steps 7–9 (no builder, an unchanged
+build-directed gap, unverifiable evidence):
+
 - Product authority remains undecided: wait for that decision.
 - Structural blocker prevents model comparison: report the lint finding first.

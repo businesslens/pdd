@@ -147,11 +147,10 @@ selection to Steps that cite one of them. Without an `effect`, or with `reads`,
 a fact-scoped Rule governs information — a derivation, or field-level
 visibility; with `creates`, `changes` or `removes` it governs that operation on
 those facts only — a field-level edit. `contexts` scopes the Rule to existing
-places. Without `permits`,
-a selected place must present the Entity and at least one governed fact when
-fact-scoped, or contain a Screen that does. Permission Rules require resolvable
-places; neither a grant nor a prohibition needs an existing disclosure or
-operation as evidence of applicability.
+places. Without `permits`, a selected place must present the Entity and at least
+one governed fact when fact-scoped, or contain a Screen that does. Permission
+Rules require resolvable places; neither a grant nor a prohibition needs an
+existing disclosure or operation as evidence of applicability.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
@@ -313,27 +312,33 @@ the setting is a fact, and the Rule that reads it says what it changes.
 
 A setting that changes only who may perform one operation — *self-service
 cancellation on or off* — is exactly this: a settings fact read by a grant's
-`when`. Rules [vary](./variations.md#when-you-create-one) only when a setting
-switches between whole policies.
+`when`. Rules [vary](./variations.md#vary-the-smallest-resource-that-contains-the-difference)
+only when a setting switches between whole policies; a value one policy reads
+stays content of that Rule.
 
-`state` says *the instance is in state X when the
-operation happens*: it must be a state of the targeted Entity, it is valid on
-every target but `creates`, and it cannot be combined with `entity`. It exists
-because two kinds of Step carry no state for a target to select by — a `reads`
-Step, and an information change. *Anyone may read a Published collection* and
-*the shopper edits delivery details only while Pending* are both `when` state
-conditions.
+`state` says *the instance is in state X when the operation happens*: it must
+be a state of the targeted Entity, it is valid on every target but `creates`,
+and it cannot be combined with `entity`. It exists because two kinds of Step
+carry no state for a target to select by — a `reads` Step, and an information
+change. *Anyone may read a Published collection* and *the shopper edits delivery
+details only while Pending* are both `when` state conditions.
 
 ### A product's own roles
 
 A Product's own roles follow how they are defined. A fixed, shipped set is
-Entities that act, granted through `actors`; roles users create at runtime are
-instances of one Role Entity with its own Capabilities; roles operators define
-in configuration are one Role Entity granted through `configuredBy`. Facts that
-belong to the person whatever their role live once on an Account Entity that
-does not act, to which each role relates one-to-one. Roles sharing an Account
-are one audience, and a Step any of them may take names the least privileged
-one.
+Entities that act, granted through `actors`, even where configuration also
+defines roles or assigns people to them; roles users create at runtime are
+instances of one Role Entity with its own Capabilities — never one Entity per
+customer role; roles operators define in configuration are one Role Entity
+granted through `configuredBy`. A role held per container, such as an
+organization or a project, is held through a membership Entity that does not
+act, whose Role fact names it, and a relation any role holder can hold — a
+message's sender — is declared to each role Entity, with one `related` grant per
+role. Facts that belong to the person whatever their role live once on an
+Account Entity that does not act, to which each role relates one-to-one. Roles
+sharing an Account are one audience, and a Step any of them may take names the
+least privileged one the Product's default permissions allow, ignoring grants
+made on a single resource.
 
 ## What `lint` checks
 

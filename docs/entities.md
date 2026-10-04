@@ -266,11 +266,11 @@ payment confirms an Order and creates a Shipment* — which only a Step can say,
 so the moves live where the act does.
 
 `lint` composes every Scenario and reports what the composition is missing: a
-state other than the first that no Step ever leaves anything in is a warning, and
-so is a Step leaving from a state nothing produces. An Entity with states that
-no Step creates, or that nothing ever removes, is noted on its report page and is
-not a finding — a Catalog product no Capability creates is a real thing whose
-instances pre-exist the model.
+state other than the first that no Step ever leaves anything in is a warning,
+and so is a Step leaving from a state nothing produces. An Entity with states
+that no Step creates, or that nothing ever removes, is not a finding — a Catalog
+product no Capability creates is a real thing whose instances pre-exist the
+model.
 
 ## Relations
 
@@ -444,8 +444,8 @@ relationship somebody forgot to declare.
   them apart.
 - A Step, Interface, Experience, Journey, or grant naming an Entity that does
   not `acts` as an actor is an error.
-- An Entity nothing changes, presents, names as an actor, or reads by Rule is an
-  error.
+- An Entity nothing changes, presents, names as an actor, reads by Rule, or
+  chooses by in a Variation is an error.
 - A state other than the first that no Step leaves anything in is a warning; a
   Step leaving from a state nothing produces is a warning.
 - An Entity naming a Domain that does not exist is an error.

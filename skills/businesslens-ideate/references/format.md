@@ -149,8 +149,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   `acts` — **who uses** the Interface, a descriptive list, never a permission
   claim; optional Product-facing `entryPoints`, a list of `- <key>: <route>`
   (public routes and deep links, never internal navigation identifiers), each
-  keyed by this Interface's own
-  type or by another Interface's id when a reader arrives from that surface;
+  keyed by this Interface's own type or by another Interface's id when a reader
+  arrives from that surface;
   optional `languages`, a subset of the Product's (listing any while the
   Product declares none is an error); optional `navigation`; H1, lead
   description, and optional `## Intent`. `## Capability boundary` is an error:
@@ -161,8 +161,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   shared Screens (those beside `experiences/`) and their descendants qualify.
   Order carries no meaning. It is structure, not a relation: it creates no
   transition (Steps say movement and entry points say arrival), and nothing
-  else about navigation —
-  menus, sitemaps, back links, the order of items — is authored. An outbound
+  else about navigation — menus, sitemaps, back links, the order of items — is
+  authored. An outbound
   connection the Product opens is not an Interface: model it in the calling
   Capability, give that Capability an availability Context for where the Actor
   observes the result, and make its failure a Capability Scenario.
@@ -171,13 +171,14 @@ Lead and section-body fragments do not contain another H1 or H2.
   Non-empty `actors` supported by the owning Interface, whose union across its
   Experiences equals the Interface's Actors; required `access`
   (`public|authenticated|restricted`), the most open the context can be, read
-  from who is there (see Contexts below). A setting that closes it is a grant's
-  `when` on the operations it restricts, never a reason for an Experience of
-  its own, and so is a setting that opens it (anonymous access). Optional
-  Interface-keyed `entryPoints` and relative `navigation`; H1, lead and
-  optional `## Intent`; `## Capability boundary` is an error. Whether an
-  Interface holds Experiences is decided under Contexts below. A Variation may
-  span Interfaces without changing ownership.
+  from who is there (see **Two conditions decide whether an Interface is
+  divided** below). A setting that closes it is a grant's `when` on the
+  operations it restricts, never a reason for an Experience of its own, and so
+  is a setting that opens it (anonymous access). Optional Interface-keyed
+  `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`;
+  `## Capability boundary` is an error. Whether an Interface holds Experiences
+  is decided by those same two conditions. A Variation may span Interfaces
+  without changing ownership.
 - Capability: a durable Product ability — the smallest behavior that remains
   independently meaningful, never a UI label, Journey title or sequence step;
   its Scenarios vary conditions, route or result and never hide
@@ -205,8 +206,10 @@ Lead and section-body fragments do not contain another H1 or H2.
     authenticator app or backup codes, restoring from the archive or the
     trash, are Scenarios of one;
   - not filtering, sorting or searching within a browsing ability;
-  - not ways a setting or the deployment selects — those are Scenario
-    alternatives of one Capability (see Variations).
+  - not a setting or the deployment: the ways it selects between stay in one
+    Capability, as Scenario alternatives, separate Scenarios or decision points
+    by **What selects** under Variations, and a way it adds beside the others,
+    the Actor choosing among them, is an ordinary Scenario.
 
   The Steps of one run are one Capability, including a link or code the run
   sends when it has no outcome for the Actor without it: requesting a password
@@ -254,13 +257,15 @@ Lead and section-body fragments do not contain another H1 or H2.
   noun. A Capability's verb is the one its control shows (Archive, Share,
   Publish); a form that only says Save or Done is `edit-<thing>` for a thing's
   own facts and `change-<section>-settings` for a page in the Product's
-  settings, the section named as its menu shows it, never
-  `update`. When an Entity, Domain or Interface id ends with a behavioral id's
-  noun half, use the declared name — `install-agent-skills`, not
-  `install-skills`, when `agent-skills` is an Interface; a Screen name is never
-  the noun half. Entity, Domain and Business Rule ids never open with a verb;
-  they name what a thing is or what must remain true. A compound noun whose
-  first word can be a verb (`pull-request`, `sign-in`) is a noun.
+  settings, the section named as its menu shows it, never `update`. When an
+  Entity, Domain or Interface id ends with a behavioral id's noun half, use the
+  declared name — `install-agent-skills`, not `install-skills`, when
+  `agent-skills` is an Interface. When two declared names share the noun half,
+  it names their category (`send-message` beside channel and direct messages);
+  Experience and Screen names never supply it: they are places, not the things
+  a behavior acts on. Entity, Domain and Business Rule ids never open with a
+  verb; they name what a thing is or what must remain true. A compound noun
+  whose first word can be a verb (`pull-request`, `sign-in`) is a noun.
 - Entity: H1, lead description, and at least one of `## Information kept`,
   `## States`, and `acts`. `## Information kept` is a bullet list of **named**
   single-line facts, each `- **Name** — prose` with an em dash as the only
@@ -292,8 +297,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   so the lines are information kept inside Order. Never a data model: no types,
   no keys, no foreign keys. Also never a representation of another Entity (a
   serialization or export is that thing in another shape: if it can be
-  regenerated, it is a projection), a receipt the
-  Product keeps to work safely (ask who the record is for), or the Product's
+  regenerated, it is a projection), a receipt the Product keeps to work safely
+  (ask who the record is for), or the Product's
   own surfaces, shipped content and closed vocabularies — where there are no
   instances, only members of a fixed list, that is a vocabulary. For a family
   of candidates sharing a word, write `## Information kept` before deciding how
@@ -310,21 +315,33 @@ Lead and section-body fragments do not contain another H1 or H2.
   changed by a Step, presented by a Screen, named as an actor somewhere, or
   read by a Business Rule as a condition's `entity` or a `configuredBy`; a
   Step's read never counts, and neither does a relation from another Entity.
-- Screen: an optional stable view an Actor reaches — a place, never a
-  component, layout, route mechanically discovered from source, or visual
-  variant. Optional `entities`, Interface-keyed `entryPoints`, H1, lead and
-  optional `## Intent`; no authored `capabilities` or `availability`.
-  Capabilities derive from Steps placed exactly here (the owner for a Capability
-  Scenario, the Step's `capability` for a Journey Scenario); at least one is
-  required. Parent and child sets remain separate. Each Entity entry is a bare
-  id only for an Entity without named facts, or `{ entity, shows?, collects? }`
-  with at least one non-empty list of unique exact fact names. `shows` is
-  disclosure; `collects` is Actor input, not read permission. Both may name a
-  prefilled editable value. Nest Screens only to subdivide a parent's persistent
-  working context; merely opening a destination never makes it a child. Shared
-  destinations belong once at their common Interface or Experience container.
-  `## Information presented`, `## Available actions`, `## View states` and
-  `## Capability boundary` are invalid; other H2s are supporting content.
+- Screen: an optional stable view an Actor reaches — a place, never a component,
+  layout, route mechanically discovered from source, or visual variant. Optional
+  `entities`, Interface-keyed `entryPoints`, H1, lead and optional `## Intent`;
+  no authored `capabilities` or `availability`. Capabilities derive from Steps
+  placed exactly here (the owner for a Capability Scenario, the Step's
+  `capability` for a Journey Scenario); at least one is required. Parent and
+  child sets remain separate. Each Entity entry is a bare id only for an Entity
+  without named facts, or `{ entity, shows?, collects? }` with at least one
+  non-empty list of unique exact fact names. `shows` is disclosure; `collects`
+  is Actor input, not read permission. Both may name a prefilled editable value.
+  Nest Screens only to subdivide a parent's persistent selected subject or
+  process: changing the parent context changes or ends the child. Tabs within
+  one resource reading and wizard stages qualify; choose the nearest qualifying
+  context as the parent. A process stage needs its own Actor decision or input
+  on the same draft or operation; a completion message, a generated credential
+  reveal or a read-only result is an Outcome on the process Screen, not a child.
+  A generic settings or category selector is neither a selected subject nor a
+  process. Opening a destination from a view never makes that view its owner: a
+  destination opened from several views sits once at their common Interface or
+  Experience. URLs, co-visibility, modal versus page, and different drawings of
+  the same information decide nothing; treat ambiguous ownership as a question
+  for the author. An empty, unauthorized or blocked view is a `condition` Step,
+  Edge case or Rule outcome in the Scenario that meets it, and its capture
+  attaches to that Scenario. Confirmation stays behavior on its host; preserving
+  the underlying view is an Outcome. `## Information presented`,
+  `## Available actions`, `## View states` and `## Capability boundary` are
+  invalid; other H2s are supporting content.
 - Business Rule: a durable constraint, derivation, or permission — H1 and lead
   assertion, optional `## Intent` and `## Rationale`, and a non-empty
   `appliesTo` list of typed `capability`, `capability-scenario`, `journey`,
@@ -368,12 +385,11 @@ Lead and section-body fragments do not contain another H1 or H2.
   state (valid on every target but `creates`, needed because reads and
   information changes carry no state to select by). A value is a scalar or
   `{ configuredBy: <entity-id> }`. Permission claims appear only here, never in
-  Scenario prose. A setting that changes only who may perform one operation is
-  a grant's `when`; Rules vary only between whole policies (see Variations). No
-  structured `when` exists on Capability targets. The experiment engine and
-  messages are ordinary Product Entities and behavior only when that is the
-  Product's purpose. A Rule on exactly one behavioral target with no
-  `contexts` is a warning; Entity and Context targets are always valid.
+  Scenario prose. No structured `when` exists on Capability targets. The
+  experiment engine and messages are ordinary Product Entities and behavior
+  only when that is the Product's purpose. A Rule on exactly one behavioral
+  target with no `contexts` is a warning; Entity and Context targets are always
+  valid.
   Rationale explains the current condition or consequence that makes the
   constraint necessary, never rejected designs.
 - Journey: at least one unique `actors` entry, H1, no lead prose, `## Goal`, and
@@ -585,7 +601,10 @@ is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
 ```yaml
-availability: [{ place: reader-web::personal-library }, { place: reader-mobile::personal-library }, { place: operator-cli }]
+availability:
+  - { place: reader-web::personal-library }
+  - { place: reader-mobile::personal-library }
+  - { place: operator-cli }
 ```
 
 An Experience belongs to exactly one Interface, so its id already names it. A
@@ -609,10 +628,10 @@ An Interface declares no access mode, so `lint` sees the first condition only
 once Experiences exist: reading access from who reaches each place is the
 author's. It checks the second on every Interface. Two Experiences of one
 Interface with the same `access` share no Actor unless they are alternatives of
-one Variation. A place some signed-in roles cannot enter but non-administrators
-can (a page guests cannot see) stays `authenticated`, and an admin-only page
-inside administration is navigation there: grants say who may act. A counterpart (an
-Experience whose name also exists under another Interface) and a Variation
+one Variation. A page closed only to some non-administrative roles stays
+`authenticated`, and an admin-only page inside administration is navigation
+there: grants say who may act. A counterpart (an Experience whose name also
+exists under another Interface) and a Variation
 alternative keep their Experience even where the conditions alone would
 flatten it. An Interface that must divide and does not, and one holding
 Experiences it must not, are `lint` errors.
@@ -709,11 +728,14 @@ Documentation: https://businesslens.io
 A Variation is a named set of two or more currently supported alternatives of
 one resource type: Interface, Experience, Screen, Entity, Capability, Capability
 Scenario, Journey, Journey Scenario or Business Rule. Product, Domain and
-Variation itself cannot vary. The set is its own resource, `variations/<id>.md`; alternatives stay
-ordinary, independently complete resources and carry no Variation keys.
+Variation itself cannot vary. The set is its own resource,
+`variations/<id>.md`; alternatives stay ordinary, independently complete
+resources and carry no Variation keys.
 
-```yaml
-# variations/refund-review.md
+`variations/refund-review.md`:
+
+```markdown
+---
 kind: configuration          # experiment | configuration | version
 of: business-rule            # the one member type
 settings:
@@ -740,21 +762,18 @@ resources of the type `of` names, by that type's ordinary ids (a Screen's full
 `interface::experience::screen`). A resource belongs to at most one Variation.
 The list is a set; its order means nothing.
 
-**Vary the smallest resource that fully contains the difference.** Two
-Scenarios of one owner when what an Actor does differs; Capabilities when the
-contract differs — who may do it, its verb — or where it is offered, never for
-a different Actor alone; Screens or Experiences when the place differs;
-Entities when the facts or States kept differ; Business Rules only when a
-setting switches between whole policies — refund review that is Standard or
-Strict, a minimum length or a length plus required kinds of character — while
-a value one statement reads stays content of that Rule. A setting that changes
-only who may perform one operation is a grant's `when` on one Rule. The
-alternatives of a Scenario Variation share their Capability or Journey;
-alternatives spread over several owners are a `lint` error. A Step has no id
-and is never an alternative. Steps, Screens and Rules name concrete resources,
-so a varying Entity carries into what touches it: a Step that creates one
-alternative sits in a Scenario selected the same way. When only the path a
-thing takes differs, the Scenarios vary and the Entity keeps every State.
+**Vary the smallest resource that fully contains the difference.** Two Scenarios
+of one owner when what an Actor does differs; Capabilities when the contract
+differs — who may do it, its verb — or where it is offered, never for a
+different Actor alone; Screens or Experiences when the place differs; Entities
+when the facts or States kept differ; Business Rules only when a setting
+switches between whole policies, below. The alternatives of a Scenario Variation
+share their Capability or Journey; alternatives spread over several owners are a
+`lint` error. A Step has no id and is never an alternative. Steps, Screens and
+Rules name concrete resources, so a varying Entity carries into what touches it:
+a Step that creates one alternative sits in a Scenario selected the same way.
+When only the path a thing takes differs, the Scenarios vary and the Entity
+keeps every State.
 
 **What selects decides whether it is a Variation.** A Variation chooses by a
 fact that exists to choose — a setting, an experiment assignment, a version
@@ -765,8 +784,9 @@ discriminator — or by the deployment, fixed before the behavior starts:
   reads it.
 - A choice that changes what an Actor does — a Step skipped, added, or at
   another place — selects Scenario alternatives, even when several settings
-  combine to make it: sign-in that starts at the only provider drops the
-  Actor's choice of provider. A choice the Actor makes on a page outside the
+  combine into that one choice (a person's preference falling back to the
+  workspace's): sign-in that starts at the only provider drops the Actor's
+  choice of provider. A choice the Actor makes on a page outside the
   Product, such as a connector at an identity provider, is still an Actor Step.
 - A choice that changes only the Product's own Steps (group sync replacing or
   adding Roles), and any choice made during a run, is a decision point in one
@@ -778,10 +798,10 @@ discriminator — or by the deployment, fixed before the behavior starts:
   unconfirmed, an unknown social account registered or refused. A branch ending
   in a refusal counts. The unconfirmed account sign-in later meets is state,
   and confirming through the emailed link is a later act of its own.
-- When two or more settings or assignments would each vary or split one
-  Scenario (a captcha and a provider password on one registration), each is a
-  decision point instead, so no Scenario needs a set per combination. State the
-  Scenario meets, such as whether an account exists, is not a setting.
+- When two or more independent settings or assignments would each vary or split
+  one Scenario (a captcha and a provider password on one registration), each is
+  a decision point instead, so no Scenario needs a set per combination. State
+  the Scenario meets, such as whether an account exists, is not a setting.
 
 **A resource that exists only under some alternatives, or only while a
 setting, plan or licence enables it** — registration while the sign-in method
@@ -790,7 +810,8 @@ paid plan enables — stays an ordinary resource, mapped even where the running
 edition hides it. Its lead names what it exists under, and `verify` checks it.
 No field or Rule carries the dependency.
 
-`kind`, `of`, `takesEffect`, `stability` and `alternatives` are required.
+`kind`, `of`, `takesEffect`, `stability` and `alternatives` are required, and
+so are each alternative's `id` and `selectedWhen`.
 **Each selection field has exactly one level.** All text is a non-empty Markdown
 fragment without H1/H2.
 
@@ -830,8 +851,13 @@ ownership, Screen nesting and Scenario parents stay as they are, and Rule
 targets, Steps and Contexts keep naming concrete resources. A Business Rule
 that is an alternative applies only under its `selectedWhen`, never
 unconditionally, so `lint` does not check its grants against Steps and Screens;
-`verify` does. A Variation grants no permission. An Entity that is an
-assignment unit or holds a fact a Variation chooses by is not an orphan.
+`verify` does. Rules vary only when a setting switches between whole policies —
+refund review that is Standard or Strict, a password rule of a minimum length
+or of a length plus required kinds of character; a value one policy reads stays
+content of that Rule. A setting that changes only who may perform one operation
+is a grant's `when` on one Rule. A Variation grants no permission. An Entity
+that is an assignment unit or holds a fact a Variation chooses by is not an
+orphan.
 
 **Evidence, not invention.** Record only selection the evidence or approved
 intent establishes; never invent Entities, settings, allocations, defaults or

@@ -112,15 +112,16 @@ aspect is absent. Both empty means presence of an Entity with no named facts.
 Read Rules select only `shows`; inputs are not disclosure. A Screen's
 `capabilityIds` is the exact set derived from Steps placed on it, never authored
 in the folder. A Capability record carries no Entity list: what it changes is
-derived from its Scenarios' steps. Every Scenario step carries an `entities` array, empty when the step
-touches nothing, of `{ entityId, as, effect, from, to, facts }` records: `as` is a
-nullable scenario-local instance alias, `effect` is `creates`, `changes`,
-`removes`, or `reads` — resolved on the wire rather than defaulted, so a reader
-never has to know which value the folder omits — `from` and `to` are
-nullable state names, and `facts` is an array of fact names, empty when the
-step affects no named facts and always empty on a `removes` record. It is an
-exhaustive claim for reads, changes and creation, not an unspecified subset.
-One step never carries two records for one `(entityId, as)` pair.
+derived from its Scenarios' steps. Every Scenario step carries an `entities`
+array, empty when the step touches nothing, of `{ entityId, as, effect, from,
+to, facts }` records: `as` is a nullable scenario-local instance alias, `effect`
+is `creates`, `changes`, `removes`, or `reads` — resolved on the wire rather
+than defaulted, so a reader never has to know which value the folder omits —
+`from` and `to` are nullable state names, and `facts` is an array of fact names,
+empty when the step affects no named facts and always empty on a `removes`
+record. It is an exhaustive claim for reads, changes and creation, not an
+unspecified subset. One step never carries two records for one `(entityId, as)`
+pair.
 
 A Business Rule record carries its `appliesTo` targets and a `permits` field.
 An Entity target is `{ type: "entity", entityId, effect, from, to, facts,
@@ -169,10 +170,11 @@ a `lint` warning, and the wire carries only refusals, so refusing it would break
 export for a lint-clean model.
 
 Product Report v15 stores `capabilityScenarios` and `journeyScenarios` as
-separate resource collections and separate counts. A Journey record's `capabilityIds` and `domainIds` derive from
-achieved Scenario Capability-bearing steps; `failureOnlyCapabilityIds`
-separately marks Capabilities observed only in not-achieved paths. These are
-modeled coverage projections rather than authored Journey meaning.
+separate resource collections and separate counts. A Journey record's
+`capabilityIds` and `domainIds` derive from achieved Scenario Capability-bearing
+steps; `failureOnlyCapabilityIds` separately marks Capabilities observed only in
+not-achieved paths. These are modeled coverage projections rather than authored
+Journey meaning.
 
 Every Interface record carries one required `type`: `web`, `mobile-app`,
 `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, `device`, or
@@ -281,15 +283,15 @@ Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Scenario
 Actors, Capabilities, route ids, and Context places resolve to existing
 resources, every contextualized Step assigns every route, no two routes repeat
-the same place sequence,
-every achieved Journey Scenario uses at least two distinct Capabilities, every
-actor reference names an Entity that `acts`, every step's `entities` records
-and every Rule's targets and grants resolve, and Interface, Experience, Screen,
-Entity, and Capability consistency holds. Product Report v15 is the only
-accepted report version — there is no compatibility reader for an earlier one. No report profile requires a
-reference. Present references use `kind: code|prd|spec|proposal|doc|adr|visual|research`
-and `role: intent|implementation|context` and remain subject to the same strict
-shape and target rules defined in [`format.md`](./format.md).
+the same place sequence, every achieved Journey Scenario uses at least two
+distinct Capabilities, every actor reference names an Entity that `acts`, every
+step's `entities` records and every Rule's targets and grants resolve, and
+Interface, Experience, Screen, Entity, and Capability consistency holds. Product
+Report v15 is the only accepted report version — there is no compatibility
+reader for an earlier one. No report profile requires a reference. Present
+references use `kind: code|prd|spec|proposal|doc|adr|visual|research` and `role:
+intent|implementation|context` and remain subject to the same strict shape and
+target rules defined in [`format.md`](./format.md).
 
 ## Media type and version negotiation
 

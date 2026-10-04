@@ -73,14 +73,9 @@ Read before authoring:
    Whether a setting, assignment or deployment makes a Variation, separate
    Scenarios, a decision point or a grant's `when` is decided by **What
    selects** under Variations in the format reference. Model unattended
-   behavior as an unattended Scenario. Preserve valid existing
-   meaning in a scoped expansion. **Attach what you actually read**: to each
-   resource, the implementation you traced (`kind: code`,
-   `role: implementation`), the spec, PRD or proposal stating intended behavior
-   (`role: intent`), and the document you took supporting context from
-   (`role: context`). A Reference says where a claim came from, never that it
-   is verified. A resource you can attach nothing to rests on inspection alone —
-   say so in the delta.
+   behavior as an unattended Scenario. Preserve valid existing meaning in a
+   scoped expansion. **Attach what you actually read**, as the rubric's
+   **Use References honestly** describes.
 
 7. **Put what the repository cannot settle to the author, in rounds, before
    writing anything.** Inspection establishes what the code does, not what the
@@ -119,9 +114,8 @@ Read before authoring:
    mature model.
 9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
-   and `.gitignore`. Write current product meaning under the guardrails below.
-   Record Coverage scope, covered behavior, approved exclusions, known
-   Unmapped areas and material limitations; never author a status.
+   and `.gitignore`. Write current product meaning under the guardrails below,
+   and Coverage as the format reference shapes it.
 10. Run the bundled linter outside the untrusted target:
 
    ```bash
@@ -151,11 +145,7 @@ Read before authoring:
 - Never persist verification receipts or lifecycle state.
 - Never capture, copy, or assess screenshots. External visual and research
   References may guide inspection; their role does not make them proof.
-- Never write design. Component libraries, theming, layout, typography, color,
-  iconography, motion, microcopy and tone, gestures versus buttons,
-  breakpoints, loading and hover states, navigation chrome and the order of
-  navigation items, and quality attributes that do not change what an Actor
-  can do belong in `visual` References with `role: intent`, never in prose.
+- Never write design; the rubric's **Places, not designs** test decides.
 - Do not promote internal APIs, adapters, command namespaces, or services to
   Interfaces or acting Entities unless their independent Product contract is
   established by inspected behavior.

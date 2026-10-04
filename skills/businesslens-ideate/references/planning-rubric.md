@@ -19,8 +19,9 @@ in every context, Variations and what selects them — lives in
 - Do not assume parity across Interfaces. Decide each availability Context and
   every Scenario's Step Contexts independently.
 - Decide each Interface's access from who will reach each planned place —
-  without signing in, once signed in, or only for some roles. `lint` cannot see
-  this until Experiences exist; deciding it is yours.
+  without signing in, once signed in, or only the roles that administer the
+  Product, its settings or members, may enter (the administration area). `lint`
+  cannot see this until Experiences exist; deciding it is yours.
 - Record intent as the outcome a boundary or behavior protects, without
   comparisons to discarded designs.
 
@@ -36,26 +37,13 @@ place. It never says how that looks or is built. One test decides every case:
 > Everything the redesign is free to change is design's, and the model says
 > nothing about it.
 
-Design lives in `visual` References with `role: intent`. Ordinary copy is
+Design — component libraries, theming, layout, typography, color,
+iconography, motion, microcopy and tone, gestures versus buttons, breakpoints,
+loading and hover states, navigation chrome and the order of navigation items,
+and quality attributes that do not change what an Actor can do — lives in
+`visual` References with `role: intent`, never in prose. Ordinary copy is
 design; when exact wording is a product requirement, a Business Rule identifies
 its authoritative Reference.
-
-- **Nesting.** A child Screen subdivides its parent's persistent selected
-  subject or process: changing the parent context changes or ends the child.
-  Tabs within one resource reading and wizard stages qualify. Choose the
-  nearest qualifying context as the parent. A process stage needs its own Actor
-  decision or input on the same draft or operation; a completion message, a
-  generated credential reveal or a read-only result is an Outcome on the
-  process Screen, not a child. A generic settings or category selector is
-  neither a selected subject nor a process. Opening a destination from a view
-  does not make that view its owner: a panel opened from several views sits
-  once at their common Interface or Experience. URLs, co-visibility, modal
-  versus page, and different drawings of the same information decide nothing.
-  Treat ambiguous ownership as a question for the author.
-- **Conditions.** An empty, unauthorized or blocked view is a `condition` Step,
-  Edge case or Rule outcome in the Scenario that meets it, and its capture
-  attaches to that Scenario. Confirmation stays behavior on its host;
-  preserving the underlying view is an Outcome.
 
 ## Scenarios are the acceptance contract
 

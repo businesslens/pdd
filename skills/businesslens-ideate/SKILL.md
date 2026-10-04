@@ -61,15 +61,15 @@ Read before authoring:
    bullet); then **Naming** (the Product's own word for each thing now
    settled). Quick mode keeps its three batched questions.
 
-   Propose concrete wording so the user corrects drafts rather than dictating
-   schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
-   Product decision; do not treat technologies or internal APIs as Interfaces.
-   Follow the format reference for every shape and boundary — Interface
-   division into Experiences (decide access from who will reach each place),
-   Entities, the Capability split test, Business Rules, Journeys, Domains and
-   naming — and decide whether a setting, assignment or deployment makes a
-   Variation, separate Scenarios, a decision point or a grant's `when` by
-   **What selects** under its Variations. Then sweep:
+   Hold the dialogue as the rubric's **Dialogue** section says. Make supported
+   web/mobile/CLI/API/integration Interfaces an explicit Product decision; do
+   not treat technologies or internal APIs as Interfaces. Follow the format
+   reference for every shape and boundary — Interface division into Experiences
+   (decide access from who will reach each place), Entities, the Capability
+   split test, Business Rules, Journeys, Domains and naming — and decide whether
+   a setting, assignment or deployment makes a Variation, separate Scenarios, a
+   decision point or a grant's `when` by **What selects** under its Variations.
+   Then sweep:
    - **Verbs.** Distinguish durable Capabilities from complete Actor goals and
      give every Capability per-Capability acceptance; plan a Journey wherever
      the Product carries the Actor from one Capability into another.
@@ -135,13 +135,8 @@ Read before authoring:
 - Treat availability as intended Product meaning. Author Contexts whose places
   are an undivided Interface or an Experience, and never use them as
   implementation status.
-- Model a Screen only for a stable view an Actor reaches, as a place: what is
-  reachable, which facts are on screen, which abilities it offers, which
-  conditions change that. Never write design: component libraries, theming,
-  layout, typography, color, iconography, motion, microcopy and tone, gestures
-  versus buttons, breakpoints, loading and hover states, navigation chrome and
-  the order of navigation items, and quality attributes that do not change
-  what an Actor can do belong in `visual` References with `role: intent`.
+- Model a Screen only as a place, never design; the rubric's **Places, not
+  designs** test decides.
 - Keep visuals and research external through References. Use `role: intent` for
   curated inputs and `role: context` for background; neither is an acceptance
   receipt.

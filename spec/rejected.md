@@ -13,8 +13,8 @@ record is worse than no record.
 **How it changes:** decisions are appended. Reopening one means adding an entry
 that supersedes the old one and says why the reason no longer holds; it never
 means editing the old entry into agreement. Entries may be filed under the right
-heading, merged when they record one argument, or trimmed to the costed shape. Consult it before proposing a change to
-either contract.
+heading, merged when they record one argument, or trimmed to the costed shape.
+Consult it before proposing a change to either contract.
 
 ## The model as a whole
 
@@ -181,6 +181,12 @@ Placing page reading once in a public Experience avoids counterpart Screens,
 but makes "public" also mean "where signed-in Users read". A Capability is
 available in every Experience in which one of its Actors uses it instead.
 
+**`restricted` as any area only some signed-in roles may enter.** Superseded.
+Pages closed to guests and pages only administrators open both qualified, and
+two independent maps of one product cut different restricted Experiences.
+`restricted` is the administration area alone; other pages stay
+`authenticated`, with grants saying who may act.
+
 ## Capabilities
 
 **A setting-driven Product side effect as a Capability of its own.** Moving
@@ -241,7 +247,17 @@ registration — would each select Scenario alternatives; enumerating their
 combinations multiplies Scenarios with every setting, and choosing the setting
 that "most changes" the Steps is a judgment. Each is a decision point instead.
 
-**A structured `enabledBy` field for switched-on behavior.** Naming the
-enabling setting as a fact reference would let `lint` resolve it, but
-deployment settings have no Entity to reference; the resource's lead names the
-dependency for `verify`.
+**A structured `enabledBy` field for switched-on behavior.** Naming the setting
+that enables a Capability as a fact reference would let `lint` resolve it, but
+deployment settings have no Entity to reference, and the grant-less Business
+Rule already carries the same claim for `verify`.
+
+**A grant-less Business Rule saying a resource exists only while enabled.**
+Superseded. It targeted one resource, which `lint` itself warns belongs to that
+resource; the resource's lead names the dependency instead, and `verify` checks
+it.
+
+**One Capability per sign-in method a deployment selects.** Superseded. The
+methods share verb, permission and availability, so the split test makes them
+one Capability; the Variation rules decide whether they are Scenario
+alternatives, separate Scenarios or decision points.

@@ -161,17 +161,6 @@ Reference never certifies alignment. BusinessLens skills may follow curated
 References as leads while mapping or verifying the repository, but the
 artifact is evidence to assess rather than proof to trust.
 
-## Report profiles
-
-A compiled workspace Product Report retains all References and declares
-`referenceProfile: workspace`. Co-located assets appear there as
-repository-relative References; the report does not embed their bytes. A
-portable Product Report keeps only HTTP(S) References whose role is `intent` or
-`context`, so local asset pointers do not enter a Blueprint yet.
-
-[`blueprint export`](./cli-export.md#portable-export) defines the complete
-portable projection. `open`, `pull`, and `contribute` apply the same projection.
-
 ## What `lint` checks
 
 | Finding | Meaning |

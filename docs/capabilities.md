@@ -74,8 +74,12 @@ separate grant), where they are offered (availability), or in verb. Nothing else
 splits one: not a different Actor, since one Capability is offered in every
 Experience it is used from; not a Business Rule that constrains only one part,
 such as a time limit; not which grant applies, told apart by a fact of the thing
-acted on, which is a grant's `when`; and not the Entity a way creates or the
-State it starts from.
+acted on, which is a grant's `when`; not the Entity a way creates or the State
+it starts from; and not filtering, sorting or searching within a browsing
+ability. Nor does a setting or the deployment: the ways it selects between stay
+in one Capability, as Scenario alternatives, separate Scenarios or decision
+points by [What selects](./variations.md#what-selects-decides-it), and a way it
+adds beside the others, the Actor choosing among them, is an ordinary Scenario.
 
 | What you see | Capabilities |
 | --- | --- |
@@ -85,17 +89,16 @@ State it starts from.
 | Adding an authenticator app or backup codes; restoring from the archive or the trash | One each: neither the Entity a way creates nor the State it starts from splits it |
 | Notification settings, each saved on its own as it changes | One: settings in one section of the Product's navigation are one Capability, however the screen saves them |
 | Requesting a password reset, then choosing the new password from the emailed link | One: the Steps of one run, including a link it needs to finish; confirming an existing account's email later is its own |
-| Adding, changing and removing members of a group | Three: list entries are things of their own |
-| Entering a second factor after any sign-in method | Its own Capability, joined to each sign-in by a Journey |
+| Adding, changing and removing members of a group | Three: list entries are things of their own, even through an API call that replaces the whole list |
+| Entering a second factor after any sign-in method | Its own Capability: the sign-ins it continues end their Scenarios at the hand-off, and a Journey joins them |
 
-Ways a setting or the deployment selects are Scenario alternatives of one
-Capability — a [Variation](./variations.md#when-you-create-one) — and ways the
-Actor chooses between are Scenarios of one. Splitting neither creates nor
-removes a [Domain](./domains.md).
+Whether split Capabilities share a Domain is decided by the Product's sections,
+never by the split — see [Domains](./domains.md#when-you-create-one).
 
 Every Capability declares explicit availability Contexts, naming
-[Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
-[Domain](./domains.md) can organize it, but Domains are not required.
+[Experiences](./interfaces.md#experiences) only where the Interface uses them.
+An optional [Domain](./domains.md) can organize it, but Domains are not
+required.
 
 ## The file
 
@@ -136,9 +139,9 @@ Scenarios, Journeys, Screens, or Business Rules. Other resources own those
 relations, and consumers derive backlinks: what a Capability changes is what its
 Scenarios' Steps say, and an `entities` key on a Capability is an error naming
 the Step key that carries it. A Capability Scenario's containing Capability
-folder creates its direct acceptance relation, while a Journey Scenario annotates concrete
-Steps with Capabilities. Journey Capability backlinks are derived from those
-Steps rather than authored on the Journey.
+folder creates its direct acceptance relation, while a Journey Scenario
+annotates concrete Steps with Capabilities. Journey Capability backlinks are
+derived from those Steps rather than authored on the Journey.
 
 Capability Scenario coverage is the only direct acceptance coverage for a
 Capability. The union of its Capability Scenarios must cover every availability
@@ -278,8 +281,8 @@ attributable to that Actor — the Product did it for them, or the condition hol
 for them. Every actor a Step names joins the Scenario's derived Actor set, and a
 Rule reads it as *who did* against its grants' *who may*. At a public place the
 Actor is whoever is not signed in — an invitee, or any role holder before
-signing in — and a Step that ends a session, such as signing out, stays where
-the session was.
+signing in — and a Step that ends a session, such as signing out or deleting
+one's own account, stays where the session was.
 
 ### Behavior nobody triggers
 
@@ -334,7 +337,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The contributor names the repository and chooses private visibility
+  - text: The contributor enters a name and chooses private visibility
     kind: actor
     actor: repository-contributor
     entities: []
@@ -418,20 +421,14 @@ Use multiple routes when the Trigger, ordered Step text, Step kinds, responsible
 Actors, and Outcome are the same but the Context places differ. If any behavior
 changes, create another Scenario.
 
-Every contextualized Step maps every route. A Step without `contexts` is shared by all
-routes and has no Context. Every route must have a Context at least once, and two routes
-cannot repeat the same Context-place sequence. Changing `place` between consecutive
-contextualized Steps is an explicit Context transition, including movement between Screens in one
-Experience.
+Every contextualized Step maps every route. A Step without `contexts` is shared
+by all routes and has no Context. Every route must have a Context at least once,
+and two routes cannot repeat the same Context-place sequence. Changing `place`
+between consecutive contextualized Steps is an explicit Context transition,
+including movement between Screens in one Experience.
 
-A Step Context is concrete and most-specific. When the Step occurs on a
-Screen, its `place` names that Screen, at any depth — a
-[parent Screen](./interfaces.md#screens-nest) is a place of its own, meaning
-on it and in none of its children. Otherwise it names the leaf Experience or
-undivided Interface, even when other behavior there has Screens. A Step on a
-Screen an Interface shares across its Experiences names that Screen as
-`interface-id::screen-id`; it is inside the Capability's availability only when
-every Experience of that Interface is, and it counts as coverage for each. Actor support, Screen participation, and
+A Step Context names [where the Step happens](./interfaces.md#where-a-step-happens),
+the most specific place it occurs. Actor support, Screen participation, and
 backlinks are all derived from these Context claims.
 
 ### Capability Scenario decision points

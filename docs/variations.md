@@ -58,7 +58,7 @@ that both seem to govern every refund.
 | A goal pursued across Capabilities in two supported ways | Journeys |
 | A place — which facts it shows, which abilities it offers | Screens or Experiences |
 | The facts or States the Product keeps — an EU store's VAT invoice against a US store's sales tax receipt | Entities |
-| Two whole statements of one constraint — Standard or Strict refund review | Business Rules |
+| Whole policies — Standard or Strict refund review, a password rule of a minimum length or of a length plus required kinds of character | Business Rules |
 | A supported contract — the v1 and v2 webhook | Interfaces |
 
 The alternatives of a Scenario Variation share their Capability or Journey.
@@ -81,19 +81,23 @@ behavior starts. Everything else is met inside one behavior:
 - **A fact describing the thing acted on is state.** A page's own editor format
   is read by a `condition` Step or a decision point, even though someone set it.
 - **A choice that changes what an Actor does selects Scenario alternatives** — a
-  Step skipped, added or at another place. Sign-in that starts at the only
-  provider drops the Actor's choice of provider.
+  Step skipped, added or at another place — even when several settings combine
+  into that one choice, such as a person's preference falling back to the
+  workspace's. Sign-in that starts at the only provider drops the Actor's choice
+  of provider. A choice the Actor makes on a page outside the Product, such as a
+  connector at an identity provider, is still an Actor Step.
 - **A choice that changes only the Product's own Steps, or is made during a run,
-  is a decision point** in one Scenario — unless a Step must then name a
-  different alternative of another Variation, such as issuing a VAT invoice or a
-  sales tax receipt, and that Scenario varies with it.
+  is a decision point** in one Scenario — group sync replacing or adding Roles —
+  unless a Step must then name a different alternative of another Variation,
+  such as issuing a VAT invoice or a sales tax receipt, and that Scenario varies
+  with it.
 - **A choice that changes only the outcome makes separate Scenarios**, each with
-  a `condition` Step reading it: registration that leaves the account
-  unconfirmed.
-- **When two or more settings or assignments would each vary or split one
-  Scenario**, each is a decision point instead, so no Scenario needs a set per
-  combination. State the Scenario meets, such as whether an account exists, is
-  not a setting.
+  a `condition` Step reading it: an unknown social account registered or
+  refused. A branch ending in a refusal counts.
+- **When two or more independent settings or assignments would each vary or
+  split one Scenario** — a captcha and a provider password on one registration —
+  each is a decision point instead, so no Scenario needs a set per combination.
+  State the Scenario meets, such as whether an account exists, is not a setting.
 
 A resource that exists only under some alternatives, or only while a setting,
 plan or licence enables it, is an ordinary resource, mapped even where the
@@ -107,7 +111,7 @@ Do not create one for:
 | What you see | Model it as |
 | --- | --- |
 | One behavior branching on what it meets — out of stock, payment declined | A `condition` Step or decision point in one Scenario |
-| A value that changes a number, not the resource | Content of the one resource — Strict and Standard refund review are two Rules; a different threshold is not |
+| A value one policy reads — a threshold, a minimum length | Content of that one resource — Strict and Standard refund review are two Rules; a different threshold is not |
 | A thing moving through phases | Entity States |
 | The same Experience on another Interface | A counterpart: same id under each Interface |
 | A visual treatment with the same facts and abilities | References on the one Screen |

@@ -34,7 +34,8 @@ Product, the other says **what** the Product does, and the axes classify members
 of both.
 
 Seven of them are main collections: **Entities, Interfaces, Domains,
-Capabilities, Journeys, Business Rules, and Variations**. Product describes the whole. Experiences and Screens are reached through Interfaces; each Capability
+Capabilities, Journeys, Business Rules, and Variations**. Product describes the
+whole. Experiences and Screens are reached through Interfaces; each Capability
 or Journey owns its Scenarios. All remain distinct resource types.
 
 ```text
@@ -86,11 +87,9 @@ look complete. A small model can be both valid and honest.
 
 Screens are deliberately visual, and deliberately not design: they say what is
 reachable, presented and possible at a place, never how it looks — see
-[Is this a design spec?](./interfaces.md#is-this-a-design-spec). A CLI or
-supported API does not need parallel Command or Endpoint resource types: syntax
-belongs in CLI help, and endpoints and payloads belong in an API contract such
-as OpenAPI. Attach those artifacts as [References](./references.md) when they
-help explain intent or implementation.
+[Is this a design spec?](./interfaces.md#is-this-a-design-spec). A CLI or API
+needs no Command or Endpoint types either — see
+[Interfaces](./interfaces.md#when-you-create-one).
 
 `taxonomies.yaml` defines the categories available as Scenario kinds, such as
 `primary` and `edge`. `config.yaml` records folder schema
@@ -144,14 +143,15 @@ For the same question about an ERD, see [Entities](./entities.md#is-this-an-erd)
 ## Authoring conventions
 
 A resource without assets or children is the compact file `<id>.md`. When it
-gains its first asset or typed child collection, move it to
-`<id>/<type>.md`; the folder becomes that resource's namespace. The two forms
-never coexist and derive the same id — `lint` reports both shapes at once, or a
-folder missing its `<type>.md`, as errors. A folder you have expanded but not
-filled yet is only a warning, so you can create it and add the child next. Behavior-hierarchy ids are the bare file
-or folder name; qualified Interface, Experience, and Screen ids carry their path
-joined by `::`, because Experience and Screen names may repeat across Interfaces.
-Only `product.md` declares `id:`. Scenario IDs are globally unique.
+gains its first asset or typed child collection, move it to `<id>/<type>.md`;
+the folder becomes that resource's namespace. The two forms never coexist and
+derive the same id — `lint` reports both shapes at once, or a folder missing its
+`<type>.md`, as errors. A folder you have expanded but not filled yet is only a
+warning, so you can create it and add the child next. Behavior-hierarchy ids are
+the bare file or folder name; qualified Interface, Experience, and Screen ids
+carry their path joined by `::`, because Experience and Screen names may repeat
+across Interfaces. Only `product.md` declares `id:`. Scenario IDs are globally
+unique.
 
 The first and only H1 supplies a resource's title. Lead prose normally supplies its
 description. Journeys have no lead prose and instead require `## Goal` and
@@ -196,11 +196,9 @@ requires:
 
 - Capability `availability` lists Contexts whose places are undivided
   Interfaces or Experiences. These are the durable availability boundaries.
-- Scenario `steps[].contexts` maps every route to a Context. Its place is the
-  most-specific occurrence: a Screen when the Step happens there — a
-  parent Screen is a place of its own, meaning on it and in none of its
-  children — otherwise the leaf Experience or undivided Interface, even if
-  other behavior in that container has Screens.
+- Scenario `steps[].contexts` maps every route to a Context at
+  [where the Step happens](./interfaces.md#where-a-step-happens), the most
+  specific place it occurs.
 - Business Rule Context selectors may name an Interface, Experience, or
   Screen. An ancestor place includes its descendants, so an Interface selector
   can deliberately cover Contexts beneath that Interface.
@@ -224,9 +222,10 @@ availability:
 
 Do not invent a ceremonial Experience for an Interface with only one coherent
 context. An Interface holds Screens directly, or Experiences, or both when a
-Screen is genuinely shared across every one of its Experiences. The Experiences inside an Interface must collectively cover all of its
-Actors. Availability is intended Product meaning; it is not inferred from
-shared code, routes, packages, or protocols.
+Screen is genuinely shared across every one of its Experiences. The Experiences
+inside an Interface must collectively cover all of its Actors. Availability is
+intended Product meaning; it is not inferred from shared code, routes, packages,
+or protocols.
 
 ## Behavioral core
 
@@ -236,17 +235,17 @@ availability Context must be covered by at least one Capability Scenario;
 appearing in a Journey Scenario does not satisfy that local acceptance
 coverage. Every model has at least one Capability.
 
-Journeys are high-level goals the Product carries an Actor through, and a model has one wherever such a path exists. A Journey authors only the Actors, Goal,
+Journeys are high-level goals the Product carries an Actor through, and a model
+has one wherever such a path exists. A Journey authors only the Actors, Goal,
 and Success criterion. Journey Scenarios own concrete Capability selection,
 order, branches, repetition, correlated context routes, and terminal results.
 Every Journey needs at least one achieved Journey Scenario using at least two
 distinct Capabilities, and every Journey Actor must appear in an achieved
 Scenario. A Product Model may have zero Journeys.
 
-A Journey's primary Capabilities and Domains are derived from achieved Journey
-Scenario Steps. Capabilities found only in not-achieved paths are
-marked separately as failure-only. These describe modeled coverage, not one
-mandatory path or proof that partial mapping is exhaustive.
+A Journey's Capabilities, Domains and what it
+[leaves behind](./journeys.md#the-file) are derived from its achieved Journey
+Scenarios, without claiming that a partial model covers every path.
 
 ## Which behavioral resource type?
 
@@ -277,9 +276,9 @@ from the Product the same way every time, and review holds the model to them.
 | Acts, or dependency? | Direction decides. An external system acts only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
 | Screen, or Entity state? | A condition of a **view** — empty, unauthorized, caught-up — is the `condition` Step, Edge case, or Rule outcome of the Scenario that meets it there. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
 | Screen, or Child Screen? | A region is a [Child Screen](./interfaces.md#screens-nest) when it subdivides its parent’s persistent working context. Opening a destination alone does not establish ownership. The same content drawn differently is design, and one Screen. |
-| Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing changes, presents, names as an actor, or reads by Rule is an error. |
+| Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing changes, presents, names as an actor, reads by Rule, or chooses by in a Variation is an error. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, a Context independent of any behavior, or an operation on a thing — and it is the only place permission is said. Anything else true of exactly one Capability is a `condition` Step or its Outcome. |
-| Domain, or no grouping? | A map creates one per section of the Product's own navigation, settings or administration that holds two or more Capabilities; an author regroups them by hand, and a map never re-cuts what an author wrote. Every Domain states a `## Boundary` naming what it does **not** own. |
+| Domain, or no grouping? | One per section of the Product's own navigation, settings or administration that holds two or more Capabilities — see [Domains](./domains.md#when-you-create-one). Every Domain states a `## Boundary` naming what it does **not** own. |
 
 ### Naming
 
@@ -287,13 +286,14 @@ Behavioral ids are **verb-noun**; cross-cutting ids are the **bare noun**.
 `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
 `order-management`; but `shopper`, `ordering`, `order`, `customer-web`.
 
-Names come from the Product's own words: an id and its H1 use what the
-Product's screens, menus and messages call the thing, never an API value, a code
+Names come from the Product's own words: an id and its H1 use what the Product's
+screens, menus and messages call the thing, never an API value, a code
 identifier or the wording of a request — a role the screens call Editor is
 `editor` even where the API sends `member`. A Capability's verb is the one its
-control shows — Archive, Share, Publish; where the control says only Save, it is
-`edit-<thing>` for a thing's own facts and `change-<section>-settings` for a
-page in the Product's settings, the section named as its menu shows it, never `update`.
+control shows — Archive, Share, Publish; where the control says only Save or
+Done, it is `edit-<thing>` for a thing's own facts and
+`change-<section>-settings` for a page in the Product's settings, the section
+named as its menu shows it, never `update`.
 
 Two further rules bind ids to vocabulary the model already declares. A
 behavioral id's **noun half names something the model declares** —

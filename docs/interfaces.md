@@ -59,6 +59,12 @@ contract—for example, a partner automation API. An internal API used to
 implement the web application is an implementation detail. Apply the same test
 to command namespaces, integrations, and background system interactions.
 
+A CLI or supported API needs no Command or Endpoint resource types. Command
+syntax belongs in CLI help, and endpoints and payloads in an API contract such
+as OpenAPI, attached as [References](./references.md) where they help; the model
+holds the durable Capabilities, their Scenarios, optional Journeys, and the
+Rules they expose.
+
 `agent` is the surface an AI coding harness reaches through installed skills or
 tools. It is a contract with its own Actors and independently verifiable
 behavior — not the harness's own interface, and not a way to describe a
@@ -170,17 +176,16 @@ justifies, is a `lint` **error**.
 
 **One access mode is one context.** Two Experiences of one Interface with the
 same `access` share no Actor unless they are alternatives of one Variation;
-otherwise it is a `lint` **error**. A page some signed-in roles cannot enter but
-non-administrators can, such as one guests cannot see, stays authenticated, and
-an admin-only page inside administration is navigation there: grants say who may
-act.
+otherwise it is a `lint` **error**. A page closed only to some
+non-administrative roles stays authenticated, and an admin-only page inside
+administration is navigation there: grants say who may act.
 
 The conditions protect one thing: an Experience is a context that stays
-meaningful when routes, commands, or navigation are reorganized, because it is defined by
-who is there and what they can do, not by how the surface is laid out. An
-overview page is usually a Screen, not an Experience. A command group is an
-Experience only when the conditions divide its Interface, not because a parser groups
-its commands.
+meaningful when routes, commands, or navigation are reorganized, because it is
+defined by who is there and what they can do, not by how the surface is laid
+out. An overview page is usually a Screen, not an Experience. A command group is
+an Experience only when the conditions divide its Interface, not because a
+parser groups its commands.
 
 When nothing divides an Interface, availability names the Interface directly.
 Do not create a one-to-one Experience to satisfy the file shape or make the
@@ -209,7 +214,7 @@ Where authorized operators manage the Product and its users.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
-| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. |
+| `access` | yes | Use `public`, `authenticated`, or `restricted`: the most open the context can be. A setting that closes it (content public only while guests are allowed) or opens it (anonymous access) is a grant's `when` and never justifies an Experience of its own. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `navigation` | no | List this Experience's own Screens reachable from every place inside it, each as a path relative to the Experience, nested ones by their child path. Unique values; order carries no meaning. See [Navigation](#navigation). |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -254,13 +259,14 @@ one Capability. Do not create Screens for responsive layouts, themes, hover
 variants, skeletons, components, or every route found in source.
 
 **Error, legal and other capability-free views are not Screens.** A Screen needs
-at least one Capability exercised by a Step placed on it, and a not-found page, a privacy policy, or a terms
-page exposes none — nothing about the Product's abilities happens there. The
-condition such a view answers — unauthorized, missing, empty — is a `condition`
-Step, an Edge case, or a Rule outcome in the Scenario that meets it; the view
-itself is left out of the model. A repository rule that every implemented route
-must appear somewhere is a documentation rule, not a Product Model rule; do not
-satisfy it by inventing a Capability the view does not have.
+at least one Capability exercised by a Step placed on it, and a not-found page,
+a privacy policy, or a terms page exposes none — nothing about the Product's
+abilities happens there. The condition such a view answers — unauthorized,
+missing, empty — is a `condition` Step, an Edge case, or a Rule outcome in the
+Scenario that meets it; the view itself is left out of the model. A repository
+rule that every implemented route must appear somewhere is a documentation rule,
+not a Product Model rule; do not satisfy it by inventing a Capability the view
+does not have.
 
 A [Child Screen](#screens-nest) subdivides a persistent parent working
 context. An opening action alone does not establish ownership.
@@ -392,11 +398,22 @@ different Experiences of one Interface are counterparts exactly as they are
 across Interfaces.
 
 A shared Screen is inside every Experience of its Interface. Its id is
-`interface-id::screen-id`, every Capability it exposes must be available in
-each Experience, and a Scenario Step on it counts as coverage for each. That is
-the test for whether a view is really shared: if its displayed facts, inputs, Capabilities or behavior differ by
-Experience, it is two Screens, one under each Experience, which are
-counterparts. A Screen that belongs to one Experience belongs inside it.
+`interface-id::screen-id`, every Capability it exposes must be available in each
+Experience, and a Scenario Step on it counts as coverage for each. That is the
+test for whether a view is really shared: if its displayed facts, inputs,
+Capabilities or behavior differ by Experience, it is two Screens, one under each
+Experience, which are counterparts. A Screen that belongs to one Experience
+belongs inside it.
+
+### Where a Step happens
+
+A Scenario Step's Context `place` is the most specific place it occurs: the
+Screen when it occurs on one, at any depth — a [parent Screen](#screens-nest) is
+a place of its own, meaning on it and in none of its children — otherwise the
+leaf Experience or undivided Interface, even when other behavior there has
+Screens. A Step on a shared Screen names it `interface-id::screen-id`. When the
+Step exercises a Capability, the Interface or Experience holding its place must
+be in that Capability's availability.
 
 ### Web and mobile
 
@@ -422,12 +439,12 @@ else is: `navigation`, and [nesting](#screens-nest).
 `navigation` names the Screens an Actor can reach from every place inside an
 Interface or Experience — a cart, a search, a home. It is structure, not a
 relation, in the same sense as folder containment: it states a fact about the
-container, and it states reachability, not a Scenario transition. Each entry is a Screen path relative to the container,
-`catalog` or `library::by-source`. On an undivided Interface any of its
-Screens qualifies. On a divided Interface only a
-[shared Screen](#screens-shared-across-experiences) or a descendant of one
-does, because a Screen inside a restricted Experience cannot be reachable from
-a public one; an Experience's own `navigation` names its own Screens. Order
+container, and it states reachability, not a Scenario transition. Each entry is
+a Screen path relative to the container, `catalog` or `library::by-source`. On
+an undivided Interface any of its Screens qualifies. On a divided Interface only
+a [shared Screen](#screens-shared-across-experiences) or a descendant of one
+does, because a Screen inside a restricted Experience cannot be reachable from a
+public one; an Experience's own `navigation` names its own Screens. Order
 carries no meaning: `lint` ignores it.
 
 Parent, next and back links, menus, route trees, the order of navigation items,
@@ -440,11 +457,6 @@ Model-owned screenshots, mockups, and diagrams live beside an expanded
 External or separately maintained artifacts such as Figma files attach through
 [References](./references.md). `lint` checks asset metadata and paths, but does
 not interpret whether a visual matches the Product.
-
-A CLI or API does not need substitute Command or Endpoint resource types. Keep
-command syntax in CLI help and endpoint schemas in the API contract; model the
-durable Capabilities, both observable Scenario types, optional Journeys, and
-Rules they expose.
 
 ### Screen ownership
 

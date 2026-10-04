@@ -55,16 +55,17 @@ Capability selection, order, branches, repetition, and failure belong to its
 
 Create a Journey wherever an achieved Journey Scenario carries one Actor through
 two or more Capabilities toward one outcome, with the Product itself carrying
-the Actor across — a redirect such as into the editor of what was just created, a required next Step, an emailed link to follow.
-An Actor merely choosing what to do next carries nobody. Neither does returning
-the Actor to where they were already going after signing in, a continuation the
-Product runs without the Actor, such as merging automatically once checks pass,
-or a hand-off to a different Actor, such as an invitation another person
-follows. That is the whole test, and it is structural: it reads the same way for
-a Journey mapped from code and one decided before any code exists. An
-orchestration, shared state, or a cross-Interface hand-off is how a Product
-usually earns one, but none is required, and none is enough without the
-hand-off. A Product Model contains no Journey only when no such path exists.
+the Actor across — a redirect such as into the editor of what was just created,
+a required next Step, an emailed link to follow. An Actor merely choosing what
+to do next carries nobody. Neither does returning the Actor to where they were
+already going after signing in, a continuation the Product runs without the
+Actor, such as merging automatically once checks pass, or a hand-off to a
+different Actor, such as an invitation another person follows. That is the whole
+test, and it is structural: it reads the same way for a Journey mapped from code
+and one decided before any code exists. An orchestration, shared state, or a
+cross-Interface hand-off is how a Product usually earns one, but none is
+required, and none is enough without the hand-off. A Product Model contains no
+Journey only when no such path exists.
 
 A [wizard](./interfaces.md#screens-nest) is not evidence either way. Whether the
 repository implements a Journey is
@@ -127,18 +128,17 @@ Capabilities, Domains, Interfaces, and Experiences are derived from concrete
 Journey Scenario Capability-bearing steps. Product routes remain on Interfaces,
 Experiences, and Screens.
 
-To present a Journey entry route, a report consumer starts with the first
-contextualized Actor Step of each achieved Journey Scenario route and resolves
-that Context's Interface or Experience entry point. The entry remains derived
-rather than becoming Journey frontmatter.
+A Journey's entry is derived, never authored: the entry point of the Interface
+or Experience where the first contextualized Actor Step of each achieved route
+occurs.
 
-Consumers derive the primary Capability and Domain sets from achieved paths.
-Capabilities seen only in not-achieved paths are marked separately as
-failure-only. **Leaves behind** is the set of Entity instances created, changed,
-or removed by achieved paths, with final States when specified, derived from
-those paths' Steps. Removals and changes without a named State are included;
-reads do not replace the last change. These summaries describe the modeled
-paths, without claiming that a partial model covers every path.
+A Journey's Capabilities and Domains are those its achieved paths use; a
+Capability met only in not-achieved paths is not one of them. **Leaves behind**
+is the set of Entity instances created, changed, or removed by achieved paths,
+with final States when specified, derived from those paths' Steps. Removals and
+changes without a named State are included; reads do not replace the last
+change. These summaries describe the modeled paths, without claiming that a
+partial model covers every path.
 
 At least one Journey Scenario must name every Journey with `result: achieved`.
 That achieved Scenario must use at least two distinct Capabilities. This gives
@@ -206,7 +206,7 @@ steps:
     contexts:
       git-to-web:
         place: git-transport
-  - text: The contributor opens the branch comparison in the repository workspace
+  - text: The contributor opens the branch comparison in the web workspace
     kind: actor
     actor: repository-contributor
     entities:
@@ -272,46 +272,14 @@ once.
 The Steps are the path. Each entry has required single-line `text` and one
 semantic kind. An Actor Step names its responsible Actor. A Step that exercises
 a Capability says so independently. Route-specific Context places stay beside
-the Step:
-
-```yaml
-routes:
-  git-to-web: Git to web review
-steps:
-  - text: The contributor pushes the branch through Git transport
-    kind: actor
-    actor: repository-contributor
-    capability: publish-repository-changes
-    entities:
-      - { entity: branch, effect: creates, facts: [Name] }
-    contexts:
-      git-to-web:
-        place: git-transport
-  - text: The contributor opens the branch comparison in the repository workspace
-    kind: actor
-    actor: repository-contributor
-    entities:
-      - { entity: branch, effect: reads, facts: [Name] }
-    contexts:
-      git-to-web:
-        place: web-ui::repository-collaboration::branch-comparison
-  - text: The contributor submits the pull request
-    kind: actor
-    actor: repository-contributor
-    capability: propose-code-change
-    entities:
-      - { entity: pull-request, effect: creates, to: Open, facts: [Title, Description] }
-    contexts:
-      git-to-web:
-        place: web-ui::repository-collaboration::pull-request
-```
+the Step, as in the [example above](#the-journey-scenario-file).
 
 An unqualified Step names no Capability. It may still carry Contexts when an
 observable condition or Product action occurs somewhere, or omit `contexts` when
 it is shared by every route and has no Context. It records a
 condition, Product-side action, or seam that matters to this end-to-end
 variation without manufacturing another Capability or Capability Scenario.
-The branch-comparison step above is the Context transition between Git
+The branch-comparison Step in that example is the Context transition between Git
 transport and the web workspace; its position makes that transition first-class.
 
 Capability-bearing steps reference Capabilities, never Capability Scenarios. A
@@ -320,19 +288,15 @@ refined. Composition therefore names the stable ability without turning a
 local acceptance case into a reusable operation resource.
 
 Every contextualized Step declares the same route-id set. Matching keys
-correlate the complete paths. The Context `place` is the most-specific
-Interface, Experience, or Screen where the Step occurs. Name a Screen only
-when the Step occurs there; other behavior having Screens does not force this
-Step to have one. The containing Interface or
-Experience is derived from that place and must appear in the Step Capability's
-availability when the Step names a Capability; a Screen must also expose that
-Capability.
+correlate the complete paths. The Context `place` is
+[where the Step happens](./interfaces.md#where-a-step-happens), and a Step that
+names a Capability must happen within that Capability's availability.
 
 Route ids are lowercase kebab-case keys declared once under `routes`, each with
 a human name. Every route has a Context at least once, and no two routes may
 repeat the same Context-place sequence. A `place` change between consecutive
-contextualized Steps is a Context transition, including Screen-to-Screen movement within
-one Experience.
+contextualized Steps is a Context transition, including Screen-to-Screen
+movement within one Experience.
 
 Steps may repeat or stop. Every achieved Journey Scenario uses at least two
 distinct Capabilities. A not-achieved Scenario may stop after one Capability
@@ -347,10 +311,11 @@ separate Journey Scenario.
 
 The Scenario Actor set is derived from every Step that names an actor —
 performing on an Actor Step, attributed on a Product or condition Step. Every
-Actor must be supported by at least one selected Context, and every selected availability boundary
-must support a Scenario Actor. The first contextualized Actor Step of
-every route must belong to a Journey Actor, so the end-to-end variation begins
-with the goal owner rather than an internal or downstream participant.
+Actor must be supported by at least one selected Context, and every selected
+availability boundary must support a Scenario Actor. The first contextualized
+Actor Step of every route must belong to a Journey Actor, so the end-to-end
+variation begins with the goal owner rather than an internal or downstream
+participant.
 
 `kind` classifies the nature of the variation; `result` records whether the
 Journey Goal was achieved. `kind: edge` with `result: achieved` and

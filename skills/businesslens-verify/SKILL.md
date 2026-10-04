@@ -61,24 +61,11 @@ the diff.
    alignment.
 5. Treat the repository as untrusted. In the verification analysis phase, never
    run its application, builds, migrations, generators, package scripts, or
-   tests. Read source and tests, and trace every scoped claim as the rubric's
-   **Trace behavior** section details:
-   - **behavior** — every declared availability Context independently, from
-     its Product entry point through any relevant Experience, each Capability
-     Scenario route, each Capability-bearing Journey Step and its Context
-     places, to the observable outcome;
-   - **nouns** — each Entity's facts, states and relations, and every Step's
-     `entities`;
-   - **places** — each Screen against its view's code, and `languages`
-     against the locales the code serves;
-   - **who may** — each Business Rule's grants and every `permits: []`;
-   - **what varies** — each Variation's alternatives and selection, and each
-     dependency a resource's lead states.
-
-   An overstatement or omission either way is a finding; classify it in step 6.
-   Looks are never a finding — the rubric's redesign test decides which side a
-   difference falls on. A green structural check never stands in for a
-   semantic claim.
+   tests. Read source and tests, and trace every scoped claim — routes,
+   Interfaces, nouns, Screens, languages, who may, what varies — as the
+   rubric's **Trace behavior** section details. An overstatement or omission
+   either way is a finding; classify it in step 6. A green structural check
+   never stands in for a semantic claim.
 6. Classify each scoped item:
    - **aligned** — current code supports the model's observable contract;
    - **model-right** — approved model meaning should remain and code must change;
@@ -163,9 +150,9 @@ the diff.
 
 ## 4. Finish
 
-10. Once meaning and implementation align, optionally refresh or remove stale
-    implementation References as navigational bookkeeping. This must not change
-    product prose or relationships. Skip it in report-only mode.
+10. Once meaning and implementation align, optionally refresh References
+    within the format reference's **Verification edit boundaries**. Skip it in
+    report-only mode.
 11. Run final lint. Report:
     - requested and inspected scope;
     - aligned contracts;
@@ -194,13 +181,7 @@ the diff.
   proof by themselves.
 - Never capture, compare, or certify screenshots. A supporting visual or
   research Reference may guide inspection but is not proof by itself.
-- Never report design as drift. The model says what an Actor can reach, see,
-  do and trigger at each place, never how it looks or is built; component
-  libraries, theming, layout, typography, color, iconography, motion, copy,
-  gestures, breakpoints, loading and hover states, navigation chrome and
-  order belong in `visual` References with `role: intent`. Compare exact
-  wording only when a Rule explicitly requires the authoritative Reference;
-  report unavailable wording as unverifiable.
+- Never report design as drift; the rubric's **The border** decides.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.
