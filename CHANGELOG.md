@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-10-04
+
+- The report and every BusinessLens page show in light mode only for now; dark mode will return once it reads as well as light.
+
 ## [0.23.0] - 2026-10-04
 
 - Model experiments, configuration choices and supported versions as Variations of an Interface, Experience, Screen, Entity, Capability, Journey, Scenario or Business Rule, and browse them in a new Variations collection.

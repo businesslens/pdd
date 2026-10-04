@@ -101,9 +101,9 @@ try {
   await expect(page.locator('[data-businesslens-theme-lab-bar]')).toBeVisible()
   await expect(desktop).toHaveCSS('width', '64px')
   await rail.getByRole('button', { name: 'Hide theme lab', exact: true }).click()
-  await rail.getByRole('button', { name: 'Toggle color mode', exact: true }).click()
-  await expect(page.locator('html')).toHaveClass(/dark/)
-  await capture('sidebar-collapsed-dark')
+  // Dark mode is off (businesslens/pdd#70): no toggle, and the report stays light.
+  await expect(rail.getByRole('button', { name: 'Toggle color mode', exact: true })).toHaveCount(0)
+  await expect(page.locator('html')).not.toHaveClass(/dark/)
 
   /* A phone opens the full menu without changing the saved desktop choice. */
   await page.setViewportSize({ width: 390, height: 844 })

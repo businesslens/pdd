@@ -302,7 +302,8 @@ try {
 
   // Both kinds of definition trigger keep a clear keyboard focus indicator in
   // either theme, and dismissing the popover restores focus to its trigger.
-  for (const colorScheme of ['light', 'dark']) {
+  // Dark mode is off (businesslens/pdd#70); restore the dark pass when it returns.
+  for (const colorScheme of ['light']) {
     await page.reload()
     const definitionName = 'Information kept — what Information kept means'
     const termHelp = page.getByRole('button', { name: definitionName, exact: true }).first()
@@ -327,7 +328,7 @@ try {
     await page.keyboard.press('Escape')
     await expect(termHelp).toBeFocused()
   }
-  console.log('Passed: definition triggers show keyboard focus in light and dark themes.')
+  console.log('Passed: definition triggers show keyboard focus.')
 
   // Help and navigation coexist on resource pages and both kinds of nested
   // Scenario. Middle widths must work too, before the mobile trail takes over.

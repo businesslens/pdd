@@ -9,6 +9,7 @@ const {
 } = useBusinessLensBackgroundVariant()
 
 const colorMode = useColorMode()
+const { darkMode } = useAppConfig().businessLens
 const mounted = ref(false)
 
 onMounted(() => {
@@ -32,9 +33,10 @@ function pick(group: 'light' | 'dark', id: string) {
   }
 }
 
+// Dark backgrounds are not offered while dark mode is off.
 const groups = computed(() => [
   { key: 'light' as const, label: 'Light', items: lightBackgrounds, activeId: activeLight.value.id },
-  { key: 'dark' as const, label: 'Dark', items: darkBackgrounds, activeId: activeDark.value.id }
+  ...(darkMode ? [{ key: 'dark' as const, label: 'Dark', items: darkBackgrounds, activeId: activeDark.value.id }] : [])
 ])
 
 defineShortcuts(Object.fromEntries(
@@ -99,7 +101,7 @@ defineShortcuts(Object.fromEntries(
       </button>
     </div>
 
-    <div class="ms-auto flex shrink-0 items-center gap-2 ps-2">
+    <div v-if="darkMode" class="ms-auto flex shrink-0 items-center gap-2 ps-2">
       <ClientOnly>
         <UButton
           :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'"

@@ -2,6 +2,7 @@
 defineProps<{ collapsed?: boolean }>()
 const { pddVersion } = useRuntimeConfig().public
 const { visible: themeLabVisible, toggle: toggleThemeLab } = useBusinessLensThemeLab()
+const { darkMode } = useAppConfig().businessLens
 </script>
 
 <template>
@@ -39,7 +40,7 @@ const { visible: themeLabVisible, toggle: toggleThemeLab } = useBusinessLensThem
         @click="toggleThemeLab"
       />
     </UTooltip>
-    <UTooltip text="Toggle color mode" :content="{ side: 'right' }">
+    <UTooltip v-if="darkMode" text="Toggle color mode" :content="{ side: 'right' }">
       <UColorModeButton color="neutral" variant="ghost" size="sm" aria-label="Toggle color mode" class="min-h-8 min-w-8 shrink-0" :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }" />
     </UTooltip>
   </div>

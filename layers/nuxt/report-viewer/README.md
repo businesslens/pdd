@@ -291,7 +291,8 @@ Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
 utilities; both also appear in the mobile navigation drawer. The bundled local
 viewer places its version beside the brand in the sidebar header, followed by
 an icon-only Theme lab button and the color-mode switch at the right edge,
-aligned with Search. Header controls stack below the mark when collapsed.
+aligned with Search. The switch is hidden while dark mode is off (see the
+theme README). Header controls stack below the mark when collapsed.
 Documentation and GitHub stay in the sidebar footer. There is no
 separate host navbar; the theme lab bar appears above the report only when
 opened. Desktop navigation uses Nuxt UI's
