@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.23.0] - 2026-10-03
+## [0.23.0] - 2026-10-04
 
 - Model experiments, configuration choices and supported versions as Variations of an Interface, Experience, Screen, Entity, Capability, Journey, Scenario or Business Rule, and browse them in a new Variations collection.
-- Read every alternative under its Variation's name — in readings, lists, trees, graphs, matrices, Lifecycles and search — and switch between them in place; what holds only under some alternatives is dashed and says which.
+- Read every alternative under its Variation's name (in readings, lists, trees, graphs, matrices, Lifecycles and search) and switch between them in place; what holds only under some alternatives is dashed and says which.
 - Model nested Screens, Screens reachable from anywhere in an Interface or Experience, and the languages a Product serves.
 - Record the facts a Screen shows and collects, and the facts each Scenario Step reads, changes or creates; a Screen's Capabilities now come from the Steps placed on it.
 - Read what a Business Rule applies to, and find every Rule that names a resource from that resource.
@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fewer false lint warnings about resource names.
 - The local report keeps running when Git cannot open the repository, saying so once.
 - Blueprints with ambiguous place names are rejected before import.
+- Shorter, simpler documentation: the introduction shows the development loop and the local report, each Product Model page leads with everyday examples, and a new Variations page covers feature flags, plan tiers, A/B tests and API versions.
 - **Breaking.** Models and Blueprints must be updated to the new format; older model and report formats are rejected. Screens describe what they show and offer through relations instead of prose sections and Capability lists; Interfaces and Experiences drop their Capability boundary sections and Screen lists; References drop state labels.
 
 ## [0.22.0] - 2026-09-23
