@@ -31,7 +31,8 @@ const report: ProductReportV15 = {
     capabilityScenarios: 0,
     journeys: 0,
     journeyScenarios: 0,
-    businessRules: 0
+    businessRules: 0,
+    variations: 0
   },
   limitations: [],
   model: {
@@ -69,7 +70,8 @@ const report: ProductReportV15 = {
     capabilityScenarios: [],
     journeys: [],
     journeyScenarios: [],
-    businessRules: []
+    businessRules: [],
+    variations: []
   },
   coverage: {
     scope: 'The fixture Product.',
