@@ -184,6 +184,12 @@ const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
 if (!changelog.includes(`## [${pkg.version}]`)) {
   errors.push(`CHANGELOG.md is missing a [${pkg.version}] release heading`)
 }
+// businesslens.io renders this file as-is. A heading label without its link
+// definition shows its brackets on GitHub and loses them on the site.
+const changelogLinks = new Set([...changelog.matchAll(/^\[([^\]]+)\]: \S/gm)].map(match => match[1]))
+for (const [, label] of changelog.matchAll(/^## \[([^\]]+)\]/gm)) {
+  if (!changelogLinks.has(label)) errors.push(`CHANGELOG.md heading [${label}] has no link definition`)
+}
 if (plugin.repository !== 'https://github.com/businesslens/pdd') {
   errors.push('plugin.json repository must be https://github.com/businesslens/pdd')
 }

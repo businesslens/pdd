@@ -284,10 +284,14 @@ costed already.
 ## Change and release checks
 
 - Keep changelog entries brief and nontechnical: state only user-visible outcomes.
+- `CHANGELOG.md` is the only authored changelog. businesslens.io renders it as-is
+  from `main`, pulled with `docs/`, so `[Unreleased]` is public on push. Every
+  release heading keeps its link definition at the bottom of the file
+  (enforced by `scripts/check-repo.mjs`).
 - Run `npm run verify` after any change.
 - Inspect `npm pack --dry-run` before a release.
-- Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading
-  before dispatching a release.
+- Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading,
+  with its compare link, before dispatching a release.
 - Validate every skill with the skill-creator `quick_validate.py`.
 - Validate the Claude plugin with `claude plugin validate . --strict` when the
   Claude CLI is available.
