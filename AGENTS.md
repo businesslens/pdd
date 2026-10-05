@@ -288,10 +288,11 @@ costed already.
   and `### Removed`; an optional bold area label (`**Report:**`, `**CLI:**`,
   `**Skills:**`, `**Docs:**`) may lead an entry.
 - `CHANGELOG.md` is the only authored changelog. businesslens.io renders it as-is
-  from `main`, pulled with `docs/`, one page per release, so `[Unreleased]` is
-  public on push. Every release heading keeps its link definition at the bottom
-  of the file, and every release closes with `### Contributors` and a
-  `**Full Changelog**` line (enforced by `scripts/check-repo.mjs`).
+  from `main`, pulled with `docs/`, one timeline card per dated release;
+  `[Unreleased]` is never shown there. Every release heading keeps its link
+  definition at the bottom of the file, and every release closes with
+  `### Contributors` and a `**Full Changelog**` line (enforced by
+  `scripts/check-repo.mjs`).
 - Write an entry under `[Unreleased]` in the pull request that makes the change,
   with no links: the pull request and commit are added when the release is
   rolled.
