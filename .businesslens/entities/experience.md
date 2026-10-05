@@ -25,7 +25,7 @@ sees.
 
 ## Information kept
 
-- **Container** — which Interface contains it, from its path
+- **Container** — the place that holds it, its Interface, from its path
 - **Audience** — the acting Entities it serves and the access it requires
 - **Entry points** — its own addresses
 

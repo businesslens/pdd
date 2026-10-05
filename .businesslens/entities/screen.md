@@ -23,7 +23,7 @@ to them.
 
 - **Exposure** — the Capabilities its own Steps use
 - **Presents** — the Entities it presents, with disclosed facts distinguished from collected inputs
-- **Container** — which Interface or Experience holds it, from its path
+- **Container** — the place that holds it, its Interface or Experience, from its path
 - **Addresses** — where it answers
 
 - **Variation** — the Variation it is an alternative in, if any, and the condition that selects it
