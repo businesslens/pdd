@@ -11,7 +11,3 @@ scenarioKinds:
     name: Validation
     description: Input the Product refuses while preserving the Actor's work.
     colorSlot: 3
-  - id: permission
-    name: Permission
-    description: An attempt the Product refuses because the Actor may not perform it now.
-    colorSlot: 5

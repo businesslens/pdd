@@ -2,7 +2,7 @@
 id: notes-app
 summary: Capture quick notes, file them into notebooks and tags, find them again with search, and keep a clean inbox with suggestions from an AI agent you allow.
 category: personal-productivity
-tags: [single-user, ai-assisted, beginner]
+tags: [single-user, agentic, beginner]
 authors:
   - name: BusinessLens
 license: MIT
