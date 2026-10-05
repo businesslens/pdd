@@ -15,5 +15,5 @@ shared or closed.
 
 ## Rationale
 
-Learners and the Quiz assistant never alter what a quiz asks or who can take
-it; the Creator is answerable for both.
+Learners never alter what a quiz asks or who can take it, and nothing the
+Product drafts does either; the Creator is answerable for both.

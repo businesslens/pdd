@@ -10,8 +10,8 @@ permits:
 # Only the creator changes a question
 
 Only the Creator who owns the quiz edits one of its questions or adds a drafted
-question to it. The Quiz assistant can draft a question but can never change
-one or put it in a quiz.
+question to it. The Product can draft a question from source material, but
+only the Creator puts it in a quiz.
 
 ## Rationale
 

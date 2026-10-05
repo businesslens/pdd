@@ -13,9 +13,9 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Quiz assistant finds nothing in the material it can ask and answer with confidence
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product sends the material to a language model, which writes nothing the material answers
+    kind: product
+    actor: creator
     capability: draft-questions
     entities:
       - { entity: quiz, effect: reads, facts: [Source material] }

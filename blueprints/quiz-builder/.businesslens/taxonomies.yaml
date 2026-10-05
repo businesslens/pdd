@@ -9,5 +9,5 @@ scenarioKinds:
     colorSlot: 6
   - id: validation
     name: Validation
-    description: Input or an attempt the Product refuses while preserving the Actor's work.
+    description: Input the Product refuses while preserving the Actor's work.
     colorSlot: 3

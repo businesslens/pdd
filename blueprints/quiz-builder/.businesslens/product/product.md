@@ -11,7 +11,7 @@ limitations:
   - Learners sign in to take a quiz; there are no anonymous attempts.
   - Each learner has one scored attempt at a quiz. Further tries are practice rounds, which never change the recorded score.
   - A short answer scores only when it matches one of the creator's accepted answers; anything else stays incorrect until the creator grades it.
-  - The Quiz assistant drafts questions and assembles practice rounds. Nothing it writes reaches learners until the creator approves it, and it never grades an attempt.
+  - Drafting questions from source material depends on a language model. A drafted question reaches learners only once the creator adds it, and while the model is unavailable creators write questions by hand.
   - Classes are rosters for sharing quizzes. There are no due dates, timers or gradebook.
   - The Product is a web application; there is no native mobile application.
 references:
@@ -25,7 +25,7 @@ references:
 
 A quiz tool for teachers and anyone else who wants to check what people have
 learned. A creator writes a quiz of multiple-choice, true/false and short-answer
-questions — or asks the Quiz assistant to draft them from source material —
+questions — or has the Product draft them from source material —
 and shares it by link or with a class. Learners take it once and are scored with
 feedback, then practice the questions they missed. The creator reviews results
 per question and per learner.

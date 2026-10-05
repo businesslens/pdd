@@ -11,19 +11,11 @@ steps:
     contexts:
       web:
         place: quiz-web::attempt
-  - text: The Quiz assistant reads which answers in the attempt did not score
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product finds the questions whose answers in the attempt did not score
+    kind: product
+    actor: learner
     entities:
       - { entity: attempt, effect: reads, facts: [Answers] }
-      - { entity: question, effect: reads, facts: [Prompt] }
-    contexts:
-      web:
-        place: quiz-web::attempt
-  - text: The Quiz assistant chooses the missed questions to repeat and the order to ask them in
-    kind: actor
-    actor: quiz-assistant
-    entities:
       - { entity: question, effect: reads, facts: [] }
     contexts:
       web:

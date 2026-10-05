@@ -43,7 +43,7 @@ steps:
 
 ## Trigger
 
-The Creator reviews a question the Quiz assistant drafted and wants to keep it.
+The Creator reviews a question the Product drafted and wants to keep it.
 
 ## Outcome
 

@@ -11,18 +11,18 @@ steps:
     contexts:
       web:
         place: quiz-web::practice
-  - text: The Quiz assistant reads which questions the earlier round still got wrong
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product finds the questions the earlier round still got wrong
+    kind: product
+    actor: learner
     entities:
       - { entity: practice-round, as: earlier, effect: reads, facts: [Answers] }
       - { entity: question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::practice
-  - text: The Quiz assistant chooses the questions still missed and the order to ask them in
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product orders them so those missed in the most rounds come first
+    kind: product
+    actor: learner
     entities:
       - { entity: question, effect: reads, facts: [] }
     contexts:
