@@ -10,7 +10,7 @@ steps:
     contexts:
       web:
         place: snippets-web::workspace::snippet-editor
-  - text: No proposal arrives from the assistant
+  - text: The language model cannot be reached or returns nothing usable
     kind: condition
     entities: []
     contexts:
@@ -36,7 +36,8 @@ steps:
 
 ## Trigger
 
-The Developer asks for suggested details and the assistant cannot propose any.
+The Developer asks for suggested details while the language model the Product
+calls is unavailable.
 
 ## Outcome
 

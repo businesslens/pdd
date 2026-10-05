@@ -4,14 +4,14 @@ domain: my-snippets
 
 # Suggestion
 
-A title, description and tags the Snippet assistant proposes for the code a
-Developer is writing, waiting for that Developer to accept or dismiss.
+A title, description and tags the Product drafts, at a Developer's request,
+for the code they are writing, waiting for that Developer to accept or dismiss.
 
 ## Information kept
 
-- **Suggested title** — the title the assistant proposes
-- **Suggested description** — the description the assistant proposes
-- **Suggested tags** — the tags the assistant proposes
+- **Suggested title** — the title proposed for the code
+- **Suggested description** — the description proposed for the code
+- **Suggested tags** — the tags proposed for the code
 
 ## States
 
