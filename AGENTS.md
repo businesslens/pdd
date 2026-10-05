@@ -66,7 +66,7 @@ were costed and then chosen against, so the same argument is not had twice.
   Model (one page per main resource family), Skills (one page per skill), and
   CLI (one page per command). The Introduction draws the development loop
   (embedded on the site as `::development-loop`, with a plain-text fallback);
-  building is the user's own flow, so there is no Integrations group.
+  implementing is the user's own workflow, so there is no Integrations group.
 - **`docs/` gives the gist; the skills carry the complexity.** A reader should
   understand a resource type from its page in a few minutes. Each resource type
   is explained in exactly one place, in this order: a one-sentence definition;

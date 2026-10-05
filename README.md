@@ -55,7 +55,7 @@ Codex users invoke skills with `$`, for example `$businesslens-map`.
 ```text
 /businesslens-ideate guest checkout
         ↓ approved Product Model delta
-your injected plan / build flow
+your existing implementation workflow (not a BusinessLens skill)
         ↓ implementation
 /businesslens-verify this branch
         ↓ automatically resolve gaps, re-check, and run final lint

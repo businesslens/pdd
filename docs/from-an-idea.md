@@ -1,6 +1,6 @@
 ---
 title: From an idea
-description: Decide what a new product does, approve its Product Model, build it with your own flow, and let verify check the result.
+description: Decide what a new product does, approve its Product Model, implement it in your own workflow, and let verify check the result.
 section: open-source
 group: Get started
 order: 5
@@ -29,9 +29,10 @@ Use this door when there is no code yet, or none worth describing.
    npx businesslens lint
    ```
 
-4. Hand the approved model to your normal plan and build flow. BusinessLens does
-   not build anything itself.
-5. When the build is done, check the code against the model:
+4. Implement the approved model in your existing workflow: plan mode, an SDD
+   framework, a coding agent, or your team's process. BusinessLens has no
+   implement skill and does not write code itself.
+5. When the implementation is done, check the code against the model:
 
    ```text
    /businesslens-verify
