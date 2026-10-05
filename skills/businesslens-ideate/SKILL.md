@@ -116,7 +116,8 @@ Read before authoring:
     Fix every error and assess each warning. Green lint means structurally
     sound, not implemented or verified.
 12. Report the approved delta and implementation acceptance contract. The next
-    phase is the user's injected build flow, followed by `businesslens-verify`.
+    phase is implementation in the user's own workflow, followed by
+    `businesslens-verify`.
     Do not implement from this skill.
 
 ## Guardrails

@@ -60,4 +60,4 @@ also accepts `application/json`.
 ## Next
 
 - [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt and
-  build it.
+  implement it.

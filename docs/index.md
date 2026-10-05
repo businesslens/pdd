@@ -24,13 +24,27 @@ Every product change runs the same loop:
 
 ::development-loop
 ```text
-ideate → build → verify
-   ▲                 │
-   └── next change ──┘
+ideate → implement → verify
+   ▲                     │
+   └──── next change ────┘
 
-build: plan mode, an SDD tool, or freestyle
+implement: plan mode, an SDD tool, or freestyle
 ```
 ::
+
+Ideate with BusinessLens. Implement in your own workflow. Verify with
+BusinessLens.
+
+- **Ideate** with [`/businesslens-ideate`](./skill-businesslens-ideate.md):
+  Decide the next change and record it in the Product Model.
+- **Implement** in your existing workflow: Plan mode, an SDD tool, or
+  freestyle.
+- **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
+  Check and improve the code and Product Model until they agree.
+
+BusinessLens installs no implement skill, and PDD does not prescribe how you
+implement. It defines only the order and the handoff: the approved Product
+Model is what you implement against.
 
 ## See the model at any time
 
