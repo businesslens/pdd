@@ -1,0 +1,13 @@
+scenarioKinds:
+  - id: primary
+    name: Primary
+    description: The expected observable behavior path.
+    colorSlot: 1
+  - id: edge
+    name: Edge case
+    description: An uncommon but expected path with a distinct observable outcome.
+    colorSlot: 6
+  - id: validation
+    name: Validation
+    description: Input the Product refuses while preserving the Actor's work.
+    colorSlot: 3
