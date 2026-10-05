@@ -48,7 +48,7 @@ They fill the gaps by guessing, and the guesses ship.
 
 * ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
 
-* 🔁 **Fits your build flow:** plan mode, an SDD tool or freestyle; BusinessLens never builds for you
+* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; BusinessLens never implements for you
 
 * 🖥️ **Local report:** `businesslens view` opens the model in your browser and follows your edits
 
@@ -63,7 +63,7 @@ They fill the gaps by guessing, and the guesses ship.
 ## The development loop
 
 <p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, build with your own flow, verify with /businesslens-verify" width="600">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in your existing workflow, verify with /businesslens-verify" width="600">
 </p>
 
 ## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
@@ -84,7 +84,7 @@ Then every change runs the loop:
 
 ```text
 /businesslens-ideate add guest checkout   # approve the model change
-                                          # build it your usual way
+                                          # implement in your existing workflow
 /businesslens-verify this branch          # fix what disagrees, re-check
 ```
 
