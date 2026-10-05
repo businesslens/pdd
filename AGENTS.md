@@ -284,14 +284,26 @@ costed already.
 ## Change and release checks
 
 - Keep changelog entries brief and nontechnical: state only user-visible outcomes.
+  Group them under Keep a Changelog's `### Added`, `### Changed`, `### Fixed`
+  and `### Removed`; an optional bold area label (`**Report:**`, `**CLI:**`,
+  `**Skills:**`, `**Docs:**`) may lead an entry.
 - `CHANGELOG.md` is the only authored changelog. businesslens.io renders it as-is
-  from `main`, pulled with `docs/`, so `[Unreleased]` is public on push. Every
-  release heading keeps its link definition at the bottom of the file
-  (enforced by `scripts/check-repo.mjs`).
+  from `main`, pulled with `docs/`, one page per release, so `[Unreleased]` is
+  public on push. Every release heading keeps its link definition at the bottom
+  of the file, and every release closes with `### Contributors` and a
+  `**Full Changelog**` line (enforced by `scripts/check-repo.mjs`).
+- Write an entry under `[Unreleased]` in the pull request that makes the change,
+  with no links: the pull request and commit are added when the release is
+  rolled.
 - Run `npm run verify` after any change.
 - Inspect `npm pack --dry-run` before a release.
-- Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading,
-  with its compare link, before dispatching a release.
+- Prepare a release in its own pull request that only rolls the changelog and
+  bumps the version: `npm version <version> --no-git-tag-version`, fetch, then
+  `npm run changelog:release`. It blames each `[Unreleased]` entry at
+  `origin/main` and appends the merged pull request and commit that added it,
+  then writes the contributors, the Full Changelog line and the compare links.
+  It refuses an entry the release pull request itself wrote, because that
+  commit has no hash until it merges.
 - Validate every skill with the skill-creator `quick_validate.py`.
 - Validate the Claude plugin with `claude plugin validate . --strict` when the
   Claude CLI is available.

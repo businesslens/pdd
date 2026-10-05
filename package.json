@@ -74,6 +74,7 @@
     "blueprints:check": "node scripts/blueprints-check.mjs",
     "blueprints:publish": "node scripts/blueprints-publish.mjs",
     "check": "node scripts/check-repo.mjs",
+    "changelog:release": "node scripts/changelog-release.mjs",
     "verify": "npm run typecheck && npm run typecheck:viewer && npm run build && npm run package:size && npm test && npm run check && npm run blueprints:check",
     "version": "node scripts/sync-version.mjs",
     "prepack": "npm run build"
