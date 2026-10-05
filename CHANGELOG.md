@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - The README demo now tours BusinessLens's own Product Model, with the command to open it yourself.
+- The README and the docs Introduction show in one table what the model holds and what it leaves to design.
+- A Screen is now one place however it is drawn: tabs, panels and wizard stages belong to it, so a redesign no longer changes the model. Screens no longer nest.
+- Interfaces and Experiences no longer list the Screens reachable from everywhere; menus are design.
+- A quality the product commits to, such as an accessibility level, is recorded as a Business Rule.
+- Models and exported reports use a new format version; re-export Blueprints after updating.
 
 ## [0.24.2] - 2026-10-05
 

@@ -12,7 +12,7 @@ steps:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The Product confirms that the Reader owns both collections
     kind: product
     actor: reader
@@ -21,7 +21,7 @@ steps:
       - { entity: collection, as: target, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The item leaves the first collection and joins the second at the chosen position
     kind: product
     actor: reader
@@ -31,14 +31,14 @@ steps:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The item's saved state and reading state are untouched
     kind: condition
     entities:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
 ---
 
 # Move an item between collections

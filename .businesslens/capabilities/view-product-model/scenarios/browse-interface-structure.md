@@ -9,7 +9,7 @@ steps:
     entities:
       - { entity: interface, effect: reads, facts: [Type, Actors] }
       - { entity: experience, effect: reads, facts: [Container, Audience] }
-      - { entity: screen, effect: reads, facts: [Exposure, Nesting] }
+      - { entity: screen, effect: reads, facts: [Exposure, Placement] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -19,17 +19,17 @@ steps:
     entities:
       - { entity: interface, effect: reads, facts: [Type] }
       - { entity: experience, effect: reads, facts: [Container] }
-      - { entity: screen, effect: reads, facts: [Exposure, Nesting] }
+      - { entity: screen, effect: reads, facts: [Exposure, Placement] }
     contexts:
       local:
-        place: local-report-web::resource-reading::delivery
+        place: local-report-web::resource-reading
   - text: The Product uses the same tree rows and group counts, identifying shared references by their owning Interface
     kind: product
     entities:
       - { entity: interface, effect: reads, facts: [] }
     contexts:
       local:
-        place: local-report-web::resource-reading::delivery
+        place: local-report-web::resource-reading
 ---
 
 # Browse Interface structure
@@ -51,5 +51,5 @@ Returning restores expansion, and the working collection stays in place.
 - Each Delivery tab starts with children because the inspected resource is already named in the header.
 - Group counts name Experiences, Screens or Shared Screens; empty groups and mixed resource totals are absent.
 - A resource with no children still opens by its name. A Capability's Scenarios start folded.
-- A nested place reads its own Delivery; nothing is summed. Audience is read in Overview.
+- Each place reads its own Delivery; nothing is summed. Audience is read in Overview.
 - Tab changes, related-resource navigation, refresh and valid recompilation preserve expansion choices.

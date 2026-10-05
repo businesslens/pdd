@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV15,
+  ProductReportV16,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -232,11 +232,9 @@ export interface InterfaceView extends ResourceBase {
   entryPoints: EntryPointView[]
   /** Narrows the Product's languages; empty means the Product's list applies. */
   languages: string[]
-  /** Screens reachable from every place inside, by full id. A mark, never an edge. */
-  navigationIds: string[]
   experienceIds: string[]
   capabilityIds: string[]
-  /** Every Screen inside, nested ones included. */
+  /** Every Screen inside. */
   screenIds: string[]
   journeyIds: string[]
 }
@@ -247,10 +245,8 @@ export interface ExperienceView extends ResourceBase {
   interfaceIds: string[]
   accessMode: 'public' | 'authenticated' | 'restricted'
   entryPoints: EntryPointView[]
-  /** Screens reachable from every place inside, by full id. A mark, never an edge. */
-  navigationIds: string[]
   capabilityIds: string[]
-  /** Every Screen inside, nested ones included. */
+  /** Every Screen inside. */
   screenIds: string[]
   journeyIds: string[]
   /** Subject regions reached through the Capabilities available here. Never authored. */
@@ -270,14 +266,8 @@ export interface ScreenView extends ResourceBase {
   /** What it presents, with the facts on screen where the model names them. */
   entities: ScreenEntityView[]
   kind: 'screen'
-  /** The nearest Interface or Experience above it. */
+  /** The Interface or Experience that holds it. */
   contexts: ContextView[]
-  /** The parent Screen's id, or empty where the parent is the container. */
-  parentScreenId: string
-  /** Screens nested directly inside this one, in authored order. */
-  childScreenIds: string[]
-  /** Named in its container's `navigation`: reachable from everywhere inside. */
-  alwaysReachable: boolean
   capabilityIds: string[]
   capabilityScenarioIds: string[]
   journeyScenarioIds: string[]
@@ -746,41 +736,16 @@ interface PlaceIndex {
   interfaceById: Map<string, ReportInterface>
   experienceById: Map<string, ReportExperience>
   screenById: Map<string, ReportScreen>
-  /** The parent segment of each Screen id, split once. */
-  parentOfScreen: Map<string, string>
-  /** Screens nested directly inside each place, in authored order. */
-  childScreensByParent: Map<string, string[]>
-  /** The nearest Interface or Experience above each Screen. */
+  /** The Interface or Experience that holds each Screen, split once. */
   containerOfScreen: Map<string, string>
 }
 
 function indexPlaces(interfaces: ReportInterface[], experiences: ReportExperience[], screens: ReportScreen[]): PlaceIndex {
-  const screenById = new Map(screens.map(item => [item.id, item]))
-  const parentOfScreen = new Map<string, string>()
-  const childScreensByParent = new Map<string, string[]>()
-  const containerOfScreen = new Map<string, string>()
-  for (const screen of screens) {
-    const parentId = parentPlace(screen.id)
-    parentOfScreen.set(screen.id, parentId)
-    push(childScreensByParent, parentId, screen.id)
-  }
-  /* A parent's container is its child's; walking up memoised makes the whole pass linear in Screens. */
-  const containerOf = (screenId: string): string => {
-    const known = containerOfScreen.get(screenId)
-    if (known !== undefined) return known
-    const parentId = parentOfScreen.get(screenId) ?? parentPlace(screenId)
-    const container = parentId && screenById.has(parentId) ? containerOf(parentId) : parentId
-    containerOfScreen.set(screenId, container)
-    return container
-  }
-  for (const screen of screens) containerOf(screen.id)
   return {
     interfaceById: new Map(interfaces.map(item => [item.id, item])),
     experienceById: new Map(experiences.map(item => [item.id, item])),
-    screenById,
-    parentOfScreen,
-    childScreensByParent,
-    containerOfScreen
+    screenById: new Map(screens.map(item => [item.id, item])),
+    containerOfScreen: new Map(screens.map(screen => [screen.id, parentPlace(screen.id)]))
   }
 }
 
@@ -826,7 +791,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV15): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV16): ReportWorkspace {
   const model = report.model
   const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
@@ -1110,7 +1075,6 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       actorIds: item.actorIds,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
       languages: item.languages,
-      navigationIds: item.navigation,
       experienceIds,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
@@ -1141,7 +1105,6 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       interfaceIds: item.interfaceIds,
       accessMode: item.accessMode,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
-      navigationIds: item.navigation,
       capabilityIds,
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
       journeyIds: model.journeys.filter(j => journeyContexts(j.id).some(context => context.experienceId === item.id)).map(j => j.id),
@@ -1149,11 +1112,8 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
     }
   })
 
-  /* A container's `navigation` names full Screen ids, so one set answers for every Screen. */
-  const navigationIds = new Set([...model.interfaces, ...model.experiences].flatMap(item => item.navigation))
   const byIndex = (index: Map<string, number>) => (left: string, right: string) => index.get(left)! - index.get(right)!
   const screens: ScreenView[] = model.screens.map((screen: ReportScreen) => {
-    const parentId = places.parentOfScreen.get(screen.id)!
     const contexts = contextsOf([{ placeId: places.containerOfScreen.get(screen.id)! }])
     /* Both lists read in the collection's own order, as a scan of it would. */
     const scenarioJourneyIds = unique(unique(screen.journeyScenarioIds)
@@ -1175,9 +1135,6 @@ export function projectReportWorkspace(report: ProductReportV15): ReportWorkspac
       supportingContent: supportingMarkdown(screen.supportingSections),
       references: screen.references,
       contexts,
-      parentScreenId: isScreen(parentId) ? parentId : '',
-      childScreenIds: [...(places.childScreensByParent.get(screen.id) ?? [])],
-      alwaysReachable: navigationIds.has(screen.id),
       capabilityIds: screen.capabilityIds,
       capabilityScenarioIds: screen.capabilityScenarioIds,
       journeyScenarioIds: screen.journeyScenarioIds,

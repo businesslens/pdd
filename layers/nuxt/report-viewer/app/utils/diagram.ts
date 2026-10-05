@@ -22,8 +22,6 @@ export interface DiagramNode {
   /** The frame this node sits inside. A frame is a node drawn with `group`. */
   parent?: string
   group?: boolean
-  /** Named in its container's navigation: a mark on the node, never an edge. */
-  navigation?: boolean
   /** "Only under …": held only under some alternatives, drawn dashed with the note as its subtitle. */
   conditional?: string
   /** A Variation's node or frame: drawn as the type it varies, badged, in ink. */

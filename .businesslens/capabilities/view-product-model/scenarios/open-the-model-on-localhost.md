@@ -34,7 +34,7 @@ steps:
       - { entity: product-model, effect: reads, facts: [Coverage, Method] }
     contexts:
       local:
-        place: local-report-web::product-overview::coverage
+        place: local-report-web::product-overview
   - text: The Developer moves to a kind's collection and opens the resource they came for
     kind: actor
     actor: developer

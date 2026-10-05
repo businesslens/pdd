@@ -52,9 +52,7 @@ export function resourceAncestors(workspace: ReportWorkspace, resource: AnyResou
   if (resource.kind === 'experience') keys = [`interface:${resource.interfaceIds[0]}`]
   if (resource.kind === 'screen') {
     const context = resource.contexts[0]
-    const parents: string[] = []
-    for (let id = resource.parentScreenId; id; id = (workspace.byKey.get(`screen:${id}`) as { parentScreenId?: string } | undefined)?.parentScreenId ?? '') parents.unshift(`screen:${id}`)
-    keys = [`interface:${context?.interfaceId}`, ...(context?.experienceId ? [`experience:${context.experienceId}`] : []), ...parents]
+    keys = [`interface:${context?.interfaceId}`, ...(context?.experienceId ? [`experience:${context.experienceId}`] : [])]
   }
   if (resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario') keys = [resource.scenarioType === 'capability' ? `capability:${resource.capabilityId}` : `journey:${resource.journeyId}`]
   return keys.flatMap(key => { const item = workspace.byKey.get(key); return item ? [item] : [] })

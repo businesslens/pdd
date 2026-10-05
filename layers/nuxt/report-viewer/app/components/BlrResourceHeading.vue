@@ -33,7 +33,6 @@ const varied = computed(() => title.value.kind === 'variation')
       <h2 ref="heading" tabindex="-1" class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
         <span class="min-w-0 break-words" data-resource-title>{{ title.title }}</span>
         <BlrTerm :slug="KIND_TERM[title.kind]" :text="title.title" icon-only />
-        <BlrNavigationMark v-if="resource.kind === 'screen' && resource.alwaysReachable" class="mt-0.5 shrink-0" />
         <!-- The alternative being read, said where the reader looks first. -->
         <BlrVariationPicker
           v-if="varied"

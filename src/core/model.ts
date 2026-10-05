@@ -58,12 +58,6 @@ export interface InterfaceResource extends ResourceFile {
    * the Product's list applies unchanged.
    */
   languages: string[]
-  /**
-   * Screens reachable from every place inside this Interface, as paths relative
-   * to it. Structure, not a relation: it says nothing about movement, and its
-   * order carries no meaning.
-   */
-  navigation: string[]
 }
 
 export interface ExperienceResource extends ResourceFile {
@@ -72,8 +66,6 @@ export interface ExperienceResource extends ResourceFile {
   interface: string
   access: string
   entryPoints: CompactEntryPoint[]
-  /** Screens reachable from every place inside this Experience, as paths relative to it. */
-  navigation: string[]
 }
 
 export interface DomainResource extends ResourceFile {
@@ -163,12 +155,10 @@ export interface ScreenResource extends ResourceFile {
   /** The Entities this view presents, with the facts on screen. */
   entities: ScreenEntity[]
   /**
-   * The nearest Interface or Experience above it, read from the path. Never
-   * authored. Availability, audience and sharing resolve against this.
+   * The Interface or Experience whose folder holds it, read from the path.
+   * Never authored. Availability, audience and sharing resolve against this.
    */
   containerId: string
-  /** The direct parent: the container, or the Screen this one nests inside. */
-  parentId: string
   capabilities: string[]
   entryPoints: CompactEntryPoint[]
 }
@@ -439,7 +429,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 10
+export const FOLDER_SCHEMA = 11
 
 /**
  * The two channels a model load reports into.
@@ -540,6 +530,10 @@ function listResources(
         const contents = readdirSync(join(directory, child.name), { withFileTypes: true })
           .filter(item => item.name !== '.DS_Store')
         if (contents.length) ownsContent = true
+        continue
+      }
+      if (child.isDirectory() && type === 'screen' && child.name === 'screens') {
+        findings.issues.push(`${collection}/${id}/screens/: Screens never nest; fold each child into ${id} (its facts into entities, its Steps onto ${id}) or place it beside ${id} when it has a subject of its own`)
         continue
       }
       if (child.isDirectory()) {
@@ -1101,7 +1095,7 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 10 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 11 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -1301,19 +1295,17 @@ export function loadModel(cwd: string): PddModel {
   const screens: ScreenResource[] = []
 
   /*
-    Screens nest. An expanded Screen may hold `screens/`, and a child's id adds
-    one segment to its parent's, so containment stays a prefix test at every
-    depth. The container — the nearest Interface or Experience — is carried down
-    unchanged, since availability and audience never belong to a Screen.
+    Screens never nest: a tab or a wizard stage is part of one Screen, so a
+    Screen's parent is always the Interface or Experience whose folder holds it.
   */
-  const readScreens = (parent: string, containerId: string, parentId: string, label: string) => {
-    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`, ['screens'])) {
+  const readScreens = (parent: string, containerId: string, label: string) => {
+    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
       const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
         ['entities', 'entryPoints'],
         issues
       )
-      const id = qualify(parentId, location.id)
+      const id = qualify(containerId, location.id)
       screens.push({
         entities: screenEntitiesField(data, issues, location.file),
         id,
@@ -1324,11 +1316,9 @@ export function loadModel(cwd: string): PddModel {
         assets,
         assetMeta,
         containerId,
-        parentId,
         capabilities: [],
         entryPoints: entryPointsField(data, issues, location.file)
       })
-      if (location.expanded) readScreens(location.directory, containerId, id, `${label}/screens/${location.id}`)
     }
   }
 
@@ -1341,7 +1331,7 @@ export function loadModel(cwd: string): PddModel {
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readResource(
       productInterface,
-      ['type', 'actors', 'entryPoints', 'languages', 'navigation'],
+      ['type', 'actors', 'entryPoints', 'languages'],
       issues
     )
     interfaces.push({
@@ -1355,8 +1345,7 @@ export function loadModel(cwd: string): PddModel {
       type: stringField(data, 'type', issues, productInterface.file) || '',
       actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
       entryPoints: entryPointsField(data, issues, productInterface.file),
-      languages: uniqueStringListField(data, 'languages', issues, productInterface.file),
-      navigation: uniqueStringListField(data, 'navigation', issues, productInterface.file)
+      languages: uniqueStringListField(data, 'languages', issues, productInterface.file)
     })
 
     const experienceLocations = listResources(
@@ -1369,7 +1358,7 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation'], issues)
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -1381,17 +1370,16 @@ export function loadModel(cwd: string): PddModel {
         actors: uniqueStringListField(parsed.data, 'actors', issues, location.file),
         interface: productInterface.id,
         access: stringField(parsed.data, 'access', issues, location.file) || '',
-        entryPoints: entryPointsField(parsed.data, issues, location.file),
-        navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file)
+        entryPoints: entryPointsField(parsed.data, issues, location.file)
       })
-      readScreens(location.directory, experienceId, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
+      readScreens(location.directory, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
 
     // Screens beside experiences/ are shared across every Experience of this
     // Interface. A view common to several Experiences would otherwise have to be
     // duplicated into each of them.
     if (existsSync(join(productInterface.directory, 'screens'))) {
-      readScreens(productInterface.directory, productInterface.id, productInterface.id, `interfaces/${productInterface.id}`)
+      readScreens(productInterface.directory, productInterface.id, `interfaces/${productInterface.id}`)
     }
   }
 

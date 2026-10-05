@@ -4,7 +4,6 @@ actors: [reader]
 entryPoints:
   - mobile-app: content-reader://library
 languages: [en, de]
-navigation: [search]
 ---
 
 # Reader mobile application

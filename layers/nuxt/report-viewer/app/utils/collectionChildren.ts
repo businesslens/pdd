@@ -10,7 +10,7 @@
  * Scenarios are read on its page.
  */
 import type { AnyResourceView, ExperienceView, InterfaceView, ReportResourceKind, ReportWorkspace, RuleView, ScreenView } from './reportWorkspace'
-import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
+import { ENTITY_KIND_META } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
 import { entityOperation, ruleAttachments } from './topologyTargets'
 import { resourceAncestors } from './reportDestinations'
@@ -92,17 +92,9 @@ export function foldVariations(workspace: ReportWorkspace, parentId: string, nod
   return folded
 }
 
-/** A Screen's nested Screens, resolved in authored order. */
-export function childScreens(workspace: ReportWorkspace, screen: ScreenView): ScreenView[] {
-  return screen.childScreenIds.flatMap((id) => {
-    const child = workspace.byKey.get(resourceKey('screen', id))
-    return child?.kind === 'screen' ? [child] : []
-  })
-}
-
-/** The Screens a container holds directly; a nested Screen is its parent's child, not the container's. */
+/** The Screens a container holds. */
 export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView): ScreenView[] {
-  return workspace.screens.filter(screen => !screen.parentScreenId && screen.contexts.some(context =>
+  return workspace.screens.filter(screen => screen.contexts.some(context =>
     owner.kind === 'experience' ? context.experienceId === owner.id : context.interfaceId === owner.id && !context.experienceId))
 }
 
@@ -133,12 +125,7 @@ function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | Exper
 
 /** One hierarchy for collection cards and focused containment readings. */
 export function structureChildren(workspace: ReportWorkspace, resource: AnyResourceView): TreeCardNode[] {
-  /* A nested Screen sits under its parent Screen with no group between: the parent already says what kind it holds.
-     Its own Capabilities come first, then the Screens nested inside it. */
-  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, [
-    ...deliveryLeaves(workspace, screen),
-    ...foldVariations(workspace, screen.key, childScreens(workspace, screen).map(screenLeaf), screen)
-  ])
+  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, deliveryLeaves(workspace, screen))
   const screensOf = (owner: AnyResourceView) => ownedScreens(workspace, owner)
   const screenGroup = (owner: Place) => group(`${owner.key}:screens`, 'screen', foldVariations(workspace, `${owner.key}:screens`, screensOf(owner).map(screenLeaf), owner))
   if (resource.kind === 'interface') {

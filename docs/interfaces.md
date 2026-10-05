@@ -14,9 +14,6 @@ terms:
     aliases: [Starts at]
     anchor: the-file
     definition: "An address where an Actor arrives, such as a path, a deep link or a command."
-  - term: Navigation
-    anchor: navigation
-    definition: "The Screens an Actor can reach from anywhere inside an Interface or Experience, such as a cart or a search."
   - term: Experience
     anchor: experiences
     definition: "One part of an Interface, such as its public, signed-in or admin part, defined by who is there and what they can do."
@@ -26,10 +23,6 @@ terms:
   - term: Screen
     anchor: screens
     definition: "A place inside an Interface or Experience, named in the Product's own words, where an Actor sees facts and finds abilities."
-  - term: Child Screen
-    aliases: [Nested Screen]
-    anchor: screens-nest
-    definition: "A Screen inside another Screen that works on the same selected thing or process, such as a tab of one record or a step of a wizard."
 ---
 
 # Interfaces
@@ -77,7 +70,6 @@ type: web
 actors: [shopper]
 entryPoints:
   - web: /
-navigation: [catalog]
 ---
 
 # Customer web application
@@ -91,7 +83,6 @@ The browser interface through which shoppers browse and buy.
 | `actors` (required) | Who uses it: Entities that act |
 | `entryPoints` | Where Actors arrive, keyed by this Interface's `type`, or by another Interface's id when they arrive from there |
 | `languages` | The [Product's languages](./product.md#the-file) this Interface serves, when it serves fewer |
-| `navigation` | Screens reachable from anywhere inside it; see [Navigation](#navigation) |
 
 ## How it connects
 
@@ -156,7 +147,6 @@ signed-in Experience for its shoppers, and the two access modes divide it.
 | `actors` (required) | Who is there; each must be an Actor of the Interface |
 | `access` (required) | `public`, `authenticated` (signed in) or `restricted` (only the roles that administer the Product) |
 | `entryPoints` | Where Actors arrive, keyed by the containing Interface's id |
-| `navigation` | This Experience's own Screens reachable from anywhere inside it |
 
 `access` is the most open the part can be. A setting that opens or closes it,
 such as content public only while the store allows guests, is a condition on a
@@ -175,6 +165,10 @@ webhook usually has none.
   is used**, such as a product record, where shoppers add to the cart.
 - **Not for error or legal pages.** A not-found page or a privacy policy offers
   no ability; the condition it answers belongs in a Scenario.
+- **One subject, one Screen.** Everything that works on the same selected
+  thing or the same process is one Screen: an order's tabs, a wizard's stages.
+  Tabs or one long page, a wizard or one form, is design; the order of stages
+  lives in the Scenario's Steps.
 - **Not for every route or component.** A modal, a page, a URL and a breakpoint
   decide nothing, and a different drawing of the same information is one Screen.
 - **The same view on web and on mobile is two Screens with the same name**
@@ -183,7 +177,7 @@ webhook usually has none.
 ### Screen file
 
 `.../screens/<id>.md` inside its Interface or Experience, or `<id>/screen.md`
-once it holds child Screens or images.
+once it holds images. Screens never nest.
 
 ```md [interfaces/customer-web/experiences/storefront/screens/product-record.md]
 ---
@@ -216,13 +210,8 @@ name the Entity's [named facts](./entities.md#named-facts); a prefilled field is
 in both, and an Entity with no named facts is listed by its id alone. Facts a
 Step reads on a Screen must be in its `shows`.
 
-### Screens nest
-
-A Screen can hold child Screens; a child's id adds a segment, such as
-`customer-web::onboarding::choose-plan`. Nest a Screen only when it works on its
-parent's selected thing (the tabs of one order) or is a stage of the parent's
-wizard. Being opened from another Screen is not enough: a panel opened from
-search, a list and related items sits once in their common Interface or
+A view with a subject of its own, such as a panel opened from search, a list
+and related items, is its own Screen, placed once in their common Interface or
 Experience.
 
 ### Screens shared across Experiences
@@ -234,16 +223,11 @@ what it shows or offers differs by Experience, it is two Screens, one in each.
 
 ### Where a Step happens
 
-A Step names the most specific place it happens: the Screen, at any depth, when
-on one; otherwise the Experience or undivided Interface. A Step on a parent
-Screen happens on the parent itself, in none of its children.
+A Step names the most specific place it happens: the Screen when on one;
+otherwise the Experience or undivided Interface.
 
-### Navigation
-
-`navigation` lists the Screens reachable from anywhere inside an Interface or
-Experience (a catalog, a cart, a search), not how anyone moves; movement comes
-from Scenario Steps. A divided Interface lists only its shared Screens; each
-Experience lists its own. Menus and their order are design.
+Movement between Screens comes from Scenario Steps. Menus, and which Screens
+they hold, are design.
 
 ## Is this a design spec?
 
@@ -265,8 +249,9 @@ All of these are errors:
   Experiences need more than one access mode or audience, a counterpart or a
   Variation; and two with the same `access` share no Actor unless they are
   alternatives of one Variation.
-- Entry point keys, `languages` and `navigation` resolve, and a Step's place
-  lists the Step's Actor.
+- Entry point keys and `languages` resolve, and a Step's place lists the
+  Step's Actor.
+- A Screen never holds `screens/`: Screens never nest.
 - A Screen has a Capability from a Step placed on it, available wherever it
   sits; its `entities` resolve; facts read on it are in its `shows`.
 - Place ids are unique: a shared Screen and an Experience of one Interface

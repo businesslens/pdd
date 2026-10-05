@@ -23,7 +23,7 @@ to them.
 
 - **Exposure** — the Capabilities its own Steps use
 - **Presents** — the Entities it presents, with disclosed facts distinguished from collected inputs
-- **Nesting** — the parent it sits in and the Screens nested inside it
-- **Addresses** — where it answers, and whether it is reachable from every place in its container
+- **Placement** — the Interface or Experience that holds it
+- **Addresses** — where it answers
 
 - **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

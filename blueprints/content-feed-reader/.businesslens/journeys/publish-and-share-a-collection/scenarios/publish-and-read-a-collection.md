@@ -10,7 +10,7 @@ steps:
       - { entity: collection, from: Private, to: Published, facts: [Public address] }
     contexts:
       publish-on-web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Product exposes a stable public web address
     kind: product
     entities: []

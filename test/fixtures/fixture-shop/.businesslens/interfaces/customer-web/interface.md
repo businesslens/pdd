@@ -3,7 +3,6 @@ type: web
 actors: [shopper]
 entryPoints:
   - web: /
-navigation: [catalog]
 ---
 
 # Customer web application

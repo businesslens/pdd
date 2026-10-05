@@ -1,6 +1,6 @@
 import type { VariationKind, VariationMemberType } from '../core/variations.js'
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV15 } from '../core/portable.js'
+import type { ProductReportV16 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -10,7 +10,7 @@ import { loadModel } from '../core/model.js'
 import { qualify } from '../core/ids.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV15Schema,
+  ProductReportV16Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV15 {
+): ProductReportV16 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -114,7 +114,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV15 = {
+  const report: ProductReportV16 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -167,7 +167,6 @@ export function compileReport(
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
         languages: sorted(productInterface.languages),
-        navigation: sorted(productInterface.navigation.map(entry => qualify(productInterface.id, entry))),
         ...resourceContent(productInterface, [], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
@@ -178,7 +177,6 @@ export function compileReport(
         interfaceIds: [experience.interface],
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
-        navigation: sorted(experience.navigation.map(entry => qualify(experience.id, entry))),
         ...resourceContent(experience, [], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
@@ -352,24 +350,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV15Schema.parse(report)
+  const parsed = ProductReportV16Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV15
+  report: ProductReportV16
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV15 {
+export function compileWorkspaceReport(cwd: string): ProductReportV16 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV15 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV16 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

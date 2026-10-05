@@ -56,7 +56,7 @@ Use these exact compact and expanded paths:
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/`, `experiences/`, or both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
-| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | `screens/` |
+| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
 | Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 | Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
@@ -66,8 +66,8 @@ Use these exact compact and expanded paths:
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
 | Variation | `variations/<id>.md` | `variations/<id>/variation.md` | — |
 
-Here `<screen-parent>` is the Interface, Experience or expanded Screen folder
-that contains the Screen: Screens nest, to any depth.
+Here `<screen-parent>` is the Interface or Experience folder that contains the
+Screen. Screens never nest: `screens/` under a Screen is a `lint` error.
 
 There is no `actors/` collection: **an Actor is an Entity that `acts`**, and
 the word names the role such an Entity plays on a Step, an Interface, an
@@ -98,10 +98,9 @@ IDs are lowercase kebab-case segments. Behavior-hierarchy and cross-cutting ids
 are the bare file or folder name. Qualified ids for Interfaces, Experiences,
 and Screens carry their path joined by `::` —
 `reader-web::personal-library::unread-library` — because Experience and Screen
-names repeat across Interfaces on purpose. A nested Screen adds one segment per
-level — `customer-web::storefront::onboarding::choose-plan` — and containment
-is by id prefix: a Step on a child is inside the parent, and a Rule selector on
-the parent covers the child. Two resources of the same kind sharing a path
+names repeat across Interfaces on purpose. Containment is by id prefix: a Step
+on a Screen is inside its Experience and Interface, and a Rule selector on
+either covers it. Two resources of the same kind sharing a path
 suffix below their Interface are counterparts: the same thing on two
 Interfaces, each listing its own facts and Capabilities.
 
@@ -117,14 +116,14 @@ Scenario and Journey Scenario IDs share one global namespace. Only `product.md`
 declares `id:`. The first and only H1 is the title. Most resources use lead
 prose as their description; Journeys and both Scenario types instead use
 required named sections and must not contain lead prose. Put relations and
-navigation in frontmatter and Product meaning in prose. Product tags and every
+entry points in frontmatter and Product meaning in prose. Product tags and every
 relation ID list contain unique values. Each recognized H2 appears at most
 once; unrecognized H2 sections are preserved as structured supporting content.
 Lead and section-body fragments do not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 10` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 11` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, `languages`, H1, lead description, and optional
   `## Intent`. `summary` is one line of at most 400 characters, `category` is
@@ -152,17 +151,11 @@ Lead and section-body fragments do not contain another H1 or H2.
   keyed by this Interface's own type or by another Interface's id when a reader
   arrives from that surface;
   optional `languages`, a subset of the Product's (listing any while the
-  Product declares none is an error); optional `navigation`; H1, lead
-  description, and optional `## Intent`. `## Capability boundary` is an error:
-  `availability` on Capabilities already says what an Interface offers.
-  `navigation` is a unique list of Screen paths relative to the Interface
-  (`catalog`, `library::by-source`) that are reachable from every place inside
-  it — a cart, a global search; entries resolve. On a divided Interface only
-  shared Screens (those beside `experiences/`) and their descendants qualify.
-  Order carries no meaning. It is structure, not a relation: it creates no
-  transition (Steps say movement and entry points say arrival), and nothing
-  else about navigation — menus, sitemaps, back links, the order of items — is
-  authored. An outbound
+  Product declares none is an error); H1, lead description, and optional
+  `## Intent`. `## Capability boundary` is an error: `availability` on
+  Capabilities already says what an Interface offers. Nothing about
+  navigation is authored — menus, what they hold, sitemaps, back links: Steps
+  say movement and entry points say arrival. An outbound
   connection the Product opens is not an Interface: model it in the calling
   Capability, give that Capability an availability Context for where the Actor
   observes the result, and make its failure a Capability Scenario.
@@ -175,7 +168,7 @@ Lead and section-body fragments do not contain another H1 or H2.
   divided** below). A setting that closes it is a grant's `when` on the
   operations it restricts, never a reason for an Experience of its own, and so
   is a setting that opens it (anonymous access). Optional Interface-keyed
-  `entryPoints` and relative `navigation`; H1, lead and optional `## Intent`;
+  `entryPoints`; H1, lead and optional `## Intent`;
   `## Capability boundary` is an error. Whether an Interface holds Experiences
   is decided by those same two conditions. A Variation may span Interfaces
   without changing ownership.
@@ -325,18 +318,18 @@ Lead and section-body fragments do not contain another H1 or H2.
   no authored `capabilities` or `availability`. Capabilities derive from Steps
   placed exactly here (the owner for a Capability Scenario, the Step's
   `capability` for a Journey Scenario); at least one is required. Parent and
-  child sets remain separate. Each Entity entry is a bare id only for an Entity
+  Each Entity entry is a bare id only for an Entity
   without named facts, or `{ entity, shows?, collects? }` with at least one
   non-empty list of unique exact fact names. `shows` is disclosure; `collects`
   is Actor input, not read permission. Both may name a prefilled editable value.
-  Nest Screens only to subdivide a parent's persistent selected subject or
-  process: changing the parent context changes or ends the child. Tabs within
-  one resource reading and wizard stages qualify; choose the nearest qualifying
-  context as the parent. A process stage needs its own Actor decision or input
-  on the same draft or operation; a completion message, a generated credential
-  reveal or a read-only result is an Outcome on the process Screen, not a child.
-  A generic settings or category selector is neither a selected subject nor a
-  process. Opening a destination from a view never makes that view its owner: a
+  A Screen is one working context — one selected subject or one process in
+  progress — and Screens never nest. Tabs of one subject, its panels, and the
+  stages of one wizard are that one Screen, its `entities` their union: tabs or
+  one long page, a wizard or one form, is design, and Step order carries the
+  sequence. A completion message, a generated credential reveal or a read-only
+  result is an Outcome on the process Screen, not a Screen. A generic settings
+  or category selector is not a subject; each settings page with a subject of
+  its own is a Screen. Opening a destination from a view never makes that view its owner: a
   destination opened from several views sits once at their common Interface or
   Experience. URLs, co-visibility, modal versus page, and different drawings of
   the same information decide nothing; treat ambiguous ownership as a question
@@ -600,7 +593,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 10 it
+Context is the single model concept for where behavior applies. In schema 11 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
@@ -612,8 +605,8 @@ availability:
 ```
 
 An Experience belongs to exactly one Interface, so its id already names it. A
-Context place either names a declared Interface, Experience, or Screen at any
-depth or it does not. Availability is intended Product meaning, not
+Context place either names a declared Interface, Experience, or Screen or it
+does not. Availability is intended Product meaning, not
 implementation status.
 
 **Two conditions decide whether an Interface is divided.** It holds
@@ -633,7 +626,7 @@ once Experiences exist: reading access from who reaches each place is the
 author's. It checks the second on every Interface. Two Experiences of one
 Interface with the same `access` share no Actor unless they are alternatives of
 one Variation. A page closed only to some non-administrative roles stays
-`authenticated`, and an admin-only page inside administration is navigation
+`authenticated`, and an admin-only page inside administration is a Screen
 there: grants say who may act. A counterpart (an Experience whose name also
 exists under another Interface) and a Variation
 alternative keep their Experience even where the conditions alone would
@@ -664,8 +657,7 @@ Each Scenario route maps a stable kebab-case id to a human name. A placed Step
 maps every route id to its most-specific Context; a Step without `contexts` is
 shared by all routes and has no Context. Name the Screen when the Step occurs
 on one, otherwise the leaf Experience or undivided Interface even if other
-behavior there has Screens. A parent Screen is a place of its own; a Step
-there is on the parent, not in a child. Every route is placed at least once and
+behavior there has Screens. Every route is placed at least once and
 no two routes repeat one place sequence. A place change between
 consecutive placed Steps is a Context place transition.
 
@@ -862,7 +854,7 @@ historical version. When one alternative is left, remove the Variation and keep
 still-relevant meaning in ordinary content.
 
 A Variation is a relation, never containment: folders, Domains, Experience
-ownership, Screen nesting and Scenario parents stay as they are, and Rule
+ownership, Screen placement and Scenario parents stay as they are, and Rule
 targets, Steps and Contexts keep naming concrete resources. A Business Rule
 that is an alternative applies only under its `selectedWhen`, never
 unconditionally, so `lint` does not check its grants against Steps and Screens;

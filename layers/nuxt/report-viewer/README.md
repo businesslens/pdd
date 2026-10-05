@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v15 renderer used by `businesslens view` and exported
+The stable Product Report v16 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -52,15 +52,10 @@ Entities under Presents and Collects separately, omitting empty groups, and the
 Capabilities it exposes. There are no Information presented,
 Available actions, View states or Capability boundary readings, and References
 carry no state badge.
-Screens nest. A nested Screen appears as a child of its parent Screen in the
-Delivery tabs and the Interfaces tree card; its header trail names the parent Screens
-after the container. A Screen named in its container's `navigation` wears an
-Always reachable mark — a small anchor badge, an unreserved glyph — in those
-trees, in its own header and in its facts strip. Navigation is
-never drawn as an edge.
+Screens never nest: a Screen's header trail names its Interface and Experience.
 The Interfaces tree says what each place delivers, as ordinary items in its
 own branch, exactly as the Delivery map does: a Screen lists its own
-Capabilities first, never a child's, then the Screens nested inside it; an
+Capabilities; an
 Experience or Interface lists Capabilities with Steps placed exactly there,
 plus availability gaps exposed on no relevant Screen. Exposure on a Screen
 never removes behavior placed directly on its container. They are ordinary rows beside the place's Screens, so
@@ -320,7 +315,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV15` from `businesslens/report`. There is
+`report` must be a `ProductReportV16` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -416,7 +411,7 @@ resource readings. Available in uses
 the authored delivery routes shown by the Matrix, with one grouped picker for
 Interfaces, Experiences and Screens. An Interface includes delivery through its
 Experiences and Screens; an Experience includes its Screens. Parent availability
-does not invent delivery on every child Screen. Whole types and exact locations
+does not invent delivery on every Screen inside. Whole types and exact locations
 combine with OR. The Matrix keeps Interface columns and shows only matching
 routes. Capabilities have no separate Screen or Scenario filter. Attached to is one searchable
 picker grouped by resource type, with whole-type and individual-resource choices.

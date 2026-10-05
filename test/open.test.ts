@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV15 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV16 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV15): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV16): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -152,7 +152,7 @@ describe('open report', () => {
       .toMatch(/  - entity: catalog-product\n    shows:/)
   })
 
-  it('round-trips nested Screens and container-relative navigation', async () => {
+  it('refuses a report whose Screen nests inside another Screen', async () => {
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-nested-'))
     initialize(fresh)
     try {
@@ -162,38 +162,17 @@ describe('open report', () => {
         ...structuredClone(parent),
         id: 'customer-web::storefront::product-record::reviews',
         title: 'Reviews',
-        description: 'What other shoppers said.',
-        capabilityIds: ['browse-catalog'],
-        capabilityScenarioIds: ['browse-catalog'],
+        capabilityIds: [],
+        capabilityScenarioIds: [],
         journeyScenarioIds: [],
         entryPoints: [],
         references: []
       })
       report.counts.screens += 1
-      const browse = report.model.capabilityScenarios.find(scenario => scenario.id === 'browse-catalog')!
-      browse.steps.push({
-        ...structuredClone(browse.steps.at(-1)!),
-        text: 'The shopper reads its reviews',
-        contexts: browse.routes.map(route => ({
-          routeId: route.id,
-          placeId: route.id === 'web'
-            ? 'customer-web::storefront::product-record::reviews'
-            : 'customer-mobile::storefront::product-record'
-        }))
-      })
-      const storefront = report.model.experiences.find(experience => experience.id === 'customer-web::storefront')!
-      storefront.navigation = ['customer-web::storefront::product-record::reviews']
       const file = join(fresh, 'nested.json')
       writeFileSync(file, JSON.stringify(report))
-
-      expect(await runOpen(fresh, file, false)).toBe(0)
-      const imported = loadModel(fresh)
-      const child = imported.screens.find(screen => screen.id === 'customer-web::storefront::product-record::reviews')
-      expect(child).toMatchObject({ parentId: 'customer-web::storefront::product-record', containerId: 'customer-web::storefront' })
-      expect(existsSync(join(fresh, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screen.md'))).toBe(true)
-      expect(existsSync(join(fresh, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screens/reviews.md'))).toBe(true)
-      expect(imported.experiences.find(experience => experience.id === 'customer-web::storefront')?.navigation)
-        .toEqual(['product-record::reviews'])
+      expect(await runOpen(fresh, file, false)).toBe(1)
+      expect(existsSync(join(fresh, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screens'))).toBe(false)
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
@@ -287,7 +266,7 @@ describe('open report', () => {
       expect(readFileSync(join(fresh, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
         .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 10')
+        .toContain('schema: 11')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))

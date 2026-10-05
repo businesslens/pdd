@@ -34,10 +34,9 @@ external systems, or live data state from source code.
   cites.
 - **Screens.** Compare each place against its view's code: the facts disclosed
   match `shows` and the inputs match `collects`; each derived Capability is one
-  a Step placed there uses; each child Screen subdivides its parent's
-  persistent working context; each `navigation` Screen is reachable from every
-  place in its container. Never require component, layout, theme, ordinary
-  copy, viewport, or screenshot similarity.
+  a Step placed there uses; each Screen is one working context, its tabs and
+  wizard stages included. Never require component, layout, theme, menu,
+  ordinary copy, viewport, or screenshot similarity.
 - **Languages.** Confirm the Product's `languages` against the locales the code
   serves, and each Interface's list against what that surface loads.
 - **Who may.** For each Business Rule with `permits`, confirm the code lets
@@ -69,20 +68,24 @@ The model records what an Actor can reach, see, supply, do and trigger at each
 place. It never says how that looks or is built. The redesign test decides
 which side a difference falls on:
 
-> Rebuild a view with a different component library, layout, typography,
-> colors, spacing, icons, motion and copy. Everything that would still have to
-> be true is the model's: who can reach the view, what facts it shows, what
-> abilities it offers, what conditions change that, and what happens next.
-> Everything the redesign is free to change is design's, and the model says
-> nothing about it.
+> Rebuild the surface from scratch: a web or mobile view with a different
+> component library, layout, typography, colors, spacing, icons, motion and
+> copy; a CLI with a different command style; an API in a different style, CRUD
+> or RPC. Everything that would still have to be true is the model's: who can
+> reach the place, what facts it shows, what abilities it offers, what
+> conditions change that, and what happens next. Everything the rebuild is free
+> to change is design's, and the model says nothing about it.
 
 A difference the redesign is free to make is never a finding: component
 libraries, theming, layout, typography, color, iconography, motion, copy,
-gestures, breakpoints, loading and hover states, navigation chrome and order
-belong in `visual` References with `role: intent`. Ordinary copy is design;
-compare exact wording only when a Business Rule requires its
-authoritative Reference, and report it unverifiable when that source is
-unavailable.
+gestures, modal versus page, tabs versus one page, a wizard versus one form,
+breakpoints, loading and hover states, menus and what they contain, a CLI's
+command syntax, flags and output format, and an API's style (CRUD or RPC),
+paths and payloads belong in `visual`, `doc` or `spec` References with
+`role: intent`. Ordinary copy is design; compare exact
+wording, or a committed quality such as an accessibility conformance level,
+only when a Business Rule requires its authoritative Reference, and report it
+unverifiable when that source is unavailable.
 
 ## Separate scope from authority
 

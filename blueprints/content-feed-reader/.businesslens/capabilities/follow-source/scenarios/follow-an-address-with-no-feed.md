@@ -22,7 +22,7 @@ steps:
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::add-source::feed-address
+        place: reader-web::personal-library::add-source
       mobile:
         place: reader-mobile::personal-library::source-list
       mobile-source-focused:
@@ -32,7 +32,7 @@ steps:
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::add-source::feed-address
+        place: reader-web::personal-library::add-source
       mobile:
         place: reader-mobile::personal-library::source-list
       mobile-source-focused:
@@ -42,7 +42,7 @@ steps:
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::add-source::feed-address
+        place: reader-web::personal-library::add-source
       mobile:
         place: reader-mobile::personal-library::source-list
       mobile-source-focused:
@@ -52,7 +52,7 @@ steps:
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::add-source::feed-address
+        place: reader-web::personal-library::add-source
       mobile:
         place: reader-mobile::personal-library::source-list
       mobile-source-focused:

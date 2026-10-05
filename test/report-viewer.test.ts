@@ -715,7 +715,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV15')
+    expect(renderer).toContain('ProductReportV16')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -1470,20 +1470,19 @@ describe('composed lifecycle', () => {
 })
 
 /*
- * Product Report v15: a Screen presents facts, Screens nest, a container leads
- * with what it delivers, and navigation is a mark. The nested Screen is built by
- * hand on top of the fixture so the reading is pinned to the wire, not to
- * whichever fixture happens to nest today.
+ * Product Report v16: a Screen presents facts, Screens never nest, and a
+ * container leads with what it delivers. The second Screen is built by hand on
+ * top of the fixture so the reading is pinned to the wire.
  */
-describe('Screens on the v15 wire', () => {
+describe('Screens on the v16 wire', () => {
   const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
   const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
   const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'
   const destinationsModulePath = '../layers/nuxt/report-viewer/app/utils/reportDestinations.ts'
   const PARENT = 'customer-web::storefront::product-record'
-  const CHILD = `${PARENT}::reviews`
+  const CHILD = 'customer-web::storefront::reviews'
 
-  /* One Step that changes something moves from the parent Screen to a child nested inside it. */
+  /* One Step that changes something moves from one Screen to a second beside it. */
   function nestedReport() {
     const report = compileReport(loadModel(FIXTURE), '2026-09-21')
     const parent = report.model.screens.find(screen => screen.id === PARENT)!
@@ -1504,7 +1503,6 @@ describe('Screens on the v15 wire', () => {
       entryPoints: [],
       references: []
     })
-    report.model.experiences.find(item => item.id === 'customer-web::storefront')!.navigation = [CHILD]
     return { report, scenario, step }
   }
 
@@ -1574,36 +1572,19 @@ describe('Screens on the v15 wire', () => {
     expect(chip).toContain("props.outcome ? [] : props.mention.facts")
   })
 
-  it('files a nested Screen under its parent Screen in every containment reading', async () => {
-    const { structureChildren, childScreens } = await import(collectionChildrenModulePath)
-    const { interfaceProjection } = await import(projectionsModulePath)
-    const { resourceAncestors } = await import(destinationsModulePath)
-    const workspace = projectReportWorkspace(nestedReport().report)
-    const child = workspace.screens.find((item: any) => item.id === CHILD)!
-    const parent = workspace.screens.find((item: any) => item.id === PARENT)!
-    expect(child.parentScreenId).toBe(PARENT)
-    expect(parent.childScreenIds).toEqual([CHILD])
-    expect(childScreens(workspace, parent)).toEqual([child])
-    // The nearest container is found through the parent Screen, not assumed one segment up.
-    expect(child.contexts.map((context: any) => [context.interfaceId, context.experienceId, context.screenId]))
-      .toEqual([['customer-web', 'customer-web::storefront', '']])
-    expect(child.interfaceIds).toEqual(['customer-web'])
-    expect(resourceAncestors(workspace, child).map((item: any) => item.key))
-      .toEqual(['interface:customer-web', 'experience:customer-web::storefront', `screen:${PARENT}`])
-
-    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
-    const experience = workspace.experiences.find((item: any) => item.id === 'customer-web::storefront')!
-    const tree = structureChildren(workspace, experience)
-    const parentNode = flatten(tree).find((node: any) => node.resource?.key === parent.key)!
-    expect(parentNode.children.filter((node: any) => node.resource?.kind === 'screen').map((node: any) => node.resource.key)).toEqual([child.key])
-    expect(tree[0].children.some((node: any) => node.resource?.key === child.key)).toBe(false)
-    const branch = interfaceProjection(workspace).find((item: any) => item.id === 'interface:customer-web')!
-    const parentBranch = flatten(branch.children).find((node: any) => node.resource?.key === parent.key)!
-    expect(parentBranch.children.map((node: any) => node.resource.key)).toEqual([child.key])
-
+  it('refuses a Screen nested inside another Screen on the wire', async () => {
+    const { validateProductReport } = await import('../src/core/portable.js')
+    const { report } = nestedReport()
+    expect(validateProductReport(report).some(issue => issue.includes('never nest'))).toBe(false)
+    const nested = report.model.screens.find(screen => screen.id === CHILD)!
+    for (const scenario of report.model.capabilityScenarios) {
+      for (const step of scenario.steps) for (const context of step.contexts) if (context.placeId === CHILD) context.placeId = `${PARENT}::reviews`
+    }
+    nested.id = `${PARENT}::reviews`
+    expect(validateProductReport(report)).toContain(`screen "${PARENT}::reviews": Screens never nest; its parent "${PARENT}" is a Screen`)
   })
 
-  it('reads a place\'s Delivery through the Scenarios placed exactly there, never on a nested place', async () => {
+  it('reads a place\'s Delivery through the Scenarios placed exactly there', async () => {
     const { placeDelivery, placeJourneys } = await import(placeReadingsModulePath)
     const { report, scenario, step } = nestedReport()
     const workspace = projectReportWorkspace(report)
@@ -1633,7 +1614,7 @@ describe('Screens on the v15 wire', () => {
         }
       }
     }
-    /* The Step moved to the child is read there, and no longer on the parent. */
+    /* The Step moved to the second Screen is read there, and no longer on the first. */
     const index = scenario.steps.indexOf(step)
     const onChild = placeDelivery(workspace, child).find((group: any) => group.capability.id === scenario.capabilityId)!
     expect(onChild.stepsHere[`capability-scenario:${scenario.id}`]).toContain(index)
@@ -1735,28 +1716,6 @@ describe('Screens on the v15 wire', () => {
     const cliNode = map.find((item: any) => item.id === cli.key)!
     expect(unfold(cliNode.children).every((item: any) => item.resource?.kind === 'journey'
       || (item.resource?.kind === 'capability' && !item.note))).toBe(true)
-  })
-
-  it('marks a Screen named in its container\'s navigation as always reachable, and never draws it as an edge', async () => {
-    const { interfaceProjection } = await import(projectionsModulePath)
-    const { report } = nestedReport()
-    const workspace = projectReportWorkspace(report)
-    const catalog = workspace.screens.find((item: any) => item.id === 'customer-web::catalog')!
-    const nested = workspace.screens.find((item: any) => item.id === CHILD)!
-    expect(catalog.alwaysReachable).toBe(true)
-    expect(nested.alwaysReachable).toBe(true)
-    expect(workspace.screens.filter((item: any) => item.alwaysReachable).map((item: any) => item.id).sort()).toEqual([CHILD, 'customer-web::catalog'].sort())
-    expect(resourceFacts(workspace, catalog).map((fact: any) => [fact.label, fact.value])).toEqual([
-      ['Presents', '1'], ['Capabilities', String(catalog.capabilityIds.length)], ['Navigation', 'Always reachable']
-    ])
-    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
-    const branches = flatten(interfaceProjection(workspace))
-    expect(branches.find((node: any) => node.resource?.key === catalog.key).note).toBe('Shared Screen · Always reachable')
-    expect(branches.find((node: any) => node.resource?.key === nested.key).note).toBe('Always reachable')
-    expect(source('nuxt.config.ts')).toContain("'lucide:anchor'")
-    expect(source('app/components/BlrResourceTree.vue')).toContain('<BlrNavigationMark')
-    expect(source('app/components/BlrResourceHeading.vue')).toContain('<BlrNavigationMark')
-
   })
 
   it('reads languages without exposing version metadata', () => {

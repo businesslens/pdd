@@ -137,7 +137,8 @@ Read before authoring:
   are an undivided Interface or an Experience, and never use them as
   implementation status.
 - Model a Screen only as a place, never design; the rubric's **Places, not
-  designs** test decides.
+  designs** test decides. One subject or process is one Screen, its tabs and
+  wizard stages included; never nest Screens or author menus.
 - Keep visuals and research external through References. Use `role: intent` for
   curated inputs and `role: context` for background; neither is an acceptance
   receipt.

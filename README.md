@@ -48,6 +48,19 @@ They fill the gaps by guessing, and the guesses ship.
 lives in this repository's [`.businesslens/` folder](./.businesslens/), and the
 demo above is that model in the local report.
 
+## What the model covers, and what it doesn't
+
+The model keeps what any rebuild of a web app, CLI or API would have to keep,
+and nothing a rebuild is free to change:
+
+| In the model | Left to design |
+| --- | --- |
+| Who can reach each place | Colors, typography, copy |
+| What it shows and asks for | Components, layout, modals |
+| What can be done there | Tabs, wizards and menus |
+| Which rules apply | CLI syntax and flags |
+| What happens next | API style: CRUD or RPC |
+
 ## Features
 
 * 🤖 **Agent skills:** map, ideate and verify for Claude Code, Codex, Cursor, Gemini CLI and GitHub Copilot

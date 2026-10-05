@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV15,
+  ProductReportV16,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -51,7 +51,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV15['references']): Array<Record<string, string>> {
+function references(value: ProductReportV16['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -81,19 +81,15 @@ function idSegments(id: string): string[] {
  * Where a Screen expands to.
  *
  * The id carries the whole placement: the Interface, then an Experience where
- * the second segment names one, then one Screen segment per nesting level. A
- * Screen with child Screens takes the expanded form so it can hold `screens/`.
+ * the id has three segments. Screens never nest, so a Screen is always compact.
  */
-function screenPath(root: string, id: string, experienceIds: Set<string>, parentScreenIds: Set<string>): string {
+function screenPath(root: string, id: string): string {
   const parts = idSegments(id)
   const interfaceId = parts[0]!
-  const underExperience = parts.length > 2 && experienceIds.has(`${interfaceId}::${parts[1]!}`)
-  let directory = underExperience
+  const directory = parts.length === 3
     ? join(root, 'interfaces', interfaceId, 'experiences', parts[1]!)
     : join(root, 'interfaces', interfaceId)
-  const screenSegments = parts.slice(underExperience ? 2 : 1)
-  for (const segment of screenSegments.slice(0, -1)) directory = join(directory, 'screens', segment)
-  return resourcePath(join(directory, 'screens'), screenSegments.at(-1)!, 'screen', parentScreenIds.has(id))
+  return resourcePath(join(directory, 'screens'), parts.at(-1)!, 'screen', false)
 }
 
 /** Compact until a resource needs a namespace for children or assets. */
@@ -198,7 +194,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -227,14 +223,6 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
     }) + body('Coverage', '', '', [], [])
   )
 
-  const experienceIds = new Set(report.model.experiences.map(experience => experience.id))
-  const screenIds = new Set(report.model.screens.map(screen => screen.id))
-  const parentScreenIds = new Set(
-    report.model.screens.map(screen => idSegments(screen.id).slice(0, -1).join('::')).filter(id => screenIds.has(id))
-  )
-  /* `navigation` is authored relative to its container; the wire carries full ids. */
-  const relativeNavigation = (containerId: string, entries: string[]) =>
-    entries.map(entry => entry.startsWith(`${containerId}::`) ? entry.slice(containerId.length + 2) : entry)
   for (const productInterface of report.model.interfaces) {
     const hasChildren = report.model.experiences.some(experience => idSegments(experience.id)[0] === productInterface.id)
       || report.model.screens.some(screen => idSegments(screen.id)[0] === productInterface.id)
@@ -245,7 +233,6 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         actors: productInterface.actorIds,
         entryPoints: entryPoints(productInterface.entryPoints),
         languages: productInterface.languages,
-        navigation: relativeNavigation(productInterface.id, productInterface.navigation),
         references: references(productInterface.references)
       })) + body(
         productInterface.title,
@@ -309,7 +296,6 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
         actors: experience.actorIds,
         access: experience.accessMode,
         entryPoints: entryPoints(experience.entryPoints),
-        navigation: relativeNavigation(experience.id, experience.navigation),
         references: references(experience.references)
       })) + body(
         experience.title,
@@ -322,7 +308,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
   }
   for (const screen of report.model.screens) {
     write(
-      screenPath(root, screen.id, experienceIds, parentScreenIds),
+      screenPath(root, screen.id),
       frontmatter(compactRecord({
         entities: screen.entities.length
           ? screen.entities.map(entry => entry.shows.length || entry.collects.length ? compactRecord({ entity: entry.entityId, shows: entry.shows, collects: entry.collects }) : entry.entityId)
@@ -410,8 +396,8 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV15['model']['capabilityScenarios'][number]
-      | ProductReportV15['model']['journeyScenarios'][number]
+      | ProductReportV16['model']['capabilityScenarios'][number]
+      | ProductReportV16['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -520,7 +506,7 @@ function writeReport(root: string, report: ProductReportV15, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV15
+  report: ProductReportV16
   root: string
 }
 
