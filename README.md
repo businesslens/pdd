@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/images/report-overview.webp" alt="The local report open on a Blueprint's overview page" width="640">
+  <img src="./.github/demo.gif" alt="A tour of the local report: npx businesslens view opens a Blueprint's Product Model, then its Entities, Capabilities, Interfaces and Business Rules, each drawn more than one way" width="800">
 </p>
 
 ---

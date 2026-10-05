@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- The README opens with a short animated tour of the local report.
+
 ## [0.24.1] - 2026-10-05
 
 - A shorter README that says what BusinessLens does, why it matters and how to start, with an animated development loop.

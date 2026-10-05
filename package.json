@@ -64,6 +64,7 @@
     "dev": "node scripts/dev.mjs",
     "dev:unlink": "node scripts/dev.mjs --unlink",
     "view:fixture": "node scripts/view-fixture.mjs",
+    "demo:record": "node scripts/record-demo.mjs",
     "typecheck": "tsc --noEmit",
     "typecheck:viewer": "npm run typecheck --workspace @businesslens/local-report-viewer",
     "test": "vitest run",
