@@ -1,5 +1,5 @@
 ---
-kind: failure
+kind: edge
 routes:
   web: Web
 steps:
@@ -11,7 +11,7 @@ steps:
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
-  - text: Drafting cannot be done at the moment
+  - text: The language model cannot be reached or returns nothing usable
     kind: condition
     entities: []
     contexts:
@@ -36,11 +36,11 @@ steps:
         place: forms-web::form-workspace::form-detail
 ---
 
-# Draft while drafting is unavailable
+# Draft while the language model is unavailable
 
 ## Trigger
 
-The Creator asks for suggested questions while drafting is unavailable.
+The Creator asks for drafts while the language model the Product calls is unavailable.
 
 ## Outcome
 

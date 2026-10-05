@@ -4,8 +4,8 @@ colorSlot: 2
 
 # Responses
 
-Reading what a form received: each response, the answers to each question, the
-Assistant's summary of themes, and the exported file.
+Reading what a form received: each response, the answers to each question, a
+summary of the themes in written answers, and the exported file.
 
 ## Boundary
 

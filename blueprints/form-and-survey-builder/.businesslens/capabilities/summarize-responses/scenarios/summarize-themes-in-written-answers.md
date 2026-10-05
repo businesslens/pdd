@@ -12,9 +12,9 @@ steps:
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
-  - text: The Assistant reads the written answers and groups them into themes
-    kind: actor
-    actor: assistant
+  - text: The Product asks a language model to group the written answers into themes
+    kind: product
+    actor: creator
     entities:
       - { entity: response, effect: reads, facts: [Answers] }
       - { entity: question, effect: reads, facts: [Prompt] }
@@ -51,4 +51,4 @@ The Creator sees the themes in the written answers and can open the responses be
 
 ## Edge cases
 
-- Summarizing cannot be done at the moment → the Product says so, and the responses stay readable as they are.
+- The language model cannot be reached → the Product says no summary could be made, and the responses stay readable as they are.

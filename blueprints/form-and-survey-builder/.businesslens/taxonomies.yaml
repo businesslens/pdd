@@ -11,7 +11,3 @@ scenarioKinds:
     name: Validation
     description: Input the Product refuses while preserving the Actor's work.
     colorSlot: 3
-  - id: failure
-    name: Failure
-    description: A service the Product depends on cannot help, and the Product keeps the Actor's work.
-    colorSlot: 5

@@ -5,7 +5,7 @@ colorSlot: 1
 # Questions
 
 Building what a form asks: its title and introduction, its questions in order,
-which answers are required, when a question is shown, and the Assistant's
+which answers are required, when a question is shown, and the drafted
 suggested questions waiting for the Creator to decide.
 
 ## Boundary

@@ -4,8 +4,8 @@ domain: questions
 
 # Suggested question
 
-A question the Assistant drafted for a form, waiting beside it for its Creator
-to decide. It is not part of the form and no Respondent ever sees it.
+A question the Product drafted for a form at its Creator's request, waiting
+beside it for the Creator to decide. It is not part of the form and no Respondent ever sees it.
 
 ## Information kept
 

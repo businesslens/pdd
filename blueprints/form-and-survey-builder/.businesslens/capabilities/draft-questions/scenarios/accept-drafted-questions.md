@@ -11,9 +11,9 @@ steps:
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
-  - text: The Assistant drafts suggested questions from the goal and the form's existing questions
-    kind: actor
-    actor: assistant
+  - text: The Product asks a language model to draft suggested questions from the goal and the form's existing questions
+    kind: product
+    actor: creator
     entities:
       - { entity: suggested-question, as: kept, effect: creates, to: Proposed, facts: [Prompt, Answer type] }
       - { entity: suggested-question, as: unwanted, effect: creates, to: Proposed, facts: [Prompt, Answer type] }

@@ -14,5 +14,5 @@ type, options, whether it is required, and when it is shown.
 
 ## Rationale
 
-Respondents answer what the Creator asked; nobody else, the Assistant
-included, rewords a question after the Creator has put it on the form.
+Respondents answer what the Creator asked; nothing rewords a question after
+the Creator has put it on the form.
