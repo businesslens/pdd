@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- The README opens with a short animated tour of the local report.
-- The changelog names the pull request and commit behind every entry, the contributors to each release, and its full comparison, and reads the same on businesslens.io.
+## [0.24.2] - 2026-10-05
+
+- The README opens with a short animated tour of the local report. ([#79](https://github.com/businesslens/pdd/pull/79)) ([012b16d](https://github.com/businesslens/pdd/commit/012b16d267ba219fb00d3bef13ffd97f1d5affa1))
+- The changelog names the pull request and commit behind every entry, the contributors to each release, and its full comparison, and reads the same on businesslens.io. ([#73](https://github.com/businesslens/pdd/pull/73)) ([3a46c36](https://github.com/businesslens/pdd/commit/3a46c362e7d7716a5b5804e02303f44a595d4c7b))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.24.1...v0.24.2][0.24.2]
 
 ## [0.24.1] - 2026-10-05
 
@@ -1007,7 +1015,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.24.1...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.24.2...HEAD
+[0.24.2]: https://github.com/businesslens/pdd/compare/v0.24.1...v0.24.2
 [0.24.1]: https://github.com/businesslens/pdd/compare/v0.24.0...v0.24.1
 [0.24.0]: https://github.com/businesslens/pdd/compare/v0.23.1...v0.24.0
 [0.23.1]: https://github.com/businesslens/pdd/compare/v0.23.0...v0.23.1
