@@ -16,11 +16,11 @@ permits:
 
 Bookmarks, collections and tags are added, changed and removed only by the
 Owner's own action: saving, editing, deleting, importing, or accepting or
-merging a suggestion. The assistant reads the library and prepares
-suggestions; it never files, tags, merges or deletes anything itself.
+merging a suggestion. The AI agent reads the library and leaves suggestions; it
+never files, tags, merges or deletes anything itself.
 
 ## Rationale
 
-The library is one person's memory of what they found worth keeping. An
-assistant that could rearrange it on its own would make the Owner unsure where
-anything is, so every change it proposes waits for the Owner.
+The library is one person's memory of what they found worth keeping. An agent
+that could rearrange it on its own would make the Owner unsure where anything
+is, so every change it proposes waits for the Owner.

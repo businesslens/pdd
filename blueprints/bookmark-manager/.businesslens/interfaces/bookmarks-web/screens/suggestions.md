@@ -10,12 +10,12 @@ entryPoints:
 
 # Suggestions
 
-Presents the assistant's pending suggestions, each with the bookmarks it
-names and the assistant's reason: where to file bookmarks and which tags to
-add, and which bookmarks lead to the same page. The Owner asks the assistant
-for suggestions here, and accepts, merges or declines each one.
+Presents the pending suggestions the Owner's AI agent left, each with the
+bookmarks it names and the agent's reason: where to file bookmarks and which
+tags to add, and which bookmarks lead to the same page. The Owner accepts,
+merges or declines each one.
 
 ## Intent
 
-Keep every change the assistant proposes in one place where the Owner decides
+Keep every change the AI agent proposes in one place where the Owner decides
 it, and nowhere it could take effect on its own.

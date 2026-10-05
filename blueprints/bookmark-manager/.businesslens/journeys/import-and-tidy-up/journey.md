@@ -7,9 +7,9 @@ actors: [owner]
 ## Goal
 
 The Owner wants the bookmarks they kept in a browser in the library, filed
-into collections and with no page kept twice.
+into collections.
 
 ## Success criterion
 
-The imported bookmarks are filed and the duplicates among them merged, through
-suggestions the Owner accepted.
+The imported bookmarks are filed in the collections the Owner decided, by hand
+or by accepting their AI agent's suggestions.

@@ -39,6 +39,7 @@ steps:
         place: bookmarks-web::suggestions
   - text: Nothing the suggestion did not name has changed
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:

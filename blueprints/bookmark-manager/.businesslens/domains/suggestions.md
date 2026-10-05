@@ -4,8 +4,8 @@ colorSlot: 2
 
 # Suggestions
 
-The assistant's proposals for tidying the library and the Owner's decisions
-about them: preparing suggestions, accepting a filing, merging duplicates, and
+An AI agent's proposals for tidying the library and the Owner's decisions about
+them: leaving suggestions, accepting a filing, merging duplicates, and
 declining what does not fit.
 
 ## Boundary

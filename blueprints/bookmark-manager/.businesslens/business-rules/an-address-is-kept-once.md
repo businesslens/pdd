@@ -14,5 +14,5 @@ bookmarks until the Owner merges them.
 ## Rationale
 
 A second copy of the same link only splits its tags and notes in two. Exact
-repeats are refused where they arrive; near repeats need judgment, which is
-the assistant's to suggest and the Owner's to decide.
+repeats are refused where they arrive; near repeats need judgment, which is the
+AI agent's to suggest and the Owner's to decide.

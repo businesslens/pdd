@@ -8,7 +8,7 @@ These are assumptions to validate, not claims that research has proved them.
   a personal library; nested collections are not needed to find things again.
 - A browser export is the one import people already know how to make, and its
   folders are a useful hint for collections even when they are out of date.
-- People accept an assistant's filing suggestions when each one says why, and
+- People accept an AI agent's filing suggestions when each one says why, and
   only when nothing changes until they accept it.
 - The same page saved twice under slightly different addresses is the
   duplicate people actually have; an exact repeat is better caught at saving.

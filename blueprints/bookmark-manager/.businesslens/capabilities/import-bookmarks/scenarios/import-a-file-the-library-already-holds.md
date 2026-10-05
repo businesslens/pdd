@@ -20,6 +20,7 @@ steps:
         place: bookmarks-web::import
   - text: The library already keeps every address in the file
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [Address] }
     contexts:
@@ -43,5 +44,4 @@ The Owner imports a file whose bookmarks all came in before.
 
 ## Outcome
 
-The library is unchanged, the Owner stays on Import knowing why, and the
-assistant is given nothing to review.
+The library is unchanged, and the Owner stays on Import knowing why.

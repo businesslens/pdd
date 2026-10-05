@@ -28,6 +28,7 @@ steps:
         place: bookmarks-web::collection
   - text: The bookmarks filed in it stay filed there, unchanged
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:

@@ -55,6 +55,7 @@ steps:
         place: bookmarks-mobile::save-link
   - text: The bookmark is in the chosen collection, or Unsorted when none was chosen
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
       - { entity: collection, effect: reads, facts: [] }
