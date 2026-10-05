@@ -19,9 +19,9 @@ BusinessLens installs exactly three skills:
 Map and ideate answer opposite questions: “what already exists?” and “what
 should exist?” Verify owns the loop between those authorities after code moves.
 
-The three installed skills are self-contained. See the
-[development loop](./index.md#the-development-loop) for how ideate and verify surround your build
-workflow.
+The three installed skills are self-contained. None of them implements: see
+the [development loop](./index.md#the-development-loop) for how ideate and
+verify surround the implementation you do in your own workflow.
 
 Catalog contribution is a deterministic CLI workflow:
 

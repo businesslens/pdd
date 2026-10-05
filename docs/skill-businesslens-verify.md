@@ -11,7 +11,7 @@ order: 19
 **Verify checks that the Product Model and the code agree, and fixes each gap
 the way you decide.**
 
-Use it after you build a change, after a refactor, when you suspect drift, or
+Use it after you implement a change, after a refactor, when you suspect drift, or
 before a release.
 
 ```text
@@ -34,8 +34,8 @@ With no scope, it checks what changed on the current branch.
 4. **The fix, after you approve.** A model change is shown in full and written;
    a code change goes to your coding agent.
 5. **A fresh check after every change.** Earlier findings are discarded and
-   derived again. If the same gap comes back unchanged after a build, it stops
-   rather than loop.
+   derived again. If the same gap comes back unchanged after an implementation
+   attempt, it stops rather than loop.
 6. **A report**: what was checked, what agrees, what changed, what is still
    blocked, and the final lint result. It says "aligned for the inspected
    scope", never "the whole product is proven" unless it checked everything.

@@ -1,6 +1,6 @@
 ---
 title: From a Blueprint
-description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then build and verify.
+description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then implement and verify.
 section: open-source
 group: Get started
 order: 4
@@ -46,11 +46,11 @@ were given.
    npx businesslens view
    ```
 
-3. If it fits, hand it to your normal plan and build flow. If you want
-   something more or different, run `/businesslens-ideate`, approve the model
-   change, then build.
+3. If it fits, implement it in your existing workflow. If you want something
+   more or different, run `/businesslens-ideate`, approve the model change,
+   then implement.
 
-4. After building, check the code against the model:
+4. After implementing, check the code against the model:
 
    ```text
    /businesslens-verify

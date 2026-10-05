@@ -38,7 +38,7 @@ describe('public workflow contract', () => {
   it('keeps ideation approval-gated and implementation-external', () => {
     const source = skill('businesslens-ideate')
     expect(source).toContain('Get explicit approval')
-    expect(source).toContain('injected build flow')
+    expect(source).toContain('implementation in the user\'s own workflow')
     expect(source).toContain('Do not implement from this skill')
   })
 
