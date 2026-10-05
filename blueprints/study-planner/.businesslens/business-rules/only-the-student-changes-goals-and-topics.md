@@ -22,7 +22,7 @@ permits:
 # Only the Student changes goals and topics
 
 Goals, their target dates, their topics and the topics' estimates are set and
-changed only by the Student. The Planning assistant plans from them as they
+changed only by the Student. The AI agent plans from them as they
 are and never adjusts an estimate or a date to make a plan fit.
 
 ## Rationale

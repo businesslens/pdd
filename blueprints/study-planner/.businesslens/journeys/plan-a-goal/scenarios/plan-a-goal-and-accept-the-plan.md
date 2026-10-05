@@ -2,42 +2,44 @@
 kind: primary
 result: achieved
 routes:
-  web: Web
+  web-and-agent: Web and agent
 steps:
-  - text: The Student picks a goal, confirms their weekly availability and asks for a plan
+  - text: The Student sets the hours they can study each day
     kind: actor
     actor: student
-    capability: propose-study-plan
+    capability: edit-weekly-availability
     entities:
-      - { entity: goal, effect: reads, facts: [Name] }
       - { entity: student, facts: [Weekly availability] }
     contexts:
-      web:
+      web-and-agent:
         place: planner-web::plans
-  - text: The Planning assistant proposes a plan that divides the study still to do across that availability
+  - text: The AI agent leaves a plan that divides the study still to do across that availability
     kind: actor
-    actor: planning-assistant
+    actor: ai-agent
     capability: propose-study-plan
     entities:
       - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
       - { entity: student, effect: reads, facts: [] }
-  - text: The Product opens the proposed plan for review
-    kind: product
-    actor: student
-    capability: propose-study-plan
-    entities:
-      - { entity: study-plan, effect: reads, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
-      - { entity: goal, effect: reads, facts: [Name, Target date] }
     contexts:
-      web:
-        place: planner-web::plan-review
-  - text: The Student accepts the plan
+      web-and-agent:
+        place: planner-agent
+  - text: The Student opens the plan waiting in Plans
     kind: actor
     actor: student
     capability: accept-study-plan
-    entities: []
+    entities:
+      - { entity: study-plan, effect: reads, facts: [Prepared at] }
     contexts:
-      web:
+      web-and-agent:
+        place: planner-web::plans
+  - text: The Student reviews the proposed sessions and the explanation, and accepts the plan
+    kind: actor
+    actor: student
+    capability: accept-study-plan
+    entities:
+      - { entity: study-plan, effect: reads, facts: [Proposed sessions, Replaced sessions, Explanation] }
+    contexts:
+      web-and-agent:
         place: planner-web::plan-review
   - text: The Product replaces the goal's upcoming planned sessions with the plan's sessions
     kind: product
@@ -48,7 +50,7 @@ steps:
       - { entity: study-session, as: proposed, effect: creates, to: Planned, facts: [Start, Planned minutes] }
       - { entity: goal, effect: reads, facts: [] }
     contexts:
-      web:
+      web-and-agent:
         place: planner-web::plan-review
   - text: The Product marks the plan accepted
     kind: product
@@ -57,7 +59,7 @@ steps:
     entities:
       - { entity: study-plan, from: Proposed, to: Accepted, facts: [] }
     contexts:
-      web:
+      web-and-agent:
         place: planner-web::plan-review
 ---
 
@@ -65,8 +67,12 @@ steps:
 
 ## Trigger
 
-The Student has a goal with topics and wants the planner to schedule it.
+The Student has a goal with topics, sets their availability, and asks their AI agent to plan it.
 
 ## Outcome
 
 The Journey goal is achieved: the goal's upcoming sessions are the accepted plan's.
+
+## Edge cases
+
+- The plan is a revision the AI agent left after a missed session → the Student accepts it the same way, and the missed session itself is unchanged.

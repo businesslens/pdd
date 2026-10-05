@@ -4,7 +4,7 @@ domain: plans
 
 # Study plan
 
-A schedule the Planning assistant proposes for one goal: the sessions it would
+A schedule the Student's AI agent proposes for one goal: the sessions it would
 put in the Student's schedule, the upcoming sessions those would replace, and
 an explanation the Student reads before deciding.
 
@@ -12,9 +12,9 @@ an explanation the Student reads before deciding.
 
 - **Proposed sessions** — the sessions the plan would schedule, each with its topic, start and length
 - **Replaced sessions** — the goal's upcoming planned sessions that accepting the plan would remove
-- **Explanation** — the assistant's plain account of how it divided the remaining study and what it changed
+- **Explanation** — the agent's plain account of how it divided the remaining study and what it changed
 - **Shortfall** — the estimated hours that do not fit in the available time before the target date, if any
-- **Prepared at** — when the assistant prepared the plan
+- **Prepared at** — when the agent left the plan
 
 ## States
 

@@ -1,47 +1,56 @@
 ---
 kind: edge
 routes:
-  web: Web
+  agent: Agent
 steps:
-  - text: The Student picks a goal, confirms their weekly availability and asks for a plan
+  - text: The AI agent asks for a goal it was asked to plan
     kind: actor
-    actor: student
+    actor: ai-agent
     entities:
-      - { entity: goal, effect: reads, facts: [Name] }
-      - { entity: student, facts: [Weekly availability] }
+      - { entity: goal, effect: reads, facts: [] }
     contexts:
-      web:
-        place: planner-web::plans
-  - text: The Planning assistant finds that the study still to do needs more hours than the Student's availability holds before the target date
-    kind: actor
-    actor: planning-assistant
+      agent:
+        place: planner-agent
+  - text: The Product provides the goal's topics, the hours already logged, the upcoming schedule and the Student's weekly availability
+    kind: product
+    actor: ai-agent
     entities:
-      - { entity: topic, effect: reads, facts: [Estimated hours] }
-      - { entity: study-session, effect: reads, facts: [Logged minutes] }
+      - { entity: goal, effect: reads, facts: [Name, Target date] }
+      - { entity: topic, effect: reads, facts: [Name, Estimated hours] }
+      - { entity: study-session, effect: reads, facts: [Start, Planned minutes, Logged minutes] }
       - { entity: student, effect: reads, facts: [Weekly availability] }
-      - { entity: goal, effect: reads, facts: [Target date] }
-  - text: The Planning assistant fills the available time and proposes the plan with the hours that do not fit as its shortfall
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The AI agent finds that the study still to do needs more hours than the Student's availability holds before the target date
     kind: actor
-    actor: planning-assistant
+    actor: ai-agent
+    entities:
+      - { entity: student, effect: reads, facts: [] }
+  - text: The AI agent leaves a plan that fills the available time, with the hours that do not fit as its shortfall
+    kind: actor
+    actor: ai-agent
     entities:
       - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
-  - text: The Product opens the proposed plan, showing the shortfall beside the proposed sessions
-    kind: product
-    actor: student
-    entities:
-      - { entity: study-plan, effect: reads, facts: [Proposed sessions, Shortfall, Explanation] }
-      - { entity: goal, effect: reads, facts: [Name, Target date] }
     contexts:
-      web:
-        place: planner-web::plan-review
+      agent:
+        place: planner-agent
+  - text: The Product confirms the proposed sessions fit and keeps the plan with its shortfall
+    kind: product
+    actor: ai-agent
+    entities:
+      - { entity: study-plan, effect: reads, facts: [Proposed sessions, Shortfall] }
+    contexts:
+      agent:
+        place: planner-agent
 ---
 
 # Propose a plan that falls short
 
 ## Trigger
 
-The Student asks for a plan for a goal that needs more study than their availability holds before its date.
+The Student asks their AI agent to plan a goal that needs more study than their availability holds before its date.
 
 ## Outcome
 
-The proposed plan uses all the available time, says how many hours do not fit and which topics they belong to, and never schedules outside the availability.
+The proposed plan uses the available time, says how many hours do not fit and which topics they belong to, and schedules nothing outside the availability.

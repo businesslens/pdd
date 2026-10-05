@@ -1,14 +1,13 @@
 ---
 type: web
-actors: [student, planning-assistant]
+actors: [student]
 entryPoints:
   - web: /goals
 ---
 
 # Study Planner web application
 
-The supported browser Interface for a Student's private planner: goals and
-their topics, the schedule of study sessions, and the study plans waiting for
-review. Every place requires the Student to be signed in. The Planning
-assistant works inside the same planner, reading what the Student keeps there
-and leaving the plans it prepares in Plans.
+The supported browser Interface for everything the Student does in their
+planner: goals and their topics, the schedule of study sessions, their weekly
+availability, and deciding the study plans their AI agent leaves. Every place
+requires the Student to be signed in.

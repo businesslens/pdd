@@ -2,43 +2,44 @@
 kind: edge
 result: not-achieved
 routes:
-  web: Web
+  web-and-agent: Web and agent
 steps:
-  - text: The Student picks a goal, confirms their weekly availability and asks for a plan
+  - text: The Student sets the hours they can study each day
     kind: actor
     actor: student
-    capability: propose-study-plan
+    capability: edit-weekly-availability
     entities:
-      - { entity: goal, effect: reads, facts: [Name] }
       - { entity: student, facts: [Weekly availability] }
     contexts:
-      web:
+      web-and-agent:
         place: planner-web::plans
-  - text: The Planning assistant proposes a plan that divides the study still to do across that availability
+  - text: The AI agent leaves a plan that divides the study still to do across that availability
     kind: actor
-    actor: planning-assistant
+    actor: ai-agent
     capability: propose-study-plan
     entities:
       - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
       - { entity: student, effect: reads, facts: [] }
-  - text: The Product opens the proposed plan for review
-    kind: product
-    actor: student
-    capability: propose-study-plan
-    entities:
-      - { entity: study-plan, effect: reads, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
-      - { entity: goal, effect: reads, facts: [Name, Target date] }
     contexts:
-      web:
-        place: planner-web::plan-review
-  - text: The Student declines the plan
+      web-and-agent:
+        place: planner-agent
+  - text: The Student opens the plan waiting in Plans
+    kind: actor
+    actor: student
+    capability: decline-study-plan
+    entities:
+      - { entity: study-plan, effect: reads, facts: [Prepared at] }
+    contexts:
+      web-and-agent:
+        place: planner-web::plans
+  - text: The Student reviews the plan and declines it
     kind: actor
     actor: student
     capability: decline-study-plan
     entities:
       - { entity: study-plan, from: Proposed, to: Declined, facts: [] }
     contexts:
-      web:
+      web-and-agent:
         place: planner-web::plan-review
 ---
 
@@ -46,7 +47,7 @@ steps:
 
 ## Trigger
 
-The Student asks for a plan and does not like what is proposed.
+The Student asks their AI agent to plan a goal and does not like what it proposes.
 
 ## Outcome
 

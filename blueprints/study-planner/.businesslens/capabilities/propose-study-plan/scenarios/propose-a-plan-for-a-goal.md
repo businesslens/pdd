@@ -1,66 +1,67 @@
 ---
 kind: primary
 routes:
-  web: Web
+  agent: Agent
 steps:
-  - text: The Student picks a goal, confirms their weekly availability and asks for a plan
+  - text: The AI agent asks for a goal it was asked to plan
     kind: actor
-    actor: student
+    actor: ai-agent
     entities:
-      - { entity: goal, effect: reads, facts: [Name] }
-      - { entity: student, facts: [Weekly availability] }
+      - { entity: goal, effect: reads, facts: [] }
     contexts:
-      web:
-        place: planner-web::plans
-  - text: The Planning assistant reads the goal's topics, the hours already logged and the upcoming schedule
-    kind: actor
-    actor: planning-assistant
+      agent:
+        place: planner-agent
+  - text: The Product provides the goal's topics, the hours already logged, the upcoming schedule and the Student's weekly availability
+    kind: product
+    actor: ai-agent
     entities:
-      - { entity: goal, effect: reads, facts: [Target date] }
+      - { entity: goal, effect: reads, facts: [Name, Target date] }
       - { entity: topic, effect: reads, facts: [Name, Estimated hours] }
       - { entity: study-session, effect: reads, facts: [Start, Planned minutes, Logged minutes] }
-  - text: The Planning assistant divides the study still to do into sessions inside the Student's weekly availability and before the target date
-    kind: actor
-    actor: planning-assistant
-    entities:
       - { entity: student, effect: reads, facts: [Weekly availability] }
-      - { entity: goal, effect: reads, facts: [Target date] }
-  - text: The Planning assistant proposes the plan, explaining how it divided the study
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The AI agent leaves a plan that divides the study still to do across the Student's availability before the target date, explaining how
     kind: actor
-    actor: planning-assistant
+    actor: ai-agent
     entities:
       - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
-  - text: The Product opens the proposed plan for the Student to review
+      - { entity: student, effect: reads, facts: [] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The Product confirms that every proposed session fits the availability and overlaps no other session, and keeps the plan
     kind: product
-    actor: student
+    actor: ai-agent
     entities:
-      - { entity: study-plan, effect: reads, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
-      - { entity: goal, effect: reads, facts: [Name, Target date] }
+      - { entity: study-plan, effect: reads, facts: [Proposed sessions] }
     contexts:
-      web:
-        place: planner-web::plan-review
-  - text: The schedule is unchanged until the Student decides
+      agent:
+        place: planner-agent
+  - text: The plan waits in Plans for the Student, and the schedule is unchanged
     kind: condition
-    actor: student
+    actor: ai-agent
     entities:
+      - { entity: study-plan, effect: reads, facts: [] }
       - { entity: study-session, effect: reads, facts: [] }
+      - { entity: student, effect: reads, facts: [] }
     contexts:
-      web:
-        place: planner-web::plan-review
+      agent:
+        place: planner-agent
 ---
 
 # Propose a plan for a goal
 
 ## Trigger
 
-The Student wants the planner to work out when to study the topics of a goal.
+The Student asks their AI agent to plan a goal that has topics and a target date still ahead.
 
 ## Outcome
 
-A proposed plan for the goal is open for the Student's review, with its sessions, the sessions it would replace and the assistant's explanation; the schedule has not changed.
+A proposed plan for the goal waits for the Student's review, with its sessions, the sessions it would replace and the agent's explanation; the schedule has not changed.
 
 ## Edge cases
 
-- A plan for the goal is already waiting for review → the Product opens that plan instead of preparing another.
-- The weekly availability has no hours in it → the Product asks for some, and nothing is prepared.
-- The goal is past → it is not offered for planning.
+- A plan for the goal is already waiting for review → that plan becomes outdated and the new plan takes its place.
+- The goal has no topics, or its target date has passed → the Product refuses the plan and keeps nothing.

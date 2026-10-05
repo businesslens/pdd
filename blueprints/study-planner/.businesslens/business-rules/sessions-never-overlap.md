@@ -12,8 +12,8 @@ appliesTo:
 
 No two study sessions in a Student's schedule share any time, across all of the
 Student's goals. Scheduling or moving a session onto time another session holds
-is refused, and a study plan never proposes a session over one it does not
-replace.
+is refused, and so is a study plan that proposes a session over one it does
+not replace.
 
 ## Rationale
 
