@@ -13,9 +13,9 @@ steps:
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: The Assistant drafts card proposals from the notes
-    kind: actor
-    actor: assistant
+  - text: The Product drafts card proposals from the notes with a language model
+    kind: product
+    actor: learner
     capability: generate-cards
     entities:
       - { entity: card-proposal, as: worthwhile, effect: creates, facts: [Front, Back, Source passage] }
@@ -48,8 +48,8 @@ steps:
 
 ## Trigger
 
-The Learner has notes they want to study from and asks the Assistant to draft
-cards.
+The Learner has notes they want to study from and asks for cards to
+be drafted.
 
 ## Outcome
 

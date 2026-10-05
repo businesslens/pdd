@@ -11,9 +11,9 @@ steps:
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: The Assistant chooses what in the notes is worth asking and drafts a card proposal for each
-    kind: actor
-    actor: assistant
+  - text: The Product has a language model pick the facts in the notes worth asking about and drafts a card proposal for each
+    kind: product
+    actor: learner
     entities:
       - { entity: card-proposal, effect: creates, facts: [Front, Back, Source passage] }
     contexts:
@@ -40,7 +40,7 @@ steps:
 
 ## Trigger
 
-The Learner pastes notes for a deck they own and asks the Assistant for cards.
+The Learner pastes notes for a deck they own and asks for cards.
 
 ## Outcome
 
@@ -49,5 +49,5 @@ passage it came from. The deck's cards are unchanged.
 
 ## Edge cases
 
-- The Assistant finds nothing in the notes worth a card → no proposal is drafted and the Learner is told so.
+- The language model finds nothing in the notes worth a card → no proposal is drafted and the Learner is told so.
 - The Learner leaves before deciding → the proposals wait in the deck for their return.

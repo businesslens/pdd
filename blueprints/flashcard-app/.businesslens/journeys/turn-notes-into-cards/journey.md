@@ -11,5 +11,5 @@ only those worth studying.
 
 ## Success criterion
 
-The deck holds new cards the Learner kept from the Assistant's proposals, and
+The deck holds new cards the Learner kept from the drafted proposals, and
 nothing the Learner discarded.

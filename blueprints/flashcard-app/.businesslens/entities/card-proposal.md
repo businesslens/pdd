@@ -4,7 +4,7 @@ domain: card-generation
 
 # Card proposal
 
-A card the Assistant drafted from a Learner's pasted notes, waiting in its deck
+A card the Product drafted from a Learner's pasted notes, waiting in its deck
 for the Learner to keep or discard. It is never studied.
 
 ## Information kept

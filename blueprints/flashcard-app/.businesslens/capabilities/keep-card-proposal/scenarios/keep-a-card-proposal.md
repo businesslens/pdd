@@ -35,7 +35,7 @@ steps:
 
 ## Trigger
 
-The Learner accepts a card proposal as the Assistant drafted it.
+The Learner accepts a card proposal as it was drafted.
 
 ## Outcome
 
