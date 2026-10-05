@@ -131,7 +131,11 @@ const work = mkdtempSync(join(tmpdir(), 'bl-demo-'))
 try {
   const context = await browser.newContext({ viewport: size, deviceScaleFactor: 1 })
   /* The default light background, pinned so a changed default cannot slip into the GIF unnoticed. */
-  await context.addCookies([{ name: 'bl-bg-light', value: 'l4', url: server.url }])
+  /* Interfaces read as one tree per row; the drawing's own default is three. */
+  await context.addCookies([
+    { name: 'bl-bg-light', value: 'l4', url: server.url },
+    { name: 'blr-columns', value: encodeURIComponent(JSON.stringify({ interface: 1 })), url: server.url }
+  ])
   await context.addInitScript(installPointer)
   const page = await context.newPage()
   page.setDefaultTimeout(15_000)
@@ -181,12 +185,23 @@ try {
     await page.mouse.up()
   }
   const rail = name => page.locator('.blr-navitem', { hasText: name })
-  /* Each collection opens on its List; the picker then draws the same set another way. */
+  const sidebarToggle = page.locator('button[aria-controls^="businesslens-report-sidebar-"]')
+  async function sidebar(expanded) {
+    if (await sidebarToggle.getAttribute('aria-expanded') === String(expanded)) return
+    await click(sidebarToggle, { ms: 400 })
+    await page.locator(`button[aria-controls^="businesslens-report-sidebar-"][aria-expanded=${expanded}]`).waitFor()
+    await hold(200)
+  }
+  /* Each collection opens on its List, with the rail folded away for room; the
+     picker then draws the same set another way. */
   async function collection(name, drawing, title) {
     beat(`${name}: List → ${title}`)
+    await sidebar(true)
     await click(rail(name), { ms: 450, dx: 0.3 })
     await page.getByRole('heading', { level: 1, name: new RegExp(name) }).waitFor()
-    await hold(1100)
+    await hold(150)
+    await sidebar(false)
+    await hold(900)
     await click(page.locator('[data-view-trigger]'))
     await hold(400)
     await click(page.getByRole('button', { name: `Draw as ${drawing}`, exact: true }), { dx: 0.3 })
@@ -210,7 +225,7 @@ try {
     const lines = printed.map(line => escape(line).replace(/(https?:\/\/\S+)/, '<span class="url">$1</span>'))
     element.innerHTML = `<span class="prompt">~/content-feed-reader $</span> ${command}\n${lines.join('\n')}\n<span class="caret"></span>`
   }, { command, printed: server.printed })
-  await hold(3300)
+  await hold(1650)
   await page.evaluate(() => document.getElementById('demo-terminal').remove())
 
   // What the product is.
@@ -224,27 +239,27 @@ try {
   await collection('Entities', 'graph', 'Relationships')
   await page.locator('[data-flow-ready=true]').waitFor()
   await glide(820, 560, 500)
-  await hold(2000)
+  await hold(1600)
 
   await collection('Capabilities', 'matrix', 'Delivery')
-  await hold(2500)
+  await hold(2000)
 
   await collection('Interfaces', 'graph', 'Delivery map')
   await page.locator('[data-flow-ready=true]').waitFor()
-  await hold(500)
+  await hold(400)
   await expand('interface:reader-web')
-  await hold(800)
+  await hold(700)
   await expand('experience:reader-web::public-reading')
-  await hold(800)
+  await hold(700)
   await expand('interface:reader-mobile')
   await hold(300)
   /* A hovered or focused node dims the rest; the grown map is read with neither. */
   await glide(420, 600, 450)
   await page.evaluate(() => document.activeElement?.blur())
-  await hold(1800)
+  await hold(1600)
 
   await collection('Business Rules', 'matrix', 'Attachments')
-  await hold(2500)
+  await hold(2000)
   beat('End')
 
   await cdp.send('Page.stopScreencast')
@@ -265,14 +280,15 @@ try {
     writeFileSync(join(framesDir, `${String(count).padStart(5, '0')}.png`), Buffer.from(frames[source].data, 'base64'))
   }
 
-  /* Two-pass palette: one palette for the whole loop, then only changed rectangles. */
+  /* Two-pass palette: one palette for the whole loop, then only changed rectangles.
+     160 colours read the same as 256 and keep the paper grain under the 5 MB budget. */
   const pattern = join(framesDir, '%05d.png')
   const palette = join(work, 'palette.png')
   const ffmpeg = (...args) => {
     const result = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: 'inherit' })
     if (result.status !== 0) throw new Error(`ffmpeg ${args.join(' ')} failed`)
   }
-  ffmpeg('-framerate', String(fps), '-i', pattern, '-vf', 'palettegen=max_colors=256:stats_mode=diff', palette)
+  ffmpeg('-framerate', String(fps), '-i', pattern, '-vf', 'palettegen=max_colors=160:stats_mode=diff', palette)
   mkdirSync(dirname(out), { recursive: true })
   ffmpeg('-framerate', String(fps), '-i', pattern, '-i', palette,
     '-lavfi', 'paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', '-loop', '0', out)
