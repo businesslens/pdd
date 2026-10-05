@@ -4,7 +4,7 @@ entities:
   - { entity: product, shows: [Identity, Catalog identity, Limitations] }
   - { entity: interface, shows: [Type, Variation, Actors, Entry points, Languages] }
   - { entity: experience, shows: [Container, Variation, Audience, Entry points] }
-  - { entity: screen, shows: [Placement, Variation, Exposure, Presents, Addresses] }
+  - { entity: screen, shows: [Container, Variation, Exposure, Presents, Addresses] }
   - { entity: domain, shows: [Region, Boundary, Colour] }
   - { entity: entity, shows: [Kind, Variation, Relations, States, Kept information, Acts] }
   - { entity: capability, shows: [Domain, Variation, Availability, Purpose] }

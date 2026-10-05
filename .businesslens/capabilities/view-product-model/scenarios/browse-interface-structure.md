@@ -9,7 +9,7 @@ steps:
     entities:
       - { entity: interface, effect: reads, facts: [Type, Actors] }
       - { entity: experience, effect: reads, facts: [Container, Audience] }
-      - { entity: screen, effect: reads, facts: [Exposure, Placement] }
+      - { entity: screen, effect: reads, facts: [Exposure, Container] }
     contexts:
       local:
         place: local-report-web::resource-collection
@@ -19,7 +19,7 @@ steps:
     entities:
       - { entity: interface, effect: reads, facts: [Type] }
       - { entity: experience, effect: reads, facts: [Container] }
-      - { entity: screen, effect: reads, facts: [Exposure, Placement] }
+      - { entity: screen, effect: reads, facts: [Exposure, Container] }
     contexts:
       local:
         place: local-report-web::resource-reading
