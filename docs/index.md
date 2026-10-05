@@ -42,10 +42,6 @@ BusinessLens.
 - **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
   Check and improve the code and Product Model until they agree.
 
-BusinessLens installs no implement skill, and PDD does not prescribe how you
-implement. It defines only the order and the handoff: the approved Product
-Model is what you implement against.
-
 ## See the model at any time
 
 At any point in the loop, open the model as a local report in your browser:
