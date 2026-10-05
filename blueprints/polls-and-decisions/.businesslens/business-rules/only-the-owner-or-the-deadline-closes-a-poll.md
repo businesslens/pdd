@@ -12,8 +12,8 @@ permits:
 # Only the owner or the deadline closes a poll
 
 A poll is closed by the Member who owns it, at any time while it is open, or by
-the Product when its deadline passes. No other Member, and not the Assistant,
-can end the voting.
+the Product when its deadline passes. No other Member can end the
+voting.
 
 ## Rationale
 

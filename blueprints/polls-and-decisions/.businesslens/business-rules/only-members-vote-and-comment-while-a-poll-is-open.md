@@ -14,8 +14,8 @@ permits:
 # Only Members vote and comment while a poll is open
 
 Votes and comments come only from Members of the team, and only until their poll
-closes. The Assistant never casts a vote or adds a comment, and once a poll has
-closed nothing more is added to its votes or its discussion.
+closes. Nothing generated is ever cast as a vote or posted as a comment, and
+once a poll has closed nothing more is added to its votes or its discussion.
 
 ## Rationale
 

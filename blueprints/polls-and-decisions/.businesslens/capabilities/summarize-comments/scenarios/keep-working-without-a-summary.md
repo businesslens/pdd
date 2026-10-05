@@ -3,19 +3,17 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Member asks the Assistant to summarize the comments on a poll they own
+  - text: The Member asks for a summary of the comments on a poll they own
     kind: actor
     actor: member
     entities:
-      - { entity: assistant, effect: reads, facts: [] }
-      - { entity: comment, effect: reads, facts: [] }
       - { entity: poll, effect: reads, facts: [] }
+      - { entity: comment, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
-  - text: The Assistant cannot produce a summary
+  - text: The language model cannot be reached or returns nothing usable
     kind: condition
-    actor: assistant
     entities: []
   - text: The Product tells the Member the summary is unavailable right now and keeps any earlier summary as it was
     kind: product
@@ -31,7 +29,8 @@ steps:
 
 ## Trigger
 
-The poll's owner asks for a summary while the Assistant cannot provide one.
+The poll's owner asks for a summary while the language model the Product calls
+is unavailable.
 
 ## Outcome
 

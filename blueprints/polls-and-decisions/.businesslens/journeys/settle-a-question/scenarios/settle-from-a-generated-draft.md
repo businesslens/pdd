@@ -22,31 +22,29 @@ steps:
     contexts:
       web:
         place: polls-web::poll
-  - text: The Member asks the Assistant to draft the decision
+  - text: The Member asks for a generated draft of the decision
     kind: actor
     actor: member
     capability: draft-decision
     entities:
-      - { entity: assistant, effect: reads, facts: [] }
       - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
-  - text: The Assistant prepares a draft decision from the question, final results and comments
-    kind: actor
-    actor: assistant
-    capability: draft-decision
-    entities:
-      - { entity: poll, effect: reads, facts: [Question, Tally] }
-      - { entity: comment, effect: reads, facts: [Text] }
-      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Assistant draft] }
-  - text: The Product opens the draft for the Member, marked as the Assistant's
+  - text: The Product generates a draft decision with a language model from the question, final results and comments
     kind: product
     actor: member
     capability: draft-decision
     entities:
-      - { entity: assistant, effect: reads, facts: [] }
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Assistant draft] }
+      - { entity: poll, effect: reads, facts: [Question, Tally] }
+      - { entity: comment, effect: reads, facts: [Text] }
+      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
+  - text: The Product opens the draft for the Member, marked as generated
+    kind: product
+    actor: member
+    capability: draft-decision
+    entities:
+      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
     contexts:
       web:
         place: polls-web::decision
@@ -79,7 +77,7 @@ steps:
         place: polls-web::decision-log
 ---
 
-# Settle with the Assistant's draft
+# Settle from a generated draft
 
 ## Trigger
 
@@ -88,5 +86,5 @@ The owner of an open poll has heard enough and wants the outcome on record.
 ## Outcome
 
 The Journey goal is achieved: the poll is closed, and the decision the owner
-edited from the Assistant's draft is recorded for the whole team, marked as
+edited from a generated draft is recorded for the whole team, marked as
 having started from that draft.

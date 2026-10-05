@@ -3,19 +3,17 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Member asks the Assistant to draft the decision for a closed poll they own
+  - text: The Member asks for a generated draft of the decision for a closed poll they own
     kind: actor
     actor: member
     entities:
-      - { entity: assistant, effect: reads, facts: [] }
       - { entity: poll, effect: reads, facts: [Closed at] }
       - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
-  - text: The Assistant cannot prepare a draft
+  - text: The language model cannot be reached or returns nothing usable
     kind: condition
-    actor: assistant
     entities: []
   - text: The Product tells the Member no draft was made and offers to start a blank decision instead
     kind: product
@@ -27,12 +25,12 @@ steps:
         place: polls-web::poll
 ---
 
-# Fall back when the Assistant cannot draft
+# Fall back when no draft can be generated
 
 ## Trigger
 
-The owner of a closed poll asks for a draft while the Assistant cannot provide
-one.
+The owner of a closed poll asks for a generated draft while the language model
+the Product calls is unavailable.
 
 ## Outcome
 

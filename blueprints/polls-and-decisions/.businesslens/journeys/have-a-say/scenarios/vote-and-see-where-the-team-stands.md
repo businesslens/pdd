@@ -14,6 +14,15 @@ steps:
     contexts:
       web:
         place: polls-web::poll
+  - text: The Product takes the Member straight to the poll's results
+    kind: product
+    actor: member
+    capability: vote-on-poll
+    entities:
+      - { entity: poll, effect: reads, facts: [] }
+    contexts:
+      web:
+        place: polls-web::poll
   - text: The poll shows its results while open
     kind: condition
     capability: view-results

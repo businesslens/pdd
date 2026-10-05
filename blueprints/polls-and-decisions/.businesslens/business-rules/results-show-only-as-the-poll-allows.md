@@ -7,7 +7,7 @@ appliesTo:
 permits:
   - actors: [member]
     when: [{ fact: Results visibility, is: While open }]
-  - actors: [member, assistant]
+  - actors: [member]
     when: [{ state: Closed }]
 ---
 
@@ -15,8 +15,8 @@ permits:
 
 Members see a poll's results while it is open only when its results visibility
 is While open; otherwise nobody, its owner included, sees a count until the
-poll closes. Once it has closed, every Member sees the final results, and the
-Assistant may read them to draft the decision.
+poll closes. Once it has closed, every Member sees the final results, and its
+owner may have them sent to a language model to generate a draft decision.
 
 ## Rationale
 

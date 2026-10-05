@@ -10,7 +10,7 @@ permits:
 
 # Only the poll owner reads the comment summary
 
-The Assistant's summary of a poll's comments is shown only to the Member who
+A generated summary of a poll's comments is shown only to the Member who
 owns the poll. Other Members read the comments themselves.
 
 ## Rationale

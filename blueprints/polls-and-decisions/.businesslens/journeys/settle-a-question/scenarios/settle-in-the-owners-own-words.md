@@ -19,7 +19,7 @@ steps:
     capability: draft-decision
     entities:
       - { entity: poll, effect: reads, facts: [Closed at] }
-      - { entity: decision, effect: creates, to: Draft, facts: [Final results, Assistant draft] }
+      - { entity: decision, effect: creates, to: Draft, facts: [Final results, Generated draft] }
     contexts:
       web:
         place: polls-web::poll
@@ -57,9 +57,9 @@ steps:
 ## Trigger
 
 The owner returns to a poll that closed at its deadline and wants to write the
-decision without the Assistant.
+decision without a generated draft.
 
 ## Outcome
 
 The Journey goal is achieved: the decision is recorded for the whole team in
-the owner's own words, with nothing marked as the Assistant's.
+the owner's own words, with nothing marked as generated.

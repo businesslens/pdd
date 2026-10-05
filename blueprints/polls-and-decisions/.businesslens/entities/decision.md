@@ -9,15 +9,15 @@ domain: decisions
 # Decision
 
 The record of what the team decided on a closed poll and why. Its poll's owner
-prepares it as a draft, alone or from the Assistant's draft, and records it for
-the whole team.
+prepares it as a draft, written themselves or generated for them, and records
+it for the whole team.
 
 ## Information kept
 
 - **Outcome** — what was decided, in one statement
 - **Rationale** — why: the reasons and arguments that carried it
 - **Final results** — the poll's tally when voting ended, kept with the decision
-- **Assistant draft** — whether the record started from the Assistant's draft
+- **Generated draft** — whether the record started from a generated draft
 - **Recorded at** — when the owner recorded it
 
 ## States

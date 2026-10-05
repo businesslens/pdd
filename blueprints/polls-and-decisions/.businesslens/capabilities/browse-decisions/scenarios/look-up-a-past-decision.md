@@ -24,7 +24,7 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Assistant draft, Recorded at] }
+      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft, Recorded at] }
       - { entity: poll, effect: reads, facts: [Question, Closed at] }
     contexts:
       web:
@@ -40,7 +40,7 @@ A Member needs to know what the team decided on a question, and why.
 ## Outcome
 
 The Member reads the decision's outcome, rationale and final results beside the
-question it settled, and whether it started from the Assistant's draft.
+question it settled, and whether it started from a generated draft.
 
 ## Edge cases
 

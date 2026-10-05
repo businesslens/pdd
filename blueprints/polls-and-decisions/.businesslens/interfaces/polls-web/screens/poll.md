@@ -13,8 +13,8 @@ entryPoints:
 
 One poll in full: its question, options and settings, the Member's own vote,
 the results as far as the poll allows, who chose what on a named poll, and the
-discussion. Its owner also sees the controls to close it, ask the Assistant for
-a summary of the discussion, and start the decision once it has closed. A closed
+discussion. Its owner also sees the controls to close it, ask for a generated
+summary of the comments, and start the decision once it has closed. A closed
 poll with a recorded decision shows that decision's outcome.
 
 ## Intent
