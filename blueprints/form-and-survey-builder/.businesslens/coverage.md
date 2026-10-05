@@ -3,7 +3,7 @@ scope: The intended behavior of the Form & Survey Builder Product.
 exclusions: []
 method: Product design authored as a source-free teaching Blueprint.
 covered:
-  - description: Building a form's questions by hand or from the Assistant's drafts, and editing them.
+  - description: Building a form's questions by hand or from drafted suggestions, and editing them.
     paths: []
   - description: Publishing a form to a public link, closing it, and opening it again.
     paths: []

@@ -12,6 +12,7 @@ limitations:
   - Logic is limited to showing a question once an earlier choice question has a chosen answer. There is no scoring, calculation, or skipping between pages.
   - Each form has one Creator. There is no shared editing of a form.
   - Forms are closed, not deleted, and a received response cannot be edited or removed.
+  - Drafting and summarizing depend on a language model service. When it is unavailable they produce nothing, while building, answering and reading forms work as usual.
   - Theme summaries are read from the answers each time the Creator asks; they are not kept, and they can miss or misjudge a theme.
 references:
   - kind: research
@@ -27,13 +28,14 @@ Creator writes questions — short and long answers, single and multiple choice,
 ratings and dates — marks which are required, and shows a question only after a
 chosen answer. Publishing gives the form a public link; anyone holding it can
 respond without an account. The Creator reads the responses, exports them, and
-closes the form when they have enough. An Assistant drafts questions from a
-stated goal and summarizes the themes in written answers, and its drafts join a
-form only when the Creator accepts them.
+closes the form when they have enough. When the Creator asks, the Product uses
+a language model to draft questions from a stated goal and to summarize the
+themes in written answers; drafts join a form only when the Creator accepts
+them.
 
 ## Intent
 
 Make asking many people a few clear questions quick for the person asking and
 effortless for the people answering. The Creator stays the author of every
-question and the only reader of the answers; the Assistant shortens the work
-without ever deciding what the form asks.
+question and the only reader of the answers; drafting and summarizing shorten
+the work without ever deciding what the form asks.

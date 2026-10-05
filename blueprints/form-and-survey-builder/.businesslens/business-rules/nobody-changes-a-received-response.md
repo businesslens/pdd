@@ -9,7 +9,7 @@ permits: []
 # Nobody changes a received response
 
 Once a response is received, its answers stay exactly as the Respondent gave
-them. Neither the Creator nor the Assistant edits them.
+them. Neither the Creator nor the Product edits them, summarizing included.
 
 ## Rationale
 

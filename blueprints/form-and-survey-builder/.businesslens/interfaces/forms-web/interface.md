@@ -1,6 +1,6 @@
 ---
 type: web
-actors: [creator, respondent, assistant]
+actors: [creator, respondent]
 entryPoints:
   - web: /
 ---
