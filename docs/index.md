@@ -28,7 +28,7 @@ ideate → implement → verify
    ▲                     │
    └──── next change ────┘
 
-implement: your existing workflow, not a BusinessLens skill
+implement: plan mode, an SDD tool, or freestyle
 ```
 ::
 
@@ -36,14 +36,15 @@ Ideate with BusinessLens. Implement in your own workflow. Verify with
 BusinessLens.
 
 - **Ideate** with [`/businesslens-ideate`](./skill-businesslens-ideate.md):
-  decide the next change and record it in the Product Model.
-- **Implement** in the workflow you already use: plan mode, an SDD framework, a
-  coding agent, or your team's process. BusinessLens installs no implement
-  skill, and PDD does not prescribe how you implement. It defines only the
-  order and the handoff: the approved Product Model is what you implement
-  against.
+  Decide the next change and record it in the Product Model.
+- **Implement** in your existing workflow: Plan mode, an SDD tool, or
+  freestyle.
 - **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
-  check and improve the code and Product Model until they agree.
+  Check and improve the code and Product Model until they agree.
+
+BusinessLens installs no implement skill, and PDD does not prescribe how you
+implement. It defines only the order and the handoff: the approved Product
+Model is what you implement against.
 
 ## See the model at any time
 

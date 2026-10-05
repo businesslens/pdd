@@ -30,8 +30,8 @@ Use this door when there is no code yet, or none worth describing.
    ```
 
 4. Implement the approved model in your existing workflow: plan mode, an SDD
-   framework, a coding agent, or your team's process. BusinessLens has no
-   implement skill and does not write code itself.
+   tool, or freestyle. BusinessLens has no implement skill and does not write
+   code itself.
 5. When the implementation is done, check the code against the model:
 
    ```text
