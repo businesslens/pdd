@@ -5,7 +5,7 @@ method: Product design authored as a source-free teaching Blueprint.
 covered:
   - description: Components and their status, maintained by operators.
     paths: []
-  - description: Incidents declared and updated on a public timeline until resolved, with assistant-drafted update text an operator posts.
+  - description: Incidents declared and updated on a public timeline until resolved, with drafted update text an operator edits and posts.
     paths: []
   - description: Scheduled maintenance that starts and completes on its own schedule.
     paths: []

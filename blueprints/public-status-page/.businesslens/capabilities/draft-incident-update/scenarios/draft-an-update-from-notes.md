@@ -11,9 +11,9 @@ steps:
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Drafting assistant drafts a message from the notes and the incident
-    kind: actor
-    actor: drafting-assistant
+  - text: The Product asks a language model to draft a message from the notes and the incident, and keeps it as a draft
+    kind: product
+    actor: operator
     entities:
       - { entity: incident, effect: reads, facts: [Title, Impact, Affected components] }
       - { entity: incident-update, effect: creates, to: Draft, facts: [Message, Notes] }

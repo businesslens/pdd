@@ -12,5 +12,5 @@ permits:
 
 # Only an Operator changes an incident
 
-Only an Operator declares an incident or moves it to another status. The
-Drafting assistant reads an incident to draft an update and never changes it.
+Only an Operator declares an incident or moves it to another status. Preparing
+a draft reads an incident and never changes it.

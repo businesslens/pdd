@@ -14,5 +14,5 @@ posting the update does.
 
 ## Rationale
 
-Operators can ask the Drafting assistant for help freely, because nothing it
-produces has any effect on its own.
+Operators can ask for a draft freely, because a draft has no effect on its
+own.

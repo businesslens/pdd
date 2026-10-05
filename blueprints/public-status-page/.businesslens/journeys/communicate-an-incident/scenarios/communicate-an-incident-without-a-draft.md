@@ -49,11 +49,11 @@ steps:
       - { entity: incident-update, as: final-update, effect: reads, facts: [Message] }
 ---
 
-# Communicate an incident without the assistant
+# Communicate an incident without a draft
 
 ## Trigger
 
-The Operator declares an incident while the Drafting assistant cannot prepare drafts.
+The Operator declares an incident while the language model the Product queries for drafts is unavailable.
 
 ## Outcome
 

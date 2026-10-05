@@ -1,6 +1,6 @@
 ---
 type: web
-actors: [visitor, operator, drafting-assistant]
+actors: [visitor, operator]
 entryPoints:
   - web: /
 ---
