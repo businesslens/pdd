@@ -10,9 +10,9 @@ steps:
     contexts:
       web:
         place: snippets-web::workspace::snippet-editor
-  - text: The Snippet assistant reads the code and its language and proposes a title, a description and tags
-    kind: actor
-    actor: snippet-assistant
+  - text: The Product asks a language model to draft a title, a description and tags for the code and its language, and keeps them as a suggestion
+    kind: product
+    actor: developer
     entities:
       - { entity: suggestion, effect: creates, to: Proposed, facts: [Suggested title, Suggested description, Suggested tags] }
     contexts:

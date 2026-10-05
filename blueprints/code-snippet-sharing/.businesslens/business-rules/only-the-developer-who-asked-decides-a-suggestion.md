@@ -10,9 +10,10 @@ permits:
 # Only the Developer who asked accepts or dismisses a suggestion
 
 A suggestion is accepted or dismissed only by the Developer who asked for it.
-The Snippet assistant never accepts its own proposal.
+A suggestion is never accepted by default or by the
+Product on its own.
 
 ## Rationale
 
-The assistant proposes; a person decides. Accepting is the step where the
+The Product proposes; a person decides. Accepting is the step where the
 proposal becomes the Developer's own words.

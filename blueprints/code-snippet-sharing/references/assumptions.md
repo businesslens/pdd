@@ -16,5 +16,7 @@ These are assumptions to validate, not claims that research has proved them.
 - Writing a description and tags is the step people skip. A suggestion they
   can accept or edit in one step increases how many snippets are described,
   provided it never changes the code and never saves anything on its own.
+- Developers accept that the code they ask suggestions for is sent to a
+  language model, as long as that happens only when they ask.
 
 Future research may change the Product Model; this file does not override it.
