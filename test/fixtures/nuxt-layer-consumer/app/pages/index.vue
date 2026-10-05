@@ -58,7 +58,6 @@ const report: ProductReportV16 = {
       actorIds: ['reader'],
       entryPoints: [],
       languages: ['en'],
-      navigation: [],
       intent: '',
       supportingSections: [],
       references: []
