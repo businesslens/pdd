@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- The README demo shows the current Product Model, one Screen per subject.
+
 ## [0.25.0] - 2026-10-05
 
 - The README demo now tours BusinessLens's own Product Model, with the command to open it yourself. ([#82](https://github.com/businesslens/pdd/pull/82)) ([04cef90](https://github.com/businesslens/pdd/commit/04cef903858fa1626f857776b0674807141faf85))
