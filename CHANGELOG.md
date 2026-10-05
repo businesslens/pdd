@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- The README demo now tours BusinessLens's own Product Model, with the command to open it yourself.
-- The README and the docs Introduction show in one table what the model holds and what it leaves to design.
-- A Screen is now one place however it is drawn: tabs, panels and wizard stages belong to it, so a redesign no longer changes the model. Screens no longer nest.
-- Interfaces and Experiences no longer list the Screens reachable from everywhere; menus are design.
-- A quality the product commits to, such as an accessibility level, is recorded as a Business Rule.
-- Models and exported reports use a new format version; re-export Blueprints after updating.
+## [0.25.0] - 2026-10-05
+
+- The README demo now tours BusinessLens's own Product Model, with the command to open it yourself. ([#82](https://github.com/businesslens/pdd/pull/82)) ([04cef90](https://github.com/businesslens/pdd/commit/04cef903858fa1626f857776b0674807141faf85))
+- The README and the docs Introduction show in one table what the model holds and what it leaves to design. ([#81](https://github.com/businesslens/pdd/pull/81)) ([d537e94](https://github.com/businesslens/pdd/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
+- A Screen is now one place however it is drawn: tabs, panels and wizard stages belong to it, so a redesign no longer changes the model. Screens no longer nest. ([#81](https://github.com/businesslens/pdd/pull/81)) ([d537e94](https://github.com/businesslens/pdd/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
+- Interfaces and Experiences no longer list the Screens reachable from everywhere; menus are design. ([#81](https://github.com/businesslens/pdd/pull/81)) ([d537e94](https://github.com/businesslens/pdd/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
+- A quality the product commits to, such as an accessibility level, is recorded as a Business Rule. ([#81](https://github.com/businesslens/pdd/pull/81)) ([d537e94](https://github.com/businesslens/pdd/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
+- Models and exported reports use a new format version; re-export Blueprints after updating. ([#81](https://github.com/businesslens/pdd/pull/81)) ([d537e94](https://github.com/businesslens/pdd/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.24.2...v0.25.0][0.25.0]
 
 ## [0.24.2] - 2026-10-05
 
@@ -1022,7 +1030,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.24.2...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/businesslens/pdd/compare/v0.24.2...v0.25.0
 [0.24.2]: https://github.com/businesslens/pdd/compare/v0.24.1...v0.24.2
 [0.24.1]: https://github.com/businesslens/pdd/compare/v0.24.0...v0.24.1
 [0.24.0]: https://github.com/businesslens/pdd/compare/v0.23.1...v0.24.0
