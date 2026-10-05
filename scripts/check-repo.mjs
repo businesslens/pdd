@@ -2,6 +2,7 @@
 import { readFile, readdir, access } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
+import { changelogProblems } from './changelog.mjs'
 import {
   VOCABULARY_MODULE,
   readVocabulary,
@@ -184,6 +185,11 @@ const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
 if (!changelog.includes(`## [${pkg.version}]`)) {
   errors.push(`CHANGELOG.md is missing a [${pkg.version}] release heading`)
 }
+// businesslens.io renders this file as-is, one page per release. A heading
+// label without its link definition shows its brackets on GitHub and loses
+// them on the site; a release without its contributors and comparison has a
+// shorter page than the others.
+for (const problem of changelogProblems(changelog)) errors.push(`CHANGELOG.md ${problem}`)
 if (plugin.repository !== 'https://github.com/businesslens/pdd') {
   errors.push('plugin.json repository must be https://github.com/businesslens/pdd')
 }

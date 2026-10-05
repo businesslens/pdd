@@ -1,10 +1,12 @@
-name: Notify landing of docs changes
+name: Notify landing of docs and changelog changes
 
 on:
   push:
     branches: [main]
+    # businesslens.io renders both at build time, pulled from this revision.
     paths:
       - 'docs/**'
+      - 'CHANGELOG.md'
   workflow_dispatch:
 
 permissions:
