@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- The README demo shows the current Product Model, one Screen per subject.
+## [0.25.1] - 2026-10-05
+
+- The README demo shows the current Product Model, one Screen per subject. ([#86](https://github.com/businesslens/pdd/pull/86)) ([1dce3bf](https://github.com/businesslens/pdd/commit/1dce3bf95d1ae3f80f4ad115bfdd63b0dc5e892f))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.25.0...v0.25.1][0.25.1]
 
 ## [0.25.0] - 2026-10-05
 
@@ -1032,7 +1040,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.25.1...HEAD
+[0.25.1]: https://github.com/businesslens/pdd/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/businesslens/pdd/compare/v0.24.2...v0.25.0
 [0.24.2]: https://github.com/businesslens/pdd/compare/v0.24.1...v0.24.2
 [0.24.1]: https://github.com/businesslens/pdd/compare/v0.24.0...v0.24.1
