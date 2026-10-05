@@ -18,6 +18,23 @@ minutes.
 The Product Model says what the product is intended to do. It does not prescribe
 the stack or replace your plan mode, SDD framework, coding agent, or tests.
 
+## What the model covers, and what it doesn't
+
+The model keeps what any rebuild of your web app, CLI or API would have to
+keep, and nothing a rebuild is free to change:
+
+| In the model | Left to design |
+| --- | --- |
+| Who can reach each place | Colors, typography, copy |
+| What it shows and asks for | Components, layout, modals |
+| What can be done there | Tabs, wizards and menus |
+| Which rules apply | CLI syntax and flags |
+| What happens next | API style: CRUD or RPC |
+
+That is why [Interfaces](./interfaces.md) and their Screens are in it: a refund
+operators issue in an admin console is a different product from one shoppers
+request on the website.
+
 ## The development loop
 
 Every product change runs the same loop:

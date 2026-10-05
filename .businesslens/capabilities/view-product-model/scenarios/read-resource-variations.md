@@ -22,7 +22,7 @@ steps:
     entities:
       - { entity: variation, effect: reads, facts: [Choice, Subtype, Selection, Takes effect, Stability] }
     contexts:
-      local: { place: local-report-web::resource-reading::overview }
+      local: { place: local-report-web::resource-reading }
   - text: The Developer reads each alternative's own words and the condition that selects it
     kind: actor
     actor: developer
@@ -30,14 +30,14 @@ steps:
       - { entity: variation, effect: reads, facts: [Subtype, Alternatives] }
       - { entity: business-rule, effect: reads, facts: [Assertion, Variation] }
     contexts:
-      local: { place: local-report-web::resource-reading::alternatives }
+      local: { place: local-report-web::resource-reading }
   - text: The Developer opens one alternative, reads its set on its title and switches to another from the pill
     kind: actor
     actor: developer
     entities:
       - { entity: business-rule, effect: reads, facts: [Assertion, Variation] }
     contexts:
-      local: { place: local-report-web::resource-reading::overview }
+      local: { place: local-report-web::resource-reading }
 ---
 
 # Read resource Variations

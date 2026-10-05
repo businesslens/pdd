@@ -105,7 +105,6 @@ const items = computed(() => props.nodes.map(toNode))
             @open="emit('open', item.source.resource)"
           >{{ item.label }}</BlrResourceLink>
           <span v-else class="min-w-0 truncate" :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.count ?? item.source.children.length }}</span></span>
-          <BlrNavigationMark v-if="item.source.resource?.kind === 'screen' && item.source.resource.alwaysReachable" class="ms-1.5 shrink-0" />
         </span>
         <!-- An alternative of this set that does not happen at this place; the set's picker says where it does. -->
         <span v-if="item.source.absentFrom" class="blr-absent-badge" data-variation-absent>{{ absenceLabel(item.source.absentFrom) }}</span>

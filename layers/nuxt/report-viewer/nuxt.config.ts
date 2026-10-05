@@ -20,7 +20,6 @@ export default defineNuxtConfig({
     clientBundle: {
       icons: [
         'lucide:align-justify',
-        'lucide:anchor',
         'lucide:app-window',
         'lucide:arrow-down',
         'lucide:arrow-left',

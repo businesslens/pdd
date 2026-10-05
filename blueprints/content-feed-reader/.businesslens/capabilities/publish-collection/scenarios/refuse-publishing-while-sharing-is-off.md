@@ -10,7 +10,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Product confirms ownership
     kind: product
     actor: reader
@@ -18,21 +18,21 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: Public sharing is switched off for the Product
     kind: condition
     entities:
       - { entity: reader-settings, effect: reads, facts: [Public sharing enabled] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Product explains that publishing is unavailable and why
     kind: product
     actor: reader
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The collection stays private, with no public address
     kind: condition
     actor: reader
@@ -40,7 +40,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
 ---
 
 # Refuse publishing while sharing is off

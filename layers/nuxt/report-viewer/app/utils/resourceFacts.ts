@@ -76,9 +76,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
       return [
         ...(presents ? [{ label: 'Presents', value: String(presents), term: KIND_TERM.entity }] : []),
         ...(collects ? [{ label: 'Collects', value: String(collects), term: KIND_TERM.entity }] : []),
-        { label: 'Capabilities', value: String(screen.capabilityIds.length), term: KIND_TERM.capability },
-        /* The navigation mark, in words: the strip is where a reader asks what it means. */
-        ...(screen.alwaysReachable ? [{ label: 'Navigation', value: 'Always reachable', term: 'navigation' as const }] : [])
+        { label: 'Capabilities', value: String(screen.capabilityIds.length), term: KIND_TERM.capability }
       ]
     }
     case 'entity': {

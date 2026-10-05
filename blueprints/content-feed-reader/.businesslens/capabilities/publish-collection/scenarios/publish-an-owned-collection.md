@@ -10,7 +10,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Product explains that the collection will become readable by link
     kind: product
     actor: reader
@@ -18,7 +18,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Reader confirms publication
     kind: actor
     actor: reader
@@ -26,7 +26,7 @@ steps:
       - { entity: collection, from: Private, to: Published, facts: [Public address] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Product shows the stable public address the collection is now served at
     kind: product
     actor: reader
@@ -34,7 +34,7 @@ steps:
       - { entity: collection, effect: reads, facts: [Public address] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
 ---
 
 # Publish an owned collection

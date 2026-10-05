@@ -272,16 +272,16 @@ describe('lintModel', () => {
 
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
-    for (const schema of [5, 8, 9]) {
+    for (const schema of [5, 8, 9, 10]) {
       writeFileSync(join(cwd, '.businesslens/config.yaml'), `schema: ${schema}\nsdd:\n  paths: []\n`)
-      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 10)`)
+      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 11)`)
     }
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 10)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 11)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -477,10 +477,7 @@ Lead.
         .replace('  web-without-stock: Web without stock\n', '')
         .replace(/ {6}web-without-stock:\n {8}place: [^\n]*\n/g, ''))
     }
-    /* With no Screen anywhere, nothing is reachable from everywhere, and a
-       governed fact is checkable only where a Step cites it. */
-    const web = join(bl, 'interfaces/customer-web/interface.md')
-    writeFileSync(web, readFileSync(web, 'utf8').replace(/^navigation:.*\n/m, ''))
+    /* With no Screen anywhere, a governed fact is checkable only where a Step cites it. */
     const status = join(bl, 'capabilities/track-order/scenarios/check-an-order-and-its-refund.md')
     writeFileSync(status, readFileSync(status, 'utf8').replace(
       '- { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
@@ -2115,8 +2112,8 @@ permits: []`)
 
   /*
    * The experience border: a Screen is relations only, its facts are the
-   * Entity's own, places nest, and what is reachable from everywhere is
-   * structure. Each rule below is decidable from the folder alone.
+   * Entity's own, and Screens never nest. Each rule below is decidable from the
+   * folder alone.
    */
   describe('places, facts and variation', () => {
     const PRODUCT_RECORD = '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
@@ -2132,7 +2129,7 @@ entryPoints:
 Lead.
 `
 
-    it('nests a Screen inside a Screen, one id segment per level, and contains Steps and Rule selectors through it', () => {
+    it('refuses a Screen nested inside a Screen, and navigation on a container', () => {
       const cwd = fixtureCopy()
       const compact = join(cwd, PRODUCT_RECORD)
       const parent = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screen.md')
@@ -2144,51 +2141,22 @@ entities:
 
 # Reviews
 
-What other shoppers said, opened from the product record.
+What other shoppers said, a tab of the product record.
 `)
-      const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
-      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record',
-        '  - text: The shopper opens a product page\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Name and description, Price, Stock remaining] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n      preview:\n        place: customer-mobile::catalog-preview\n  - text: The shopper reads its reviews\n    kind: actor\n    actor: shopper\n    entities:\n      - { entity: catalog-product, effect: reads, facts: [Price] }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record::reviews'
-      ))
-      const result = run(cwd)
-      expect(result.errors).toEqual([])
-      expect(result.counts.screens).toBe(8)
-
-      /* A selector on the parent covers the child. */
-      writeRule(cwd, 'reviews-are-public', `appliesTo:
-  - type: entity
-    id: catalog-product
-    effect: reads
-    facts: [Price]
-    contexts:
-      - place: customer-web::storefront::product-record
-permits:
-  - actors: [shopper]`)
-      expect(run(cwd).errors).toEqual([])
-
-      /* A child that is not a Screen folder is still refused. */
       mkdirSync(join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/notes'))
-      expect(run(cwd).errors).toContain(
+      const errors = run(cwd).errors
+      expect(errors).toContain(
+        'interfaces/customer-web/experiences/storefront/screens/product-record/screens/: Screens never nest; fold each child into product-record (its facts into entities, its Steps onto product-record) or place it beside product-record when it has a subject of its own'
+      )
+      /* A child that is not a Screen folder is still refused. */
+      expect(errors).toContain(
         'interfaces/customer-web/experiences/storefront/screens/product-record/notes/ is not a recognized child directory'
       )
-    })
 
-    it('resolves navigation to a Screen the container itself holds, shared only on a divided Interface', () => {
-      const cwd = fixtureCopy()
-      const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
-      const source = readFileSync(productInterface, 'utf8').replace(/^navigation:.*\n/m, '')
-      writeFileSync(productInterface, source.replace('actors: [shopper]', 'actors: [shopper]\nnavigation: [catalog, storefront::product-record, ghost]'))
-      const errors = run(cwd).errors
-      expect(errors).toContain(`${productInterface}: navigation "storefront::product-record" does not resolve to a Screen this Interface shares beside its Experiences`)
-      expect(errors).toContain(`${productInterface}: navigation "ghost" does not resolve to a Screen this Interface shares beside its Experiences`)
-      expect(errors.some(error => error.includes('navigation "catalog"'))).toBe(false)
-
-      const experience = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
-      writeFileSync(experience, readFileSync(experience, 'utf8').replace('access: public', 'access: public\nnavigation: [product-record, catalog]'))
-      const settled = run(cwd).errors
-      expect(settled).toContain(`${experience}: navigation "catalog" does not resolve to a Screen inside "customer-web::storefront"`)
-      expect(settled.some(error => error.includes('navigation "product-record"'))).toBe(false)
+      const settled = fixtureCopy()
+      const experience = join(settled, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
+      writeFileSync(experience, readFileSync(experience, 'utf8').replace('access: public', 'access: public\nnavigation: [product-record]'))
+      expect(run(settled).errors).toContain(`${experience}: unknown frontmatter key "navigation"`)
     })
 
     it('checks every fact a Screen or Step cites against the Entity, and requires facts on every Screen entry', () => {

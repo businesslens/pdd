@@ -145,7 +145,9 @@ Read before authoring:
 - Never persist verification receipts or lifecycle state.
 - Never capture, copy, or assess screenshots. External visual and research
   References may guide inspection; their role does not make them proof.
-- Never write design; the rubric's **Places, not designs** test decides.
+- Never write design; the rubric's **Places, not designs** test decides. One
+  subject or process is one Screen, its tabs and wizard stages included; never
+  nest Screens or author menus.
 - Do not promote internal APIs, adapters, command namespaces, or services to
   Interfaces or acting Entities unless their independent Product contract is
   established by inspected behavior.

@@ -194,21 +194,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
   const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
-  /*
-   * `navigation` names what is reachable from every place inside a container.
-   * It is structure, so it resolves the way containment does: a path relative
-   * to the container, landing on a Screen the container itself holds — on a
-   * divided Interface, a shared Screen or one of its descendants.
-   */
-  const validateNavigation = (file: string, containerId: string, entries: string[], shared: boolean) => {
-    for (const entry of entries) {
-      const screen = isQualifiedId(entry) ? screensById.get(qualify(containerId, entry)) : undefined
-      if (screen && screen.containerId === containerId) continue
-      errors.push(shared
-        ? `${file}: navigation "${entry}" does not resolve to a Screen this Interface shares beside its Experiences`
-        : `${file}: navigation "${entry}" does not resolve to a Screen inside "${containerId}"`)
-    }
-  }
   const experienceScopedInterfaces = new Set(model.experiences.map(experience => experience.interface))
   /* Capability availability names a boundary: an undivided Interface or an Experience. */
   const availabilityPlaceIds = new Set<string>([
@@ -306,7 +291,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     for (const issue of interfaceLanguageIssues(productInterface.languages.filter(isLanguageTag), productLanguages, 'product.md')) {
       errors.push(`${productInterface.file}: ${issue}`)
     }
-    validateNavigation(productInterface.file, productInterface.id, productInterface.navigation, experienceScopedInterfaces.has(productInterface.id))
     /*
      * F11 — one entry-point key vocabulary per resource. On an Interface the key
      * is that Interface's own `type`, or another Interface's id when a reader
@@ -331,7 +315,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   for (const experience of model.experiences) {
     requireTitle(experience.file, experience.doc.title, experience.doc.lead)
     validateSections(experience.file, experience.doc, ['Intent'], ['Capability boundary'])
-    validateNavigation(experience.file, experience.id, experience.navigation, false)
     if (!ACCESS_MODES.has(experience.access)) {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
@@ -495,8 +478,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     /*
      * One access mode is one context. Two Experiences with the same access and
      * an Actor in common are one audience cut by area — an admin-only page
-     * beside one admins share with members — which is navigation, not a second
-     * context. Alternatives of one Variation coexist by construction; an
+     * beside one admins share with members — which is a Screen there, not a
+     * second context. Alternatives of one Variation coexist by construction; an
      * Experience beside them, or in another Variation, is still compared.
      */
     const setOf = (experience: { id: string }) => variationOf.get(`experiences:${experience.id}`)
@@ -1203,11 +1186,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  /*
-   * Every Step placed exactly on a Screen, by Screen id. "Exactly": a Step on a
-   * child Screen is inside its parent, but it is the child's own claim, and a
-   * parent Screen with Steps of its own is a place in its own right.
-   */
+  /* Every Step placed on a Screen, by Screen id. */
   const stepsOnScreen = new Map<string, Array<{ label: string, step: ScenarioStep, capabilityId: string | undefined }>>()
   for (const scenario of allScenarios) {
     const implicitCapability = 'capability' in scenario ? scenario.capability : undefined

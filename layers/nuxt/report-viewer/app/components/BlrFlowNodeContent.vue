@@ -44,7 +44,6 @@ const branchLabel = computed(() => props.node.branch
       <!-- Held only under some alternatives: the variation mark and which. -->
       <span v-if="node.conditional" class="blr-flow-node__sub blr-flow-node__condition" :title="node.conditional"><UIcon name="i-lucide-split" class="size-3 shrink-0" />{{ node.conditional }}</span>
     </span>
-    <BlrNavigationMark v-if="node.navigation" :labelled="false" class="shrink-0" />
     </component>
     <UTooltip v-if="node.branch" :text="branchLabel">
       <button type="button" class="blr-flow-node__count nodrag nopan" :aria-expanded="node.branch.open" :aria-label="branchLabel" @click.stop="emit('toggle', node.branch.id, !node.branch.open)">

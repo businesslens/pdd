@@ -68,13 +68,12 @@ describe('connected containment tree', () => {
     expect(tree.children.map((node: any) => node.id)).toEqual(workspace.interfaces.map((resource: any) => resource.key))
     const nodes = flatten(tree)
     expect(new Set(nodes.map(node => node.id))).toEqual(new Set([tree.id, ...[...workspace.byKey.values()].filter((resource: any) => ['interface', 'experience', 'screen'].includes(resource.kind)).map((resource: any) => resource.key)]))
-    // One node per place, and a nested Screen is contained by its parent Screen, never listed beside it.
+    // One node per place; a Screen sits under the Interface or Experience that holds it.
     expect(nodes.length).toBe(1 + workspace.interfaces.length + workspace.experiences.length + workspace.screens.length)
     const parentOf = new Map(nodes.flatMap(node => node.children.map((child: any) => [child.id, node.id])))
     for (const screen of workspace.screens) {
-      expect(parentOf.get(screen.key)).toBe(screen.parentScreenId ? `screen:${screen.parentScreenId}` : screen.contexts[0].experienceId ? `experience:${screen.contexts[0].experienceId}` : `interface:${screen.contexts[0].interfaceId}`)
+      expect(parentOf.get(screen.key)).toBe(screen.contexts[0].experienceId ? `experience:${screen.contexts[0].experienceId}` : `interface:${screen.contexts[0].interfaceId}`)
     }
-    if (root === '.') expect(workspace.screens.some((screen: any) => screen.parentScreenId)).toBe(true)
     verifyTree(tree)
   })
   it('keeps a single root and uneven deep/wide branches readable', () => {

@@ -84,51 +84,33 @@ describe('merge review regressions', () => {
     } finally { rmSync(parent, { recursive: true, force: true }) }
   })
 
-  it('preserves a valid nested shared Screen’s owner, parent and location across export/import', () => {
+  it('preserves a shared Screen’s owner and location across export/import, and refuses a nested one', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'bl-shared-owner-'))
     const target = mkdtempSync(join(tmpdir(), 'bl-shared-import-'))
     try {
       cpSync(fixture, cwd, { recursive: true })
-      const parent = join(cwd, '.businesslens/interfaces/customer-web/screens/shared-storefront')
-      mkdirSync(join(parent, 'screens'), { recursive: true })
       const content = '---\nentities:\n  - { entity: catalog-product, shows: [Name and description, Price, Stock remaining] }\n---\n\n# Shared catalog\n\nThe shared catalog detail.\n'
-      writeFileSync(join(parent, 'screen.md'), content.replace('Shared catalog', 'Shared storefront'))
-      writeFileSync(join(parent, 'screens/shared-catalog.md'), content)
+      writeFileSync(join(cwd, '.businesslens/interfaces/customer-web/screens/shared-catalog.md'), content)
       const scenarioFile = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
-      writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replaceAll('customer-web::storefront::product-record', 'customer-web::shared-storefront::shared-catalog'))
-      writeFileSync(join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/read-shared-catalog.md'), `---
-kind: primary
-routes: { web: Web }
-steps:
-  - text: The shopper reads the shared catalog
-    kind: actor
-    actor: shopper
-    entities: [{ entity: catalog-product, effect: reads, facts: [Price] }]
-    contexts: { web: { place: customer-web::shared-storefront } }
----
-
-# Read the shared catalog
-
-## Trigger
-
-The catalog is opened.
-
-## Outcome
-
-Prices are shown.
-`)
+      writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replaceAll('customer-web::storefront::product-record', 'customer-web::shared-catalog'))
       const model = loadModel(cwd)
       expect(lintModel(model, tracked).errors).toEqual([])
       expandProductReport(target, compileReport(model, '2026-10-01'), false)
       const reopened = loadModel(target)
       expect(lintModel(reopened, tracked).errors).toEqual([])
-      for (const id of ['customer-web::shared-storefront', 'customer-web::shared-storefront::shared-catalog', 'customer-web::storefront::product-record']) {
+      for (const id of ['customer-web::shared-catalog', 'customer-web::storefront::product-record']) {
         const original = model.screens.find(screen => screen.id === id)!
         const imported = reopened.screens.find(screen => screen.id === id)!
-        expect(imported).toMatchObject({ id, containerId: original.containerId, parentId: original.parentId })
+        expect(imported).toMatchObject({ id, containerId: original.containerId })
         expect(imported.file.slice(target.length)).toBe(original.file.slice(cwd.length))
         expect(existsSync(imported.file)).toBe(true)
       }
+
+      const parent = join(cwd, '.businesslens/interfaces/customer-web/screens/shared-storefront')
+      mkdirSync(join(parent, 'screens'), { recursive: true })
+      writeFileSync(join(parent, 'screen.md'), content.replace('Shared catalog', 'Shared storefront'))
+      writeFileSync(join(parent, 'screens/reviews.md'), content.replace('Shared catalog', 'Reviews'))
+      expect(loadModel(cwd).issues).toContain('interfaces/customer-web/screens/shared-storefront/screens/: Screens never nest; fold each child into shared-storefront (its facts into entities, its Steps onto shared-storefront) or place it beside shared-storefront when it has a subject of its own')
     } finally { rmSync(cwd, { recursive: true, force: true }); rmSync(target, { recursive: true, force: true }) }
   })
 

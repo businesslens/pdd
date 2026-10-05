@@ -180,26 +180,21 @@ export function reachTreeProjection(workspace: ReportWorkspace, kind: ReachKind)
  */
 export function interfaceProjection(workspace: ReportWorkspace, delivery = false): TopologyBranch[] {
   type Screen = typeof workspace.screens[number]
-  const childScreens = (screen: Screen): Screen[] => screen.childScreenIds.flatMap((id) => {
-    const child = workspace.byKey.get(resourceKey('screen', id))
-    return child?.kind === 'screen' ? [child] : []
-  })
-  /* A nested Screen is contained by its parent Screen; the navigation mark is a note on the node, never an edge. */
-  const screenBranch = (screen: Screen, note?: string): TopologyBranch => ({ ...branch(screen, childScreens(screen).map(child => screenBranch(child))),
+  const screenBranch = (screen: Screen, note?: string): TopologyBranch => ({ ...branch(screen),
     references: delivery ? workspace.capabilities.filter(capability => screen.capabilityIds.includes(capability.id)) : [],
     referenceLabel: 'Exposes',
-    note: [note, screen.alwaysReachable ? 'Always reachable' : undefined].filter(Boolean).join(' · ') || undefined
+    note
   })
   return workspace.interfaces.map(resource => {
     const experiences = workspace.experiences.filter(experience => experience.interfaceIds.includes(resource.id))
     const children = [
       ...experiences.map(experience => {
         const screens = workspace.screens.filter(screen => screen.contexts.some(context => context.interfaceId === resource.id && context.experienceId === experience.id))
-        return { ...branch(experience, screens.filter(screen => !screen.parentScreenId).map(screen => screenBranch(screen))),
+        return { ...branch(experience, screens.map(screen => screenBranch(screen))),
           references: delivery ? workspace.capabilities.filter(capability => capability.contexts.some(context => context.experienceId === experience.id) && !screens.some(screen => screen.capabilityIds.includes(capability.id))) : [],
           referenceLabel: 'Delivers' }
       }),
-      ...workspace.screens.filter(screen => !screen.parentScreenId && screen.contexts.some(context => context.interfaceId === resource.id && !context.experienceId)).map(screen => screenBranch(screen, experiences.length ? 'Shared Screen' : undefined)),
+      ...workspace.screens.filter(screen => screen.contexts.some(context => context.interfaceId === resource.id && !context.experienceId)).map(screen => screenBranch(screen, experiences.length ? 'Shared Screen' : undefined)),
       ...(delivery ? workspace.capabilities.filter(capability =>
         capability.contexts.some(context => context.interfaceId === resource.id && !context.experienceId) && !workspace.screens.some(screen => screen.contexts.some(context => context.interfaceId === resource.id) && screen.capabilityIds.includes(capability.id))).map(capability => ({ ...branch(capability), note: 'Delivered directly' })) : [])
     ]

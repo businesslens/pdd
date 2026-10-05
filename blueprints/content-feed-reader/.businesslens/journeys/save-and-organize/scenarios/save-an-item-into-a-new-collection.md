@@ -37,11 +37,11 @@ steps:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
       mobile-to-web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
       mobile-to-web-source-focused:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
 routes:
   web: Web
   mobile-to-web: Mobile to web

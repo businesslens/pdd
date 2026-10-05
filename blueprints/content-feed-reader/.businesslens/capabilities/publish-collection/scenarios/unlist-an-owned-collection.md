@@ -10,13 +10,13 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Product explains that the public link will stop working
     kind: product
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Reader confirms unlisting
     kind: actor
     actor: reader
@@ -24,7 +24,7 @@ steps:
       - { entity: collection, from: Published, to: Unlisted, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
 ---
 
 # Unlist an owned collection

@@ -11,7 +11,7 @@ steps:
       - { entity: collection, effect: reads, facts: [Name] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The Product confirms collection ownership
     kind: product
     actor: reader
@@ -19,7 +19,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The item is added at the chosen position
     kind: product
     actor: reader
@@ -28,13 +28,13 @@ steps:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The remaining order is preserved
     kind: condition
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
 ---
 
 # Add an item to an owned collection

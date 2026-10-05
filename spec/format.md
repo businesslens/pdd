@@ -108,7 +108,7 @@ collection differ:
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/`, `experiences/`, or both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
-| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | `screens/` |
+| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
 | Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 | Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
@@ -118,10 +118,9 @@ collection differ:
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
 | Variation | `variations/<id>.md` | `variations/<id>/variation.md` | — |
 
-Here `<screen-parent>` is the Interface, Experience, or expanded Screen folder
-that contains the Screen. Screens nest: an expanded Screen may hold `screens/`,
-and the rule is the same at every level, so depth is unlimited. A
-representative model can therefore look like this:
+Here `<screen-parent>` is the Interface or Experience folder that contains the
+Screen. Screens never nest: an expanded Screen holds assets, never `screens/`.
+A representative model can therefore look like this:
 
 ```
 .businesslens/
@@ -143,8 +142,7 @@ representative model can therefore look like this:
 │           ├── <screen-id>.md                    # compact Screen
 │           └── <illustrated-screen-id>/          # expanded Screen
 │               ├── screen.md
-│               ├── mockup.svg
-│               └── screens/<child-screen-id>.md  # nested Screen
+│               └── mockup.svg
 │
 │   ── subject axis: what it is about ──
 ├── domains/<domain-id>.md                       # optional
@@ -187,20 +185,16 @@ Screen:
 The use of the Context determines how specific its place must be. A Capability
 availability Context names an undivided Interface or an Experience. A Scenario
 Context is a concrete occurrence and names the most-specific available place:
-a Screen, at any depth, when the Step occurs on one; otherwise the leaf
-Experience or undivided Interface, even if it also contains Screens. A parent
-Screen is a place of its own: a Step placed there occurs on the parent and in
-none of its children. A Business Rule
-Context is a selector and may name any of the three; an Interface, Experience,
-or parent Screen selector includes its descendant places.
+a Screen when the Step occurs on one; otherwise the leaf Experience or
+undivided Interface, even if it also contains Screens. A Business Rule Context
+is a selector and may name any of the three; an Interface or Experience
+selector includes its descendant places.
 
 Filesystem paths supply containment, and containment is read by id prefix at
 every depth. For example, `customer-web::storefront::checkout` is contained by
 `customer-web::storefront`, so a Step there is inside that Capability
-availability Context; `customer-web::storefront::onboarding::choose-plan` is
-contained by `customer-web::storefront::onboarding`, so a Step on the child is
-inside the parent Screen. Authors never repeat the containing Interface,
-Experience, or Screen in another field.
+availability Context. Authors never repeat the containing Interface or
+Experience in another field.
 
 **Two conditions decide whether an Interface is divided.** It must hold
 Experiences when either holds, and must not when neither does:
@@ -219,7 +213,7 @@ once Experiences exist; the second it checks on every Interface. Two
 Experiences of one Interface with the same `access` share no Actor, unless they
 are alternatives of one Variation; sharing one is a `lint` error. A page closed
 only to some non-administrative roles stays `authenticated`, and an admin-only
-page inside administration is navigation there: grants say who may act.
+page inside administration is a Screen there: grants say who may act.
 
 **Counterparts and Variations justify existing Experiences.** An Experience whose
 name also exists under another Interface is the same context on another
@@ -236,8 +230,7 @@ Interface, and two Screens with the same name below different Experiences of one
 Interface are counterparts exactly as they are across Interfaces.
 
 **A shared Screen is inside every Experience of its Interface.** Its id is
-`interface::screen`, its descendants are `interface::screen::child` and so on,
-and its Interface is never an availability place, so
+`interface::screen`, and its Interface is never an availability place, so
 containment reads the Interface as the set of its Experiences: a Capability the
 Screen exposes must be available in each of them, a Step that occurs on it is
 inside a Capability's availability only when every Experience is, and that
@@ -275,12 +268,10 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   reader-web
   reader-web::personal-library
   reader-web::personal-library::unread-library
-  reader-web::personal-library::unread-library::item-detail
   ```
 
-  Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. A Screen
-  nested in a Screen adds one segment per level, so the id says the whole
-  placement and containment is a prefix test. Never
+  Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. The id
+  says the whole placement, so containment is a prefix test. Never
   write `id:` in frontmatter — the filesystem is the id authority. The one
   exception is `product.md`, whose `id:` names the Product Model (it may differ
   from the repo name) and is limited to 64 characters. Compacting or expanding
@@ -351,8 +342,9 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   expanded resource folder. Files under its reserved `implementation/`
   subdirectory describe this repository's realization instead. Typed child
   directories (`experiences/`, `screens/`, and `scenarios/`) are structural,
-  not assets — `screens/` under an expanded Screen included; any other nested
-  directory is invalid. Plain asset files need no
+  not assets, and each is valid only under the types the layout table names: a
+  `screens/` directory under a Screen is a `lint` error, because Screens never
+  nest. Any other nested directory is invalid. Plain asset files need no
   declaration. Optional `assets:` frontmatter annotates files already present:
 
   ```yaml
@@ -373,7 +365,7 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   heading is the description for entities, domains, experiences, and the product.
   Journeys and both Scenario types instead use the required structured sections
   specified below and must not carry lead prose.
-- **Frontmatter = relations and navigation, with one relational-prose
+- **Frontmatter = relations and entry points, with one relational-prose
   exception.** Both Scenario types keep their structured `steps` in
   frontmatter so each single-line statement stays beside its kind, responsible
   Actor, Capability qualification, the Entities it touches, and route-specific
@@ -518,7 +510,7 @@ contracts or forms live together. Versions selected by a setting remain
 Version; experiments enabled by a setting remain Experiment.
 
 **A Variation is a relation, never containment.** Folders, Domain classification,
-Experience ownership, Screen nesting and Scenario parents stay authoritative.
+Experience ownership, Screen placement and Scenario parents stay authoritative.
 Ordinary Rule targets, Steps and Contexts reference concrete resources and never
 acquire "all alternatives" meaning. A Variation neither duplicates nor grants
 permission.
@@ -606,12 +598,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 10                         # folder-format version
+schema: 11                         # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 10 is the only supported folder format.
+`config.yaml` has no other keys. Schema 11 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -718,7 +710,6 @@ actors: [shopper, guest]
 entryPoints:
   - web: /
 languages: [en]
-navigation: [catalog, cart]
 ---
 
 # Customer web application
@@ -758,19 +749,6 @@ that is a subset of the Product's `languages`; an Interface listing languages
 while the Product declares none is a `lint` error, as is a tag outside the
 Product's list. It narrows the Product's list to what this surface serves. An
 Interface that omits it serves every language the Product declares.
-
-`navigation` is optional and names Screens that are reachable from every place
-inside the Interface — a cart, a search, an account menu. Each entry is a
-Screen path relative to this Interface — `catalog`, or
-`library::by-source` for a nested Screen — and must resolve to a Screen
-whose nearest Interface-or-Experience container is this Interface: on an
-undivided Interface any of its Screens; on a divided Interface only shared
-Screens, those beside `experiences/`, and their descendants. Entries are
-unique, and **order carries no meaning**. `navigation` is **structure, not a
-relation**, like folder containment: it states that a Screen is always
-reachable inside its container, asserts no transition, and creates or narrows
-no relation. It is the only navigation the model authors: menus, back links,
-route trees, and the order of navigation items are design.
 
 ### Outbound dependencies
 
@@ -819,7 +797,6 @@ actors: [store-admin]
 access: restricted              # public | authenticated | restricted
 entryPoints:
   - admin-web: /admin
-navigation: [order-console, settings]
 ---
 
 # Administration
@@ -842,11 +819,6 @@ Experiences form an exhaustive, potentially overlapping cover of the Interface
 that holds them. The union of their Actors must equal that Interface's Actor
 list, so no Interface Actor becomes unreachable when Screens move under
 Experiences.
-
-`navigation` is the Interface's field, relative to the Experience: each entry
-is a path to one of this Experience's own Screens, nested ones by their child
-path — `order-console`, `library::by-source` — reachable from every place
-inside the Experience, under the Interface's rules.
 
 ### Availability
 
@@ -877,27 +849,36 @@ placement, and a Scenario Step names one concrete Context per route.
 **The model says what an Actor can reach, see, do and trigger at each place. It
 never says how that looks or is built.** The test:
 
-> Rebuild a view with a different component library, layout, typography,
-> colors, spacing, icons, motion and copy. Everything that would still have to
-> be true is the model's: who can reach the view, what facts it shows, what
-> abilities it offers, what conditions change that, and what happens next.
-> Everything the redesign is free to change is design's, and the model says
-> nothing about it.
+> Rebuild the surface from scratch: a web or mobile view with a different
+> component library, layout, typography, colors, spacing, icons, motion and
+> copy; a CLI with a different command style; an API in a different style, CRUD
+> or RPC. Everything that would still have to be true is the model's: who can
+> reach the place, what facts it shows, what abilities it offers, what
+> conditions change that, and what happens next. Everything the rebuild is free
+> to change is design's, and the model says nothing about it.
 
 In the model: which surfaces exist and their interaction type; which languages
-they serve; who is in each context and with what access; which views exist,
-nested how, and what facts and abilities each has, including the facts an
-Actor enters; what is always reachable inside a context; where behavior moves
-between views; the conditions and outcomes an Actor meets; who may act; and
-the Product's own vocabulary for all of it.
+they serve; who is in each context and with what access; which views exist and
+what facts and abilities each has, including the facts an Actor enters; where
+behavior moves between views; the conditions and outcomes an Actor meets; who
+may act; and the Product's own vocabulary for all of it. Each has a field or a
+Step that `lint` checks; nothing else about a view does.
 
 Out of the model: component libraries, theming, layout, typography, color,
 radius and borders, iconography, motion, microcopy and tone, gestures versus
-buttons, breakpoints, loading and hover states, navigation chrome, the order
-of navigation items, and quality attributes such as accessibility or
-performance unless they change what an Actor can do. These live in a design
-system and design files, attached as `kind: visual` References with
-`role: intent`.
+buttons, modal versus page, tabs versus one page, a wizard versus one form,
+breakpoints, loading and hover states, menus and what they contain, and
+quality attributes such as accessibility or performance; a CLI's command
+names, syntax, flags and output format; and an API's style (CRUD or RPC),
+paths and payload shapes. These live in a design system, design files, help
+text or an API description, attached as `kind: visual`, `doc` or `spec`
+References with `role: intent`.
+
+**Commitments.** A quality the Product commits to whatever the design — a
+stated accessibility conformance level, a response-time promise in a contract —
+is a Business Rule that names the authoritative Reference and requires it, the
+same pattern as contractual wording below. How a design meets it stays design.
+A quality nobody has committed to is not a Rule.
 
 **Text.** The model says that an Actor is told something and under which
 condition — a Step, an Edge case, or a Rule outcome. Ordinary copy stays outside
@@ -1776,7 +1757,7 @@ A Screen never authors `capabilities`. Its Capabilities are the distinct
 Capabilities exercised by Steps placed exactly on that Screen, across both
 Scenario kinds. A Capability Scenario's owner supplies its Step Capability;
 a Journey Step names its own. A Screen needs at least one such Capability.
-Capabilities do not flow up or down the Screen hierarchy. Each derived Capability
+Each derived Capability
 must be available in the containing Interface or Experience (every Experience
 for a shared Screen). A Capability need not have a Screen: nonvisual behavior
 and coverage gaps do not become contradictions when another Screen is modeled.
@@ -1805,32 +1786,28 @@ Model-owned visuals expand the Screen and sit beside `screen.md`; generated
 captures live under its `implementation/` directory. External or separately
 maintained visuals attach as `kind: visual` References.
 
-**Screens nest.** An expanded Screen may hold `screens/`, and a child's id is
-its parent's id plus one segment — `customer-web::storefront::onboarding::choose-plan`.
-Containment keeps its meaning at every level: a Step on a child is inside the
-parent, a Rule selector on the parent covers the child, and `navigation` may
-name a nested Screen by its child path. A Screen has one structural parent — an
-Interface, an Experience, or a Screen — and it is the folder that holds it.
+**A Screen is one working context: one selected subject, or one process in
+progress.** Everything that works on the same subject or the same draft is that
+one Screen — its tabs, sections, side panels, and the stages of a wizard alike —
+so its `shows` and `collects` are the union of them. Whether those parts are
+tabs or one long page, a wizard or one form, is design: a redesign may merge or
+split them, and the model must not change when it does. Where order matters,
+the Scenario Steps on that Screen carry it. **Screens never nest**: a Screen's
+structural parent is the Interface or Experience whose folder holds it, and a
+`screens/` directory under a Screen is a `lint` error.
 
-**Screen ownership follows a persistent working context, not an opening
-act.** Nest a Screen when it subdivides the same selected subject or process
-as its parent and changing that parent context also changes or ends the child.
-Tabs within one resource reading and stages within one wizard are examples.
-A destination that establishes its own subject and can be opened from several
-working views belongs once at their common Interface or Experience container;
-opening it over another view does not make that view its owner. Selection,
+A destination that establishes its own subject is its own Screen, placed once
+at the Interface or Experience that holds the views it is opened from; opening
+it over another view does not make that view its owner. Selection,
 co-visibility, URLs, modal versus page, and component boundaries alone decide
 nothing. A different drawing of the same information remains one Screen.
 
 Confirmation is behavior on its host unless the confirmation establishes a
 distinct working context; visual presentation is not the test. Preserving the
-underlying view on close is a Scenario Outcome.
-
-Choose the nearest qualifying persistent context as the parent. A generic
-settings/category selector is not itself a selected subject or an in-progress
-process. A process stage requires its own Actor decision or input while retaining
-the same draft or operation; a completion message, generated credential reveal
-or read-only result alone is an Outcome on that process Screen, not a child.
+underlying view on close is a Scenario Outcome. A generic settings/category
+selector is not itself a selected subject: each settings page it leads to with
+its own subject is a Screen. A completion message, generated credential reveal
+or read-only result is an Outcome on the process Screen, not a Screen.
 
 The same view on another Interface is another Screen with the same name — a
 counterpart, stated separately so a divergence stays visible.
@@ -1838,11 +1815,10 @@ counterpart, stated separately so a divergence stays visible.
 **Places are authored; transitions are derived.** Screens are the places. A
 transition is a place change between consecutive contextualized Steps on a
 Scenario route; a transition no Scenario records is not a product commitment.
-Entry points state where an Actor arrives from outside, `navigation` what is
-always reachable, and nesting which views sit inside which; none asserts a
-transition, and they are the only structural additions. Screens never author a
-sitemap, a transition graph, a `next`, a `parent`, or an `over`. UX sitemaps may
-be external `doc` or `visual` references.
+Entry points state where an Actor arrives from outside; they assert no
+transition, and they are the only structural addition. Screens never author a
+sitemap, menus, a transition graph, a `next`, a `parent`, or an `over`. UX
+sitemaps may be external `doc` or `visual` references.
 
 ### `journeys/<id>.md` or `journeys/<id>/journey.md`
 
@@ -1912,8 +1888,7 @@ Journey, and nothing else is: the test is structural, so it reads the same way
 for a model mapped from code and one decided before any code exists. An
 orchestration, shared state, or a cross-Interface hand-off is not required, and
 a merely plausible sequence of independent Product actions is not a Journey. A
-wizard is nested Screens on the structure axis and says nothing about Journeys:
-the Scenario walking it is a Journey Scenario only where it crosses
+wizard is one Screen and says nothing about Journeys: the Scenario walking it is a Journey Scenario only where it crosses
 Capabilities. Whether the repository implements the Journey is `verify`'s
 finding. One achieved Journey Scenario is valid coverage. A goal with no
 achieved multi-Capability path belongs to Capability behavior.

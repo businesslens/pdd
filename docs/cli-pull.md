@@ -54,7 +54,7 @@ Serve two anonymous endpoints:
 | `GET /api/v1/blueprints/:slug/report.json` | The report, with `x-businesslens-blueprint: <slug>` and `x-businesslens-report-digest: <sha-256 hex of the canonical report JSON>`; `404` unknown, `410` withdrawn, `503` unavailable |
 | `GET /api/v1/blueprints/:slug/logo.svg` | The Product logo, optional |
 
-`pull` asks for `application/vnd.businesslens.report+json; version=15` and
+`pull` asks for `application/vnd.businesslens.report+json; version=16` and
 also accepts `application/json`.
 
 ## Next

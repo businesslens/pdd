@@ -15,7 +15,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '15.0.0'
+export const REPORT_SCHEMA_VERSION = '16.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -143,12 +143,6 @@ export const ReportInterfaceSchema = z.strictObject({
   entryPoints: z.array(ReportEntryPointSchema),
   /** Narrows the Product's languages; empty means the Product's list applies. */
   languages: z.array(LanguageTagSchema),
-  /**
-   * Screens reachable from every place inside this Interface, by full id.
-   * Structure, not a relation: it says nothing about movement and its order
-   * carries no meaning.
-   */
-  navigation: z.array(QualifiedIdSchema),
   ...ResourceContentSchema
 })
 
@@ -160,7 +154,6 @@ export const ReportExperienceSchema = z.strictObject({
   interfaceIds: z.array(QualifiedIdSchema).min(1),
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
-  navigation: z.array(QualifiedIdSchema),
   ...ResourceContentSchema
 })
 
@@ -465,7 +458,7 @@ export const ReportVariationSchema = z.strictObject({
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV15Schema = z.strictObject({
+export const ProductReportV16Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -504,10 +497,10 @@ export const ProductReportV15Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV15Schema
+export const ProductReportSchema = ProductReportV16Schema
 
-export type ProductReportV15 = z.infer<typeof ProductReportV15Schema>
-export type ProductReport = ProductReportV15
+export type ProductReportV16 = z.infer<typeof ProductReportV16Schema>
+export type ProductReport = ProductReportV16
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -540,7 +533,7 @@ export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV15['model']
+export type ReportModel = ProductReportV16['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -549,7 +542,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV15Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV16Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -694,7 +687,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV15): string[] {
+export function validateProductReport(report: ProductReportV16): string[] {
   const issues: string[] = []
   const { model } = report
   /* Member key → Variation id. A Rule in a Variation applies only under its set's conditions, never unconditionally. */
@@ -770,20 +763,11 @@ export function validateProductReport(report: ProductReportV15): string[] {
   }
 
   const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
-  /* The nearest Interface or Experience above a Screen: its parent may be a Screen. */
-  const containerForScreen = (screen: ReportScreen): string => {
-    let place = parentPlace(screen.id)
-    while (place && screensById.has(place)) place = parentPlace(place)
-    return place || ''
-  }
-  /* Relative to its container, landing on a Screen the container itself holds. */
-  const validateNavigation = (label: string, containerId: string, entries: string[]) => {
-    requireUniqueValues(issues, label, 'navigation', entries)
-    for (const entry of entries) {
-      const screen = screensById.get(entry)
-      if (screen && containerForScreen(screen) === containerId) continue
-      issues.push(`${label}: navigation "${entry}" does not resolve to a Screen inside "${containerId}"`)
-    }
+  /* Screens never nest: a Screen's parent is its Interface or Experience. */
+  const containerForScreen = (screen: ReportScreen): string => parentPlace(screen.id) || ''
+  for (const screen of model.screens) {
+    const parent = containerForScreen(screen)
+    if (screensById.has(parent)) issues.push(`screen "${screen.id}": Screens never nest; its parent "${parent}" is a Screen`)
   }
   for (const productInterface of model.interfaces) {
     requireUniqueValues(issues, `interface "${productInterface.id}"`, 'actorIds', productInterface.actorIds)
@@ -791,7 +775,6 @@ export function validateProductReport(report: ProductReportV15): string[] {
     for (const issue of interfaceLanguageIssues(productInterface.languages, productLanguages, 'the Product')) {
       issues.push(`interface "${productInterface.id}": ${issue}`)
     }
-    validateNavigation(`interface "${productInterface.id}"`, productInterface.id, productInterface.navigation)
     /* The folder has always checked this and the wire never did. A key is the
        Interface's own type, or another Interface's id for a surface a reader
        arrives from; its own id is refused because `type` already says it. */
@@ -829,7 +812,6 @@ export function validateProductReport(report: ProductReportV15): string[] {
       experience.supportingSections,
       ['Intent', 'Capability boundary']
     )
-    validateNavigation(`experience "${experience.id}"`, experience.id, experience.navigation)
     requireActing(`experience "${experience.id}"`, experience.actorIds)
     missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
     for (const interfaceId of experience.interfaceIds) {
@@ -1790,7 +1772,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV15): ProductReportV15 {
+export function projectPortableReport(report: ProductReportV16): ProductReportV16 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1839,8 +1821,8 @@ export function projectPortableReport(report: ProductReportV15): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV15 {
-  const parsed = ProductReportV15Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV16 {
+  const parsed = ProductReportV16Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1866,7 +1848,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV15): string[] {
+export function validateBlueprintReport(report: ProductReportV16): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

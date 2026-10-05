@@ -10,7 +10,7 @@ steps:
       - { entity: collection, from: Private, to: Published, facts: [Public address] }
     contexts:
       unlist-on-web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Reader unlists the collection
     kind: actor
     actor: reader
@@ -19,7 +19,7 @@ steps:
       - { entity: collection, from: Published, to: Unlisted, facts: [] }
     contexts:
       unlist-on-web:
-        place: reader-web::personal-library::collection-workspace::settings::sharing
+        place: reader-web::personal-library::collection-detail
   - text: The Visitor opens the shared address
     kind: actor
     actor: visitor

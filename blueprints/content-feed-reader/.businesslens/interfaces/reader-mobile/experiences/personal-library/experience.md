@@ -3,7 +3,6 @@ actors: [reader]
 access: authenticated
 entryPoints:
   - reader-mobile: content-reader://library
-navigation: [unread-library, saved-items, source-list]
 ---
 
 # Personal library

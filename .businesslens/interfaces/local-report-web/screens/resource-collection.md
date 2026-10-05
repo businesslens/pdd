@@ -4,7 +4,7 @@ entities:
   - { entity: product, shows: [Identity] }
   - { entity: interface, shows: [Type, Actors, Variation] }
   - { entity: experience, shows: [Container, Audience, Variation] }
-  - { entity: screen, shows: [Exposure, Nesting, Variation] }
+  - { entity: screen, shows: [Exposure, Container, Variation] }
   - { entity: domain, shows: [Region] }
   - { entity: entity, shows: [Kept information, Acts, Kind, States, Variation] }
   - { entity: capability, shows: [Purpose, Availability, Domain, Variation] }

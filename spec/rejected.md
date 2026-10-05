@@ -187,6 +187,17 @@ two independent maps of one product cut different restricted Experiences.
 `restricted` is the administration area alone; other pages stay
 `authenticated`, with grants saying who may act.
 
+**Nested Screens for tabs and wizard stages.** Superseded. A child Screen per tab
+of one subject or per stage of one wizard made the model change when a redesign
+turned tabs into one long page or a wizard into one form — a layout decision
+the model must survive. One working context is one Screen; the order of stages
+lives in its Scenario Steps.
+
+**`navigation` on Interfaces and Experiences.** Superseded. Listing the Screens
+reachable from everywhere recorded menu structure, which a redesign may change,
+and `lint` could only check that each entry resolved. What an Actor reaches is
+already said by entry points, Screens and Scenario Steps.
+
 ## Capabilities
 
 **A setting-driven Product side effect as a Capability of its own.** Moving

@@ -24,7 +24,7 @@ None.
 
 1. Finds the model (see [Choosing the Product Model](./cli.md#choosing-the-product-model))
    and lints it. Any lint error stops the run.
-2. Compiles it into a Product Report (version 15) and applies the
+2. Compiles it into a Product Report (version 16) and applies the
    [portable projection](#portable-export).
 3. Writes `.businesslens/build/report.json`, plus a small
    `.businesslens/cache/build.json` stamp. Both are generated and gitignored, and

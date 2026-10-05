@@ -19,7 +19,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The Product confirms collection ownership
     kind: product
     actor: reader
@@ -27,7 +27,7 @@ steps:
       - { entity: collection, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: The item is moved to the chosen position
     kind: product
     actor: reader
@@ -36,14 +36,14 @@ steps:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
   - text: Every other item keeps its relative order
     kind: condition
     entities:
       - { entity: item, effect: reads, facts: [] }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace::items
+        place: reader-web::personal-library::collection-detail
 ---
 
 # Reorder an owned collection

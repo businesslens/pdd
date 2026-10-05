@@ -10,7 +10,7 @@ steps:
       - { entity: product, effect: reads, facts: [Identity, Catalog identity, Limitations] }
     contexts:
       local:
-        place: local-report-web::product-overview::about
+        place: local-report-web::product-overview
   - text: The Developer selects Coverage to read what the model covers, by path
     kind: actor
     actor: developer
@@ -18,14 +18,14 @@ steps:
       - { entity: product-model, effect: reads, facts: [Coverage, Method] }
     contexts:
       local:
-        place: local-report-web::product-overview::coverage
+        place: local-report-web::product-overview
   - text: The Developer selects References to read every attached location and the resources that cite it
     kind: actor
     actor: developer
     entities: []
     contexts:
       local:
-        place: local-report-web::product-overview::references
+        place: local-report-web::product-overview
   - text: The Developer opens a Capability and reads its Overview
     kind: actor
     actor: developer
@@ -33,7 +33,7 @@ steps:
       - { entity: capability, effect: reads, facts: [Purpose, Availability, Domain] }
     contexts:
       local:
-        place: local-report-web::resource-reading::overview
+        place: local-report-web::resource-reading
   - text: The Developer selects Scenarios to read one of its Scenarios' Steps
     kind: actor
     actor: developer
@@ -41,7 +41,7 @@ steps:
       - { entity: capability-scenario, effect: reads, facts: [Trigger and outcome, Steps] }
     contexts:
       local:
-        place: local-report-web::resource-reading::scenarios
+        place: local-report-web::resource-reading
   - text: The Developer selects Connections to read everything the Capability relates to
     kind: actor
     actor: developer
@@ -49,14 +49,14 @@ steps:
       - { entity: capability, effect: reads, facts: [Availability, Domain] }
     contexts:
       local:
-        place: local-report-web::resource-reading::connections
+        place: local-report-web::resource-reading
   - text: The Developer selects References to read the attachments of the resource being read
     kind: actor
     actor: developer
     entities: []
     contexts:
       local:
-        place: local-report-web::resource-reading::references
+        place: local-report-web::resource-reading
   - text: The Developer opens a Screen that delivers it and reads its presented facts and available Capabilities
     kind: actor
     actor: developer
@@ -64,7 +64,7 @@ steps:
       - { entity: screen, effect: reads, facts: [Exposure, Presents] }
     contexts:
       local:
-        place: local-report-web::resource-reading::overview
+        place: local-report-web::resource-reading
 ---
 
 # Read the Product and one resource through their readings
