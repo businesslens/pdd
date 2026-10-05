@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-10-05
+
+- A globally installed CLI offers each newer release once, and updates itself only when you choose to. Turn the reminder off from the prompt or with `BUSINESSLENS_NO_UPDATE_CHECK=1`.
+
 ## [0.23.1] - 2026-10-04
 
 - The report and every BusinessLens page show in light mode only for now; dark mode will return once it reads as well as light.
@@ -845,7 +849,9 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/businesslens/pdd/compare/v0.23.1...v0.24.0
+[0.23.1]: https://github.com/businesslens/pdd/compare/v0.23.0...v0.23.1
 [0.23.0]: https://github.com/businesslens/pdd/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/businesslens/pdd/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/businesslens/pdd/compare/v0.20.0...v0.21.0

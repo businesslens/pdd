@@ -9,6 +9,7 @@ import { runOpen } from './commands/open.js'
 import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
 import { runView } from './commands/view.js'
+import { checkForCliUpdate } from './core/cli-update.js'
 import { cliVersion } from './version.js'
 
 interface InstallCliOptions {
@@ -45,6 +46,13 @@ interface PullCliOptions extends ForceCliOptions {
 
 interface ContributeCliOptions {
   yes?: boolean
+}
+
+/** Ends the invocation before its command runs, with this exit code. */
+class StopInvocation extends Error {
+  constructor(readonly exitCode: number) {
+    super()
+  }
 }
 
 function cwdFor(command: Command): string {
@@ -108,6 +116,11 @@ function createProgram(setExitCode: (code: number) => void): Command {
       }
     })
     .exitOverride()
+    .hook('preAction', async (_program, action) => {
+      if (action.name() === 'blueprint') return
+      const exitCode = await checkForCliUpdate()
+      if (exitCode !== undefined) throw new StopInvocation(exitCode)
+    })
 
   program
     .command('install')
@@ -226,6 +239,7 @@ async function main(argv = process.argv): Promise<number> {
     await program.parseAsync(argv)
     return exitCode
   } catch (error) {
+    if (error instanceof StopInvocation) return error.exitCode
     if (error instanceof CommanderError) {
       return error.exitCode === 0 || error.code === 'commander.help' ? 0 : 2
     }

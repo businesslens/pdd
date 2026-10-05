@@ -77,6 +77,35 @@ used for harness detection and project-scoped skills.
 | --- | --- | --- |
 | `BUSINESSLENS_CATALOG_URL` | `blueprint pull` | Catalog origin when `--catalog` is not given; defaults to `https://businesslens.io` |
 | `BUSINESSLENS_CONTRIBUTE_UPSTREAM` | `blueprint contribute` | `owner/repo` the pull request targets; defaults to `businesslens/pdd` |
+| `BUSINESSLENS_NO_UPDATE_CHECK` | every command | Set to `1` to turn off the CLI update check and prompt |
 
 Exit codes: `0` success, `1` the command failed or was refused, `2` invalid
 usage. Each command page says which cases map to which.
+
+## Updating the CLI
+
+When the CLI is installed globally with npm, pnpm, Yarn or Bun, a command run
+in a terminal may offer a newer stable release before it starts:
+
+```text
+◆  A newer BusinessLens CLI is available: 0.23.1 → 0.24.0
+│  ● Update now (npm install --global businesslens@0.24.0)
+│  ○ Not now
+│  ○ Do not remind me again
+```
+
+- **Update now** installs that release with the package manager that installed
+  the CLI, then stops; run your command again. If the update fails, the command
+  runs on the installed version and prints the install command to retry.
+- **Not now** runs the command. Each release is offered once.
+- **Do not remind me again** turns the prompt off for good. To turn it back on,
+  delete `~/.config/businesslens/update-check.json`
+  (`%APPDATA%\businesslens\update-check.json` on Windows, or under
+  `XDG_CONFIG_HOME` when set).
+
+The check runs at most once a day in the background, so no command waits on it.
+Nothing is checked or offered without a terminal, in CI, with
+`BUSINESSLENS_NO_UPDATE_CHECK=1`, under `npx` (which already runs the latest
+release), or when BusinessLens is a project dependency. Nothing is installed
+without your choice. This updates the CLI itself; [`update`](./cli-update.md)
+refreshes installed skills.

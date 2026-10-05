@@ -5,6 +5,8 @@ export default defineConfig({
   // it carries type declarations because it is a cross-repository contract.
   entry: {
     cli: 'src/cli.ts',
+    // Run detached by the CLI to look for a newer release.
+    'update-check': 'src/update-check.ts',
     report: 'src/report.ts',
     'report-digest': 'src/report-digest.ts',
     'report-selectors': 'src/report-selectors.ts',
