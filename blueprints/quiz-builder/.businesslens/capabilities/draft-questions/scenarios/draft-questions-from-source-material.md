@@ -11,18 +11,18 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Quiz assistant reads the source material and the questions the quiz already asks
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product sends the source material and the questions the quiz already asks to a language model
+    kind: product
+    actor: creator
     entities:
       - { entity: quiz, effect: reads, facts: [Source material, Question order] }
       - { entity: question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Quiz assistant writes questions the material answers, each with a correct answer and an explanation
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product keeps each question the model writes, with its correct answer and explanation, as a draft
+    kind: product
+    actor: creator
     entities:
       - { entity: question, effect: creates, to: Drafted, facts: [Prompt, Format, Answer options, Correct answer, Explanation, Points] }
     contexts:
@@ -60,5 +60,5 @@ learners take is unchanged.
 
 ## Edge cases
 
-- The quiz already asks about part of the material → the Quiz assistant does not draft those questions again.
-- The Quiz assistant cannot be reached → the Product says drafting failed and keeps the source material to try again.
+- The quiz already asks about part of the material → no draft repeats a question the quiz already asks.
+- A written question has no answer the Product could score → it is not kept as a draft.

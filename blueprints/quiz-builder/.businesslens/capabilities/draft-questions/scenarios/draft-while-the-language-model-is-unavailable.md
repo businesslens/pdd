@@ -19,16 +19,17 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The model writes nothing the material answers
+  - text: The language model cannot be reached or does not answer
     kind: condition
     entities: []
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Product says why no drafts were written
+  - text: The Product says drafting failed and keeps the source material to try again
     kind: product
     actor: creator
-    entities: []
+    entities:
+      - { entity: quiz, effect: reads, facts: [Source material] }
     contexts:
       web:
         place: quiz-web::quiz-editor
@@ -42,13 +43,13 @@ steps:
         place: quiz-web::quiz-editor
 ---
 
-# Draft from material with nothing to ask
+# Draft while the language model is unavailable
 
 ## Trigger
 
-The Creator asks for drafts from material too short or too vague to ask about.
+The Creator asks for drafts while the language model is unavailable.
 
 ## Outcome
 
-The Creator knows why nothing was drafted; the source material is kept and the
-quiz is unchanged.
+Nothing is drafted, the Creator knows why and can try again, and writing
+questions by hand is unaffected.

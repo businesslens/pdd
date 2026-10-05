@@ -20,7 +20,8 @@ answer.
 
 ### Drafted
 
-Proposed by the Quiz assistant and waiting for the creator. It is not part of
+Drafted by the Product from source material and waiting for the creator. It is
+not part of
 the quiz, and no learner sees it.
 
 ### Included

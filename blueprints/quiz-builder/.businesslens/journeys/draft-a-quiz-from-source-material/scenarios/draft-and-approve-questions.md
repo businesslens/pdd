@@ -13,9 +13,9 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Quiz assistant drafts questions from the material
-    kind: actor
-    actor: quiz-assistant
+  - text: The Product has a language model draft questions from the material and keeps them as drafts
+    kind: product
+    actor: creator
     capability: draft-questions
     entities:
       - { entity: quiz, effect: reads, facts: [Source material] }

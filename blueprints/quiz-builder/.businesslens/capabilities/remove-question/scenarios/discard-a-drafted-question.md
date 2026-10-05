@@ -32,7 +32,7 @@ steps:
 
 ## Trigger
 
-The Creator reviews a question the Quiz assistant drafted and does not want it.
+The Creator reviews a question the Product drafted and does not want it.
 
 ## Outcome
 
