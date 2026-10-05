@@ -10,6 +10,6 @@ entryPoints:
 
 # Suggestion
 
-One suggestion opened for review: why the Assistant raised it, the pages it
+One suggestion opened for review: why it was raised, the pages it
 cites, and its proposed content beside the page as it stands now. An Editor
 adjusts the proposed content, publishes it, or dismisses it here.

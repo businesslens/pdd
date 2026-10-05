@@ -1,5 +1,5 @@
 ---
-kind: conflict
+kind: edge
 routes:
   web: Web
 steps:
@@ -49,13 +49,12 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The Product makes the proposed content the page's current revision, marked as published from an Assistant suggestion
+  - text: The Product makes the proposed content the page's current revision, marked as published from a suggestion
     kind: product
     actor: member
     entities:
       - { entity: page, effect: changes, facts: [Content, Last edited at] }
       - { entity: revision, effect: creates, facts: [Title, Content, Saved at, Origin] }
-      - { entity: assistant, effect: reads, facts: [] }
       - { entity: suggestion, effect: reads, facts: [] }
     contexts:
       web:
@@ -66,8 +65,8 @@ steps:
 
 ## Trigger
 
-An Editor opens a suggestion for a page someone edited after the Assistant
-drafted it.
+An Editor opens a suggestion for a page someone edited after the suggestion was
+left.
 
 ## Outcome
 

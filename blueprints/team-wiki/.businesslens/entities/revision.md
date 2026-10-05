@@ -12,4 +12,4 @@ revision, and earlier revisions are never changed or removed.
 - **Title** — the page's title at that save
 - **Content** — the page's content at that save
 - **Saved at** — when it was saved
-- **Origin** — how it came about: written by an Editor, restored from an earlier revision, or published from an Assistant suggestion
+- **Origin** — how it came about: written by an Editor, restored from an earlier revision, or published from a suggestion an AI agent left

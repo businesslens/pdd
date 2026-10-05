@@ -1,5 +1,5 @@
 ---
-kind: conflict
+kind: edge
 routes:
   web: Web
 steps:

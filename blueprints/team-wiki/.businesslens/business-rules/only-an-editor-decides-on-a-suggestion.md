@@ -11,10 +11,10 @@ permits:
 # Only an Editor decides on a suggestion
 
 A suggestion's proposed content is adjusted, and the suggestion published or
-dismissed, only by a Member whose role in the page's space is Editor. The
-Assistant drafts a suggestion and never decides on it.
+dismissed, only by a Member whose role in the page's space is Editor. An AI
+agent leaves a suggestion and never decides on it.
 
 ## Rationale
 
-The Assistant proposes and people decide: a suggestion reaches a page only
+The agent proposes and people decide: a suggestion reaches a page only
 through someone who answers for that space.
