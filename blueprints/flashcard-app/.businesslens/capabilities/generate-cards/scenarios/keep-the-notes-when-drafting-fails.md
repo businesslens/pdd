@@ -11,7 +11,7 @@ steps:
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: Drafting cannot be completed right now
+  - text: The language model the Product drafts with cannot be reached
     kind: condition
     entities: []
     contexts:
@@ -30,7 +30,8 @@ steps:
 
 ## Trigger
 
-The Learner asks for cards while drafting is unavailable.
+The Learner asks for cards while the language model the Product drafts with
+cannot be reached.
 
 ## Outcome
 

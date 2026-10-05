@@ -5,7 +5,7 @@ colorSlot: 4
 # Card generation
 
 Drafting cards from notes a Learner pastes, and the Learner's decision on each
-card the Assistant proposes.
+proposed card.
 
 ## Boundary
 

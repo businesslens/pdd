@@ -5,8 +5,8 @@ availability: [{ place: flashcards-web }]
 
 # Keep card proposal
 
-Turns one card proposal into a new card in its deck, as the Assistant drafted
-it or as the Learner corrected it.
+Turns one card proposal into a new card in its deck, as it was drafted or as
+the Learner corrected it.
 
 ## Intent
 

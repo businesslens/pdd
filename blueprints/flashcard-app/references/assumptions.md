@@ -7,6 +7,8 @@ These are assumptions to validate, not claims that research has proved them.
 - Four recall ratings — Again, Hard, Good, Easy — are enough to schedule a card,
   and the gaps they produce (one day, then about ×1.2, ×2.5 or ×4) feel neither
   nagging nor forgetful. A 21-day gap is a fair line for calling a card Known.
+- A language model drafts usable cards from typical study notes often enough
+  that deciding on proposals is quicker than writing the cards by hand.
 - Learners trust drafted cards more when each proposal shows the passage of
   their notes it came from, and they would rather discard a weak proposal than
   edit it.

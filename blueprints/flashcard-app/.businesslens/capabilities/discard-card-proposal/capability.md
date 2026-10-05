@@ -9,5 +9,5 @@ Throws away one card proposal without adding anything to its deck.
 
 ## Intent
 
-Let a Learner reject what the Assistant got wrong or what is not worth
+Let a Learner reject a draft that got something wrong or what is not worth
 studying, at no cost.

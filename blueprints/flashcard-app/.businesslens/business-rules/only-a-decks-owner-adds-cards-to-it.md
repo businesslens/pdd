@@ -10,7 +10,7 @@ permits:
 # Only a deck's owner adds cards to it
 
 A card enters a deck only when the deck's owner adds it, keeps a card proposal,
-or makes the deck as a copy. The Assistant never adds a card: what it drafts
+or makes the deck as a copy. Drafting from notes never adds a card: what it produces
 waits as a card proposal until the owner keeps it.
 
 ## Rationale
