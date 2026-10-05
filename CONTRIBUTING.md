@@ -38,3 +38,10 @@ development launcher; without it they retain their release-pinned npm runner.
    builder and then inspects again.
 5. Run `npm run verify` before opening a PR.
 6. Do not add secrets, customer data, or private repository URLs.
+
+## Demo GIF
+
+`.github/demo.gif` tours the local report on the `content-feed-reader`
+Blueprint. Re-record it after a visible report change with
+`npm run build && npm run demo:record`; it needs Playwright's Chromium and
+`ffmpeg`, and must stay under 5 MB.
