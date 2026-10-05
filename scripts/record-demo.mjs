@@ -186,21 +186,22 @@ try {
   }
   const rail = name => page.locator('.blr-navitem', { hasText: name })
   const sidebarToggle = page.locator('button[aria-controls^="businesslens-report-sidebar-"]')
-  async function sidebar(expanded) {
-    if (await sidebarToggle.getAttribute('aria-expanded') === String(expanded)) return
+  /* The rail folds once, after the first collection opens, and stays folded:
+     later collections are picked from its icons. */
+  async function collapseSidebar() {
+    if (await sidebarToggle.getAttribute('aria-expanded') === 'false') return
+    await hold(150)
     await click(sidebarToggle, { ms: 400 })
-    await page.locator(`button[aria-controls^="businesslens-report-sidebar-"][aria-expanded=${expanded}]`).waitFor()
+    await page.locator('button[aria-controls^="businesslens-report-sidebar-"][aria-expanded=false]').waitFor()
     await hold(200)
   }
-  /* Each collection opens on its List, with the rail folded away for room; the
-     picker then draws the same set another way. */
+  /* Each collection opens on its List; the picker then draws the same set another way. */
   async function collection(name, drawing, title) {
     beat(`${name}: List → ${title}`)
-    await sidebar(true)
-    await click(rail(name), { ms: 450, dx: 0.3 })
+    const folded = await sidebarToggle.getAttribute('aria-expanded') === 'false'
+    await click(rail(name), { ms: 450, dx: folded ? 0.5 : 0.3 })
     await page.getByRole('heading', { level: 1, name: new RegExp(name) }).waitFor()
-    await hold(150)
-    await sidebar(false)
+    await collapseSidebar()
     await hold(900)
     await click(page.locator('[data-view-trigger]'))
     await hold(400)
