@@ -9,11 +9,12 @@ These are assumptions to validate, not claims that research has proved them.
 - Pages go stale silently. A reviewer pointed at a specific stale or
   contradictory page, with a drafted fix, updates it more often than a
   general reminder to review the wiki.
-- People accept an assistant's answer more readily when every claim cites the
-  page it came from, and when it says plainly that the wiki holds no answer.
-- Editors want the Assistant to propose, never to publish: a page changes only
+- People already ask their own AI agent first, and accept its answer more
+  readily when every claim cites the wiki page it came from, and when it says
+  plainly that the wiki holds no answer.
+- Editors want an AI agent to propose, never to publish: a page changes only
   when a person who answers for the space decides it should.
-- Seeing a space's pages and suggestions through the Assistant must never be a
-  way around the space's membership.
+- An agent connected by one Member must never be a way around a space's
+  membership, for that Member or for the Editors who read its suggestions.
 
 Future research may change the Product Model; this file does not override it.

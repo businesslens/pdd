@@ -11,11 +11,3 @@ scenarioKinds:
     name: Validation
     description: Input the Product refuses while preserving the Actor's work.
     colorSlot: 3
-  - id: permission
-    name: Permission
-    description: An attempt the Actor's access does not allow, refused without revealing or changing anything.
-    colorSlot: 5
-  - id: conflict
-    name: Conflict
-    description: Work that meets a newer change by someone else and is reconciled rather than lost.
-    colorSlot: 4

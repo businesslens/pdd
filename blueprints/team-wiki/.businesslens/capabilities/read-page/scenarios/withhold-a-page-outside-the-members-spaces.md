@@ -1,5 +1,5 @@
 ---
-kind: permission
+kind: validation
 routes:
   web: Web
 steps:

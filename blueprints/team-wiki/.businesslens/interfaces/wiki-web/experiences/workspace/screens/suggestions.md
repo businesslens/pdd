@@ -10,5 +10,5 @@ entryPoints:
 # Suggestions
 
 Lists the open suggestions for pages in the spaces where the Member is an
-Editor, each with the page and space it concerns, why the Assistant raised it
-and when, and opens one to review.
+Editor, each with the page and space it concerns, why it was raised and
+when, and opens one to review.

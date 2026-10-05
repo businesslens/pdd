@@ -4,16 +4,17 @@ domain: assistant
 
 # Suggestion
 
-An update to one page that the Assistant drafted because the page looks stale
-or disagrees with another page in its space, waiting for the space's editors.
+An update to one page that a Member's AI agent left because the page looks
+stale or disagrees with another page in its space, waiting for the space's
+Editors.
 
 ## Information kept
 
 - **Reason** — Stale, when newer pages have moved on from what it says, or Conflicting, when another page says something different
-- **Explanation** — what looks wrong and why, in a few sentences
-- **Proposed content** — the page content the Assistant proposes, which an Editor may adjust before publishing
+- **Explanation** — what the AI agent found wrong and why, in a few sentences
+- **Proposed content** — the page content the AI agent proposes, which an Editor may adjust before publishing
 - **Cited pages** — the pages in the same space the explanation relies on
-- **Drafted at** — when the Assistant drafted it
+- **Drafted at** — when the AI agent left it
 
 ## States
 

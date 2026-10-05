@@ -4,7 +4,7 @@ method: Product design authored as a source-free teaching Blueprint.
 covered:
   - description: Spaces and their members, nested pages, revision history and restore, and search.
     paths: []
-  - description: Assistant answers with citations and Assistant suggestions that editors publish or dismiss.
+  - description: AI agents answering from cited pages, and their suggestions that Editors publish or dismiss.
     paths: []
 exclusions:
   - description: Archiving and deleting pages.

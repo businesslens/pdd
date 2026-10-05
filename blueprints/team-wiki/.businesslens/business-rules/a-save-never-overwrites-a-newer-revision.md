@@ -9,7 +9,7 @@ appliesTo:
 # A save never overwrites a newer revision unseen
 
 When a page gained a revision after the Editor began their change — another
-Editor's save, or an edit made after the Assistant drafted a suggestion — the
+Editor's save, or an edit made after an AI agent left a suggestion — the
 Product shows the newer revision and lets the Editor reconcile before anything
 is saved.
 

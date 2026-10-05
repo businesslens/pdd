@@ -13,13 +13,12 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::suggestions
-  - text: The Product shows why the Assistant raised it, the pages it cites, and its proposed content beside the page as it stands
+  - text: The Product shows why the suggestion was raised, the pages it cites, and its proposed content beside the page as it stands
     kind: product
     actor: member
     entities:
       - { entity: suggestion, effect: reads, facts: [Reason, Explanation, Proposed content, Cited pages] }
       - { entity: page, effect: reads, facts: [Title, Content] }
-      - { entity: assistant, effect: reads, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::suggestion
@@ -31,13 +30,12 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The Product makes the proposed content the page's current revision, marked as published from an Assistant suggestion
+  - text: The Product makes the proposed content the page's current revision, marked as published from a suggestion
     kind: product
     actor: member
     entities:
       - { entity: page, effect: changes, facts: [Content, Last edited at] }
       - { entity: revision, effect: creates, facts: [Title, Content, Saved at, Origin] }
-      - { entity: assistant, effect: reads, facts: [] }
       - { entity: suggestion, effect: reads, facts: [] }
     contexts:
       web:
@@ -48,7 +46,7 @@ steps:
 
 ## Trigger
 
-An Editor agrees with a suggestion the Assistant drafted.
+An Editor agrees with a suggestion an AI agent left.
 
 ## Outcome
 

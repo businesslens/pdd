@@ -13,13 +13,12 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::suggestions
-  - text: The Product shows why the Assistant raised it, the pages it cites, and its proposed content beside the page as it stands
+  - text: The Product shows why the suggestion was raised, the pages it cites, and its proposed content beside the page as it stands
     kind: product
     actor: member
     entities:
       - { entity: suggestion, effect: reads, facts: [Reason, Explanation, Proposed content, Cited pages] }
       - { entity: page, effect: reads, facts: [Title, Content] }
-      - { entity: assistant, effect: reads, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::suggestion
@@ -46,8 +45,7 @@ steps:
 
 ## Trigger
 
-An Editor decides a suggestion the Assistant drafted is wrong or not worth
-making.
+An Editor decides a suggestion an AI agent left is wrong or not worth making.
 
 ## Outcome
 
