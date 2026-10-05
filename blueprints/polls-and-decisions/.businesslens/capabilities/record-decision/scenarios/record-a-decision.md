@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Assistant draft] }
+      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
       - { entity: poll, effect: reads, facts: [Question] }
     contexts:
       web:
@@ -49,7 +49,7 @@ why.
 ## Outcome
 
 The decision is recorded: every Member can read it in the decision log and on
-its poll, it keeps whether it started from the Assistant's draft, and it no
+its poll, it keeps whether it started from a generated draft, and it no
 longer changes.
 
 ## Edge cases

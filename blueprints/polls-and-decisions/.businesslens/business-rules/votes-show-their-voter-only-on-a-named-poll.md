@@ -20,7 +20,7 @@ permits:
 
 A Member always sees their own vote. Other Members see what someone chose only
 on a named poll, and only once its results are showing. On an anonymous poll
-nobody — its owner and the Assistant included — sees who chose what; the
+nobody, its owner included, sees who chose what; the
 results are counts alone.
 
 ## Rationale

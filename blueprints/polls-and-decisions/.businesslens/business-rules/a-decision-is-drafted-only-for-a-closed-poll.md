@@ -6,14 +6,12 @@ appliesTo:
 permits:
   - related: [{ verb: settles, entity: poll }, { verb: owns, entity: member }]
     when: [{ entity: poll, fact: Closed at, present: true }]
-  - actors: [assistant]
-    when: [{ entity: poll, fact: Closed at, present: true }]
 ---
 
 # A decision is drafted only for a closed poll
 
-A decision is started only once its poll has closed: by the poll's owner, or by
-the Assistant when that owner asks it for a draft. A poll has at most one
+A decision is started only once its poll has closed: by the poll's owner, written
+themselves or generated at their request. A poll has at most one
 decision.
 
 ## Rationale

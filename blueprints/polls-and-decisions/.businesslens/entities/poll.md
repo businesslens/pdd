@@ -23,7 +23,7 @@ and the settings that decide how votes are cast and shown.
 - **Ballot** — Named, where Members see who chose what, or Anonymous, where nobody does
 - **Results visibility** — While open, where results show as votes arrive, or After closing, where they stay hidden until voting ends
 - **Tally** — how many votes each option holds, counted from the current votes
-- **Comment summary** — the Assistant's latest summary of the comments, made for the owner
+- **Comment summary** — the latest summary of the comments generated for the owner
 - **Closed at** — when voting ended, by the owner or at the deadline
 
 ## States

@@ -9,9 +9,9 @@ permits:
 
 # Only the poll owner edits and records a decision
 
-Only the Member who owns a poll edits its draft decision and records it. The
-Assistant prepares a draft but never changes one afterwards, and never records
-it.
+Only the Member who owns a poll edits its draft decision and records it. A
+generated draft is only a proposal until the owner has edited it as they see
+fit and recorded it.
 
 ## Rationale
 

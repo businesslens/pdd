@@ -5,7 +5,7 @@ method: Product design authored as a source-free teaching Blueprint.
 covered:
   - description: Creating, voting on, discussing and closing team polls, and revealing their results.
     paths: []
-  - description: Recording a closed poll's outcome as a decision, with an optional Assistant summary and draft.
+  - description: Recording a closed poll's outcome as a decision, with an optional generated summary and draft.
     paths: []
 unmapped: []
 limitations: []

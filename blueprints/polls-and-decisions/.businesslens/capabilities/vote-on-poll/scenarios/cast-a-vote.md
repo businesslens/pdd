@@ -26,6 +26,14 @@ steps:
     contexts:
       web:
         place: polls-web::poll
+  - text: The Product takes the Member straight to the poll's results
+    kind: product
+    actor: member
+    entities:
+      - { entity: poll, effect: reads, facts: [Results visibility] }
+    contexts:
+      web:
+        place: polls-web::poll
 ---
 
 # Cast a vote
@@ -36,5 +44,6 @@ A Member decides which option they support on an open poll.
 
 ## Outcome
 
-The Member's vote counts toward the chosen option, and the poll shows which
-option the Member chose.
+The Member's vote counts toward the chosen option, the poll shows which option
+the Member chose, and the Product has taken the Member straight to the poll's
+results, which show as far as the poll allows.

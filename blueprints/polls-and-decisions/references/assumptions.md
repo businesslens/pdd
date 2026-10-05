@@ -12,7 +12,7 @@ These are assumptions to validate, not claims that research has proved them.
   a one-line outcome with a short rationale is enough to look back on.
 - A summary of the arguments saves an owner time on a long discussion, but an
   owner only trusts a drafted decision they could edit before anyone saw it.
-- Members are comfortable with an Assistant reading a poll's comments when its
-  summary is seen only by the owner who asked for it.
+- Members are comfortable with a poll's comments being sent to a language model
+  when the summary it returns is seen only by the owner who asked for it.
 
 Future research may change the Product Model; this file does not override it.

@@ -16,5 +16,5 @@ is recorded, in the decision log and on its poll.
 
 ## Rationale
 
-An unconfirmed draft, especially one the Assistant proposed, must never be
+An unconfirmed draft, especially a generated one, must never be
 mistaken for what the team decided.

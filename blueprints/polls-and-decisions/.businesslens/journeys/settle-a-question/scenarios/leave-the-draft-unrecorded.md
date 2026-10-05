@@ -13,22 +13,21 @@ steps:
     contexts:
       web:
         place: polls-web::poll
-  - text: The Member asks the Assistant to draft the decision
+  - text: The Member asks for a generated draft of the decision
     kind: actor
     actor: member
     capability: draft-decision
     entities:
-      - { entity: assistant, effect: reads, facts: [] }
       - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
-  - text: The Assistant prepares a draft decision
-    kind: actor
-    actor: assistant
+  - text: The Product generates a draft decision with a language model
+    kind: product
+    actor: member
     capability: draft-decision
     entities:
-      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Assistant draft] }
+      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
   - text: The Member leaves the draft without recording it
     kind: actor
     actor: member

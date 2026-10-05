@@ -16,7 +16,7 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: decision, effect: creates, to: Draft, facts: [Final results, Assistant draft] }
+      - { entity: decision, effect: creates, to: Draft, facts: [Final results, Generated draft] }
     contexts:
       web:
         place: polls-web::poll
@@ -39,5 +39,5 @@ The owner of a closed poll wants to write the decision in their own words.
 ## Outcome
 
 An empty draft decision for the poll exists that only its owner can see, with
-the final results kept on it and no Assistant involvement. The owner is on the
+the final results kept on it and nothing generated. The owner is on the
 draft, ready to write and record it.
