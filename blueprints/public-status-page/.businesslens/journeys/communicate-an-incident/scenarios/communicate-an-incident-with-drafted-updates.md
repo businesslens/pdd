@@ -31,9 +31,9 @@ steps:
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Drafting assistant drafts the next incident update from the notes
-    kind: actor
-    actor: drafting-assistant
+  - text: The Product asks a language model to draft the next incident update from the notes
+    kind: product
+    actor: operator
     capability: draft-incident-update
     entities:
       - { entity: incident, effect: reads, facts: [Title, Impact, Affected components] }

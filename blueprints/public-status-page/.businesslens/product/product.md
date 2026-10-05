@@ -12,7 +12,7 @@ limitations:
   - Subscribers are notified by email only.
   - There is one public page per operator team, readable by anyone; there are no private or audience-restricted pages.
   - Components are one flat list; they are not grouped or nested.
-  - The drafting assistant drafts incident updates only; it never posts, changes a status or contacts subscribers.
+  - Drafting an incident update needs the language model the Product queries; while it is unavailable, Operators write every update themselves.
 references:
   - kind: research
     role: context
@@ -28,14 +28,14 @@ set each one's status, declare incidents and post updates on a timeline until
 they are resolved, and schedule maintenance ahead of time. Visitors read the
 page without an account and can subscribe by email to hear about every update.
 
-A drafting assistant helps operators write during an incident: from the
-operator's rough notes it drafts the text of the next update, which the operator
-edits and posts. Nothing reaches the page or a subscriber until an operator
-posts it.
+During an incident an operator can ask for a draft: from the operator's rough
+notes the Product drafts the text of the next update with a language model, and
+the operator edits and posts it. Nothing reaches the page or a subscriber until
+an operator posts it.
 
 ## Intent
 
 Give the people affected by an outage one honest, timely place to learn what is
 wrong, what is being done, and when it is over — without asking the operators to
-stop fixing the problem to write prose. Speed in writing comes from the
-assistant; every word that is published remains an operator's decision.
+stop fixing the problem to write prose. A draft saves the writing; every word
+that is published remains an operator's decision.

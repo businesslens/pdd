@@ -5,9 +5,11 @@ availability: [{ place: status-web::operator-console }]
 
 # Update drafting
 
-Has the Drafting assistant turn an Operator's rough notes into the message of
-the next incident update. The draft is the Operator's to edit, post or throw
-away.
+When an Operator asks for a draft, the Product sends the Operator's rough notes
+and the incident's title, impact and affected components to a language model,
+and keeps the message it returns as a draft of the next incident update. The
+draft is the Operator's to edit, post or throw away; the Product sends nothing
+to the language model unless an Operator asks.
 
 ## Intent
 

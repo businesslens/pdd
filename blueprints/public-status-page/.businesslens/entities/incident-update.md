@@ -5,8 +5,8 @@ domain: incidents
 # Incident update
 
 One entry on an incident's timeline: what the operators want visitors to know
-at that moment. An update starts either as a draft the Drafting assistant
-prepares or directly as the message an Operator posts.
+at that moment. An update starts either as a draft the Product prepares from an
+Operator's notes or directly as the message an Operator posts.
 
 ## Information kept
 

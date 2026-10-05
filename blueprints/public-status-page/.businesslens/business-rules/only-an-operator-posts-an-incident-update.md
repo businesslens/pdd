@@ -15,8 +15,8 @@ permits:
 # Only an Operator posts an incident update
 
 An incident update reaches the public timeline and subscribers only when an
-Operator posts it. The Drafting assistant prepares drafts and nothing more:
-it never posts one, whatever it was asked.
+Operator posts it. A draft the Product prepared with a language model is only a
+proposal: it stays a draft until an Operator reads it and posts it.
 
 ## Rationale
 

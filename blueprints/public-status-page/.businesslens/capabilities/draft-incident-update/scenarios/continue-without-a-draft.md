@@ -1,5 +1,5 @@
 ---
-kind: failure
+kind: edge
 routes:
   web: Web
 steps:
@@ -11,7 +11,7 @@ steps:
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: No draft can be prepared
+  - text: The language model cannot be reached or returns nothing usable
     kind: condition
     entities: []
     contexts:
@@ -38,7 +38,7 @@ steps:
 
 ## Trigger
 
-The Operator asks for a draft while the Drafting assistant cannot prepare one.
+The Operator asks for a draft while the language model the Product queries is unavailable.
 
 ## Outcome
 
