@@ -14,8 +14,8 @@ permits:
 
 # Only the Student accepts or declines a study plan
 
-A proposed plan waits until the Student accepts or declines it. The Planning
-assistant never accepts its own plan, and a plan nobody decides on never
+A proposed plan waits until the Student accepts or declines it. The AI agent
+never accepts its own plan, and a plan nobody decides on never
 changes the schedule.
 
 ## Rationale
