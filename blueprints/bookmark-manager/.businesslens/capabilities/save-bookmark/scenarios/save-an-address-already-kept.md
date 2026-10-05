@@ -15,6 +15,7 @@ steps:
         place: bookmarks-mobile::save-link
   - text: The library already keeps a bookmark with exactly this address
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [Address] }
     contexts:

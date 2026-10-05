@@ -13,6 +13,7 @@ steps:
         place: bookmarks-web::suggestions
   - text: All but one of its bookmarks have been deleted since it was made
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:

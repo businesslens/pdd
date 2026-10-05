@@ -22,6 +22,7 @@ steps:
         place: bookmarks-web::suggestions
   - text: Its bookmarks stay where they were, with the tags they had
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
       - { entity: tag, effect: reads, facts: [] }
@@ -34,7 +35,7 @@ steps:
 
 ## Trigger
 
-The Owner disagrees with where the assistant would file some bookmarks.
+The Owner disagrees with where their AI agent would file some bookmarks.
 
 ## Outcome
 

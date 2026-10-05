@@ -28,6 +28,7 @@ steps:
         place: bookmarks-mobile::bookmark
   - text: No other bookmark carries that tag
     kind: condition
+    actor: owner
     entities:
       - { entity: tag, effect: reads, facts: [] }
       - { entity: bookmark, effect: reads, facts: [] }

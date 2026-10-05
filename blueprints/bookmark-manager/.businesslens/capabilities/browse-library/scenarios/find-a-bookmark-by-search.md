@@ -36,6 +36,7 @@ steps:
         place: bookmarks-mobile::library
   - text: Nothing in the library changes by being found
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:

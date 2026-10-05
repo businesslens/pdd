@@ -6,9 +6,9 @@ appliesTo:
 
 # Every suggestion says why
 
-Each suggestion the assistant prepares carries a short reason the Owner sees
-beside the bookmarks it names: what the bookmarks have in common, or why they
-are the same page. A suggestion without a reason is not presented.
+Each suggestion an AI agent leaves carries a short reason the Owner sees beside
+the bookmarks it names: what the bookmarks have in common, or why they are the
+same page. A suggestion without a reason is refused.
 
 ## Rationale
 

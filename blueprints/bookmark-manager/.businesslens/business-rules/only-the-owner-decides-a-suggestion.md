@@ -9,8 +9,8 @@ permits:
 # Only the Owner decides a suggestion
 
 A suggestion is accepted, merged, declined or withdrawn only through the
-Owner's own decision about it. The assistant cannot accept its own
-suggestions, change one after preparing it, or take one back.
+Owner's own decision about it. The AI agent cannot accept its own suggestions,
+change one after leaving it, or take one back.
 
 ## Rationale
 

@@ -53,7 +53,7 @@ steps:
 
 ## Trigger
 
-The Owner agrees that bookmarks the assistant grouped lead to the same page.
+The Owner agrees that bookmarks the AI agent grouped lead to the same page.
 
 ## Outcome
 
@@ -64,7 +64,7 @@ the suggestion is merged.
 
 ### Which bookmark is kept?
 
-The Owner keeps the assistant's choice or picks another bookmark of the set.
+The Owner keeps the AI agent's choice or picks another bookmark of the set.
 
 - The Owner keeps the proposed bookmark → it survives with its own title, address and collection.
 - The Owner picks another bookmark → that one survives instead, with its own title, address and collection.

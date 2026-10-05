@@ -42,14 +42,14 @@ steps:
     contexts:
       web:
         place: bookmarks-web::import
-  - text: The Product hands the added bookmarks over for review and takes the Owner to Suggestions
+  - text: The Product takes the Owner to the Library, narrowed to the Unsorted bookmarks it added
     kind: product
     actor: owner
     entities:
-      - { entity: bookmark, effect: reads, facts: [] }
+      - { entity: bookmark, effect: reads, facts: [Title, Address, Imported from folder] }
     contexts:
       web:
-        place: bookmarks-web::suggestions
+        place: bookmarks-web::library
 ---
 
 # Import a browser export
@@ -63,7 +63,7 @@ in the library.
 
 Every bookmark from the file whose address was new is in the library, Unsorted,
 with the folder it came from. The Owner knows what was added and skipped, and is
-handed to Suggestions while the assistant reviews the new bookmarks.
+looking at the new bookmarks in the Library, ready to file them.
 
 ## Edge cases
 

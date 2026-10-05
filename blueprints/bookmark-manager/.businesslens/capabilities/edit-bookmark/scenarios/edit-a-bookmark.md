@@ -48,6 +48,7 @@ steps:
         place: bookmarks-mobile::bookmark
   - text: The address and when the bookmark was saved are unchanged
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:

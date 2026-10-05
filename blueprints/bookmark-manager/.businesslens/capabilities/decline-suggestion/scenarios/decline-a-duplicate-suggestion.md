@@ -22,6 +22,7 @@ steps:
         place: bookmarks-web::suggestions
   - text: Every bookmark in it stays in the library, unchanged
     kind: condition
+    actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:
@@ -33,10 +34,10 @@ steps:
 
 ## Trigger
 
-The Owner wants to keep bookmarks the assistant judged to be the same page, such
+The Owner wants to keep bookmarks the AI agent judged to be the same page, such
 as two versions of one page they deliberately keep apart.
 
 ## Outcome
 
-The suggestion is declined, every bookmark in it stays, and the assistant does
-not suggest the same set again.
+The suggestion is declined, every bookmark in it stays, and the AI agent cannot
+suggest the same set again.
