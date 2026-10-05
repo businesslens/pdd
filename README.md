@@ -34,15 +34,11 @@
 Agents write code faster than anyone can explain to them what the product is.
 They fill the gaps by guessing, and the guesses ship.
 
-1. **One definition, not many fragments.** Today the product lives across
-   tickets, docs, chats, code and people. The Product Model writes it down once,
-   beside the code, and links back to those sources.
-2. **Agents know what to build.** Instead of inferring behavior and rules from
-   whatever they can find, they read the Journeys, Scenarios and Business Rules
-   before they start.
-3. **Done means the code matches the product.** Code can work and still miss
-   the intent. Verify checks it against the approved model, and model and code
-   changes are reviewed together in one pull request.
+1. **One definition.** Not scattered across tickets, docs, chats and people, but one model beside the code.
+2. **Agents know what to build.** They read the Journeys, Scenarios and Rules instead of guessing.
+3. **Done means it matches the product.** Verify checks the code against the approved model.
+4. **Drift is easy to spot.** The model stays a clear reference as behavior changes.
+5. **Decisions travel with the code.** Model and code changes are reviewed in one pull request.
 
 ## Features
 
