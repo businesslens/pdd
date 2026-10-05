@@ -9,7 +9,8 @@ order: 22
 # `businesslens update`
 
 Refresh installed BusinessLens skills to the version of the package you run,
-after upgrading it.
+after upgrading it. Upgrading the CLI itself is separate; see
+[Updating the CLI](./cli.md#updating-the-cli).
 
 ```bash
 npx businesslens update [--providers <list>] [--scope project|global] [--force]
