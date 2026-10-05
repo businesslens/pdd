@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
-    <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="96">
+    <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
   </picture>
 </p>
 
@@ -67,10 +67,10 @@ They fill the gaps by guessing, and the guesses ship.
 ## The development loop
 
 <p align="center">
-  <img src="./.github/readme/development-loop.png" alt="The development loop: ideate with /businesslens-ideate, build with your own flow, verify with /businesslens-verify" width="560">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, build with your own flow, verify with /businesslens-verify" width="600">
 </p>
 
-## <img src="./.github/readme/rocket.svg" alt="" width="24" height="24" align="center"> Getting started
+## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
 
 ```bash
 npx businesslens install
@@ -95,10 +95,11 @@ Then every change runs the loop:
 `map` is for adopting BusinessLens or covering more of the product; `verify` is
 the everyday skill.
 
-## <img src="./.github/readme/app-window.svg" alt="" width="24" height="24" align="center"> Web interface
+## <img src="./.github/readme/app-window.svg" alt="" width="28" height="28" align="top"> Web interface
 
-Read the Product Model as a report in your browser. The server listens on
-`127.0.0.1` only and sends nothing anywhere.
+Read the Product Model as a report in your browser. It updates automatically
+as you make changes. The server listens on `127.0.0.1` only and sends nothing
+anywhere.
 
 ```bash
 # This repository's model (opens the browser)
@@ -111,15 +112,7 @@ npx businesslens view acme/checkout --pr 12
 npx businesslens view --port 8080 --no-open
 ```
 
-**Features:**
-
-* Overview, then one collection per resource type
-* Rows, Graph and Matrix drawings of the same set
-* Every resource opens in a complete reading
-* Search across the whole model
-* Live updates as you save
-
-## <img src="./.github/readme/square-terminal.svg" alt="" width="24" height="24" align="center"> CLI reference
+## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI reference
 
 Every command and option: [CLI reference](./docs/cli.md).
 
