@@ -2,10 +2,12 @@
 /**
  * Record the README demo: a short looping GIF touring the local Product Report.
  *
- * It serves the `content-feed-reader` Blueprint with the real `view` command
- * (through `view-fixture.mjs`, which gives the Blueprint a repository of its
- * own), drives one session through the report with Playwright at fixed pacing,
- * and records it frame by frame. Playwright draws no pointer, so a visible one
+ * BusinessLens is dogfooded, so the demo is this repository's own Product
+ * Model. It runs the same command the README offers a reader,
+ * `npx businesslens view businesslens/pdd`, which fetches the default branch
+ * from GitHub; re-record after a model or report change has merged. It drives
+ * one session through the report with Playwright at fixed pacing and records
+ * it frame by frame. Playwright draws no pointer, so a visible one
  * is injected into the page and follows the real mouse events.
  *
  * Frames come from Chromium's screencast rather than Playwright's video, which
@@ -15,7 +17,8 @@
  * Every beat is current report behavior; nothing is mocked. The opening
  * terminal prints the `view` command's own output, captured from the server.
  *
- * Requires a build (`npm run build`), Playwright's Chromium and ffmpeg.
+ * Requires a build (`npm run build`), git with access to GitHub, Playwright's
+ * Chromium and ffmpeg.
  * Usage: npm run demo:record [-- [--out <gif>] [--frames <dir>]]
  */
 import { spawn, spawnSync } from 'node:child_process'
@@ -26,9 +29,10 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const model = 'blueprints/content-feed-reader'
+const repository = 'businesslens/pdd'
 const size = { width: 1280, height: 720 }
-const fps = 12
+const fps = 10
+const budget = 5 * 1024 * 1024
 let out = resolve(root, '.github/demo.gif')
 let keepFrames
 for (let index = 2; index < process.argv.length; index += 1) {
@@ -44,27 +48,26 @@ if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) {
 
 /* ---------------------------------------------------------------- server */
 
-/** Serve the Blueprint and resolve with the lines `view` itself printed. */
+/** Serve the repository's model and resolve with the lines `view` itself printed. */
 function serve() {
-  const child = spawn(process.execPath, [join(root, 'scripts/view-fixture.mjs'), model, '--no-open'], {
+  const child = spawn(process.execPath, [join(root, 'dist/cli.js'), 'view', repository, '--no-open'], {
     cwd: root,
-    stdio: ['ignore', 'pipe', 'inherit']
+    stdio: ['ignore', 'pipe', 'pipe']
   })
   return new Promise((resolveServer, reject) => {
     let output = ''
-    child.on('exit', code => reject(new Error(`view exited with ${code} before it was ready`)))
-    child.stdout.on('data', chunk => {
+    child.on('exit', code => reject(new Error(`view exited with ${code} before it was ready:\n${output}`)))
+    const read = chunk => {
       output += chunk
-      const lines = output.split('\n').map(line => line.trimEnd())
-      const start = lines.findIndex(line => line.includes('http://'))
-      if (start === -1 || !lines.some(line => line.startsWith('Press Ctrl+C'))) return
+      /* A progress line rewrites itself with carriage returns; keep what it settled on. */
+      const lines = output.split('\n').map(line => line.split('\r').filter(Boolean).at(-1)?.trimEnd() ?? '').filter(Boolean)
+      const ready = lines.find(line => line.includes('http://'))
+      if (!ready || !lines.some(line => line.startsWith('Press Ctrl+C'))) return
       child.removeAllListeners('exit')
-      resolveServer({
-        child,
-        url: lines[start].match(/https?:\/\/\S+/)[0],
-        printed: lines.slice(start).filter(Boolean)
-      })
-    })
+      resolveServer({ child, url: ready.match(/https?:\/\/\S+/)[0], printed: lines })
+    }
+    child.stdout.on('data', read)
+    child.stderr.on('data', read)
   })
 }
 
@@ -110,7 +113,7 @@ function showTerminal() {
     <style>
       #demo-terminal { position: fixed; inset: 0; z-index: 2147483646; display: grid; place-items: center;
         background: #e9e3d6; font: 20px/1.55 ui-monospace, Menlo, "IBM Plex Mono", monospace; }
-      #demo-terminal .window { width: 900px; border-radius: 12px; overflow: hidden; background: #1d1b19;
+      #demo-terminal .window { width: 1120px; border-radius: 12px; overflow: hidden; background: #1d1b19;
         box-shadow: 0 24px 60px rgb(0 0 0 / .28); }
       #demo-terminal .bar { display: flex; gap: 8px; padding: 14px 16px; background: #2a2724; }
       #demo-terminal .bar i { width: 12px; height: 12px; border-radius: 50%; background: #5a544d; }
@@ -210,13 +213,13 @@ try {
   }
   const expand = id => click(page.locator(`.vue-flow__node[data-id="${id}"] .blr-flow-node__count`), { ms: 450 })
 
-  // 0–4.5 s: one command, private and local.
+  // One command, private and local, that a reader can run as is.
   beat('Terminal')
   const terminal = page.locator('#demo-terminal pre')
-  const command = 'npx businesslens view'
+  const command = `npx businesslens view ${repository}`
   for (let typed = 0; typed <= command.length; typed += 1) {
     await terminal.evaluate((element, text) => {
-      element.innerHTML = `<span class="prompt">~/content-feed-reader $</span> ${text}<span class="caret"></span>`
+      element.innerHTML = `<span class="prompt">~ $</span> ${text}<span class="caret"></span>`
     }, command.slice(0, typed))
     await hold(35)
   }
@@ -224,9 +227,9 @@ try {
   await terminal.evaluate((element, { command, printed }) => {
     const escape = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;')
     const lines = printed.map(line => escape(line).replace(/(https?:\/\/\S+)/, '<span class="url">$1</span>'))
-    element.innerHTML = `<span class="prompt">~/content-feed-reader $</span> ${command}\n${lines.join('\n')}\n<span class="caret"></span>`
+    element.innerHTML = `<span class="prompt">~ $</span> ${command}\n${lines.join('\n')}\n<span class="caret"></span>`
   }, { command, printed: server.printed })
-  await hold(1650)
+  await hold(3150)
   await page.evaluate(() => document.getElementById('demo-terminal').remove())
 
   // What the product is.
@@ -248,11 +251,11 @@ try {
   await collection('Interfaces', 'graph', 'Delivery map')
   await page.locator('[data-flow-ready=true]').waitFor()
   await hold(400)
-  await expand('interface:reader-web')
+  await expand('interface:local-report-web')
   await hold(700)
-  await expand('experience:reader-web::public-reading')
+  await expand('screen:local-report-web::product-overview')
   await hold(700)
-  await expand('interface:reader-mobile')
+  await expand('screen:local-report-web::resource-collection')
   await hold(300)
   /* A hovered or focused node dims the rest; the grown map is read with neither. */
   await glide(420, 600, 450)
@@ -294,6 +297,9 @@ try {
   ffmpeg('-framerate', String(fps), '-i', pattern, '-i', palette,
     '-lavfi', 'paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', '-loop', '0', out)
 
+  if (statSync(out).size > budget) {
+    throw new Error(`${relative(root, out)} is ${(statSync(out).size / 1024 / 1024).toFixed(2)} MB, over the 5 MB budget; shorten a beat or simplify a drawing.`)
+  }
   console.log(`Wrote ${relative(root, out)}: ${(statSync(out).size / 1024 / 1024).toFixed(2)} MB, ${count} frames at ${fps} fps (${(count / fps).toFixed(1)} s)`)
   for (const { name, at } of beats) console.log(`  ${at.toFixed(1).padStart(5)} s  ${name}`)
 } finally {
