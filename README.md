@@ -1,191 +1,125 @@
-# BusinessLens
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
+    <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
+  </picture>
+</p>
 
-[![npm](https://img.shields.io/npm/v/businesslens)](https://www.npmjs.com/package/businesslens)
-[![Check](https://github.com/businesslens/pdd/actions/workflows/check.yml/badge.svg)](https://github.com/businesslens/pdd/actions/workflows/check.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+<h1 align="center">BusinessLens</h1>
+<p align="center"><strong>Product-Driven Development for coding agents</strong></p>
+<p align="center">Your AI agent is guessing what the product is. Give it, and your team, one Product Model to build from and check against.</p>
 
-**Product-Driven Development for coding agents.** BusinessLens keeps intended
-product behavior in a Git-tracked `.businesslens/` Product Model: who the
-product serves, what they accomplish, what it keeps and what changes it, and
-which rules must remain true, including who may act.
+<p align="center">
+  <a href="https://www.npmjs.com/package/businesslens"><img src="https://img.shields.io/npm/v/businesslens" alt="npm version"></a>
+  <a href="https://github.com/businesslens/pdd/actions/workflows/check.yml"><img src="https://github.com/businesslens/pdd/actions/workflows/check.yml/badge.svg" alt="Check"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+</p>
 
-The model is Markdown, reviewable in pull requests, and useful without a hosted
-service. `businesslens lint` checks its structure. The `businesslens-verify`
-skill performs the separate semantic comparison with code and owns the
-resolution loop.
+<p align="center">
+<code>npx businesslens install</code>
+</p>
 
-```text
-.businesslens/
-├── README.md
-├── product.md                # or product/product.md beside logo.svg
-├── entities/<id>.md          # or <id>/entity.md with assets; the ones that act carry kind and acts
-├── interfaces/<id>.md        # or <id>/interface.md with screens/ or experiences/
-├── domains/<id>.md           # or <id>/domain.md with assets; optional collection
-├── capabilities/<id>.md      # or <id>/capability.md with scenarios/ or assets
-├── journeys/<id>.md          # or <id>/journey.md with scenarios/ or assets; optional
-├── business-rules/<id>.md    # or <id>/business-rule.md with assets
-├── variations/<id>.md        # optional; one set of alternatives each
-└── coverage.md
-```
+<p align="center">
+  <img src="./docs/images/report-overview.webp" alt="The local report open on a Blueprint's overview page" width="640">
+</p>
 
-Leaf resources stay compact as `<id>.md`. A resource expands to
-`<id>/<type>.md` only when it needs a namespace for assets or child resources.
+---
 
-## Getting started
+> **BusinessLens** keeps what your product does in a Git-tracked
+> `.businesslens/` folder of Markdown files, and gives your coding agent the
+> skills to write it, follow it and check the code against it.
 
-Install the skills:
+## Why a Product Model in the AI era
+
+Agents write code faster than anyone can explain to them what the product is.
+They fill the gaps by guessing, and the guesses ship.
+
+1. **One definition.** Not scattered across tickets, docs, chats and people, but one model beside the code.
+2. **Agents know what to build.** They read the Journeys, Scenarios and Rules instead of guessing.
+3. **Done means it matches the product.** Verify checks the code against the approved model.
+4. **Drift is easy to spot.** The model stays a clear reference as behavior changes.
+5. **Decisions travel with the code.** Model and code changes are reviewed in one pull request.
+
+## Features
+
+* 🤖 **Agent skills:** map, ideate and verify for Claude Code, Codex, Cursor, Gemini CLI and GitHub Copilot
+
+* 📝 **Markdown-native:** every resource is a plain `.md` file in your repo, reviewed in pull requests
+
+* ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
+
+* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; BusinessLens never implements for you
+
+* 🖥️ **Local report:** `businesslens view` opens the model in your browser and follows your edits
+
+* 📦 **Blueprints:** start from a reviewed model for a common product instead of a blank page
+
+* 🔒 **Local-first:** no account, no hosted service; the skills read your code and never run it
+
+* 🆓 MIT-licensed and open source
+
+---
+
+## The development loop
+
+<p align="center">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in your existing workflow, verify with /businesslens-verify" width="600">
+</p>
+
+## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
 
 ```bash
 npx businesslens install
 ```
 
-Then choose one starting door:
+Then start from where you are, inside your agent (Codex uses `$` instead of `/`):
 
-- **Existing product** — `/businesslens-map` creates the model from established
-  repository behavior.
-- **Blank repository** — `/businesslens-ideate` decides and authors the product
-  before implementation.
-- **Blueprint** — `npx businesslens blueprint pull <name>` opens a
-  reviewed starting model.
+| You have | Run | Guide |
+| --- | --- | --- |
+| Existing code | `/businesslens-map` | [From your repo](./docs/from-your-repo.md) |
+| An idea | `/businesslens-ideate` | [From an idea](./docs/from-an-idea.md) |
+| A familiar kind of product | `npx businesslens blueprint pull <name>` | [From a Blueprint](./docs/from-a-blueprint.md) |
 
-Codex users invoke skills with `$`, for example `$businesslens-map`.
-
-## The ongoing loop
+Then every change runs the loop:
 
 ```text
-/businesslens-ideate guest checkout
-        ↓ approved Product Model delta
-your existing implementation workflow (not a BusinessLens skill)
-        ↓ implementation
-/businesslens-verify this branch
-        ↓ automatically resolve gaps, re-check, and run final lint
-merge
+/businesslens-ideate add guest checkout   # approve the model change
+                                          # implement in your existing workflow
+/businesslens-verify this branch          # fix what disagrees, re-check
 ```
 
-You invoke verify once. When it finds a gap, it groups the authority decision
-and routes automatically: update approved model meaning through its internal
-ideation protocol, map an absent established area, or hand an acceptance packet
-to the builder supplied by your harness. It re-verifies after every change and
-stops explicitly when blocked. Its completion report includes final structural
-lint, so no second skill or command is required to finish the loop. Use `report
-only` to disable all writes and delegation.
+`map` is for adopting BusinessLens or covering more of the product; `verify` is
+the everyday skill.
 
-`map` is not daily maintenance. Use it for adoption, a deliberately untrusted
-area, or coverage expansion. Use `verify` after changes, refactors, suspected
-drift, before release, or for a named/full current-state audit.
+## <img src="./.github/readme/app-window.svg" alt="" width="28" height="28" align="top"> Web interface
 
-## Terminal and agent surfaces
+Read the Product Model as a report in your browser. It updates automatically
+as you make changes. The server listens on `127.0.0.1` only and sends nothing
+anywhere.
 
-| Where | Command | Purpose |
-| --- | --- | --- |
-| Terminal | `npx businesslens install` | Install the three skills |
-| Terminal | `npx businesslens update` | Refresh managed skill installations |
-| Terminal | `npx businesslens lint` | Check Product Model structure; no semantic claim |
-| Terminal | `npx businesslens view` | View the current Product Model, or a GitHub repository's, privately on localhost |
-| Terminal | `npx businesslens blueprint export` | Compile the model into a source-free Blueprint |
-| Terminal | `npx businesslens blueprint pull <name>` | Pull a catalog Blueprint |
-| Terminal | `npx businesslens blueprint open <report>` | Expand a local Blueprint |
-| Terminal | `npx businesslens blueprint contribute` | Propose a Blueprint by pull request |
-| AI harness | `businesslens-map` | Map established repository behavior |
-| AI harness | `businesslens-ideate` | Decide intended behavior and write approved meaning |
-| AI harness | `businesslens-verify` | Verify and automatically resolve model/code gaps |
+```bash
+# This repository's model (opens the browser)
+npx businesslens view
 
-Catalog contribution stays in the CLI; there is no contribution skill.
+# A GitHub repository's pull request
+npx businesslens view acme/checkout --pr 12
 
-## Product Model semantics
+# Custom port, no browser
+npx businesslens view --port 8080 --no-open
+```
 
-- `references` optionally attach intent, implementation, or context artifacts
-  to any semantic resource. They are navigation and supporting material, not
-  proof or verification receipts.
-- `coverage.md` describes model scope and known gaps; it has no status.
-- A model may contain zero References.
-- A Product may expose several Interfaces—such as web, mobile, CLI, and a
-  supported API—without being classified as one of those delivery forms.
-- Experiences are optional coherent usage contexts, each belonging to exactly
-  one Interface. Availability is a list of strict Context objects whose
-  `place` is an undivided Interface or an Experience.
-- Domains are optional regions of subject matter. Only Capabilities and
-  Entities author `domain:`; every other Domain relation is derived.
-- Screens are optional platform-neutral product views, nested in the Interface,
-  Experience or parent Screen that contains them. Their path supplies their place. Product
-  assets sit beside the resource they describe; anything
-  under `implementation/` describes this realization and stays home.
-- `lint` checks format, required content, relationships, Reference grammar, and
-  tracked code-reference paths. `verify` checks meaning against current code.
+## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI reference
 
-Every model creation path writes `.businesslens/README.md`. BusinessLens never
-writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
+Every command and option: [CLI reference](./docs/cli.md).
 
-## Where the Product Model is defined
+Quick examples: `businesslens install`, `businesslens update`,
+`businesslens lint`, `businesslens view`, `businesslens blueprint export`,
+`businesslens blueprint pull <name>`, `businesslens blueprint open <report>`,
+`businesslens blueprint contribute`.
 
-Use these sources in this order:
-
-1. Read the [Product Model overview](./docs/product-model.md) for the mental
-   model and relationship overview.
-2. Use [`spec/format.md`](./spec/format.md) as the normative contract for the
-   authored `.businesslens/` files. It defines every resource type, file shape,
-   relation, and semantic boundary, and changes before parser or linter
-   behavior changes. Its companion [`spec/report.md`](./spec/report.md) is the
-   contract for the serialized Product Report, its portable projection, and
-   expansion.
-3. Use the individual resource type pages under [`docs/`](./docs/) for approachable
-   explanations, examples, and the relevant `lint` findings. They restate the
-   format contract and must not introduce a second definition.
-4. Follow [`src/core/model.ts`](./src/core/model.ts),
-   [`src/core/frontmatter.ts`](./src/core/frontmatter.ts),
-   [`src/core/markdown.ts`](./src/core/markdown.ts), and
-   [`src/commands/lint.ts`](./src/commands/lint.ts) to understand what the CLI
-   parses and enforces today.
-5. Use [`src/core/portable.ts`](./src/core/portable.ts) for the generated Product
-   Report JSON schema and relationship validation, and
-   [`src/commands/export.ts`](./src/commands/export.ts) for the authored-model to
-   report projection.
-
-The installed skills carry self-contained format summaries and semantic
-rubrics so agents can judge concepts that structural lint cannot prove—for
-example, whether something is genuinely a durable Capability or a coherent
-multi-Capability Journey. Those guides must remain consistent with
-`spec/format.md`; they do not supersede it. Viewer backlinks and topology are
-derived report projections, not additional authored relationships.
-
-## Documentation
-
-- [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
-  [Development loop](./docs/index.md#the-development-loop)
-- Start [from your repo](./docs/from-your-repo.md),
-  [from a Blueprint](./docs/from-a-blueprint.md), or
-  [from an idea](./docs/from-an-idea.md)
-- [Product Model](./docs/product-model.md) · [References](./docs/references.md)
-- [Skills](./docs/skills.md) · [CLI](./docs/cli.md)
-- [Format contract](./spec/format.md) ·
-  [Report contract](./spec/report.md)
-
-## Nuxt layers
-
-The package also exposes separately composable Nuxt layers:
-
-- `businesslens/nuxt/report-viewer` renders a Product Report without owning its
-  host navigation or page shell.
-- `businesslens/nuxt/theme` provides the stable BusinessLens palette, type,
-  semantic UI foundation, approved surfaces, logo/wordmark renderer, and
-  browser/install icon family.
-- `businesslens/nuxt/theme-lab` extends that stable theme with the shared,
-  opt-in background experiments used by the landing site and local report
-  viewer. A consumer that does not opt in receives the approved stable
-  presentation from `theme`; a background graduates by moving into `theme`,
-  never by a consumer depending on `theme-lab` in production.
-
-## Safety
-
-- BusinessLens analysis phases inspect untrusted repositories without executing
-  target code. A separately injected builder may run normal project checks under
-  its own permissions.
-- Installation refuses to overwrite unowned skill directories unless `--force`
-  is explicit; update touches only marked installations.
-- Nothing submits model data except the explicit
-  `businesslens blueprint contribute` command.
-- No command publishes, tags, or pushes implicitly.
+Full help: `npx businesslens --help`
 
 ## License
 
-MIT.
+BusinessLens is released under the **MIT License**: do anything, just give
+credit. See [LICENSE](./LICENSE).

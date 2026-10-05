@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-10-05
+
+- A shorter README that says what BusinessLens does, why it matters and how to start, with an animated development loop.
+- The development loop now reads ideate → implement → verify, and says plainly that implementing stays in your own workflow.
+
 ## [0.24.0] - 2026-10-05
 
 - A globally installed CLI offers each newer release once, and updates itself only when you choose to. Turn the reminder off from the prompt or with `BUSINESSLENS_NO_UPDATE_CHECK=1`.
