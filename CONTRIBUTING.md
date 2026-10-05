@@ -41,7 +41,9 @@ development launcher; without it they retain their release-pinned npm runner.
 
 ## Demo GIF
 
-`.github/demo.gif` tours the local report on the `content-feed-reader`
-Blueprint. Re-record it after a visible report change with
-`npm run build && npm run demo:record`; it needs Playwright's Chromium and
-`ffmpeg`, and must stay under 5 MB.
+`.github/demo.gif` tours this repository's own Product Model in the local
+report, opened with `npx businesslens view businesslens/pdd` as the README
+invites readers to. That command reads the default branch on GitHub, so
+re-record after a model or report change has merged:
+`npm run build && npm run demo:record`. It needs Git access to GitHub,
+Playwright's Chromium and `ffmpeg`, and fails if the GIF exceeds 5 MB.

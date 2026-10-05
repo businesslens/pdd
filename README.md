@@ -20,7 +20,11 @@
 </p>
 
 <p align="center">
-  <img src="./.github/demo.gif" alt="A tour of the local report: npx businesslens view opens a Blueprint's Product Model, then its Entities, Capabilities, Interfaces and Business Rules, each drawn more than one way" width="800">
+  <img src="./.github/demo.gif" alt="A tour of BusinessLens's own Product Model: npx businesslens view businesslens/pdd opens it in the local report, then its Entities, Capabilities, Interfaces and Business Rules, each drawn more than one way" width="800">
+</p>
+
+<p align="center">
+Try it yourself: <code>npx businesslens view businesslens/pdd</code>
 </p>
 
 ---
@@ -39,6 +43,10 @@ They fill the gaps by guessing, and the guesses ship.
 3. **Done means it matches the product.** Verify checks the code against the approved model.
 4. **Drift is easy to spot.** The model stays a clear reference as behavior changes.
 5. **Decisions travel with the code.** Model and code changes are reviewed in one pull request.
+
+**Dogfooded:** BusinessLens is developed with BusinessLens. Its own Product Model
+lives in this repository's [`.businesslens/` folder](./.businesslens/), and the
+demo above is that model in the local report.
 
 ## Features
 
