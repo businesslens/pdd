@@ -170,6 +170,10 @@ the diff.
 
 - Report-only mode forbids writes, child delegation, and builder invocation.
 - Never change product meaning without explicit approval.
+- Approval is explicit and covers the delta you presented. A reply that hands
+  you the open questions ("take your recommendation", "you decide") settles
+  those questions; it does not approve the change. Present the complete delta
+  with the answers applied and wait for approval before writing.
 - Never persist rejected approaches, reasons another option was not selected,
   or deliberation history anywhere in `.businesslens/`, including resource prose,
   supporting sections, limitations, README, and additional files. Keep decision

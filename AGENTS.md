@@ -149,6 +149,10 @@ costed already.
   under its own normal permissions; it is not a BusinessLens skill. If no
   builder is available, verify stops with a complete handoff packet.
 - Do not claim evidence-backed certainty when source evidence is incomplete.
+- **Delegated decisions are not approval.** Every skill that writes product
+  meaning writes it only after the user approves the complete delta it
+  presented. "Take your recommendation" settles the open questions; the skill
+  still presents the resulting delta and waits.
 - **Verification findings are re-derived, never persisted.** Each
   `businesslens-verify` run derives findings from the model and current
   repository state. A tracked ledger would create merge conflicts and imply

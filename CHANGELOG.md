@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Skills:** Telling your agent to "take your recommendation" now settles the open questions without approving the change: the skills still show you the complete change and write the model only after you approve it.
+
 ## [0.27.0] - 2026-10-06
 
 ### Changed
