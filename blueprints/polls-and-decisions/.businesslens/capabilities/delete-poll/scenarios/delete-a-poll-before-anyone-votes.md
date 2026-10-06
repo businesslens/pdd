@@ -25,7 +25,7 @@ steps:
     actor: member
     entities:
       - { entity: poll, effect: removes, from: Open }
-      - { entity: comment, effect: removes }
+      - { entity: comment, effect: removes, with: poll }
     contexts:
       web:
         place: polls-web::poll
