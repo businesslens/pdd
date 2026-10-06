@@ -1,9 +1,9 @@
 ---
-domain: sharing
+domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Share deck
+# Deck sharing
 
 Makes an owned deck readable by link: any signed-in Learner holding the share
 link sees its cards and may copy it. Sharing never exposes the owner's progress

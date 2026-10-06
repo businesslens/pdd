@@ -15,7 +15,7 @@ steps:
     kind: product
     actor: learner
     entities:
-      - { entity: card-proposal, effect: creates, facts: [Front, Back, Source passage] }
+      - { entity: card-proposal, effect: creates, to: Proposed, facts: [Front, Back, Source passage] }
     contexts:
       web:
         place: flashcards-web::card-proposals

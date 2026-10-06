@@ -3,7 +3,7 @@ domain: study
 availability: [{ place: flashcards-web }, { place: flashcards-mobile }]
 ---
 
-# Study deck
+# Deck study
 
 Works through the cards an owned deck has due, one at a time. The Learner
 tries to recall the back from the front, reveals it, and rates their recall

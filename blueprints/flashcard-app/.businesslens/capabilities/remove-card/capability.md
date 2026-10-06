@@ -3,7 +3,7 @@ domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Remove card
+# Card removal
 
 Removes a card, and the progress made on it, from an owned deck.
 

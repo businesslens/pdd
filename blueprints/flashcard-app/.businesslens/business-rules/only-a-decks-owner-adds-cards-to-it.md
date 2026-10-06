@@ -9,11 +9,10 @@ permits:
 
 # Only a deck's owner adds cards to it
 
-A card enters a deck only when the deck's owner adds it, keeps a card proposal,
-or makes the deck as a copy. Drafting from notes never adds a card: what it produces
-waits as a card proposal until the owner keeps it.
+A card enters a deck only when the deck's owner adds it, accepts a card
+proposal, or makes the deck as a copy.
 
 ## Rationale
 
-What a Learner studies is their decision. A drafting mistake must cost one
-discard, never a wrong card studied for weeks.
+What a Learner studies is their decision, so nobody else puts a card in front
+of them.

@@ -11,7 +11,7 @@ steps:
     contexts:
       web:
         place: flashcards-web::deck-detail
-  - text: The Product explains that the deck, its cards, their progress and any waiting card proposals will be deleted
+  - text: The Product explains that the deck, its cards, their progress and any card proposals will be deleted for good
     kind: product
     actor: learner
     entities:
@@ -19,7 +19,7 @@ steps:
       - { entity: card, as: new-card, effect: reads, facts: [] }
       - { entity: card, as: learning-card, effect: reads, facts: [] }
       - { entity: card, as: known-card, effect: reads, facts: [] }
-      - { entity: card-proposal, effect: reads, facts: [] }
+      - { entity: card-proposal, as: waiting-proposal, effect: reads, facts: [] }
     contexts:
       web:
         place: flashcards-web::deck-detail
@@ -31,7 +31,9 @@ steps:
       - { entity: card, as: new-card, effect: removes, from: New }
       - { entity: card, as: learning-card, effect: removes, from: Learning }
       - { entity: card, as: known-card, effect: removes, from: Known }
-      - { entity: card-proposal, effect: removes }
+      - { entity: card-proposal, as: waiting-proposal, effect: removes, from: Proposed }
+      - { entity: card-proposal, as: accepted-proposal, effect: removes, from: Accepted }
+      - { entity: card-proposal, as: dismissed-proposal, effect: removes, from: Dismissed }
     contexts:
       web:
         place: flashcards-web::deck-detail
@@ -52,8 +54,8 @@ The Learner chooses to delete a private deck they own.
 
 ## Outcome
 
-The deck, its cards, their progress and any card proposals waiting in it are
-gone, and the Learner's other decks are unchanged.
+The deck, its cards, their progress and its card proposals are
+gone for good, and the Learner's other decks are unchanged.
 
 ## Edge cases
 

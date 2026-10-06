@@ -8,6 +8,6 @@ entryPoints:
 # Flashcards web application
 
 The supported browser Interface for everything a signed-in Learner does:
-building and deleting decks, studying them, following their progress, drafting
-cards from pasted notes and deciding on each proposal, and sharing or copying
-decks.
+building, renaming and deleting decks, studying them, following their
+progress, drafting cards from pasted notes and accepting or dismissing each
+proposal, and sharing or copying decks.

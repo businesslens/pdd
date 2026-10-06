@@ -3,7 +3,7 @@ domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Add card
+# Card addition
 
 Adds a card with a front and a back to an owned deck. A new card is due for
 study the day it is added.
