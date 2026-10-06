@@ -269,7 +269,7 @@ Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it
 removes every `kind: code` reference, every `role: implementation` reference,
 every repository-relative reference, every repository-relative entry point,
-and every Coverage entry's `paths`. It also contains no repository URL, branch, commit,
+and every Coverage entry. It also contains no repository URL, branch, commit,
 catalog listing state, pricing, or entitlement data. A report that has been
 through `export` is a Blueprint.
 
@@ -329,8 +329,9 @@ operators in [`docs/cli-pull.md`](../docs/cli-pull.md#catalog-contract).
 ## Coverage
 
 `coverage` carries the fields of [`coverage.md`](./format.md#coveragemd) with the
-same strict validation. Expansion writes them back unchanged except `method`,
-which records the model's origin.
+same strict validation: every entry names at least one path, and `scope` is
+non-empty whenever an entry exists. Coverage describes the origin repository's
+code, so a portable report carries none, and expansion writes empty coverage.
 
 ## Portable projection
 
@@ -349,7 +350,7 @@ serve(projectPortableReport(report))
 | --- | --- |
 | `references` | only HTTP(S) intent/context references kept |
 | `entryPoints` | repository paths and `file:` URLs dropped; routes, HTTP(S) URLs, non-file mobile deep links, and commands kept |
-| `coverage` entry `paths` | emptied; descriptions kept |
+| `coverage` | emptied: `scope` and `method` `""`, all four lists empty |
 | `referenceProfile` | set to `portable` |
 
 Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
@@ -360,24 +361,24 @@ and is also kept. Repository-relative references are dropped. HTTP(S)
 intent/context references are kept. A value with no path separator at all,
 such as a CLI entry point, is not a path and is kept.
 
-Author-written prose — Coverage descriptions, `intent`, and each
+Author-written prose — `intent`, `limitations`, and each
 `supportingSections[].content` value — is never rewritten, by the
-projection or by expansion. It describes the **model's own completeness** rather
-than its origin, it is exactly what a reader receiving a Blueprint needs in
-order to know what they are getting, and it belongs to the author.
+projection or by expansion. It describes the product, it is exactly what a
+reader receiving a Blueprint needs in order to know what they are getting, and
+it belongs to the author. Keep repository internals out of it.
 
-`coverage.method` is the one exception, and deliberately so. It states **how a
-model was derived** — "static review of the pinned revision", "authored as a
-teaching Blueprint" — which is a claim about origin. A Blueprint carries no such
-claim, so expansion replaces `method` with its own honest account of where the
-model came from. Keep repository internals out of the prose that does survive.
+Coverage is dropped whole rather than stripped of paths. Every entry describes
+code in the origin repository — which areas the model accounts for, which it
+excludes, where it could not establish behavior — and none of that is true of
+the receiving repository, whose code has not been mapped. A pulled model
+therefore starts with empty coverage, like any model decided before its code.
 
 The projection is idempotent and does not mutate its input. Because both the
 framework and the catalog apply this same exported function, contributors and
 the server cannot disagree about what a delivered report exposes.
 `validateProductReport` rejects a report that declares `referenceProfile:
 portable` while still carrying a code reference, implementation reference,
-repository-relative reference, or Coverage path.
+repository-relative reference, or any Coverage entry.
 
 `blueprint export` writes the portable report. Contribution applies
 the same idempotent projection before opening a public pull request. `open` and

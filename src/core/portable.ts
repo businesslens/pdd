@@ -1745,8 +1745,8 @@ export function validateProductReport(report: ProductReportV17): string[] {
 
   if (report.referenceProfile === 'portable') {
     for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations'] as const) {
-      if (report.coverage[kind].some(area => area.paths.length)) {
-        issues.push(`referenceProfile is portable but coverage.${kind} paths name repository areas`)
+      if (report.coverage[kind].length) {
+        issues.push(`referenceProfile is portable but coverage.${kind} describes the origin repository's code`)
       }
     }
     const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
@@ -1840,13 +1840,9 @@ export function projectPortableReport(report: ProductReportV17): ProductReportV1
       businessRules: strip(report.model.businessRules),
       variations: strip(report.model.variations)
     },
-    coverage: {
-      ...report.coverage,
-      covered: report.coverage.covered.map(area => ({ ...area, paths: [] })),
-      exclusions: report.coverage.exclusions.map(area => ({ ...area, paths: [] })),
-      unmapped: report.coverage.unmapped.map(area => ({ ...area, paths: [] })),
-      limitations: report.coverage.limitations.map(area => ({ ...area, paths: [] }))
-    }
+    /* Coverage describes the origin repository's code, none of which is true
+       of a receiving repository, so a portable report carries none. */
+    coverage: { scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] }
   }
 }
 

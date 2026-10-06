@@ -6,9 +6,7 @@ const props = withDefaults(defineProps<{
   statement: CoverageStatement
   /** The path this statement is being read under, shown as the current one. */
   here?: string | null
-  /** False under a heading that already names the category. */
-  badge?: boolean
-}>(), { here: null, badge: true })
+}>(), { here: null })
 
 const elsewhere = computed(() => props.here
   ? props.statement.paths.filter(location => normalizeCoveragePath(location) !== normalizeCoveragePath(props.here!))
@@ -21,7 +19,7 @@ const elsewhere = computed(() => props.here
     :class="COVERAGE_KIND_META[statement.kind].tone"
     :data-coverage-statement="statement.kind"
   >
-    <span v-if="badge" class="blr-coverage-chip inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium">
+    <span class="blr-coverage-chip inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium">
       <UIcon :name="COVERAGE_KIND_META[statement.kind].icon" class="size-3.5 shrink-0" />
       {{ COVERAGE_KIND_META[statement.kind].singular }}
     </span>

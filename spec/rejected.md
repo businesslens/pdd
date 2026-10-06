@@ -256,6 +256,26 @@ the person brings acts.
 simpler, but each mis-models half the cases: a drafted question is the question
 it becomes, while a filing suggestion keeps a reason no bookmark has.
 
+## Coverage
+
+**Coverage as the model's breadth, with optional paths.** Superseded. One file
+said both what the model left out of the product — "accounts are not modelled"
+— and which code it was derived from, so a Blueprint carried product scope that
+belonged in its limitations, a pulled Blueprint carried prose about another
+repository's code, and a model designed before its code showed an empty file
+tree. Coverage now records only which code the model accounts for, every entry
+names its paths, and a model tied to no code has none.
+
+**Mapping coverage file by file.** Tried and reverted: the file outgrew its
+reader, drifted with every move, and repeated what resources and their
+References already locate. Coverage stays at the highest level that still tells
+an agent where to look and what to ignore.
+
+**Recording coverage paths after verification aligns an implemented area.**
+Every flow would converge on located coverage, but verification would start
+writing model metadata after each run, and the detail invites the file-by-file
+mapping already reverted. Coverage is written by mapping only.
+
 ## Domains
 
 **Domains cut by "the thing the Actor works on".** Two independent maps of one

@@ -311,7 +311,7 @@ describe('projectPortableReport', () => {
       { type: 'mobile', path: 'fixture-shop://checkout' },
       { type: 'cli', path: 'shop checkout' }
     ])
-    expect(portable.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
+    expect(portable.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
   })
 
   it('rejects portable reports that still expose workspace references', () => {
@@ -330,9 +330,10 @@ describe('projectPortableReport', () => {
     }
 
     const withCoveredAreas = structuredClone(base)
-    withCoveredAreas.coverage.covered = [{ description: 'Shopping', paths: ['src/'] }]
+    withCoveredAreas.coverage.scope = 'The storefront.'
+    withCoveredAreas.coverage.covered = [{ description: 'Shopping code', paths: ['src/'] }]
     expect(sdk.validateProductReport(withCoveredAreas)).toContain(
-      'referenceProfile is portable but coverage.covered paths name repository areas'
+      'referenceProfile is portable but coverage.covered describes the origin repository\'s code'
     )
   })
 
@@ -492,7 +493,7 @@ describe('projectPortableReport', () => {
     }
     incomplete.model.screens = incomplete.model.screens
       .filter(screen => !screen.id.startsWith('customer-mobile::'))
-    incomplete.coverage.unmapped = [{ description: 'Subscription purchases are not modeled.', paths: [] }]
+    incomplete.coverage.unmapped = [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }]
     expect(sdk.validateProductReport(incomplete)).toContain(
       'capability "place-order": availability Context place "customer-mobile::storefront" needs Capability Scenario coverage'
     )

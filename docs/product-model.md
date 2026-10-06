@@ -13,7 +13,7 @@ terms:
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "What the model sets out to describe, what it covers, what it leaves out on purpose, and its known gaps."
+    definition: "Which of the repository's code the model accounts for, what it leaves out as not product behavior, and known gaps."
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A kind of resource, such as Entity or Capability, decided by where its file sits in the Product Model."
@@ -36,7 +36,7 @@ Each file is one **resource**, and the folder it sits in decides its type.
 ```text
 .businesslens/
 ├── product.md              # the one Product
-├── coverage.md             # what the model covers, and its gaps
+├── coverage.md             # which code the model accounts for
 ├── interfaces/             # where people and systems meet the Product
 │   └── customer-web/
 │       ├── interface.md
@@ -153,21 +153,23 @@ it straight into the model. Attach the PRD itself as a `prd`
 
 ## Coverage
 
-`coverage.md` says what the model sets out to describe and what it knows it is
-missing:
+**Coverage is about code, not the product.** `coverage.md` says which of the
+repository's code the model accounts for, at the highest level that still
+tells an agent where to look and what to ignore. What the Product is or is not
+belongs in [`product.md`](./product.md).
 
 ```md [coverage.md]
 ---
-scope: Customer purchasing and order fulfillment.
+scope: The storefront and order services.
 method: Static inspection of source and documentation.
 covered:
-  - description: Customer checkout and order tracking.
+  - description: Checkout and order tracking code.
     paths: [src/checkout/, src/orders/]
 exclusions:
-  - description: Staff payroll is outside this model.
-    paths: [server/payroll/]
+  - description: The design system and email templates.
+    paths: [src/ui/, emails/]
 unmapped:
-  - description: Background fulfillment jobs are not modeled yet.
+  - description: Background fulfillment jobs.
     paths: [server/jobs/]
 limitations: []
 ---
@@ -177,15 +179,20 @@ limitations: []
 
 | Field | Says |
 | --- | --- |
-| `scope` | What the model intends to describe |
-| `method` | How it was written, in one line, or `""` |
-| `covered` | What the model represents |
-| `exclusions` | Approved omissions, never skipped work |
-| `unmapped` | Known behavior in scope that is not modeled yet |
-| `limitations` | What could not be established |
+| `scope` | How much of the code the model accounts for |
+| `method` | How the code was inspected, in one line, or `""` |
+| `covered` | Code whose behavior the model describes |
+| `exclusions` | Code that is not product behavior, such as presentation or packaging |
+| `unmapped` | Code with behavior the model does not describe yet |
+| `limitations` | Code whose behavior could not be established |
 
-Every field is required. Each entry has a unique one-line `description` and its
-repository `paths`, or `[]`. Known gaps never relax any other check.
+Every field is required, and every entry names its code: a unique one-line
+`description` of the code area and its `paths`, usually folders.
+[`businesslens-map`](./skill-businesslens-map.md) writes coverage when it maps
+a repository. A model with no code yet — a Blueprint, or one you design first
+with [`businesslens-ideate`](./skill-businesslens-ideate.md) — has empty
+coverage until something maps its code. Known gaps never relax any other
+check.
 
 ## What lint checks
 
@@ -198,7 +205,8 @@ All of these are errors:
   expanded folder has its `<type>.md`.
 - No unknown frontmatter keys, and each recognized `##` section at most once.
 - `coverage.md` has every field, unique descriptions, and only `# Coverage` in
-  its body.
+  its body; every entry names at least one path, and `scope` is set whenever
+  there is an entry.
 
 Warnings:
 

@@ -76,9 +76,10 @@ in `languages`.
 
 ### Limitations vs Coverage
 
-`limitations` are deliberate boundaries of the Product itself: "In-store
-purchasing is outside this Product". Gaps and uncertainty in the *model* belong
-in [Coverage](./product-model.md#coverage).
+`limitations` are deliberate boundaries of the Product itself, including what
+it leaves to other systems: "In-store purchasing is outside this Product",
+"People sign in with their existing account". [Coverage](./product-model.md#coverage)
+never describes the Product; it records which code the model accounts for.
 
 ## Logo and publishing
 
@@ -98,8 +99,8 @@ at least one tag, at least one author, a `license`, and `logo.svg`.
 
 - [Interfaces](./interfaces.md) are where the Product meets people and systems;
   each may narrow its `languages`.
-- [Coverage](./product-model.md#coverage) says how much of the Product the
-  model describes.
+- [Coverage](./product-model.md#coverage) says which of the repository's code
+  the model accounts for.
 - [References](./references.md) attach outside material, such as a product
   brief with `role: intent`.
 
@@ -124,4 +125,4 @@ Errors:
 Warnings:
 
 - A limitation that talks about the model ("not modeled", "outside the
-  model") instead of stating a product constraint; record gaps in coverage.md.
+  model") instead of stating a product constraint.

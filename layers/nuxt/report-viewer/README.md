@@ -573,7 +573,13 @@ bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 ### Coverage
 
-Coverage opens with one summary panel: **Scope**, then **Method** when
+Coverage records which of the repository's code the model accounts for, so
+every statement names at least one path. A model tied to no code yet — every
+Blueprint, any model decided before its code — has empty coverage, and the
+reading says so in one plain statement ("This model isn't tied to code yet.")
+instead of drawing a panel, cards or a tree.
+
+Otherwise, Coverage opens with one summary panel: **Scope**, then **Method** when
 recorded, under the model's own field names, then the four category cards as the
 panel's last row. Method is one short line by format, so it is read rather than
 disclosed. The search and the location tree follow the panel. There is no
@@ -582,7 +588,7 @@ Coverage reading, and no separate Rationale or Mapping details.
 
 The reading takes the four authored lists as one set of statements whose
 category is an attribute. Four compact cards count Covered, Exclusions, Unmapped and Limitations,
-including entries with no location, and are the only category filter; selecting
+and are the only category filter; selecting
 a card activates it, selecting it again restores every category. Card totals
 never change with search or filtering.
 
@@ -632,14 +638,7 @@ it and cover both axes: the folders and the explanations. A card filter or a
 search only narrows what is drawn: Expand all and Collapse all change what is on
 screen, and whatever the narrowing hides keeps its own state for when it
 returns. The References catalog shares this expansion. Expansion is
-remembered per report. When no statement records a location — a model designed before its code, as
-every Blueprint is — there is no tree to draw and nothing for a path search to
-find, so neither appears: the statements read as plain lists under each
-category's heading, narrowed by the same card filter, and the same statements
-gain their tree once a mapping records paths. Otherwise, statements with no
-recorded location stay visible under **No location recorded**, narrowed by the same card filter and set aside while a
-search is active, since they have no path to match; this includes model-wide
-Limitations, which have no separate section of their own. Model References are not repeated here — they have their home in the
+remembered per report. Model References are not repeated here — they have their home in the
 Product Overview's own References reading. No live repository inventory is
 added.
 

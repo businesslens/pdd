@@ -27,10 +27,6 @@ import { UsageError } from '../core/usage-error.js'
 import { validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-/* `method` is the one coverage field expansion rewrites: it states how the
-   model was derived, which is a claim about origin, and a Blueprint carries
-   none. Authored descriptions pass through untouched. */
-const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; implementation alignment has not been verified in this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -220,10 +216,9 @@ function writeReport(root: string, report: ProductReportV17, hasLogo: boolean): 
   )
   write(
     join(root, 'coverage.md'),
-    frontmatter({
-      ...report.coverage,
-      method: OPEN_COVERAGE_METHOD
-    }) + body('Coverage', '', '', [], [])
+    /* A portable report carries no coverage: no code in this repository has
+       been mapped to the model yet. */
+    frontmatter({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] }) + body('Coverage', '', '', [], [])
   )
 
   for (const productInterface of report.model.interfaces) {

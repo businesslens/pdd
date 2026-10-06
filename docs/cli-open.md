@@ -40,9 +40,9 @@ npx businesslens --cwd ./new-product blueprint open ./report.json
 4. Moves it into place as `.businesslens/` and removes the temporary directory.
 
 Everything except repository navigation comes through (see
-[what export keeps](./cli-export.md#portable-export)). Coverage loses its paths,
-and its `method` records that the model has not been verified against this
-repository. A report carries no logo, so the Product is written compact, as
+[what export keeps](./cli-export.md#portable-export)). Coverage comes through
+empty: no code in your repository has been mapped to the model yet. A report
+carries no logo, so the Product is written compact, as
 `product.md`.
 
 ## Safety

@@ -86,9 +86,9 @@ Walk these after `lint` is clean; lint cannot see them.
   that role.
 - **Invariants:** a Rule about a thing's facts or States targets the Entity.
 - **AI:** one of the two shapes in format.md, never an assistant that acts.
-- **Accounts:** when signing up and signing in are not modelled, coverage
-  `exclusions` says so once — "Accounts: signing up, signing in and account
-  settings." — and nothing else repeats it.
+- **What the Product leaves to other systems:** say it once as a
+  product-language limitation ("People sign in with their existing account;
+  managing accounts is not part of this product."), never in coverage.
 
 ## Dialogue
 
@@ -97,7 +97,8 @@ Walk these after `lint` is clean; lint cannot see them.
 - While a choice remains open, discuss a recommendation and its tradeoff in the
   conversation. After resolution, record the resulting product meaning without
   retaining discarded directions or replaying settled discussion on later runs.
-- Record material unresolved points in coverage.md instead of guessing; an
+- Resolve material points before approval instead of guessing; one still open
+  is stated in the prose of the resource it affects, never in coverage. An
   unchosen option is not a limitation or product exclusion.
 - Keep screenshots, mockups, design systems, research, and sitemaps external.
   References may attach them with `role: intent` or `role: context`, but

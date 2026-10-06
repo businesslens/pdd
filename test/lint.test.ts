@@ -259,7 +259,7 @@ describe('lintModel', () => {
     expect(invalidPath.join('\n')).toContain('coverage.md: unmapped.0.paths.0')
     expect(scopeErrors(invalidPath)).toEqual([])
 
-    editCoverage(file, { unmapped: [{ description: 'Refunds are not modeled.', paths: [] }], limitations: [{ description: 'Refunds are not modeled.', paths: [] }] })
+    editCoverage(file, { unmapped: [{ description: 'Refund code.', paths: ['src/refunds/'] }], limitations: [{ description: 'Refund code.', paths: ['src/refunds/'] }] })
     const duplicate = run(cwd).errors.filter(error => /unique/.test(error))
     expect(duplicate).toHaveLength(1)
     expect(scopeErrors(run(cwd).errors)).toEqual([])
@@ -794,7 +794,7 @@ Read-only status an operator can query without a session.
     expect(run(cwd).errors.join('\n')).toContain('availability Context place "operator-cli" needs Capability Scenario coverage')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
-    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchases are not modeled.', paths: [] }] })
+    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }] })
     const result = run(cwd)
     expect(result.errors.some(error => error.includes('needs Capability Scenario coverage'))).toBe(true)
     expect(result.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(false)
@@ -851,7 +851,7 @@ Filed away.
     expect(run(cwd).errors.join('\n')).toContain('step 1: text names "Shopper" and "entities" does not declare it')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
-    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchases are not modeled.', paths: [] }] })
+    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }] })
     const result = run(cwd)
     expect(result.errors.some(error => error.includes('does not declare it'))).toBe(true)
     expect(result.warnings.some(warning => warning.includes('does not declare it'))).toBe(false)
@@ -1590,7 +1590,7 @@ An order exists.
   })
 
   it('allows missing references and known unmapped behavior without a status', () => {
-    for (const unmapped of [[], [{ description: 'Subscription purchases are not modeled.', paths: [] }]]) {
+    for (const unmapped of [[], [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }]]) {
       const cwd = fixtureCopy()
       editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, scope: 'The fixture Product.', method: 'Authored model', covered: [] })
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
@@ -2288,7 +2288,7 @@ permits: []`)
       const cwd = fixtureCopy()
       const product = join(cwd, '.businesslens/product/product.md')
       writeFileSync(product, readFileSync(product, 'utf8').replace('limitations: []', 'limitations: ["Gift cards are not modeled."]'))
-      expect(run(cwd).warnings).toContain('product.md: limitation "Gift cards are not modeled." speaks about the model; limitations state deliberate product constraints, so record a gap in coverage.md')
+      expect(run(cwd).warnings).toContain('product.md: limitation "Gift cards are not modeled." speaks about the model; state the product fact instead, such as what the Product leaves to other systems')
     })
 
     it('accepts a limitation that states a product constraint', () => {
@@ -2550,5 +2550,28 @@ describe('a removal that goes with another', () => {
     writeRule(second, 'catalog-products-are-never-removed', 'appliesTo:\n  - type: entity\n    id: catalog-product\n    effect: removes\npermits: []')
     withCart(second, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
     expect(run(second).errors.join('\n')).not.toContain('forbids to everyone')
+  })
+})
+
+describe('Coverage records which code the model accounts for', () => {
+  it('errors on a Coverage entry that names no code', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { exclusions: [{ description: 'Payroll code.', paths: [] }] })
+    expect(run(cwd).errors.join('\n')).toContain('coverage.md: exclusions.0.paths: A Coverage entry names the code it is about; give it at least one path')
+  })
+
+  it('accepts empty coverage for a model tied to no code, scope and method included', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
+    expect(run(cwd).errors.filter(error => error.startsWith('coverage.md'))).toEqual([])
+  })
+
+  it('requires a scope once coverage records code', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { scope: '' })
+    expect(run(cwd).errors.join('\n')).toContain('coverage.md: scope: Scope is required once Coverage records code')
   })
 })

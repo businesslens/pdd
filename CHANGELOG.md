@@ -14,14 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Blueprints:** The Content Feed Reader now belongs to Personal Productivity.
-- **Report:** Coverage reads as plain lists by category when a model records no locations, as Blueprints do; the path tree appears once a mapping records paths.
+- Coverage now describes only which of your code a model accounts for, each entry naming its folders; what the product leaves out is said in its limitations. A model or Blueprint with no code yet has empty coverage, and the report says so.
 - **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it.
 - **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it.
 - Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.
 - A Journey continues only where the product carries the same person on; something shown where they already are does not count.
 - Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission.
 - Reports use a new format version; re-export Blueprints after updating.
-- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product.
+- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, limitations that describe the model instead of the product, and a Coverage entry that names no code.
 
 ## [0.25.1] - 2026-10-05
 

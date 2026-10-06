@@ -30,10 +30,23 @@ describe('described Coverage areas and limitations', () => {
     for (const path of ['src/*.ts', 'src/file?.ts', '../outside', 'src/a.ts#Symbol', 'src/a.ts:12']) expect(at(path)).toBe(false)
   })
 
-  it('accepts located and unlocated gaps with the same shape', () => {
-    const unmapped = [{ description: 'Scheduled **refunds** are not modeled.', paths: ['src/refunds.ts', 'jobs/'] }, { description: 'Recurring purchases are not modeled.', paths: [] }]
+  it('requires every entry to name its code, in every category', () => {
+    const located = [{ description: 'Scheduled **refunds** code.', paths: ['src/refunds.ts', 'jobs/'] }]
     for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations'] as const) {
-      expect(ReportCoverageSchema.parse({ ...coverage, unmapped: [], [kind]: unmapped })[kind]).toEqual(unmapped)
+      expect(ReportCoverageSchema.parse({ ...coverage, unmapped: [], [kind]: located })[kind]).toEqual(located)
+      const unlocated = ReportCoverageSchema.safeParse({ ...coverage, unmapped: [], [kind]: [{ description: 'Recurring purchases.', paths: [] }] })
+      expect(unlocated.success).toBe(false)
+      expect(unlocated.error?.issues.map(issue => issue.message)).toContain('A Coverage entry names the code it is about; give it at least one path')
+    }
+  })
+
+  it('lets a model tied to no code have empty coverage, scope included, but not entries without a scope', () => {
+    const empty = { scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] }
+    for (const schema of [CoverageDocumentSchema, ReportCoverageSchema]) {
+      expect(schema.safeParse(empty).success).toBe(true)
+      const scopeless = schema.safeParse({ ...empty, covered: [{ description: 'Checkout code.', paths: ['src/checkout/'] }] })
+      expect(scopeless.success).toBe(false)
+      expect(scopeless.error?.issues.map(issue => issue.message)).toContain('Scope is required once Coverage records code; say the breadth of code the model accounts for')
     }
   })
 
@@ -53,43 +66,39 @@ describe('described Coverage areas and limitations', () => {
     expect(ReportCoverageSchema.safeParse({ ...coverage, unmapped: [{ description: 'Future behavior', paths: ['future/new-feature/'] }] }).success).toBe(true)
   })
 
-  it('preserves gap meaning and strips all repository locations without mutating the workspace report', () => {
+  it('drops coverage whole from a portable report without mutating the workspace report', () => {
     const report = compileReport(loadModel(join(__dirname, 'fixtures', 'fixture-shop')), '2026-09-15')
     report.coverage.unmapped = [{ description: 'Back-office refunds are not modeled.', paths: ['src/refunds/'] }]
     report.coverage.limitations = [{ description: 'The retry policy is uncertain.', paths: ['src/refunds/'] }]
     expect(validateProductReport(report)).toEqual([])
     const portable = projectPortableReport(report)
     expect(validateProductReport(portable)).toEqual([])
-    expect(portable.coverage).not.toHaveProperty('status')
-    expect(portable.coverage.unmapped).toEqual([{ description: report.coverage.unmapped[0]!.description, paths: [] }])
-    expect(portable.coverage.covered).toEqual(report.coverage.covered.map(area => ({ ...area, paths: [] })))
-    expect(portable.coverage.limitations).toEqual([{ description: 'The retry policy is uncertain.', paths: [] }])
+    expect(portable.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
     expect(report.coverage.limitations[0]!.paths).toEqual(['src/refunds/'])
     expect(report.coverage.unmapped[0]!.paths).toEqual(['src/refunds/'])
     expect(projectPortableReport(portable)).toEqual(portable)
-    for (const kind of ['covered', 'unmapped', 'limitations'] as const) {
+    for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations'] as const) {
       const invalid = structuredClone(portable)
-      invalid.coverage[kind][0]!.paths = ['src/refunds/']
-      expect(validateProductReport(invalid)).toContain(`referenceProfile is portable but coverage.${kind} paths name repository areas`)
+      invalid.coverage.scope = 'The storefront.'
+      invalid.coverage[kind] = [{ description: 'Refund code.', paths: ['src/refunds/'] }]
+      expect(validateProductReport(invalid)).toContain(`referenceProfile is portable but coverage.${kind} describes the origin repository's code`)
     }
   })
 })
 
-it('distinguishes approved exclusions from gaps, requires scope and allows known missing behavior', () => {
+it('distinguishes code excluded from code not yet modeled, and requires scope once code is recorded', () => {
   const excluded = { description: 'Payroll is outside the model.', paths: ['payroll/'] }
   const base = { ...coverage, exclusions: [excluded], unmapped: [] }
   expect(ReportCoverageSchema.safeParse(base).success).toBe(true)
   expect(ReportCoverageSchema.safeParse({ ...base, scope: '' }).success).toBe(false)
-  expect(ReportCoverageSchema.safeParse({ ...base, unmapped: [{ description: 'Missing checkout behavior.', paths: [] }] }).success).toBe(true)
+  expect(ReportCoverageSchema.safeParse({ ...base, unmapped: [{ description: 'Checkout jobs.', paths: ['jobs/checkout/'] }] }).success).toBe(true)
   expect(ReportCoverageSchema.safeParse({ ...base, unmapped: [excluded] }).success).toBe(false)
   expect(ReportCoverageSchema.safeParse({ ...base, covered: [excluded] }).success).toBe(false)
   expect(ReportCoverageSchema.safeParse({ ...base, limitations: [excluded] }).success).toBe(false)
   const report = compileReport(loadModel(join(__dirname, 'fixtures', 'fixture-shop')), '2026-09-15')
   report.coverage.exclusions = [excluded]
   const portable = projectPortableReport(report)
-  expect(portable.coverage.scope).toBe(report.coverage.scope)
-  expect(portable.coverage.exclusions).toEqual([{ ...excluded, paths: [] }])
+  expect(portable.coverage.scope).toBe('')
+  expect(portable.coverage.exclusions).toEqual([])
   expect(report.coverage.exclusions[0]!.paths).toEqual(['payroll/'])
-  portable.coverage.exclusions[0]!.paths = ['payroll/']
-  expect(validateProductReport(portable)).toContain('referenceProfile is portable but coverage.exclusions paths name repository areas')
 })

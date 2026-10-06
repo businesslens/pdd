@@ -119,8 +119,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   validateSections('product.md', model.product.doc, ['Intent'])
   /*
    * A Product limitation is a deliberate constraint a reader of the Product
-   * can rely on. Wording about the model itself — what it does not cover — is a
-   * gap in the mapping, and coverage.md is where gaps and exclusions live.
+   * can rely on, including what the Product leaves to other systems. Wording
+   * about the model itself — what it does not cover — says nothing a reader of
+   * the Product can rely on; the product fact behind it is the limitation.
    */
   // "in the model" is left out on purpose: a limitation about a language
   // model's provider ("nothing is kept in the model provider's logs") is a
@@ -128,7 +129,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const MODEL_LANGUAGE = /\bnot model(?:l)?ed\b|\boutside (?:the|this) model\b|\bthe model does not\b/i
   for (const limitation of model.product.limitations) {
     if (MODEL_LANGUAGE.test(limitation)) {
-      warnings.push(`product.md: limitation "${limitation}" speaks about the model; limitations state deliberate product constraints, so record a gap in coverage.md`)
+      warnings.push(`product.md: limitation "${limitation}" speaks about the model; state the product fact instead, such as what the Product leaves to other systems`)
     }
   }
   if (model.product.summary && (/\r|\n/.test(model.product.summary) || model.product.summary.length > 400)) {

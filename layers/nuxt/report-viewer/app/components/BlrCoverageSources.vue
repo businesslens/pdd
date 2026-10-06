@@ -4,10 +4,7 @@
  * category cards, then every authored statement written under the path it names.
  *
  * The four category cards are the only category filter and count whole authored
- * statements, including those with no location. When no statement records a
- * location — a model designed before its code, as every Blueprint is — there is
- * no tree to draw and no path to find, so the statements read as plain lists by
- * category, and the search and tree appear once locations are recorded. Search finds recorded paths,
+ * statements, each naming at least one location. Search finds recorded paths,
  * as a file finder would: it narrows the tree to the paths whose name contains
  * what was typed and opens the folders above them, and never matches prose.
  */
@@ -19,8 +16,6 @@ import {
   COVERAGE_KIND_META,
   COVERAGE_KIND_ORDER,
   coveragePathMatches,
-  coverageByCategory,
-  coverageHasLocations,
   coverageStatements,
   coverageStatementIndex,
   type CoverageStatementKind
@@ -33,17 +28,12 @@ const filter = ref<CoverageStatementKind | null>(null)
 const query = ref('')
 
 const all = computed(() => coverageStatements(props.workspace.coverage))
-const anyLocated = computed(() => coverageHasLocations(all.value))
-const searching = computed(() => Boolean(query.value.trim()))
 const shown = computed(() => all.value.filter(statement => !filter.value || statement.kind === filter.value))
 // A search narrows paths, not statements: a statement also recorded elsewhere
 // never drags its other locations into the result.
 const located = computed(() => shown.value
   .map(statement => ({ ...statement, paths: statement.paths.filter(path => coveragePathMatches(path, query.value)) }))
   .filter(statement => statement.paths.length))
-// With no path, a statement cannot answer a path search.
-const unlocated = computed(() => searching.value ? [] : shown.value.filter(statement => !statement.paths.length))
-const categories = computed(() => coverageByCategory(shown.value))
 const nodes = computed(() => coverageStatementTree(located.value))
 const branches = computed(() => repositoryTreeNodes(nodes.value).filter(node => node.children.length).map(node => node.value))
 // Indexed once per reading, so each row looks its statements up rather than
@@ -136,72 +126,44 @@ onMounted(() => reveal(focused.value))
       </div>
     </div>
 
-    <!-- No location anywhere: the statements are the whole reading, listed by category. -->
-    <div v-if="!anyLocated" class="min-w-0 space-y-5" data-coverage-categories>
-      <section
-        v-for="group in categories"
-        :key="group.kind"
-        class="min-w-0 space-y-3"
-        :aria-label="COVERAGE_KIND_META[group.kind].label"
-        :data-coverage-category="group.kind"
-      >
-        <h3 class="text-sm font-semibold text-highlighted">{{ COVERAGE_KIND_META[group.kind].label }} <span class="blr-meta ms-1">{{ group.statements.length }}</span></h3>
-        <ul class="space-y-4">
-          <li v-for="(statement, index) in group.statements" :key="index" data-coverage-entry>
-            <BlrCoverageStatement :statement="statement" :badge="false" />
-          </li>
-        </ul>
-      </section>
+    <div class="flex min-w-0 items-center gap-2 py-1" role="group" aria-label="Location controls">
+      <UInput
+        v-model="query"
+        icon="i-lucide-search"
+        placeholder="Find a path…"
+        aria-label="Find recorded paths"
+        size="sm"
+        class="min-w-48 flex-1"
+      />
+      <UFieldGroup size="sm" class="shrink-0" data-expand-all>
+        <UTooltip text="Expand all">
+          <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="expandAll(true)" />
+        </UTooltip>
+        <UTooltip text="Collapse all">
+          <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="expandAll(false)" />
+        </UTooltip>
+      </UFieldGroup>
     </div>
 
-    <template v-else>
-      <div class="flex min-w-0 items-center gap-2 py-1" role="group" aria-label="Location controls">
-        <UInput
-          v-model="query"
-          icon="i-lucide-search"
-          placeholder="Find a path…"
-          aria-label="Find recorded paths"
-          size="sm"
-          class="min-w-48 flex-1"
+    <div v-if="nodes.length" class="rounded-xl border border-default bg-elevated/20 px-3 py-2" data-repository-tree>
+      <ul class="min-w-0">
+        <BlrCoverageLocation
+          v-for="node in nodes"
+          :key="node.value"
+          :node="node"
+          :statements-at="statementsAt"
+          :expanded="expanded"
+          :focused="focused"
+          :depth="0"
+          @toggle="toggle"
+          @focus="select"
         />
-        <UFieldGroup size="sm" class="shrink-0" data-expand-all>
-          <UTooltip text="Expand all">
-            <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="expandAll(true)" />
-          </UTooltip>
-          <UTooltip text="Collapse all">
-            <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="expandAll(false)" />
-          </UTooltip>
-        </UFieldGroup>
-      </div>
+      </ul>
+    </div>
+    <p v-else class="text-sm text-muted">
+      {{ query ? 'No recorded path matches this search.' : filter ? 'No recorded locations in this category.' : 'No repository paths recorded.' }}
+    </p>
 
-      <div v-if="nodes.length" class="rounded-xl border border-default bg-elevated/20 px-3 py-2" data-repository-tree>
-        <ul class="min-w-0">
-          <BlrCoverageLocation
-            v-for="node in nodes"
-            :key="node.value"
-            :node="node"
-            :statements-at="statementsAt"
-            :expanded="expanded"
-            :focused="focused"
-            :depth="0"
-            @toggle="toggle"
-            @focus="select"
-          />
-        </ul>
-      </div>
-      <p v-else class="text-sm text-muted">
-        {{ query ? 'No recorded path matches this search.' : filter ? 'No recorded locations in this category.' : 'No repository paths recorded.' }}
-      </p>
-
-      <section v-if="unlocated.length" class="min-w-0 space-y-3 border-t border-default pt-4" aria-label="No location recorded">
-        <h3 class="text-sm font-semibold text-highlighted">No location recorded <span class="blr-meta ms-1">{{ unlocated.length }}</span></h3>
-        <ul class="space-y-4">
-          <li v-for="(statement, index) in unlocated" :key="index" data-coverage-entry>
-            <BlrCoverageStatement :statement="statement" />
-          </li>
-        </ul>
-      </section>
-    </template>
   </section>
 </template>
 

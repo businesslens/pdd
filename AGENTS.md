@@ -272,9 +272,9 @@ costed already.
   referenced location appears once in a tree and discloses its statements or
   citations when asked; a folder never inherits meaning from beneath it. Their
   category and kind cards are fixed sets that read zero, and search matches
-  paths and links, never prose. Coverage that records no location at all — a
-  model designed before its code — reads as plain lists by category, with no
-  tree or search, until a mapping records paths.
+  paths and links, never prose. Coverage records only which code the model
+  accounts for, so every entry has a location; a model tied to no code yet has
+  empty coverage, and its reading says so in one plain statement.
 - **A teaching affordance can be turned off, and never hides the way back.**
   Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
   so the first paint is right.
