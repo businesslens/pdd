@@ -3,7 +3,7 @@ domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Edit card
+# Card editing
 
 Changes the front or back of a card in an owned deck without touching when it
 comes back for study.

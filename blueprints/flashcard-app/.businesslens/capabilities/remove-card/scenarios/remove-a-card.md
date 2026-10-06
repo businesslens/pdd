@@ -11,6 +11,14 @@ steps:
     contexts:
       web:
         place: flashcards-web::deck-detail
+  - text: The Product explains that the card and the progress made on it will be removed for good
+    kind: product
+    actor: learner
+    entities:
+      - { entity: card, effect: reads, facts: [Front] }
+    contexts:
+      web:
+        place: flashcards-web::deck-detail
   - text: The Learner confirms
     kind: actor
     actor: learner

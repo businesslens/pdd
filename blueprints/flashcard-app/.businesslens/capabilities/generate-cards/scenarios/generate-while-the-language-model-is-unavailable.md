@@ -11,13 +11,13 @@ steps:
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: The language model the Product drafts with cannot be reached
+  - text: The language model the Product drafts with cannot be reached or does not answer
     kind: condition
     entities: []
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: The Product explains that no proposals could be drafted and keeps the pasted notes in place to try again
+  - text: The Product says drafting failed and keeps the pasted notes in place to try again
     kind: product
     actor: learner
     entities: []
@@ -26,14 +26,14 @@ steps:
         place: flashcards-web::card-proposals
 ---
 
-# Keep the notes when drafting fails
+# Generate while the language model is unavailable
 
 ## Trigger
 
-The Learner asks for cards while the language model the Product drafts with
-cannot be reached.
+The Learner asks for cards while the language model is unavailable.
 
 ## Outcome
 
-No proposal is drafted, the deck is unchanged, and the Learner's pasted notes
-are still there to ask again without pasting them twice.
+No card proposal is drafted, the deck is unchanged, and the Learner's pasted
+notes are still there to ask again without pasting them twice. Adding cards by
+hand is unaffected.

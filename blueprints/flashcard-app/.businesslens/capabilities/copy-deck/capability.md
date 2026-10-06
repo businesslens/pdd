@@ -1,9 +1,9 @@
 ---
-domain: sharing
+domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Copy deck
+# Deck copying
 
 Copies a deck another Learner shared into the copying Learner's own library as
 a private deck they own. Every copied card starts new, and the copy changes

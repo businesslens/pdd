@@ -11,7 +11,7 @@ steps:
     contexts:
       web:
         place: flashcards-web::deck-detail
-  - text: The Product explains that the share link will stop working and that copies other Learners made will stay theirs
+  - text: The Product explains that the deck and everything in it will be deleted for good, that its share link will stop working, and that copies other Learners made will stay theirs
     kind: product
     actor: learner
     entities:
@@ -27,7 +27,9 @@ steps:
       - { entity: card, as: new-card, effect: removes, from: New }
       - { entity: card, as: learning-card, effect: removes, from: Learning }
       - { entity: card, as: known-card, effect: removes, from: Known }
-      - { entity: card-proposal, effect: removes }
+      - { entity: card-proposal, as: waiting-proposal, effect: removes, from: Proposed }
+      - { entity: card-proposal, as: accepted-proposal, effect: removes, from: Accepted }
+      - { entity: card-proposal, as: dismissed-proposal, effect: removes, from: Dismissed }
     contexts:
       web:
         place: flashcards-web::deck-detail
@@ -48,5 +50,5 @@ The Learner chooses to delete a deck they own while it is shared.
 
 ## Outcome
 
-The deck and everything in it are gone and its share link opens nothing.
+The deck and everything in it are gone for good and its share link opens nothing.
 Copies other Learners made earlier are unaffected.

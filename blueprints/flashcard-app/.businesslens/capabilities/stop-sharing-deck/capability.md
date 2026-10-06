@@ -1,9 +1,9 @@
 ---
-domain: sharing
+domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Stop sharing deck
+# Deck sharing withdrawal
 
 Makes a shared deck private again: its share link stops opening it at once.
 Copies other Learners already made stay theirs.

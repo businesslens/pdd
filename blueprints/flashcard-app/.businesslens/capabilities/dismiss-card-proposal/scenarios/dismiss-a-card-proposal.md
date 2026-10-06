@@ -3,11 +3,11 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Learner discards a card proposal
+  - text: The Learner dismisses a card proposal
     kind: actor
     actor: learner
     entities:
-      - { entity: card-proposal, effect: removes }
+      - { entity: card-proposal, from: Proposed, to: Dismissed, facts: [] }
     contexts:
       web:
         place: flashcards-web::card-proposals
@@ -21,12 +21,12 @@ steps:
         place: flashcards-web::card-proposals
 ---
 
-# Discard a card proposal
+# Dismiss a card proposal
 
 ## Trigger
 
-The Learner rejects a card proposal.
+The Learner turns down a card proposal.
 
 ## Outcome
 
-The proposal is gone and the deck's cards are unchanged.
+The proposal no longer waits for a decision and the deck's cards are unchanged.

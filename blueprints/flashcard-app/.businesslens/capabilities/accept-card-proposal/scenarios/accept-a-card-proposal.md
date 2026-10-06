@@ -7,20 +7,20 @@ steps:
     kind: actor
     actor: learner
     entities:
-      - { entity: card-proposal, as: kept, effect: reads, facts: [Front, Back, Source passage] }
+      - { entity: card-proposal, as: accepted, effect: reads, facts: [Front, Back, Source passage] }
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: The Learner keeps it, and the card proposal becomes a new card
+  - text: The Learner accepts it, and a new card is made from its front and back
     kind: actor
     actor: learner
     entities:
-      - { entity: card-proposal, as: kept, effect: removes }
+      - { entity: card-proposal, as: accepted, from: Proposed, to: Accepted, facts: [] }
       - { entity: card, effect: creates, to: New, facts: [Front, Back, Due on] }
     contexts:
       web:
         place: flashcards-web::card-proposals
-  - text: The new card is due today and the remaining card proposals still wait for a decision
+  - text: The new card is due today and the other card proposals still wait for a decision
     kind: condition
     actor: learner
     entities:
@@ -31,7 +31,7 @@ steps:
         place: flashcards-web::card-proposals
 ---
 
-# Keep a card proposal
+# Accept a card proposal
 
 ## Trigger
 
@@ -40,4 +40,4 @@ The Learner accepts a card proposal as it was drafted.
 ## Outcome
 
 The deck holds a new card with the proposal's front and back, due today, and
-the proposal is gone from those waiting.
+the proposal no longer waits for a decision.

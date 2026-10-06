@@ -10,7 +10,7 @@ These are assumptions to validate, not claims that research has proved them.
 - A language model drafts usable cards from typical study notes often enough
   that deciding on proposals is quicker than writing the cards by hand.
 - Learners trust drafted cards more when each proposal shows the passage of
-  their notes it came from, and they would rather discard a weak proposal than
+  their notes it came from, and they would rather dismiss a weak proposal than
   edit it.
 - Learners expect pasted notes to be used for drafting and not kept afterwards.
 - People who share a deck expect others to get its cards, never their own

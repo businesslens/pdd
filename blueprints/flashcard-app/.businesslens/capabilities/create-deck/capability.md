@@ -3,7 +3,7 @@ domain: decks
 availability: [{ place: flashcards-web }]
 ---
 
-# Create deck
+# Deck creation
 
 Creates an empty, private, named deck owned by the Learner and opens it to
 work in.

@@ -4,10 +4,12 @@ colorSlot: 1
 
 # Decks
 
-Building a Learner's own decks: creating and deleting a deck, and adding,
-editing and removing the cards it holds.
+Building a Learner's own decks: creating, renaming, sharing and deleting a
+deck, copying a deck someone shared, and adding, editing and removing the
+cards a deck holds.
 
 ## Boundary
 
-Owns decks and the text of their cards. It does not own when a card comes back
-for study, whether a deck is shared, or drafted card proposals.
+Owns decks, the text of their cards, whether a deck is shared, and making
+copies. It does not own when a card comes back for study, or drafted card
+proposals, and a copy never carries study progress.
