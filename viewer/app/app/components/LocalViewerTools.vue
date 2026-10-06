@@ -1,5 +1,51 @@
 <script setup lang="ts">
 defineProps<{ collapsed?: boolean }>()
+
+/*
+ * The star button beside the GitHub link. The CLI stars through the reader's
+ * own `gh` sign-in; without one the state is `unavailable` and only the link
+ * shows. The click is the consent: nothing stars on load.
+ *
+ * Asking `gh` takes a moment, so the report never waits for it: the question
+ * goes out once the browser is idle, and the star fades in when it is answered.
+ * Its slot is reserved, beside the link or below it when collapsed, so nothing
+ * in the sidebar moves when it arrives.
+ */
+type StarState = 'starred' | 'not-starred' | 'unavailable'
+const STAR_PATH = '/_businesslens/github-star'
+const star = ref<StarState>('unavailable')
+const toast = useToast()
+
+async function readStar() {
+  try {
+    star.value = (await $fetch<{ state: StarState }>(STAR_PATH)).state
+  } catch {
+    star.value = 'unavailable'
+  }
+}
+
+onMounted(() => {
+  if ('requestIdleCallback' in window) requestIdleCallback(() => void readStar(), { timeout: 2000 })
+  else setTimeout(() => void readStar(), 0)
+})
+
+async function addStar() {
+  if (star.value !== 'not-starred') return
+  star.value = 'starred'
+  try {
+    await $fetch(STAR_PATH, { method: 'POST' })
+  } catch {
+    star.value = 'not-starred'
+    toast.add({
+      title: 'BusinessLens was not starred',
+      description: 'GitHub did not accept the star. You can star it on GitHub instead.',
+      color: 'error',
+      icon: 'i-lucide-triangle-alert'
+    })
+  }
+}
+
+const starLabel = computed(() => star.value === 'starred' ? 'Starred on GitHub' : 'Star on GitHub')
 </script>
 
 <template>
@@ -14,33 +60,67 @@ defineProps<{ collapsed?: boolean }>()
         target="_blank"
         rel="noopener noreferrer"
         icon="i-lucide-book-open"
-        :trailing-icon="collapsed ? undefined : 'i-lucide-arrow-up-right'"
         color="neutral"
         variant="ghost"
         size="sm"
         class="min-h-9 w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
         :class="collapsed ? 'justify-center' : 'justify-start'"
-        :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4', trailingIcon: 'ms-auto size-3' }"
+        :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
       />
     </UTooltip>
-    <UTooltip text="GitHub" :disabled="!collapsed" :content="{ side: 'right' }">
-      <UButton
-        :label="collapsed ? undefined : 'GitHub'"
-        :square="collapsed"
-        to="https://github.com/businesslens/pdd"
-        external
-        target="_blank"
-        rel="noopener noreferrer"
-        icon="i-simple-icons-github"
-        :trailing-icon="collapsed ? undefined : 'i-lucide-arrow-up-right'"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        class="min-h-9 w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
-        :class="collapsed ? 'justify-center' : 'justify-start'"
-        :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4', trailingIcon: 'ms-auto size-3' }"
-        aria-label="BusinessLens on GitHub"
-      />
-    </UTooltip>
+    <div :class="collapsed ? 'grid gap-1' : 'flex items-center gap-0.5'">
+      <UTooltip text="GitHub" :disabled="!collapsed" :content="{ side: 'right' }">
+        <UButton
+          :label="collapsed ? undefined : 'GitHub'"
+          :square="collapsed"
+          to="https://github.com/businesslens/pdd"
+          external
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="i-simple-icons-github"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="min-h-9 w-full min-w-0 flex-1 gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
+          :class="collapsed ? 'justify-center' : 'justify-start'"
+          :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
+          aria-label="BusinessLens on GitHub"
+        />
+      </UTooltip>
+      <div class="h-9 shrink-0" :class="collapsed ? 'w-full' : 'w-9'" data-local-viewer-star-slot>
+        <Transition enter-from-class="opacity-0" enter-active-class="transition-opacity duration-300">
+          <div v-if="star !== 'unavailable'">
+            <UTooltip
+              :text="star === 'starred' ? 'Starred' : collapsed ? 'Star on GitHub' : 'Star'"
+              :content="{ side: collapsed ? 'right' : 'top' }"
+            >
+              <UButton
+                square
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="h-9 w-full justify-center"
+                :class="star === 'starred' ? 'cursor-default text-primary hover:bg-transparent' : 'text-muted hover:text-highlighted'"
+                :aria-label="starLabel"
+                :aria-pressed="star === 'starred'"
+                data-local-viewer-star
+                :data-state="star"
+                @click="addStar"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                  :fill="star === 'starred' ? 'currentColor' : 'none'"
+                  :class="collapsed ? 'size-[17px]' : 'size-4'"
+                  aria-hidden="true"
+                ><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" /></svg>
+              </UButton>
+            </UTooltip>
+          </div>
+        </Transition>
+      </div>
+    </div>
   </div>
 </template>
