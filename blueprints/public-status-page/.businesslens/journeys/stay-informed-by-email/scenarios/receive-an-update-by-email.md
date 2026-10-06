@@ -27,16 +27,18 @@ steps:
     actor: operator
     capability: post-incident-update
     entities:
-      - { entity: incident-update, effect: creates, to: Posted, facts: [Message, Incident status, Posted at] }
+      - { entity: incident-update, effect: creates, facts: [Message, Incident status, Posted at] }
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Product emails the incident update to every confirmed subscription
+  - text: The Product emails the incident update, with a link to the incident, to every confirmed subscription
     kind: product
     actor: operator
+    capability: post-incident-update
     entities:
       - { entity: subscription, effect: reads, facts: [Email address] }
       - { entity: incident-update, effect: reads, facts: [Message] }
+      - { entity: incident, effect: reads, facts: [Title] }
   - text: The Visitor follows the link in the email to the incident
     kind: actor
     actor: visitor

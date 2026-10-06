@@ -11,28 +11,25 @@ steps:
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Product asks a language model to draft a message from the notes and the incident, and keeps it as a draft
+  - text: The Product asks a language model to draft a message from the notes and the incident
     kind: product
     actor: operator
     entities:
       - { entity: incident, effect: reads, facts: [Title, Impact, Affected components] }
-      - { entity: incident-update, effect: creates, to: Draft, facts: [Message, Notes] }
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Product shows the draft beside the notes, marked as a draft
+  - text: The Product fills the message of the update being written with the draft, beside the notes
     kind: product
     actor: operator
-    entities:
-      - { entity: incident-update, effect: reads, facts: [Message, Notes] }
+    entities: []
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
   - text: The Operator edits the drafted message
     kind: actor
     actor: operator
-    entities:
-      - { entity: incident-update, facts: [Message] }
+    entities: []
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
@@ -55,9 +52,9 @@ The Operator wants help writing the next update for an unresolved incident.
 
 ## Outcome
 
-A draft the Operator has edited waits in the incident's workspace; the public page and subscribers are unchanged until the Operator posts it.
+The update being written holds a drafted message the Operator has edited; the public page and subscribers are unchanged until the Operator posts it.
 
 ## Edge cases
 
-- The Operator asks for another draft → the new draft replaces the old one, which was never posted.
-- The Operator throws the draft away → it is gone, and nothing was posted.
+- The Operator asks for another draft → the new draft replaces the message being written.
+- The Operator leaves the workspace without posting → the drafted message is not kept.

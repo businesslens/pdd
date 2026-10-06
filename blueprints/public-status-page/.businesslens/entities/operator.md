@@ -1,6 +1,6 @@
 ---
 kind: person
-acts: internal
+acts: external
 relations:
   - entity: incident-update
     verb: posts

@@ -8,9 +8,9 @@ appliesTo:
 
 # A draft changes nothing until it is posted
 
-Asking for, editing or throwing away a draft never changes an incident's
-status, a component's status, the public page, or who is emailed. Only
-posting the update does.
+Asking for a draft or editing it never changes an incident's status, a
+component's status, the public page, or who is emailed. A drafted message is
+only the text of the update being written; posting the update is what keeps it.
 
 ## Rationale
 

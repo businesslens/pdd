@@ -17,14 +17,14 @@ steps:
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Product says no draft could be prepared and keeps the Operator's notes
+  - text: The Product says no draft could be prepared and keeps the Operator's notes and message
     kind: product
     actor: operator
     entities: []
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: No incident update is created
+  - text: No incident update is posted
     kind: condition
     actor: operator
     entities:
@@ -34,7 +34,7 @@ steps:
         place: status-web::operator-console::incident-workspace
 ---
 
-# Continue without a draft
+# Draft while the language model is unavailable
 
 ## Trigger
 

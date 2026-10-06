@@ -40,4 +40,4 @@ Visitors see the new name and description; the component's status and the incide
 
 ## Edge cases
 
-- The new name is already used by another component → the change is refused and the old name kept.
+- The new name is already used by another component → the change is refused, the old name kept, and the Operator can choose another.

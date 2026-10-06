@@ -22,7 +22,7 @@ steps:
     actor: operator
     capability: post-incident-update
     entities:
-      - { entity: incident-update, effect: creates, to: Posted, facts: [Message, Incident status, Posted at] }
+      - { entity: incident-update, effect: creates, facts: [Message, Incident status, Posted at] }
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
