@@ -181,12 +181,15 @@ question only where existing code contradicts the model.
     - **in one go**, when the user asks for it: implement every slice, then
       check them all.
 
-    State the phases with their slices and the pace as one short list, then
-    start; wait for approval of the plan only when the user asked to review it.
+    Before writing any code, post the plan as one short list: each phase with
+    its slices, and the pace. Wait for approval of the plan only when the user
+    asked to review it. A large or unbuilt model is not a reason to change the
+    pace: without a request for one go, never implement past the current phase.
 11. Hand the next phase, slice, or the whole plan, as the pace says, to the
     builder. When it returns, inspect each slice it covered and what that
     slice depends on (steps 4–6); slices not yet handed over are the plan, not
-    findings. Aligned → continue. A remaining gap → hand it back once with the
+    findings. Start the next phase only when every slice of this one is
+    aligned or reported blocked. A remaining gap → hand it back once with the
     gap stated, then step 9's unchanged-gap stop applies. A product question →
     settle it with the user through step 7's intent resolution, write the
     approved model, and derive the remaining plan again. With no user

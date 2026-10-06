@@ -77,6 +77,10 @@ describe('public workflow contract', () => {
     expect(source).toContain('**one slice at a time**, when the user asks for it')
     expect(source).toContain('**in one go**, when the user asks for it')
     expect(source).toContain('inspect each slice it covered')
+    // The plan is a visible checkpoint, and phases hold even on a large model.
+    expect(source).toContain('Before writing any code, post the plan as one short list')
+    expect(source).toContain('never implement past the current phase')
+    expect(source).toContain('Start the next phase only when every slice of this one is aligned or reported blocked')
     expect(source).toContain('never settles a product question in code')
     // The write boundary binds BusinessLens's own phases; implementation, which
     // writes the user's code, must not be forbidden by it.
