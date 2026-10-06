@@ -20,12 +20,20 @@ steps:
       - { entity: suggested-adjustment, from: Proposed, to: Accepted, facts: [] }
       - { entity: habit, facts: [Schedule] }
     contexts: { web: { place: tracker-web::weekly-reflection } }
-  - text: The Product opens the habit with its new schedule and its streak
+  - text: The Product opens the habit
     kind: product
+    actor: owner
+    capability: accept-suggested-adjustment
+    entities:
+      - { entity: habit, effect: reads, facts: [Name, Schedule] }
+    contexts: { web: { place: tracker-web::habit-detail } }
+  - text: The Owner reads the habit's new schedule beside its streak and history
+    kind: actor
     actor: owner
     capability: view-progress
     entities:
-      - { entity: habit, effect: reads, facts: [Name, Schedule, Current streak] }
+      - { entity: habit, effect: reads, facts: [Schedule, Current streak, Best streak] }
+      - { entity: check-in, effect: reads, facts: [Day] }
     contexts: { web: { place: tracker-web::habit-detail } }
 ---
 

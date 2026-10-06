@@ -28,7 +28,7 @@ steps:
     contexts: { web: { place: tracker-web::weekly-reflection } }
 ---
 
-# Generate a reflection without a summary
+# Generate while the language model is unavailable
 
 ## Trigger
 

@@ -4,14 +4,14 @@ routes:
   web: Web
   mobile: Mobile
 steps:
-  - text: The Owner takes back the check-in recorded for a habit today
+  - text: The Owner unchecks a habit checked off today
     kind: actor
     actor: owner
     entities:
       - { entity: habit, effect: reads, facts: [Name] }
       - { entity: check-in, effect: reads, facts: [Day] }
     contexts: { web: { place: tracker-web::today }, mobile: { place: tracker-mobile::today } }
-  - text: The Product removes the check-in
+  - text: The Product removes today's check-in
     kind: product
     actor: owner
     entities:
@@ -25,7 +25,7 @@ steps:
     contexts: { web: { place: tracker-web::today }, mobile: { place: tracker-mobile::today } }
 ---
 
-# Take back a check-off
+# Uncheck a habit done today
 
 ## Trigger
 
@@ -35,7 +35,3 @@ The Owner checked off a habit by mistake.
 
 There is no check-in for today, the habit is due again, and its streak is as it
 was before the mistake.
-
-## Edge cases
-
-- A day from the past week taken back on the habit itself → the day leaves the habit's history and the streak is counted again.

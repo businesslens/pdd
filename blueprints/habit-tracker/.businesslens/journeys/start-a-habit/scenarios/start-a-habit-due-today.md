@@ -15,7 +15,7 @@ steps:
   - text: The Product returns the Owner to Today, where the new habit is listed as due
     kind: product
     actor: owner
-    capability: check-off-habit
+    capability: create-habit
     entities:
       - { entity: habit, effect: reads, facts: [Name, Schedule, Current streak] }
     contexts: { web: { place: tracker-web::today }, mobile: { place: tracker-mobile::today } }

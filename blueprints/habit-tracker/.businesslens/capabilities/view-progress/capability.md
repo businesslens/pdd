@@ -3,7 +3,7 @@ domain: habits
 availability: [ { place: tracker-web }, { place: tracker-mobile } ]
 ---
 
-# Progress
+# Habit progress
 
 Presents a habit's current and best streak and the history of days it was
 done, each counted against the habit's own schedule.

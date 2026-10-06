@@ -23,6 +23,7 @@ steps:
     entities:
       - { entity: habit, effect: removes, from: Active }
       - { entity: check-in, effect: removes }
+      - { entity: suggested-adjustment, from: Proposed, to: Outdated, facts: [] }
     contexts: { web: { place: tracker-web::habit-detail }, mobile: { place: tracker-mobile::habit-detail } }
   - text: Nothing of it remains on Today or in the list of habits
     kind: condition
@@ -40,8 +41,8 @@ The Owner no longer wants to keep a habit at all.
 
 ## Outcome
 
-The habit and all of its check-ins are gone, and no streak or history of it
-remains.
+The habit and all of its check-ins are gone for good, no streak or history of
+it remains, and a suggestion still waiting for it reads as outdated.
 
 ## Edge cases
 

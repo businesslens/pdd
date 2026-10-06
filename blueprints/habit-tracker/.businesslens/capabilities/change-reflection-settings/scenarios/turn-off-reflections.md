@@ -30,4 +30,4 @@ its own; earlier reflections remain.
 
 ## Edge cases
 
-- A suggested adjustment is still waiting → it can still be accepted or declined until it expires.
+- A suggested adjustment is still waiting → it can still be accepted or dismissed.

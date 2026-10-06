@@ -11,5 +11,5 @@ entryPoints:
 
 One week read back: how consistently each active habit was done, the written
 summary when there is one, and the schedule adjustment it suggests, if any,
-beside the habit's current schedule. Here the Owner accepts or declines the
+beside the habit's current schedule. Here the Owner accepts or dismisses the
 suggestion.

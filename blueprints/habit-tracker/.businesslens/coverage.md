@@ -1,13 +1,15 @@
 ---
 scope: The intended behavior of the Habit Tracker Product.
-exclusions: []
+exclusions:
+  - description: "Accounts: signing up, signing in and account settings."
+    paths: []
 method: Product design authored as a source-free teaching Blueprint.
 covered:
-  - description: Defining, changing, pausing and deleting habits with daily, chosen-day or weekly schedules.
+  - description: Defining, changing, pausing, resuming and deleting habits with daily, chosen-day or weekly schedules.
     paths: []
-  - description: Checking habits off, and the streaks and history read from those check-offs.
+  - description: Checking habits off and unchecking them, and the streaks and history read from those check-offs.
     paths: []
-  - description: The optional weekly reflection and the schedule adjustments it suggests for the Owner to accept or decline.
+  - description: The optional weekly reflection and the schedule adjustments it suggests for the Owner to accept or dismiss.
     paths: []
 unmapped: []
 limitations:

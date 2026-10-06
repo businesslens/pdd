@@ -17,7 +17,7 @@ steps:
     kind: product
     entities:
       - { entity: weekly-reflection, effect: creates, facts: [Week, Consistency, Summary] }
-  - text: The Product proposes a suggested adjustment for the one habit whose schedule the week fell furthest short of
+  - text: The Product asks the language model to draft a new schedule for the one habit whose schedule the week fell furthest short of, and keeps it as a suggested adjustment
     kind: product
     entities:
       - { entity: habit, effect: reads, facts: [Schedule] }
@@ -46,3 +46,4 @@ Every habit is exactly as the Owner left it.
 ## Edge cases
 
 - No active habit had a scheduled day that week → no reflection is prepared for it.
+- That habit already has a suggested adjustment waiting → no second one is drafted for it, and the earlier one stays open to accept or dismiss.
