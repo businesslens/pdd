@@ -776,6 +776,31 @@ is a dependency; a feed provider that pushes updates to the Product acts.
 There is no external-system resource type. An outbound dependency shared by several
 Capabilities is described by each Capability that depends on it.
 
+### AI in a Product
+
+AI enters a model in exactly one of two ways, decided by who initiates:
+
+- **A model the Product calls is an outbound dependency.** Drafting,
+  summarizing or classifying that a person asks for, or that the Product runs on
+  its own schedule, is a Product Step; the Capability names the language model
+  and what triggers the call, and the model gets no Entity that acts and no
+  Interface. What the person sees while the model is unavailable is an `edge`
+  Capability Scenario.
+- **The person's own agent harness acts.** It is `ai-agent`, the
+  acting Entity the acts table names, reaching the Product through an `agent` Interface.
+  Every grant naming it reaches the person it acts for through `related` — a
+  relation such as *a Member connects an AI agent* — because a bare
+  `actors: [ai-agent]` grants every agent, and `lint` warns.
+
+Either way, what the AI produces and the Product keeps is a draft until a person
+decides it. A kept draft is its own Entity when it keeps facts its target never
+has — a reason, a source passage — and otherwise a `Draft` State of the target.
+Accepting and dismissing a kept draft are each a Capability, being later acts on
+something a run produced; a Business Rule says only the person decides it, and
+another that the draft changes nothing until accepted. A draft that only fills
+an editor the person has not saved is not kept: saving is the acceptance, and it
+needs no Capability of its own.
+
 ### `interfaces/<interface-id>/experiences/<id>.md` or `<id>/experience.md`
 
 An Experience is a coherent context of Product use with a stable audience,
@@ -1307,6 +1332,20 @@ whole list. The same verb reached from another context is
 the same Capability, available there too. A continuation several Capabilities
 share — a second factor after any sign-in method — is its own Capability: the
 ones it continues end their Scenarios at the hand-off, and a Journey joins them.
+
+**Opposite verbs are separate Capabilities.** A reversible pair — publish and
+unpublish, enable and disable, follow and unfollow, pause and resume, accept and
+dismiss, share and stop sharing, open and close — is two Capabilities, because
+each control shows its own verb, even where one button toggles between them.
+Returning to an earlier State with the *same* verb is a Scenario of that verb:
+republishing an unpublished collection is `publish-collection`, reopening a
+closed form is `reopen-form` only because the control says *reopen*. One
+control that sets one fact to one of several values — a visibility of private,
+unlisted or public — is one Capability, `change-<thing>-<fact>`, with a Scenario
+per value worth distinguishing. Changing one's own earlier submission through
+the control that made it — changing a vote, changing an RSVP — is a Scenario of
+the submitting Capability, not a Capability of its own; withdrawing it through a
+control of its own is.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
@@ -1889,7 +1928,15 @@ for a model mapped from code and one decided before any code exists. An
 orchestration, shared state, or a cross-Interface hand-off is not required, and
 a merely plausible sequence of independent Product actions is not a Journey. A
 wizard is one Screen and says nothing about Journeys: the Scenario walking it is a Journey Scenario only where it crosses
-Capabilities. Whether the repository implements the Journey is `verify`'s
+Capabilities. The carrying Step belongs to the run that ends with it, so it
+names the Capability that carries — `create-board` for the redirect into the
+new board — and the next Capability is the first one the Actor then uses where
+they were carried. A result or a pending decision shown where the Actor already
+is carries nobody: drafted cards appearing in the editor the Actor is working
+in are the drafting Capability's outcome, not a hand-off. Steps of other Actors
+may sit between, but only the Journey Actor's Steps — performed, or attributed
+to them — count toward its two Capabilities, and `lint` errors when they do
+not. Whether the repository implements the Journey is `verify`'s
 finding. One achieved Journey Scenario is valid coverage. A goal with no
 achieved multi-Capability path belongs to Capability behavior.
 

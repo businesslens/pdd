@@ -90,6 +90,10 @@ different ways, from different starting states, or chosen by a setting. See
 | Entering a second factor after any sign-in method | Its own Capability |
 | Searching, filtering or sorting the catalog | Part of browsing |
 | A shopper and an operator both cancel orders | One: a different Actor is not a permission of its own |
+| Publishing and unpublishing a collection | Two: opposite verbs, even behind one toggle button |
+| Republishing a collection that was unpublished | Part of publishing: the same verb from another state |
+| Setting a snippet to private, unlisted or public with one control | One: `change-snippet-visibility` |
+| Changing your vote before the poll closes | Part of voting: the same control changes your own submission |
 
 The same verb reached from somewhere else (changing your password when sign-in
 demands it) is the same Capability, offered there too.
@@ -274,3 +278,6 @@ Warnings:
 
 - A Capability or Scenario id that reads as a noun phrase instead of starting
   with a verb, or that shortens the name of an Entity the model declares.
+- A Capability Scenario that opens with the opposite of its Capability's verb,
+  such as `enable-a-disabled-link` under `disable-link`: opposite verbs are
+  separate Capabilities.

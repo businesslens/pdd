@@ -71,8 +71,9 @@ Read before authoring:
    decision point or a grant's `when` by **What selects** under its Variations.
    Then sweep:
    - **Verbs.** Distinguish durable Capabilities from complete Actor goals and
-     give every Capability per-Capability acceptance; plan a Journey wherever
-     the Product carries the Actor from one Capability into another.
+     give every Capability per-Capability acceptance; give each verb a control
+     shows its own Capability, opposite verbs included; plan a Journey wherever
+     the Product carries the same Actor from one Capability into another.
    - **Nouns.** Every new thing has a Step that creates it and a Step for each
      state it can reach, and a Screen presenting it with its facts, or the
      delta says why not. Where a family of things could be one Entity or
@@ -114,7 +115,8 @@ Read before authoring:
     ```
 
     Fix every error and assess each warning. Green lint means structurally
-    sound, not implemented or verified.
+    sound, not implemented or verified, so then walk the rubric's **Check the
+    whole model before approval** list and fix what it finds before reporting.
 12. Report the approved delta and implementation acceptance contract. The next
     phase is implementation in the user's own workflow, followed by
     `businesslens-verify`.

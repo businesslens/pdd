@@ -2115,6 +2115,90 @@ permits: []`)
    * Entity's own, and Screens never nest. Each rule below is decidable from the
    * folder alone.
    */
+  describe('modelling checks the catalog review surfaced', () => {
+    it('requires an achieved Journey Scenario to carry its own Actor through two Capabilities', () => {
+      const cwd = fixtureCopy()
+      const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+      // The shopper browses, then another Actor places the order: a hand-off carries nobody.
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+        '  - text: The shopper submits checkout\n    kind: actor\n    actor: shopper',
+        '  - text: The shopper submits checkout\n    kind: actor\n    actor: store-admin'
+      ))
+      expect(run(cwd).errors).toContain(`${scenario}: an achieved Journey Scenario must carry its Journey Actor through at least two Capabilities; Steps of another Actor do not count`)
+    })
+
+    it('counts the Journey Actor\'s own Capabilities, so the golden Journeys pass', () => {
+      const cwd = fixtureCopy()
+      expect(run(cwd).errors.join('\n')).not.toContain('must carry its Journey Actor')
+    })
+
+    it('warns when a Capability Scenario opens with the opposite of its Capability\'s verb', () => {
+      const cwd = fixtureCopy()
+      const capabilities = join(cwd, '.businesslens/capabilities')
+      cpSync(join(capabilities, 'track-order'), join(capabilities, 'follow-order'), { recursive: true })
+      renameSync(
+        join(capabilities, 'follow-order/scenarios/check-an-order-and-its-refund.md'),
+        join(capabilities, 'follow-order/scenarios/unfollow-an-order.md')
+      )
+      const file = join(capabilities, 'follow-order/scenarios/unfollow-an-order.md')
+      expect(run(cwd).warnings).toContain(`${file}: opens with "unfollow" under Capability "follow-order", whose verb is "follow"; opposite verbs are separate Capabilities`)
+    })
+
+    it('leaves a Capability Scenario alone when its verb is not an opposite', () => {
+      const cwd = fixtureCopy()
+      const capabilities = join(cwd, '.businesslens/capabilities')
+      cpSync(join(capabilities, 'track-order'), join(capabilities, 'follow-order'), { recursive: true })
+      expect(run(cwd).warnings.join('\n')).not.toContain('opposite verbs are separate Capabilities')
+    })
+
+    it('warns when a grant admits any AI agent instead of the one a person connected', () => {
+      const cwd = fixtureCopy()
+      writeResource(join(cwd, '.businesslens/entities/ai-agent.md'), '---\nkind: system\nacts: external\n---\n\n# AI agent\n\nAn AI agent harness a shopper connects.\n')
+      writeRule(cwd, 'any-ai-agent-reads-orders', 'appliesTo:\n  - type: entity\n    id: order\n    effect: reads\npermits:\n  - actors: [ai-agent]')
+      const rule = join(cwd, '.businesslens/business-rules/any-ai-agent-reads-orders.md')
+      expect(run(cwd).warnings).toContain(`${rule}: grant 1: grants "ai-agent" with no "related" path, which admits any AI agent; say whose AI agent it is through "related"`)
+    })
+
+    it('accepts an AI agent grant that walks to the person who connected it', () => {
+      const cwd = fixtureCopy()
+      writeResource(join(cwd, '.businesslens/entities/ai-agent.md'), '---\nkind: system\nacts: external\n---\n\n# AI agent\n\nAn AI agent harness a shopper connects.\n')
+      writeResource(join(cwd, '.businesslens/entities/shopper.md'), shopperWith('  - entity: ai-agent\n    verb: connects\n    cardinality: one-to-many'))
+      writeRule(cwd, 'their-ai-agent-reads-orders', 'appliesTo:\n  - type: entity\n    id: order\n    effect: reads\npermits:\n  - related:\n      - { verb: owns, entity: shopper }\n      - { verb: connects, entity: ai-agent }')
+      const result = run(cwd)
+      // The Rule now governs every read of an order; only its path is under test here.
+      expect(result.errors.join('\n')).not.toContain('"related"')
+      expect(result.warnings.join('\n')).not.toContain('admits any AI agent')
+    })
+
+    it('warns when an Actor changes an Entity whose other changes the Rules govern', () => {
+      const cwd = fixtureCopy()
+      // Creating a cart is governed; removing it at checkout is not.
+      writeRule(cwd, 'only-a-shopper-creates-a-cart', 'appliesTo:\n  - type: entity\n    id: cart\n    effect: creates\npermits:\n  - actors: [shopper]')
+      expect(run(cwd).warnings.join('\n')).toContain('"shopper" removes "cart", which no permission Rule selects')
+    })
+
+    it('stays quiet once a Rule says who may make that change', () => {
+      const cwd = fixtureCopy()
+      writeRule(cwd, 'only-a-shopper-creates-a-cart', 'appliesTo:\n  - type: entity\n    id: cart\n    effect: creates\npermits:\n  - actors: [shopper]')
+      writeRule(cwd, 'only-a-shopper-empties-a-cart', 'appliesTo:\n  - type: entity\n    id: cart\n    effect: removes\npermits:\n  - actors: [shopper]')
+      expect(run(cwd).warnings.join('\n')).not.toContain('which no permission Rule selects')
+    })
+
+    it('warns when a Product limitation speaks about the model', () => {
+      const cwd = fixtureCopy()
+      const product = join(cwd, '.businesslens/product/product.md')
+      writeFileSync(product, readFileSync(product, 'utf8').replace('limitations: []', 'limitations: ["Gift cards are not modeled."]'))
+      expect(run(cwd).warnings).toContain('product.md: limitation "Gift cards are not modeled." speaks about the model; limitations state deliberate product constraints, so record a gap in coverage.md')
+    })
+
+    it('accepts a limitation that states a product constraint', () => {
+      const cwd = fixtureCopy()
+      const product = join(cwd, '.businesslens/product/product.md')
+      writeFileSync(product, readFileSync(product, 'utf8').replace('limitations: []', 'limitations: ["Gift cards cannot be bought."]'))
+      expect(run(cwd).warnings.join('\n')).not.toContain('speaks about the model')
+    })
+  })
+
   describe('places, facts and variation', () => {
     const PRODUCT_RECORD = '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
     const screenSource = (entities: string) => `---

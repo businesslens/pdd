@@ -130,6 +130,9 @@ Lead and section-body fragments do not contain another H1 or H2.
   lowercase kebab-case, `authors` are `{ name, url? }` records, and `license`
   is an SPDX identifier. Report hosts read those four as portable Product
   identity and attribution, so a model intended for a Blueprint authors them.
+  `limitations` are deliberate constraints of the Product, written as product
+  facts ("Comments are never edited"); a gap or uncertainty in the model —
+  "not modelled", "outside the model" — belongs in coverage.md, never here.
   `languages` is a unique list of language tags the Product serves — `en`,
   `de-DE`, `pt-BR`, each matching `^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$`; an
   Interface may narrow it, and Experiences and Screens never carry it. Content
@@ -221,6 +224,17 @@ Lead and section-body fragments do not contain another H1 or H2.
   sign-in method) is its own Capability: the ones it continues end their
   Scenarios at the hand-off, stating it in their Outcome, and a Journey joins
   them. Splitting neither creates nor removes a Domain.
+
+  **Opposite verbs are separate Capabilities** — publish and unpublish, enable
+  and disable, follow and unfollow, pause and resume, accept and dismiss, share
+  and stop sharing, open and close — even where one button toggles: each
+  control shows its own verb. Returning to an earlier State with the *same*
+  verb is a Scenario (republishing is `publish-collection`). One control that
+  sets one fact to one of several values — visibility private, unlisted or
+  public — is one Capability, `change-<thing>-<fact>`. Changing one's own
+  earlier submission through the control that made it (a vote, an RSVP) is a
+  Scenario of the submitting Capability. An umbrella verb — manage, organize,
+  handle — hides Capabilities; name each verb its controls show.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A
@@ -284,6 +298,23 @@ Lead and section-body fragments do not contain another H1 or H2.
   it; a fixed-command CI runner does not act by analogy). A system the Product
   calls out to does not act; a privilege that exists only in code is
   authorization, not product meaning, and is never modelled.
+
+  **AI enters in exactly one of two ways, decided by who initiates.** A model
+  the Product calls — drafting, summarizing or classifying a person asks for,
+  or the Product runs on its schedule — is an outbound dependency: a Product
+  Step, the Capability naming the language model and what triggers the call,
+  no Entity that acts, no Interface, and an `edge` Capability Scenario for what
+  the person sees while the model is unavailable. A built-in "assistant" is
+  this case and never an Actor. The person's own agent harness is `ai-agent`
+  behind an `agent` Interface, and every grant naming it reaches the person it
+  acts for through `related` (a person `connects` an AI agent); a bare
+  `actors: [ai-agent]` grants every agent. What the AI produces and the Product
+  keeps is a draft: its own Entity when it keeps facts the target never has (a
+  reason, a source passage), otherwise a `Draft` State of the target. Accepting
+  and dismissing a kept draft are each a Capability; one Business Rule says only
+  the person decides it, another that it changes nothing until accepted. A
+  draft that only fills an editor the person has not saved is not kept, and
+  saving is the acceptance.
 
   An Entity is a thing an Actor points at and the Product tells apart —
   identity, not storage: a shopper says "this order", never "this order line",
@@ -402,7 +433,16 @@ Lead and section-body fragments do not contain another H1 or H2.
   automatically once checks pass. Neither is a hand-off to a different Actor,
   such as an invitation another person follows: the Actor carried must be the
   same one. The test is structural, so "omit rather than assert" does not apply
-  to it. Every Journey needs achieved Journey Scenario coverage for every
+  to it. The carrying Step ends the run that carries, so it names that
+  Capability (`create-board` for the redirect into the new board), and the
+  next Capability is the first one the Actor then uses where they were carried.
+  A result or pending decision shown where the Actor already is carries nobody:
+  drafts appearing in the editor the Actor is working in are the drafting
+  Capability's outcome. Other Actors' Steps may sit between, but only Steps the
+  Journey Actor performs or is attributed count toward its two Capabilities.
+  To find every Journey, read each Capability Scenario's last Product Step:
+  wherever it lands the Actor at a place offering another Capability they then
+  use, there is a Journey. Every Journey needs achieved Journey Scenario coverage for every
   Journey Actor. It has no `entryPoints`; resolve presentation routes from the
   first Actor-owned placed Step's Context place and its Interface or Experience.
 - Journey Scenario: taxonomy `kind`, `result: achieved|not-achieved`, named

@@ -205,6 +205,39 @@ group sync into its own Capability keeps its setting from crossing sign-in's,
 but creates Capabilities the split test would not make, only to host a
 Variation.
 
+**A reversible pair as one Capability.** Folding publish and unpublish, or
+enable and disable, into one toggle Capability reads naturally, but fifteen
+Blueprints authored in parallel folded some pairs and split others, and both
+linted clean. The verb each control shows decides it the same way every time;
+the cost is a few more Capabilities.
+
+**Changing one's own submission as a Capability of its own.** Changing a vote
+or an RSVP goes through the control that made it, under the same grant, so a
+separate Capability would split on nothing the split test names.
+
+## Journeys
+
+**Naming a carrying Step after the destination Capability.** Parallel authors
+named the redirect after the creating Capability, after the destination, or
+after nothing, and all three linted clean. The redirect ends the creating run,
+so it names that Capability.
+
+**A Journey carried by a different Actor's Step.** An invitation another
+person follows, or an AI agent's proposal a person then accepts, joins two
+Capabilities in sequence but carries nobody: the goal changes hands.
+
+## AI
+
+**A built-in AI assistant as an Entity that acts.** It reads like a
+collaborator, and authors modelled it so, but it is the Product's own component
+calling a model: it keeps no inbound contract and its privileges are
+authorization, not product meaning. Its work is a Product Step; only a harness
+the person brings acts.
+
+**An AI draft always as its own Entity, or always as a State.** Either rule is
+simpler, but each mis-models half the cases: a drafted question is the question
+it becomes, while a filing suggestion keeps a reason no bookmark has.
+
 ## Domains
 
 **Domains cut by "the thing the Actor works on".** Two independent maps of one

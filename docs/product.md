@@ -104,7 +104,7 @@ at least one tag, at least one author, a `license`, and `logo.svg`.
 
 ## What lint checks
 
-All of these are errors:
+Errors:
 
 - Exactly one manifest: `product.md` or `product/product.md`, never both.
 - `product/` holds only `product.md` and `logo.svg`, and a `product/` folder
@@ -119,3 +119,8 @@ All of these are errors:
 - Every language is a well-formed tag, like `en` or `pt-BR`, listed once.
 - `logo.svg` is a plain file of at most 256 KiB with a `viewBox`: shapes only,
   with no scripts, animation, text, external links or embedded content.
+
+Warnings:
+
+- A limitation that talks about the model ("not modeled", "outside the
+  model") instead of stating a product constraint; record gaps in coverage.md.

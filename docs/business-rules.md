@@ -250,6 +250,10 @@ Warnings:
 - A `from` or `state` condition every selected Step already satisfies.
 - An id that opens with a verb acting on something the model declares, such as
   `cancel-unpaid-orders` beside an Order Entity.
+- A grant that names `ai-agent` without a `related` path to the person whose
+  agent it is.
+- An Actor changing or removing a thing whose other changes Rules govern, when
+  no permission Rule selects that change.
 
 A permission Rule that is an alternative in a Variation skips the Step and
 Screen checks; [`businesslens-verify`](./skill-businesslens-verify.md) checks it

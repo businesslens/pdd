@@ -117,6 +117,17 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   if (!model.product.id) errors.push('product.md: missing id')
   requireTitle('product.md', model.product.doc.title, model.product.doc.lead)
   validateSections('product.md', model.product.doc, ['Intent'])
+  /*
+   * A Product limitation is a deliberate constraint a reader of the Product
+   * can rely on. Wording about the model itself — what it does not cover — is a
+   * gap in the mapping, and coverage.md is where gaps and exclusions live.
+   */
+  const MODEL_LANGUAGE = /\bnot model(?:l)?ed\b|\boutside (?:the|this) model\b|\bin the model\b|\bthe model does not\b/i
+  for (const limitation of model.product.limitations) {
+    if (MODEL_LANGUAGE.test(limitation)) {
+      warnings.push(`product.md: limitation "${limitation}" speaks about the model; limitations state deliberate product constraints, so record a gap in coverage.md`)
+    }
+  }
   if (model.product.summary && (/\r|\n/.test(model.product.summary) || model.product.summary.length > 400)) {
     errors.push('product.md: summary must be a single line with at most 400 characters')
   }
@@ -555,6 +566,53 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (NOMINALISED.test(last) && !declared && !carriesVerb) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" reads as a noun phrase; a behavioral id starts with a verb`
+      )
+    }
+  }
+
+  /*
+   * The split test separates parts that differ in verb, and the verb is the one
+   * the control shows. A Scenario that opens with the opposite of its
+   * Capability's verb — `enable-a-disabled-link` under `disable-link` — is the
+   * other half of a toggle folded in, and two encodings of one product would
+   * disagree on the Capability count. The first id segment is read directly:
+   * `unlist` and `unfollow` need not be in the lexicon to be opposites.
+   */
+  const leadingVerb = (id: string) => id.split('-')[0] || ''
+  const OPPOSITE_VERBS: Array<[string, string[]]> = [
+    ['publish', ['unpublish', 'unlist']],
+    ['enable', ['disable']],
+    ['follow', ['unfollow']],
+    ['pause', ['resume']],
+    ['accept', ['dismiss', 'decline']],
+    ['share', ['unshare']],
+    ['open', ['close']],
+    ['reopen', ['close']],
+    ['subscribe', ['unsubscribe']],
+    ['join', ['leave']],
+    ['add', ['remove']],
+    ['save', ['unsave', 'remove']],
+    ['archive', ['restore', 'unarchive']],
+    ['lock', ['unlock']],
+    ['pin', ['unpin']],
+    ['star', ['unstar']],
+    ['link', ['unlink']],
+    ['check', ['uncheck']]
+  ]
+  const opposites = new Map<string, Set<string>>()
+  for (const [verb, others] of OPPOSITE_VERBS) {
+    for (const other of others) {
+      opposites.set(verb, (opposites.get(verb) || new Set()).add(other))
+      opposites.set(other, (opposites.get(other) || new Set()).add(verb))
+    }
+  }
+  const capabilityVerbs = new Map(model.capabilities.map(capability => [capability.id, leadingVerb(capability.id)]))
+  for (const scenario of model.capabilityScenarios) {
+    const capabilityVerb = capabilityVerbs.get(scenario.capability)
+    const scenarioVerb = leadingVerb(scenario.id)
+    if (capabilityVerb && opposites.get(capabilityVerb)?.has(scenarioVerb)) {
+      warnings.push(
+        `${scenario.file}: opens with "${scenarioVerb}" under Capability "${scenario.capability}", whose verb is "${capabilityVerb}"; opposite verbs are separate Capabilities`
       )
     }
   }
@@ -1170,6 +1228,16 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     journeyScenarioActors.set(scenario.id, scenarioActors)
     if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capability)).size < 2) {
       errors.push(`${scenario.file}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    } else if (scenario.result === 'achieved' && journey) {
+      /* The Product carries the Journey's own Actor across; a hand-off to
+         another Actor carries nobody, so only Steps the Journey Actor performs
+         or is attributed count toward the two Capabilities. */
+      const carried = new Set(scenario.steps
+        .filter(step => step.capability && step.actor && journeyActorSet.has(step.actor))
+        .map(step => step.capability))
+      if (carried.size < 2) {
+        errors.push(`${scenario.file}: an achieved Journey Scenario must carry its Journey Actor through at least two Capabilities; Steps of another Actor do not count`)
+      }
     }
   }
 
@@ -1456,6 +1524,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       for (const [grantIndex, grant] of rule.permits.entries()) {
         const grantLabel = `${rule.file}: grant ${grantIndex + 1}`
         for (const actorId of grant.actors) requireActor(grantLabel, actorId)
+        if (grant.actors.includes('ai-agent') && !grant.related.length) {
+          warnings.push(`${grantLabel}: grants "ai-agent" with no "related" path, which admits any AI agent; say whose AI agent it is through "related"`)
+        }
         if (grant.configuredBy !== undefined && !entityIds.has(grant.configuredBy)) {
           errors.push(`${grantLabel}: "configuredBy" references missing entity "${grant.configuredBy}"`)
         }
@@ -1636,6 +1707,36 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
             warnings.push(`${rule.file}: grant ${grantIndex + 1}: "state: ${condition.state}" is redundant; every selected Step already leaves from it`)
           }
         }
+      }
+    }
+  }
+
+  /*
+   * Where the model already decides who may change an Entity, an Actor's
+   * change or removal of it that no permission Rule selects is the gap a
+   * reader will hit: the Rules say who may edit a Question, and nothing says
+   * who may remove one. Creating is left open, since anyone a place admits
+   * usually may make their own, and an Entity with no permission Rule at all is
+   * a model that has not taken up authorization, which is not lint's call.
+   * Reported once per Entity and effect.
+   */
+  const governedEntities = new Set(permissionRuleResources.flatMap(rule =>
+    rule.appliesTo.flatMap(target => target.type === 'entity' && target.effect !== 'reads' ? [target.id] : [])))
+  const ungoverned = new Set<string>()
+  for (const scenario of allScenarios) {
+    for (const [index, step] of scenario.steps.entries()) {
+      if (step.kind !== 'actor' || !step.actor) continue
+      for (const entry of step.entities) {
+        const effect = entry.effect ?? 'changes'
+        if (effect !== 'changes' && effect !== 'removes') continue
+        if (entry.entity === step.actor || !governedEntities.has(entry.entity)) continue
+        const key = `${entry.entity}|${effect}`
+        if (ungoverned.has(key)) continue
+        const governed = permissionRuleResources.some(rule => rule.appliesTo.some(target =>
+          target.type === 'entity' && selects(target, entry, step, scenario.file)))
+        if (governed) continue
+        ungoverned.add(key)
+        warnings.push(`${scenario.file}: step ${index + 1}: "${step.actor}" ${effect} "${entry.entity}", which no permission Rule selects, though Rules govern who may change it otherwise; say who may`)
       }
     }
   }

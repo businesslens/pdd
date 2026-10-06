@@ -73,6 +73,11 @@ products have none.
   Capability's Scenario, never a Journey wrapper.
 - **Being sent back to where you were going after signing in** is not a
   hand-off.
+- **Something shown where you already are** — drafts appearing in the editor
+  you are working in — is that Capability's result, not a hand-off.
+- **The redirect names the Capability that made it**: creating a board and
+  landing on it is `create-board`; the Journey continues with the first thing
+  you then do there.
 
 ## The file
 
@@ -212,7 +217,9 @@ Errors:
   includes each of its actors.
 - A Journey Scenario needs `kind`, `result`, `routes`, `steps`, `## Trigger` and
   `## Outcome`, and at least one Step naming a Capability.
-- An achieved Journey Scenario uses at least two different Capabilities.
+- An achieved Journey Scenario uses at least two different Capabilities, and
+  carries its own Journey Actor through at least two of them; Steps of another
+  Actor don't count.
 - Each route's first placed Actor Step belongs to a Journey actor.
 - A Step that creates, changes or removes something names a `capability`, and a
   Step naming one happens inside that Capability's availability.

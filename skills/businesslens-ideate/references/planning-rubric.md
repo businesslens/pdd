@@ -52,15 +52,39 @@ its authoritative Reference the same way; how a design meets it stays design.
 
 ## Scenarios are the acceptance contract
 
-Every Capability needs at least one Capability Scenario; cover primary,
-permission, validation, conflict, and external-failure behavior where the
-Product distinguishes them. Write Trigger, ordered typed Steps, Decision points
-when a linear sequence branches, and Outcome so a reviewer can compare source
-behavior without executing it.
+Every Capability needs at least one Capability Scenario; cover the primary
+path, refusals of who may act, invalid input, conflicts, and external failures
+where the Product distinguishes them. These are cases, not kinds: record each
+under a `kind` that `taxonomies.yaml` declares, never a new kind per case — a
+refusal of who may act is `validation`, a conflict or an unavailable dependency
+is `edge`. Write Trigger, ordered typed Steps, Decision points when a linear
+sequence branches, and Outcome so a reviewer can compare source behavior
+without executing it.
 
 - Good: “Submitting an empty cart shows an error and keeps the cart.”
 - Too vague: “Cart validation works.”
 - Wrong altitude: “POST /cart returns 400.”
+
+## Check the whole model before approval
+
+Walk these after `lint` is clean; lint cannot see them.
+
+- **Lifecycle:** every Entity a person creates can be changed and removed by a
+  Capability, or a Product limitation says it is not ("Links are never
+  deleted; disabling one stops its redirect"). Renaming is changing.
+- **Every Journey:** each Capability Scenario whose last Product Step lands the
+  same Actor where they use another Capability is a Journey; none other is.
+- **Opposite verbs:** no Capability hides an opposite verb in a Scenario;
+  each control's verb has its own Capability.
+- **Who may act:** every create, change and remove a person or agent performs
+  is selected by a permission Rule. A grant about one's own thing reaches the
+  person through `related`, never a bare `actors` list that means everyone with
+  that role.
+- **Invariants:** a Rule about a thing's facts or States targets the Entity.
+- **AI:** one of the two shapes in format.md, never an assistant that acts.
+- **Accounts:** when signing up and signing in are not modelled, coverage
+  `exclusions` says so once — "Accounts: signing up, signing in and account
+  settings." — and nothing else repeats it.
 
 ## Dialogue
 
@@ -69,7 +93,7 @@ behavior without executing it.
 - While a choice remains open, discuss a recommendation and its tradeoff in the
   conversation. After resolution, record the resulting product meaning without
   retaining discarded directions or replaying settled discussion on later runs.
-- Record material unresolved points as limitations instead of guessing; an
+- Record material unresolved points in coverage.md instead of guessing; an
   unchosen option is not a limitation or product exclusion.
 - Keep screenshots, mockups, design systems, research, and sitemaps external.
   References may attach them with `role: intent` or `role: context`, but
