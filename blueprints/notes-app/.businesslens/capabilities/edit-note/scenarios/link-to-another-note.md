@@ -24,7 +24,7 @@ steps:
         place: notes-web::note-editor
       mobile:
         place: notes-mobile::note-editor
-  - text: The Owner picks one of them
+  - text: The Owner picks one of them and saves
     kind: actor
     actor: owner
     entities: []

@@ -10,7 +10,7 @@ entryPoints:
 
 # Suggestions
 
-The AI agent's pending suggestions, oldest first. Each shows the note it is
+The AI agent's proposed suggestions, oldest first. Each shows the note it is
 for, what it proposes and why, and lets the owner accept it, dismiss it, or
 dismiss it and file the note themselves.
 

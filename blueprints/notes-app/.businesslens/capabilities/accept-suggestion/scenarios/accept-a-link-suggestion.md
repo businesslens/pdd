@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner reads a pending suggestion to link a note to related notes
+  - text: The Owner reads a proposed suggestion to link a note to related notes
     kind: actor
     actor: owner
     entities:
@@ -17,7 +17,7 @@ steps:
     kind: actor
     actor: owner
     entities:
-      - { entity: suggestion, from: Pending, to: Accepted, facts: [] }
+      - { entity: suggestion, from: Proposed, to: Accepted, facts: [] }
     contexts:
       web:
         place: notes-web::suggestions

@@ -4,14 +4,14 @@ appliesTo:
     id: suggestion
     effect: changes
 permits:
-  - actors: [owner]
+  - related: [{ verb: receives, entity: note }, { verb: keeps, entity: owner }]
 ---
 
 # Only the owner decides a suggestion
 
-Only the Owner accepts or dismisses a suggestion, and a decided suggestion is
-never decided again. The AI agent that left it cannot accept, withdraw or
-change it.
+Only the Owner who keeps the note accepts or dismisses a suggestion for it, and
+a decided suggestion is never decided again. The AI agent that left it cannot
+accept or change it.
 
 ## Rationale
 

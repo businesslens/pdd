@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner reads a pending suggestion beside the note it is for
+  - text: The Owner reads a proposed suggestion beside the note it is for
     kind: actor
     actor: owner
     entities:
@@ -16,11 +16,11 @@ steps:
     kind: actor
     actor: owner
     entities:
-      - { entity: suggestion, from: Pending, to: Dismissed, facts: [] }
+      - { entity: suggestion, from: Proposed, to: Dismissed, facts: [] }
     contexts:
       web:
         place: notes-web::suggestions
-  - text: The note is exactly as it was, and the next pending suggestion is shown
+  - text: The note is exactly as it was, and the next proposed suggestion is shown
     kind: condition
     actor: owner
     entities:
@@ -40,7 +40,3 @@ The Owner disagrees with a suggestion, or with part of it.
 ## Outcome
 
 The suggestion is dismissed and no longer listed, and its note is unchanged.
-
-## Edge cases
-
-- The Owner chooses to file the note themselves → the suggestion is dismissed and moving the note begins at once.

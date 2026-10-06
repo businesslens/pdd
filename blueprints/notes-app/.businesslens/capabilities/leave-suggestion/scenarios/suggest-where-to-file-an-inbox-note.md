@@ -10,14 +10,6 @@ steps:
     contexts:
       agent:
         place: notes-agent
-  - text: The Product confirms that the Owner allows assistant access
-    kind: product
-    actor: ai-agent
-    entities:
-      - { entity: owner, effect: reads, facts: [Assistant access] }
-    contexts:
-      agent:
-        place: notes-agent
   - text: The Product provides the unsorted notes, the notebook names and the tag names
     kind: product
     actor: ai-agent
@@ -32,14 +24,14 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: suggestion, effect: creates, to: Pending, facts: [Suggested notebook, Suggested tags, Reason, Suggested at] }
+      - { entity: suggestion, effect: creates, to: Proposed, facts: [Suggested notebook, Suggested tags, Reason, Suggested at] }
       - { entity: note, effect: reads, facts: [] }
       - { entity: notebook, effect: reads, facts: [] }
       - { entity: tag, effect: reads, facts: [] }
     contexts:
       agent:
         place: notes-agent
-  - text: The note stays unsorted and unchanged while the suggestion is pending
+  - text: The note stays unsorted and unchanged while the suggestion is proposed
     kind: condition
     actor: ai-agent
     entities:
@@ -54,14 +46,14 @@ steps:
 
 ## Trigger
 
-The AI agent works through the Owner's inbox while the Owner allows it.
+The AI agent works through the inbox of the Owner who connected it.
 
 ## Outcome
 
-A pending suggestion proposes a notebook and tags for the note, with a reason,
+A suggestion proposes a notebook and tags for the note, with a reason,
 and waits on the Owner's suggestion list; the note itself is unchanged.
 
 ## Edge cases
 
-- The note already has a pending suggestion → the new one is refused until the Owner decides the first.
+- The note already has a proposed suggestion → the new one is refused until the Owner decides the first.
 - The suggestion names a notebook the Owner does not have → it is refused; the AI agent may propose new tags but never a new notebook.

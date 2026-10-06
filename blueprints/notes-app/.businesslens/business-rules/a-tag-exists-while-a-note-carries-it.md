@@ -11,5 +11,5 @@ taken off the last note carrying it. No two of an Owner's tags share a name.
 
 ## Rationale
 
-Tags are offered whenever the Owner tags or searches; a tag nothing carries
+Tags are offered whenever the Owner tags a note or searches; a tag nothing carries
 would only be noise in that list.

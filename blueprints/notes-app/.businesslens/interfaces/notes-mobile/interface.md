@@ -8,5 +8,5 @@ entryPoints:
 # Notes mobile application
 
 The supported mobile Interface for capturing a note the moment it occurs,
-editing it, and finding notes again. Filing, tagging, notebooks, suggestions
-and assistant settings remain web commitments.
+editing its words and links, and finding notes again. Filing, tagging,
+notebooks and suggestions remain web commitments.

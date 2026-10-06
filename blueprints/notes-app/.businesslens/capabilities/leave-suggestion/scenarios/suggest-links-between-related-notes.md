@@ -11,14 +11,6 @@ steps:
     contexts:
       agent:
         place: notes-agent
-  - text: The Product confirms that the Owner allows assistant access
-    kind: product
-    actor: ai-agent
-    entities:
-      - { entity: owner, effect: reads, facts: [Assistant access] }
-    contexts:
-      agent:
-        place: notes-agent
   - text: The Product provides the note and the other notes it asked for
     kind: product
     actor: ai-agent
@@ -32,13 +24,13 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: suggestion, effect: creates, to: Pending, facts: [Suggested links, Reason, Suggested at] }
+      - { entity: suggestion, effect: creates, to: Proposed, facts: [Suggested links, Reason, Suggested at] }
       - { entity: note, as: subject, effect: reads, facts: [] }
       - { entity: note, as: related, effect: reads, facts: [] }
     contexts:
       agent:
         place: notes-agent
-  - text: Neither note changes while the suggestion is pending
+  - text: Neither note changes while the suggestion is proposed
     kind: condition
     actor: ai-agent
     entities:
@@ -59,5 +51,5 @@ other.
 
 ## Outcome
 
-A pending suggestion proposes the links, with a reason, and waits on the
+A suggestion proposes the links, with a reason, and waits on the
 Owner's suggestion list; no note is changed.

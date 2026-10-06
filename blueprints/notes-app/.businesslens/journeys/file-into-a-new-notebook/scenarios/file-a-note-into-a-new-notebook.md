@@ -22,16 +22,17 @@ steps:
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Product creates the empty notebook
+  - text: The Product creates the empty notebook and returns the Owner to moving the note, with the new notebook chosen
     kind: product
     actor: owner
     capability: create-notebook
     entities:
+      - { entity: note, effect: reads, facts: [] }
       - { entity: notebook, effect: creates, facts: [Name] }
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Product files the note in the new notebook without asking again
+  - text: The Product files the note in the new notebook
     kind: product
     actor: owner
     capability: move-note

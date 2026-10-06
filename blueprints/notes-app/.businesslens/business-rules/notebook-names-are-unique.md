@@ -2,12 +2,13 @@
 appliesTo:
   - type: entity
     id: notebook
-    effect: creates
+    facts: [Name]
 ---
 
 # Notebook names are unique
 
-No two of an Owner's notebooks share a name, ignoring capital letters.
+No two of an Owner's notebooks share a name, ignoring capital letters, whether
+the name is given when the notebook is created or when it is renamed.
 
 ## Rationale
 
