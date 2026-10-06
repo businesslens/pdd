@@ -17,11 +17,11 @@ describe('Content Feed Reader teaching Blueprint', () => {
       screens: 18,
       domains: 3,
       entities: 6,
-      capabilities: 19,
+      capabilities: 20,
       capabilityScenarios: 36,
       journeys: 2,
       journeyScenarios: 3,
-      businessRules: 13
+      businessRules: 14
     })
     expect(Object.values(result.counts).every(count => count >= 2)).toBe(true)
   })
