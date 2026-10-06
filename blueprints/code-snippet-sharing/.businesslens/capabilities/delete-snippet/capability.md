@@ -5,7 +5,7 @@ availability: [{ place: snippets-web::workspace }]
 
 # Snippet deletion
 
-Permanently removes an owned snippet and its history, after the owner confirms.
+Removes an owned snippet and its history for good, after the owner confirms.
 
 ## Intent
 

@@ -32,7 +32,7 @@ steps:
         place: snippets-web::workspace::snippet-editor
 ---
 
-# Write details when suggestions are unavailable
+# Suggest snippet details while the language model is unavailable
 
 ## Trigger
 

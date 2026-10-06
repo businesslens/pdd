@@ -3,7 +3,7 @@ domain: my-snippets
 availability: [{ place: snippets-web::workspace }]
 ---
 
-# Snippet visibility
+# Snippet visibility change
 
 Decides who can read an owned snippet: only its owner (private), anyone holding
 its address (unlisted), or anyone at all, listed in Discover and open to forking

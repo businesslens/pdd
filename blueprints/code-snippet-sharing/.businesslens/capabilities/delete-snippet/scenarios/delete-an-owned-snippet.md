@@ -47,7 +47,7 @@ The owner no longer wants a snippet to exist.
 
 ## Outcome
 
-The snippet and its history are gone and its address shows nothing to anyone.
+The snippet and its history are gone for good, and its address shows nothing to anyone.
 Forks other Developers made keep their code, and show that the snippet they came
 from is no longer available.
 

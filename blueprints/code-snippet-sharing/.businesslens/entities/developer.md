@@ -5,9 +5,6 @@ relations:
   - entity: snippet
     verb: owns
     cardinality: one-to-many
-  - entity: suggestion
-    verb: requests
-    cardinality: one-to-many
 ---
 
 # Developer

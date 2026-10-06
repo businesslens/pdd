@@ -57,4 +57,5 @@ they gave it, readable by nobody else, and its history starts at revision 1.
 ## Edge cases
 
 - The Developer chooses Unlisted before saving → the snippet is created unlisted and its address is ready to share.
+- The Developer filled the details from a suggestion → saving keeps them as the Developer's own, like anything typed.
 - The Developer leaves the editor without saving → nothing is kept.
