@@ -3,7 +3,7 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Member opens an open suggestion from their suggestions
+  - text: The Member opens a proposed suggestion from their suggestions
     kind: actor
     actor: member
     entities:
@@ -41,15 +41,15 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The Member publishes the suggestion
+  - text: The Member accepts the suggestion
     kind: actor
     actor: member
     entities:
-      - { entity: suggestion, effect: changes, from: Open, to: Published, facts: [] }
+      - { entity: suggestion, effect: changes, from: Proposed, to: Accepted, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The Product makes the proposed content the page's current revision, marked as published from a suggestion
+  - text: The Product makes the proposed content the page's current revision, marked as accepted from a suggestion
     kind: product
     actor: member
     entities:
@@ -61,7 +61,7 @@ steps:
         place: wiki-web::workspace::suggestion
 ---
 
-# Publish a suggestion for a page changed since
+# Accept a suggestion for a page changed since
 
 ## Trigger
 
@@ -71,4 +71,4 @@ left.
 ## Outcome
 
 The newer revision is not overwritten unseen: the page says what the Editor
-reconciled, as a new revision after it, and the suggestion is published.
+reconciled, as a new revision after it, and the suggestion is accepted.

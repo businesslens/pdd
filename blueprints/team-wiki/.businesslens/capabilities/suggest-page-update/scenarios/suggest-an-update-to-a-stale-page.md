@@ -26,7 +26,7 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: suggestion, effect: creates, to: Open, facts: [Reason, Explanation, Proposed content, Cited pages, Drafted at] }
+      - { entity: suggestion, effect: creates, to: Proposed, facts: [Reason, Explanation, Proposed content, Cited pages, Drafted at] }
       - { entity: page, effect: reads, facts: [Title] }
       - { entity: space, effect: reads, facts: [] }
     contexts:
@@ -52,10 +52,10 @@ A Member's AI agent reviews a space for pages that have fallen behind.
 
 ## Outcome
 
-An open suggestion marked Stale waits among the space's suggestions on the web,
+A proposed suggestion marked Stale waits among the space's suggestions on the web,
 citing the pages it relies on. The page says what it said before.
 
 ## Edge cases
 
-- The page already has an open suggestion → the new one is refused until an Editor decides the first.
+- The page already has a proposed suggestion → the new one is refused until an Editor decides the first.
 - A cited page is in another space → the suggestion is refused; a suggestion cites only pages in the space of the page it would update.

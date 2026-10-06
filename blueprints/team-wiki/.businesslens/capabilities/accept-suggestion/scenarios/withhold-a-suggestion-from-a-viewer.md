@@ -40,5 +40,5 @@ A Viewer follows a link to a suggestion for a page in their space.
 
 ## Outcome
 
-The Viewer sees nothing of the suggestion, which stays open, and the page is
+The Viewer sees nothing of the suggestion, which stays proposed, and the page is
 unchanged.

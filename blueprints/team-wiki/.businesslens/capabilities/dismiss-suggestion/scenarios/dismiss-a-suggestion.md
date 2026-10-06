@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Member opens an open suggestion from their suggestions
+  - text: The Member opens a proposed suggestion from their suggestions
     kind: actor
     actor: member
     entities:
@@ -26,11 +26,11 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: suggestion, effect: changes, from: Open, to: Dismissed, facts: [] }
+      - { entity: suggestion, effect: changes, from: Proposed, to: Dismissed, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The suggestion leaves the open suggestions and the page is unchanged
+  - text: The suggestion leaves the proposed suggestions and the page is unchanged
     kind: condition
     actor: member
     entities:

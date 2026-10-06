@@ -1,5 +1,5 @@
 ---
-domain: assistant
+domain: suggestions
 availability: [{ place: wiki-agent }]
 ---
 

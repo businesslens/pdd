@@ -3,7 +3,7 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Member opens an open suggestion from their suggestions
+  - text: The Member opens a proposed suggestion from their suggestions
     kind: actor
     actor: member
     entities:
@@ -30,15 +30,15 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The Member publishes the suggestion
+  - text: The Member accepts the suggestion
     kind: actor
     actor: member
     entities:
-      - { entity: suggestion, effect: changes, from: Open, to: Published, facts: [] }
+      - { entity: suggestion, effect: changes, from: Proposed, to: Accepted, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::suggestion
-  - text: The Product makes the proposed content the page's current revision, marked as published from a suggestion
+  - text: The Product makes the proposed content the page's current revision, marked as accepted from a suggestion
     kind: product
     actor: member
     entities:
@@ -50,7 +50,7 @@ steps:
         place: wiki-web::workspace::suggestion
 ---
 
-# Edit a suggestion before publishing
+# Edit a suggestion before accepting
 
 ## Trigger
 
@@ -59,4 +59,4 @@ An Editor agrees with a suggestion only in part.
 ## Outcome
 
 The page says what the Editor made of the suggestion, as a new revision they
-saved, and the suggestion is published.
+saved, and the suggestion is accepted.

@@ -18,6 +18,7 @@ steps:
   - text: The Product opens the new page to be written
     kind: product
     actor: member
+    capability: create-page
     entities:
       - { entity: page, effect: reads, facts: [Title] }
     contexts:

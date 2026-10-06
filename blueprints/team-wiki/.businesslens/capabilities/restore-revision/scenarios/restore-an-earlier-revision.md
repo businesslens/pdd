@@ -36,14 +36,14 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::revision
-  - text: The Product shows the restored page
+  - text: The Product shows that the page now says what was restored, with no difference left
     kind: product
     actor: member
     entities:
       - { entity: page, effect: reads, facts: [Title, Content, Last edited at] }
     contexts:
       web:
-        place: wiki-web::workspace::page
+        place: wiki-web::workspace::revision
 ---
 
 # Restore an earlier revision

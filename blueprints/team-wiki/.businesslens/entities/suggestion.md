@@ -1,5 +1,5 @@
 ---
-domain: assistant
+domain: suggestions
 ---
 
 # Suggestion
@@ -12,20 +12,20 @@ Editors.
 
 - **Reason** — Stale, when newer pages have moved on from what it says, or Conflicting, when another page says something different
 - **Explanation** — what the AI agent found wrong and why, in a few sentences
-- **Proposed content** — the page content the AI agent proposes, which an Editor may adjust before publishing
+- **Proposed content** — the page content the AI agent proposes, which an Editor may adjust before accepting
 - **Cited pages** — the pages in the same space the explanation relies on
 - **Drafted at** — when the AI agent left it
 
 ## States
 
-### Open
+### Proposed
 
 Waiting for an Editor of the page's space. The page is unchanged.
 
-### Published
+### Accepted
 
-An Editor published it, and its proposed content became a new revision of the
-page.
+An Editor accepted it, and its proposed content was published as a new revision
+of the page.
 
 ### Dismissed
 

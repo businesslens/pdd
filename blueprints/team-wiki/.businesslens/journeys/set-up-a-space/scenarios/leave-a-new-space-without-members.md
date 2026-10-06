@@ -16,6 +16,7 @@ steps:
   - text: The Product opens the members of the new space
     kind: product
     actor: administrator
+    capability: create-space
     entities:
       - { entity: space, effect: reads, facts: [Name] }
       - { entity: member, effect: reads, facts: [] }

@@ -1,21 +1,20 @@
 ---
 appliesTo:
-  - type: capability
-    id: create-page
-  - type: capability
-    id: edit-page
-  - type: capability
-    id: restore-revision
-  - type: capability
-    id: publish-suggestion
+  - type: entity
+    id: page
+    effect: creates
+  - type: entity
+    id: page
+    effect: changes
+    facts: [Title, Content]
 ---
 
 # Every change to a page's title or content adds a revision
 
 Each save of a page's title or content — creating it, editing it, restoring an
-earlier revision, or publishing a suggestion — adds a revision naming who saved
-it, when, and how it came about. No revision is ever changed or removed, so
-restoring is itself a new revision.
+earlier revision, or accepting a suggestion — adds a revision naming who saved
+it, when, and how it came about. No revision is ever changed, so restoring is
+itself a new revision.
 
 ## Rationale
 
