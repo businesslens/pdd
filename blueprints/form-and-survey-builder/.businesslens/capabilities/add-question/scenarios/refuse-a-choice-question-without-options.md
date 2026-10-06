@@ -3,14 +3,14 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Creator chooses an answer type that offers options, lists none, and tries to add it
+  - text: The Creator starts a question to be answered by picking options, lists none, and tries to add it
     kind: actor
     actor: creator
     entities: []
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
-  - text: The Product explains that a choice needs at least one option
+  - text: The Product explains that a question answered by picking needs at least one option to pick
     kind: product
     actor: creator
     entities: []

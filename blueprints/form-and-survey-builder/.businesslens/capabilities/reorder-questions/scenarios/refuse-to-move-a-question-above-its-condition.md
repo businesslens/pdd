@@ -3,12 +3,12 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Creator tries to move a question above the question its show condition names
+  - text: The Creator tries to move a question above the choice question its show condition names
     kind: actor
     actor: creator
     entities:
-      - { entity: question, as: dependent, effect: reads, facts: [Prompt, Show condition] }
-      - { entity: question, as: named, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt, Show condition] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -41,4 +41,4 @@ The order is unchanged, and the Creator knows which move would break the conditi
 
 ## Edge cases
 
-- The Creator moves the named question below the one that depends on it → refused the same way.
+- The Creator moves the named choice question below the one that depends on it → refused the same way.

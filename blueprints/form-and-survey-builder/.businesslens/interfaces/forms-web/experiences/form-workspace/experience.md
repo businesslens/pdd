@@ -7,7 +7,7 @@ entryPoints:
 
 # Form workspace
 
-The signed-in context in which a Creator builds their forms, with drafted
-suggestions when they ask, publishes and closes forms, and reads their
-responses. Every form,
-question, suggestion and response here belongs to the signed-in Creator.
+The signed-in context in which a Creator builds their forms, with proposed
+questions when they ask, publishes, closes and reopens forms, and reads their
+responses. Every form, question and response here belongs to the signed-in
+Creator.

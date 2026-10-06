@@ -17,7 +17,7 @@ steps:
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
-  - text: The Product says that no suggestions could be drafted and keeps the stated goal for another try
+  - text: The Product says that no questions could be drafted and keeps the stated goal for another try
     kind: product
     actor: creator
     entities:
@@ -30,7 +30,6 @@ steps:
     actor: creator
     entities:
       - { entity: form, effect: reads, facts: [Question order] }
-      - { entity: question, effect: reads, facts: [] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -44,4 +43,4 @@ The Creator asks for drafts while the language model the Product calls is unavai
 
 ## Outcome
 
-Nothing is suggested and the form is unchanged; building it by hand is unaffected.
+Nothing is proposed and the form is unchanged; building it by hand is unaffected.

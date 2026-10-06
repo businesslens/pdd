@@ -1,7 +1,8 @@
 ---
 entities:
   - { entity: form, shows: [Title, Description] }
-  - { entity: question, shows: [Prompt, Answer type, Required] }
+  - { entity: choice-question, shows: [Prompt, Selection, Options, Required] }
+  - { entity: entry-question, shows: [Prompt, Answer type, Required] }
   - { entity: response, collects: [Answers] }
 entryPoints:
   - forms-web: /f/:publicLink

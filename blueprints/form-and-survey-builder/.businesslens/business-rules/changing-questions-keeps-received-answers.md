@@ -1,9 +1,17 @@
 ---
 appliesTo:
-  - type: capability
-    id: edit-question
-  - type: capability
-    id: remove-question
+  - type: entity
+    id: choice-question
+    effect: changes
+  - type: entity
+    id: choice-question
+    effect: removes
+  - type: entity
+    id: entry-question
+    effect: changes
+  - type: entity
+    id: entry-question
+    effect: removes
 ---
 
 # Changing questions keeps received answers

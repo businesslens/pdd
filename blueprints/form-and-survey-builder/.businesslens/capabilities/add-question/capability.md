@@ -5,7 +5,7 @@ availability: [{ place: forms-web::form-workspace }]
 
 # Question adding
 
-Adds a question to a form: its prompt, its answer type and any options, and whether it is required.
+Adds a question at the end of a form: a choice question with its options, or an entry question with its answer type, and whether an answer is required.
 
 ## Intent
 

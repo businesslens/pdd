@@ -5,7 +5,7 @@ colorSlot: 4
 # Sharing
 
 Whether a form takes responses: publishing it to a public link, closing it, and
-opening it again.
+reopening it.
 
 ## Boundary
 

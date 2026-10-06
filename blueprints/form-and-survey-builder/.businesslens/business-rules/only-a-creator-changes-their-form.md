@@ -10,7 +10,7 @@ permits:
 # Only a Creator changes their form
 
 Only the Creator who owns a form changes its title, introduction, goal or
-question order, publishes it, closes it, or opens it again.
+question order, publishes it, closes it, or reopens it.
 
 ## Rationale
 

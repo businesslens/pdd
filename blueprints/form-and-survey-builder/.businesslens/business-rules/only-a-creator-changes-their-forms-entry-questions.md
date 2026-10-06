@@ -1,16 +1,16 @@
 ---
 appliesTo:
   - type: entity
-    id: question
+    id: entry-question
     effect: changes
 permits:
   - related: [{ verb: holds, entity: form }, { verb: owns, entity: creator }]
 ---
 
-# Only a Creator changes their form's questions
+# Only a Creator changes their form's entry questions
 
-Only the Creator who owns a form changes a question on it — its prompt, answer
-type, options, whether it is required, and when it is shown.
+Only the Creator who owns a form changes its entry questions, including accepting a
+proposed one onto the form.
 
 ## Rationale
 

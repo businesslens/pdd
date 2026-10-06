@@ -3,12 +3,12 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Creator tries to show a question after an answer to a question asked after it
+  - text: The Creator tries to show a question after an answer to a choice question asked after it
     kind: actor
     actor: creator
     entities:
-      - { entity: question, as: dependent, effect: reads, facts: [Prompt] }
-      - { entity: question, as: later, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Options] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -23,7 +23,7 @@ steps:
     kind: condition
     actor: creator
     entities:
-      - { entity: question, as: dependent, effect: reads, facts: [Show condition] }
+      - { entity: entry-question, effect: reads, facts: [Show condition] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -38,7 +38,3 @@ The Creator tries to make a question depend on one that comes later in the form.
 ## Outcome
 
 The question keeps the show condition it had, and the Creator knows which questions it can depend on.
-
-## Edge cases
-
-- The question named does not offer options → it is refused the same way.

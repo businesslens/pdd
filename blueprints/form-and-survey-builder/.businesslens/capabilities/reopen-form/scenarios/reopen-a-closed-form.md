@@ -1,9 +1,9 @@
 ---
-kind: edge
+kind: primary
 routes:
   web: Web
 steps:
-  - text: The Creator chooses to open a closed form again
+  - text: The Creator chooses to reopen a closed form
     kind: actor
     actor: creator
     entities:
@@ -47,3 +47,7 @@ The Creator wants more answers after closing a form.
 ## Outcome
 
 The form is open at its former public link, with every earlier response still in place.
+
+## Edge cases
+
+- The Creator declines to confirm → the form stays closed.
