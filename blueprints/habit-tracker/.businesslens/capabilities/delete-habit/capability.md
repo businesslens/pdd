@@ -5,7 +5,8 @@ availability: [ { place: tracker-web }, { place: tracker-mobile } ]
 
 # Habit deletion
 
-Removes a habit and its whole history for good, once the Owner confirms.
+Removes a habit, its whole history and its suggested adjustments for good, once
+the Owner confirms.
 
 ## Intent
 

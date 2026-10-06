@@ -9,4 +9,4 @@ one for each day.
 
 ## Information kept
 
-- **Day** — the calendar day the habit was done on
+- **Day** — the calendar day the habit was done on, in the Owner's time zone when it was recorded

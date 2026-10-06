@@ -30,5 +30,6 @@ The Owner dismissed it. The habit is unchanged.
 
 ### Outdated
 
-No longer fits, because the habit was changed, paused or deleted after it was
-drafted. The habit is unchanged.
+No longer fits, because the habit's schedule was changed or the habit was
+paused after it was drafted. The Product closes it when the Owner tries to
+accept it. The habit is unchanged.
