@@ -67,4 +67,4 @@ The bookmark is gone from the library, its collection and every tag view.
 
 - The Owner declines to confirm → the bookmark stays as it was.
 - The bookmark carried the only use of a tag → the tag is removed with it.
-- A proposed suggestion named the bookmark → the suggestion no longer offers it.
+- A proposed suggestion named the bookmark → the suggestion no longer offers it, and still waits for the Owner to decide.

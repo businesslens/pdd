@@ -24,33 +24,32 @@ steps:
         place: bookmarks-web::bookmark
       mobile:
         place: bookmarks-mobile::bookmark
-  - text: The Owner changes its title, note, tags or collection and saves
+  - text: The Owner changes its title, note or collection and saves
     kind: actor
     actor: owner
     entities:
       - { entity: collection, effect: reads, facts: [Name] }
-      - { entity: tag, effect: reads, facts: [Name] }
     contexts:
       web:
         place: bookmarks-web::bookmark
       mobile:
         place: bookmarks-mobile::bookmark
-  - text: The Product records the changes, creating any tag that is new
+  - text: The Product records the changes
     kind: product
     actor: owner
     entities:
-      - { entity: bookmark, effect: changes, facts: [Title, Note, Tags, Collection] }
-      - { entity: tag, effect: creates, facts: [Name] }
+      - { entity: bookmark, effect: changes, facts: [Title, Note, Collection] }
     contexts:
       web:
         place: bookmarks-web::bookmark
       mobile:
         place: bookmarks-mobile::bookmark
-  - text: The address and when the bookmark was saved are unchanged
+  - text: The address, tags and when the bookmark was saved are unchanged
     kind: condition
     actor: owner
     entities:
       - { entity: bookmark, effect: reads, facts: [] }
+      - { entity: tag, effect: reads, facts: [] }
     contexts:
       web:
         place: bookmarks-web::bookmark
@@ -66,8 +65,8 @@ The Owner wants a bookmark described or filed differently.
 
 ## Outcome
 
-The bookmark carries the Owner's new title, note, tags and collection, and still
-opens the same address.
+The bookmark carries the Owner's new title, note and collection, and still
+opens the same address with the same tags.
 
 ## Edge cases
 

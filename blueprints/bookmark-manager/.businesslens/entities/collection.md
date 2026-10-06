@@ -1,5 +1,5 @@
 ---
-domain: collections
+domain: library
 relations:
   - entity: bookmark
     verb: holds

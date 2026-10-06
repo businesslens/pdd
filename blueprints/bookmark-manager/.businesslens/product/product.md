@@ -1,6 +1,6 @@
 ---
 id: bookmark-manager
-summary: Save links from your browser or phone, import a browser's bookmarks, file and find them by collection and tag, and let an AI agent you connect suggest tidying.
+summary: A private library of links you save yourself, from browser, phone or a browser's export, filed and tagged, with your own AI agent suggesting tidying.
 category: personal-productivity
 tags: [single-user, agentic]
 authors:

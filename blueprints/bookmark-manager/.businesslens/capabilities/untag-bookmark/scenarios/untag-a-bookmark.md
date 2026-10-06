@@ -1,21 +1,21 @@
 ---
-kind: edge
+kind: primary
 routes:
   web: Web
   mobile: Mobile
 steps:
-  - text: The Owner takes a tag off a bookmark and saves
+  - text: The Owner opens a bookmark and takes one of its tags off
     kind: actor
     actor: owner
     entities:
+      - { entity: bookmark, effect: reads, facts: [Title, Tags] }
       - { entity: tag, effect: reads, facts: [Name] }
-      - { entity: bookmark, effect: reads, facts: [] }
     contexts:
       web:
         place: bookmarks-web::bookmark
       mobile:
         place: bookmarks-mobile::bookmark
-  - text: The Product records the bookmark's remaining tags
+  - text: The Product takes the tag off the bookmark
     kind: product
     actor: owner
     entities:
@@ -26,22 +26,12 @@ steps:
         place: bookmarks-web::bookmark
       mobile:
         place: bookmarks-mobile::bookmark
-  - text: No other bookmark carries that tag
+  - text: Other bookmarks still carry the tag, so it stays in the library
     kind: condition
     actor: owner
     entities:
-      - { entity: tag, effect: reads, facts: [] }
+      - { entity: tag, effect: reads, facts: [Name] }
       - { entity: bookmark, effect: reads, facts: [] }
-    contexts:
-      web:
-        place: bookmarks-web::bookmark
-      mobile:
-        place: bookmarks-mobile::bookmark
-  - text: The Product removes the tag from the library
-    kind: product
-    actor: owner
-    entities:
-      - { entity: tag, effect: removes }
     contexts:
       web:
         place: bookmarks-web::bookmark
@@ -49,13 +39,13 @@ steps:
         place: bookmarks-mobile::bookmark
 ---
 
-# Remove the last use of a tag
+# Untag a bookmark
 
 ## Trigger
 
-The Owner takes off a tag that only this bookmark carried.
+A tag no longer describes a bookmark.
 
 ## Outcome
 
-The bookmark no longer carries the tag, and the tag no longer appears among the
-library's tags.
+The bookmark no longer carries the tag and no longer appears when the Library is
+narrowed to it; the other bookmarks carrying it are unchanged.

@@ -1,11 +1,11 @@
 ---
-domain: collections
+domain: library
 availability: [{ place: bookmarks-web }]
 ---
 
 # Collection deletion
 
-Deletes a collection for good after the Owner confirms, leaving every bookmark
+Deletes a collection for good once the Owner confirms, leaving every bookmark
 it held in the library as Unsorted.
 
 ## Intent

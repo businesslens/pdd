@@ -1,5 +1,5 @@
 ---
-domain: collections
+domain: library
 availability: [{ place: bookmarks-web }]
 ---
 
