@@ -220,7 +220,9 @@ question only where existing code contradicts the model.
 - Never capture, compare, or certify screenshots. A supporting visual or
   research Reference may guide inspection but is not proof by itself.
 - Never report design as drift; the rubric's **The border** decides.
-- Never write outside `.businesslens/`; model-resolution writes must leave target
-  `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
+- Never write outside `.businesslens/` in an analysis or model-resolution phase;
+  model-resolution writes must leave target `AGENTS.md`, `CLAUDE.md`, and root
+  README byte-identical. The build phase (step 8) writes only the user's code,
+  under the repository's own instructions, and never `.businesslens/`.
 - Never stage, commit, publish, submit, or contribute.
 - Never ask the user to manually invoke map or ideate to continue this run.

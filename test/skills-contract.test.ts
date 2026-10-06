@@ -72,6 +72,10 @@ describe('public workflow contract', () => {
     expect(source).toContain('In build mode, the model-right findings are the build plan')
     expect(source).toContain('later slices are the plan, not findings')
     expect(source).toContain('never settles a product question in code')
+    // The write boundary binds BusinessLens's own phases; the build phase that
+    // implements code must not be forbidden by it.
+    expect(source).toContain('Never write outside `.businesslens/` in an analysis or model-resolution phase')
+    expect(source).toContain('The build phase (step 8) writes only the user\'s code')
     expect(source).toContain('stop with the complete handoff packet')
 
     const rubric = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'verification-rubric.md'), 'utf8')
