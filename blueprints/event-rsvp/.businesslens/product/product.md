@@ -12,10 +12,9 @@ limitations:
   - The host never adds a guest or changes an answer; the guest list holds the answers guests give, and the host may only remove one.
   - Each event has one host and happens once. There are no co-hosts and no recurring series.
   - Events are never deleted; cancelling one closes its invitation and keeps its guest list.
-  - Sent messages are never changed or deleted.
   - The Product does not sell tickets, take payments or check guests in at the door.
-  - Messages to guests go out by email in one direction; guests do not reply inside the Product.
-  - A language model can suggest a message's wording from the event's details. It may be wrong, the host edits and decides what is sent, and while it is unavailable the host writes the message themselves.
+  - Messages to guests go out by email in one direction and are never changed or deleted once sent; guests do not reply inside the Product.
+  - A language model drafts a message's wording from the event's details and may be wrong. The host edits and decides what is sent, and messaging works while it is unavailable.
 references:
   - kind: research
     role: context

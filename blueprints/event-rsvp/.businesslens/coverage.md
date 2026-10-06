@@ -9,7 +9,7 @@ covered:
   - description: The host's guest list, removing an RSVP, and email messages to guests with optional suggested wording.
     paths: []
 exclusions:
-  - description: 'Accounts: signing up, signing in and account settings.'
+  - description: "Accounts: signing up, signing in and account settings."
     paths: []
 unmapped: []
 limitations: []
