@@ -8,11 +8,13 @@ authors:
 license: MIT
 languages: [en]
 limitations:
-  - Component status is what an operator sets; the Product does not monitor components or measure uptime itself.
+  - Component status is what an Operator sets; the Product does not monitor components or measure uptime itself.
   - Subscribers are notified by email only.
-  - There is one public page per operator team, readable by anyone; there are no private or audience-restricted pages.
+  - The Product keeps one status page for one operator team, and anyone can read it; there are no private or audience-restricted pages.
   - Components are one flat list; they are not grouped or nested.
-  - Drafting an incident update needs the language model the Product queries; while it is unavailable, Operators write every update themselves.
+  - Incidents, their updates and maintenance windows are never deleted, and a posted update is never edited; a correction is a later update.
+  - A maintenance window's times and components are never edited; a changed plan is a cancelled window and a new one.
+  - A language model drafts an update's message from the Operator's notes and can get it wrong; the Operator edits it and decides whether to post it. While the language model is unavailable, Operators write every update themselves.
 references:
   - kind: research
     role: context
@@ -29,13 +31,11 @@ they are resolved, and schedule maintenance ahead of time. Visitors read the
 page without an account and can subscribe by email to hear about every update.
 
 During an incident an operator can ask for a draft: from the operator's rough
-notes the Product drafts the text of the next update with a language model, and
-the operator edits and posts it. Nothing reaches the page or a subscriber until
-an operator posts it.
+notes, the Product fills in the text of the next update with a language model.
 
 ## Intent
 
-Give the people affected by an outage one honest, timely place to learn what is
-wrong, what is being done, and when it is over — without asking the operators to
-stop fixing the problem to write prose. A draft saves the writing; every word
-that is published remains an operator's decision.
+When a service breaks, the people who depend on it cannot tell whether the
+problem is theirs, and the operators who could tell them are busy fixing it.
+The page gives them one honest, timely place to learn what is wrong, what is
+being done, and when it is over — and spares the operators the writing.

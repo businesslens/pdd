@@ -15,7 +15,7 @@ steps:
     kind: actor
     actor: operator
     entities:
-      - { entity: incident-update, effect: creates, to: Posted, facts: [Message, Incident status, Posted at] }
+      - { entity: incident-update, effect: creates, facts: [Message, Incident status, Posted at] }
       - { entity: incident, from: Identified, to: Monitoring, facts: [] }
     contexts:
       web:

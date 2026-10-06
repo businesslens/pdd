@@ -8,4 +8,4 @@ entryPoints:
 # Component detail
 
 Presents one component's name, description and current status, where an
-Operator edits how it is described to visitors.
+Operator edits how it is described to visitors or removes it from the page.

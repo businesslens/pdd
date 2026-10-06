@@ -3,11 +3,10 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Operator reads the draft and chooses the incident status it announces
+  - text: The Operator reads the drafted message and chooses the incident status it announces
     kind: actor
     actor: operator
     entities:
-      - { entity: incident-update, effect: reads, facts: [Message, Notes] }
       - { entity: incident, effect: reads, facts: [] }
     contexts:
       web:
@@ -16,7 +15,7 @@ steps:
     kind: actor
     actor: operator
     entities:
-      - { entity: incident-update, from: Draft, to: Posted, facts: [Incident status, Posted at] }
+      - { entity: incident-update, effect: creates, facts: [Message, Notes, Incident status, Posted at] }
       - { entity: incident, from: Investigating, to: Identified, facts: [] }
     contexts:
       web:
@@ -42,8 +41,8 @@ steps:
 
 ## Trigger
 
-The Operator is satisfied with a draft for an incident still being investigated.
+The Operator is satisfied with a drafted message for an incident still being investigated.
 
 ## Outcome
 
-The update is on the public timeline, the incident shows Identified, and confirmed subscribers have been emailed the message the Operator approved.
+The update is on the public timeline with the notes it was drafted from kept for the team, the incident shows Identified, and confirmed subscribers have been emailed the message the Operator approved.

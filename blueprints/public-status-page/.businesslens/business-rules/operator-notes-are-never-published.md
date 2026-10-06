@@ -10,8 +10,8 @@ permits:
 
 # Operator notes are never published
 
-The notes a draft was prepared from are read only in the operator console,
-whether or not the update was posted.
+The notes an update's message was drafted from are read only in the operator
+console.
 
 ## Rationale
 

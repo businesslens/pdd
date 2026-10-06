@@ -10,13 +10,14 @@ steps:
     capability: declare-incident
     entities:
       - { entity: incident, effect: creates, to: Investigating, facts: [Title, Impact, Affected components, Started at] }
-      - { entity: incident-update, as: first-update, effect: creates, to: Posted, facts: [Message, Incident status, Posted at] }
+      - { entity: incident-update, as: first-update, effect: creates, facts: [Message, Incident status, Posted at] }
     contexts:
       web:
         place: status-web::operator-console::new-incident
   - text: The Product opens the incident's workspace
     kind: product
     actor: operator
+    capability: declare-incident
     entities:
       - { entity: incident, effect: reads, facts: [Title] }
     contexts:
@@ -36,7 +37,7 @@ steps:
     actor: operator
     capability: post-incident-update
     entities:
-      - { entity: incident-update, as: final-update, effect: creates, to: Posted, facts: [Message, Incident status, Posted at] }
+      - { entity: incident-update, as: final-update, effect: creates, facts: [Message, Incident status, Posted at] }
       - { entity: incident, from: Investigating, to: Resolved, facts: [Resolved at] }
     contexts:
       web:
@@ -44,6 +45,7 @@ steps:
   - text: The Product emails the final incident update to every confirmed subscription
     kind: product
     actor: operator
+    capability: post-incident-update
     entities:
       - { entity: subscription, effect: reads, facts: [Email address] }
       - { entity: incident-update, as: final-update, effect: reads, facts: [Message] }

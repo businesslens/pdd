@@ -3,22 +3,21 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Operator posts a draft whose message is empty
+  - text: The Operator posts an update whose message is empty
     kind: actor
     actor: operator
-    entities:
-      - { entity: incident-update, effect: reads, facts: [Message] }
+    entities: []
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The Product explains that an update needs a message
+  - text: The Product explains that an update needs a message and keeps the notes
     kind: product
     actor: operator
     entities: []
     contexts:
       web:
         place: status-web::operator-console::incident-workspace
-  - text: The draft stays a draft and no subscription is emailed
+  - text: No incident update is posted and no subscription is emailed
     kind: condition
     actor: operator
     entities:
@@ -37,4 +36,4 @@ The Operator posts an update with no message.
 
 ## Outcome
 
-Nothing is posted or emailed, and the draft and its notes are kept.
+Nothing is posted or emailed, and the notes are kept.
