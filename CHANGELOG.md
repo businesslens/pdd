@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Personal Productivity (Notes App, Bookmark Manager, Habit Tracker), Team Collaboration (Kanban Board, Team Wiki, Polls & Decisions), Public Participation (Form & Survey Builder, Event RSVP), Learning & Education (Flashcard App, Quiz Builder, Study Planner) and Developer Tools (URL Shortener, Public Status Page, Code Snippet Sharing).
+- **Blueprints:** Blueprints with AI show one of two shapes: your own AI agent connects and proposes while you decide, or the product drafts on request and nothing takes effect until you accept it.
+
+### Changed
+
+- **Blueprints:** The Content Feed Reader now belongs to Personal Productivity.
+
 ## [0.25.1] - 2026-10-05
 
 - The README demo shows the current Product Model, one Screen per subject. ([#86](https://github.com/businesslens/pdd/pull/86)) ([1dce3bf](https://github.com/businesslens/pdd/commit/1dce3bf95d1ae3f80f4ad115bfdd63b0dc5e892f))
