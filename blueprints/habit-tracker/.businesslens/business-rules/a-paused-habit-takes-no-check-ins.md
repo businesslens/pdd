@@ -1,9 +1,8 @@
 ---
 appliesTo:
-  - type: capability
-    id: check-off-habit
-  - type: capability
-    id: pause-habit
+  - type: entity
+    id: check-in
+    effect: creates
 ---
 
 # A paused habit takes no check-ins

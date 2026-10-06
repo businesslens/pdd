@@ -5,8 +5,8 @@ availability: [ { place: tracker-web }, { place: tracker-mobile } ]
 
 # Habit pausing
 
-Sets a habit aside and brings it back. A paused habit is not due and takes no
-check-ins, and it keeps its schedule, history and streak until it is resumed.
+Sets an active habit aside. A paused habit is not due and takes no check-ins,
+and it keeps its schedule, history and streak until it is resumed.
 
 ## Intent
 

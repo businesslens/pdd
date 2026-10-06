@@ -20,12 +20,12 @@ steps:
       - { entity: suggested-adjustment, effect: reads, facts: [Proposed schedule] }
       - { entity: habit, effect: reads, facts: [Schedule] }
     contexts: { web: { place: tracker-web::weekly-reflection } }
-  - text: The Product explains that the suggestion no longer fits, and expires the suggested adjustment
+  - text: The Product explains that the suggestion no longer fits, and marks the suggested adjustment outdated
     kind: product
     actor: owner
     capability: accept-suggested-adjustment
     entities:
-      - { entity: suggested-adjustment, from: Proposed, to: Expired, facts: [] }
+      - { entity: suggested-adjustment, from: Proposed, to: Outdated, facts: [] }
     contexts: { web: { place: tracker-web::weekly-reflection } }
 ---
 
@@ -39,4 +39,4 @@ after the reflection was prepared.
 ## Outcome
 
 The Journey goal is not achieved: the habit keeps the schedule the Owner gave
-it, and the suggestion reads as expired.
+it, and the suggestion reads as outdated.

@@ -4,9 +4,9 @@ domain: reflections
 
 # Suggested adjustment
 
-A new schedule for one habit, proposed by a weekly reflection for the Owner to
-accept or decline. It proposes a schedule and nothing else: never a new habit,
-a pause or a deletion.
+A new schedule for one habit, drafted by a language model for a weekly
+reflection and kept for the Owner to accept or dismiss. It proposes a schedule
+and nothing else: never a new habit, a pause or a deletion.
 
 ## Information kept
 
@@ -24,11 +24,11 @@ Waiting for the Owner. The habit is unchanged.
 The Owner accepted it, and the habit follows the proposed schedule from that
 day.
 
-### Declined
+### Dismissed
 
-The Owner declined it. The habit is unchanged.
+The Owner dismissed it. The habit is unchanged.
 
-### Expired
+### Outdated
 
-No longer answerable, because the next reflection arrived or the habit changed
-before the Owner answered. The habit is unchanged.
+No longer fits, because the habit was changed, paused or deleted after it was
+drafted. The habit is unchanged.

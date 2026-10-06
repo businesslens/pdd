@@ -1,18 +1,17 @@
 ---
 id: habit-tracker
-summary: Define habits on a daily, chosen-day or weekly schedule, check them off, follow streaks and history, pause a habit without losing it, and optionally receive a weekly reflection whose suggestions change nothing until accepted.
+summary: Define habits on a daily, chosen-day or weekly schedule, check them off, follow their streaks, pause one without losing it, and read an optional weekly reflection.
 category: personal-productivity
-tags: [single-user, ai-assisted, beginner]
+tags: [single-user, ai-assisted]
 authors:
   - name: BusinessLens
 license: MIT
 languages: [en]
 limitations:
   - Habits are private to their one Owner. There is no sharing, social accountability or coaching.
-  - A habit is done or not done on a day. There are no quantities, timers, notes or habits to avoid.
+  - A habit is done or not done on a day, so a check-in holds nothing to edit; a wrong day is unchecked. There are no quantities, timers, notes or habits to avoid.
   - The Product sends no reminders or notifications; the Owner comes to it.
-  - Weekly reflections are read and answered on the web; the mobile application serves the daily loop.
-  - A reflection's summary is written with a language model and can misread the week. It only ever suggests a schedule, and nothing changes until the Owner accepts.
+  - A language model writes each weekly reflection's summary and drafts its suggested adjustment, and it can misread the week. The Owner decides every suggestion, and nothing changes until they accept it. While the model is unavailable, a reflection carries its consistency figures alone.
 references:
   - kind: research
     role: context
@@ -27,11 +26,12 @@ Owner defines each habit with a schedule — every day, on chosen weekdays, or a
 number of times a week — checks it off on the days they do it, and follows the
 streak and history it builds. A habit can be paused for a while and resumed
 with its history intact. An optional weekly reflection reads the week back and
-may suggest one schedule adjustment, which the Owner accepts or declines.
+may suggest one schedule adjustment, which the Owner accepts or dismisses.
 
 ## Intent
 
-Make a regular practice visible without turning a missed day into a failure.
-Streaks count only the days a habit was meant to happen, a pause keeps
-everything, and nothing the Product prepares on its own changes a habit: the
-Owner decides every schedule.
+People who set out to do something regularly tend to give up after a missed
+day, because most trackers count a rest day or a break as a failure. Here a
+streak counts only the days a habit was meant to happen, a pause keeps
+everything, and the Owner can make an over-ambitious schedule realistic
+without losing the record they built.

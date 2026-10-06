@@ -22,11 +22,11 @@ steps:
     entities:
       - { entity: habit, effect: reads, facts: [Schedule] }
     contexts: { web: { place: tracker-web::weekly-reflection } }
-  - text: The Product explains that the suggested adjustment no longer fits the habit, and expires it
+  - text: The Product explains that the suggested adjustment no longer fits the habit, and marks it outdated
     kind: product
     actor: owner
     entities:
-      - { entity: suggested-adjustment, from: Proposed, to: Expired, facts: [] }
+      - { entity: suggested-adjustment, from: Proposed, to: Outdated, facts: [] }
       - { entity: habit, effect: reads, facts: [] }
     contexts: { web: { place: tracker-web::weekly-reflection } }
   - text: The habit keeps the schedule and state the Owner gave it
@@ -37,7 +37,7 @@ steps:
     contexts: { web: { place: tracker-web::weekly-reflection } }
 ---
 
-# Reject an out-of-date suggestion
+# Reject an outdated suggestion
 
 ## Trigger
 
@@ -47,8 +47,8 @@ the reflection was prepared.
 ## Outcome
 
 Nothing about the habit changes, the Owner knows why, and the suggestion reads
-as expired.
+as outdated.
 
 ## Edge cases
 
-- The habit was deleted since → the weekly reflection shows the suggestion as expired and offers nothing to accept.
+- The habit was deleted since → the suggestion already reads as outdated, and the weekly reflection offers nothing to accept or dismiss.

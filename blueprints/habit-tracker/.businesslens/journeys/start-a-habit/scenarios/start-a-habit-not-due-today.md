@@ -15,7 +15,7 @@ steps:
   - text: The Product returns the Owner to Today, which does not list the new habit
     kind: product
     actor: owner
-    capability: check-off-habit
+    capability: create-habit
     entities:
       - { entity: habit, effect: reads, facts: [Schedule] }
     contexts: { web: { place: tracker-web::today }, mobile: { place: tracker-mobile::today } }

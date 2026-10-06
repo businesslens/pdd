@@ -11,5 +11,5 @@ entryPoints:
 One habit, opened to work with. It presents the habit's name and schedule, the
 day it started, whether it is active or paused, its current and best streak,
 and the history of days it was done. Here the Owner changes its name or
-schedule, checks off or takes back a day from the past week, pauses or resumes
+schedule, checks off or unchecks a day from the past week, pauses or resumes
 it, and deletes it.
