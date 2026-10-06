@@ -1,9 +1,8 @@
 ---
 appliesTo:
-  - type: capability
-    id: create-link
-  - type: capability
-    id: edit-link
+  - type: entity
+    id: link
+    facts: [Destination]
 ---
 
 # A destination is never a short address

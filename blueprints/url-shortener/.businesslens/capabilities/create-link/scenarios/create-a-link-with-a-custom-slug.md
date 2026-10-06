@@ -34,14 +34,14 @@ steps:
     contexts:
       web:
         place: shortener-web::dashboard::new-link
-  - text: The Product opens the new link and shows its short address, ready to hand out
+  - text: The Product shows the new link's short address in place, ready to copy and hand out
     kind: product
     actor: owner
     entities:
       - { entity: link, effect: reads, facts: [Slug, Destination, Expires at] }
     contexts:
       web:
-        place: shortener-web::dashboard::link-detail
+        place: shortener-web::dashboard::new-link
 ---
 
 # Create a link with a custom slug
