@@ -22,7 +22,7 @@ steps:
     actor: owner
     entities:
       - { entity: habit, effect: removes, from: Paused }
-      - { entity: check-in, effect: removes }
+      - { entity: check-in, effect: removes, with: habit }
     contexts: { web: { place: tracker-web::habit-detail }, mobile: { place: tracker-mobile::habit-detail } }
   - text: Nothing of it remains in the list of habits
     kind: condition

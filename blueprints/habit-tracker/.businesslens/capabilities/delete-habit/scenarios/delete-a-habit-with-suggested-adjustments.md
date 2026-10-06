@@ -22,11 +22,11 @@ steps:
     actor: owner
     entities:
       - { entity: habit, effect: removes, from: Active }
-      - { entity: check-in, effect: removes }
-      - { entity: suggested-adjustment, as: waiting, effect: removes, from: Proposed }
-      - { entity: suggested-adjustment, as: accepted, effect: removes, from: Accepted }
-      - { entity: suggested-adjustment, as: dismissed, effect: removes, from: Dismissed }
-      - { entity: suggested-adjustment, as: outdated, effect: removes, from: Outdated }
+      - { entity: check-in, effect: removes, with: habit }
+      - { entity: suggested-adjustment, as: waiting, effect: removes, from: Proposed, with: habit }
+      - { entity: suggested-adjustment, as: accepted, effect: removes, from: Accepted, with: habit }
+      - { entity: suggested-adjustment, as: dismissed, effect: removes, from: Dismissed, with: habit }
+      - { entity: suggested-adjustment, as: outdated, effect: removes, from: Outdated, with: habit }
     contexts: { web: { place: tracker-web::habit-detail }, mobile: { place: tracker-mobile::habit-detail } }
   - text: Nothing of it remains in the list of habits
     kind: condition
