@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. What either produces stays a draft until a person accepts it.
 - Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.
 - A Journey continues only where the product carries the same person on; something shown where they already are does not count.
+- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product.
 
 ## [0.25.1] - 2026-10-05
 
