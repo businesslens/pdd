@@ -40,7 +40,7 @@ A Member needs to know what the team decided on a question, and why.
 ## Outcome
 
 The Member reads the decision's outcome, rationale and final results beside the
-question it settled, and whether it started from a generated draft.
+question it settled, and whether it began as a generated draft.
 
 ## Edge cases
 

@@ -6,10 +6,10 @@ actors: [member]
 
 ## Goal
 
-A poll's owner wants the team's answer to their question kept as a decision the
-team can refer back to.
+The owner of a closed poll wants the team's answer kept as a decision the team
+can refer back to.
 
 ## Success criterion
 
-The poll is closed and its decision is recorded, readable by every Member in
-the decision log and on the poll.
+The poll's decision is recorded, readable by every Member in the decision log
+and on the poll.

@@ -25,7 +25,7 @@ steps:
         place: polls-web::poll
 ---
 
-# Keep working without a summary
+# Summarize while the language model is unavailable
 
 ## Trigger
 

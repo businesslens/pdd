@@ -10,7 +10,7 @@ appliesTo:
 
 Every summary and draft the Product generates with a language model is shown as
 generated, and only to the poll owner who asked for it. A recorded decision that
-started from a generated draft keeps saying so.
+began as a generated draft says so for good.
 
 ## Rationale
 

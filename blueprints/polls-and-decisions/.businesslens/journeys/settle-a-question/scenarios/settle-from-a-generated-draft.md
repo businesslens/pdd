@@ -4,21 +4,12 @@ result: achieved
 routes:
   web: Web
 steps:
-  - text: The Member closes an open poll they own and confirms
-    kind: actor
+  - text: The poll the Member owns has closed and has no decision yet
+    kind: condition
     actor: member
-    capability: close-poll
     entities:
-      - { entity: poll, from: Open, to: Closed, facts: [Closed at] }
-    contexts:
-      web:
-        place: polls-web::poll
-  - text: The Product shows the final results and invites the Member to record what the team decided
-    kind: product
-    actor: member
-    capability: close-poll
-    entities:
-      - { entity: poll, effect: reads, facts: [Tally] }
+      - { entity: poll, effect: reads, facts: [Closed at] }
+      - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
@@ -39,7 +30,7 @@ steps:
       - { entity: poll, effect: reads, facts: [Question, Tally] }
       - { entity: comment, effect: reads, facts: [Text] }
       - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
-  - text: The Product opens the draft for the Member, marked as generated
+  - text: The Product opens the draft for the Member, marked as generated and ready to edit
     kind: product
     actor: member
     capability: draft-decision
@@ -66,25 +57,26 @@ steps:
     contexts:
       web:
         place: polls-web::decision
-  - text: The decision is in the team's decision log
-    kind: condition
+  - text: The Product shows the decision as recorded and adds it to the team's decision log
+    kind: product
     actor: member
     capability: record-decision
     entities:
       - { entity: decision, effect: reads, facts: [Outcome, Recorded at] }
     contexts:
       web:
-        place: polls-web::decision-log
+        place: polls-web::decision
 ---
 
 # Settle from a generated draft
 
 ## Trigger
 
-The owner of an open poll has heard enough and wants the outcome on record.
+The owner of a closed poll wants the outcome on record and a first version
+written for them.
 
 ## Outcome
 
-The Journey goal is achieved: the poll is closed, and the decision the owner
-edited from a generated draft is recorded for the whole team, marked as
-having started from that draft.
+The Journey goal is achieved: the decision the owner edited from a generated
+draft is recorded for the whole team, shown as having begun as a generated
+draft.

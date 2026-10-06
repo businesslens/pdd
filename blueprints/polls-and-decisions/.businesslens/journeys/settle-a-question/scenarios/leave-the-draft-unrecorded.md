@@ -4,12 +4,12 @@ result: not-achieved
 routes:
   web: Web
 steps:
-  - text: The Member closes an open poll they own and confirms
-    kind: actor
+  - text: The poll the Member owns has closed and has no decision yet
+    kind: condition
     actor: member
-    capability: close-poll
     entities:
-      - { entity: poll, from: Open, to: Closed, facts: [Closed at] }
+      - { entity: poll, effect: reads, facts: [Closed at] }
+      - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
@@ -28,6 +28,15 @@ steps:
     capability: draft-decision
     entities:
       - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
+  - text: The Product opens the draft for the Member, marked as generated and ready to edit
+    kind: product
+    actor: member
+    capability: draft-decision
+    entities:
+      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
+    contexts:
+      web:
+        place: polls-web::decision
   - text: The Member leaves the draft without recording it
     kind: actor
     actor: member
@@ -40,7 +49,6 @@ steps:
   - text: The decision log shows no decision for the poll
     kind: condition
     actor: member
-    capability: browse-decisions
     entities:
       - { entity: decision, effect: reads, facts: [] }
       - { entity: poll, effect: reads, facts: [Question] }
@@ -53,11 +61,10 @@ steps:
 
 ## Trigger
 
-The owner closes a poll and gets a draft, but is not ready to put the outcome on
-record.
+The owner gets a generated draft for a closed poll but is not ready to put the
+outcome on record.
 
 ## Outcome
 
-The Journey goal is not achieved: the poll is closed, but its decision stays a
-draft only the owner can see, and the team has no decision to refer back to
-until the owner records it.
+The Journey goal is not achieved: the decision stays a draft only the owner can
+see, and the team has no decision to refer back to until the owner records it.
