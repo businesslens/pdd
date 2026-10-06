@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CLI:** The README in every Product Model tells any agent how to implement the model and change it, and which parts of the model the code must honor.
 - **Docs:** The development loop and the Get started guides now show asking your agent to implement, in phases, with verify checking each part.
 
+### Fixed
+
+- **Skills:** Telling your agent to "take your recommendation" now settles the open questions without approving the change: the skills still show you the complete change and write the model only after you approve it.
+
 ## [0.27.0] - 2026-10-06
 
 ### Changed

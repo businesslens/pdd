@@ -139,6 +139,10 @@ Read before authoring:
   preserve established constraints, refusal and failure behavior, and material
   unresolved questions or missing evidence.
 - Write no placeholder resources and claim no certainty beyond inspected source.
+- Approval is explicit and covers the delta you presented. A reply that hands
+  you the open questions ("take your recommendation", "you decide") settles
+  those questions; it does not approve the change. Present the complete delta
+  with the answers applied and wait for approval before writing.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.
 - Never stage, commit, submit, or contribute the model.

@@ -131,6 +131,14 @@ describe('public workflow contract', () => {
     ])
   })
 
+  it('never treats delegated decisions as approval of a model write', () => {
+    for (const name of publicSkills()) {
+      const source = normalizedSkill(name)
+      expect(source, name).toContain('settles those questions; it does not approve the change')
+      expect(source, name).toContain('wait for approval before writing')
+    }
+  })
+
   it('forbids workflow writes to repository-owned instructions', () => {
     for (const name of publicSkills()) {
       const source = skill(name)
