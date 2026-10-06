@@ -1,9 +1,11 @@
 ---
 scope: The intended behavior of the Content Feed Reader Product.
-exclusions: []
+exclusions:
+  - description: "Accounts: signing up, signing in and account settings."
+    paths: []
 method: Product design authored as a source-free teaching Blueprint.
 covered:
-  - description: Feed subscription, entry collection and reader organization of saved content.
+  - description: Following feeds, collecting their items, reading and saving them, and curating and publishing collections.
     paths: []
 unmapped: []
 limitations: []

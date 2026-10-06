@@ -6,8 +6,9 @@ actors: [reader]
 
 ## Goal
 
-A Reader wants a chosen source to contribute new items to their private library.
+A Reader wants to start reading a source they have just found.
 
 ## Success criterion
 
-The source is followed and its available new items arrive in the Reader's library.
+The source is followed, its items have arrived in the Reader's library, and the
+Reader has opened one of them.

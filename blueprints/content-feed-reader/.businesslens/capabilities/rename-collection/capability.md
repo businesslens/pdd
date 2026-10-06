@@ -3,7 +3,7 @@ domain: collections
 availability: [{ place: reader-web::personal-library }]
 ---
 
-# Collection naming
+# Collection renaming
 
 Renames an owned collection without changing its contents, order, or visibility.
 

@@ -29,8 +29,9 @@ steps:
         place: reader-mobile::personal-library::unread-library
       mobile-source-focused:
         place: reader-mobile::source-focused-library::unread-library
-  - text: The item remains available for an explicit track-reading-state or saving decision
+  - text: The item stays unread until the Reader marks it read or saves it
     kind: condition
+    actor: reader
     entities:
       - { entity: item, effect: reads, facts: [] }
     contexts:

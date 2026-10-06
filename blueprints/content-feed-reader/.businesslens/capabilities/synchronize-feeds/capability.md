@@ -11,9 +11,10 @@ availability: [ { place: reader-web::personal-library }, { place: reader-mobile:
 # Feed synchronization
 
 Collects new items from the Reader's followed syndicated feeds into their
-private library. The Product reads each followed feed itself — when the Reader
-refreshes their sources, and on a recurring schedule the Product owns — and
-keeps earlier library items when a feed cannot be read.
+private library and keeps each source's record of whether it can still be read.
+The Product reads each followed feed itself — when the Reader refreshes their
+sources, and on a recurring schedule the Product owns — and keeps earlier
+library items when a feed cannot be read.
 
 ## Intent
 

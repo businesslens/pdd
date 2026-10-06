@@ -17,5 +17,5 @@ sharing. Nowhere else in the workspace presents it.
 
 ## Rationale
 
-The address of an unlisted collection is a way back in that only its owner
+The address of an unpublished collection is a way back in that only its owner
 should hold until they publish it again.

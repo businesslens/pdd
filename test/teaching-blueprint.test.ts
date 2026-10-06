@@ -17,11 +17,11 @@ describe('Content Feed Reader teaching Blueprint', () => {
       screens: 18,
       domains: 3,
       entities: 6,
-      capabilities: 11,
-      capabilityScenarios: 34,
-      journeys: 4,
-      journeyScenarios: 8,
-      businessRules: 8
+      capabilities: 19,
+      capabilityScenarios: 36,
+      journeys: 2,
+      journeyScenarios: 3,
+      businessRules: 13
     })
     expect(Object.values(result.counts).every(count => count >= 2)).toBe(true)
   })
@@ -37,11 +37,11 @@ describe('Content Feed Reader teaching Blueprint', () => {
 
     expect(results).toEqual(new Set(['achieved', 'not-achieved']))
 
-    const catchUp = model.journeyScenarios.filter(scenario => scenario.journey === 'catch-up-on-unread')
-    const achieved = new Set(catchUp
+    const followSource = model.journeyScenarios.filter(scenario => scenario.journey === 'follow-and-receive-from-a-source')
+    const achieved = new Set(followSource
       .filter(scenario => scenario.result === 'achieved')
       .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : [])))
-    const failureOnly = new Set(catchUp
+    const failureOnly = new Set(followSource
       .filter(scenario => scenario.result === 'not-achieved')
       .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : []))
       .filter(capability => !achieved.has(capability)))

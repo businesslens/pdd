@@ -72,6 +72,31 @@ steps:
         place: reader-mobile::personal-library::source-list
       mobile-source-focused:
         place: reader-mobile::source-focused-library::source-list
+  - text: The Product collects the items the feed currently offers into the unread backlog
+    kind: product
+    actor: reader
+    entities:
+      - { entity: item, effect: creates, to: Unread, facts: [ Title, Published at ] }
+    contexts:
+      web:
+        place: reader-web::personal-library::add-source
+      mobile:
+        place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
+  - text: The Product takes the Reader to the new source's unread items
+    kind: product
+    actor: reader
+    entities:
+      - { entity: source, effect: reads, facts: [ Name ] }
+      - { entity: item, effect: reads, facts: [ Title, Published at ] }
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-backlog
 ---
 
 # Follow a source by feed address
@@ -83,4 +108,10 @@ library.
 
 ## Outcome
 
-The source is followed and future synchronization may add its items to the Reader's library.
+The source is followed, what it currently offers is in the Reader's unread
+backlog, and the Reader is looking at those items; later synchronization adds
+whatever it publishes next.
+
+## Edge cases
+
+- The feed currently offers no items → the Reader is taken to the new source's items, which say nothing has been published yet.
