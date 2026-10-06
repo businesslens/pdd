@@ -45,23 +45,24 @@ ideate → implement ⇄ verify
    ▲                     │
    └──── next change ────┘
 
-implement: your agent, slice by slice, your usual way
+implement: your agent, your way, slice by slice
 ```
 ::
 
-You talk to your agent; it picks the skill. You don't have to name one.
+Ideate and verify with BusinessLens. Your own agent implements, your way.
 
-- **Ideate**: ask for a change, such as "add guest checkout to the product".
-  [`businesslens-ideate`](./skill-businesslens-ideate.md) decides it with you
-  and records it in the Product Model.
-- **Implement**: ask your agent to build it.
-  [`businesslens-verify`](./skill-businesslens-verify.md) splits the work into
-  slices, and your agent implements each one your usual way: plan mode, an
+- **Ideate** with [`/businesslens-ideate`](./skill-businesslens-ideate.md):
+  Decide the next change and record it in the product model.
+- **Implement** with your agent, your way: Slice by slice, with plan mode, an
   SDD tool, or freestyle.
-- **Verify**: each slice is checked against the model before the next one
-  starts, until the code and the Product Model agree. Run
-  `/businesslens-verify` yourself whenever you want to be sure, for example
-  before a release.
+- **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
+  Check and improve the code and product model until they agree.
+
+You don't have to name a skill. Ask your agent for a change, such as "add
+guest checkout to the product", and ideate decides it with you. Ask it to build,
+and verify splits the work into slices: your agent implements each one, and
+verify checks it before the next starts. Run `/businesslens-verify` yourself
+whenever you want to be sure, for example before a release.
 
 Ideate changes the model only with your approval. Your agent changes the code
 and never the model. A product question that comes up while building comes

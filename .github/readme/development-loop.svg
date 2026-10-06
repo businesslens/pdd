@@ -28,5 +28,5 @@ text{text-anchor:middle;font-family:Inter,-apple-system,BlinkMacSystemFont,"Sego
 <text class="mark" x="301.2" y="242">PDD</text>
 <circle class="dot" cx="300" cy="148" r="3.8"/>
 <text class="h" x="160" y="362">Verify</text><rect class="pill" x="60.0" y="376" width="200" height="30" rx="8"/><text class="cmd" x="160" y="395.5">/businesslens-verify</text><text class="note" x="160" y="430">Check and improve the code and</text><text class="note" x="160" y="450">product model until they agree.</text>
-<text class="h" x="440" y="362">Implement</text><rect class="own" x="340.0" y="376" width="200" height="30" rx="8"/><text class="ownt" x="440" y="395.5">your agent, your way</text><text class="note" x="440" y="430">Build each slice: plan mode,</text><text class="note" x="440" y="450">an SDD tool, or freestyle.</text>
+<text class="h" x="440" y="362">Implement</text><rect class="own" x="340.0" y="376" width="200" height="30" rx="8"/><text class="ownt" x="440" y="395.5">your agent, your way</text><text class="note" x="440" y="430">Slice by slice, with plan mode,</text><text class="note" x="440" y="450">an SDD tool, or freestyle.</text>
 </svg>
