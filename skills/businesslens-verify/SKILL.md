@@ -176,13 +176,15 @@ question only where existing code contradicts the model.
     **Slices and phases** section says. Take the pace from the request:
     - **in phases**, the default: implement one phase, then check each of its
       slices;
-    - **one slice at a time**, when the user asks for it: implement one slice,
-      then check it;
-    - **in one go**, when the user asks for it: implement every slice, then
-      check them all.
+    - **one slice at a time**, when the user asks for it ("one slice at a
+      time", "slice by slice"): implement one slice, then check it;
+    - **in one go**, when the user asks for it ("in one go", "all at once",
+      "without phases", "in a single pass"): implement every slice, then check
+      them all.
 
     Before writing any code, post the plan as one short list: each phase with
-    its slices, and the pace. Wait for approval of the plan only when the user
+    its slices, and the pace. Do this at every pace, including in one go,
+    where the list is the slices in order. Wait for approval of the plan only when the user
     asked to review it. A large or unbuilt model is not a reason to change the
     pace: without a request for one go, never implement past the current phase.
 11. Hand the next phase, slice, or the whole plan, as the pace says, to the

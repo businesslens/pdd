@@ -52,5 +52,7 @@ were given.
 4. Ask your agent to implement it: "implement our PDD".
    [Verify](./skill-businesslens-verify.md) plans the work in phases: your agent
    implements each phase your usual way, and verify checks it before the next.
+   Say "in one go" to skip phases, or "one slice at a time" to go slower; see
+   [Choose the pace](./skill-businesslens-verify.md#choose-the-pace).
    Run `/businesslens-verify` yourself whenever you want to be sure.
 

@@ -51,8 +51,8 @@ the skill.
 | Say | What happens | Use it when |
 | --- | --- | --- |
 | Nothing, or "in phases" | One phase at a time, each slice checked before the next phase (the default) | Most work: a new product, a Blueprint, a large change |
-| "One slice at a time" | One slice, checked, then the next | You want to review each part, or the model is new to you |
-| "In one go" | Every slice at once, then every slice checked | A small change, or you want the fastest run |
+| "One slice at a time" or "slice by slice" | One slice, checked, then the next | You want to review each part, or the model is new to you |
+| "In one go", "all at once" or "without phases" | Every slice at once, then every slice checked | A small change, or you want the fastest run |
 
 The pace changes how much your agent implements before a check, never what is
 checked: every slice is checked against the model either way.

@@ -76,9 +76,14 @@ describe('public workflow contract', () => {
     expect(source).toContain('**in phases**, the default')
     expect(source).toContain('**one slice at a time**, when the user asks for it')
     expect(source).toContain('**in one go**, when the user asks for it')
+    // The phrasings the docs' pace table promises.
+    for (const phrase of ['"slice by slice"', '"all at once"', '"without phases"', '"in a single pass"']) {
+      expect(source).toContain(phrase)
+    }
     expect(source).toContain('inspect each slice it covered')
     // The plan is a visible checkpoint, and phases hold even on a large model.
     expect(source).toContain('Before writing any code, post the plan as one short list')
+    expect(source).toContain('Do this at every pace, including in one go')
     expect(source).toContain('never implement past the current phase')
     expect(source).toContain('Start the next phase only when every slice of this one is aligned or reported blocked')
     expect(source).toContain('never settles a product question in code')

@@ -32,8 +32,11 @@ Use this door when there is no code yet, or none worth describing.
 4. Ask your agent to implement it: "implement it", or "implement our PDD".
    [Verify](./skill-businesslens-verify.md) plans the work in phases, your
    agent implements each phase your usual way (plan mode, an SDD tool, or
-   freestyle), and verify checks it before the next. Questions the model
-   doesn't answer come back to you. BusinessLens never writes code itself.
+   freestyle), and verify checks it before the next. Say "in one go" to skip
+   phases, or "one slice at a time" to go slower; see
+   [Choose the pace](./skill-businesslens-verify.md#choose-the-pace). Questions
+   the model doesn't answer come back to you. BusinessLens never writes code
+   itself.
 5. Run a check yourself whenever you want to be sure, for example before a
    release:
 
