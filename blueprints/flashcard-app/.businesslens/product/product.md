@@ -9,8 +9,8 @@ license: MIT
 languages: [en]
 limitations:
   - Cards are plain front-and-back text. There are no images, audio, or other kinds of card.
-  - A shared deck opens only for signed-in Learners, who may copy it but never edit it. There is no anonymous preview, public catalog of decks, or commenting.
-  - A language model drafts card proposals, only when the Learner asks and only from the notes they paste. What it drafts can be wrong, and only the Learner decides what reaches a deck; while the model is unavailable nothing is drafted, and cards are still added by hand.
+  - A shared deck opens only for other Learners, who may copy it but never edit it. There is no anonymous preview, public catalog of decks, or commenting.
+  - A language model drafts card proposals from the notes a Learner pastes and may be wrong. The Learner decides what reaches a deck, and everything else works while the model is unavailable.
 references:
   - kind: research
     role: context

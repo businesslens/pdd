@@ -11,8 +11,8 @@ permits:
 
 # Only the owner reads a deck that is not shared
 
-A deck is read by its owner always, and by other signed-in Learners only while
-it is shared. Once its owner stops sharing it, its share link presents nothing.
+A deck is read by its owner always, and by other Learners only while it is
+shared. Once its owner stops sharing it, its share link presents nothing.
 
 ## Rationale
 

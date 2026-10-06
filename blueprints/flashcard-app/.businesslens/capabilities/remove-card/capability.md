@@ -5,7 +5,8 @@ availability: [{ place: flashcards-web }]
 
 # Card removal
 
-Removes a card, and the progress made on it, from an owned deck.
+Removes a card, and the progress made on it, from an owned deck for good, once
+the Learner confirms.
 
 ## Intent
 
