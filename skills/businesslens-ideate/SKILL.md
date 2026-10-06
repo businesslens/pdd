@@ -56,7 +56,7 @@ Read before authoring:
    surfaces are supported Interfaces); then **Granularity** (one Capability or
    several; a family that could be one Entity or several, quoted with both
    counts; a Journey or a plausible sequence; a Business Rule or one
-   Capability's prose); then **Coverage** (how many Scenarios each Capability
+   Capability's prose); then **Acceptance** (how many Scenarios each Capability
    needs, and where the line falls between a Scenario and an `## Edge cases`
    bullet); then **Naming** (the Product's own word for each thing now
    settled). Quick mode keeps its three batched questions.

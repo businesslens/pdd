@@ -95,7 +95,7 @@ the diff.
    calls no inspection settles — one Capability or several, one Entity or a
    family, what a thing is called. Put those to the author **before drafting**,
    in rounds, and wait: Boundary, then Granularity quoting both counts, then
-   Coverage, then Naming. Only what inspection cannot answer; finding facts
+   Acceptance, then Naming. Only what inspection cannot answer; finding facts
    stays your job. With no author reachable, Capability splits, Journeys and
    Domains follow their tests in the format reference; elsewhere split rather
    than collapse, omit rather than assert, and carry each unanswered question

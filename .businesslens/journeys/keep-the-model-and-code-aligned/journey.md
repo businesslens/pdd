@@ -3,7 +3,7 @@ actors: [developer, ai-agent]
 references:
   - kind: doc
     role: context
-    target: docs/the-loop.md
+    target: docs/index.md
 ---
 
 # Keep the model and the code aligned

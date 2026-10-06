@@ -15,7 +15,8 @@ repository's instructions, documentation, entry points, handlers, persistence,
 integrations, configuration, and tests, traces observable behavior end to end,
 and proposes the Interfaces, the things the product keeps and the ones that act
 on it, the Capabilities and Scenarios with what each Step does to those things,
-the Rules including who may act, and the coverage that the evidence supports.
+the Rules including who may act, and the coverage that names, at folder level,
+the code the model accounts for.
 
 ## Intent
 

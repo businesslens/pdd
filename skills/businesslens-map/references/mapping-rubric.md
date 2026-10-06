@@ -40,7 +40,7 @@ primary path, refusals of who may act, invalid input, conflicts, and external
 failures only where the Product distinguishes them. These are cases, not kinds:
 record each under a `kind` that `taxonomies.yaml` declares — a refusal of who
 may act is `validation`, a conflict or an unavailable dependency is `edge`. Where the line falls between a Scenario
-and an `## Edge cases` bullet is the author's call and belongs in the Coverage
+and an `## Edge cases` bullet is the author's call and belongs in the Acceptance
 round.
 
 ## Entity granularity

@@ -17,8 +17,9 @@ references:
 Compiles the current Product Model into a single portable Product Report — a
 Blueprint — and writes it as a generated file the repository ignores. The report
 carries product meaning, relationships, Contexts, Scenarios with what each Step
-does, Rules with who may act, and coverage, and drops everything that only
-navigated the repository it came from.
+does, and Rules with who may act. It drops everything that only navigated the
+repository it came from, coverage included, since coverage describes that
+repository's code.
 
 ## Intent
 

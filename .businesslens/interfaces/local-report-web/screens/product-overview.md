@@ -34,14 +34,14 @@ or that it is live, sits with it.
 
 ### Coverage
 
-How much of the Product the model covers, read by location: the declared
+Which of the repository's code the model accounts for, read by location: the
 Scope and, when recorded, the Method note, then four cards counting Covered,
 Exclusions, Unmapped and Limitations, with no status or derived completeness
 badge. Selecting a card filters the tree. Each recorded path appears once in a
 tree marked with the categories recorded at exactly that path; a folder never
 inherits meaning from beneath it. Search matches paths, never prose, and a
-path's statements read in place. Statements with no known location stay
-readable below the tree.
+path's statements read in place. A model tied to no code yet shows one
+statement saying so instead.
 
 ### Product references
 

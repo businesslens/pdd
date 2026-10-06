@@ -17,7 +17,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The AI agent presents the proposed model, its declared scope, explicit exclusions, known unmapped behavior, limitations, and every judgement that could defensibly have gone the other way
+  - text: The AI agent presents the proposed model, the code it accounts for, the code it excludes, the code still unmodeled, limitations, and every judgement that could defensibly have gone the other way
     kind: actor
     actor: ai-agent
     entities: []
@@ -31,7 +31,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product writes the complete model layout, records represented behavior and known gaps, and reports the structural check
+  - text: The Product writes the complete model layout, records the code the model accounts for and the code it does not, and reports the structural check
     kind: product
     actor: developer
     entities:
@@ -49,8 +49,9 @@ A repository with established code and no `.businesslens/` needs one.
 
 ## Outcome
 
-The repository holds an approved Product Model whose coverage states what was
-modeled, its approved exclusions and remaining gaps. Supporting References name
+The repository holds an approved Product Model whose coverage names the code it
+accounts for, the code excluded as not product behavior, and the code still
+unmodeled. Supporting References name
 the evidence for modeled behavior. The repository was never executed.
 
 ## Edge cases
@@ -59,4 +60,4 @@ the evidence for modeled behavior. The repository was never executed.
 - Documentation is treated as a lead; a claim it makes is confirmed against implementation before it enters the model.
 - What each observable act does to the things the repository keeps is named on its Step — created, changed with the states it leaves and lands in, removed, or read — so a thing with no Step touching it is a finding, not a silence.
 - An authorization check in the code becomes a grant on a Business Rule, never a sentence inside a Scenario.
-- Inspection worklists stay temporary; the model retains product meaning, supporting References, and material Coverage gaps or limitations.
+- Inspection worklists stay temporary; the model retains product meaning, supporting References, and coverage naming the code it accounts for, at folder level.

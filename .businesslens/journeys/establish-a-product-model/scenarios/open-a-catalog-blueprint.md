@@ -18,7 +18,7 @@ steps:
     actor: developer
     capability: pull-blueprint
     entities:
-      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning] }
       - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       catalog:

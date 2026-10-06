@@ -21,7 +21,7 @@ steps:
   - text: The Product writes the report to the model's generated build location and names the file
     kind: product
     entities:
-      - { entity: blueprint, effect: creates, to: Exported, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: blueprint, effect: creates, to: Exported, facts: [Schema version, Product identity, Product meaning] }
     contexts:
       terminal:
         place: businesslens-cli

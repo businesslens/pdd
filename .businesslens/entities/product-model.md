@@ -49,11 +49,11 @@ resolve this directory before acting on it; installing skills does not require
 one. Only the Developer may authorize its
 creation or changes. Whether one exists at all is not a state it is in: a
 repository with no `.businesslens/` has no Product Model to have one. Its
-declared coverage is a claim it carries, authored with it and moved with it,
-not a state anything here moves it through.
+coverage says which of the repository's code it accounts for; a model decided
+before any code exists has empty coverage until a mapping records some.
 
 ## Information kept
 
 - **Product** — which Product it describes, with that Product's identity and attribution
-- **Coverage** — the declared scope, and the covered behavior, approved exclusions, unmapped behavior and limitations, each at the paths it names
-- **Method** — the short note on how the model was produced
+- **Coverage** — which of the repository's code the model accounts for: covered code areas, code excluded as not product behavior, code with unmodeled behavior, and code whose behavior could not be established, each at the folders it names; empty when the model is tied to no code
+- **Method** — the short note on how its code was inspected; empty with empty coverage

@@ -15,7 +15,7 @@ steps:
     kind: product
     entities:
       - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
-      - { entity: blueprint, effect: creates, to: Exported, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: blueprint, effect: creates, to: Exported, facts: [Schema version, Product identity, Product meaning] }
     contexts:
       terminal:
         place: businesslens-cli

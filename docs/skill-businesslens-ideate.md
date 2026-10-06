@@ -28,7 +28,7 @@ behavior nobody has described.
    is for, which surfaces are supported [Interfaces](./interfaces.md)), then
    **granularity**, such as whether a family of things is one
    [Entity](./entities.md) or several, quoted with both counts; then
-   **coverage**, which cases each [Capability](./capabilities.md) needs; then
+   **acceptance**, which cases each [Capability](./capabilities.md) needs; then
    **naming**, the product's own word for each thing.
 2. **The proposed change.** Every resource added, changed or removed, each
    Capability's Scenarios, the implementation work it implies, and any open

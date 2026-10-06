@@ -11,7 +11,7 @@ steps:
     contexts:
       local:
         place: local-report-web::product-overview
-  - text: The Developer selects Coverage to read what the model covers, by path
+  - text: The Developer selects Coverage to read which code the model accounts for, by path
     kind: actor
     actor: developer
     entities:

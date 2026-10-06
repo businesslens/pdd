@@ -27,7 +27,7 @@ steps:
     actor: developer
     capability: decide-intended-behavior
     entities:
-      - { entity: product-model, effect: changes, facts: [Coverage, Method] }
+      - { entity: product-model, effect: changes, facts: [] }
     contexts:
       branch:
         place: agent-skills

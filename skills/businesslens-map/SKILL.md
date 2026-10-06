@@ -90,7 +90,7 @@ Read before authoring:
      family of candidates that could be one Entity or several, quoted with both
      counts; a goal that could be a Journey or a merely plausible sequence; a
      constraint that could be a Business Rule or one Capability's prose.
-   - **Coverage** — once the Capability set is settled, how many Scenarios
+   - **Acceptance** — once the Capability set is settled, how many Scenarios
      each Capability needs and where the line falls between a Scenario and an
      `## Edge cases` bullet; and availability wherever you would offer a
      Capability on two Interfaces because one implementation serves both.
