@@ -1,5 +1,5 @@
 ---
-domain: rsvps
+domain: guest-list
 availability: [{ place: rsvp-web::hosting }]
 ---
 

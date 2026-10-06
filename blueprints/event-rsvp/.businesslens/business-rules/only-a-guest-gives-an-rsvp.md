@@ -4,7 +4,7 @@ appliesTo:
     id: rsvp
     effect: creates
 permits:
-  - actors: [guest]
+  - related: [{ verb: gives, entity: guest }]
 ---
 
 # Only a guest gives an RSVP

@@ -1,5 +1,4 @@
 ---
-domain: rsvps
 availability: [{ place: rsvp-web::hosting }, { place: rsvp-web::responding }]
 ---
 
