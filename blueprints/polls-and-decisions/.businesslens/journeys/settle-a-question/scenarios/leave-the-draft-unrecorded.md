@@ -22,27 +22,29 @@ steps:
     contexts:
       web:
         place: polls-web::poll
-  - text: The Product generates a draft decision with a language model
+  - text: The Product sends the poll's question, final results and comments to a language model
     kind: product
     actor: member
     capability: draft-decision
     entities:
-      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
-  - text: The Product opens the draft for the Member, marked as generated and ready to edit
+      - { entity: poll, effect: reads, facts: [Question, Tally] }
+      - { entity: comment, effect: reads, facts: [Text] }
+  - text: The Product opens the poll's decision with the returned outcome and rationale filled in, marked as generated and not yet saved
     kind: product
     actor: member
     capability: draft-decision
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
+      - { entity: decision, effect: reads, facts: [] }
+      - { entity: poll, effect: reads, facts: [Question, Tally] }
     contexts:
       web:
         place: polls-web::decision
-  - text: The Member leaves the draft without recording it
+  - text: The Member leaves the decision without recording it
     kind: actor
     actor: member
     capability: record-decision
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale] }
+      - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::decision
@@ -66,5 +68,6 @@ outcome on record.
 
 ## Outcome
 
-The Journey goal is not achieved: the decision stays a draft only the owner can
-see, and the team has no decision to refer back to until the owner records it.
+The Journey goal is not achieved: the generated draft is discarded, nothing of
+it is kept, and the team has no decision to refer back to until the owner writes
+and records one.

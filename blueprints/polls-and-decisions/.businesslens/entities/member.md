@@ -17,7 +17,8 @@ relations:
 
 A person on the team. Any Member can put a question to the team, vote on and
 discuss its open polls, and read its decisions; the Member who creates a poll
-owns it and is the one who closes it and records its decision.
+owns it and is the one who closes it, deletes it before anyone votes, and
+records its decision.
 
 ## Information kept
 

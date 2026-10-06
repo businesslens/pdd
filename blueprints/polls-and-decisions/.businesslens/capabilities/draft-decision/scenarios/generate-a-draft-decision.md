@@ -26,16 +26,12 @@ steps:
     entities:
       - { entity: poll, effect: reads, facts: [Question, Tally] }
       - { entity: comment, effect: reads, facts: [Text] }
-  - text: The Product keeps the returned outcome and rationale as a draft decision
+  - text: The Product opens the poll's decision with the returned outcome and rationale filled in, marked as generated and not yet saved
     kind: product
     actor: member
     entities:
-      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
-  - text: The Product opens the draft for the Member, marked as generated and ready to edit
-    kind: product
-    actor: member
-    entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
+      - { entity: decision, effect: reads, facts: [] }
+      - { entity: poll, effect: reads, facts: [Question, Tally] }
     contexts:
       web:
         place: polls-web::decision
@@ -50,10 +46,10 @@ them.
 
 ## Outcome
 
-A draft decision for the poll exists that only its owner can see, with the final
-results kept beside a generated outcome and rationale. The owner is on the
-draft, ready to edit and record it.
+The owner is on the poll's decision with a generated outcome and rationale to
+edit beside the final results, seen by nobody else. Nothing is kept until they
+record it.
 
 ## Edge cases
 
-- The owner already has a draft for the poll → the Product opens that draft instead of generating another.
+- The owner leaves without recording → the draft is discarded, and the poll offers to draft again.

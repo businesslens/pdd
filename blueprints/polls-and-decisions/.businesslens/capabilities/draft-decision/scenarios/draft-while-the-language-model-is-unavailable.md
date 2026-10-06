@@ -15,7 +15,7 @@ steps:
   - text: The language model cannot be reached or returns nothing usable
     kind: condition
     entities: []
-  - text: The Product tells the Member no draft was made and offers to start a blank decision instead
+  - text: The Product tells the Member no draft was made and offers to write the decision themselves
     kind: product
     actor: member
     entities:
@@ -34,5 +34,5 @@ the Product calls is unavailable.
 
 ## Outcome
 
-No decision is created, the owner knows why, and they can still start a blank
-decision for the poll.
+No draft is made, the owner knows why, and they can still write the decision
+themselves.

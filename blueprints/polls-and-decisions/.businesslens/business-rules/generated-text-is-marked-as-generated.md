@@ -9,8 +9,9 @@ appliesTo:
 # Generated text is marked as generated
 
 Every summary and draft the Product generates with a language model is shown as
-generated, and only to the poll owner who asked for it. A recorded decision that
-began as a generated draft says so for good.
+generated, and only to the poll owner who asked for it. A generated draft is
+never kept on its own: it only fills the owner's decision until they record it
+or leave, and a decision recorded from one says so for good.
 
 ## Rationale
 

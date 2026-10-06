@@ -45,4 +45,3 @@ question it settled, and whether it began as a generated draft.
 ## Edge cases
 
 - The team has recorded no decision yet → the log says so.
-- A decision is still a draft → it is not listed for anyone but its poll's owner, and not even for them in the log.

@@ -3,20 +3,36 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Member opens the draft decision for a poll they own
+  - text: The poll the Member owns has closed and has no decision yet
+    kind: condition
+    actor: member
+    entities:
+      - { entity: poll, effect: reads, facts: [Closed at] }
+      - { entity: decision, effect: reads, facts: [] }
+    contexts:
+      web:
+        place: polls-web::poll
+  - text: The Member chooses to write the decision themselves
     kind: actor
     actor: member
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
-      - { entity: poll, effect: reads, facts: [Question] }
+      - { entity: decision, effect: reads, facts: [] }
+    contexts:
+      web:
+        place: polls-web::poll
+  - text: The Product opens the poll's empty decision with the question and final results beside it
+    kind: product
+    actor: member
+    entities:
+      - { entity: decision, effect: reads, facts: [] }
+      - { entity: poll, effect: reads, facts: [Question, Tally] }
     contexts:
       web:
         place: polls-web::decision
-  - text: The Member edits the outcome and rationale until they say what was decided
+  - text: The Member writes the outcome and rationale
     kind: actor
     actor: member
-    entities:
-      - { entity: decision, facts: [Outcome, Rationale] }
+    entities: []
     contexts:
       web:
         place: polls-web::decision
@@ -24,7 +40,7 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: decision, from: Draft, to: Recorded, facts: [Recorded at] }
+      - { entity: decision, effect: creates, facts: [Outcome, Rationale, Final results, Generated draft, Recorded at] }
     contexts:
       web:
         place: polls-web::decision
@@ -33,7 +49,6 @@ steps:
     actor: member
     entities:
       - { entity: decision, effect: reads, facts: [Outcome, Recorded at] }
-      - { entity: poll, effect: reads, facts: [Question] }
     contexts:
       web:
         place: polls-web::decision
@@ -43,15 +58,15 @@ steps:
 
 ## Trigger
 
-The poll's owner is satisfied that the draft says what the team decided and
-why.
+The owner of a closed poll is ready to say what the team decided and why, in
+their own words.
 
 ## Outcome
 
-The decision is recorded and never changes again. Every Member can read it in
-the decision log and on its poll, and it shows whether it began as a generated
-draft.
+The decision is recorded, with the final results kept on it and nothing marked
+as generated, and never changes again. Every Member can read it in the decision
+log and on its poll.
 
 ## Edge cases
 
-- The owner leaves without recording → the draft stays private to them, unchanged, and the team sees no decision yet.
+- The owner leaves without recording → nothing is kept, and the team sees no decision yet.
