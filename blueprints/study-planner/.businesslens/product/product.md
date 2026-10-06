@@ -8,11 +8,11 @@ authors:
 license: MIT
 languages: [en]
 limitations:
-  - Personal and single-user. There are no study groups, tutors, classes or shared schedules.
+  - A plan belongs to one Student; there are no study groups, tutors, classes or shared schedules.
   - The planner does not read from or write to outside calendars, and sends no reminders.
-  - Bring your own AI agent; the Product does not include one.
   - Study plans are built from the Student's own topic estimates and weekly availability. The planner never judges what the Student has learned or how hard a topic is.
-  - Logged study is never edited or cancelled; it goes only when its goal is deleted.
+  - Logged study is never edited; a session logged by mistake is deleted and logged again.
+  - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research
     role: context

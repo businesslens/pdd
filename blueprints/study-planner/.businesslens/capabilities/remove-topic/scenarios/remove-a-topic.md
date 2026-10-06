@@ -12,30 +12,39 @@ steps:
     contexts:
       web:
         place: planner-web::goal-detail
-  - text: The Product asks the Student to confirm, and says how many upcoming planned sessions will be cancelled with it
+  - text: The Product asks the Student to confirm, and says how many planned sessions are cancelled and how many hours of logged study go with the topic for good
     kind: product
     actor: student
     entities:
       - { entity: topic, effect: reads, facts: [] }
-      - { entity: study-session, effect: reads, facts: [] }
+      - { entity: study-session, as: planned, effect: reads, facts: [] }
+      - { entity: study-session, as: logged, effect: reads, facts: [Logged minutes] }
     contexts:
       web:
         place: planner-web::goal-detail
   - text: The Student confirms
     kind: actor
     actor: student
-    entities:
-      - { entity: topic, effect: removes }
-      - { entity: study-session, effect: removes, from: Planned }
+    entities: []
     contexts:
       web:
         place: planner-web::goal-detail
-  - text: Sessions already logged stay in the history and keep counting toward the goal's logged hours
+  - text: The Product removes the topic with its planned and logged sessions for good
+    kind: product
+    actor: student
+    entities:
+      - { entity: topic, effect: removes }
+      - { entity: study-session, as: planned, effect: removes, from: Planned }
+      - { entity: study-session, as: logged, effect: removes, from: Logged }
+    contexts:
+      web:
+        place: planner-web::goal-detail
+  - text: The goal's progress no longer counts the topic's estimate or its logged hours
     kind: condition
     actor: student
     entities:
-      - { entity: study-session, effect: reads, facts: [Logged minutes] }
       - { entity: goal, effect: reads, facts: [] }
+      - { entity: topic, effect: reads, facts: [Estimated hours] }
     contexts:
       web:
         place: planner-web::goal-detail
@@ -49,8 +58,9 @@ A topic turns out not to be part of what the Student must study.
 
 ## Outcome
 
-The topic and its upcoming planned sessions are gone, and the study already logged for it is kept.
+The topic, its planned sessions and the study logged for it are gone for good, and the goal's progress counts only the topics left.
 
 ## Edge cases
 
-- The Student declines to confirm → the topic and its sessions stay as they were.
+- The Student does not confirm → the topic and its sessions stay as they were.
+- The topic has no logged study → the confirmation names only the planned sessions that are cancelled.

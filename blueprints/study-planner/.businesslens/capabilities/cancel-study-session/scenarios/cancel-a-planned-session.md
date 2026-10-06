@@ -41,4 +41,4 @@ The session is no longer in the schedule, and the study it was for is still to d
 
 ## Edge cases
 
-- The session was already logged → it cannot be cancelled, and its time keeps counting toward the goal.
+- The session was already logged → it cannot be cancelled; the Student deletes it instead if it was logged by mistake.
