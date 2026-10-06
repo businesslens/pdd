@@ -28,12 +28,12 @@ steps:
     actor: learner
     entities:
       - { entity: deck, effect: removes, from: Private }
-      - { entity: card, as: new-card, effect: removes, from: New }
-      - { entity: card, as: learning-card, effect: removes, from: Learning }
-      - { entity: card, as: known-card, effect: removes, from: Known }
-      - { entity: card-proposal, as: waiting-proposal, effect: removes, from: Proposed }
-      - { entity: card-proposal, as: accepted-proposal, effect: removes, from: Accepted }
-      - { entity: card-proposal, as: dismissed-proposal, effect: removes, from: Dismissed }
+      - { entity: card, as: new-card, effect: removes, from: New, with: deck }
+      - { entity: card, as: learning-card, effect: removes, from: Learning, with: deck }
+      - { entity: card, as: known-card, effect: removes, from: Known, with: deck }
+      - { entity: card-proposal, as: waiting-proposal, effect: removes, from: Proposed, with: deck }
+      - { entity: card-proposal, as: accepted-proposal, effect: removes, from: Accepted, with: deck }
+      - { entity: card-proposal, as: dismissed-proposal, effect: removes, from: Dismissed, with: deck }
     contexts:
       web:
         place: flashcards-web::deck-detail
