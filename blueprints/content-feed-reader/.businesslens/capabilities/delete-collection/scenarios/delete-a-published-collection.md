@@ -37,6 +37,7 @@ steps:
         place: reader-web::personal-library::collection-detail
   - text: The former public address serves no contents, and every item it held is still saved
     kind: condition
+    actor: reader
     entities:
       - { entity: item, effect: reads, facts: [ Saved at ] }
     contexts:
