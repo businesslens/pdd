@@ -1,6 +1,6 @@
 ---
 title: From an idea
-description: Decide what a new product does, approve its Product Model, implement it in your own workflow, and let verify check the result.
+description: Decide what a new product does, approve its Product Model, then ask your agent to implement it while verify checks each part.
 section: open-source
 group: Get started
 order: 5
@@ -10,8 +10,8 @@ order: 5
 
 Use this door when there is no code yet, or none worth describing.
 
-1. [Install the BusinessLens skills](./installation.md), then run ideate in your
-   agent:
+1. [Install the BusinessLens skills](./installation.md), then tell your agent
+   about the product you want, or run ideate by name:
 
    ```text
    /businesslens-ideate
@@ -29,16 +29,19 @@ Use this door when there is no code yet, or none worth describing.
    npx businesslens lint
    ```
 
-4. Implement the approved model in your existing workflow: plan mode, an SDD
-   tool, or freestyle. BusinessLens has no implement skill and does not write
-   code itself.
-5. When the implementation is done, check the code against the model:
+4. Ask your agent to implement it: "implement it", or "implement our PDD".
+   [Verify](./skill-businesslens-verify.md) plans the work in phases, your
+   agent implements each phase your usual way (plan mode, an SDD tool, or
+   freestyle), and verify checks it before the next. Say "in one go" to skip
+   phases, or "one slice at a time" to go slower; see
+   [Choose the pace](./skill-businesslens-verify.md#choose-the-pace). Questions
+   the model doesn't answer come back to you. BusinessLens never writes code
+   itself.
+5. Run a check yourself whenever you want to be sure, for example before a
+   release:
 
    ```text
    /businesslens-verify
    ```
-
-   Verify fixes what disagrees, or stops and says exactly what blocks it. See
-   the [`verify` skill](./skill-businesslens-verify.md).
 
 Next: [Development loop](./index.md#the-development-loop)

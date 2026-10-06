@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Skills:** Ask your agent to implement the Product Model, all of it or a part, and verify plans the work in phases that your agent implements your usual way, checks each part, and settles any product question with you. Ask for one part at a time or everything in one go if you prefer.
+
+### Changed
+
+- **Skills:** Asking to change the product, such as "make a PDD change", now starts ideate, which ends by offering to implement the approved change.
+- **CLI:** The README in every Product Model tells any agent how to implement the model and change it, and which parts of the model the code must honor.
+- **Docs:** The development loop and the Get started guides now show asking your agent to implement, in phases, with verify checking each part.
+
 ## [0.27.0] - 2026-10-06
 
 ### Changed

@@ -69,7 +69,7 @@ and nothing a rebuild is free to change:
 
 * ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
 
-* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; BusinessLens never implements for you
+* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
 
 * 🖥️ **Local report:** `businesslens view` opens the model in your browser and follows your edits
 
@@ -84,7 +84,7 @@ and nothing a rebuild is free to change:
 ## The development loop
 
 <p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in your existing workflow, verify with /businesslens-verify" width="600">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
 </p>
 
 ## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
@@ -101,12 +101,12 @@ Then start from where you are, inside your agent (Codex uses `$` instead of `/`)
 | An idea | `/businesslens-ideate` | [From an idea](./docs/from-an-idea.md) |
 | A familiar kind of product | `npx businesslens blueprint pull <name>` | [From a Blueprint](./docs/from-a-blueprint.md) |
 
-Then every change runs the loop:
+Then every change runs the loop. You just ask; your agent picks the skill:
 
 ```text
-/businesslens-ideate add guest checkout   # approve the model change
-                                          # implement in your existing workflow
-/businesslens-verify this branch          # fix what disagrees, re-check
+add guest checkout to the product   # ideate: approve the model change
+implement it                        # verify: your agent implements in phases, verify checks each
+/businesslens-verify this branch    # any time you want to be sure
 ```
 
 `map` is for adopting BusinessLens or covering more of the product; `verify` is
