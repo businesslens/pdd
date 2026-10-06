@@ -1,6 +1,6 @@
 ---
 id: kanban-board
-summary: Plan and track a small team's work on shared boards of columns and cards, with an AI agent that proposes cards and flags stalled work for members to accept or act on.
+summary: Plan and track a small team's work on shared boards of columns and cards, with stalled work flagged and an AI agent proposing the next cards.
 category: team-collaboration
 tags: [multi-user, agentic]
 authors:
@@ -8,12 +8,12 @@ authors:
 license: MIT
 languages: [en]
 limitations:
-  - The AI agent proposes cards and flags stalled ones. It never creates, edits, moves or accepts a card itself.
-  - Boards are private to their members. There is no public link, guest access or read-only sharing.
+  - Bring your own AI agent; the Product does not include one.
+  - Boards are private to their members. There is no public link or guest access.
   - A Teammate is added to a board by the email address of an existing account; there is no invitation for someone without one.
-  - Cards are not archived or deleted. Finished work stays in the board's last column.
-  - Comments cannot be edited or deleted once posted.
-  - The product is used in a web browser. There is no mobile application, and there are no notifications, attachments, labels or checklists.
+  - Boards are never deleted; their members leave them instead.
+  - Cards are never archived. Finished work stays in the board's last column.
+  - Comments are never edited.
 references:
   - kind: research
     role: context
@@ -26,14 +26,17 @@ references:
 A shared board for a small team. Each board holds the columns its work moves
 through and the cards that are that work: who is on it, when it is due, and
 what the team has said about it. Members move cards from column to column as
-work progresses, and admins decide who belongs to the board and how its columns
-are arranged. An AI agent a member connects can turn a stated goal into
-proposed cards and watch for cards that have stopped moving; members decide
-what happens to both.
+work progresses, admins decide who belongs to the board and how its columns are
+arranged, and the board flags cards that have stopped moving. An AI agent a
+member connects can turn a stated goal into proposed cards, or suggest a next
+step for a stalled card.
 
 ## Intent
 
-Let a small team see all of its work in one place and agree on where each piece
-stands. Every card on a board was put there and moved by a member, so the board
-stays an honest picture of what the team has committed to. The AI agent saves
-planning and watching effort without ever deciding on the team's behalf.
+A small team loses sight of who is doing what, and work that has quietly
+stopped goes unnoticed until it is late. A board keeps all of the team's work in
+one place where everyone agrees on where each piece stands, and points at the
+cards nobody has moved. Every card on it was put there and moved by a member, so
+it stays an honest picture of what the team has committed to: an AI agent saves
+planning effort, but nothing it proposes reaches the board until a member
+accepts it.

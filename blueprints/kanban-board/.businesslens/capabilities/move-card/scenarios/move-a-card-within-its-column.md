@@ -32,7 +32,7 @@ steps:
         place: board-web::board
 ---
 
-# Reorder a card within its column
+# Move a card within its column
 
 ## Trigger
 

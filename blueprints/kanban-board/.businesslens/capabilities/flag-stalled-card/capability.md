@@ -1,14 +1,13 @@
 ---
 domain: cards
-availability: [{ place: agent-tools }]
+availability: [{ place: board-web }]
 ---
 
-# Flag stalled card
+# Stalled card flagging
 
-Raises a stall flag on a card that has stayed in one column, other than the
-board's last, longer than the board's stall threshold. The AI agent decides
-when to look; the Product checks every flag against the threshold before it is
-raised.
+The Product raises a stall flag on a card that has stayed in one column, other
+than the board's last, longer than the board's stall threshold. It checks every
+board on its own schedule, whether or not anyone is looking.
 
 ## Intent
 

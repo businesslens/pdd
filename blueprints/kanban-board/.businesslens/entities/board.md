@@ -19,4 +19,4 @@ and the members who may work there.
 ## Information kept
 
 - **Name** — what the team calls the board
-- **Stall threshold** — how many days a card may stay in one column before the AI agent may flag it; seven unless an admin changes it
+- **Stall threshold** — how many days a card may stay in one column before the Product flags it as stalled; seven unless an admin changes it

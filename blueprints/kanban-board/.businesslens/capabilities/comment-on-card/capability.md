@@ -3,6 +3,6 @@ domain: cards
 availability: [{ place: board-web }]
 ---
 
-# Comment on card
+# Card commenting
 
 Posts a comment on a card for the board's members to read.

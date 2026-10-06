@@ -5,7 +5,7 @@ appliesTo:
     effect: removes
 permits:
   - related: [{ verb: holds, entity: teammate }]
-  - actors: [teammate]
+  - related: [{ verb: has, entity: board }, { verb: has, entity: board-membership }, { verb: holds, entity: teammate }]
     when: [{ entity: board-membership, fact: Role, is: Admin }]
 ---
 

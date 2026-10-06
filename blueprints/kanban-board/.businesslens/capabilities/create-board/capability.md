@@ -2,7 +2,7 @@
 availability: [{ place: board-web }]
 ---
 
-# Create board
+# Board creation
 
 Starts a new board from a name. The Product gives it the columns To do, Doing
 and Done and the default stall threshold, makes the Teammate who created it its

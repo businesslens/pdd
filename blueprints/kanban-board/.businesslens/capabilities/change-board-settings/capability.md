@@ -3,10 +3,9 @@ domain: board-settings
 availability: [{ place: board-web }]
 ---
 
-# Change board settings
+# Board settings change
 
-Changes a board's name and the stall threshold the AI agent measures cards
-against.
+Changes a board's name and the stall threshold its cards are measured against.
 
 ## Intent
 

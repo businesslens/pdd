@@ -5,15 +5,15 @@ appliesTo:
     effect: reads
 permits:
   - related: [{ verb: has, entity: board-membership }, { verb: holds, entity: teammate }]
-  - actors: [ai-agent]
+  - related: [{ verb: has, entity: board-membership }, { verb: holds, entity: teammate }, { verb: connects, entity: ai-agent }]
+  - unattended: true
 ---
 
-# Only members and their AI agent open a board
+# Only members and their AI agents open a board
 
 A board and everything on it are visible to the Teammates who are its members,
-and to an AI agent acting for one of those members. The agent reads only the
-boards the member it acts for belongs to. Anyone else cannot open the board or
-learn that it exists.
+to an AI agent a member has connected, and to the Product's own check for
+stalled cards. Anyone else cannot open the board or learn that it exists.
 
 ## Rationale
 
