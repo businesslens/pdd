@@ -28,12 +28,14 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::space
-  - text: The Product deletes its revisions with it, and any suggestion still proposed for it
+  - text: The Product deletes its revisions with it, and every suggestion left for it, whatever its state
     kind: product
     actor: member
     entities:
       - { entity: revision, effect: removes }
-      - { entity: suggestion, effect: removes, from: Proposed }
+      - { entity: suggestion, as: proposed,  effect: removes, from: Proposed }
+      - { entity: suggestion, as: accepted,  effect: removes, from: Accepted }
+      - { entity: suggestion, as: dismissed, effect: removes, from: Dismissed }
     contexts:
       web:
         place: wiki-web::workspace::space
@@ -56,5 +58,5 @@ An Editor decides a page with nothing beneath it no longer belongs in the space.
 
 ## Outcome
 
-The page and its revisions are gone for good, along with any suggestion still
-proposed for it, and nobody in the space can open them again.
+The page and its revisions are gone for good, along with every suggestion left
+for it, accepted and dismissed ones included, and nobody in the space can open them again.

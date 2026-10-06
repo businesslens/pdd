@@ -6,8 +6,9 @@ availability: [{ place: wiki-web::workspace }]
 # Page deletion
 
 Deletes a page for good, once an Editor confirms, together with its revisions
-and any suggestion still proposed for it. The pages beneath it move up to its parent, or to the top of
-the space when it had none.
+and every suggestion left for it, whether proposed, accepted or dismissed. The
+pages beneath it move up to its parent, or to the top of the space when it had
+none.
 
 ## Intent
 

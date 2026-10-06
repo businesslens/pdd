@@ -27,14 +27,16 @@ steps:
     contexts:
       web:
         place: wiki-web::workspace::space
-  - text: The Product deletes its revisions and any suggestion still proposed for it, and places each page that sat directly beneath it under its parent, or at the top of the space when it had none
+  - text: The Product deletes its revisions and every suggestion left for it, whatever its state, and places each page that sat directly beneath it under its parent, or at the top of the space when it had none
     kind: product
     actor: member
     entities:
       - { entity: page, effect: changes, facts: [Parent page] }
       - { entity: space, effect: reads, facts: [] }
       - { entity: revision, effect: removes }
-      - { entity: suggestion, effect: removes, from: Proposed }
+      - { entity: suggestion, as: proposed,  effect: removes, from: Proposed }
+      - { entity: suggestion, as: accepted,  effect: removes, from: Accepted }
+      - { entity: suggestion, as: dismissed, effect: removes, from: Dismissed }
     contexts:
       web:
         place: wiki-web::workspace::space
@@ -48,5 +50,6 @@ An Editor deletes a page that other pages sit under.
 
 ## Outcome
 
-The page and its history are gone for good. The pages that sat directly beneath
-it now sit under its parent, keeping their own pages, content and revisions.
+The page, its history and every suggestion left for it are gone for good. The
+pages that sat directly beneath it now sit under its parent, keeping their own
+pages, content and revisions.
