@@ -8,8 +8,8 @@ permits:
 # Only the Owner changes their bookmarks
 
 A bookmark's title, note, tags and collection change only by its Owner's own
-action: editing it, deleting its collection, or accepting a suggestion. Their
-AI agent never files or tags a bookmark itself.
+action: editing, tagging or untagging it, deleting its collection, or accepting
+a suggestion. Their AI agent never files or tags a bookmark itself.
 
 ## Rationale
 

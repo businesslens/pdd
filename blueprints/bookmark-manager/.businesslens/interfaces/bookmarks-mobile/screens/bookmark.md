@@ -12,5 +12,5 @@ entryPoints:
 # Bookmark
 
 One bookmark with everything the library keeps about it. The Owner changes
-its title, note, tags and collection here, opens the page it leads to, or
-deletes it.
+its title, note and collection here, tags and untags it, opens the page it
+leads to, or deletes it.

@@ -7,7 +7,7 @@ permits:
 
 # Only the Owner deletes their collections
 
-A collection is deleted only by its Owner, after they confirm.
+A collection is deleted only by its Owner, once the Owner confirms.
 
 ## Rationale
 

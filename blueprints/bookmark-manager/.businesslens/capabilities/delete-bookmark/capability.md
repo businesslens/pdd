@@ -5,7 +5,7 @@ availability: [ { place: bookmarks-web }, { place: bookmarks-mobile } ]
 
 # Bookmark deletion
 
-Removes one bookmark from the library for good, after the Owner confirms.
+Removes one bookmark from the library for good, once the Owner confirms.
 
 ## Intent
 
