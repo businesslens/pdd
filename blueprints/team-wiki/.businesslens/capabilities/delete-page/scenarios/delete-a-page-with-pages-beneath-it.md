@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: page, effect: reads, facts: [Title, Parent page] }
+      - { entity: page, as: deleted, effect: reads, facts: [Title, Parent page] }
     contexts:
       web:
         place: wiki-web::workspace::space
@@ -15,7 +15,7 @@ steps:
     kind: product
     actor: member
     entities:
-      - { entity: page, effect: reads, facts: [Title, Parent page] }
+      - { entity: page, as: deleted, effect: reads, facts: [Title, Parent page] }
     contexts:
       web:
         place: wiki-web::workspace::space
@@ -23,20 +23,21 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: page, effect: removes }
+      - { entity: page, as: deleted, effect: reads, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::space
-  - text: The Product deletes its revisions and every suggestion left for it, whatever its state, and places each page that sat directly beneath it under its parent, or at the top of the space when it had none
+  - text: The Product deletes the page with its revisions and every suggestion left for it, whatever its state, and places each page that sat directly beneath it under its parent, or at the top of the space when it had none
     kind: product
     actor: member
     entities:
-      - { entity: page, effect: changes, facts: [Parent page] }
-      - { entity: space, effect: reads, facts: [] }
-      - { entity: revision, effect: removes }
-      - { entity: suggestion, as: proposed,  effect: removes, from: Proposed }
-      - { entity: suggestion, as: accepted,  effect: removes, from: Accepted }
-      - { entity: suggestion, as: dismissed, effect: removes, from: Dismissed }
+      - { entity: page,       as: deleted,   effect: removes }
+      - { entity: page,       as: beneath,   effect: changes, facts: [Parent page] }
+      - { entity: space,                     effect: reads, facts: [] }
+      - { entity: revision,                  effect: removes, with: deleted }
+      - { entity: suggestion, as: proposed,  effect: removes, from: Proposed,  with: deleted }
+      - { entity: suggestion, as: accepted,  effect: removes, from: Accepted,  with: deleted }
+      - { entity: suggestion, as: dismissed, effect: removes, from: Dismissed, with: deleted }
     contexts:
       web:
         place: wiki-web::workspace::space
