@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner reviews a pending duplicate suggestion with its bookmarks and reason
+  - text: The Owner reviews a proposed duplicate suggestion with its bookmarks and reason
     kind: actor
     actor: owner
     entities:
@@ -12,11 +12,11 @@ steps:
     contexts:
       web:
         place: bookmarks-web::suggestions
-  - text: The Owner declines it
+  - text: The Owner dismisses it
     kind: actor
     actor: owner
     entities:
-      - { entity: duplicate-suggestion, effect: changes, from: Pending, to: Declined, facts: [] }
+      - { entity: duplicate-suggestion, effect: changes, from: Proposed, to: Dismissed, facts: [] }
     contexts:
       web:
         place: bookmarks-web::suggestions
@@ -30,7 +30,7 @@ steps:
         place: bookmarks-web::suggestions
 ---
 
-# Decline a duplicate suggestion
+# Dismiss a duplicate suggestion
 
 ## Trigger
 
@@ -39,5 +39,5 @@ as two versions of one page they deliberately keep apart.
 
 ## Outcome
 
-The suggestion is declined, every bookmark in it stays, and the AI agent cannot
-suggest the same set again.
+The suggestion is dismissed, every bookmark in it stays, and the AI agent
+cannot suggest the same set again.

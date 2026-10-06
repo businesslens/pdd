@@ -11,5 +11,4 @@ into collections.
 
 ## Success criterion
 
-The imported bookmarks are filed in the collections the Owner decided, by hand
-or by accepting their AI agent's suggestions.
+The imported bookmarks are filed in the collections the Owner chose.

@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner reviews a pending filing suggestion that names a new collection
+  - text: The Owner reviews a proposed filing suggestion that names a new collection
     kind: actor
     actor: owner
     entities:
@@ -41,7 +41,7 @@ steps:
     kind: product
     actor: owner
     entities:
-      - { entity: filing-suggestion, effect: changes, from: Pending, to: Accepted, facts: [] }
+      - { entity: filing-suggestion, effect: changes, from: Proposed, to: Accepted, facts: [] }
     contexts:
       web:
         place: bookmarks-web::suggestions

@@ -25,13 +25,13 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: filing-suggestion, effect: creates, to: Pending, facts: [Collection, Tags to add, Reason] }
+      - { entity: filing-suggestion, effect: creates, to: Proposed, facts: [Collection, Tags to add, Reason] }
       - { entity: collection, effect: reads, facts: [] }
       - { entity: tag, effect: reads, facts: [] }
     contexts:
       agent:
         place: bookmarks-agent
-  - text: No collection is created while the suggestion is pending
+  - text: No collection is created while the suggestion is proposed
     kind: condition
     actor: ai-agent
     entities:
@@ -49,5 +49,5 @@ The AI agent finds Unsorted bookmarks on a subject no existing collection fits.
 
 ## Outcome
 
-A pending filing suggestion proposes the new collection by name, with its
+A proposed filing suggestion proposes the new collection by name, with its
 reason, and the library has no new collection until the Owner accepts it.

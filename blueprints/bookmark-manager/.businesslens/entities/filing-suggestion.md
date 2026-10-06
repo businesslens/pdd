@@ -19,7 +19,7 @@ existing or new, and to add tags to them.
 
 ## States
 
-### Pending
+### Proposed
 
 Waiting for the Owner to decide. Nothing in the library has changed.
 
@@ -27,12 +27,12 @@ Waiting for the Owner to decide. Nothing in the library has changed.
 
 The Owner accepted it, and its bookmarks were filed and tagged as it said.
 
-### Declined
+### Dismissed
 
-The Owner declined it. Nothing changed, and the same suggestion cannot be left
-again.
+The Owner dismissed it. Nothing changed, and the same suggestion cannot be
+left again.
 
-### Withdrawn
+### Outdated
 
-Every bookmark it covered was deleted before the Owner decided, so nothing is
-left to file.
+Every bookmark it covered was deleted before the Owner decided, so the Product
+closed it with nothing left to file.

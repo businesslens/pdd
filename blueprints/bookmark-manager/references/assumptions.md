@@ -13,5 +13,7 @@ These are assumptions to validate, not claims that research has proved them.
 - The same page saved twice under slightly different addresses is the
   duplicate people actually have; an exact repeat is better caught at saving.
 - Deleting a collection should never delete the bookmarks in it.
+- Someone who makes a collection usually has its first link in hand, so a new
+  collection opens ready to save a link into.
 
 Future research may change the Product Model; this file does not override it.

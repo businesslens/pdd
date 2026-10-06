@@ -5,8 +5,8 @@ colorSlot: 2
 # Suggestions
 
 An AI agent's proposals for tidying the library and the Owner's decisions about
-them: leaving suggestions, accepting a filing, merging duplicates, and
-declining what does not fit.
+them: leaving suggestions, accepting a filing or a merge, and dismissing what
+does not fit.
 
 ## Boundary
 
