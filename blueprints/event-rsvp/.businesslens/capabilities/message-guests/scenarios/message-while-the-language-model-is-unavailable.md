@@ -1,5 +1,5 @@
 ---
-kind: primary
+kind: edge
 routes:
   web: Web
 steps:
@@ -9,19 +9,16 @@ steps:
     entities:
       - { entity: event, effect: reads, facts: [Title] }
     contexts: { web: { place: rsvp-web::hosting::new-message } }
-  - text: The Product asks a language model for a subject and body from the event's details and puts them in the unsent message, without sending anything
-    kind: product
-    actor: host
-    entities:
-      - { entity: event, effect: reads, facts: [Title, Description, Starts at, Ends at, Place, Online link] }
-      - { entity: message, effect: reads, facts: [] }
+  - text: The language model does not answer
+    kind: condition
+    entities: []
     contexts: { web: { place: rsvp-web::hosting::new-message } }
-  - text: The Host edits the suggested subject and body
-    kind: actor
+  - text: The Product says suggested wording is unavailable right now and leaves the subject and body as the Host had them
+    kind: product
     actor: host
     entities: []
     contexts: { web: { place: rsvp-web::hosting::new-message } }
-  - text: The Host sends it
+  - text: The Host writes the subject and body themselves and sends it
     kind: actor
     actor: host
     entities: []
@@ -37,18 +34,14 @@ steps:
     contexts: { web: { place: rsvp-web::hosting::new-message } }
 ---
 
-# Start a message from suggested wording
+# Message while the language model is unavailable
 
 ## Trigger
 
-The Host wants help putting a message to their guests into words.
+The Host asks for suggested wording while the language model cannot be
+reached.
 
 ## Outcome
 
-The chosen guests receive the message as the Host edited and sent it. The
-suggestion itself was never sent, and only the sent message is kept.
-
-## Edge cases
-
-- The Host asks again → the Product replaces the unsent suggestion with a new one.
-- The Host leaves without sending → nothing is sent or kept.
+The Host knows no suggestion is coming, loses nothing they had written, and
+sends the message in their own words as usual.

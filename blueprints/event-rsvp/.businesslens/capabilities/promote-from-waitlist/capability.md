@@ -5,8 +5,8 @@ availability: [{ place: rsvp-web::hosting }, { place: rsvp-web::responding }]
 
 # Waitlist promotion
 
-Gives spots that open on a scheduled event to waitlisted guests on its own, in
-the order they answered, and tells each promoted Guest by email.
+Gives spots that open on a scheduled event to waitlisted RSVPs on its own, in
+the order they were given, and tells each promoted Guest by email.
 
 ## Intent
 

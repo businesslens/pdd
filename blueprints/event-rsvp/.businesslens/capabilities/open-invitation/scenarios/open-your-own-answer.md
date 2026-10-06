@@ -7,14 +7,14 @@ steps:
     kind: actor
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The Product shows the event with the Guest's own answer and plus-one
     kind: product
     actor: guest
     entities:
       - { entity: event, effect: reads, facts: [Title, Starts at, Ends at, Place] }
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: For an online event, the Product shows the Guest where to join
     kind: product

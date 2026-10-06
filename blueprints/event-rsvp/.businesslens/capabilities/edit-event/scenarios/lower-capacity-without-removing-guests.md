@@ -18,6 +18,7 @@ steps:
   - text: Every guest already going keeps their spot
     kind: condition
     entities:
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
 ---

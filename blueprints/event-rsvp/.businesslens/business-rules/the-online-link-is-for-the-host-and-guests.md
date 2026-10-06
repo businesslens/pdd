@@ -6,16 +6,16 @@ appliesTo:
     facts: [Online link]
 permits:
   - related: [{ verb: owns, entity: host }]
-  - related: [{ verb: has, entity: guest }]
+  - related: [{ verb: has, entity: rsvp }, { verb: gives, entity: guest }]
     when: [{ state: Scheduled }]
 ---
 
 # The online link is for the host and guests
 
-Where to join an online event is shown to its Host, and to a Guest of that
-event who opens it through their personal link while the event is scheduled.
-The public invitation says only that the event is online, and a cancelled
-event shows no link.
+Where to join an online event is shown to its Host, and to a Guest who opens
+it through the personal link of their RSVP while the event is scheduled. The
+public invitation says only that the event is online, and a cancelled event
+shows no link.
 
 ## Rationale
 

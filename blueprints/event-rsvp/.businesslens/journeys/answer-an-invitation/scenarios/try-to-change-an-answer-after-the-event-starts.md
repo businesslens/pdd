@@ -9,26 +9,27 @@ steps:
     actor: guest
     capability: rsvp-to-event
     entities:
-      - { entity: guest, effect: creates, to: Maybe, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: creates, to: Maybe, facts: [Name, Email, Plus-one, Responded at, Personal link] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
-  - text: The Product emails the Guest a confirmation with a personal link to their answer
+  - text: The Product emails the Guest a confirmation with a personal link to their RSVP
     kind: product
     actor: guest
+    capability: rsvp-to-event
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email, Personal link] }
   - text: The Guest follows the personal link after the event has started
     kind: actor
     actor: guest
     capability: open-invitation
     entities:
       - { entity: event, effect: reads, facts: [Starts at] }
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The Product shows the Guest's answer as it stands and takes no change
     kind: product
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
 ---
 

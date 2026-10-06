@@ -7,8 +7,9 @@ steps:
     kind: actor
     actor: host
     entities:
-      - { entity: guest, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: event, effect: reads, facts: [Title] }
+      - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
   - text: The Host chooses the going answer as recipients and writes a subject and body
     kind: actor
@@ -19,6 +20,7 @@ steps:
     kind: product
     actor: host
     entities:
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::new-message } }
   - text: The Host sends it
@@ -32,7 +34,8 @@ steps:
     entities:
       - { entity: event, effect: reads, facts: [] }
       - { entity: message, effect: creates, facts: [Subject, Body, Recipients, Sent at] }
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email] }
+      - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::new-message } }
   - text: The message is listed among the event's sent messages
     kind: product

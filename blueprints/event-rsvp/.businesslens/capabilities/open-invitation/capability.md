@@ -3,11 +3,11 @@ domain: rsvps
 availability: [{ place: rsvp-web::responding }]
 ---
 
-# Invitation
+# Invitation viewing
 
 Shows anyone holding an event's invitation link what the event is, when and
 where it happens, who is hosting and how many spots are left. Opened through a
-Guest's personal link, it also shows that Guest's own answer and, for an online
+Guest's personal link, it also shows that Guest's own RSVP and, for an online
 event, where to join.
 
 ## Intent

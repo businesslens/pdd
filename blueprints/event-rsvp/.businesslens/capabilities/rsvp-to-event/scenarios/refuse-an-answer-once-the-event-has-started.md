@@ -30,3 +30,7 @@ Someone tries to answer an invitation after the event's start time.
 
 No answer is recorded and the Guest knows answers are closed. The guest list is
 unchanged.
+
+## Edge cases
+
+- The Guest tries to change their RSVP through its personal link → it is refused the same way and the RSVP stays as it was.

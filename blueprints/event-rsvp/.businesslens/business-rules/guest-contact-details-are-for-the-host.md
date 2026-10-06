@@ -1,20 +1,20 @@
 ---
 appliesTo:
   - type: entity
-    id: guest
+    id: rsvp
     effect: reads
     facts: [Name, Email]
 permits:
   - related: [{ verb: has, entity: event }, { verb: owns, entity: host }]
-  - self: true
+  - related: [{ verb: gives, entity: guest }]
   - unattended: true
 ---
 
 # Guest contact details are for the host
 
-A Guest's name and email are seen by the Host of their event and by that
-Guest, and used by the Product only to email that Guest. The invitation never
-shows one guest's details to another.
+The name and email on an RSVP are seen by the Host of its event and by the
+Guest who gave it, and used by the Product only to email that Guest. The
+invitation never shows one guest's details to another.
 
 ## Rationale
 
