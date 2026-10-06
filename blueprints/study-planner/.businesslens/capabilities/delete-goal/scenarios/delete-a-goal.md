@@ -32,13 +32,13 @@ steps:
     actor: student
     entities:
       - { entity: goal, effect: removes }
-      - { entity: topic, effect: removes }
-      - { entity: study-session, as: planned, effect: removes, from: Planned }
-      - { entity: study-session, as: logged, effect: removes, from: Logged }
-      - { entity: study-plan, as: proposed, effect: removes, from: Proposed }
-      - { entity: study-plan, as: accepted, effect: removes, from: Accepted }
-      - { entity: study-plan, as: dismissed, effect: removes, from: Dismissed }
-      - { entity: study-plan, as: outdated, effect: removes, from: Outdated }
+      - { entity: topic, effect: removes, with: goal }
+      - { entity: study-session, as: planned, effect: removes, from: Planned, with: topic }
+      - { entity: study-session, as: logged, effect: removes, from: Logged, with: topic }
+      - { entity: study-plan, as: proposed, effect: removes, from: Proposed, with: goal }
+      - { entity: study-plan, as: accepted, effect: removes, from: Accepted, with: goal }
+      - { entity: study-plan, as: dismissed, effect: removes, from: Dismissed, with: goal }
+      - { entity: study-plan, as: outdated, effect: removes, from: Outdated, with: goal }
     contexts:
       web:
         place: planner-web::goals

@@ -34,8 +34,8 @@ steps:
     actor: student
     entities:
       - { entity: topic, effect: removes }
-      - { entity: study-session, as: planned, effect: removes, from: Planned }
-      - { entity: study-session, as: logged, effect: removes, from: Logged }
+      - { entity: study-session, as: planned, effect: removes, from: Planned, with: topic }
+      - { entity: study-session, as: logged, effect: removes, from: Logged, with: topic }
     contexts:
       web:
         place: planner-web::goal-detail

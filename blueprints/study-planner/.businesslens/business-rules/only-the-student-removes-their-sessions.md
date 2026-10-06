@@ -9,7 +9,7 @@ permits:
 
 # Only the Student removes their sessions
 
-A study session leaves the schedule only by the Student's act: cancelling it, deleting it once logged, accepting a plan that replaces it, removing its topic or deleting its goal. The AI agent never removes a session.
+A study session leaves the schedule only by the Student's act: cancelling it, deleting it once logged, or accepting a plan that replaces it. The AI agent never removes a session.
 
 ## Rationale
 
