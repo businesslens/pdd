@@ -11,7 +11,7 @@ limitations:
   - Habits are private to their one Owner. There is no sharing, social accountability or coaching.
   - A habit is done or not done on a day, so a check-in holds nothing to edit; a wrong day is unchecked. There are no quantities, timers, notes or habits to avoid.
   - The Product sends no reminders or notifications; the Owner comes to it.
-  - A language model writes each weekly reflection's summary and drafts its suggested adjustment, and it can misread the week. The Owner decides every suggestion, and nothing changes until they accept it. While the model is unavailable, a reflection carries its consistency figures alone.
+  - A language model writes each weekly reflection's summary and drafts its suggested adjustment, and it may be wrong; the Owner decides every suggestion. While it is unavailable, a reflection carries its consistency figures alone and everything else works.
 references:
   - kind: research
     role: context

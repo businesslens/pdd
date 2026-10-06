@@ -51,4 +51,4 @@ as outdated.
 
 ## Edge cases
 
-- The habit was deleted since → the suggestion already reads as outdated, and the weekly reflection offers nothing to accept or dismiss.
+- The habit was deleted since → its suggestion was removed with it, and the weekly reflection offers nothing to accept or dismiss.
