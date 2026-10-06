@@ -20,11 +20,24 @@ sound; it does not claim that the model and implementation agree.
 
 Planning uses the same files: approved intended behavior is written into the
 model before implementation. `businesslens-verify` performs the separate,
-semantic comparison with the implementation and owns any resolution loop. Git
+semantic comparison with the implementation and owns any resolution loop,
+including building: what the model describes that the code does not do yet is a
+gap it closes slice by slice, through the agent the user asked to build. Git
 may narrow that inspection to a branch, but a diff never decides which side is
 authoritative. The technical *how* of a change (specs, designs, task lists)
 still belongs to your SDD tool of choice and may be attached through
 `references`.
+
+Each phase changes one side:
+
+| Phase | May change | Never changes |
+| --- | --- | --- |
+| `businesslens-ideate` | product meaning, after approval | code |
+| implementation, by the agent the user asked to build | code | `.businesslens/` |
+| `businesslens-verify` | neither by itself: it routes model changes through approval and code changes to the builder | anything without approval |
+
+A product question that arises while implementing goes back to approval; it is
+never settled in code.
 
 **The model holds current product meaning.** Do not persist alternatives
 considered, rejected approaches, explanations of why another option was not
@@ -247,6 +260,16 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   required alongside the semantic files. `.gitignore` must ignore `build/`
   and `cache/`; those generated directories are never part of the committed
   model.
+
+- **`README.md` is the canonical orientation, owned by BusinessLens.** It is
+  for an agent that opens `.businesslens/` without a BusinessLens skill
+  running: it routes building to `businesslens-verify` and product changes to
+  `businesslens-ideate`, says how to install them, and states which parts of
+  the model bind the code and which do not. It is not a second explanation of
+  the format. Its text is `MODEL_README` in `src/core/model-readme.ts`, embedded
+  verbatim in every skill's format reference. A README that differs from it is
+  a `lint` warning, never an error, because the model's meaning is unaffected;
+  BusinessLens restores the canonical text whenever it writes the model.
 
 - **Compact and expanded are exclusive.** `<id>.md` and `<id>/<type>.md` may
   not coexist. An expanded resource must own at least one asset or child

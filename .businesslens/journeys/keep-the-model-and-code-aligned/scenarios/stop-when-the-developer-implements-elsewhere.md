@@ -21,7 +21,7 @@ steps:
     contexts:
       branch:
         place: agent-skills
-  - text: The harness supplies no builder that may change implementation
+  - text: Implementation is to happen in another tool or session
     kind: condition
     entities: []
     contexts:
@@ -35,15 +35,15 @@ steps:
         place: agent-skills
 ---
 
-# Stop without a builder
+# Stop when the Developer implements elsewhere
 
 ## Trigger
 
-Verification reaches a gap that only an implementation change can close, in a
-session with nothing authorized to make one.
+Verification reaches a gap that only an implementation change can close, and
+the Developer will make it in another tool or session.
 
 ## Outcome
 
-The Journey goal is not achieved. Nothing was implemented from inside a
-BusinessLens phase, the model was left unchanged, and the Developer holds
-everything a builder would need.
+The Journey goal is not achieved in this run. Nothing was implemented from
+inside a BusinessLens phase, the model was left unchanged, and the Developer
+holds everything their own tool needs to build it.

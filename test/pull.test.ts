@@ -7,6 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runPull } from '../src/commands/pull.js'
 import { projectPortableReport } from '../src/core/portable.js'
 import { reportDigest } from '../src/core/report-digest.js'
+import { MODEL_README } from '../src/core/model-readme.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 const temporaryDirectories: string[] = []
@@ -123,8 +124,8 @@ describe('pull', () => {
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
 
     const readme = readFileSync(join(target, '.businesslens', 'README.md'), 'utf8')
-    expect(readme).toContain('BusinessLens Product Model')
-    expect(readme).toContain('acceptance contract')
+    expect(readme).toBe(MODEL_README)
+    expect(readme).toContain('**To build from it**')
     expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
   })
 

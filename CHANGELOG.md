@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Skills:** Ask your agent to build from the Product Model, all of it or a part, and verify builds it slice by slice in your usual way of working, checks each slice, and settles any product question with you.
+
+### Changed
+
+- **Skills:** Asking to change the product, such as "make a PDD change", now starts ideate, which ends by offering to build the approved change.
+- **CLI:** The README in every Product Model tells any agent how to build from the model and change it, and which parts of the model the code must honor. `lint` warns when a model's README is out of date.
+
 ## [0.25.1] - 2026-10-05
 
 - The README demo shows the current Product Model, one Screen per subject. ([#86](https://github.com/businesslens/pdd/pull/86)) ([1dce3bf](https://github.com/businesslens/pdd/commit/1dce3bf95d1ae3f80f4ad115bfdd63b0dc5e892f))

@@ -38,18 +38,49 @@ describe('public workflow contract', () => {
   it('keeps ideation approval-gated and implementation-external', () => {
     const source = skill('businesslens-ideate')
     expect(source).toContain('Get explicit approval')
-    expect(source).toContain('implementation in the user\'s own workflow')
     expect(source).toContain('Do not implement from this skill')
+  })
+
+  it('hands an approved change to verify\'s build in the user\'s own words', () => {
+    const source = normalizedSkill('businesslens-ideate')
+    expect(source).toContain('the user can say *build it*')
+    expect(source).toContain('builds the change slice by slice in the user\'s own way of working')
+  })
+
+  it('lets a user reach each workflow by asking, not by naming a skill', () => {
+    const description = (name: string) => skill(name).match(/^description: (.*)$/m)![1]!
+    expect(description('businesslens-ideate')).toContain('“make a PDD change”')
+    expect(description('businesslens-ideate')).toContain('do not use to map established code, build the model into code')
+    expect(description('businesslens-verify')).toContain('Use when asked to build, implement or develop the product')
+    expect(description('businesslens-verify')).toContain('“build it” after ideate')
   })
 
   it('makes one verify invocation own resolution and reinspection', () => {
     const source = normalizedSkill('businesslens-verify')
     expect(source).toContain('must not have to invoke map or ideate manually')
     expect(source).toContain('After every mutation, discard the earlier findings and inspect again')
-    expect(source).toContain('injected external builder')
+    expect(source).toContain('The builder is the agent the user asked to build')
+    expect(source).not.toContain('injected')
     expect(source).toContain('same gap returns unchanged')
     expect(source).toContain('Report-only mode forbids writes')
     expect(source).toContain('Persist no receipt')
+  })
+
+  it('builds slice by slice with the requesting agent as the builder', () => {
+    const source = normalizedSkill('businesslens-verify')
+    expect(source).toContain('a request to build or implement from the model → build mode')
+    expect(source).toContain('In build mode, the model-right findings are the build plan')
+    expect(source).toContain('later slices are the plan, not findings')
+    expect(source).toContain('never settles a product question in code')
+    expect(source).toContain('stop with the complete handoff packet')
+
+    const rubric = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'verification-rubric.md'), 'utf8')
+    expect(rubric).toContain('## Build slices')
+    expect(rubric).toContain('so two runs agree')
+
+    const handoff = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'build-handoff.md'), 'utf8')
+    expect(handoff).toContain('do not edit `.businesslens/`')
+    expect(handoff).toContain('never settle a product question in code')
   })
 
   it('keeps the complete verify classification and routing structure', () => {

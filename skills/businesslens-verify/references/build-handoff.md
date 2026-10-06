@@ -1,25 +1,33 @@
-# Injected build handoff
+# Build handoff
 
-Send one self-contained packet to the harness-supplied builder:
+Give the builder one self-contained packet: yourself, working in the user's
+usual way, or the subagent the user asked for.
 
+- **Slice:** which slice this is, of how many, and which built slices it
+  depends on.
 - **Expected behavior:** the exact approved model contract.
 - **Affected model resources:** IDs of relevant Interfaces, Experiences,
   Screens, Entities, Capabilities, Capability Scenarios, Rules, Journeys,
   Journey Scenarios, Variations, and declared availability Contexts.
-- **Observed gap:** current behavior and why it differs.
+- **Observed gap:** current behavior and why it differs; for an unbuilt slice,
+  that the behavior does not exist yet.
 - **Acceptance criteria:** observable trigger, typed steps, decisions, outcome,
   edge cases, applicable invariants, each Scenario route's most-specific
   Context places where relevant, and for a Variation each alternative's
   `selectedWhen`.
 - **File leads:** inspected paths and symbols as leads, never mandatory design.
+  The model names no stack; where the repository has none yet, the builder
+  chooses it.
 - **Constraints:** do not edit `.businesslens/`; preserve unrelated user work;
-  follow repository instructions; surface uncertainty rather than changing
-  product meaning.
+  follow repository instructions; never settle a product question in code:
+  when the model is ambiguous or seems wrong, stop the slice and return the
+  question.
 - **Verification:** the builder may run the target's normal tests and checks
-  under its separate permissions and reports files changed, checks run, results,
+  under its normal permissions and reports files changed, checks run, results,
   and remaining uncertainty.
-- **Return:** hand control directly back to this verification invocation.
+- **Return:** hand control directly back to this verification invocation,
+  with any product question raised.
 
-If no injected builder exists, return this same packet to the user as the
-blocker. Do not pretend implementation completed and do not substitute a
-BusinessLens skill for the builder.
+If the user implements elsewhere, in another tool or session, return this same
+packet to the user as the blocker. Do not pretend implementation completed and
+do not substitute a BusinessLens skill for the builder.
