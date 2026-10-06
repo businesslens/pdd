@@ -384,9 +384,10 @@ Lead and section-body fragments do not contain another H1 or H2.
   and who may perform it ("Only the owner reads an unpublished collection"), an
   invariant what always holds. A consequence, a feature, or the mechanism
   behind the Rule belongs in the lead or `## Rationale`, never the title; from
-  the title and `appliesTo` alone, the grants' who is no surprise. Operations
-  on one Entity that the same grant admits share one permission Rule (omit
-  `effect` when all of them do); an operation whose grant differs has its own.
+  the title and `appliesTo` alone, the grants' who is no surprise. Each
+  operation Actors perform on an Entity — `creates`, `changes`, `removes`, and
+  `reads` where a grant restricts it — has its own permission Rule naming that
+  `effect`, even where two share a grant.
   An Entity target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`:
   **a target selects; a grant conditions.** `effect`, `from` and `to` select
   Steps by the keys their `entities` entry carries (`from` with

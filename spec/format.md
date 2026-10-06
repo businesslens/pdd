@@ -1500,11 +1500,13 @@ Rule needs only to resolve: neither a grant nor a prohibition requires a
 matching operation, Screen disclosure or fact use to exist, and a prohibition
 never needs an example of the prohibited behavior.
 
-**One permission Rule per grant.** Operations on one Entity that the same grant
-admits share one Rule — its target omits `effect` when every operation shares
-it — and an operation whose grant differs has a Rule of its own: creating a card
-open to any board member and deleting it open only to an admin are two Rules,
-changing and deleting it by the same members are one.
+**One permission Rule per operation.** Each `effect` Actors perform on an
+Entity — `creates`, `changes`, `removes`, and `reads` where a grant restricts
+it — is governed by a Rule of its own, its target naming that `effect`, even
+where two operations happen to share a grant: a `related` grant starts from one
+Entity target, and a target without `effect` would also select reads.
+Deciding a draft is a `changes` or `removes` from its `Proposed` State and
+needs no Rule beyond these unless its grant differs.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
