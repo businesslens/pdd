@@ -38,6 +38,7 @@ steps:
         place: reader-web::personal-library::collection-detail
   - text: Every item it held is still saved, with its reading state unchanged
     kind: condition
+    actor: reader
     entities:
       - { entity: item, effect: reads, facts: [ Saved at ] }
     contexts:
