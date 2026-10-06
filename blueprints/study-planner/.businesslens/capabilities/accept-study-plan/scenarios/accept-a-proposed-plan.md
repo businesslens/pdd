@@ -18,12 +18,16 @@ steps:
     contexts:
       web:
         place: planner-web::plan-review
-  - text: The Product confirms the schedule has not changed since the plan was prepared
+  - text: The Product re-checks the plan against the goal's schedule, the Student's current availability, the goal's target date and topics, and every other goal's sessions, and every proposed session still fits
     kind: product
     actor: student
     entities:
-      - { entity: study-plan, effect: reads, facts: [Prepared at] }
+      - { entity: study-plan, effect: reads, facts: [Prepared at, Proposed sessions] }
       - { entity: study-session, as: replaced, effect: reads, facts: [] }
+      - { entity: student, effect: reads, facts: [Weekly availability] }
+      - { entity: goal, effect: reads, facts: [Target date] }
+      - { entity: topic, effect: reads, facts: [Name] }
+      - { entity: study-session, as: other-goal, effect: reads, facts: [Start, Planned minutes] }
     contexts:
       web:
         place: planner-web::plan-review
@@ -77,3 +81,4 @@ The goal's upcoming sessions are the plan's sessions, the plan is accepted, and 
 ## Edge cases
 
 - The goal had no upcoming planned sessions → the proposed sessions are added and nothing is removed.
+- A proposed session no longer fits the availability, the target date, the goal's topics or another goal's sessions → the plan is refused and becomes outdated, and nothing in the schedule changes.

@@ -35,5 +35,7 @@ The Student dismissed it. The schedule is as it was.
 
 ### Outdated
 
-The goal's schedule changed after the plan was prepared, so the planner closed
-it instead of accepting it as shown. The schedule is as it was.
+The Student tried to accept it after it stopped fitting: the goal's schedule,
+target date or topics changed, the Student's availability no longer holds a
+proposed session, or another goal's session now shares its time. The Product
+refused it instead of accepting it as shown. The schedule is as it was.
