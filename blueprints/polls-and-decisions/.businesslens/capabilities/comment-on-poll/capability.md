@@ -3,7 +3,7 @@ domain: polls
 availability: [{ place: polls-web }]
 ---
 
-# Discussion
+# Poll discussion
 
 Adds a Member's argument to an open poll's discussion, shown with their name.
 

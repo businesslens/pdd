@@ -17,7 +17,7 @@ it for the whole team.
 - **Outcome** — what was decided, in one statement
 - **Rationale** — why: the reasons and arguments that carried it
 - **Final results** — the poll's tally when voting ended, kept with the decision
-- **Generated draft** — whether the record started from a generated draft
+- **Generated draft** — whether the decision began as a draft a language model wrote
 - **Recorded at** — when the owner recorded it
 
 ## States

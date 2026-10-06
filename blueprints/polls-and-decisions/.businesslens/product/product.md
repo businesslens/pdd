@@ -1,18 +1,19 @@
 ---
 id: polls-and-decisions
-summary: Put an open question to the team as a poll, vote on it, reveal the results as the poll allows, and keep the outcome as a decision the team can look back on.
+summary: Put a question to the team as a poll, vote and argue while it is open, and keep the outcome as a decision the team can look up.
 category: team-collaboration
-tags: [multi-user, ai-assisted, beginner]
+tags: [multi-user, ai-assisted]
 authors:
   - name: BusinessLens
 license: MIT
 languages: [en]
 limitations:
-  - The team and its members are given. Signing in, inviting and removing members are outside this model.
-  - A recorded decision is final. Revisiting a question means asking it again in a new poll.
-  - Comment summaries and draft decisions are written with a language model and can misread a discussion. They are seen only by the poll's owner, and nothing reaches the team until the owner records a decision.
-  - A generated summary or draft works from one poll's question, options, results and comments. It does not draw on earlier decisions or anything outside the Product.
-  - The Product keeps its polls and decisions to itself. It sends no reminders, notifications or messages outside the web application.
+  - A poll's question, options and settings never change once it is open, and a poll is never deleted.
+  - A vote can be changed until its poll closes, but never withdrawn.
+  - Comments are never edited or deleted.
+  - A decision is never deleted, and once recorded it is final. Revisiting a question means asking it again in a new poll.
+  - A language model writes comment summaries and draft decisions from one poll's question, options, results and comments, and can misread the discussion. Only the poll's owner sees what it writes, and nothing reaches the team until the owner records a decision. While the model is unavailable, the owner gets no new summary and writes the decision themselves.
+  - The Product sends no reminders, notifications or messages outside the web application.
 references:
   - kind: research
     role: context
@@ -26,14 +27,14 @@ A small team tool for settling open questions. A member puts a question to the
 team as a poll — single or multiple choice, with an optional deadline, anonymous
 or named — members vote and argue their case in comments, the results are
 revealed when the poll's own setting allows, and the poll's owner records the
-outcome as a decision the whole team can find again later. On request, the
-Product summarizes the comments and drafts the decision record with a language
-model, for the owner to edit and confirm.
+outcome as a decision the whole team can find again later. On request, a
+language model summarizes the comments for the owner and drafts the decision
+record.
 
 ## Intent
 
-Turn "what did we decide, and why?" into something the team can look up. Every
-poll is honest about what it shows and when: an anonymous vote never reveals
-its voter, and hidden results stay hidden until voting ends. The decision is
-always a person's: generated words are only a proposal, and the poll owner
-decides whether they become the record.
+A team that settles questions in chat threads and meetings soon cannot say what
+it decided, or why. Polls & Decisions gives every question a clear end and a
+record the team can look up. Every poll is honest about what it shows and when:
+an anonymous vote never reveals its voter, and hidden results stay hidden until
+voting ends.

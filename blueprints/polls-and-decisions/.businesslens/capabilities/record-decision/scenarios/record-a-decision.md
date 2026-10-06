@@ -28,7 +28,7 @@ steps:
     contexts:
       web:
         place: polls-web::decision
-  - text: The Product adds the decision to the team's decision log and shows its outcome on the poll
+  - text: The Product shows the decision as recorded and adds it to the team's decision log
     kind: product
     actor: member
     entities:
@@ -36,7 +36,7 @@ steps:
       - { entity: poll, effect: reads, facts: [Question] }
     contexts:
       web:
-        place: polls-web::decision-log
+        place: polls-web::decision
 ---
 
 # Record a decision
@@ -48,9 +48,9 @@ why.
 
 ## Outcome
 
-The decision is recorded: every Member can read it in the decision log and on
-its poll, it keeps whether it started from a generated draft, and it no
-longer changes.
+The decision is recorded and never changes again. Every Member can read it in
+the decision log and on its poll, and it shows whether it began as a generated
+draft.
 
 ## Edge cases
 

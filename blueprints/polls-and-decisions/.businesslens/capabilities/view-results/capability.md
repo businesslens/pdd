@@ -3,7 +3,7 @@ domain: polls
 availability: [{ place: polls-web }]
 ---
 
-# Results
+# Results viewing
 
 Shows a poll's results as far as its settings allow: as votes arrive or only
 once it has closed, as counts on an anonymous poll, and with who chose what on a

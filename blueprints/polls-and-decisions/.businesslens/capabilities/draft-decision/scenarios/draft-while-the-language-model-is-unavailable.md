@@ -25,7 +25,7 @@ steps:
         place: polls-web::poll
 ---
 
-# Fall back when no draft can be generated
+# Draft while the language model is unavailable
 
 ## Trigger
 

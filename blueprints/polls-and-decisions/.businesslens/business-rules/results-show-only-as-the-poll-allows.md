@@ -15,8 +15,7 @@ permits:
 
 Members see a poll's results while it is open only when its results visibility
 is While open; otherwise nobody, its owner included, sees a count until the
-poll closes. Once it has closed, every Member sees the final results, and its
-owner may have them sent to a language model to generate a draft decision.
+poll closes. Once it has closed, every Member sees the final results.
 
 ## Rationale
 

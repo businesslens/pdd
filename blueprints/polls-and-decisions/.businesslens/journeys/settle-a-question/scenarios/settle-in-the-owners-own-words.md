@@ -4,26 +4,25 @@ result: achieved
 routes:
   web: Web
 steps:
-  - text: The poll's deadline has passed and the Product has closed it
+  - text: The poll the Member owns closed at its deadline and has no decision yet
     kind: condition
     actor: member
-    capability: close-poll
     entities:
       - { entity: poll, effect: reads, facts: [Deadline, Closed at] }
+      - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::poll
-  - text: The Member opens the closed poll they own and chooses to write the decision themselves
+  - text: The Member chooses to write the decision themselves
     kind: actor
     actor: member
     capability: draft-decision
     entities:
-      - { entity: poll, effect: reads, facts: [Closed at] }
       - { entity: decision, effect: creates, to: Draft, facts: [Final results, Generated draft] }
     contexts:
       web:
         place: polls-web::poll
-  - text: The Product opens the empty draft with the final results beside it
+  - text: The Product opens the empty draft for the Member with the final results beside it
     kind: product
     actor: member
     capability: draft-decision
