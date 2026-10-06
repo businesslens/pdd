@@ -3,11 +3,11 @@ domain: guest-list
 availability: [{ place: rsvp-web::hosting }]
 ---
 
-# Guest list
+# Guest list viewing
 
-Shows a Host everyone who has answered their event: who is going and with how
-many plus-ones, who might come, who cannot, and who is waiting in order, with
-the total going against capacity.
+Shows a Host every RSVP to their event: who is going and with how many
+plus-ones, who might come, who cannot, and who is waiting in order, with the
+total going against capacity.
 
 ## Intent
 

@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The event has no spots left
     kind: condition
@@ -18,7 +18,7 @@ steps:
     kind: product
     actor: guest
     entities:
-      - { entity: guest, from: Not going, to: Waitlisted, facts: [Responded at] }
+      - { entity: rsvp, from: Not going, to: Waitlisted, facts: [Responded at] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
 ---
 

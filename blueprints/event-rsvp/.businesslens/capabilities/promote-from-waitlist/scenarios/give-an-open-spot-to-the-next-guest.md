@@ -7,25 +7,29 @@ steps:
     kind: condition
     unattended: true
     entities:
-      - { entity: guest, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: event, effect: reads, facts: [Spots left] }
-  - text: The Product moves the earliest waitlisted Guest whose party fits the open spots to going
+      - { entity: guest, effect: reads, facts: [] }
+  - text: The Product moves the earliest waitlisted RSVP whose party fits the open spots to going
     kind: product
     entities:
-      - { entity: guest, from: Waitlisted, to: Going, facts: [] }
+      - { entity: rsvp, from: Waitlisted, to: Going, facts: [] }
   - text: The Product emails the Guest that they have a spot, with their personal link
     kind: product
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email, Personal link] }
+      - { entity: guest, effect: reads, facts: [] }
   - text: The guest list on the event shows the Guest as going
     kind: product
     entities:
-      - { entity: guest, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: event, effect: reads, facts: [] }
+      - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
   - text: The Guest's personal link shows them as going
     kind: product
     entities:
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
 ---
@@ -34,8 +38,8 @@ steps:
 
 ## Trigger
 
-A going Guest changes their answer, or the Host raises the capacity, while
-guests are waiting.
+A going Guest changes their answer, the Host removes a going RSVP, or the Host
+raises the capacity, while guests are waiting.
 
 ## Outcome
 

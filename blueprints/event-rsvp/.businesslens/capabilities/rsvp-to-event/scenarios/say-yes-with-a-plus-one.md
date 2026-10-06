@@ -22,13 +22,13 @@ steps:
     kind: product
     actor: guest
     entities:
-      - { entity: guest, effect: creates, to: Going, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: creates, to: Going, facts: [Name, Email, Plus-one, Responded at, Personal link] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The Product emails the Guest a confirmation with a personal link to their answer
     kind: product
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email, Personal link] }
 ---
 
 # Say yes with a plus-one
@@ -47,4 +47,4 @@ answer.
 
 - The Host does not allow plus-ones → the invitation offers none and the Guest answers alone.
 - One spot is left → the Guest may take it without the plus-one, or both join the waitlist.
-- The email has already answered this event → the Product adds no second guest, changes nothing, and emails that address its personal link again.
+- The email has already answered this event → the Product adds no second RSVP, changes nothing, and emails that address its personal link again.

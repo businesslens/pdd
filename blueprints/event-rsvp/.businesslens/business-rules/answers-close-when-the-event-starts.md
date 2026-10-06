@@ -1,17 +1,21 @@
 ---
 appliesTo:
-  - type: capability
-    id: rsvp-to-event
-  - type: capability
-    id: change-rsvp
-  - type: capability
-    id: promote-from-waitlist
+  - type: entity
+    id: rsvp
+    effect: creates
+  - type: entity
+    id: rsvp
+    effect: changes
+  - type: entity
+    id: rsvp
+    effect: removes
 ---
 
 # Answers close when the event starts
 
-An event takes new answers, changed answers and waitlist moves only while it is
-scheduled and has not started. After that, the guest list stays as it stood.
+An event's RSVPs are given, changed, moved off the waitlist and removed only
+while the event is scheduled and has not started. After that, the guest list
+stays as it stood.
 
 ## Rationale
 

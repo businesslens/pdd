@@ -1,6 +1,6 @@
 ---
 relations:
-  - entity: guest
+  - entity: rsvp
     verb: has
     cardinality: one-to-many
   - entity: message

@@ -13,14 +13,16 @@ steps:
     kind: condition
     entities:
       - { entity: event, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
   - text: The Product shows an empty guest list beside the invitation link to share
     kind: product
     actor: host
     entities:
-      - { entity: guest, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: event, effect: reads, facts: [Invitation link] }
+      - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
 ---
 

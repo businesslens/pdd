@@ -1,7 +1,7 @@
 ---
 appliesTo:
   - type: entity
-    id: guest
+    id: rsvp
     effect: changes
     from: Waitlisted
     to: Going
@@ -11,9 +11,9 @@ permits:
 
 # Only the waitlist gives a waitlisted guest a spot
 
-A waitlisted Guest becomes going only when the Product moves them as spots
-open: the earliest waitlisted party that fits the open spots goes first. No
-guest moves themselves ahead, and the Host does not pick who gets in.
+A waitlisted RSVP becomes going only when the Product moves it as spots open:
+the earliest waitlisted party that fits the open spots goes first. No guest
+moves themselves ahead, and the Host does not pick who gets in.
 
 ## Rationale
 

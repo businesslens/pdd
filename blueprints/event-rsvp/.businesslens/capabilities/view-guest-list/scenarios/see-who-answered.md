@@ -14,14 +14,15 @@ steps:
     actor: host
     entities:
       - { entity: event, effect: reads, facts: [] }
-      - { entity: guest, effect: reads, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: reads, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
   - text: The Product totals the people going, plus-ones included, against the event's capacity
     kind: product
     actor: host
     entities:
       - { entity: event, effect: reads, facts: [Capacity, Spots left] }
-      - { entity: guest, effect: reads, facts: [Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Plus-one] }
     contexts: { web: { place: rsvp-web::hosting::event } }
 ---
 

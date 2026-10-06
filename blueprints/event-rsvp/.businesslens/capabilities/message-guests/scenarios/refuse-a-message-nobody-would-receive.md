@@ -12,6 +12,7 @@ steps:
     kind: condition
     entities:
       - { entity: event, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [] }
       - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::new-message } }
   - text: The Product refuses to send, says nobody would receive it, and keeps the draft

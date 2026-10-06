@@ -20,7 +20,8 @@ steps:
     actor: host
     entities:
       - { entity: event, effect: reads, facts: [] }
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email] }
+      - { entity: guest, effect: reads, facts: [] }
 ---
 
 # Cancel an event

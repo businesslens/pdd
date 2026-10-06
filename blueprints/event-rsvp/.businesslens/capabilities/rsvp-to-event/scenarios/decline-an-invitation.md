@@ -12,13 +12,13 @@ steps:
     kind: product
     actor: guest
     entities:
-      - { entity: guest, effect: creates, to: Not going, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: creates, to: Not going, facts: [Name, Email, Plus-one, Responded at, Personal link] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The Product emails the Guest a confirmation with a personal link to their answer
     kind: product
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email, Personal link] }
 ---
 
 # Decline an invitation

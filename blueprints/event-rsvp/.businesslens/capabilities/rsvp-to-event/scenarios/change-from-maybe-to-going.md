@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The event has spots left for them and their plus-one
     kind: condition
@@ -18,13 +18,13 @@ steps:
     kind: product
     actor: guest
     entities:
-      - { entity: guest, from: Maybe, to: Going, facts: [Responded at] }
+      - { entity: rsvp, from: Maybe, to: Going, facts: [Responded at] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The Product emails the Guest a confirmation of their new answer
     kind: product
     actor: guest
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email] }
 ---
 
 # Change from maybe to going

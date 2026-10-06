@@ -15,5 +15,8 @@ These are assumptions to validate, not claims that research has proved them.
   guests.
 - Hosts welcome suggested wording for a message only if they can edit it and
   nothing is ever sent without them.
+- Hosts occasionally need to remove an answer that should not be there — a
+  duplicate, a joke, someone they did not invite — and accept that the person
+  is told by email and could answer again through the invitation link.
 
 Future research may change the Product Model; this file does not override it.

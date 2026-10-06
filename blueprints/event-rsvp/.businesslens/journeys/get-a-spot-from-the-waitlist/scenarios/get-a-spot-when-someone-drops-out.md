@@ -10,28 +10,30 @@ steps:
     capability: rsvp-to-event
     entities:
       - { entity: event, effect: reads, facts: [Spots left] }
-      - { entity: guest, effect: creates, to: Waitlisted, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: creates, to: Waitlisted, facts: [Name, Email, Plus-one, Responded at, Personal link] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: A spot opens on the event before it starts
     kind: condition
     entities:
       - { entity: event, effect: reads, facts: [Spots left] }
-  - text: Waitlist promotion gives the open spot to the Guest
+  - text: Waitlist promotion moves the Guest's RSVP to going
     kind: product
     capability: promote-from-waitlist
     entities:
       - { entity: guest, effect: reads, facts: [] }
-  - text: The Product emails the Guest that they have a spot, with their personal link
+      - { entity: rsvp, effect: reads, facts: [] }
+  - text: The Product emails the Guest that they have a spot, with the personal link to their RSVP
     kind: product
-    actor: guest
+    capability: promote-from-waitlist
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: guest, effect: reads, facts: [] }
+      - { entity: rsvp, effect: reads, facts: [Personal link] }
   - text: The Guest follows the personal link and sees they are going, with the event's details
     kind: actor
     actor: guest
     capability: open-invitation
     entities:
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
       - { entity: event, effect: reads, facts: [Title, Starts at, Place] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
 ---

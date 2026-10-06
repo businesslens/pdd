@@ -19,7 +19,8 @@ steps:
     kind: product
     actor: host
     entities:
-      - { entity: guest, effect: reads, facts: [Email] }
+      - { entity: rsvp, effect: reads, facts: [Email] }
+      - { entity: guest, effect: reads, facts: [] }
 ---
 
 # Change the time of an event

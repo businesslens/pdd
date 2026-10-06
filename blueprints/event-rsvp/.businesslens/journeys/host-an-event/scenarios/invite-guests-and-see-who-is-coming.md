@@ -14,7 +14,7 @@ steps:
   - text: The Product opens the new event with its invitation link, before anyone has answered
     kind: product
     actor: host
-    capability: view-guest-list
+    capability: create-event
     entities:
       - { entity: event, effect: reads, facts: [Title, Invitation link] }
     contexts: { web: { place: rsvp-web::hosting::event } }
@@ -27,15 +27,16 @@ steps:
     actor: guest
     capability: rsvp-to-event
     entities:
-      - { entity: guest, effect: creates, to: Going, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: creates, to: Going, facts: [Name, Email, Plus-one, Responded at, Personal link] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: The Host sees the Guest on the event's guest list as going
     kind: actor
     actor: host
     capability: view-guest-list
     entities:
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
       - { entity: event, effect: reads, facts: [Spots left] }
+      - { entity: guest, effect: reads, facts: [] }
     contexts: { web: { place: rsvp-web::hosting::event } }
 ---
 

@@ -10,7 +10,7 @@ steps:
     capability: rsvp-to-event
     entities:
       - { entity: event, effect: reads, facts: [Spots left] }
-      - { entity: guest, effect: creates, to: Waitlisted, facts: [Name, Email, Plus-one, Responded at] }
+      - { entity: rsvp, effect: creates, to: Waitlisted, facts: [Name, Email, Plus-one, Responded at, Personal link] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
   - text: No spot opens on the event before it starts
     kind: condition
@@ -21,7 +21,7 @@ steps:
     actor: guest
     capability: open-invitation
     entities:
-      - { entity: guest, effect: reads, facts: [Name, Plus-one] }
+      - { entity: rsvp, effect: reads, facts: [Name, Plus-one] }
     contexts: { web: { place: rsvp-web::responding::invitation } }
 ---
 
