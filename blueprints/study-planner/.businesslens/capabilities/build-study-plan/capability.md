@@ -1,5 +1,5 @@
 ---
-domain: plans
+domain: goals
 availability: [ { place: planner-web } ]
 ---
 

@@ -9,8 +9,8 @@ permits:
 
 # Only the Student removes their topics
 
-A topic is removed only by the Student who owns its goal.
+A topic, with its planned and logged sessions, is removed only by the Student who owns its goal. The AI agent never removes a topic.
 
 ## Rationale
 
-Removing a topic cancels its upcoming sessions, which only the Student may decide.
+Removing a topic takes its study record with it for good, which only the Student may decide.

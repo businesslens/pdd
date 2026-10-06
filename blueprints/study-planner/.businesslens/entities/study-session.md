@@ -24,4 +24,5 @@ shown as missed.
 ### Logged
 
 The Student recorded the study as done. Its logged minutes count toward the
-goal's progress, and no study plan replaces it.
+goal's progress, and no study plan replaces it; only deleting it, its topic or
+its goal removes it.

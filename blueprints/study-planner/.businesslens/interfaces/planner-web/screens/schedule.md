@@ -11,4 +11,4 @@ entryPoints:
 
 Presents the Student's study sessions over time, each with its topic and goal,
 when it starts and how long it is planned for, and whether it was logged or
-missed. This is where the Student schedules, moves, cancels and logs sessions.
+missed. This is where the Student schedules, moves, cancels and logs sessions, and deletes a session logged by mistake.
