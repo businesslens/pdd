@@ -21,6 +21,7 @@ steps:
         place: planner-web::goal-detail
   - text: Sessions already logged for the topic still count toward it
     kind: condition
+    actor: student
     entities:
       - { entity: topic, effect: reads, facts: [] }
       - { entity: study-session, effect: reads, facts: [Logged minutes] }

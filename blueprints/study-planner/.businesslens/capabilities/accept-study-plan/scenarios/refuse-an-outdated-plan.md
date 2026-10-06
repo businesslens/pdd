@@ -14,6 +14,7 @@ steps:
         place: planner-web::plan-review
   - text: A session of the goal was scheduled, moved, cancelled or logged after the plan was prepared
     kind: condition
+    actor: student
     entities:
       - { entity: study-session, effect: reads, facts: [] }
       - { entity: study-plan, effect: reads, facts: [Prepared at] }
@@ -21,7 +22,7 @@ steps:
     contexts:
       web:
         place: planner-web::plan-review
-  - text: The Product marks the plan outdated and explains that it no longer matches the schedule
+  - text: The Product closes the plan as outdated and explains that it no longer matches the schedule
     kind: product
     actor: student
     entities:
@@ -29,10 +30,11 @@ steps:
     contexts:
       web:
         place: planner-web::plan-review
-  - text: The schedule is unchanged, and the Student can ask for a new plan
+  - text: The schedule is unchanged, and the Student can ask for a new plan for the goal
     kind: condition
     actor: student
     entities:
+      - { entity: goal, effect: reads, facts: [] }
       - { entity: study-session, effect: reads, facts: [] }
     contexts:
       web:

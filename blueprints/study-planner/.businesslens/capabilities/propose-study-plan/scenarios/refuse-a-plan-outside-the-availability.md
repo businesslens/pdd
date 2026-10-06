@@ -14,6 +14,7 @@ steps:
         place: planner-agent
   - text: A proposed session falls outside the availability, after the target date, or over a session the plan does not replace
     kind: condition
+    actor: ai-agent
     entities:
       - { entity: student, effect: reads, facts: [Weekly availability] }
       - { entity: study-session, effect: reads, facts: [Start, Planned minutes] }

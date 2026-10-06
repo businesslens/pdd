@@ -21,6 +21,7 @@ steps:
         place: planner-web::plans
   - text: Sessions already scheduled stay where they are
     kind: condition
+    actor: student
     entities:
       - { entity: study-session, effect: reads, facts: [] }
     contexts:

@@ -53,13 +53,15 @@ steps:
     contexts:
       web:
         place: planner-web::plan-review
-  - text: The schedule shows the new sessions, with logged and missed sessions where they were
+  - text: The goal's upcoming sessions are the plan's, with logged and missed sessions where they were
     kind: condition
+    actor: student
     entities:
+      - { entity: goal, effect: reads, facts: [] }
       - { entity: study-session, as: proposed, effect: reads, facts: [Start, Planned minutes] }
     contexts:
       web:
-        place: planner-web::schedule
+        place: planner-web::plan-review
 ---
 
 # Accept a proposed plan

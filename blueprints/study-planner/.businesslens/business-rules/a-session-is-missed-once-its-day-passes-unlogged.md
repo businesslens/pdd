@@ -15,5 +15,5 @@ day still ahead.
 
 ## Rationale
 
-Missed sessions are what the AI agent revises around, so the Product
+Missed sessions are what plans are revised around, so the Product
 must say plainly and in one way when a session counts as missed.

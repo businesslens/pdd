@@ -1,11 +1,8 @@
 ---
 appliesTo:
-  - type: capability
-    id: propose-study-plan
   - type: entity
     id: study-plan
-    effect: creates
-    facts: [Proposed sessions]
+    facts: [Proposed sessions, Shortfall]
 ---
 
 # Study plans fit the Student's availability
@@ -13,7 +10,8 @@ appliesTo:
 Every proposed session falls inside the Student's weekly availability, after
 the moment the plan is prepared and before the goal's target date. Study that
 does not fit is reported as the plan's shortfall, never squeezed in outside
-that time; the Product refuses a plan with a session that does not fit.
+that time; the Product refuses an agent's plan with a session that does not
+fit.
 
 ## Rationale
 

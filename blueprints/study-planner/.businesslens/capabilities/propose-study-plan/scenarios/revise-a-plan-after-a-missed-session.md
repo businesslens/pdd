@@ -11,11 +11,12 @@ steps:
     contexts:
       agent:
         place: planner-agent
-  - text: The Product provides the sessions, with those whose day passed unlogged shown as missed
+  - text: The Product provides the sessions, with those whose day passed unlogged shown as missed, and the Student's weekly availability
     kind: product
     actor: ai-agent
     entities:
       - { entity: study-session, effect: reads, facts: [Start, Planned minutes, Logged minutes] }
+      - { entity: student, effect: reads, facts: [Weekly availability] }
     contexts:
       agent:
         place: planner-agent
@@ -32,7 +33,15 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
+      - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared by, Prepared at] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The Product confirms that every proposed session fits the availability and overlaps no other session, and keeps the plan
+    kind: product
+    actor: ai-agent
+    entities:
+      - { entity: study-plan, effect: reads, facts: [Proposed sessions] }
     contexts:
       agent:
         place: planner-agent
@@ -60,5 +69,4 @@ A revised plan waits for the Student's review; the schedule has not changed.
 
 ## Edge cases
 
-- A plan for the goal is already waiting for review → that plan becomes outdated and the revised plan takes its place.
-- The goal is past → the Product refuses a revision and keeps nothing.
+- The goal is past → the Product refuses the plan and keeps nothing.

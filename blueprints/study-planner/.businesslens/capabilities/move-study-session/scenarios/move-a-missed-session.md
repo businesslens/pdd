@@ -21,6 +21,7 @@ steps:
         place: planner-web::schedule
   - text: The session is upcoming again and no longer shown as missed
     kind: condition
+    actor: student
     entities:
       - { entity: study-session, effect: reads, facts: [Start] }
     contexts:

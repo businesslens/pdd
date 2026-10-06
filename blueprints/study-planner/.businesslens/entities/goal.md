@@ -13,7 +13,7 @@ relations:
 
 Something a Student is studying toward by a date, such as passing an exam.
 Once its target date has passed, the goal is past: its progress stays readable
-and no plan is prepared for it.
+and no plan is built or proposed for it.
 
 ## Information kept
 

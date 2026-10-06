@@ -1,7 +1,5 @@
 ---
 appliesTo:
-  - type: capability
-    id: view-goal-progress
   - type: entity
     id: study-session
     effect: reads

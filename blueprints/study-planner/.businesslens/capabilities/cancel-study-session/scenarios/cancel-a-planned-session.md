@@ -21,6 +21,7 @@ steps:
         place: planner-web::schedule
   - text: The topic's estimate and logged hours are unchanged
     kind: condition
+    actor: student
     entities:
       - { entity: topic, effect: reads, facts: [] }
     contexts:
