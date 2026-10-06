@@ -7,5 +7,5 @@ entryPoints:
 
 # Administration
 
-The context only Administrators enter, where they create spaces and decide who
-belongs to each one and with which role.
+The context only Administrators enter, where they create and rename spaces and
+decide who belongs to each one and with which role.

@@ -60,3 +60,4 @@ ones after it, is still in the history.
 ## Edge cases
 
 - The Editor declines to confirm → the page is unchanged.
+- Another Editor saved the page after the Editor opened this revision → the Product shows that newer revision and asks the Editor to confirm again before restoring.
