@@ -54,8 +54,9 @@ its authoritative Reference the same way; how a design meets it stays design.
 
 Every Capability needs at least one Capability Scenario; cover the primary
 path, refusals of who may act, invalid input, conflicts, and external failures
-where the Product distinguishes them. These are cases, not kinds: record each
-under a `kind` that `taxonomies.yaml` declares, never a new kind per case — a
+where the Product distinguishes them. These are cases, not kinds: a new model
+declares exactly `primary`, `edge` and `validation`, and records each case
+under one of them, never a new kind per case — a
 refusal of who may act is `validation`, a conflict or an unavailable dependency
 is `edge`. Write Trigger, ordered typed Steps, Decision points when a linear
 sequence branches, and Outcome so a reviewer can compare source behavior

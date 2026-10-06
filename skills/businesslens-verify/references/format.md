@@ -317,7 +317,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`.
   Accepting and dismissing a kept draft are each a Capability —
   `accept-<draft>`/`dismiss-<draft>` for a draft Entity,
-  `accept-proposed-<thing>`/`dismiss-proposed-<thing>` for a State; one Business Rule says only
+  `accept-proposed-<thing>`/`dismiss-proposed-<thing>` for a State, where
+  dismissing removes the proposed thing; one Business Rule says only
   the person decides it, another that it changes nothing until accepted. A
   draft that only fills an editor the person has not saved is not kept, and
   saving is the acceptance.

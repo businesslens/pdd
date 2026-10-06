@@ -798,7 +798,8 @@ has — a reason, a source passage — and otherwise a `Proposed` State of the
 target. A draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`.
 Accepting and dismissing a kept draft are each a Capability, being later acts on
 something a run produced — `accept-<draft>` and `dismiss-<draft>` for a draft
-Entity, `accept-proposed-<thing>` and `dismiss-proposed-<thing>` for a State; a Business Rule says only the person decides it, and
+Entity, `accept-proposed-<thing>` and `dismiss-proposed-<thing>` for a State, where
+dismissing removes the proposed thing; a Business Rule says only the person decides it, and
 another that the draft changes nothing until accepted. A draft that only fills
 an editor the person has not saved is not kept: saving is the acceptance, and it
 needs no Capability of its own.

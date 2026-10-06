@@ -164,9 +164,9 @@ describe('collection rows that expand', () => {
   })
 
   it('draws what a Rule applies to as a tree: targets by kind, holding only the places the Rule names', () => {
-    const rule = workspace.rules.find((item: any) => item.id === 'collection-membership-does-not-control-saving')
+    const rule = workspace.rules.find((item: any) => item.id === 'collection-membership-never-saves-or-unsaves-an-item')
     const tree = ruleScope(workspace, rule)
-    expect(tree.map((group: any) => [group.title, group.groupKind, group.children.length])).toEqual([['Capabilities', 'capability', 2], ['Journeys', 'journey', 1]])
+    expect(tree.map((group: any) => [group.title, group.groupKind, group.children.length])).toEqual([['Capabilities', 'capability', 4], ['Journeys', 'journey', 1]])
     /* No Context named: the target's own places are read on its page, not drawn here. */
     for (const node of tree.flatMap((group: any) => group.children)) expect([node.note, node.children]).toEqual(['Every supported Context', []])
     /* An Entity target notes its operation, and holds places only where the Rule narrows it, each saying where it sits. */
@@ -192,8 +192,8 @@ describe('collection rows that expand', () => {
   })
 
   it('reads every edge of a Rule\'s Applies to tree at its other end', () => {
-    const rule = workspace.rules.find((item: any) => item.id === 'collection-membership-does-not-control-saving')
-    const saving = workspace.capabilities.find((item: any) => item.id === 'save-item')
+    const rule = workspace.rules.find((item: any) => item.id === 'collection-membership-never-saves-or-unsaves-an-item')
+    const saving = workspace.capabilities.find((item: any) => item.id === 'add-collection-item')
     expect(attachedRules(workspace, saving).filter((item: any) => item.rule.key === rule.key).map((item: any) => [item.hookLabel, item.hook])).toEqual([['Where', 'Every supported Context']])
     /* The Rules that name it are a tab of their own, before Connections, never Overview blocks. */
     const tabs = tabsFor(workspace, saving)

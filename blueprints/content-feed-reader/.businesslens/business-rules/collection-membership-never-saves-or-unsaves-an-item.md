@@ -1,9 +1,15 @@
 ---
 appliesTo:
-  - type: entity
-    id: item
-    effect: changes
-    facts: [Saved at]
+  - type: capability
+    id: add-collection-item
+  - type: capability
+    id: remove-collection-item
+  - type: capability
+    id: move-collection-item
+  - type: capability
+    id: delete-collection
+  - type: journey
+    id: start-a-collection
 ---
 
 # Collection membership never saves or unsaves an item
