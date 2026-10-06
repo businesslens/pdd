@@ -3,7 +3,7 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Reader attempts to change the publication state of a collection owned by someone else.
+  - text: The Reader attempts to publish a collection owned by someone else
     kind: actor
     actor: reader
     entities:
@@ -19,7 +19,7 @@ steps:
     contexts:
       web:
         place: reader-web::personal-library::collection-detail
-  - text: The attempted publication change is rejected
+  - text: Publishing is refused
     kind: condition
     entities: []
     contexts:
@@ -31,7 +31,7 @@ steps:
 
 ## Trigger
 
-The Reader attempts to change the publication state of a collection owned by someone else.
+The Reader attempts to publish a collection owned by someone else
 
 ## Outcome
 

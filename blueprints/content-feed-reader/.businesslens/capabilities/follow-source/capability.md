@@ -5,8 +5,10 @@ availability: [ { place: reader-web::personal-library }, { place: reader-mobile:
 
 # Source following
 
-Registers or removes a readable feed as a source the Reader chooses to follow.
+Adds a readable feed to the sources the Reader follows, collects what it has
+already published, and takes the Reader to those items.
 
 ## Intent
 
-Let Readers decide exactly which sources may contribute future items to their library.
+Let Readers decide exactly which sources may contribute items to their library,
+and start reading a new one straight away.

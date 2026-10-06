@@ -9,7 +9,7 @@ domain: collections
 # Collection
 
 An ordered group of saved items an owner curates and may share beyond their own
-library.
+library. Deleting one removes it for good and leaves its items saved.
 
 ## Information kept
 
@@ -28,7 +28,7 @@ Visible only to its owner. No address outside the library resolves to it.
 Readable by anyone who reaches its address, and discoverable as the owner's
 public work.
 
-### Unlisted
+### Unpublished
 
 Withdrawn from its public address, which serves nothing until the owner
 publishes it again. The collection itself is untouched.
