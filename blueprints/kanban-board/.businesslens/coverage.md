@@ -6,12 +6,14 @@ covered:
     paths: []
   - description: Board membership, the Admin and Member roles, and leaving a board.
     paths: []
-  - description: Creating, editing, assigning, scheduling, moving and commenting on cards.
+  - description: Creating, editing, assigning, moving, deleting and commenting on cards, and deleting one's own comments.
     paths: []
-  - description: AI agent proposals and stall flags, and the members' decisions on them.
+  - description: Stall flags the Product raises on cards that stop moving.
+    paths: []
+  - description: AI agent proposals and the members' decisions on them.
     paths: []
 exclusions:
-  - description: Account registration, sign-in and profile settings.
+  - description: "Accounts: signing up, signing in and account settings."
     paths: []
 unmapped:
   - description: How a member connects an AI agent to their boards and later disconnects it.

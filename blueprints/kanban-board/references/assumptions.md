@@ -10,11 +10,17 @@ These are assumptions to validate, not claims that research has proved them.
   or add columns once the board is in use.
 - Seven days in one column is a sensible default before a card counts as
   stalled, and teams adjust it per board rather than per column.
-- Members trust an AI agent's proposals more when nothing reaches the board
-  until a member accepts it, and when the agent cannot move or edit cards.
+- Teams want stalled cards flagged by the board itself, whether or not anyone
+  has connected an AI agent.
 - A stall flag that clears when the card moves is enough; members do not need
   to dismiss flags by hand.
+- Members trust an AI agent's proposals more when nothing reaches the board
+  until a member accepts it, and when the agent cannot move or edit cards.
+- A next step proposed for a stalled card is as useful to a team as cards
+  proposed for a new goal.
 - Teams treat the board's last column as done, so finished cards do not need
-  to be archived.
+  to be archived; cards added by mistake are deleted instead.
+- A board outlives the work on it; members who are done with one leave it
+  rather than delete it.
 
 Future research may change the Product Model; this file does not override it.

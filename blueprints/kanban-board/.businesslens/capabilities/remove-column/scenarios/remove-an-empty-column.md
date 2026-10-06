@@ -45,4 +45,4 @@ The column is gone from the board, and the remaining columns keep their order.
 ## Edge cases
 
 - The column is the board's only column → refused; a board always keeps at least one column.
-- A pending proposed card suggests the removed column → it stays pending, and the member who accepts it chooses another column.
+- A proposed card suggests the removed column → it keeps waiting, and the member who accepts it chooses another column.

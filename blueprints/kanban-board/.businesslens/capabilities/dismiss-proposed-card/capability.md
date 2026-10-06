@@ -3,6 +3,6 @@ domain: proposals
 availability: [{ place: board-web }]
 ---
 
-# Dismiss proposed card
+# Proposed card dismissal
 
-Declines a pending proposed card, so that nothing from it reaches the board.
+Declines a proposed card, so that nothing from it reaches the board.

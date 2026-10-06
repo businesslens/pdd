@@ -1,5 +1,5 @@
 ---
-kind: edge
+kind: primary
 routes:
   web: Web
 steps:

@@ -32,7 +32,7 @@ steps:
         place: board-web::board-settings
 ---
 
-# Refuse removing the last admin
+# Refuse leaving as the last admin
 
 ## Trigger
 

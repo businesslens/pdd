@@ -8,6 +8,9 @@ relations:
   - entity: comment
     verb: writes
     cardinality: one-to-many
+  - entity: ai-agent
+    verb: connects
+    cardinality: one-to-many
 ---
 
 # Teammate

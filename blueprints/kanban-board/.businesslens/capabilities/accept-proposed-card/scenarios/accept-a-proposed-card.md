@@ -3,11 +3,11 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Teammate reviews a pending proposed card with its goal and suggested column
+  - text: The Teammate reviews a proposed card with its reason and suggested column
     kind: actor
     actor: teammate
     entities:
-      - { entity: proposed-card, effect: reads, facts: [Title, Description, Goal, Suggested column] }
+      - { entity: proposed-card, effect: reads, facts: [Title, Description, Reason, Suggested column] }
       - { entity: card, effect: reads, facts: [] }
       - { entity: column, effect: reads, facts: [Name] }
     contexts:
@@ -17,7 +17,7 @@ steps:
     kind: actor
     actor: teammate
     entities:
-      - { entity: proposed-card, effect: changes, from: Pending, to: Accepted, facts: [] }
+      - { entity: proposed-card, effect: changes, from: Proposed, to: Accepted, facts: [] }
       - { entity: card, effect: reads, facts: [] }
     contexts:
       web:
@@ -31,15 +31,16 @@ steps:
     contexts:
       web:
         place: board-web::proposed-cards
-  - text: The card shows on the board for every member
+  - text: The proposal leaves the proposed cards, and the card is on the board for every member
     kind: condition
     actor: teammate
     entities:
+      - { entity: proposed-card, effect: reads, facts: [] }
       - { entity: card, effect: reads, facts: [Title] }
       - { entity: board, effect: reads, facts: [] }
     contexts:
       web:
-        place: board-web::board
+        place: board-web::proposed-cards
 ---
 
 # Accept a proposed card
@@ -50,4 +51,4 @@ A member decides a proposed card is work the team will do.
 
 ## Outcome
 
-A card with the proposed title and description is at the bottom of the suggested column, and the proposal is accepted and no longer pending.
+A card with the proposed title and description is at the bottom of the suggested column, and the proposal is accepted and no longer waiting for a decision.

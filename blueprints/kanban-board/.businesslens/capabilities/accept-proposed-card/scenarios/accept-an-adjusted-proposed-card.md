@@ -3,11 +3,11 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Teammate reviews a pending proposed card with its goal and suggested column
+  - text: The Teammate reviews a proposed card with its reason and suggested column
     kind: actor
     actor: teammate
     entities:
-      - { entity: proposed-card, effect: reads, facts: [Title, Description, Goal, Suggested column] }
+      - { entity: proposed-card, effect: reads, facts: [Title, Description, Reason, Suggested column] }
       - { entity: card, effect: reads, facts: [] }
       - { entity: column, effect: reads, facts: [Name] }
     contexts:
@@ -17,7 +17,7 @@ steps:
     kind: actor
     actor: teammate
     entities:
-      - { entity: proposed-card, effect: changes, from: Pending, to: Accepted, facts: [] }
+      - { entity: proposed-card, effect: changes, from: Proposed, to: Accepted, facts: [] }
       - { entity: card, effect: reads, facts: [] }
       - { entity: column, effect: reads, facts: [Name] }
     contexts:

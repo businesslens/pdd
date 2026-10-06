@@ -48,7 +48,7 @@ steps:
 
 ## Trigger
 
-A member moves a card the AI agent flagged as stalled into another column.
+A member moves a card the Product flagged as stalled into another column.
 
 ## Outcome
 

@@ -14,7 +14,8 @@ relations:
 
 # Card
 
-One piece of the team's work, sitting in one column of a board.
+One piece of the team's work, sitting in one column of a board. Deleting a card
+takes its comments and stall flags with it.
 
 ## Information kept
 

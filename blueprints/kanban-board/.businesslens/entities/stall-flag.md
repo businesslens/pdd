@@ -4,8 +4,8 @@ domain: cards
 
 # Stall flag
 
-The AI agent's mark that a card has stayed in one column longer than its
-board's stall threshold, shown on the card to every member of the board.
+The Product's mark that a card has stayed in one column longer than its board's
+stall threshold, shown on the card to every member of the board.
 
 ## Information kept
 
