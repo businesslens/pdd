@@ -9,7 +9,7 @@ steps:
     entities:
       - { entity: quiz, effect: reads, facts: [] }
       - { entity: attempt, effect: reads, facts: [Answers] }
-      - { entity: question, effect: reads, facts: [Prompt, Correct answer] }
+      - { entity: short-answer-question, effect: reads, facts: [Prompt, Accepted answers] }
     contexts:
       web:
         place: quiz-web::attempt
@@ -26,7 +26,7 @@ steps:
     actor: creator
     entities:
       - { entity: attempt, effect: changes, facts: [Score] }
-      - { entity: question, effect: reads, facts: [Points] }
+      - { entity: short-answer-question, effect: reads, facts: [Points] }
     contexts:
       web:
         place: quiz-web::attempt

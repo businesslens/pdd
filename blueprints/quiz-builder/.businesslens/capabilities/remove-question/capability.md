@@ -3,7 +3,7 @@ domain: quizzes
 availability: [{ place: quiz-web }]
 ---
 
-# Remove question
+# Question removal
 
-Takes a question out of the Creator's quiz, or discards a drafted question the
-Creator does not want.
+Takes a question out of the Creator's quiz for good. Attempts already submitted
+keep the scores they were given.

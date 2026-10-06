@@ -3,7 +3,7 @@ domain: results
 availability: [{ place: quiz-web }]
 ---
 
-# Review results
+# Results review
 
 Shows the Creator how a quiz's submitted attempts went: for each question, how
 many attempts answered it right and the answers given; for each learner, their

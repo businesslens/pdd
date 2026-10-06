@@ -9,9 +9,9 @@ permits:
 
 # Only the creator changes a quiz
 
-Only the Creator who owns a quiz changes its title, its questions and their
-order, its source material, what it reveals after submitting, and whether it is
-shared or closed.
+Only the Creator who owns a quiz changes its title, what it reveals after
+submitting, its questions and their order, its source material, and whether it
+is shared, closed or reopened.
 
 ## Rationale
 

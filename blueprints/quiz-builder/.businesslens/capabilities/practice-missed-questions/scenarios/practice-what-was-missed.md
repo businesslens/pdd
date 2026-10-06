@@ -16,7 +16,8 @@ steps:
     actor: learner
     entities:
       - { entity: attempt, effect: reads, facts: [Answers] }
-      - { entity: question, effect: reads, facts: [] }
+      - { entity: choice-question, effect: reads, facts: [] }
+      - { entity: short-answer-question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::attempt
@@ -25,7 +26,8 @@ steps:
     actor: learner
     entities:
       - { entity: practice-round, effect: creates, to: In progress, facts: [Questions] }
-      - { entity: question, effect: reads, facts: [] }
+      - { entity: choice-question, effect: reads, facts: [] }
+      - { entity: short-answer-question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::practice
@@ -34,7 +36,8 @@ steps:
     actor: learner
     entities:
       - { entity: practice-round, effect: changes, facts: [Answers] }
-      - { entity: question, effect: reads, facts: [Prompt, Answer options] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Answer options] }
+      - { entity: short-answer-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: quiz-web::practice

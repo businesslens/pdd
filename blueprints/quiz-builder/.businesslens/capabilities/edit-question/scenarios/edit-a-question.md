@@ -3,12 +3,12 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Creator opens a question of their quiz
+  - text: The Creator opens a choice question of their quiz
     kind: actor
     actor: creator
     entities:
       - { entity: quiz, effect: reads, facts: [] }
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: quiz-web::quiz-editor
@@ -19,19 +19,18 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Product checks that the question still has a correct answer it can score
+  - text: The Product checks that one option still scores
     kind: product
     actor: creator
-    entities:
-      - { entity: question, effect: reads, facts: [] }
+    entities: []
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Product saves the question in its place in the quiz
+  - text: The Product saves the choice question in its place in the quiz
     kind: product
     actor: creator
     entities:
-      - { entity: question, effect: changes, facts: [Prompt, Answer options, Correct answer, Explanation, Points] }
+      - { entity: choice-question, effect: changes, facts: [Prompt, Answer options, Correct answer, Explanation, Points] }
       - { entity: quiz, effect: reads, facts: [Question order] }
     contexts:
       web:
@@ -50,4 +49,6 @@ The question asks what the Creator now wants, in the same place in the quiz.
 
 ## Edge cases
 
-- The change removes the only correct answer → the Product refuses it and keeps the Creator's edit to finish.
+- A short-answer question → the Creator changes its prompt, accepted answers, explanation or points the same way.
+- The question is still proposed → it stays proposed, beside the quiz, until the Creator accepts or dismisses it.
+- The change leaves no answer that scores → the Product refuses it and keeps the Creator's edit to finish.

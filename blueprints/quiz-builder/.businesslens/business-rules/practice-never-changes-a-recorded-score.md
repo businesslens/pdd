@@ -1,5 +1,8 @@
 ---
 appliesTo:
+  - type: entity
+    id: attempt
+    facts: [Score]
   - type: capability
     id: practice-missed-questions
   - type: capability

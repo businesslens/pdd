@@ -3,12 +3,12 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Creator chooses to remove a question from their quiz
+  - text: The Creator chooses to remove a choice question from their quiz
     kind: actor
     actor: creator
     entities:
       - { entity: quiz, effect: reads, facts: [] }
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: quiz-web::quiz-editor
@@ -23,7 +23,7 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: question, effect: removes, from: Included }
+      - { entity: choice-question, effect: removes, from: Included }
       - { entity: quiz, effect: changes, facts: [Question order] }
     contexts:
       web:
@@ -46,9 +46,9 @@ The Creator no longer wants a question asked.
 
 ## Outcome
 
-The question is no longer part of the quiz, and nothing already submitted
-changes.
+The question is gone for good, and nothing already submitted changes.
 
 ## Edge cases
 
+- A short-answer question → it is removed the same way.
 - The Creator declines to confirm → the question stays where it was.

@@ -4,9 +4,10 @@ colorSlot: 1
 
 # Quizzes
 
-A creator's quizzes and their questions: writing them by hand or keeping the
-questions the Product drafts from source material, choosing what learners see
-after submitting, and sharing or closing each quiz.
+A creator's quizzes and their questions: writing, ordering and removing
+questions, accepting or dismissing the questions the Product drafts from source
+material, choosing what learners see after submitting, and sharing, closing,
+reopening or deleting each quiz.
 
 ## Boundary
 

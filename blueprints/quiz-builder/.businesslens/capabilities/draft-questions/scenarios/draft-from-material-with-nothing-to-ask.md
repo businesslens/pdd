@@ -36,7 +36,6 @@ steps:
     kind: condition
     entities:
       - { entity: quiz, effect: reads, facts: [Question order] }
-      - { entity: question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::quiz-editor

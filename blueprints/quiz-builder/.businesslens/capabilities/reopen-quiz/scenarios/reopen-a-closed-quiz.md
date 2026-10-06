@@ -1,9 +1,9 @@
 ---
-kind: edge
+kind: primary
 routes:
   web: Web
 steps:
-  - text: The Creator chooses to share their closed quiz again
+  - text: The Creator chooses to reopen their closed quiz
     kind: actor
     actor: creator
     entities:
@@ -11,7 +11,7 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Product opens the quiz at its former share link and for the classes it was assigned to
+  - text: The Product reopens the quiz at its former share link and for the classes it was assigned to
     kind: product
     actor: creator
     entities:
