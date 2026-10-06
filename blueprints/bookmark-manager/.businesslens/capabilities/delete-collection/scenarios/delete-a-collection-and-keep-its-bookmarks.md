@@ -59,4 +59,4 @@ Unsorted, with its title, note and tags.
 ## Edge cases
 
 - The Owner declines to confirm → the collection and its bookmarks stay as they were.
-- A pending filing suggestion names the deleted collection → accepting it creates a collection of that name again.
+- A proposed filing suggestion names the deleted collection → accepting it creates a collection of that name again.

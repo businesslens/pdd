@@ -1,8 +1,6 @@
 ---
 appliesTo:
-  - { type: capability, id: create-collection }
-  - { type: capability, id: rename-collection }
-  - { type: capability, id: accept-filing-suggestion }
+  - { type: entity, id: collection, facts: [Name] }
 ---
 
 # Collection names are unique

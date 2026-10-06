@@ -1,6 +1,16 @@
 ---
 kind: person
 acts: external
+relations:
+  - entity: bookmark
+    verb: owns
+    cardinality: one-to-many
+  - entity: collection
+    verb: owns
+    cardinality: one-to-many
+  - entity: ai-agent
+    verb: connects
+    cardinality: one-to-one
 ---
 
 # Owner

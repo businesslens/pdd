@@ -19,21 +19,21 @@ should be merged into one.
 
 ## States
 
-### Pending
+### Proposed
 
 Waiting for the Owner to decide. Every bookmark in it is still in the library.
 
-### Merged
+### Accepted
 
-The Owner merged it: the kept bookmark carries the others' tags and notes, and
-the others are gone.
+The Owner accepted it, and its bookmarks were merged: the kept bookmark
+carries the others' tags and notes, and the others are gone.
 
-### Declined
+### Dismissed
 
-The Owner declined it. Every bookmark stays, and the same set cannot be
+The Owner dismissed it. Every bookmark stays, and the same set cannot be
 suggested again.
 
-### Withdrawn
+### Outdated
 
-All but one of its bookmarks were deleted before the Owner decided, so nothing
-is left to merge.
+All but one of its bookmarks were deleted before the Owner decided, so the
+Product closed it with nothing left to merge.

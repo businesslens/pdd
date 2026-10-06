@@ -1,8 +1,6 @@
 ---
 appliesTo:
-  - { type: capability, id: save-bookmark }
-  - { type: capability, id: edit-bookmark }
-  - { type: capability, id: delete-bookmark }
+  - { type: entity, id: tag }
 ---
 
 # A tag exists while a bookmark carries it

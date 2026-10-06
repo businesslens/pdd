@@ -25,12 +25,12 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: filing-suggestion, effect: creates, to: Pending, facts: [Collection, Tags to add, Reason] }
+      - { entity: filing-suggestion, effect: creates, to: Proposed, facts: [Collection, Tags to add, Reason] }
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:
       agent:
         place: bookmarks-agent
-  - text: The imported bookmarks stay Unsorted while the suggestions are pending
+  - text: The imported bookmarks stay Unsorted while the suggestions are proposed
     kind: condition
     actor: ai-agent
     entities:
@@ -49,5 +49,5 @@ filing them.
 
 ## Outcome
 
-Pending filing suggestions cover the imported bookmarks, each with its reason,
+Proposed filing suggestions cover the imported bookmarks, each with its reason,
 and the imported bookmarks are still Unsorted.

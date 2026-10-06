@@ -3,7 +3,7 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Owner accepts a pending filing suggestion
+  - text: The Owner accepts a proposed filing suggestion
     kind: actor
     actor: owner
     entities:
@@ -19,11 +19,11 @@ steps:
     contexts:
       web:
         place: bookmarks-web::suggestions
-  - text: The Product withdraws the suggestion
+  - text: The Product closes the suggestion as outdated
     kind: product
     actor: owner
     entities:
-      - { entity: filing-suggestion, effect: changes, from: Pending, to: Withdrawn, facts: [] }
+      - { entity: filing-suggestion, effect: changes, from: Proposed, to: Outdated, facts: [] }
     contexts:
       web:
         place: bookmarks-web::suggestions
@@ -36,7 +36,7 @@ steps:
         place: bookmarks-web::suggestions
 ---
 
-# Withdraw a suggestion with nothing left to file
+# Find nothing left to file
 
 ## Trigger
 
@@ -44,4 +44,4 @@ The Owner accepts a suggestion whose bookmarks they have since deleted.
 
 ## Outcome
 
-No collection is created or changed, and the suggestion is withdrawn.
+No collection is created or changed, and the suggestion is outdated.

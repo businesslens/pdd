@@ -1,5 +1,5 @@
 ---
-kind: edge
+kind: primary
 result: achieved
 routes:
   web: Web

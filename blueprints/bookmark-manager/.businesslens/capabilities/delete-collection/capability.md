@@ -5,8 +5,8 @@ availability: [{ place: bookmarks-web }]
 
 # Collection deletion
 
-Deletes a collection after the Owner confirms, leaving every bookmark it held
-in the library as Unsorted.
+Deletes a collection for good after the Owner confirms, leaving every bookmark
+it held in the library as Unsorted.
 
 ## Intent
 

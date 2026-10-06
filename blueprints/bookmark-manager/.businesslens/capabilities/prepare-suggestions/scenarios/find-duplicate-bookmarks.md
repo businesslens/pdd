@@ -23,12 +23,12 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: duplicate-suggestion, effect: creates, to: Pending, facts: [Shared page, Kept bookmark, Reason] }
+      - { entity: duplicate-suggestion, effect: creates, to: Proposed, facts: [Shared page, Kept bookmark, Reason] }
       - { entity: bookmark, effect: reads, facts: [] }
     contexts:
       agent:
         place: bookmarks-agent
-  - text: Every bookmark in it stays in the library while the suggestion is pending
+  - text: Every bookmark in it stays in the library while the suggestion is proposed
     kind: condition
     actor: ai-agent
     entities:
@@ -46,9 +46,9 @@ The AI agent looks for pages the Owner has kept more than once.
 
 ## Outcome
 
-A pending duplicate suggestion with its reason waits on the Owner's Suggestions,
+A proposed duplicate suggestion with its reason waits on the Owner's Suggestions,
 and every bookmark in it is still in the library.
 
 ## Edge cases
 
-- The Owner declined the same set before → the suggestion is refused, and the AI agent is told why.
+- The Owner dismissed the same set before → the suggestion is refused, and the AI agent is told why.

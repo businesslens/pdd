@@ -3,7 +3,7 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Owner merges a pending duplicate suggestion
+  - text: The Owner accepts a proposed duplicate suggestion
     kind: actor
     actor: owner
     entities:
@@ -19,11 +19,11 @@ steps:
     contexts:
       web:
         place: bookmarks-web::suggestions
-  - text: The Product withdraws the suggestion
+  - text: The Product closes the suggestion as outdated
     kind: product
     actor: owner
     entities:
-      - { entity: duplicate-suggestion, effect: changes, from: Pending, to: Withdrawn, facts: [] }
+      - { entity: duplicate-suggestion, effect: changes, from: Proposed, to: Outdated, facts: [] }
     contexts:
       web:
         place: bookmarks-web::suggestions
@@ -36,13 +36,13 @@ steps:
         place: bookmarks-web::suggestions
 ---
 
-# Withdraw a suggestion with one bookmark left
+# Find one bookmark left to merge
 
 ## Trigger
 
-The Owner merges a suggestion after deleting all but one of its bookmarks
-themselves.
+The Owner accepts a duplicate suggestion after deleting all but one of its
+bookmarks themselves.
 
 ## Outcome
 
-The remaining bookmark is untouched, and the suggestion is withdrawn.
+The remaining bookmark is untouched, and the suggestion is outdated.

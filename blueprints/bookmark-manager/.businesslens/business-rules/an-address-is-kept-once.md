@@ -1,7 +1,6 @@
 ---
 appliesTo:
-  - { type: capability, id: save-bookmark }
-  - { type: capability, id: import-bookmarks }
+  - { type: entity, id: bookmark, facts: [Address] }
 ---
 
 # An address is kept once

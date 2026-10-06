@@ -25,14 +25,14 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: filing-suggestion, effect: creates, to: Pending, facts: [Collection, Tags to add, Reason] }
+      - { entity: filing-suggestion, effect: creates, to: Proposed, facts: [Collection, Tags to add, Reason] }
       - { entity: bookmark, effect: reads, facts: [] }
       - { entity: collection, effect: reads, facts: [] }
       - { entity: tag, effect: reads, facts: [] }
     contexts:
       agent:
         place: bookmarks-agent
-  - text: The bookmarks stay Unsorted and unchanged while the suggestion is pending
+  - text: The bookmarks stay Unsorted and unchanged while the suggestion is proposed
     kind: condition
     actor: ai-agent
     entities:
@@ -50,10 +50,10 @@ The Owner's AI agent works through the bookmarks the Owner has not filed yet.
 
 ## Outcome
 
-A pending filing suggestion with its reason waits on the Owner's Suggestions,
+A proposed filing suggestion with its reason waits on the Owner's Suggestions,
 and no bookmark has changed.
 
 ## Edge cases
 
-- The suggestion repeats one the Owner declined or one still pending → it is refused, and the AI agent is told why.
+- The suggestion repeats one the Owner dismissed or one still proposed → it is refused, and the AI agent is told why.
 - Nothing is Unsorted → the AI agent is told so, and no suggestion is left.

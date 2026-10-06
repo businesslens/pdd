@@ -14,4 +14,5 @@ entryPoints:
 Takes the Owner through keeping one page: its address, pasted or brought by
 the browser button from the page they are on; the title the Product read from
 the page, which the Owner may change; and an optional note, tags and
-collection, including a new collection made on the spot.
+collection, including a new collection made on the spot. Opened from a
+collection, it has that collection chosen.

@@ -1,5 +1,5 @@
 ---
-kind: edge
+kind: primary
 result: achieved
 routes:
   web: Web
@@ -24,7 +24,7 @@ steps:
   - text: The Product takes the Owner to the Library, narrowed to the Unsorted bookmarks it added
     kind: product
     actor: owner
-    capability: browse-library
+    capability: import-bookmarks
     entities:
       - { entity: bookmark, as: imported, effect: reads, facts: [Title, Address, Imported from folder] }
     contexts:
@@ -52,11 +52,11 @@ steps:
         place: bookmarks-web::bookmark
 ---
 
-# File imported bookmarks yourself
+# File imported bookmarks
 
 ## Trigger
 
-The Owner imports their browser's bookmarks and files them without an AI agent.
+The Owner imports their browser's bookmarks and files them.
 
 ## Outcome
 

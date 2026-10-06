@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner reviews a pending filing suggestion with its bookmarks and reason
+  - text: The Owner reviews a proposed filing suggestion with its bookmarks and reason
     kind: actor
     actor: owner
     entities:
@@ -12,11 +12,11 @@ steps:
     contexts:
       web:
         place: bookmarks-web::suggestions
-  - text: The Owner declines it
+  - text: The Owner dismisses it
     kind: actor
     actor: owner
     entities:
-      - { entity: filing-suggestion, effect: changes, from: Pending, to: Declined, facts: [] }
+      - { entity: filing-suggestion, effect: changes, from: Proposed, to: Dismissed, facts: [] }
     contexts:
       web:
         place: bookmarks-web::suggestions
@@ -31,7 +31,7 @@ steps:
         place: bookmarks-web::suggestions
 ---
 
-# Decline a filing suggestion
+# Dismiss a filing suggestion
 
 ## Trigger
 
@@ -39,4 +39,4 @@ The Owner disagrees with where their AI agent would file some bookmarks.
 
 ## Outcome
 
-The suggestion is declined and nothing in the library has changed.
+The suggestion is dismissed and nothing in the library has changed.

@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner reviews a pending duplicate suggestion with its bookmarks and reason
+  - text: The Owner reviews a proposed duplicate suggestion with its bookmarks and reason
     kind: actor
     actor: owner
     entities:
@@ -13,7 +13,7 @@ steps:
     contexts:
       web:
         place: bookmarks-web::suggestions
-  - text: The Owner merges it, keeping the bookmark it proposes or picking another
+  - text: The Owner accepts it, keeping the bookmark it proposes or picking another
     kind: actor
     actor: owner
     entities:
@@ -39,17 +39,17 @@ steps:
     contexts:
       web:
         place: bookmarks-web::suggestions
-  - text: The Product marks the suggestion merged
+  - text: The Product marks the suggestion accepted
     kind: product
     actor: owner
     entities:
-      - { entity: duplicate-suggestion, effect: changes, from: Pending, to: Merged, facts: [] }
+      - { entity: duplicate-suggestion, effect: changes, from: Proposed, to: Accepted, facts: [] }
     contexts:
       web:
         place: bookmarks-web::suggestions
 ---
 
-# Merge a duplicate suggestion
+# Merge the bookmarks of a duplicate suggestion
 
 ## Trigger
 
@@ -58,7 +58,7 @@ The Owner agrees that bookmarks the AI agent grouped lead to the same page.
 ## Outcome
 
 One bookmark remains for the page, carrying every tag and note the set had, and
-the suggestion is merged.
+the suggestion is accepted.
 
 ## Decision points
 

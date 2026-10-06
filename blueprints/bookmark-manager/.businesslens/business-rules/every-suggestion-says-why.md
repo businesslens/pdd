@@ -1,7 +1,7 @@
 ---
 appliesTo:
-  - { type: capability, id: prepare-suggestions }
-  - { type: journey, id: import-and-tidy-up }
+  - { type: entity, id: filing-suggestion, facts: [Reason] }
+  - { type: entity, id: duplicate-suggestion, facts: [Reason] }
 ---
 
 # Every suggestion says why
@@ -12,5 +12,5 @@ same page. A suggestion without a reason is refused.
 
 ## Rationale
 
-The Owner decides from what they can see. A reason lets them accept or decline
+The Owner decides from what they can see. A reason lets them accept or dismiss
 in a moment, and makes a wrong suggestion recognizably wrong.

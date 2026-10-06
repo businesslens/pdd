@@ -5,7 +5,7 @@ availability: [{ place: bookmarks-web }]
 
 # Filing suggestion acceptance
 
-Applies a pending filing suggestion the Owner accepts: files its bookmarks into
+Applies a proposed filing suggestion the Owner accepts: files its bookmarks into
 the suggested collection, creating that collection when it is new, and adds
 the suggested tags.
 

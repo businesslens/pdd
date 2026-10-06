@@ -3,9 +3,9 @@ domain: suggestions
 availability: [{ place: bookmarks-web }]
 ---
 
-# Suggestion declining
+# Filing suggestion dismissal
 
-Declines a pending suggestion of either kind, leaving the library as it is and
+Dismisses a proposed filing suggestion, leaving the library as it is and
 keeping the same suggestion from being left again.
 
 ## Intent
