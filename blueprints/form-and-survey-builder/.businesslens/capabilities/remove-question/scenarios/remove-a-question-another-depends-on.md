@@ -12,7 +12,7 @@ steps:
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
-  - text: The Product names the dependent question and says it will be shown to everyone answering once this one is gone
+  - text: The Product asks the Creator to confirm, naming the dependent question and saying it will be shown to everyone answering once this one is gone
     kind: product
     actor: creator
     entities:
@@ -50,3 +50,7 @@ The Creator removes a choice question that another question's show condition nam
 ## Outcome
 
 The question is gone, no question waits on an answer that can no longer be given, and answers already received are kept.
+
+## Edge cases
+
+- The Creator declines to confirm → both questions stay as they were.

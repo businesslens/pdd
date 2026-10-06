@@ -13,7 +13,7 @@ limitations:
   - Each form has one Creator. There is no shared editing of a form.
   - A choice question stays a choice question; asking for a written answer, a rating or a date instead means adding a new question.
   - A received response is never edited. Deleting a form deletes its responses with it.
-  - A language model drafts proposed questions and summarizes written answers, and it can be wrong, so a proposed question joins a form only when the Creator accepts it and a summary is made fresh each time and never kept. While the model is unavailable, the Creator builds forms by hand and reads responses unsummarized.
+  - A language model drafts proposed questions and summarizes written answers, and it can be wrong; a proposed question joins a form only when the Creator accepts it. While the model is unavailable, the Creator builds forms by hand and reads responses unsummarized.
 references:
   - kind: research
     role: context

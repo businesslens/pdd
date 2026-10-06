@@ -5,7 +5,7 @@ availability: [{ place: forms-web::form-workspace }]
 
 # Question removal
 
-Removes a question from a form for good, keeping the answers already given to it.
+Removes a question from a form for good, once the Creator confirms, keeping the answers already given to it.
 
 ## Intent
 
