@@ -22,7 +22,8 @@ steps:
     kind: product
     actor: learner
     entities:
-      - { entity: class, effect: changes, facts: [Learners] }
+      - { entity: enrollment, effect: creates, facts: [Joined at] }
+      - { entity: class, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::classes

@@ -17,8 +17,8 @@ These are assumptions to validate, not claims that research has proved them.
   learner to find who needs help.
 - Matching short answers against a list of accepted answers is good enough for
   most quizzes, provided the creator can grade the exceptions by hand.
-- Classes are stable rosters for a term: creators rarely need a learner to
-  leave one, and starting a new class serves a new group.
+- Classes are stable rosters for a term: creators occasionally remove someone
+  who joined by mistake, and starting a new class serves a new group.
 - Whether learners see correct answers right after submitting is the creator's
   call per quiz: some quizzes are practice, some are assessment.
 

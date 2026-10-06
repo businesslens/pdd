@@ -11,8 +11,8 @@ limitations:
   - Every attempt belongs to a learner's account; there are no anonymous attempts.
   - Each learner has one scored attempt at a quiz. Further tries are practice rounds, which never change the recorded score.
   - A short answer scores only when it matches one of the creator's accepted answers; anything else stays incorrect until the creator grades it.
-  - A language model drafts questions from source material and can be wrong. A drafted question changes nothing until the creator accepts it, and while the model is unavailable creators write questions by hand.
-  - Classes are rosters for sharing quizzes, with no due dates, timers or gradebook. A learner stays in a class once they join it, and a quiz stays assigned to a class once shared with it.
+  - A language model drafts questions from source material and may be wrong. The creator accepts or dismisses each draft, and everything else works while the model is unavailable.
+  - Classes are rosters for sharing quizzes, with no due dates, timers or gradebook. A learner leaves a class only when its creator removes them, and a quiz stays assigned to a class once shared with it.
 references:
   - kind: research
     role: context

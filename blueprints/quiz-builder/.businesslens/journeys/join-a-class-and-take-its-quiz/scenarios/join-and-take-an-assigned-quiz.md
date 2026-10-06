@@ -17,7 +17,8 @@ steps:
     actor: learner
     capability: join-class
     entities:
-      - { entity: class, effect: changes, facts: [Learners] }
+      - { entity: enrollment, effect: creates, facts: [Joined at] }
+      - { entity: class, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::classes

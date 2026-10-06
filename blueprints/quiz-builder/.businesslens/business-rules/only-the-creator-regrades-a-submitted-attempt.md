@@ -3,7 +3,6 @@ appliesTo:
   - type: entity
     id: attempt
     effect: changes
-    facts: [Answers, Score]
 permits:
   - related: [{ verb: makes, entity: learner }]
     when: [{ state: In progress }]

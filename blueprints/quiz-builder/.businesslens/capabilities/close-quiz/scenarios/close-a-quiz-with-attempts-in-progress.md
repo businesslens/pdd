@@ -37,7 +37,7 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: Those attempts appear in the quiz results with their scores
+  - text: Those attempts count in the quiz's results with their scores
     kind: condition
     actor: creator
     entities:
@@ -45,7 +45,7 @@ steps:
       - { entity: quiz, effect: reads, facts: [] }
     contexts:
       web:
-        place: quiz-web::quiz-results
+        place: quiz-web::quiz-editor
 ---
 
 # Close a quiz with attempts in progress

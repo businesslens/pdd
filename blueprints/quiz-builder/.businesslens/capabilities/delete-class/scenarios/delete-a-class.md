@@ -7,11 +7,12 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: class, effect: reads, facts: [Name, Learners] }
+      - { entity: class, effect: reads, facts: [Name] }
+      - { entity: enrollment, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::class
-  - text: The Product asks the Creator to confirm that the class will be deleted for good, and says its quizzes are kept
+  - text: The Product asks the Creator to confirm that the class and who has joined it will be deleted for good, and says its quizzes are kept
     kind: product
     actor: creator
     entities:
@@ -25,6 +26,7 @@ steps:
     actor: creator
     entities:
       - { entity: class, effect: removes }
+      - { entity: enrollment, effect: removes }
     contexts:
       web:
         place: quiz-web::class

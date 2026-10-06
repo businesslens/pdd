@@ -32,7 +32,8 @@ steps:
   - text: The quiz is listed for everyone in the class
     kind: condition
     entities:
-      - { entity: class, effect: reads, facts: [Learners] }
+      - { entity: class, effect: reads, facts: [] }
+      - { entity: enrollment, effect: reads, facts: [] }
       - { entity: quiz, effect: reads, facts: [] }
     contexts:
       web:

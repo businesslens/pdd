@@ -9,8 +9,9 @@ permits:
 
 # Only the quiz's creator removes a choice question
 
-Only the Creator who owns the quiz removes one of its choice questions,
-dismisses a proposed one, or deletes the quiz with them.
+Only the Creator who owns the quiz removes one of its choice questions, once
+they confirm, dismisses a proposed one, or deletes the quiz with them. The
+language model that drafted a question never dismisses it.
 
 ## Rationale
 

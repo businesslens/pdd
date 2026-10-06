@@ -14,7 +14,7 @@ steps:
     kind: product
     actor: creator
     entities:
-      - { entity: class, effect: creates, facts: [Name, Join code, Learners, Assigned quizzes] }
+      - { entity: class, effect: creates, facts: [Name, Join code, Assigned quizzes] }
     contexts:
       web:
         place: quiz-web::classes
