@@ -42,6 +42,14 @@ const devHandlers = [
       setHeader(event, 'cache-control', 'no-store')
       return ': businesslens dev viewer\n\n'
     })
+  },
+  {
+    // Shows the star button without touching GitHub; the CLI asks `gh`.
+    route: '/_businesslens/github-star',
+    handler: defineEventHandler((event) => {
+      setHeader(event, 'cache-control', 'no-store')
+      return { state: event.method === 'POST' ? 'starred' : 'not-starred' }
+    })
   }
 ]
 
@@ -75,7 +83,6 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
-        'lucide:arrow-up-right',
         'lucide:loader-circle',
         'lucide:refresh-cw',
         'lucide:sliders-horizontal',

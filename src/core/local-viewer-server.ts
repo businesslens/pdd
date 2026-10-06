@@ -8,6 +8,7 @@ import type { ProductReportV16 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
+import { ghStarClient, type GithubStarClient } from './github-star.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
 const REPORT_PATH = '/_businesslens/report.json'
@@ -16,6 +17,7 @@ const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
 const ASSET_PREFIX = '/_businesslens/file/'
 const CODE_PATH = '/_businesslens/code'
+const GITHUB_STAR_PATH = '/_businesslens/github-star'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
 const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('businesslens/package.json'), '../layers/nuxt/theme/public/brand')
 
@@ -102,6 +104,8 @@ export interface LocalViewerOptions {
    * rather than only from `.businesslens/`. Omit it and the mount is off.
    */
   assetRoot?: string
+  /** Stars BusinessLens on the reader's behalf. Defaults to the reader's own `gh` sign-in. */
+  githubStar?: GithubStarClient
 }
 
 interface ReportSnapshot {
@@ -326,6 +330,44 @@ function validHost(request: IncomingMessage, port: number): boolean {
   return host === `${LOOPBACK_HOST}:${port}` || host === `localhost:${port}`
 }
 
+/**
+ * Whether a state-changing request comes from the report itself.
+ *
+ * The Host check stops DNS rebinding but not another page in the same browser
+ * posting here; a browser always sends Origin on a cross-origin POST, so only
+ * the viewer's own origin may change anything.
+ */
+function sameOrigin(request: IncomingMessage, port: number): boolean {
+  const origin = request.headers.origin?.toLowerCase()
+  return origin === `http://${LOOPBACK_HOST}:${port}` || origin === `http://localhost:${port}`
+}
+
+/**
+ * Read or add the reader's star on BusinessLens.
+ *
+ * GET reports the state; POST stars and takes no input, so the route can
+ * never star anything but BusinessLens. Unstarring stays on GitHub.
+ */
+function githubStar(
+  request: IncomingMessage, response: ServerResponse, client: GithubStarClient, port: number, head: boolean
+): void {
+  if (request.method === 'POST') {
+    if (!sameOrigin(request, port)) {
+      json(response, 403, { message: 'Only the local report can star BusinessLens.' }, false)
+      return
+    }
+    void client.star().then(
+      () => { if (!response.destroyed) json(response, 200, { state: 'starred' }, false) },
+      () => { if (!response.destroyed) json(response, 502, { message: 'GitHub did not accept the star.' }, false) }
+    )
+    return
+  }
+  void client.state().then(
+    state => { if (!response.destroyed) json(response, 200, { state }, head) },
+    () => { if (!response.destroyed) json(response, 200, { state: 'unavailable' }, head) }
+  )
+}
+
 function staticFile(viewerRoot: string, pathname: string): string | undefined {
   let decoded: string
   try {
@@ -443,8 +485,9 @@ function requestHandler(
       return
     }
     const pathname = url.pathname
-    if (request.method !== 'GET' && !head) {
-      response.setHeader('allow', 'GET, HEAD')
+    const methods = pathname === GITHUB_STAR_PATH ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD']
+    if (!methods.includes(request.method ?? '')) {
+      response.setHeader('allow', methods.join(', '))
       json(response, 405, { message: 'Method not allowed.' }, false)
       return
     }
@@ -460,6 +503,10 @@ function requestHandler(
         response.setHeader('x-businesslens-report-state', snapshot.error ? 'stale' : 'ready')
         json(response, 200, snapshot.report, head)
       }
+      return
+    }
+    if (pathname === GITHUB_STAR_PATH) {
+      githubStar(request, response, options.githubStar ?? ghStarClient, port, head)
       return
     }
     if (pathname === LOGO_PATH) {
