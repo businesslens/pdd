@@ -1,11 +1,10 @@
 ---
 appliesTo:
   - type: entity
-    id: class
-    effect: changes
-    facts: [Learners]
+    id: enrollment
+    effect: creates
 permits:
-  - related: [{ verb: enrolls, entity: learner }]
+  - related: [{ verb: holds, entity: learner }]
 ---
 
 # Only a learner adds themselves to a class

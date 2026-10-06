@@ -11,6 +11,9 @@ relations:
   - entity: practice-round
     verb: practices
     cardinality: one-to-many
+  - entity: enrollment
+    verb: holds
+    cardinality: one-to-many
 ---
 
 # Learner

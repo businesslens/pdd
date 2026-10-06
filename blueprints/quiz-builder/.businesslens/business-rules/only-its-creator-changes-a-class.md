@@ -3,12 +3,11 @@ appliesTo:
   - type: entity
     id: class
     effect: changes
-    facts: [Name, Assigned quizzes]
 permits:
   - related: [{ verb: owns, entity: creator }]
 ---
 
-# Only its creator renames a class or assigns quizzes to it
+# Only its creator changes a class
 
 Only the Creator who owns a class changes its name or the quizzes assigned to
 it, by sharing a quiz with it or deleting one.

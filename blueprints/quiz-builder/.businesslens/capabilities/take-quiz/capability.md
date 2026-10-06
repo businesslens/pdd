@@ -1,5 +1,4 @@
 ---
-domain: learning
 availability: [{ place: quiz-web }]
 ---
 

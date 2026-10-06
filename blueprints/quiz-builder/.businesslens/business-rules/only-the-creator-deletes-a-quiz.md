@@ -9,7 +9,7 @@ permits:
 
 # Only the creator deletes a quiz
 
-Only the Creator who owns a quiz deletes it, and with it its questions, the
+Only the Creator who owns a quiz deletes it, once they confirm, and with it its questions, the
 attempts at it and their practice rounds.
 
 ## Rationale

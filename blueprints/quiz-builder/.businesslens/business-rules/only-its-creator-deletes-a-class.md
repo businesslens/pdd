@@ -9,7 +9,8 @@ permits:
 
 # Only its creator deletes a class
 
-Only the Creator who owns a class deletes it.
+Only the Creator who owns a class deletes it, once they confirm, and with it
+every learner's place in it.
 
 ## Rationale
 

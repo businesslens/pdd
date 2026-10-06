@@ -4,8 +4,6 @@ appliesTo:
     id: choice-question
   - type: entity
     id: short-answer-question
-  - type: capability
-    id: draft-questions
 ---
 
 # A proposed question changes nothing until its creator accepts it
