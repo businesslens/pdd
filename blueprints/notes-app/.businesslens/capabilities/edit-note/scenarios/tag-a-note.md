@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner starts tagging the open note and types part of a tag
+  - text: The Owner types part of a tag into the open note's tags
     kind: actor
     actor: owner
     entities:
@@ -20,14 +20,16 @@ steps:
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Owner picks one of them
+  - text: The Owner picks one of them and saves the note
     kind: actor
     actor: owner
-    entities: []
+    entities:
+      - { entity: note, effect: reads, facts: [] }
+
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Product puts the tag on the note
+  - text: The Product keeps the note with the tag on it
     kind: product
     actor: owner
     entities:

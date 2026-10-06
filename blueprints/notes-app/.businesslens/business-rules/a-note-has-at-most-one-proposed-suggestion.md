@@ -2,13 +2,12 @@
 appliesTo:
   - type: entity
     id: suggestion
-    effect: creates
 ---
 
-# A note has at most one pending suggestion
+# A note has at most one proposed suggestion
 
 A new suggestion for a note is refused while an earlier one for the same note
-is still pending. Once the Owner accepts or dismisses it, the AI agent may
+is still proposed. Once the Owner accepts or dismisses it, the AI agent may
 suggest for that note again. A suggestion names only a notebook the Owner
 already has.
 

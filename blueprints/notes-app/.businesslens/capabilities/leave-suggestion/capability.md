@@ -1,5 +1,5 @@
 ---
-domain: assistant
+domain: suggestions
 availability: [ { place: notes-agent } ]
 references:
   - kind: research
@@ -10,10 +10,10 @@ references:
 
 # Organization suggestions
 
-Lets an AI agent the Owner allows read their notes and leave a suggestion for
+Lets the AI agent an Owner connects read their notes and leave a suggestion for
 one note at a time: an existing notebook to file it in, tags to put on it, and
-other notes to link it to, each with its reason. A suggestion changes nothing;
-it waits for the Owner.
+other notes to link it to, each with its reason. A suggestion waits for the
+Owner.
 
 ## Intent
 

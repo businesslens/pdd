@@ -39,5 +39,5 @@ The Owner accepts a filing suggestion after deleting the notebook it names.
 
 ## Outcome
 
-Nothing changes: the note stays where it was and the suggestion stays pending,
+Nothing changes: the note stays where it was and the suggestion stays proposed,
 for the Owner to dismiss or to file the note themselves.

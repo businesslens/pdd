@@ -27,11 +27,11 @@ steps:
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Product removes any pending suggestions left for it
+  - text: The Product removes any suggestion still proposed for it
     kind: product
     actor: owner
     entities:
-      - { entity: suggestion, effect: removes, from: Pending }
+      - { entity: suggestion, effect: removes, from: Proposed }
     contexts:
       web:
         place: notes-web::note-editor

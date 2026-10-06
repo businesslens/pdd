@@ -8,8 +8,8 @@ These are assumptions to validate, not claims that research has proved them.
   personal notes collection.
 - Searching by words and narrowing by a tag finds most notes people remember
   only vaguely.
-- Owners trust an AI agent with their notes when it can only suggest, every
-  suggestion says why, and they can switch the agent off at any time.
+- Owners trust an AI agent of their own choosing with their notes when it can
+  only suggest, every suggestion says why, and connecting it is their decision.
 - Accepting or dismissing a whole suggestion is quick enough; owners who
   disagree with part of one prefer to file the note themselves.
 

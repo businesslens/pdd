@@ -1,8 +1,9 @@
 ---
-domain: assistant
+domain: suggestions
 availability: [ { place: notes-web } ]
 ---
 
 # Suggestion dismissal
 
-Sets a pending suggestion aside without changing its note.
+Sets a proposed suggestion aside without changing its note, and, when the Owner
+asks, takes them straight to filing the note themselves.

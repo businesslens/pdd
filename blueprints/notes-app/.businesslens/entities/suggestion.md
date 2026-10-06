@@ -1,5 +1,5 @@
 ---
-domain: assistant
+domain: suggestions
 ---
 
 # Suggestion
@@ -18,7 +18,7 @@ proposing it. It waits for the owner, who accepts or dismisses it whole.
 
 ## States
 
-### Pending
+### Proposed
 
 Waiting for the owner. The note is exactly as it was.
 

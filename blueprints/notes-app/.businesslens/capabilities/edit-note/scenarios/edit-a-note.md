@@ -14,7 +14,7 @@ steps:
         place: notes-web::note-editor
       mobile:
         place: notes-mobile::note-editor
-  - text: The Owner changes the title or the body
+  - text: The Owner changes the title or the body and saves
     kind: actor
     actor: owner
     entities: []
@@ -60,3 +60,4 @@ The note says what the Owner wrote, and is still filed and tagged as it was.
 ## Edge cases
 
 - The Owner removes the title → the note is titled by its first line again.
+- The Owner leaves without saving → the note stays exactly as it was.

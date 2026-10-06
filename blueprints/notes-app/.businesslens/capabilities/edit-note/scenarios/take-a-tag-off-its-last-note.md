@@ -3,7 +3,7 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Owner takes a tag off the only note that carries it
+  - text: The Owner removes a tag from the only note that carries it and saves the note
     kind: actor
     actor: owner
     entities:
@@ -12,7 +12,7 @@ steps:
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Product takes the tag off the note
+  - text: The Product keeps the note without the tag
     kind: product
     actor: owner
     entities:

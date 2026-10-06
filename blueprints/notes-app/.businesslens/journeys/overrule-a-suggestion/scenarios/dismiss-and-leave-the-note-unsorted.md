@@ -4,20 +4,20 @@ result: not-achieved
 routes:
   web: Web
 steps:
-  - text: The Owner disagrees with a suggestion and chooses to file the note themselves
+  - text: The Owner chooses to dismiss a suggestion and file the note themselves
     kind: actor
     actor: owner
     capability: dismiss-suggestion
     entities:
-      - { entity: suggestion, from: Pending, to: Dismissed, facts: [] }
+      - { entity: suggestion, from: Proposed, to: Dismissed, facts: [] }
       - { entity: note, effect: reads, facts: [Title] }
     contexts:
       web:
         place: notes-web::suggestions
-  - text: The Product opens moving the note straight away
+  - text: The Product takes the Owner to the note, with moving it already open
     kind: product
     actor: owner
-    capability: move-note
+    capability: dismiss-suggestion
     entities:
       - { entity: note, effect: reads, facts: [Title, Notebook] }
     contexts:
@@ -46,7 +46,7 @@ steps:
 ## Trigger
 
 The Owner turns down a suggestion intending to file the note themselves, then
-changes their mind about where it goes.
+leaves without choosing where it goes.
 
 ## Outcome
 
