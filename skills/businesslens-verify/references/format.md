@@ -383,10 +383,12 @@ Lead and section-body fragments do not contain another H1 or H2.
   information changes carry no state to select by). A value is a scalar or
   `{ configuredBy: <entity-id> }`. Permission claims appear only here, never in
   Scenario prose. No structured `when` exists on Capability targets. The
-  experiment engine and messages are ordinary Product Entities and behavior
-  only when that is the Product's purpose. A Rule on exactly one behavioral
-  target with no `contexts` is a warning; Entity and Context targets are always
-  valid.
+  experiment engine is ordinary Product Entities and behavior only when running
+  experiments is the Product's purpose. An outbound message (an email, push or
+  SMS) is a `product` Step that `reads` the facts it carries, its other wording
+  copy; messages are an Entity only when the Product schedules, retries or
+  revokes them. A Rule on exactly one behavioral target with no `contexts` is a
+  warning; Entity and Context targets are always valid.
   Rationale explains the current condition or consequence that makes the
   constraint necessary, never rejected designs.
 - Journey: at least one unique `actors` entry, H1, no lead prose, `## Goal`, and
