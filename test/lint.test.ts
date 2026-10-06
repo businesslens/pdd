@@ -2497,3 +2497,58 @@ permits:
     })
   })
 })
+
+describe('a removal that goes with another', () => {
+  const CHECKOUT = '.businesslens/capabilities/place-order/scenarios/complete-checkout.md'
+  const CART_LINE = '      - { entity: cart, effect: removes }\n'
+  function withCart(cwd: string, replacement: string): string {
+    const file = join(cwd, CHECKOUT)
+    const source = readFileSync(file, 'utf8')
+    expect(source).toContain(CART_LINE)
+    writeFileSync(file, source.replace(CART_LINE, replacement))
+    return file
+  }
+
+  it('warns when one Step removes two related things and neither says which goes with the other', () => {
+    const cwd = fixtureCopy()
+    const file = withCart(cwd, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available }\n`)
+    expect(run(cwd).warnings.join('\n')).toContain(`${file}: step 5: removes "catalog-product" alongside "cart", which it relates to; say which goes with the other through "with"`)
+  })
+
+  it('accepts a removal that goes with a related removal of the same Step', () => {
+    const cwd = fixtureCopy()
+    withCart(cwd, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.warnings.join('\n')).not.toContain('alongside')
+  })
+
+  it('refuses "with" outside a removal, naming no removal of the Step, or joining unrelated things', () => {
+    const cwd = fixtureCopy()
+    const file = withCart(cwd, `      - { entity: cart, effect: removes, with: basket }\n      - { entity: refund, effect: removes, from: Requested, with: cart }\n`)
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('"cart" goes "with" "basket", which names no other "removes" entry of this Step')
+    expect(errors).toContain(`${file}: step 5: "refund" goes "with" "cart", but no relation joins "refund" and "cart"`)
+    const second = fixtureCopy()
+    const order = join(second, CHECKOUT)
+    writeFileSync(order, readFileSync(order, 'utf8').replace('to: Pending, facts: [Items ordered', 'to: Pending, with: cart, facts: [Items ordered'))
+    expect(run(second).errors.join('\n')).toContain('"with" belongs on a "removes" entry; only a removal goes with another')
+  })
+
+  it('refuses a "with" chain that returns to where it started', () => {
+    const cwd = fixtureCopy()
+    withCart(cwd, `      - { entity: cart, effect: removes, with: catalog-product }\n      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
+    expect(run(cwd).errors.join('\n')).toContain('returns to where it started; one removal must be what the others go with')
+  })
+
+  it('lets the removal it goes with carry the permission', () => {
+    const cwd = fixtureCopy()
+    writeRule(cwd, 'catalog-products-are-never-removed', 'appliesTo:\n  - type: entity\n    id: catalog-product\n    effect: removes\npermits: []')
+    withCart(cwd, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available }\n`)
+    expect(run(cwd).errors.join('\n')).toContain('which rule "catalog-products-are-never-removed" forbids to everyone')
+    const second = fixtureCopy()
+    writeRule(second, 'catalog-products-are-never-removed', 'appliesTo:\n  - type: entity\n    id: catalog-product\n    effect: removes\npermits: []')
+    withCart(second, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
+    expect(run(second).errors.join('\n')).not.toContain('forbids to everyone')
+  })
+})

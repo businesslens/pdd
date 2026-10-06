@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV16,
+  ProductReportV17,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -791,7 +791,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV16): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV17): ReportWorkspace {
   const model = report.model
   const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
@@ -1250,7 +1250,8 @@ export function projectReportWorkspace(report: ProductReportV16): ReportWorkspac
       const operations = step.entities.map(entry => ({
         label: '', actorId: step.actorId ?? null, unattended: false, entityId: entry.entityId, alias: entry.as ?? null,
         effect: entry.effect, from: entry.from ?? null, to: entry.to ?? null, facts: entry.facts,
-        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places)
+        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places),
+        goesWith: entry.with !== null
       }))
       for (const rule of entityTargetsByRule) {
         const selecting = rule.targets.filter(target => operations.some(operation => permissionTargetSelectsOperation(target, operation)))

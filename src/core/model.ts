@@ -223,6 +223,12 @@ export interface ScenarioStepEntity {
   to?: string
   /** Exhaustive named facts affected; empty for presence/state-only operations and removal. */
   facts: string[]
+  /**
+   * On a removal only: the other removal of this Step it goes with, named by
+   * that entry's alias when it has one and by its Entity id otherwise. The
+   * removal it goes with is what needs permission.
+   */
+  with?: string
 }
 
 export interface ScenarioStep {
@@ -721,7 +727,7 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       continue
     }
     const item = entry as Record<string, unknown>
-    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to', 'facts'], issues, entryLabel)
+    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to', 'facts', 'with'], issues, entryLabel)
     const entity = stringField(item, 'entity', issues, entryLabel) || ''
     if (!entity) {
       issues.push(`${entryLabel}: needs an "entity"`)
@@ -772,7 +778,36 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
     } else if (!Array.isArray(item.facts)) {
       issues.push(`${entryLabel}: "facts" is required as a list, including [] when no named facts are affected`)
     }
-    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts })
+    const goesWith = stringField(item, 'with', issues, entryLabel)
+    if (goesWith !== undefined && resolved !== 'removes') {
+      issues.push(`${entryLabel}: "with" belongs on a "removes" entry; only a removal goes with another`)
+      continue
+    }
+    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts, ...(goesWith !== undefined ? { with: goesWith } : {}) })
+  }
+  /* A removal goes with another removal of this same Step, named the way the
+     Step names it: by alias when the entry has one, by Entity id otherwise. */
+  const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
+  const byReference = new Map(entries.map(entry => [referenceOf(entry), entry]))
+  for (const entry of entries) {
+    if (entry.with === undefined) continue
+    const target = byReference.get(entry.with)
+    if (!target || target === entry || (target.effect ?? 'changes') !== 'removes') {
+      issues.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", which names no other "removes" entry of this Step`)
+      delete entry.with
+    }
+  }
+  for (const entry of entries) {
+    const visited = new Set<ScenarioStepEntity>()
+    let current: ScenarioStepEntity | undefined = entry
+    while (current?.with !== undefined && !visited.has(current)) {
+      visited.add(current)
+      current = byReference.get(current.with)
+    }
+    if (current && visited.has(current)) {
+      issues.push(`${label}: "with" on "${referenceOf(entry)}" returns to where it started; one removal must be what the others go with`)
+      break
+    }
   }
   return entries
 }

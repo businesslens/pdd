@@ -40,6 +40,8 @@ export interface PermissionOperation {
   /** The facts the Step cites on this Entity; empty when it cites none. */
   facts: string[]
   contextPlaces: string[]
+  /** A removal that goes with another removal of its Step; that one needs the permission. */
+  goesWith: boolean
 }
 
 /** Named facts a Screen discloses or collects; both lists are empty for a bare Entity. */
@@ -103,6 +105,9 @@ export function permissionTargetSelectsOperation(
   ignoreFrom = false
 ): boolean {
   if (target.entityId !== operation.entityId) return false
+  /* A removal that goes with another is permitted by the removal it goes
+     with, so a Rule on this Entity's removal never selects it. */
+  if (operation.goesWith) return false
   if (target.facts.length && !target.facts.some(fact => operation.facts.includes(fact))) return false
   if (target.effect !== null && target.effect !== operation.effect) return false
   if (!ignoreFrom && target.from !== null && target.from !== operation.from) return false

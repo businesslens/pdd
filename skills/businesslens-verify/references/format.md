@@ -531,14 +531,17 @@ on its own — a schedule it owns, an expiry, a retry — is such a Scenario,
 available where an Actor observes the outcome.
 
 **`entities` is required on every Step** and `[]` when it touches nothing.
-Each entry is `{ entity, as?, effect, from?, to?, facts? }`: `effect` is
+Each entry is `{ entity, as?, effect, from?, to?, facts?, with? }`: `effect` is
 `creates|changes|removes|reads`, defaulting to `changes`; `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither. Every
 state resolves. `facts` is required on reads, changes and creation: the
 exhaustive unique list of named Product facts affected, including defaults on
 creation, never inferred from form fields or padded with incidental
 implementation data; `[]` names no facts, never unspecified. Removal has no
-`facts`. An Actor read on a Screen must occur in that Screen's `shows`; Product
+`facts`. A removal that happens because another removal of the same Step does
+— a card's comments going with the card — says `with: <alias or entity id of
+that entry>`; the two Entities must be related, the removal it goes with is
+what needs permission, and two related removals with no `with` are a warning. An Actor read on a Screen must occur in that Screen's `shows`; Product
 and condition Steps may consult undisplayed facts. A Step lists every thing it
 moves, one entry per `(entity, as)` pair; `as` is a scenario-local alias for two
 instances of one Entity, and once used, used everywhere in the Scenario. Where

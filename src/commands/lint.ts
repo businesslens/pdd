@@ -1691,7 +1691,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     contextPlaces: operationPlaces(
       step.contexts.map(context => context.place),
       scenarioPlaces.get(scenarioFile) ?? []
-    )
+    ),
+    goesWith: entry.with !== undefined
   })
   const permissionRules = permissionRuleResources.map(rule => ({
     id: rule.id,
@@ -1783,6 +1784,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       for (const entry of step.entities) {
         const effect = entry.effect ?? 'changes'
         if (effect !== 'changes' && effect !== 'removes') continue
+        // A removal that goes with another is permitted by that removal.
+        if (entry.with !== undefined) continue
         // An Actor changing its own record (an Owner turning on one of their
         // settings) is that person's own business, not a gap in who may act.
         if (entry.entity === step.actor || !governedEntities.has(entry.entity)) continue
@@ -1793,6 +1796,37 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         if (governed) continue
         ungoverned.add(key)
         warnings.push(`${scenario.file}: step ${index + 1}: "${step.actor}" ${effect} "${entry.entity}", which no permission Rule selects, though Rules govern who may change it otherwise; say who may`)
+      }
+    }
+  }
+
+  /*
+   * A removal that goes `with` another needs the two things related, or the
+   * claim that one goes because of the other says nothing a reader can check.
+   * Two related things removed in one Step with no `with` on either nearly
+   * always hide one: a card's comments go because the card does.
+   */
+  const relatedEntities = (left: string, right: string) =>
+    (entitiesById.get(left)?.relations ?? []).some(relation => relation.entity === right)
+    || (entitiesById.get(right)?.relations ?? []).some(relation => relation.entity === left)
+  for (const scenario of allScenarios) {
+    for (const [index, step] of scenario.steps.entries()) {
+      const label = `${scenario.file}: step ${index + 1}`
+      const removals = step.entities.filter(entry => entry.effect === 'removes')
+      const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
+      for (const entry of removals) {
+        if (entry.with === undefined) continue
+        const target = removals.find(other => referenceOf(other) === entry.with)
+        if (target && target.entity !== entry.entity && !relatedEntities(entry.entity, target.entity)) {
+          errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but no relation joins "${entry.entity}" and "${target.entity}"; relate them, or the removal is not one that goes with the other`)
+        }
+      }
+      for (const [position, left] of removals.entries()) {
+        for (const right of removals.slice(position + 1)) {
+          if (left.entity === right.entity || left.with !== undefined || right.with !== undefined) continue
+          if (!relatedEntities(left.entity, right.entity)) continue
+          warnings.push(`${label}: removes "${referenceOf(right)}" alongside "${referenceOf(left)}", which it relates to; say which goes with the other through "with"`)
+        }
       }
     }
   }

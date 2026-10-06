@@ -2087,7 +2087,7 @@ availability Context.
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`. Silence is impossible; an omission is a claim that can
 be reviewed, linted, and contradicted by code. Each entry is
-`{ entity, as, effect, from, to, facts }`:
+`{ entity, as, effect, from, to, facts, with }`:
 
 ```yaml
 - text: The Reader moves the item from one collection to another
@@ -2130,6 +2130,28 @@ id its own label. Entries without one are a single unnamed instance. Once an
 Entity is aliased anywhere in a Scenario, every mention of it in that Scenario
 is aliased: a bare `collection` beside a `collection (source)` is an error, not
 a third instance.
+
+**`with` says a removal goes with another.** A `removes` entry may carry
+`with`, naming another `removes` entry of the same Step — by its `as` when it
+has one, otherwise by its `entity` — that it is removed because of:
+
+```yaml
+- text: The Teammate deletes the card and every comment on it
+  kind: actor
+  actor: teammate
+  entities:
+    - { entity: card,    effect: removes, from: Active }
+    - { entity: comment, effect: removes, with: card }
+```
+
+The two Entities are joined by a relation, in either direction, and a `with`
+chain never returns to where it started; `lint` errors otherwise, and on `with`
+outside a `removes` entry or naming no `removes` entry of the Step. **The
+removal it goes with is what needs permission:** a permission Rule on the
+dependent Entity's `removes` never selects a `with` removal, so *only its
+author deletes a comment* and *a member deletes a card, comments and all* hold
+together. A Step that removes two related Entities with no `with` on either is a
+`lint` warning: one of them almost always goes because of the other.
 
 **Steps chain, per instance.** Where a prior Step in the same Scenario left an
 `(entity, as)` pair in a state, this Step's `from` for that pair must equal it.

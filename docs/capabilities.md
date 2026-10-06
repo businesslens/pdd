@@ -225,6 +225,10 @@ is exhaustive: `[]` means none, never "unspecified".
     - { entity: cart, effect: removes }
 ```
 
+When removing one thing removes others with it — a card's comments go with
+the card — each of those entries says `with: card`. Only the removal it goes
+with needs permission, so *only its author deletes a comment* still holds.
+
 A Scenario's **Ends with** is where each thing it touched is left. Across the
 whole model, Step entries make up each Entity's lifecycle.
 
@@ -270,6 +274,8 @@ Errors:
 - Each `entities` entry names a real Entity and its real States and facts;
   `facts` is required, except on `removes`, which has none; a `from` matches
   where an earlier Step left the thing.
+- `with` sits only on a `removes` entry, names another removal of the same Step,
+  joins two related Entities, and never loops back.
 - Step text that names an Entity's title must list that Entity.
 - `contexts` maps every route, stays inside the Capability's availability, and
   supports the Step's Actor; no two routes visit the same places.
@@ -279,6 +285,7 @@ Warnings:
 
 - A Capability or Scenario id that reads as a noun phrase instead of starting
   with a verb, or that shortens the name of an Entity the model declares.
+- A Step that removes two related things with no `with` on either.
 - A Capability Scenario that opens with the opposite of its Capability's verb,
   such as `enable-a-disabled-link` under `disable-link`: opposite verbs are
   separate Capabilities.

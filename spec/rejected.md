@@ -237,6 +237,13 @@ admits deleting any comment directly. Saying "removed with its card" on the
 Step needs a field the report contract does not carry yet; until it does, a
 container's administrator is granted the removal openly, as moderation.
 
+**Supersedes the deferral above: granting a cascade through the container.** A
+grant wide enough to admit removing other people's comments with their card
+admits removing any one of them directly, and no condition can tell the two
+apart. A `removes` entry now says `with` what it goes, and the removal it goes
+with is what needs permission; the report carries the field, so the deferral's
+reason no longer holds.
+
 ## AI
 
 **A built-in AI assistant as an Entity that acts.** It reads like a

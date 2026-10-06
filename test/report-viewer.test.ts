@@ -313,7 +313,7 @@ describe('stable Product Report', () => {
     const cancelStep = cancel.steps.at(-1)!
     cancel.steps[cancel.steps.length - 1] = {
       ...cancelStep,
-      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded', facts: [] }]
+      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded', facts: [], with: null }]
     }
     const workspace = projectReportWorkspace(report)
 
@@ -715,7 +715,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV16')
+    expect(renderer).toContain('ProductReportV17')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -1470,11 +1470,11 @@ describe('composed lifecycle', () => {
 })
 
 /*
- * Product Report v16: a Screen presents facts, Screens never nest, and a
+ * Product Report v17: a Screen presents facts, Screens never nest, and a
  * container leads with what it delivers. The second Screen is built by hand on
  * top of the fixture so the reading is pinned to the wire.
  */
-describe('Screens on the v16 wire', () => {
+describe('Screens on the v17 wire', () => {
   const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
   const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
   const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'

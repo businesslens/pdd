@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV16,
+  ProductReportV17,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -51,7 +51,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV16['references']): Array<Record<string, string>> {
+function references(value: ProductReportV17['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -117,7 +117,10 @@ function stepEntities(step: ReportScenarioStep): Array<Record<string, unknown>> 
       as: entry.as ?? undefined,
       effect: entry.effect === 'changes' ? undefined : entry.effect,
       from: entry.from ?? undefined,
-      to: entry.to ?? undefined
+      to: entry.to ?? undefined,
+      /* The folder names the entry it goes with as the Step names it: by
+         alias when it has one, by Entity id otherwise. */
+      with: entry.with ? entry.with.as ?? entry.with.entityId : undefined
     }),
     ...(entry.effect === 'removes' ? {} : { facts: entry.facts })
   }))
@@ -194,7 +197,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV17, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -396,8 +399,8 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV16['model']['capabilityScenarios'][number]
-      | ProductReportV16['model']['journeyScenarios'][number]
+      | ProductReportV17['model']['capabilityScenarios'][number]
+      | ProductReportV17['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -506,7 +509,7 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV16
+  report: ProductReportV17
   root: string
 }
 

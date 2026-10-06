@@ -1,6 +1,6 @@
 import type { VariationKind, VariationMemberType } from '../core/variations.js'
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV16 } from '../core/portable.js'
+import type { ProductReportV17 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -10,7 +10,7 @@ import { loadModel } from '../core/model.js'
 import { qualify } from '../core/ids.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV16Schema,
+  ProductReportV17Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV16 {
+): ProductReportV17 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -94,14 +94,22 @@ export function compileReport(
     capabilityId: parentCapability ?? step.capability ?? null,
     /* The default is resolved here, so a reader of the wire never has to know
        which value the folder is allowed to omit. */
-    entities: step.entities.map(entry => ({
-      entityId: entry.entity,
-      as: entry.as ?? null,
-      effect: entry.effect ?? 'changes' as const,
-      from: entry.from ?? null,
-      to: entry.to ?? null,
-      facts: sorted(entry.facts ?? [])
-    })),
+    entities: step.entities.map(entry => {
+      /* `with` names another entry of this Step by alias or Entity id; the
+         wire carries the resolved pair, so a reader never resolves it. */
+      const goesWith = entry.with === undefined
+        ? undefined
+        : step.entities.find(other => (other.as ?? other.entity) === entry.with)
+      return {
+        entityId: entry.entity,
+        as: entry.as ?? null,
+        effect: entry.effect ?? 'changes' as const,
+        from: entry.from ?? null,
+        to: entry.to ?? null,
+        facts: sorted(entry.facts ?? []),
+        with: goesWith ? { entityId: goesWith.entity, as: goesWith.as ?? null } : null
+      }
+    }),
     unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
       const context = step.contexts.find(item => item.routeId === route.id)
@@ -114,7 +122,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV16 = {
+  const report: ProductReportV17 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -350,24 +358,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV16Schema.parse(report)
+  const parsed = ProductReportV17Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV16
+  report: ProductReportV17
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV16 {
+export function compileWorkspaceReport(cwd: string): ProductReportV17 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV16 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV17 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)
