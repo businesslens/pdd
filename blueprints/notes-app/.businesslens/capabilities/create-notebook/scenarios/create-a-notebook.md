@@ -6,7 +6,7 @@ steps:
   - text: The Owner chooses to create a notebook and gives it a name
     kind: actor
     actor: owner
-    entities: 
+    entities:
       - { entity: notebook, effect: reads, facts: [Name] }
     contexts:
       web:

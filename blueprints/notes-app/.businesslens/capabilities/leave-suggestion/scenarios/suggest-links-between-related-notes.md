@@ -6,7 +6,7 @@ steps:
   - text: The AI agent asks for a note and the notes around it
     kind: actor
     actor: ai-agent
-    entities: 
+    entities:
       - { entity: note, as: subject, effect: reads, facts: [] }
     contexts:
       agent:
