@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Personal Productivity, Team Collaboration, Public Participation, Learning & Education and Developer Tools.
-- **Skills:** Ask your agent to implement the Product Model, all of it or a part, and verify plans the work in phases that your agent implements your usual way, checks each part, and settles any product question with you. Ask for one part at a time or everything in one go if you prefer.
 
 ### Changed
 
@@ -23,13 +22,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission.
 - Reports use a new format version; re-export Blueprints after updating.
 - **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, limitations that describe the model instead of the product, and a Coverage entry that names no code.
-- **Skills:** Asking to change the product, such as "make a PDD change", now starts ideate, which ends by offering to implement the approved change.
-- **CLI:** The README in every Product Model tells any agent how to implement the model and change it, and which parts of the model the code must honor.
-- **Docs:** The development loop and the Get started guides now show asking your agent to implement, in phases, with verify checking each part.
+
+## [0.28.0] - 2026-10-06
+
+### Added
+
+- **Skills:** Ask your agent to implement the Product Model, all of it or a part, and verify plans the work in phases that your agent implements your usual way, checks each part, and settles any product question with you. Ask for one part at a time or everything in one go if you prefer. ([#91](https://github.com/businesslens/pdd/pull/91)) ([0c38287](https://github.com/businesslens/pdd/commit/0c38287a93bee0dcd6ba2a0610fdca83185dc872))
+
+### Changed
+
+- **Skills:** Asking to change the product, such as "make a PDD change", now starts ideate, which ends by offering to implement the approved change. ([#91](https://github.com/businesslens/pdd/pull/91)) ([0c38287](https://github.com/businesslens/pdd/commit/0c38287a93bee0dcd6ba2a0610fdca83185dc872))
+- **CLI:** The README in every Product Model tells any agent how to implement the model and change it, and which parts of the model the code must honor. ([#91](https://github.com/businesslens/pdd/pull/91)) ([0c38287](https://github.com/businesslens/pdd/commit/0c38287a93bee0dcd6ba2a0610fdca83185dc872))
+- **Docs:** The development loop and the Get started guides now show asking your agent to implement, in phases, with verify checking each part. ([#91](https://github.com/businesslens/pdd/pull/91)) ([0c38287](https://github.com/businesslens/pdd/commit/0c38287a93bee0dcd6ba2a0610fdca83185dc872))
 
 ### Fixed
 
-- **Skills:** Telling your agent to "take your recommendation" now settles the open questions without approving the change: the skills still show you the complete change and write the model only after you approve it.
+- **Skills:** Telling your agent to "take your recommendation" now settles the open questions without approving the change: the skills still show you the complete change and write the model only after you approve it. ([#96](https://github.com/businesslens/pdd/pull/96)) ([9d6f999](https://github.com/businesslens/pdd/commit/9d6f9994fe07a125732b6d89d5688ef5e9af0a4e))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.27.0...v0.28.0][0.28.0]
 
 ## [0.27.0] - 2026-10-06
 
@@ -1092,7 +1106,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/businesslens/pdd/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/businesslens/pdd/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/businesslens/pdd/compare/v0.25.1...v0.26.0
 [0.25.1]: https://github.com/businesslens/pdd/compare/v0.25.0...v0.25.1
