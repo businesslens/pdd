@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Report:** The local report can star BusinessLens on GitHub in one click, through your signed-in GitHub CLI.
+
+### Changed
+
+- **Report:** The local report's Documentation and GitHub links no longer show a new-tab arrow.
+
 ## [0.25.1] - 2026-10-05
 
 - The README demo shows the current Product Model, one Screen per subject. ([#86](https://github.com/businesslens/pdd/pull/86)) ([1dce3bf](https://github.com/businesslens/pdd/commit/1dce3bf95d1ae3f80f4ad115bfdd63b0dc5e892f))

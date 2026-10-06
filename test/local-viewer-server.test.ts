@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
+import type { GithubStarClient } from '../src/core/github-star.js'
 import type { ProductReportV16 } from '../src/core/portable.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
@@ -324,6 +325,53 @@ describe('local Product Report server', () => {
     // A request target that is not a URL is answered, never a crash.
     expect((await get(viewer.url, '//')).status).toBe(400)
     expect((await get(viewer.url)).status).toBe(200)
+  })
+
+  it('reports and adds the GitHub star only from the report itself', async () => {
+    let starred = false
+    let fail = false
+    const githubStar: GithubStarClient = {
+      state: async () => starred ? 'starred' : 'not-starred',
+      star: async () => {
+        if (fail) throw new Error('offline')
+        starred = true
+      }
+    }
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, githubStar })
+    viewers.push(viewer)
+    const path = `${viewer.url}/_businesslens/github-star`
+
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'not-starred' })
+
+    // Another page in the same browser cannot star on the reader's behalf.
+    for (const headers of [{}, { origin: 'https://example.com' }, { origin: 'null' }] as Record<string, string>[]) {
+      expect((await fetch(path, { method: 'POST', headers })).status).toBe(403)
+    }
+    expect(starred).toBe(false)
+
+    fail = true
+    expect((await fetch(path, { method: 'POST', headers: { origin: viewer.url } })).status).toBe(502)
+    expect(starred).toBe(false)
+
+    fail = false
+    const accepted = await fetch(path, { method: 'POST', headers: { origin: viewer.url } })
+    expect(accepted.status).toBe(200)
+    expect(await accepted.json()).toEqual({ state: 'starred' })
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'starred' })
+
+    const unsupported = await fetch(path, { method: 'DELETE', headers: { origin: viewer.url } })
+    expect(unsupported.status).toBe(405)
+    expect(unsupported.headers.get('allow')).toBe('GET, HEAD, POST')
+  })
+
+  it('reports the GitHub star as unavailable when gh cannot answer', async () => {
+    const githubStar: GithubStarClient = {
+      state: async () => { throw new Error('gh exploded') },
+      star: async () => {}
+    }
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, githubStar })
+    viewers.push(viewer)
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'unavailable' })
   })
 
   it('drops the previous model on rebind, even when the new one does not compile', async () => {
