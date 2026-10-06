@@ -5,8 +5,8 @@ availability: [{ place: board-web }]
 
 # Card deletion
 
-Deletes a card for good, with its comments and stall flags, once an admin of
-its board confirms.
+Deletes a card for good, with its comments and stall flags, once the Teammate
+confirms.
 
 ## Intent
 

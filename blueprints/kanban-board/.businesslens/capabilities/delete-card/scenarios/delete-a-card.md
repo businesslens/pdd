@@ -11,15 +11,6 @@ steps:
     contexts:
       web:
         place: board-web::card-detail
-  - text: The Product confirms the Teammate is an admin of the board
-    kind: product
-    actor: teammate
-    entities:
-      - { entity: board-membership, effect: reads, facts: [Role] }
-      - { entity: board, effect: reads, facts: [] }
-    contexts:
-      web:
-        place: board-web::card-detail
   - text: The Product asks the Teammate to confirm that the card and its comments go for good
     kind: product
     actor: teammate
@@ -41,9 +32,9 @@ steps:
     actor: teammate
     entities:
       - { entity: card, effect: removes }
-      - { entity: comment, effect: removes }
-      - { entity: stall-flag, as: raised, effect: removes, from: Raised }
-      - { entity: stall-flag, as: cleared, effect: removes, from: Cleared }
+      - { entity: comment, effect: removes, with: card }
+      - { entity: stall-flag, as: raised, effect: removes, from: Raised, with: card }
+      - { entity: stall-flag, as: cleared, effect: removes, from: Cleared, with: card }
     contexts:
       web:
         place: board-web::card-detail
@@ -62,7 +53,7 @@ steps:
 
 ## Trigger
 
-An admin decides a card is not work the team will do, such as one added by mistake.
+A member decides a card is not work the team will do, such as one added by mistake.
 
 ## Outcome
 
@@ -70,4 +61,4 @@ The card, its comments and its stall flags are gone for good, and the other card
 
 ## Edge cases
 
-- The admin cancels at the confirmation → nothing is deleted.
+- The member cancels at the confirmation → nothing is deleted.
