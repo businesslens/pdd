@@ -10,6 +10,8 @@ permits:
 
 # A suggestion is removed only when an Editor deletes its page
 
-A suggestion still proposed for a page is removed only when a Member whose role
-in the page's space is Editor deletes that page, once they confirm. Otherwise a
-suggestion leaves the proposed suggestions only by being accepted or dismissed.
+A suggestion is removed only when a Member whose role in the page's space is
+Editor deletes that page, once they confirm. Every suggestion for the page goes
+with it, whether Proposed, Accepted or Dismissed, so none is left pointing at a
+page that no longer exists. Otherwise a suggestion leaves the proposed
+suggestions only by being accepted or dismissed, and is kept afterwards.
