@@ -46,4 +46,4 @@ the Developer will make it in another tool or session.
 
 The Journey goal is not achieved in this run. Nothing was implemented from
 inside a BusinessLens phase, the model was left unchanged, and the Developer
-holds everything their own tool needs to build it.
+holds everything their own tool needs to implement it.

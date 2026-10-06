@@ -6,7 +6,6 @@ import { stringify } from 'yaml'
 import { lintModel } from '../src/commands/lint.js'
 import { splitFrontmatter } from '../src/core/frontmatter.js'
 import { loadModel } from '../src/core/model.js'
-import { MODEL_README } from '../src/core/model-readme.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 const TRACKED = [
@@ -292,21 +291,6 @@ describe('lintModel', () => {
     const errors = run(cwd).errors
     expect(errors).toContain('README.md is missing')
     expect(errors).toContain('.gitignore must ignore cache/')
-  })
-
-  it('warns, never fails, when the orientation is not the canonical text', () => {
-    const readme = 'README.md differs from the canonical orientation; BusinessLens restores it on its next model write'
-    const cwd = fixtureCopy()
-    expect(run(cwd).warnings).not.toContain(readme)
-
-    writeFileSync(join(cwd, '.businesslens/README.md'), '# Product Model\n\nAn older orientation.\n')
-    const result = run(cwd)
-    expect(result.warnings).toContain(readme)
-    expect(result.errors).not.toContain(readme)
-
-    // A Windows checkout's line endings are not a difference.
-    writeFileSync(join(cwd, '.businesslens/README.md'), MODEL_README.replace(/\n/g, '\r\n'))
-    expect(run(cwd).warnings).not.toContain(readme)
   })
 
   it('requires the model gitignore file', () => {

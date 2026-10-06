@@ -41,46 +41,53 @@ describe('public workflow contract', () => {
     expect(source).toContain('Do not implement from this skill')
   })
 
-  it('hands an approved change to verify\'s build in the user\'s own words', () => {
+  it('hands an approved change to verify\'s implementation in the user\'s own words', () => {
     const source = normalizedSkill('businesslens-ideate')
-    expect(source).toContain('the user can say *build it*')
-    expect(source).toContain('builds the change slice by slice in the user\'s own way of working')
+    expect(source).toContain('the user can say *implement it*')
+    expect(source).toContain('implements the change in phases in the user\'s own way of working')
   })
 
   it('lets a user reach each workflow by asking, not by naming a skill', () => {
     const description = (name: string) => skill(name).match(/^description: (.*)$/m)![1]!
     expect(description('businesslens-ideate')).toContain('“make a PDD change”')
-    expect(description('businesslens-ideate')).toContain('do not use to map established code, build the model into code')
-    expect(description('businesslens-verify')).toContain('Use when asked to build, implement or develop the product')
-    expect(description('businesslens-verify')).toContain('“build it” after ideate')
+    expect(description('businesslens-ideate')).toContain('do not use to map established code, implement the model in code')
+    // "Implement" is the loop's word; "build" is what users also say.
+    expect(description('businesslens-verify')).toContain('Use when asked to implement, build or develop the product')
+    expect(description('businesslens-verify')).toContain('“implement it” or “build it” after ideate')
   })
 
   it('makes one verify invocation own resolution and reinspection', () => {
     const source = normalizedSkill('businesslens-verify')
     expect(source).toContain('must not have to invoke map or ideate manually')
     expect(source).toContain('After every mutation, discard the earlier findings and inspect again')
-    expect(source).toContain('The builder is the agent the user asked to build')
+    expect(source).toContain('The builder is the agent the user asked to implement')
     expect(source).not.toContain('injected')
     expect(source).toContain('same gap returns unchanged')
     expect(source).toContain('Report-only mode forbids writes')
     expect(source).toContain('Persist no receipt')
   })
 
-  it('builds slice by slice with the requesting agent as the builder', () => {
+  it('implements in phases with the requesting agent as the builder', () => {
     const source = normalizedSkill('businesslens-verify')
-    expect(source).toContain('a request to build or implement from the model → build mode')
-    expect(source).toContain('In build mode, the model-right findings are the build plan')
-    expect(source).toContain('later slices are the plan, not findings')
+    expect(source).toContain('a request to implement (or build) from the model → implement mode')
+    expect(source).toContain('In implement mode, the model-right findings are the plan')
+    expect(source).toContain('slices not yet handed over are the plan, not findings')
+    // Three paces, phases by default; checking is per slice at every pace.
+    expect(source).toContain('**in phases**, the default')
+    expect(source).toContain('**one slice at a time**, when the user asks for it')
+    expect(source).toContain('**in one go**, when the user asks for it')
+    expect(source).toContain('inspect each slice it covered')
     expect(source).toContain('never settles a product question in code')
-    // The write boundary binds BusinessLens's own phases; the build phase that
-    // implements code must not be forbidden by it.
+    // The write boundary binds BusinessLens's own phases; implementation, which
+    // writes the user's code, must not be forbidden by it.
     expect(source).toContain('Never write outside `.businesslens/` in an analysis or model-resolution phase')
-    expect(source).toContain('The build phase (step 8) writes only the user\'s code')
+    expect(source).toContain('Implementation (step 8) writes only the user\'s code')
     expect(source).toContain('stop with the complete handoff packet')
 
     const rubric = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'verification-rubric.md'), 'utf8')
-    expect(rubric).toContain('## Build slices')
+    expect(rubric).toContain('## Slices and phases')
     expect(rubric).toContain('so two runs agree')
+    expect(rubric).toContain('Checking stays per slice at every pace')
 
     const handoff = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'build-handoff.md'), 'utf8')
     expect(handoff).toContain('do not edit `.businesslens/`')

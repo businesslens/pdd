@@ -125,9 +125,9 @@ names, and read each Interface's access from who reaches its places. Draft
 every resource by the format reference, apply the border above, draft honest
 coverage and necessary relationships, and get approval before writing.
 
-## Build slices
+## Slices and phases
 
-A slice is what one builder pass can implement and one inspection can confirm:
+A slice is the unit verify checks and reports: what one inspection can confirm.
 
 - One Capability with its Capability Scenarios, the Entity facts and states its
   Steps touch, the Screens placing it, and the Business Rules targeting it.
@@ -142,6 +142,20 @@ Order slices so that:
 - the slice whose Step creates a thing precedes every slice whose Steps read,
   change or move it;
 - otherwise, by Domain id, then by resource id, so two runs agree.
+
+A phase is the unit handed to the builder by default: the slices whose needs
+are already met.
+
+- The first phase holds the shared groundwork no slice owns, such as storage,
+  access and the application shell, together with every slice that needs
+  nothing another slice creates.
+- Each next phase holds the slices whose needs the earlier phases met. A
+  Journey joins the phase after its last Capability.
+- Within a phase, slices keep the order above.
+
+The pace changes only how much is handed over at once: one phase (the
+default), one slice when the user asks for one at a time, or the whole plan
+when the user asks for it in one go. Checking stays per slice at every pace.
 
 ## Stop safely
 

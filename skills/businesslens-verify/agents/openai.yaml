@@ -1,4 +1,4 @@
 interface:
   display_name: "BusinessLens Verify"
-  short_description: "Build from the model and keep code aligned"
-  default_prompt: "Use $businesslens-verify to build this Product Model into the repository slice by slice, or to check it against the current code, resolving gaps until aligned or blocked."
+  short_description: "Implement the model and keep code aligned"
+  default_prompt: "Use $businesslens-verify to implement this Product Model in the repository in phases, or to check it against the current code, resolving gaps until aligned or blocked."

@@ -1,6 +1,6 @@
 ---
 name: businesslens-ideate
-description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model (PDD). Use when the user asks to add, change or remove what the product does (“add X to the product”, “make a PDD change”), to explore product directions, define a blank-slate product, plan a capability or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code, build the model into code, or verify implementation alignment.
+description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model (PDD). Use when the user asks to add, change or remove what the product does (“add X to the product”, “make a PDD change”), to explore product directions, define a blank-slate product, plan a capability or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code, implement the model in code, or verify implementation alignment.
 ---
 
 # Decide intended product behavior
@@ -116,9 +116,9 @@ Read before authoring:
     Fix every error and assess each warning. Green lint means structurally
     sound, not implemented or verified.
 12. Report the approved delta and its acceptance contract, then end with one
-    line offering the build: the user can say *build it*, and
-    `businesslens-verify` builds the change slice by slice in the user's own
-    way of working, checking each slice. Do not implement from this skill.
+    line offering to implement it: the user can say *implement it*, and
+    `businesslens-verify` implements the change in phases in the user's own way
+    of working, checking each part. Do not implement from this skill.
 
 ## Guardrails
 

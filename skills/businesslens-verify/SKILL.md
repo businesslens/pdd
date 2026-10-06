@@ -1,17 +1,18 @@
 ---
 name: businesslens-verify
-description: Build a .businesslens/ Product Model (PDD) into code slice by slice, or check that code and model agree, resolving every gap until the requested scope is aligned or explicitly blocked. Use when asked to build, implement or develop the product or any part of it from the Product Model, the PDD or a pulled Blueprint, including “build it” after ideate; and after implementation, refactors, suspected drift, before release, for a branch-scoped change, or for a named/full current-state audit. Use “report only” when no writes or code changes are allowed.
+description: Implement a .businesslens/ Product Model (PDD) in code, in phases by default, or check that code and model agree, resolving every gap until the requested scope is aligned or explicitly blocked. Use when asked to implement, build or develop the product or any part of it from the Product Model, the PDD or a pulled Blueprint, including “implement it” or “build it” after ideate; and after implementation, refactors, suspected drift, before release, for a branch-scoped change, or for a named/full current-state audit. Use “report only” when no writes or code changes are allowed.
 ---
 
-# Build and verify alignment
+# Implement and verify alignment
 
 Own one invocation from inspection through resolution. The user must not have to
 invoke map or ideate manually after a finding. Use child agents for bounded
 phases when the harness supports them; otherwise run the same protocols as
 internal phase transitions without losing context.
 
-Building is resolution from a larger gap: what the model describes that the
-code does not do yet is model-right, and a build closes it slice by slice.
+Implementing is resolution from a larger gap: what the model describes that
+the code does not do yet is model-right, and implementation closes it in
+phases.
 
 Verification itself is semantically read-only: do not change product meaning or
 implementation while classifying findings. Approved intent resolution may edit
@@ -31,13 +32,13 @@ Read before work:
 1. Require an existing Product Model. If none exists and repository behavior is
    established, run the scoped-map protocol in step 7 for the necessary scope;
    do not tell the user to invoke another skill. If both model and implementation
-   are absent, stop: there is nothing to verify or build until the product is
-   decided.
+   are absent, stop: there is nothing to verify or implement until the product
+   is decided.
 2. Parse mode:
    - `report only` → inspect and report; prohibit every write, code change and
      delegation;
-   - a request to build or implement from the model → build mode: the request
-     authorizes code changes within its scope; follow section 4;
+   - a request to implement (or build) from the model → implement mode: the
+     request authorizes code changes within its scope; follow section 4;
    - otherwise → resolution mode.
 3. Resolve scope:
    - `this branch` → use merge-base, committed, staged, and working-tree diffs
@@ -49,8 +50,8 @@ Read before work:
      availability Context, or path → inspect it and behaviorally necessary
      dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
-     useful diff exists, inspect the current modeled product. In build mode, no
-     explicit scope means the whole model.
+     useful diff exists, inspect the current modeled product. In implement mode,
+     no explicit scope means the whole model.
 
 Git never decides whether model or code is right. A Blueprint or approved model
 committed before a feature branch remains a plan even when only code changed in
@@ -97,7 +98,7 @@ the diff.
    - Keep model meaning unchanged.
    - Prepare the exact packet from `references/build-handoff.md`.
    - Ask for authorization to change implementation when not already explicit;
-     build mode is explicit.
+     implement mode is explicit.
    - Hand the packet to the builder (step 8), then return directly to step 4.
 
    Three of the branches below re-author product meaning, and authoring faces
@@ -148,15 +149,15 @@ the diff.
      and what could resolve it. Mark the run blocked for that scope.
 
 8. A BusinessLens analysis phase never implements or executes target code. The
-   builder is the agent the user asked to build: in build mode, or once the
-   user authorizes a code change, that is you, implementing the packet in the
-   user's usual way of working (their plan mode, SDD tool, repository
-   conventions and tests) under your normal permissions. That build phase is
-   the user's workflow, not BusinessLens analysis; when it ends, return to
-   step 4 and inspect from source again. Hand the packet to a subagent instead
+   builder is the agent the user asked to implement: in implement mode, or once
+   the user authorizes a code change, that is you, implementing the packet in
+   the user's usual way of working (their plan mode, SDD tool, repository
+   conventions and tests) under your normal permissions. That implementation
+   work is the user's workflow, not BusinessLens analysis; when it ends,
+   return to step 4 and inspect from source again. Hand the packet to a subagent instead
    only when the user asks for one and the harness can start it. The builder
    never edits `.businesslens/` and never settles a product question in code:
-   an ambiguous or wrong-seeming model claim ends the slice and returns as a
+   an ambiguous or wrong-seeming model claim ends the handoff and returns as a
    question for intent resolution. When the user implements elsewhere, in
    another tool or session, stop with the complete handoff packet instead of
    asking the user to invoke a BusinessLens skill.
@@ -165,25 +166,34 @@ the diff.
    If the same gap returns unchanged after a build attempt, stop and report it;
    do not loop. Persist no receipt, ledger, or lifecycle state.
 
-## 4. Build slice by slice
+## 4. Implement in phases
 
-In build mode, the model-right findings are the build plan. Behavior the model
+In implement mode, the model-right findings are the plan. Behavior the model
 describes and the code lacks is model-right without asking; ask an authority
 question only where existing code contradicts the model.
 
-10. Slice and order the plan as the rubric's **Build slices** section says.
-    State the order as one short list, then start; wait for approval of the
-    order only when the user asked to review it.
-11. For each slice in order, hand its packet to the builder. When it returns,
-    inspect that slice and what it depends on (steps 4–6); later slices are the
-    plan, not findings. Aligned → next slice. A remaining gap → hand it back
-    once with the gap stated, then step 9's unchanged-gap stop applies. A
-    product question → settle it with the user through step 7's intent
-    resolution, write the approved model, and derive the remaining plan again.
-    With no user reachable, stop that slice and the slices depending on it,
-    carry the question to the report, and continue with independent slices.
+10. Cut the plan into slices and group them into phases as the rubric's
+    **Slices and phases** section says. Take the pace from the request:
+    - **in phases**, the default: implement one phase, then check each of its
+      slices;
+    - **one slice at a time**, when the user asks for it: implement one slice,
+      then check it;
+    - **in one go**, when the user asks for it: implement every slice, then
+      check them all.
+
+    State the phases with their slices and the pace as one short list, then
+    start; wait for approval of the plan only when the user asked to review it.
+11. Hand the next phase, slice, or the whole plan, as the pace says, to the
+    builder. When it returns, inspect each slice it covered and what that
+    slice depends on (steps 4–6); slices not yet handed over are the plan, not
+    findings. Aligned → continue. A remaining gap → hand it back once with the
+    gap stated, then step 9's unchanged-gap stop applies. A product question →
+    settle it with the user through step 7's intent resolution, write the
+    approved model, and derive the remaining plan again. With no user
+    reachable, stop the slices that depend on the question, carry it to the
+    report, and continue with the independent ones.
 12. Observable behavior the builder added that no slice asked for is
-    unmapped: raise it at the end rather than mapping it mid-build.
+    unmapped: raise it at the end rather than mapping it midway.
 
 ## 5. Finish
 
@@ -192,7 +202,8 @@ question only where existing code contradicts the model.
     report-only mode.
 14. Run final lint. Report:
     - requested and inspected scope;
-    - in build mode, the slices built in order and any left blocked;
+    - in implement mode, the pace, the phases and slices implemented in order,
+      and any left blocked;
     - aligned contracts;
     - resulting authority decisions and approvals, without replaying settled
       alternatives or unchanged deliberation;
@@ -222,7 +233,7 @@ question only where existing code contradicts the model.
 - Never report design as drift; the rubric's **The border** decides.
 - Never write outside `.businesslens/` in an analysis or model-resolution phase;
   model-resolution writes must leave target `AGENTS.md`, `CLAUDE.md`, and root
-  README byte-identical. The build phase (step 8) writes only the user's code,
+  README byte-identical. Implementation (step 8) writes only the user's code,
   under the repository's own instructions, and never `.businesslens/`.
 - Never stage, commit, publish, submit, or contribute.
 - Never ask the user to manually invoke map or ideate to continue this run.

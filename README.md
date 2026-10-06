@@ -69,7 +69,7 @@ and nothing a rebuild is free to change:
 
 * ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
 
-* 🔁 **Fits your workflow:** ask your agent to build and it implements slice by slice your usual way, with plan mode, an SDD tool or freestyle; verify checks each slice
+* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
 
 * 🖥️ **Local report:** `businesslens view` opens the model in your browser and follows your edits
 
@@ -84,7 +84,7 @@ and nothing a rebuild is free to change:
 ## The development loop
 
 <p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement slice by slice with your own agent, verify each slice with /businesslens-verify" width="600">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
 </p>
 
 ## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
@@ -105,7 +105,7 @@ Then every change runs the loop. You just ask; your agent picks the skill:
 
 ```text
 add guest checkout to the product   # ideate: approve the model change
-build it                            # verify: your agent builds each slice, verify checks it
+implement it                        # verify: your agent implements in phases, verify checks each
 /businesslens-verify this branch    # any time you want to be sure
 ```
 

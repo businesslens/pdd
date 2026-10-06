@@ -29,10 +29,10 @@ intended product behavior.
 
 ## If you are an agent working in this repository
 
-- **To build from it**, all of it or a part, use the \`businesslens-verify\`
+- **To implement it**, all of it or a part, use the \`businesslens-verify\`
   skill. It works out what the model describes that the code does not do yet,
-  has you implement it one slice at a time in your usual way, and checks each
-  slice.
+  has you implement it in phases in your usual way, and checks each part as it
+  lands.
 - **To change what the product should do**, use \`businesslens-ideate\`. To
   model established code the model does not cover, use \`businesslens-map\`.
 - If those skills are not installed, run \`npx businesslens install\`.

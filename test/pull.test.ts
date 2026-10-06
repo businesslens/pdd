@@ -125,7 +125,7 @@ describe('pull', () => {
 
     const readme = readFileSync(join(target, '.businesslens', 'README.md'), 'utf8')
     expect(readme).toBe(MODEL_README)
-    expect(readme).toContain('**To build from it**')
+    expect(readme).toContain('**To implement it**')
     expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
   })
 

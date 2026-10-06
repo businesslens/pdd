@@ -1,6 +1,6 @@
 ---
 title: From a Blueprint
-description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then ask your agent to build it.
+description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then ask your agent to implement it.
 section: open-source
 group: Get started
 order: 4
@@ -49,8 +49,8 @@ were given.
 3. If you want something more or different, ask your agent for the change (or
    run `/businesslens-ideate`) and approve it first.
 
-4. Ask your agent to build it: "build according to our PDD".
-   [Verify](./skill-businesslens-verify.md) builds it slice by slice: your agent
-   implements each slice your usual way, and verify checks it before the next.
+4. Ask your agent to implement it: "implement our PDD".
+   [Verify](./skill-businesslens-verify.md) plans the work in phases: your agent
+   implements each phase your usual way, and verify checks it before the next.
    Run `/businesslens-verify` yourself whenever you want to be sure.
 

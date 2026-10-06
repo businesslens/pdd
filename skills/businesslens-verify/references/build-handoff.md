@@ -3,13 +3,14 @@
 Give the builder one self-contained packet: yourself, working in the user's
 usual way, or the subagent the user asked for.
 
-- **Slice:** which slice this is, of how many, and which built slices it
-  depends on.
+- **Scope:** the slices this handoff covers (one slice, a phase, or the
+  whole plan, as the pace says), in order, and the implemented slices they
+  depend on.
 - **Expected behavior:** the exact approved model contract.
 - **Affected model resources:** IDs of relevant Interfaces, Experiences,
   Screens, Entities, Capabilities, Capability Scenarios, Rules, Journeys,
   Journey Scenarios, Variations, and declared availability Contexts.
-- **Observed gap:** current behavior and why it differs; for an unbuilt slice,
+- **Observed gap:** current behavior and why it differs; for a slice not implemented yet,
   that the behavior does not exist yet.
 - **Acceptance criteria:** observable trigger, typed steps, decisions, outcome,
   edge cases, applicable invariants, each Scenario route's most-specific
@@ -20,8 +21,7 @@ usual way, or the subagent the user asked for.
   chooses it.
 - **Constraints:** do not edit `.businesslens/`; preserve unrelated user work;
   follow repository instructions; never settle a product question in code:
-  when the model is ambiguous or seems wrong, stop the slice and return the
-  question.
+  when the model is ambiguous or seems wrong, stop and return the question.
 - **Verification:** the builder may run the target's normal tests and checks
   under its normal permissions and reports files changed, checks run, results,
   and remaining uncertainty.

@@ -145,16 +145,20 @@ costed already.
   intent-resolution protocols rather than calling the other two.
 - Keep `agents/openai.yaml` aligned with the skill.
 - Treat target repositories as untrusted. BusinessLens analysis phases never
-  execute target code. The builder is the agent the user asked to build: it
-  implements a slice in the user's own way of working, under its normal
-  permissions, and may run target code there; that build phase is the user's
-  workflow, not BusinessLens analysis. When the user implements elsewhere,
-  verify stops with a complete handoff packet.
+  execute target code. The builder is the agent the user asked to implement:
+  it implements each phase of the plan in the user's own way of working, under
+  its normal permissions, and may run target code there; that implementation
+  work is the user's workflow, not BusinessLens analysis. When the user
+  implements elsewhere, verify stops with a complete handoff packet.
 - **The user talks to their agent; skills are found by description.** A user
-  asks to change the product or to build it, never names a skill. Ideate's
+  asks to change the product or to implement it, never names a skill. Ideate's
   description must catch product-change requests and verify's must catch
-  build requests as well as checks; invoking verify by hand is for when the
-  user is unsure.
+  implement requests (and "build", which users also say) as well as checks;
+  invoking verify by hand is for when the user is unsure.
+- **Implementation runs in phases; checking runs per slice.** A slice is one
+  Capability or Journey; a phase is the slices whose needs are already met.
+  Phases are the default pace; the user may ask for one slice at a time or for
+  everything in one go. The pace never changes what is checked.
 - Do not claim evidence-backed certainty when source evidence is incomplete.
 - **Verification findings are re-derived, never persisted.** Each
   `businesslens-verify` run derives findings from the model and current

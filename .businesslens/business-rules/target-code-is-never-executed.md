@@ -21,8 +21,8 @@ references:
 No BusinessLens analysis runs the repository it is looking at: not its
 application, builds, migrations, generators, package scripts, or tests. Source
 and tests are read. Where a change to implementation is needed, the agent the
-Developer asked to build makes it the Developer's usual way, under its normal
-permissions; that build is the Developer's workflow, not a BusinessLens
+Developer asked to implement makes it the Developer's usual way, under its normal
+permissions; that implementation is the Developer's workflow, not a BusinessLens
 analysis, and the inspection that follows reads source again.
 
 ## Rationale

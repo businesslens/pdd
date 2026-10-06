@@ -41,7 +41,7 @@ The model is the side that is right, so implementation has to move.
 
 ## Outcome
 
-The implementation was changed by the agent the Developer asked to build, under
+The implementation was changed by the agent the Developer asked to implement, under
 its normal permissions, and the fresh inspection reports the result. No
 BusinessLens analysis phase wrote or executed product code, and the model was
 left unchanged.

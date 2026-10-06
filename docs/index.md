@@ -45,7 +45,7 @@ ideate → implement ⇄ verify
    ▲                     │
    └──── next change ────┘
 
-implement: your agent, your way, slice by slice
+implement: your agent, your way, in phases
 ```
 ::
 
@@ -53,19 +53,21 @@ Ideate and verify with BusinessLens. Your own agent implements, your way.
 
 - **Ideate** with [`/businesslens-ideate`](./skill-businesslens-ideate.md):
   Decide the next change and record it in the product model.
-- **Implement** with your agent, your way: Slice by slice, with plan mode, an
-  SDD tool, or freestyle.
+- **Implement** with your agent, your way: In phases, with plan mode, an SDD
+  tool, or freestyle.
 - **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
   Check and improve the code and product model until they agree.
 
 You don't have to name a skill. Ask your agent for a change, such as "add
-guest checkout to the product", and ideate decides it with you. Ask it to build,
-and verify splits the work into slices: your agent implements each one, and
-verify checks it before the next starts. Run `/businesslens-verify` yourself
-whenever you want to be sure, for example before a release.
+guest checkout to the product", and ideate decides it with you. Ask it to
+implement the change, and verify plans the work in phases: your agent
+implements each phase, and verify checks every part of it before the next
+starts. You can also ask for one part at a time, or for everything in one go.
+Run `/businesslens-verify` yourself whenever you want to be sure, for example
+before a release.
 
 Ideate changes the model only with your approval. Your agent changes the code
-and never the model. A product question that comes up while building comes
+and never the model. A product question that comes up while implementing comes
 back to you; it is never decided in code.
 
 ## See the model at any time
@@ -84,7 +86,7 @@ review a change, or verify. See [`view`](./cli-view.md) for the options.
 ## What BusinessLens never does
 
 - Run your code to check it: the skills read it, they never execute it. While
-  building, your agent runs your tests the way it always does.
+  implementing, your agent runs your tests the way it always does.
 - Write outside `.businesslens/`, or edit your AGENTS.md, CLAUDE.md or README.
 - Commit for you.
 

@@ -20,7 +20,6 @@ import {
 } from './frontmatter.js'
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
-import { MODEL_README } from './model-readme.js'
 import {
   bulletList, decisionPoints, namedStates, parseMarkdown, section
 } from './markdown.js'
@@ -437,8 +436,7 @@ export const FOLDER_SCHEMA = 11
  *
  * `issues` are states no correct model passes through and fail `lint`.
  * `notices` are advisory: the model is loadable and the finding describes a
- * shape an author is expected to reach in more than one step, or BusinessLens-
- * owned text that differs from what BusinessLens writes.
+ * shape an author is expected to reach in more than one step.
  */
 export interface LoadFindings {
   issues: string[]
@@ -1106,14 +1104,7 @@ export function loadModel(cwd: string): PddModel {
   if (!existsSync(root)) {
     issues.push(`${FOLDER}/ does not exist — use \`businesslens-map\` for established code or \`businesslens-ideate\` for a new product`)
   } else {
-    const readmeFile = join(root, 'README.md')
-    if (!existsSync(readmeFile)) {
-      issues.push('README.md is missing')
-    } else if (readFileSync(readmeFile, 'utf8').replace(/\r\n/g, '\n') !== MODEL_README) {
-      // Advisory: the orientation carries no product meaning, and every
-      // BusinessLens write restores it, so a stale copy never blocks lint.
-      notices.push('README.md differs from the canonical orientation; BusinessLens restores it on its next model write')
-    }
+    if (!existsSync(join(root, 'README.md'))) issues.push('README.md is missing')
 
     const gitignoreFile = join(root, '.gitignore')
     if (!existsSync(gitignoreFile)) {

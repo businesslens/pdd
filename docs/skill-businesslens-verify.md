@@ -1,6 +1,6 @@
 ---
 title: verify
-description: Build the Product Model into code slice by slice, or check that the model and the code agree, and resolve every gap you approve until they do or something blocks.
+description: Implement the Product Model in code, in phases, or check that the model and the code agree, and resolve every gap you approve until they do or something blocks.
 section: open-source
 group: Skills
 order: 19
@@ -8,10 +8,11 @@ order: 19
 
 # `businesslens-verify`
 
-**Verify makes the Product Model and the code agree: it builds what the model
-describes and the code lacks, and fixes each other gap the way you decide.**
+**Verify makes the Product Model and the code agree: it implements what the
+model describes and the code lacks, and fixes each other gap the way you
+decide.**
 
-Your agent uses it when you ask it to build from the model, all of it or a part.
+Your agent uses it when you ask it to implement the model, all of it or a part.
 Run it yourself after a refactor, when you suspect drift, or before a release.
 
 ```text
@@ -23,27 +24,41 @@ Run it yourself after a refactor, when you suspect drift, or before a release.
 
 With no scope, it checks what changed on the current branch.
 
-## Build from the model
+## Implement from the model
 
-Ask your agent to build, for example "build according to our PDD", "build
-it" after ideate, or "implement saving an item". You don't name the skill.
+Ask your agent to implement, for example "implement our PDD", "implement it"
+after ideate, or "implement saving an item". "Build" works too. You don't name
+the skill.
 
-1. **A plan in slices.** Everything the model describes that the code doesn't
-   do yet is the plan. Each slice is one Capability with its Scenarios, the
-   Screens and Rules that go with it; a Journey comes after its Capabilities.
-   Slices are ordered so that what a later slice needs already exists.
-2. **Your agent builds each slice your usual way**: plan mode, an SDD tool, your
-   repository's conventions and tests. It never edits `.businesslens/`.
-3. **Verify checks the slice** before the next one starts, and hands back
-   anything still missing.
-4. **Questions come to you.** If the model is ambiguous or seems wrong, the
-   slice stops and verify settles it with you, updating the model only with
-   your approval. Nothing is decided in code.
-5. **A report**: the slices built in order, anything blocked, and anything the
-   build added that the model doesn't describe yet.
+1. **A plan.** Everything the model describes that the code doesn't do yet is
+   the plan, cut into **slices**: one Capability with its Scenarios and the
+   Screens and Rules that go with it, or one Journey after its Capabilities.
+   Slices are grouped into **phases**: the first holds the shared groundwork
+   (storage, sign-in, the app shell) and the slices that need nothing else;
+   each next phase holds the slices the earlier ones made possible.
+2. **Your agent implements each phase your usual way**: plan mode, an SDD tool,
+   your repository's conventions and tests. It never edits `.businesslens/`.
+3. **Verify checks every slice of the phase** before the next phase starts, and
+   hands back anything still missing.
+4. **Questions come to you.** If the model is ambiguous or seems wrong, the work
+   stops and verify settles it with you, updating the model only with your
+   approval. Nothing is decided in code.
+5. **A report**: what was implemented in order, anything blocked, and anything
+   the implementation added that the model doesn't describe yet.
+
+### Choose the pace
+
+| Say | What happens | Use it when |
+| --- | --- | --- |
+| Nothing, or "in phases" | One phase at a time, each slice checked before the next phase (the default) | Most work: a new product, a Blueprint, a large change |
+| "One slice at a time" | One slice, checked, then the next | You want to review each part, or the model is new to you |
+| "In one go" | Every slice at once, then every slice checked | A small change, or you want the fastest run |
+
+The pace changes how much your agent implements before a check, never what is
+checked: every slice is checked against the model either way.
 
 To implement in another tool or session instead, say so: verify gives you a
-**handoff packet** for each gap.
+**handoff packet** for the work.
 
 ## What you get
 

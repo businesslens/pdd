@@ -203,7 +203,5 @@ All of these are errors:
 Warnings:
 
 - An expanded folder with nothing in it yet.
-- A `README.md` that is not the current BusinessLens text; the skills restore
-  it the next time they write the model.
 - A behavioral id that reads as a noun phrase, a cross-cutting id that opens
   with a verb, or a noun the model already declares more fully.

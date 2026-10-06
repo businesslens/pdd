@@ -1,6 +1,6 @@
 ---
 title: From an idea
-description: Decide what a new product does, approve its Product Model, then ask your agent to build it while verify checks each slice.
+description: Decide what a new product does, approve its Product Model, then ask your agent to implement it while verify checks each part.
 section: open-source
 group: Get started
 order: 5
@@ -29,9 +29,9 @@ Use this door when there is no code yet, or none worth describing.
    npx businesslens lint
    ```
 
-4. Ask your agent to build it: "build it", or "build according to our PDD".
-   [Verify](./skill-businesslens-verify.md) splits the model into slices, your
-   agent implements each one your usual way (plan mode, an SDD tool, or
+4. Ask your agent to implement it: "implement it", or "implement our PDD".
+   [Verify](./skill-businesslens-verify.md) plans the work in phases, your
+   agent implements each phase your usual way (plan mode, an SDD tool, or
    freestyle), and verify checks it before the next. Questions the model
    doesn't answer come back to you. BusinessLens never writes code itself.
 5. Run a check yourself whenever you want to be sure, for example before a
