@@ -20,8 +20,7 @@ These are assumptions to validate, not claims that research has proved them.
 - A next step proposed for a stalled card is as useful to a team as cards
   proposed for a new goal.
 - Teams treat the board's last column as done, so finished cards do not need
-  to be archived; cards added by mistake are deleted instead, by an admin, since
-  deleting a card takes everyone's comments on it with it.
+  to be archived; cards added by mistake are deleted instead.
 - Members who are done with a board leave it; deleting a whole board, with
   everyone's work on it, is rare enough to rest with its admins.
 

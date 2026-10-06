@@ -6,7 +6,7 @@ covered:
     paths: []
   - description: "Board membership, the Admin and Member roles, and leaving a board."
     paths: []
-  - description: "Creating, editing, assigning, unassigning, moving and commenting on cards, deleting one's own comments, and admins deleting cards and anyone's comments."
+  - description: "Creating, editing, assigning, unassigning, moving, deleting and commenting on cards, and deleting one's own comments."
     paths: []
   - description: "Stall flags the Product raises on cards that stop moving."
     paths: []

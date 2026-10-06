@@ -36,28 +36,20 @@ steps:
     contexts:
       web:
         place: board-web::board-settings
-  - text: The Product deletes its proposed cards, comments, stall flags, cards and columns for good
-    kind: product
-    actor: teammate
-    entities:
-      - { entity: proposed-card, as: waiting, effect: removes, from: Proposed }
-      - { entity: proposed-card, as: accepted, effect: removes, from: Accepted }
-      - { entity: proposed-card, as: dismissed, effect: removes, from: Dismissed }
-      - { entity: comment, effect: removes }
-      - { entity: stall-flag, as: raised, effect: removes, from: Raised }
-      - { entity: stall-flag, as: cleared, effect: removes, from: Cleared }
-      - { entity: card, effect: removes }
-      - { entity: column, effect: removes }
-      - { entity: board, effect: reads, facts: [] }
-    contexts:
-      web:
-        place: board-web::board-settings
-  - text: The Product deletes the board and ends every membership of it
+  - text: The Product deletes the board for good, with its columns, cards, comments, stall flags and proposed cards, and ends every membership of it
     kind: product
     actor: teammate
     entities:
       - { entity: board, effect: removes }
-      - { entity: board-membership, effect: removes }
+      - { entity: board-membership, effect: removes, with: board }
+      - { entity: column, effect: removes, with: board }
+      - { entity: card, effect: removes, with: column }
+      - { entity: comment, effect: removes, with: card }
+      - { entity: stall-flag, as: raised, effect: removes, from: Raised, with: card }
+      - { entity: stall-flag, as: cleared, effect: removes, from: Cleared, with: card }
+      - { entity: proposed-card, as: waiting, effect: removes, from: Proposed, with: board }
+      - { entity: proposed-card, as: accepted, effect: removes, from: Accepted, with: board }
+      - { entity: proposed-card, as: dismissed, effect: removes, from: Dismissed, with: board }
     contexts:
       web:
         place: board-web::board-settings
