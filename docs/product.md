@@ -45,12 +45,13 @@ Exercise the complete BusinessLens report contract with a small deterministic pr
 ## One Product or several?
 
 A website, a mobile app, a CLI and a public API are usually
-[Interfaces](./interfaces.md) of one Product, not separate Products. Make a
-separate model only when one repository holds products with genuinely separate
-promises.
+[Interfaces](./interfaces.md) of one Product, not separate Products. Keep
+separate Products for genuinely separate promises.
 
-Repository layout doesn't decide it: several packages may build one Product,
-and one repository may hold several, each with its own `.businesslens/`.
+Repository layout doesn't decide it: several packages may build one Product.
+Today a repository holds one Product Model in one `.businesslens/`; support for
+several Products in one repository is planned
+([#46](https://github.com/businesslens/pdd/issues/46)).
 
 ## The file
 
