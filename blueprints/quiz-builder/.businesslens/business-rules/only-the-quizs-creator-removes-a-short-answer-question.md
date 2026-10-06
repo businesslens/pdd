@@ -10,8 +10,8 @@ permits:
 # Only the quiz's creator removes a short-answer question
 
 Only the Creator who owns the quiz removes one of its short-answer questions, once
-they confirm, dismisses a proposed one, or deletes the quiz with them. The
-language model that drafted a question never dismisses it.
+they confirm, or dismisses a proposed one. The language model that drafted a
+question never dismisses it.
 
 ## Rationale
 

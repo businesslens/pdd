@@ -24,8 +24,8 @@ steps:
     actor: creator
     entities:
       - { entity: quiz, effect: removes, from: Draft }
-      - { entity: choice-question, effect: removes, from: Included }
-      - { entity: short-answer-question, effect: removes, from: Proposed }
+      - { entity: choice-question, effect: removes, from: Included, with: quiz }
+      - { entity: short-answer-question, effect: removes, from: Proposed, with: quiz }
     contexts:
       web:
         place: quiz-web::quiz-editor
