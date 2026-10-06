@@ -25,7 +25,7 @@ steps:
     actor: developer
     entities:
       - { entity: snippet, effect: removes, from: Public }
-      - { entity: revision, effect: removes }
+      - { entity: revision, effect: removes, with: snippet }
     contexts:
       web:
         place: snippets-web::workspace::snippet
