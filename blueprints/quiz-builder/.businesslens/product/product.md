@@ -1,19 +1,18 @@
 ---
 id: quiz-builder
-summary: Build multiple-choice, true/false and short-answer quizzes, share them by link or with a class, score every attempt with feedback, and let learners practice what they missed.
+summary: Build quizzes of multiple-choice, true/false and short-answer questions, share them by link or with a class, score each learner's one attempt, and practice what was missed.
 category: learning-and-education
-tags: [ai-assisted, multi-user, beginner]
+tags: [multi-user, ai-assisted]
 authors:
   - name: BusinessLens
 license: MIT
 languages: [en]
 limitations:
-  - Learners sign in to take a quiz; there are no anonymous attempts.
+  - Every attempt belongs to a learner's account; there are no anonymous attempts.
   - Each learner has one scored attempt at a quiz. Further tries are practice rounds, which never change the recorded score.
   - A short answer scores only when it matches one of the creator's accepted answers; anything else stays incorrect until the creator grades it.
-  - Drafting questions from source material depends on a language model. A drafted question reaches learners only once the creator adds it, and while the model is unavailable creators write questions by hand.
-  - Classes are rosters for sharing quizzes. There are no due dates, timers or gradebook.
-  - The Product is a web application; there is no native mobile application.
+  - A language model drafts questions from source material and can be wrong. A drafted question changes nothing until the creator accepts it, and while the model is unavailable creators write questions by hand.
+  - Classes are rosters for sharing quizzes, with no due dates, timers or gradebook. A learner stays in a class once they join it, and a quiz stays assigned to a class once shared with it.
 references:
   - kind: research
     role: context
@@ -25,15 +24,16 @@ references:
 
 A quiz tool for teachers and anyone else who wants to check what people have
 learned. A creator writes a quiz of multiple-choice, true/false and short-answer
-questions — or has the Product draft them from source material —
-and shares it by link or with a class. Learners take it once and are scored with
+questions — or accepts questions the Product drafts from source material — and
+shares it by link or with a class. Learners take it once and are scored with
 feedback, then practice the questions they missed. The creator reviews results
 per question and per learner.
 
 ## Intent
 
-Make checking understanding quick for the creator and useful for the learner.
-The creator stays the author of record: every question learners see is one they
-wrote or approved, and every score is one the Product calculated from their
+Checking what people have learned costs a creator hours of writing questions and
+marking answers, and a learner's mistakes are usually forgotten once the score
+is given. Make writing quick and scoring immediate while the creator stays
+accountable: every score is one the Product calculated from the creator's
 answers or one they graded themselves. A learner's mistakes become their next
 practice, without changing the result their creator sees.

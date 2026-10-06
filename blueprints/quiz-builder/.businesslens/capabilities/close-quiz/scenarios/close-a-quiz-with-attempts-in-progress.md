@@ -32,7 +32,8 @@ steps:
     actor: creator
     entities:
       - { entity: attempt, effect: changes, from: In progress, to: Submitted, facts: [Answers, Score, Submitted at] }
-      - { entity: question, effect: reads, facts: [Correct answer, Points] }
+      - { entity: choice-question, effect: reads, facts: [Correct answer, Points] }
+      - { entity: short-answer-question, effect: reads, facts: [Accepted answers, Points] }
     contexts:
       web:
         place: quiz-web::quiz-editor

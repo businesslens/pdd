@@ -2,8 +2,9 @@
 
 These are assumptions to validate, not claims that research has proved them.
 
-- Creators trust drafted questions only when they review each one before
-  learners can see it, and they want to correct a draft rather than rewrite it.
+- Creators trust drafted questions only when they accept or dismiss each one
+  before learners can see it, and they want to correct a draft before accepting
+  it rather than rewrite it.
 - Drafting from source material saves enough of a creator's time to justify
   depending on a language model, provided writing questions by hand keeps
   working when the model is unavailable.
@@ -16,6 +17,8 @@ These are assumptions to validate, not claims that research has proved them.
   learner to find who needs help.
 - Matching short answers against a list of accepted answers is good enough for
   most quizzes, provided the creator can grade the exceptions by hand.
+- Classes are stable rosters for a term: creators rarely need a learner to
+  leave one, and starting a new class serves a new group.
 - Whether learners see correct answers right after submitting is the creator's
   call per quiz: some quizzes are practice, some are assessment.
 

@@ -27,7 +27,7 @@ steps:
     actor: creator
     capability: add-question
     entities:
-      - { entity: question, effect: creates, to: Included, facts: [Prompt, Format, Answer options, Correct answer, Explanation, Points] }
+      - { entity: choice-question, effect: creates, to: Included, facts: [Prompt, Format, Answer options, Correct answer, Explanation, Points] }
       - { entity: quiz, effect: changes, facts: [Question order] }
     contexts:
       web:

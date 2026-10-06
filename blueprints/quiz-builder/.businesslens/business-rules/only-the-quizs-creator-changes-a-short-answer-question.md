@@ -1,17 +1,16 @@
 ---
 appliesTo:
   - type: entity
-    id: question
+    id: short-answer-question
     effect: changes
 permits:
   - related: [{ verb: contains, entity: quiz }, { verb: owns, entity: creator }]
 ---
 
-# Only the creator changes a question
+# Only the quiz's creator changes a short-answer question
 
-Only the Creator who owns the quiz edits one of its questions or adds a drafted
-question to it. The Product can draft a question from source material, but
-only the Creator puts it in a quiz.
+Only the Creator who owns the quiz edits one of its short-answer questions,
+proposed or included.
 
 ## Rationale
 

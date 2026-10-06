@@ -15,6 +15,6 @@ relations:
 
 # Creator
 
-A person who builds quizzes, decides which drafted questions to keep, shares
-quizzes with learners, and reviews and grades their results — a teacher, a
-trainer, or anyone checking what others have learned.
+A person who builds quizzes, accepts or dismisses the questions the Product
+drafts, shares quizzes with learners, and reviews and grades their results — a
+teacher, a trainer, or anyone checking what others have learned.

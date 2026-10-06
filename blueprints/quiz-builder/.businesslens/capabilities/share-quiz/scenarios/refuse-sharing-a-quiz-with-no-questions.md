@@ -11,12 +11,11 @@ steps:
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: The Product finds no question in the quiz, only drafts or nothing
+  - text: The Product finds no question in the quiz, only proposed questions or nothing
     kind: product
     actor: creator
     entities:
       - { entity: quiz, effect: reads, facts: [Question order] }
-      - { entity: question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::quiz-editor
@@ -25,7 +24,6 @@ steps:
     actor: creator
     entities:
       - { entity: quiz, effect: reads, facts: [] }
-      - { entity: question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::quiz-editor
@@ -46,5 +44,5 @@ The Creator tries to share a quiz that asks no questions yet.
 
 ## Outcome
 
-Nothing is shared and the Creator knows the quiz needs a question first. Drafted
-questions do not count until added.
+Nothing is shared and the Creator knows the quiz needs a question first.
+Proposed questions do not count until accepted.

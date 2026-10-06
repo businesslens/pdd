@@ -3,7 +3,7 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Creator writes a prompt and options without marking any option correct
+  - text: The Creator writes a prompt and options without marking any option as scoring
     kind: actor
     actor: creator
     entities: []
@@ -37,7 +37,7 @@ steps:
 
 ## Trigger
 
-The Creator tries to add a question that has no correct answer.
+The Creator tries to add a question that has no answer that scores.
 
 ## Outcome
 
@@ -46,4 +46,4 @@ them to finish.
 
 ## Edge cases
 
-- A short answer with no accepted answers is refused the same way.
+- A short-answer question with no accepted answers is refused the same way.

@@ -8,7 +8,8 @@ steps:
     actor: learner
     entities:
       - { entity: attempt, effect: reads, facts: [Answers] }
-      - { entity: question, effect: reads, facts: [] }
+      - { entity: choice-question, effect: reads, facts: [] }
+      - { entity: short-answer-question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::attempt
@@ -17,7 +18,8 @@ steps:
     actor: learner
     entities:
       - { entity: attempt, effect: reads, facts: [] }
-      - { entity: question, effect: reads, facts: [] }
+      - { entity: choice-question, effect: reads, facts: [] }
+      - { entity: short-answer-question, effect: reads, facts: [] }
     contexts:
       web:
         place: quiz-web::attempt
@@ -33,7 +35,8 @@ steps:
     actor: learner
     entities:
       - { entity: attempt, effect: changes, from: In progress, to: Submitted, facts: [Answers, Score, Submitted at] }
-      - { entity: question, effect: reads, facts: [Points] }
+      - { entity: choice-question, effect: reads, facts: [Points] }
+      - { entity: short-answer-question, effect: reads, facts: [Points] }
     contexts:
       web:
         place: quiz-web::attempt

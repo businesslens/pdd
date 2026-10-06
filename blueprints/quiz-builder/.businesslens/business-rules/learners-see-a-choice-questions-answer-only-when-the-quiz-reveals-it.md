@@ -1,7 +1,7 @@
 ---
 appliesTo:
   - type: entity
-    id: question
+    id: choice-question
     effect: reads
     facts: [Correct answer, Explanation]
 permits:
@@ -10,10 +10,10 @@ permits:
     when: [{ entity: quiz, fact: Answer reveal, is: true }]
 ---
 
-# Learners see correct answers only when the quiz reveals them
+# Learners see a choice question's answer only when the quiz reveals it
 
-A question's correct answer and explanation are always the Creator's to see. A
-learner sees them only after submitting, and only when the quiz reveals
+A choice question's correct answer and explanation are always the Creator's to
+see. A learner sees them only after submitting, and only when the quiz reveals
 answers; otherwise their attempt and their practice show only which answers
 were right.
 

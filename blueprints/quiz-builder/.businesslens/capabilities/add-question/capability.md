@@ -3,13 +3,12 @@ domain: quizzes
 availability: [{ place: quiz-web }]
 ---
 
-# Add question
+# Question addition
 
-Puts a question into the Creator's quiz, last in its order: one the Creator
-writes as multiple choice, true/false or short answer, or one the Product
-drafted from source material that the Creator adds.
+Puts a question the Creator writes into their quiz, last in its order: a
+multiple-choice or true/false question with the option that scores, or a
+short-answer question with the typed answers that score.
 
 ## Intent
 
-Every question learners are asked is one the Creator wrote or chose to keep, and
-every one can be scored.
+Every question learners are asked can be scored.

@@ -3,16 +3,15 @@ domain: quizzes
 availability: [{ place: quiz-web }]
 ---
 
-# Draft questions
+# Question drafting
 
 When the Creator gives their quiz source material and asks for drafts, the
-Product sends the material to a language model and keeps the questions it writes
-as drafts beside the quiz, each with a correct answer and an explanation. The
-Creator adds, edits or discards each draft; none is asked of learners until the
-Creator adds it.
+Product sends the material to a language model and keeps each question it
+writes as a proposed question beside the quiz, with its correct or accepted
+answers and an explanation. The Creator accepts or dismisses each one.
 
 ## Intent
 
 Save the Creator from writing every question from scratch without handing over
-authorship: the Product proposes, and the Creator decides what learners see. The
-language model is a helper whose absence costs only the drafts, never the quiz.
+authorship. The language model is a helper whose absence costs only the drafts,
+never the quiz.

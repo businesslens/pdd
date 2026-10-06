@@ -1,7 +1,8 @@
 ---
 entities:
   - { entity: quiz, shows: [Title] }
-  - { entity: question, shows: [Prompt, Answer options, Correct answer, Explanation] }
+  - { entity: choice-question, shows: [Prompt, Answer options, Correct answer, Explanation] }
+  - { entity: short-answer-question, shows: [Prompt, Accepted answers, Explanation] }
   - { entity: practice-round, shows: [Questions, Answers, Correct count], collects: [Answers] }
 entryPoints:
   - quiz-web: /practice/:practiceRoundId

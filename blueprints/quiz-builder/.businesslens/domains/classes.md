@@ -4,8 +4,8 @@ colorSlot: 4
 
 # Classes
 
-The rosters a creator shares quizzes with: creating a class and letting
-learners join it with its code.
+The rosters a creator shares quizzes with: creating, renaming and deleting a
+class, and letting learners join it with its code.
 
 ## Boundary
 

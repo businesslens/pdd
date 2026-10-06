@@ -18,7 +18,8 @@ steps:
     actor: creator
     entities:
       - { entity: attempt, effect: reads, facts: [Answers, Score, Submitted at] }
-      - { entity: question, effect: reads, facts: [Prompt, Correct answer, Points] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Correct answer, Points] }
+      - { entity: short-answer-question, effect: reads, facts: [Prompt, Accepted answers, Points] }
     contexts:
       web:
         place: quiz-web::attempt

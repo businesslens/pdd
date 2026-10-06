@@ -15,7 +15,8 @@ steps:
     kind: product
     actor: creator
     entities:
-      - { entity: question, effect: reads, facts: [Prompt, Correct answer] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Correct answer] }
+      - { entity: short-answer-question, effect: reads, facts: [Prompt, Accepted answers] }
       - { entity: attempt, effect: reads, facts: [Answers] }
     contexts:
       web:

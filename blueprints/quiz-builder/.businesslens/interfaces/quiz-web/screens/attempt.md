@@ -1,7 +1,8 @@
 ---
 entities:
   - { entity: quiz, shows: [Title, Question order] }
-  - { entity: question, shows: [Prompt, Answer options, Correct answer, Explanation, Points] }
+  - { entity: choice-question, shows: [Prompt, Answer options, Correct answer, Explanation, Points] }
+  - { entity: short-answer-question, shows: [Prompt, Accepted answers, Explanation, Points] }
   - { entity: attempt, shows: [Answers, Score, Submitted at], collects: [Answers] }
   - { entity: account, shows: [Display name] }
 entryPoints:

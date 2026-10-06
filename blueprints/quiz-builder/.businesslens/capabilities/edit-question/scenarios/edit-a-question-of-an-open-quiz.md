@@ -3,12 +3,12 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Creator changes the correct answer of a question in an open quiz
+  - text: The Creator changes the accepted answers of a short-answer question in an open quiz
     kind: actor
     actor: creator
     entities:
       - { entity: quiz, effect: reads, facts: [] }
-      - { entity: question, effect: reads, facts: [Correct answer] }
+      - { entity: short-answer-question, effect: reads, facts: [Accepted answers] }
     contexts:
       web:
         place: quiz-web::quiz-editor
@@ -24,11 +24,11 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: question, effect: changes, facts: [Correct answer] }
+      - { entity: short-answer-question, effect: changes, facts: [Accepted answers] }
     contexts:
       web:
         place: quiz-web::quiz-editor
-  - text: Attempts submitted afterwards are scored against the new answer
+  - text: Attempts submitted afterwards are scored against the new answers
     kind: condition
     actor: creator
     entities:

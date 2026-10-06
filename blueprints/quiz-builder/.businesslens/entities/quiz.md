@@ -1,11 +1,17 @@
 ---
 domain: quizzes
 relations:
-  - entity: question
+  - entity: choice-question
+    verb: contains
+    cardinality: one-to-many
+  - entity: short-answer-question
     verb: contains
     cardinality: one-to-many
   - entity: attempt
     verb: receives
+    cardinality: one-to-many
+  - entity: practice-round
+    verb: is practiced in
     cardinality: one-to-many
 ---
 
@@ -36,4 +42,4 @@ make their one attempt.
 ### Closed
 
 No longer accepting attempts. Submitted attempts, results and practice remain,
-and the creator can open it again.
+and the creator can reopen it.

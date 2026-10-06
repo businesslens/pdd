@@ -3,7 +3,7 @@ domain: learning
 availability: [{ place: quiz-web }]
 ---
 
-# Practice missed questions
+# Missed-question practice
 
 Assembles a practice round from the questions a learner missed in a submitted
 attempt — and, after an earlier round, from those still missed, the ones missed
