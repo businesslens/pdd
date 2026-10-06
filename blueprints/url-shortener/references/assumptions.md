@@ -13,8 +13,8 @@ These are assumptions to validate, not claims that research has proved them.
   countries and devices; they do not need to know who followed it.
 - Click counts include every follow, automated ones among them; Owners accept
   that as long as the analytics say so.
-- An Owner's tools mostly need to create links. Editing, disabling and reading
-  analytics stay human decisions taken on the web.
+- An Owner's tools mostly need to create links. Editing, disabling, enabling and
+  reading analytics stay human decisions taken on the web.
 - One API key per tool, shown once, is a familiar enough pattern that Owners
   copy the secret when it is created.
 

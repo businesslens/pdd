@@ -11,5 +11,4 @@ entryPoints:
 One of the Owner's links: its short address, destination, state, expiry and
 when it was created, and how it has been followed — clicks over time, and the
 referring sites, countries and devices they came from. Here the Owner changes
-the destination or the expiry, and disables or enables the link. A link the
-Owner has just created opens here.
+the destination or the expiry, and disables or enables the link.
