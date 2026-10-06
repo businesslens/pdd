@@ -11,8 +11,10 @@ order: 18
 **Ideate decides what the product should do and writes that decision into the
 Product Model.**
 
-Use it for a new product or for any change in behavior, before you implement. If
-the repository already has code but no model, it stops and asks you to run
+Use it for a new product or for any change in behavior, before you build. You
+don't have to name it: asking your agent to add or change something in the
+product, or to make a PDD change, starts it. If the repository already has code
+but no model, it stops and asks you to run
 [`businesslens-map`](./skill-businesslens-map.md) first: it won't plan against
 behavior nobody has described.
 
@@ -35,12 +37,13 @@ behavior nobody has described.
    questions.
 3. **Files written after you approve**, only inside `.businesslens/`.
 4. **Lint**, fixed until clean.
-5. **The acceptance contract for your implementation**: the approved change
-   and its Scenarios, which your implementation must satisfy and
-   [`businesslens-verify`](./skill-businesslens-verify.md) will check.
+5. **An offer to build**: the approved change and its Scenarios are what the
+   code must satisfy. Say *build it*, and
+   [`businesslens-verify`](./skill-businesslens-verify.md) has your agent build
+   it slice by slice and checks each slice.
 
-Ideate never writes code. Implementation happens in your own workflow;
-BusinessLens has no implement skill.
+Ideate never writes code. Building happens through your own agent, your usual
+way.
 
 ## Modes
 

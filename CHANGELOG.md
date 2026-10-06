@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Skills:** Asking to change the product, such as "make a PDD change", now starts ideate, which ends by offering to build the approved change.
 - **CLI:** The README in every Product Model tells any agent how to build from the model and change it, and which parts of the model the code must honor. `lint` warns when a model's README is out of date.
+- **Docs:** The development loop and the Get started guides now show asking your agent to build, with verify checking each slice.
 
 ## [0.25.1] - 2026-10-05
 

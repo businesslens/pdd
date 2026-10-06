@@ -41,23 +41,31 @@ Every product change runs the same loop:
 
 ::development-loop
 ```text
-ideate → implement → verify
+ideate → implement ⇄ verify
    ▲                     │
    └──── next change ────┘
 
-implement: plan mode, an SDD tool, or freestyle
+implement: your agent, slice by slice, your usual way
 ```
 ::
 
-Ideate with BusinessLens. Implement in your own workflow. Verify with
-BusinessLens.
+You talk to your agent; it picks the skill. You don't have to name one.
 
-- **Ideate** with [`/businesslens-ideate`](./skill-businesslens-ideate.md):
-  Decide the next change and record it in the Product Model.
-- **Implement** in your existing workflow: Plan mode, an SDD tool, or
-  freestyle.
-- **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
-  Check and improve the code and Product Model until they agree.
+- **Ideate**: ask for a change, such as "add guest checkout to the product".
+  [`businesslens-ideate`](./skill-businesslens-ideate.md) decides it with you
+  and records it in the Product Model.
+- **Implement**: ask your agent to build it.
+  [`businesslens-verify`](./skill-businesslens-verify.md) splits the work into
+  slices, and your agent implements each one your usual way: plan mode, an
+  SDD tool, or freestyle.
+- **Verify**: each slice is checked against the model before the next one
+  starts, until the code and the Product Model agree. Run
+  `/businesslens-verify` yourself whenever you want to be sure, for example
+  before a release.
+
+Ideate changes the model only with your approval. Your agent changes the code
+and never the model. A product question that comes up while building comes
+back to you; it is never decided in code.
 
 ## See the model at any time
 
@@ -74,7 +82,8 @@ review a change, or verify. See [`view`](./cli-view.md) for the options.
 
 ## What BusinessLens never does
 
-- Run your code: the skills read it, they never execute it.
+- Run your code to check it: the skills read it, they never execute it. While
+  building, your agent runs your tests the way it always does.
 - Write outside `.businesslens/`, or edit your AGENTS.md, CLAUDE.md or README.
 - Commit for you.
 

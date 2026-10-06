@@ -14,14 +14,16 @@ BusinessLens installs exactly three skills:
 | --- | --- | --- |
 | [`businesslens-map`](./skill-businesslens-map.md) | Existing behavior needs an initial model, scoped remap, or coverage expansion | Approved model meaning inside `.businesslens/` |
 | [`businesslens-ideate`](./skill-businesslens-ideate.md) | You are deciding what the product should do | Approved model meaning inside `.businesslens/` |
-| [`businesslens-verify`](./skill-businesslens-verify.md) | You need branch, named, or current-state model/code alignment | Nothing during classification; approved resolution and optional Reference bookkeeping |
+| [`businesslens-verify`](./skill-businesslens-verify.md) | You ask to build from the model, or need branch, named, or current-state model/code alignment | Nothing during classification; approved resolution and optional Reference bookkeeping. Code is written by your agent |
 
 Map and ideate answer opposite questions: “what already exists?” and “what
 should exist?” Verify owns the loop between those authorities after code moves.
 
-The three installed skills are self-contained. None of them implements: see
-the [development loop](./index.md#the-development-loop) for how ideate and
-verify surround the implementation you do in your own workflow.
+You don't have to name a skill: ask your agent to change the product or to
+build it, and it picks the right one. The three installed skills are
+self-contained, and none of them writes code: when you ask to build, verify has
+your own agent implement each slice your usual way and checks it. See the
+[development loop](./index.md#the-development-loop).
 
 Catalog contribution is a deterministic CLI workflow:
 
