@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Report:** Clicking the local report's star again unstars BusinessLens on GitHub.
+
 ## [0.26.0] - 2026-10-06
 
 ### Added

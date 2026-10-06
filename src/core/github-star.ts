@@ -10,6 +10,8 @@ export interface GithubStarClient {
   state: () => Promise<GithubStarState>
   /** Resolves once GitHub has accepted the star; rejects otherwise. */
   star: () => Promise<void>
+  /** Resolves once GitHub has removed the star; rejects otherwise. */
+  unstar: () => Promise<void>
 }
 
 const GH_TIMEOUT_MS = 10_000
@@ -43,5 +45,9 @@ export const ghStarClient: GithubStarClient = {
   async star() {
     const result = await gh(['--method', 'PUT', STARRED_PATH])
     if (!result.ok) throw new Error('GitHub did not accept the star.')
+  },
+  async unstar() {
+    const result = await gh(['--method', 'DELETE', STARRED_PATH])
+    if (!result.ok) throw new Error('GitHub did not remove the star.')
   }
 }

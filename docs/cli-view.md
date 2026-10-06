@@ -34,7 +34,8 @@ npx businesslens view [repository] [--branch <name> | --pr <number>] [--no-open]
 
 If the [GitHub CLI](https://cli.github.com) is signed in, the report asks GitHub
 through `gh` whether you have starred BusinessLens, and a star beside the GitHub
-link stars it when you click it. Without `gh`, only the link shows.
+link stars it when you click it, or unstars it when you click it again. Without
+`gh`, only the link shows.
 
 ## Your checkout
 
