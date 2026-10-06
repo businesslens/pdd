@@ -9,8 +9,7 @@ permits:
 
 # Only a deck's owner removes its cards
 
-Only the Learner who owns a deck removes a card from it, alone or by deleting
-the deck.
+Only the Learner who owns a deck removes a card from it.
 
 ## Rationale
 
