@@ -93,3 +93,19 @@ export function coveragePathMatches(path: string, query: string) {
   const needle = query.trim().toLowerCase()
   return !needle || path.toLowerCase().includes(needle)
 }
+
+/**
+ * Whether any statement records a location. A model designed before its code —
+ * every Blueprint — records none, so there is no tree to draw and nothing for a
+ * path search to find; the same statements gain paths once a model is mapped.
+ */
+export function coverageHasLocations(statements: CoverageStatement[]) {
+  return statements.some(statement => statement.paths.length > 0)
+}
+
+/** The statements grouped by category, in card order, dropping empty categories. */
+export function coverageByCategory(statements: CoverageStatement[]) {
+  return COVERAGE_KIND_ORDER
+    .map(kind => ({ kind, statements: statements.filter(statement => statement.kind === kind) }))
+    .filter(group => group.statements.length > 0)
+}

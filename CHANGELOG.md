@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Blueprints:** The Content Feed Reader now belongs to Personal Productivity.
+- **Report:** Coverage reads as plain lists by category when a model records no locations, as Blueprints do; the path tree appears once a mapping records paths.
 - **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it.
 - **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it.
 - Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.

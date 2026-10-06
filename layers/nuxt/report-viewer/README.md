@@ -632,8 +632,12 @@ it and cover both axes: the folders and the explanations. A card filter or a
 search only narrows what is drawn: Expand all and Collapse all change what is on
 screen, and whatever the narrowing hides keeps its own state for when it
 returns. The References catalog shares this expansion. Expansion is
-remembered per report. Statements with no recorded location stay visible under
-**No location recorded**, narrowed by the same card filter and set aside while a
+remembered per report. When no statement records a location — a model designed before its code, as
+every Blueprint is — there is no tree to draw and nothing for a path search to
+find, so neither appears: the statements read as plain lists under each
+category's heading, narrowed by the same card filter, and the same statements
+gain their tree once a mapping records paths. Otherwise, statements with no
+recorded location stay visible under **No location recorded**, narrowed by the same card filter and set aside while a
 search is active, since they have no path to match; this includes model-wide
 Limitations, which have no separate section of their own. Model References are not repeated here — they have their home in the
 Product Overview's own References reading. No live repository inventory is
