@@ -25,10 +25,10 @@ steps:
     actor: creator
     entities:
       - { entity: quiz, effect: removes, from: Closed }
-      - { entity: choice-question, effect: removes, from: Included }
-      - { entity: short-answer-question, effect: removes, from: Included }
-      - { entity: attempt, effect: removes, from: Submitted }
-      - { entity: practice-round, effect: removes, from: Finished }
+      - { entity: choice-question, effect: removes, from: Included, with: quiz }
+      - { entity: short-answer-question, effect: removes, from: Included, with: quiz }
+      - { entity: attempt, effect: removes, from: Submitted, with: quiz }
+      - { entity: practice-round, effect: removes, from: Finished, with: quiz }
       - { entity: class, effect: changes, facts: [Assigned quizzes] }
     contexts:
       web:

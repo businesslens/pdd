@@ -26,7 +26,7 @@ steps:
     actor: creator
     entities:
       - { entity: class, effect: removes }
-      - { entity: enrollment, effect: removes }
+      - { entity: enrollment, effect: removes, with: class }
     contexts:
       web:
         place: quiz-web::class

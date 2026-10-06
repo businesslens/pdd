@@ -10,8 +10,8 @@ permits:
 # Only its creator removes a learner from a class
 
 A learner leaves a class only when the Creator who owns it removes them, once
-the Creator confirms, or deletes the class. A learner does not leave a class on
-their own, and no classmate removes another.
+the Creator confirms. A learner does not leave a class on their own, and no
+classmate removes another.
 
 ## Rationale
 
