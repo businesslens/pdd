@@ -13,6 +13,8 @@ appliesTo:
 No two study sessions in a Student's schedule share any time, across all of the
 Student's goals. Scheduling or moving a session onto time another session holds
 is refused, and no study plan proposes a session over one it does not replace.
+A plan is checked again when accepted: if a session of another goal now holds
+time it proposes, it is refused and becomes outdated.
 
 ## Rationale
 

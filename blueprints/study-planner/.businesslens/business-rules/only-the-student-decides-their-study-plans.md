@@ -9,7 +9,7 @@ permits:
 
 # Only the Student decides their study plans
 
-A proposed plan waits until the Student who owns its goal accepts or dismisses it, or the planner closes it as outdated when that Student accepts it after the goal's schedule changed. The AI agent never accepts or dismisses a plan, its own or the planner's.
+A proposed plan waits until the Student who owns its goal accepts or dismisses it, or the Product closes it as outdated when that Student accepts it after it stopped fitting the goal, the availability or the other goals' sessions. The AI agent never accepts or dismisses a plan, its own or the planner's.
 
 ## Rationale
 
