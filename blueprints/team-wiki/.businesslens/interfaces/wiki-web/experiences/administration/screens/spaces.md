@@ -8,4 +8,4 @@ entryPoints:
 # Spaces
 
 Lists every space in the workspace with what it is for, lets an Administrator
-create another, and opens a space's members.
+create another or rename one, and opens a space's members.

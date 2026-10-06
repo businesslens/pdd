@@ -1,5 +1,4 @@
 ---
-domain: pages
 availability: [{ place: wiki-web::workspace }]
 ---
 

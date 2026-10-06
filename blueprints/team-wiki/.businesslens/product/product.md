@@ -10,11 +10,11 @@ languages: [en]
 limitations:
   - Every page belongs to one space and is read only by that space's members; there is no public or guest access.
   - A page moves only within its own space.
-  - A space keeps the name and description it was created with, and is never deleted.
+  - A space keeps the description it was created with, and is never deleted.
   - Two editors do not edit one page together live. The second save meets the first as a conflict to resolve, never a silent overwrite.
-  - Bring your own AI agent; the Product does not include one.
-  - The wiki keeps no record of the questions a Member asks their AI agent; only suggestions are kept.
   - There are no comments, page watching or notifications.
+  - The wiki keeps no record of the questions a Member asks their AI agent; only suggestions are kept.
+  - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research
     role: context
