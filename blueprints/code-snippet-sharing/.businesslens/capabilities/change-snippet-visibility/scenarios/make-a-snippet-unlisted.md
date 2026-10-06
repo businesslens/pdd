@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Developer chooses to share a private snippet they own by link
+  - text: The Developer sets the visibility of a private snippet they own to Unlisted
     kind: actor
     actor: developer
     entities:
@@ -37,7 +37,7 @@ steps:
         place: snippets-web::workspace::snippet
 ---
 
-# Share a snippet by link
+# Make a snippet unlisted
 
 ## Trigger
 

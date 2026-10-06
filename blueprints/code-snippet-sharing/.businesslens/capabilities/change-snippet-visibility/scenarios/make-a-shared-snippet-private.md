@@ -3,7 +3,7 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Developer chooses to make a public snippet they own private
+  - text: The Developer sets the visibility of a public snippet they own to Private
     kind: actor
     actor: developer
     entities:

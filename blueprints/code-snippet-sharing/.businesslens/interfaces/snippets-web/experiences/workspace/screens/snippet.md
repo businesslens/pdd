@@ -11,6 +11,6 @@ entryPoints:
 
 One snippet opened by a signed-in Developer: its details, code highlighted for
 its language, history of revisions and the snippet it was forked from if any.
-On their own snippet the owner also sees its visibility and address, and edits,
-shares, makes private or deletes it from here; on another Developer's public
-snippet they fork it.
+On their own snippet the owner also sees its visibility and address, and edits
+it, changes its visibility or deletes it from here; on another Developer's
+public snippet they fork it.

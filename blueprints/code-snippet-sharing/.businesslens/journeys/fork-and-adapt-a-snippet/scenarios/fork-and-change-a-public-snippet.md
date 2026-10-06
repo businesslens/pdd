@@ -4,16 +4,7 @@ result: achieved
 routes:
   web: Web
 steps:
-  - text: The Developer finds a public snippet in Discover and opens it
-    kind: actor
-    actor: developer
-    capability: browse-public-snippets
-    entities:
-      - { entity: snippet, as: original, effect: reads, facts: [Title, Description, Language, Tags] }
-    contexts:
-      web:
-        place: snippets-web::discover
-  - text: The Developer forks the original snippet
+  - text: The Developer forks a public snippet another Developer owns
     kind: actor
     actor: developer
     capability: fork-snippet
@@ -24,7 +15,7 @@ steps:
     contexts:
       web:
         place: snippets-web::workspace::snippet
-  - text: The Product opens the fork snippet in the editor
+  - text: The Product opens the fork in the editor, ready to change
     kind: product
     actor: developer
     capability: fork-snippet
@@ -33,7 +24,7 @@ steps:
     contexts:
       web:
         place: snippets-web::workspace::snippet-editor
-  - text: The Developer changes the code of the fork snippet and saves
+  - text: The Developer changes the code of the fork and saves
     kind: actor
     actor: developer
     capability: edit-snippet
@@ -43,10 +34,10 @@ steps:
     contexts:
       web:
         place: snippets-web::workspace::snippet-editor
-  - text: The Product shows the fork snippet with its new code, the original snippet it was forked from, and a history of two revisions
+  - text: The Product returns to the fork with its new code, the original it was forked from, and a history of two revisions
     kind: product
     actor: developer
-    capability: view-snippet
+    capability: edit-snippet
     entities:
       - { entity: snippet, as: fork, effect: reads, facts: [Code, Forked from] }
       - { entity: revision, as: second, effect: reads, facts: [Number, Saved at] }
@@ -59,10 +50,10 @@ steps:
 
 ## Trigger
 
-A Developer finds a public snippet that is nearly what they need.
+A Developer reading a public snippet finds it nearly what they need.
 
 ## Outcome
 
-The Journey goal is achieved: the Developer owns a private fork holding their
-change as revision 2, it names the original, and the original snippet and its
-owner are unaffected.
+The Journey goal is achieved: forking carried the Developer into the editor of
+their private copy, which now holds their change as revision 2 and names the
+original. The original snippet and its owner are unaffected.

@@ -13,9 +13,10 @@ These are assumptions to validate, not claims that research has proved them.
   not permission to change the original.
 - A visible history makes owners more willing to improve a snippet they have
   already shared, because the earlier code is not lost.
-- Writing a description and tags is the step people skip. A suggestion they
-  can accept or edit in one step increases how many snippets are described,
-  provided it never changes the code and never saves anything on its own.
+- Writing a description and tags is the step people skip. Details drafted
+  straight into the editor, which they keep by saving or rewrite first,
+  increase how many snippets are described, provided the draft never changes
+  the code and never saves anything on its own.
 - Developers accept that the code they ask suggestions for is sent to a
   language model, as long as that happens only when they ask.
 

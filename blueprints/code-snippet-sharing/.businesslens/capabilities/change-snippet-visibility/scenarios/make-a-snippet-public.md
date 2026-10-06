@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Developer chooses to make a private snippet they own public
+  - text: The Developer sets the visibility of a private snippet they own to Public
     kind: actor
     actor: developer
     entities:
