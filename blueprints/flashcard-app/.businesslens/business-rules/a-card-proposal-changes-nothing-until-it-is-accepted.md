@@ -1,15 +1,14 @@
 ---
 appliesTo:
-  - type: capability
-    id: generate-cards
-  - type: capability
-    id: dismiss-card-proposal
+  - type: entity
+    id: card-proposal
 ---
 
 # A card proposal changes nothing until it is accepted
 
-Drafting card proposals, and dismissing one, leave the deck's cards exactly as
-they were. A drafted card reaches a deck only when its owner accepts it.
+While a card proposal is proposed, and after it is dismissed, its deck's cards
+are exactly as the Learner left them. Only accepting it adds a card, made from
+its front and back.
 
 ## Rationale
 
