@@ -792,10 +792,12 @@ AI enters a model in exactly one of two ways, decided by who initiates:
   relation such as *a Member connects an AI agent* — because a bare
   `actors: [ai-agent]` grants every agent, and `lint` warns.
 
-Either way, what the AI produces and the Product keeps is a draft until a person
-decides it. A kept draft is its own Entity when it keeps facts its target never
+Either way, what the AI produces to change something a person owns, and the
+Product keeps, is a draft until that person decides it; a kept summary that
+changes nothing is not a draft, only marked as generated. A kept draft is its own Entity when it keeps facts its target never
 has — a reason, a source passage — and otherwise a `Proposed` State of the
-target. A draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`.
+target. A draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`,
+and `Outdated` where the Product closes it because its target changed.
 Accepting and dismissing a kept draft are each a Capability, being later acts on
 something a run produced — `accept-<draft>` and `dismiss-<draft>` for a draft
 Entity, `accept-proposed-<thing>` and `dismiss-proposed-<thing>` for a State, where
@@ -1348,7 +1350,10 @@ unlisted or public — is one Capability, `change-<thing>-<fact>`, with a Scenar
 per value worth distinguishing. Changing one's own earlier submission through
 the control that made it — changing a vote, changing an RSVP — is a Scenario of
 the submitting Capability, not a Capability of its own; withdrawing it through a
-control of its own is.
+control of its own is. Putting an entry on a thing's list and taking it off — a
+tag, an assignee, a member — are two Capabilities even inside the thing's edit
+form, because each entry is a thing of its own. An on/off switch among a
+settings section's settings stays part of that section's one Capability.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
@@ -1950,7 +1955,10 @@ is carries nobody: drafted cards appearing in the editor the Actor is working
 in are the drafting Capability's outcome, not a hand-off. Steps of other Actors
 may sit between, but only the Journey Actor's Steps — performed, or attributed
 to them — count toward its two Capabilities, and `lint` errors when they do
-not. Whether the repository implements the Journey is `verify`'s
+not. An emailed link carries only when the Journey Actor's own run sent it; a
+message another Actor's run or the Product's schedule sends starts a new
+visit, not a Journey. Returning from a thing created inline to the act already
+in progress — creating a notebook while filing a note — is not a hand-off. Whether the repository implements the Journey is `verify`'s
 finding. One achieved Journey Scenario is valid coverage. A goal with no
 achieved multi-Capability path belongs to Capability behavior.
 

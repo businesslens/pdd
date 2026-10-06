@@ -236,7 +236,10 @@ Lead and section-body fragments do not contain another H1 or H2.
   sets one fact to one of several values — visibility private, unlisted or
   public — is one Capability, `change-<thing>-<fact>`. Changing one's own
   earlier submission through the control that made it (a vote, an RSVP) is a
-  Scenario of the submitting Capability. An umbrella verb — manage, organize,
+  Scenario of the submitting Capability. Putting an entry on a thing's list
+  and taking it off (a tag, an assignee, a member) are two Capabilities even
+  inside its edit form; an on/off switch among a settings section's settings
+  stays part of that section's one Capability. An umbrella verb — manage, organize,
   handle — hides Capabilities; name each verb its controls show.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
@@ -311,10 +314,12 @@ Lead and section-body fragments do not contain another H1 or H2.
   this case and never an Actor. The person's own agent harness is `ai-agent`
   behind an `agent` Interface, and every grant naming it reaches the person it
   acts for through `related` (a person `connects` an AI agent); a bare
-  `actors: [ai-agent]` grants every agent. What the AI produces and the Product
-  keeps is a draft: its own Entity when it keeps facts the target never has (a
+  `actors: [ai-agent]` grants every agent. What the AI produces to change
+  something a person owns, and the Product keeps, is a draft (a kept summary
+  that changes nothing is not): its own Entity when it keeps facts the target never has (a
   reason, a source passage), otherwise a `Proposed` State of the target. A
-  draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`.
+  draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`, and
+  `Outdated` where the Product closes it because its target changed.
   Accepting and dismissing a kept draft are each a Capability —
   `accept-<draft>`/`dismiss-<draft>` for a draft Entity,
   `accept-proposed-<thing>`/`dismiss-proposed-<thing>` for a State, where
@@ -450,6 +455,9 @@ Lead and section-body fragments do not contain another H1 or H2.
   drafts appearing in the editor the Actor is working in are the drafting
   Capability's outcome. Other Actors' Steps may sit between, but only Steps the
   Journey Actor performs or is attributed count toward its two Capabilities.
+  An emailed link carries only when the Journey Actor's own run sent it, and
+  returning from a thing created inline to the act in progress carries
+  nobody.
   To find every Journey, read each Capability Scenario's last Product Step:
   wherever it lands the Actor at a place offering another Capability they then
   use, there is a Journey. Every Journey needs achieved Journey Scenario coverage for every

@@ -94,6 +94,7 @@ different ways, from different starting states, or chosen by a setting. See
 | Republishing a collection that was unpublished | Part of publishing: the same verb from another state |
 | Setting a snippet to private, unlisted or public with one control | One: `change-snippet-visibility` |
 | Changing your vote before the poll closes | Part of voting: the same control changes your own submission |
+| Tagging a note and taking a tag off, both in the note's edit form | Two: each tag is an entry of its own |
 
 The same verb reached from somewhere else (changing your password when sign-in
 demands it) is the same Capability, offered there too.

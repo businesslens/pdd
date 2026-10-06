@@ -77,8 +77,10 @@ Walk these after `lint` is clean; lint cannot see them.
   same Actor where they use another Capability is a Journey; none other is.
 - **Opposite verbs:** no Capability hides an opposite verb in a Scenario;
   each control's verb has its own Capability.
-- **Who may act:** every create, change and remove a person or agent performs
-  is selected by a permission Rule. A grant about one's own thing reaches the
+- **Who may act:** every create, change and remove — a person's, an agent's,
+  and the Product's own Steps inside their runs, cascades included (deleting a
+  card removes other people's comments; creating a board makes its first
+  membership) — is selected by a permission Rule whose grant admits that Step. A grant about one's own thing reaches the
   person through `related`, never a bare `actors` list that means everyone with
   that role.
 - **Invariants:** a Rule about a thing's facts or States targets the Entity.
