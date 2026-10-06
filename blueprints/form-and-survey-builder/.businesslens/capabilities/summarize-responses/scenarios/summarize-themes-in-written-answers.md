@@ -17,7 +17,7 @@ steps:
     actor: creator
     entities:
       - { entity: response, effect: reads, facts: [Answers] }
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -48,7 +48,3 @@ The Creator has more written answers than they can read one by one.
 ## Outcome
 
 The Creator sees the themes in the written answers and can open the responses behind each one; no response changed and the summary is not kept.
-
-## Edge cases
-
-- The language model cannot be reached → the Product says no summary could be made, and the responses stay readable as they are.

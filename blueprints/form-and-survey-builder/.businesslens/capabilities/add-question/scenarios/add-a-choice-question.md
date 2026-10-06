@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Creator starts a new entry at the end of the form and chooses an answer type that offers options
+  - text: The Creator starts a new question at the end of the form and chooses whether one option or several may be picked
     kind: actor
     actor: creator
     entities:
@@ -22,7 +22,7 @@ steps:
     kind: product
     actor: creator
     entities:
-      - { entity: question, effect: creates, facts: [Prompt, Answer type, Required, Show condition] }
+      - { entity: choice-question, effect: creates, to: Included, facts: [Prompt, Selection, Options, Required] }
       - { entity: form, effect: changes, facts: [Question order] }
     contexts:
       web:
@@ -37,9 +37,8 @@ The Creator wants Respondents to pick from a list of options.
 
 ## Outcome
 
-The form ends with the new question, its options and its required setting, shown to everyone.
+The form ends with the new question, its options and its required setting.
 
 ## Edge cases
 
 - The form is already open → Respondents who open it from now on see the question; responses already received have no answer to it.
-- The Creator picks an answer type without options — a short answer, a paragraph, a rating or a date → the question is added the same way with no options to list.

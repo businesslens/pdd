@@ -9,7 +9,8 @@ permits: []
 # Nobody changes a received response
 
 Once a response is received, its answers stay exactly as the Respondent gave
-them. Neither the Creator nor the Product edits them, summarizing included.
+them. Neither the Creator nor the Product edits them, summarizing included; a
+response that should not count is deleted, never altered.
 
 ## Rationale
 

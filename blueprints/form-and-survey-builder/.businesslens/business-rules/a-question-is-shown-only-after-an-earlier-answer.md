@@ -1,7 +1,11 @@
 ---
 appliesTo:
   - type: entity
-    id: question
+    id: choice-question
+    effect: changes
+    facts: [Show condition]
+  - type: entity
+    id: entry-question
     effect: changes
     facts: [Show condition]
   - type: entity
@@ -12,7 +16,7 @@ appliesTo:
 
 # A question is shown only after an earlier answer
 
-A question's show condition names an answer to a choice question asked before
+A question's show condition names an option of a choice question asked before
 it. Setting a condition on a later question, or moving a question above the
 one its condition names, is refused.
 

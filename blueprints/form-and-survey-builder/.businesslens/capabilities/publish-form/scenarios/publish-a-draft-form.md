@@ -16,7 +16,8 @@ steps:
     actor: creator
     entities:
       - { entity: form, effect: reads, facts: [Question order] }
-      - { entity: question, effect: reads, facts: [] }
+      - { entity: choice-question, effect: reads, facts: [] }
+      - { entity: entry-question, effect: reads, facts: [] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail

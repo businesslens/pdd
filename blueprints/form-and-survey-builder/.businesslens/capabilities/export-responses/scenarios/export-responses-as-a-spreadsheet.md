@@ -17,7 +17,8 @@ steps:
     actor: creator
     entities:
       - { entity: response, effect: reads, facts: [Answers, Submitted at] }
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail

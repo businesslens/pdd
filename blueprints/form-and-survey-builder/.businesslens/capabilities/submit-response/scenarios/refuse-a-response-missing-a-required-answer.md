@@ -7,7 +7,8 @@ steps:
     kind: actor
     actor: respondent
     entities:
-      - { entity: question, effect: reads, facts: [Prompt, Required] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Required] }
+      - { entity: entry-question, effect: reads, facts: [Prompt, Required] }
     contexts:
       web:
         place: forms-web::responding::public-form
@@ -15,7 +16,8 @@ steps:
     kind: product
     actor: respondent
     entities:
-      - { entity: question, effect: reads, facts: [Prompt, Required] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Required] }
+      - { entity: entry-question, effect: reads, facts: [Prompt, Required] }
     contexts:
       web:
         place: forms-web::responding::public-form

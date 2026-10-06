@@ -1,13 +1,13 @@
 ---
 relations:
-  - entity: question
+  - entity: choice-question
+    verb: holds
+    cardinality: one-to-many
+  - entity: entry-question
     verb: holds
     cardinality: one-to-many
   - entity: response
     verb: receives
-    cardinality: one-to-many
-  - entity: suggested-question
-    verb: offers
     cardinality: one-to-many
 ---
 
@@ -20,8 +20,8 @@ people answer through one public link.
 
 - **Title** — the name Respondents see at the top of the form
 - **Description** — the introduction Respondents read before the questions
-- **Goal** — what the Creator says the form should find out, which suggested questions are drafted from
-- **Question order** — the order its questions are asked in
+- **Goal** — what the Creator says the form should find out, which proposed questions are drafted from
+- **Question order** — the order its included questions are asked in
 - **Public link** — the address Respondents answer it at, given when it is first published
 
 ## States

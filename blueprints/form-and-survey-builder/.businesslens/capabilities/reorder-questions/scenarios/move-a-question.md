@@ -8,7 +8,7 @@ steps:
     actor: creator
     entities:
       - { entity: form, effect: changes, facts: [Question order] }
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -17,7 +17,8 @@ steps:
     actor: creator
     entities:
       - { entity: form, effect: reads, facts: [Question order] }
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail

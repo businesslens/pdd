@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -15,7 +15,7 @@ steps:
     kind: product
     actor: creator
     entities:
-      - { entity: question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt] }
       - { entity: response, effect: reads, facts: [] }
     contexts:
       web:
@@ -24,7 +24,7 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: question, effect: removes }
+      - { entity: entry-question, effect: removes, from: Included }
       - { entity: form, effect: changes, facts: [Question order] }
     contexts:
       web:

@@ -16,7 +16,8 @@ steps:
     actor: respondent
     entities:
       - { entity: form, effect: reads, facts: [Title, Description, Question order] }
-      - { entity: question, effect: reads, facts: [Prompt, Answer type, Required, Show condition] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Selection, Options, Required, Show condition] }
+      - { entity: entry-question, effect: reads, facts: [Prompt, Answer type, Required, Show condition] }
     contexts:
       web:
         place: forms-web::responding::public-form
@@ -24,7 +25,8 @@ steps:
     kind: actor
     actor: respondent
     entities:
-      - { entity: question, effect: reads, facts: [Prompt, Answer type, Required] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Options, Required] }
+      - { entity: entry-question, effect: reads, facts: [Prompt, Answer type, Required] }
     contexts:
       web:
         place: forms-web::responding::public-form

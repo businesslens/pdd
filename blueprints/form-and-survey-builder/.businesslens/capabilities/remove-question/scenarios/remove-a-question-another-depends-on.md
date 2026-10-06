@@ -3,12 +3,12 @@ kind: edge
 routes:
   web: Web
 steps:
-  - text: The Creator chooses to remove a question whose answer shows another question
+  - text: The Creator chooses to remove a choice question whose answer shows another question
     kind: actor
     actor: creator
     entities:
-      - { entity: question, as: removed, effect: reads, facts: [Prompt] }
-      - { entity: question, as: dependent, effect: reads, facts: [Show condition] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Show condition] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -16,8 +16,8 @@ steps:
     kind: product
     actor: creator
     entities:
-      - { entity: question, as: removed, effect: reads, facts: [Prompt] }
-      - { entity: question, as: dependent, effect: reads, facts: [Prompt, Show condition] }
+      - { entity: choice-question, effect: reads, facts: [Prompt] }
+      - { entity: entry-question, effect: reads, facts: [Prompt, Show condition] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -25,8 +25,8 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: question, as: removed, effect: removes }
-      - { entity: question, as: dependent, effect: changes, facts: [Show condition] }
+      - { entity: choice-question, effect: removes, from: Included }
+      - { entity: entry-question, effect: changes, facts: [Show condition] }
       - { entity: form, effect: changes, facts: [Question order] }
     contexts:
       web:
@@ -35,7 +35,7 @@ steps:
     kind: condition
     actor: creator
     entities:
-      - { entity: question, as: dependent, effect: reads, facts: [Show condition] }
+      - { entity: entry-question, effect: reads, facts: [Show condition] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -45,7 +45,7 @@ steps:
 
 ## Trigger
 
-The Creator removes a question that another question's show condition names.
+The Creator removes a choice question that another question's show condition names.
 
 ## Outcome
 

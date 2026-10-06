@@ -5,7 +5,7 @@ availability: [{ place: forms-web::form-workspace }]
 
 # Question editing
 
-Changes a question already on a form — its prompt, its answer type and options, whether it is required, and the earlier answer it is shown after.
+Changes a question already on a form — its prompt, its options or answer type, whether it is required, and the earlier answer it is shown after.
 
 ## Intent
 

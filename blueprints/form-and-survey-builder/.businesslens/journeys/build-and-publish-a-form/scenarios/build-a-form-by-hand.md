@@ -13,9 +13,10 @@ steps:
     contexts:
       web:
         place: forms-web::form-workspace::forms
-  - text: The Product opens the new empty form
+  - text: The Product opens the new empty form, ready to build
     kind: product
     actor: creator
+    capability: create-form
     entities:
       - { entity: form, effect: reads, facts: [Title] }
     contexts:
@@ -26,7 +27,7 @@ steps:
     actor: creator
     capability: add-question
     entities:
-      - { entity: question, effect: creates, facts: [Prompt, Answer type, Required, Show condition] }
+      - { entity: entry-question, effect: creates, to: Included, facts: [Prompt, Answer type, Required] }
       - { entity: form, effect: changes, facts: [Question order] }
     contexts:
       web:
@@ -43,6 +44,7 @@ steps:
   - text: The Product shows the public link to share
     kind: product
     actor: creator
+    capability: publish-form
     entities:
       - { entity: form, effect: reads, facts: [Public link] }
     contexts:

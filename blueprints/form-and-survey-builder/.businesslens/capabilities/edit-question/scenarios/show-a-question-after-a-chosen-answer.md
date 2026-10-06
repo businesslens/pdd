@@ -7,8 +7,8 @@ steps:
     kind: actor
     actor: creator
     entities:
-      - { entity: question, as: dependent, effect: changes, facts: [Show condition] }
-      - { entity: question, as: earlier, effect: reads, facts: [Prompt, Answer type] }
+      - { entity: entry-question, effect: changes, facts: [Show condition] }
+      - { entity: choice-question, effect: reads, facts: [Prompt, Options] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -16,7 +16,7 @@ steps:
     kind: product
     actor: creator
     entities:
-      - { entity: question, as: dependent, effect: reads, facts: [Show condition] }
+      - { entity: entry-question, effect: reads, facts: [Show condition] }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
@@ -34,4 +34,5 @@ The question appears only to Respondents who give the chosen answer, and is requ
 
 ## Edge cases
 
+- The follow-up is itself a choice question → its show condition is set the same way.
 - The Creator clears the show condition → the question is shown to every Respondent again.
