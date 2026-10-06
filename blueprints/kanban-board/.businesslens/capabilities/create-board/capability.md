@@ -4,9 +4,9 @@ availability: [{ place: board-web }]
 
 # Board creation
 
-Starts a new board from a name. The Product gives it the columns To do, Doing
-and Done and the default stall threshold, makes the Teammate who created it its
-first admin, and takes them to the new board's members to add their
+Starts a new board from a name. The Product makes the Teammate who created it
+its first admin, gives it the columns To do, Doing and Done and the default
+stall threshold, and takes them to the new board's members to add their
 colleagues.
 
 ## Intent

@@ -7,9 +7,9 @@ appliesTo:
 # A card is flagged only past its board's stall threshold
 
 A stall flag is raised only on a card that has stayed in one column, other than
-its board's last, for longer than the board's stall threshold, and a card
-carries at most one raised flag. Moving the card to another column clears the
-flag and starts the count again.
+its board's last, for more calendar days than the board's stall threshold,
+weekends included, and a card carries at most one raised flag. Moving the card
+to another column clears the flag and starts the count again.
 
 ## Rationale
 

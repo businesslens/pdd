@@ -21,6 +21,21 @@ steps:
     contexts:
       web:
         place: board-web::board
+  - text: The Product asks the Teammate to confirm that the column goes for good
+    kind: product
+    actor: teammate
+    entities:
+      - { entity: column, effect: reads, facts: [Name] }
+    contexts:
+      web:
+        place: board-web::board
+  - text: The Teammate confirms
+    kind: actor
+    actor: teammate
+    entities: []
+    contexts:
+      web:
+        place: board-web::board
   - text: The Product removes the column from the board
     kind: product
     actor: teammate
@@ -44,5 +59,6 @@ The column is gone from the board, and the remaining columns keep their order.
 
 ## Edge cases
 
+- The admin cancels at the confirmation → the column stays.
 - The column is the board's only column → refused; a board always keeps at least one column.
 - A proposed card suggests the removed column → it keeps waiting, and the member who accepts it chooses another column.

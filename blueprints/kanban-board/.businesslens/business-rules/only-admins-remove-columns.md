@@ -10,7 +10,7 @@ permits:
 
 # Only the board's admins remove its columns
 
-A column is removed from a board only by a Teammate whose role on that board is Admin.
+A column is removed from a board only by a Teammate whose role on that board is Admin, once they confirm, or with the board when an admin deletes it.
 
 ## Rationale
 

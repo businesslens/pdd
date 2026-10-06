@@ -13,13 +13,22 @@ steps:
     contexts:
       web:
         place: board-web::board-list
-  - text: The Product gives the board To do, Doing and Done columns and makes the Teammate its first admin
+  - text: The Product makes the Teammate the first admin of the board
+    kind: product
+    actor: teammate
+    capability: create-board
+    entities:
+      - { entity: board-membership, effect: creates, facts: [Role] }
+      - { entity: board, effect: reads, facts: [] }
+    contexts:
+      web:
+        place: board-web::board-list
+  - text: The Product gives the board To do, Doing and Done columns
     kind: product
     actor: teammate
     capability: create-board
     entities:
       - { entity: column, effect: creates, facts: [Name, Position] }
-      - { entity: board-membership, effect: creates, facts: [Role] }
       - { entity: board, effect: reads, facts: [] }
     contexts:
       web:

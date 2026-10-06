@@ -9,7 +9,7 @@ permits:
 
 # Only the board's members delete its cards
 
-A card is deleted only by a Teammate who is a member of its board. An AI agent never deletes one.
+A card is deleted only by a Teammate who is a member of its board, once they confirm, or with its board when an admin deletes the board. An AI agent never deletes one.
 
 ## Rationale
 

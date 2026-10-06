@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Teammate chooses colleagues to put on a card
+  - text: The Teammate chooses a colleague to put on a card
     kind: actor
     actor: teammate
     entities:
@@ -12,7 +12,7 @@ steps:
     contexts:
       web:
         place: board-web::card-detail
-  - text: The Product checks each one is a member of the board
+  - text: The Product checks the colleague is a member of the board
     kind: product
     actor: teammate
     entities:
@@ -21,7 +21,7 @@ steps:
     contexts:
       web:
         place: board-web::card-detail
-  - text: The card lists them as its assignees
+  - text: The Product adds the colleague to the assignees of the card
     kind: product
     actor: teammate
     entities:
@@ -29,7 +29,7 @@ steps:
     contexts:
       web:
         place: board-web::card-detail
-  - text: The assignees show on the card on the board
+  - text: The colleague shows among the assignees of the card on the board
     kind: condition
     actor: teammate
     entities:
@@ -49,8 +49,9 @@ A member decides who should work on a card, including themselves.
 
 ## Outcome
 
-The card lists the chosen members as its assignees, and nothing else about it changes.
+The card lists the chosen member among its assignees, its other assignees stay,
+and nothing else about it changes.
 
 ## Edge cases
 
-- The member takes an assignee off the card → the card no longer lists them, and nothing else about it changes.
+- The colleague is already an assignee of the card → nothing changes.

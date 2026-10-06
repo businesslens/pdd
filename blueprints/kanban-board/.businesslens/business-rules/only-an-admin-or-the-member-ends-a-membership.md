@@ -12,7 +12,8 @@ permits:
 # Only an admin or the member themselves ends a membership
 
 An admin of a board removes any member from it, and any member leaves the board
-on their own. Nobody else ends a membership.
+on their own, each once they confirm. Deleting the board, which only an admin
+does, ends every membership of it. Nobody else ends a membership.
 
 ## Rationale
 

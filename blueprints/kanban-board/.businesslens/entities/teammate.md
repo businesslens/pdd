@@ -11,6 +11,9 @@ relations:
   - entity: ai-agent
     verb: connects
     cardinality: one-to-many
+  - entity: board
+    verb: creates
+    cardinality: one-to-many
 ---
 
 # Teammate
