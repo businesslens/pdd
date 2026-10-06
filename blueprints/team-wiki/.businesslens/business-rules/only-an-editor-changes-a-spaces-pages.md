@@ -12,7 +12,7 @@ permits:
 
 A page's title, content and place in its space's tree are changed only by a
 Member whose role in that space is Editor: by editing it, moving it, restoring
-an earlier revision, or publishing a suggestion. An AI agent never changes a
+an earlier revision, or accepting a suggestion. An AI agent never changes a
 page.
 
 ## Rationale

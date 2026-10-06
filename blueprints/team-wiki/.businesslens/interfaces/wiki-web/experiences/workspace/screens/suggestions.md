@@ -9,6 +9,6 @@ entryPoints:
 
 # Suggestions
 
-Lists the open suggestions for pages in the spaces where the Member is an
+Lists the proposed suggestions for pages in the spaces where the Member is an
 Editor, each with the page and space it concerns, why it was raised and
 when, and opens one to review.

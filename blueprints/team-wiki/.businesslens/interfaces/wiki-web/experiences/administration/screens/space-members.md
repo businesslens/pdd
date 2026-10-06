@@ -10,4 +10,5 @@ entryPoints:
 # Space members
 
 The people who belong to one space and the role each holds there. An
-Administrator adds a person from the workspace with a role, or removes someone.
+Administrator adds a person from the workspace with a role, changes someone's
+role, or removes someone.

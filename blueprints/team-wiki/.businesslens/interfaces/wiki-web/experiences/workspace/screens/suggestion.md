@@ -12,4 +12,4 @@ entryPoints:
 
 One suggestion opened for review: why it was raised, the pages it
 cites, and its proposed content beside the page as it stands now. An Editor
-adjusts the proposed content, publishes it, or dismisses it here.
+adjusts the proposed content, accepts it, or dismisses it here.

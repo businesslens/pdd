@@ -1,5 +1,4 @@
 ---
-domain: assistant
 availability: [{ place: wiki-agent }]
 ---
 

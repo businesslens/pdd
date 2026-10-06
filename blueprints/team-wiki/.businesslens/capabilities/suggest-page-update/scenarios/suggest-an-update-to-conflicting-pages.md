@@ -26,7 +26,7 @@ steps:
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: suggestion, effect: creates, to: Open, facts: [Reason, Explanation, Proposed content, Cited pages, Drafted at] }
+      - { entity: suggestion, effect: creates, to: Proposed, facts: [Reason, Explanation, Proposed content, Cited pages, Drafted at] }
       - { entity: page, effect: reads, facts: [Title, Last edited at] }
     contexts:
       agent:
@@ -52,5 +52,5 @@ the same subject.
 
 ## Outcome
 
-An open suggestion marked Conflicting waits among the space's suggestions on the
+A proposed suggestion marked Conflicting waits among the space's suggestions on the
 web, citing the page it disagrees with. Neither page has changed.

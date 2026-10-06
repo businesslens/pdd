@@ -9,5 +9,5 @@ entryPoints:
 # Space
 
 One space the Member belongs to: its name and purpose and its tree of pages,
-each under its parent. It opens a page, and lets an Editor add a page at the top
-of the space.
+each under its parent. It opens a page, lets an Editor add a page at the top of
+the space, and lets an Editor delete a page from the tree once they confirm.

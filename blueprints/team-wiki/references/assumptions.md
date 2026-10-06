@@ -13,7 +13,9 @@ These are assumptions to validate, not claims that research has proved them.
   readily when every claim cites the wiki page it came from, and when it says
   plainly that the wiki holds no answer.
 - Editors want an AI agent to propose, never to publish: a page changes only
-  when a person who answers for the space decides it should.
+  when a person who answers for the space accepts the change.
+- Deleting a page is rare and deliberate, and the pages filed beneath it are
+  usually still worth keeping, so they move up rather than go with it.
 - An agent connected by one Member must never be a way around a space's
   membership, for that Member or for the Editors who read its suggestions.
 

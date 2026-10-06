@@ -3,7 +3,7 @@ appliesTo:
   - type: capability
     id: edit-page
   - type: capability
-    id: publish-suggestion
+    id: accept-suggestion
 ---
 
 # A save never overwrites a newer revision unseen
