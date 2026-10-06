@@ -8,7 +8,7 @@ import type { ProductReportV16 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
-import { ghStarClient, type GithubStarClient } from './github-star.js'
+import { ghStarClient, type GithubStarClient, type GithubStarState } from './github-star.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
 const REPORT_PATH = '/_businesslens/report.json'
@@ -104,7 +104,7 @@ export interface LocalViewerOptions {
    * rather than only from `.businesslens/`. Omit it and the mount is off.
    */
   assetRoot?: string
-  /** Stars BusinessLens on the reader's behalf. Defaults to the reader's own `gh` sign-in. */
+  /** Stars or unstars BusinessLens on the reader's behalf. Defaults to the reader's own `gh` sign-in. */
   githubStar?: GithubStarClient
 }
 
@@ -334,8 +334,8 @@ function validHost(request: IncomingMessage, port: number): boolean {
  * Whether a state-changing request comes from the report itself.
  *
  * The Host check stops DNS rebinding but not another page in the same browser
- * posting here; a browser always sends Origin on a cross-origin POST, so only
- * the viewer's own origin may change anything.
+ * posting here; a browser always sends Origin on a cross-origin POST or
+ * DELETE, so only the viewer's own origin may change anything.
  */
 function sameOrigin(request: IncomingMessage, port: number): boolean {
   const origin = request.headers.origin?.toLowerCase()
@@ -343,22 +343,25 @@ function sameOrigin(request: IncomingMessage, port: number): boolean {
 }
 
 /**
- * Read or add the reader's star on BusinessLens.
+ * Read, add or remove the reader's star on BusinessLens.
  *
- * GET reports the state; POST stars and takes no input, so the route can
- * never star anything but BusinessLens. Unstarring stays on GitHub.
+ * GET reports the state; POST stars and DELETE unstars. Neither takes input,
+ * so the route can never touch anything but BusinessLens.
  */
 function githubStar(
   request: IncomingMessage, response: ServerResponse, client: GithubStarClient, port: number, head: boolean
 ): void {
-  if (request.method === 'POST') {
+  if (request.method === 'POST' || request.method === 'DELETE') {
     if (!sameOrigin(request, port)) {
-      json(response, 403, { message: 'Only the local report can star BusinessLens.' }, false)
+      json(response, 403, { message: 'Only the local report can star or unstar BusinessLens.' }, false)
       return
     }
-    void client.star().then(
-      () => { if (!response.destroyed) json(response, 200, { state: 'starred' }, false) },
-      () => { if (!response.destroyed) json(response, 502, { message: 'GitHub did not accept the star.' }, false) }
+    const starring = request.method === 'POST'
+    const state: GithubStarState = starring ? 'starred' : 'not-starred'
+    const failure = starring ? 'GitHub did not accept the star.' : 'GitHub did not remove the star.'
+    void (starring ? client.star() : client.unstar()).then(
+      () => { if (!response.destroyed) json(response, 200, { state }, false) },
+      () => { if (!response.destroyed) json(response, 502, { message: failure }, false) }
     )
     return
   }
@@ -485,7 +488,7 @@ function requestHandler(
       return
     }
     const pathname = url.pathname
-    const methods = pathname === GITHUB_STAR_PATH ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD']
+    const methods = pathname === GITHUB_STAR_PATH ? ['GET', 'HEAD', 'POST', 'DELETE'] : ['GET', 'HEAD']
     if (!methods.includes(request.method ?? '')) {
       response.setHeader('allow', methods.join(', '))
       json(response, 405, { message: 'Method not allowed.' }, false)

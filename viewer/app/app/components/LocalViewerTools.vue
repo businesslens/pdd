@@ -4,7 +4,8 @@ defineProps<{ collapsed?: boolean }>()
 /*
  * The star button beside the GitHub link. The CLI stars through the reader's
  * own `gh` sign-in; without one the state is `unavailable` and only the link
- * shows. The click is the consent: nothing stars on load.
+ * shows. The click is the consent: nothing stars on load, and a second click
+ * unstars.
  *
  * Asking `gh` takes a moment, so the report never waits for it: the question
  * goes out once the browser is idle, and the star fades in when it is answered.
@@ -29,23 +30,31 @@ onMounted(() => {
   else setTimeout(() => void readStar(), 0)
 })
 
-async function addStar() {
-  if (star.value !== 'not-starred') return
-  star.value = 'starred'
+// One change at a time, so a quick second click cannot race the first.
+let changing = false
+
+async function toggleStar() {
+  if (star.value === 'unavailable' || changing) return
+  const previous = star.value
+  const starring = previous === 'not-starred'
+  star.value = starring ? 'starred' : 'not-starred'
+  changing = true
   try {
-    await $fetch(STAR_PATH, { method: 'POST' })
+    await $fetch(STAR_PATH, { method: starring ? 'POST' : 'DELETE' })
   } catch {
-    star.value = 'not-starred'
+    star.value = previous
     toast.add({
-      title: 'BusinessLens was not starred',
-      description: 'GitHub did not accept the star. You can star it on GitHub instead.',
+      title: starring ? 'BusinessLens was not starred' : 'BusinessLens is still starred',
+      description: starring
+        ? 'GitHub did not accept the star. You can star it on GitHub instead.'
+        : 'GitHub did not remove the star. You can unstar it on GitHub instead.',
       color: 'error',
       icon: 'i-lucide-triangle-alert'
     })
+  } finally {
+    changing = false
   }
 }
-
-const starLabel = computed(() => star.value === 'starred' ? 'Starred on GitHub' : 'Star on GitHub')
 </script>
 
 <template>
@@ -91,7 +100,7 @@ const starLabel = computed(() => star.value === 'starred' ? 'Starred on GitHub' 
         <Transition enter-from-class="opacity-0" enter-active-class="transition-opacity duration-300">
           <div v-if="star !== 'unavailable'">
             <UTooltip
-              :text="star === 'starred' ? 'Starred' : collapsed ? 'Star on GitHub' : 'Star'"
+              :text="(star === 'starred' ? 'Unstar' : 'Star') + (collapsed ? ' on GitHub' : '')"
               :content="{ side: collapsed ? 'right' : 'top' }"
             >
               <UButton
@@ -100,12 +109,12 @@ const starLabel = computed(() => star.value === 'starred' ? 'Starred on GitHub' 
                 variant="ghost"
                 size="sm"
                 class="h-9 w-full justify-center"
-                :class="star === 'starred' ? 'cursor-default text-primary hover:bg-transparent' : 'text-muted hover:text-highlighted'"
-                :aria-label="starLabel"
+                :class="star === 'starred' ? 'text-primary' : 'text-muted hover:text-highlighted'"
+                aria-label="Star BusinessLens on GitHub"
                 :aria-pressed="star === 'starred'"
                 data-local-viewer-star
                 :data-state="star"
-                @click="addStar"
+                @click="toggleStar"
               >
                 <svg
                   viewBox="0 0 24 24"

@@ -16,6 +16,9 @@ const { version: pddVersion } = createRequire(import.meta.url)('../../package.js
 // until someone opens the model that does.
 const fixtureRoot = resolve(process.env.BLR_DEV_MODEL || '../../blueprints/content-feed-reader/.businesslens')
 
+// The dev star remembers its state until `nuxt dev` restarts.
+let devStarred = false
+
 const devHandlers = [
   {
     route: '/_businesslens/report.json',
@@ -48,7 +51,9 @@ const devHandlers = [
     route: '/_businesslens/github-star',
     handler: defineEventHandler((event) => {
       setHeader(event, 'cache-control', 'no-store')
-      return { state: event.method === 'POST' ? 'starred' : 'not-starred' }
+      if (event.method === 'POST') devStarred = true
+      if (event.method === 'DELETE') devStarred = false
+      return { state: devStarred ? 'starred' : 'not-starred' }
     })
   }
 ]

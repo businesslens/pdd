@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CLI:** The README in every Product Model tells any agent how to build from the model and change it, and which parts of the model the code must honor. `lint` warns when a model's README is out of date.
 - **Docs:** The development loop and the Get started guides now show asking your agent to build, with verify checking each slice.
 
+## [0.27.0] - 2026-10-06
+
+### Changed
+
+- **Report:** Clicking the local report's star again unstars BusinessLens on GitHub. ([#94](https://github.com/businesslens/pdd/pull/94)) ([bbe82f8](https://github.com/businesslens/pdd/commit/bbe82f8c05b8175dfc1c9374edc67a01d7ee6633))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.26.0...v0.27.0][0.27.0]
+
 ## [0.26.0] - 2026-10-06
 
 ### Added
@@ -1066,7 +1078,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.26.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.27.0...HEAD
+[0.27.0]: https://github.com/businesslens/pdd/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/businesslens/pdd/compare/v0.25.1...v0.26.0
 [0.25.1]: https://github.com/businesslens/pdd/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/businesslens/pdd/compare/v0.24.2...v0.25.0
