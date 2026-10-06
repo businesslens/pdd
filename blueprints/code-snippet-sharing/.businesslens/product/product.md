@@ -11,7 +11,7 @@ limitations:
   - A snippet holds one piece of code in one language.
   - Only a snippet's owner changes it. Others read it and may fork a public one; there are no comments, stars or shared editing.
   - An earlier revision is never restored in place; its code is carried forward by editing the snippet.
-  - When the Developer asks, a language model drafts a title, a description and tags into the editor. The draft may be wrong and never touches code, language or visibility; the Developer decides what is saved, and while the model is unavailable the fields stay as they were.
+  - When the Developer asks, a language model drafts a title, a description and tags into the editor, and may be wrong. The Developer decides what is saved, and everything else works while the model is unavailable.
   - Highlighting follows the language the Developer chooses. The Product never runs, checks or formats code.
   - An unlisted snippet's address cannot be guessed, but anyone who holds it can read the snippet.
 references:
