@@ -6,9 +6,11 @@ covered:
     paths: []
   - description: Scheduling, rescheduling, cancelling and logging study sessions.
     paths: []
-  - description: Study plans an AI agent proposes around the student's weekly availability, and the student accepts or declines.
+  - description: Study plans the planner builds around the student's weekly availability, revisions their AI agent proposes, and the student accepting or dismissing each.
     paths: []
-exclusions: []
+exclusions:
+  - description: "Accounts: signing up, signing in and account settings."
+    paths: []
 unmapped: []
 limitations: []
 ---

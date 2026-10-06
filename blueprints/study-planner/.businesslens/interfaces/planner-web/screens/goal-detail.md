@@ -11,5 +11,5 @@ entryPoints:
 
 Presents one goal: its name and target date, the topics it is broken into with
 their estimates, and how many hours have been logged against each. This is
-where the Student changes the goal, adds, changes and removes topics, and
-reads the goal's progress.
+where the Student changes or deletes the goal, adds, changes and removes
+topics, reads the goal's progress, and asks for a study plan.

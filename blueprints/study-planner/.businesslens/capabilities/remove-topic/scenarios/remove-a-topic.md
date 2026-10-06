@@ -32,6 +32,7 @@ steps:
         place: planner-web::goal-detail
   - text: Sessions already logged stay in the history and keep counting toward the goal's logged hours
     kind: condition
+    actor: student
     entities:
       - { entity: study-session, effect: reads, facts: [Logged minutes] }
       - { entity: goal, effect: reads, facts: [] }

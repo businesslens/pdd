@@ -1,6 +1,6 @@
 ---
 id: study-planner
-summary: Set study goals with a date, break them into topics, schedule and log study sessions, and see progress toward each goal, with your AI agent proposing a schedule you accept.
+summary: Set dated study goals with estimated topics, get a schedule built around your weekly hours, log what you study, and let your AI agent propose revisions.
 category: learning-and-education
 tags: [single-user, agentic]
 authors:
@@ -9,9 +9,10 @@ license: MIT
 languages: [en]
 limitations:
   - Personal and single-user. There are no study groups, tutors, classes or shared schedules.
-  - The planner is a web application; it does not read from or write to outside calendars, and it sends no reminders outside the planner.
-  - The AI agent proposes and revises study plans; it never changes a goal, a topic or a session itself. Which agent the student connects, and how it proves it acts for them, are outside the model.
-  - Study plans are built from the student's own topic estimates and weekly availability. The Product does not judge what the student has learned or how difficult a topic is.
+  - The planner does not read from or write to outside calendars, and sends no reminders.
+  - Bring your own AI agent; the Product does not include one.
+  - Study plans are built from the Student's own topic estimates and weekly availability. The planner never judges what the Student has learned or how hard a topic is.
+  - Logged study is never edited or cancelled; it goes only when its goal is deleted.
 references:
   - kind: research
     role: context
@@ -23,15 +24,16 @@ references:
 
 A personal planner for a student working toward a dated goal, such as an exam.
 The student sets the goal, breaks it into topics with an estimate of the study
-each one needs, schedules study sessions, logs the sessions they complete, and
-sees how far each goal has come. An AI agent the student connects proposes a
-study plan that fits their weekly availability and the goal's date, and
-proposes a revision when a session is missed.
+each one needs, and asks the planner for a study plan that spreads those topics
+across their weekly availability before the date. They log the sessions they
+complete and see how far each goal has come. An AI agent the student connects
+proposes revised plans on top, for example after a missed session.
 
 ## Intent
 
-Turn "I have an exam on the 12th" into a week-by-week schedule the student can
-keep, and keep it honest when life gets in the way. The agent does the
-arithmetic of fitting topics into available time; the student stays the only
-one who changes the schedule, and nothing the agent proposes takes effect
-until the student accepts it.
+A student with an exam on the 12th has more to study than time to study it,
+and a schedule that goes stale the first time a session slips. The planner does
+the arithmetic of fitting topics into the hours they really have, says plainly
+what does not fit, and keeps the schedule honest when weeks go wrong. Every
+plan, the planner's own or the agent's, waits for the student: nothing in the
+schedule changes until they accept it.

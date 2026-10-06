@@ -21,6 +21,7 @@ steps:
         place: planner-web::schedule
   - text: The logged minutes count toward the topic's progress
     kind: condition
+    actor: student
     entities:
       - { entity: study-session, effect: reads, facts: [Logged minutes] }
       - { entity: topic, effect: reads, facts: [] }

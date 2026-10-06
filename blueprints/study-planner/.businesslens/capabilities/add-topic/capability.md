@@ -3,7 +3,7 @@ domain: goals
 availability: [ { place: planner-web } ]
 ---
 
-# Topic adding
+# Topic addition
 
 Adds a topic to a goal, with the Student's estimate of how many hours of study it needs.
 

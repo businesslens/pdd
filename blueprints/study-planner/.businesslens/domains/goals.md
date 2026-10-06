@@ -10,5 +10,5 @@ broken into, and how far the logged study has brought it.
 ## Boundary
 
 Owns goals, their topics and topic estimates, and the progress derived from
-logged study. It does not own when sessions take place or the study plans an AI
-agent proposes.
+logged study. It does not own when sessions take place or the study plans proposed for a
+goal.

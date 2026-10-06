@@ -21,6 +21,7 @@ steps:
         place: planner-web::goal-detail
   - text: The goal's topics and scheduled sessions are untouched
     kind: condition
+    actor: student
     entities:
       - { entity: goal, effect: reads, facts: [] }
       - { entity: topic, effect: reads, facts: [] }

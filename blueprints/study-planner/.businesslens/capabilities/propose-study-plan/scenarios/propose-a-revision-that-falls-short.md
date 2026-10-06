@@ -3,16 +3,8 @@ kind: edge
 routes:
   agent: Agent
 steps:
-  - text: The AI agent asks for a goal it was asked to plan
+  - text: The AI agent asks for a goal's topics, the hours already logged, the upcoming schedule and the Student's weekly availability
     kind: actor
-    actor: ai-agent
-    entities:
-      - { entity: goal, effect: reads, facts: [] }
-    contexts:
-      agent:
-        place: planner-agent
-  - text: The Product provides the goal's topics, the hours already logged, the upcoming schedule and the Student's weekly availability
-    kind: product
     actor: ai-agent
     entities:
       - { entity: goal, effect: reads, facts: [Name, Target date] }
@@ -22,16 +14,20 @@ steps:
     contexts:
       agent:
         place: planner-agent
-  - text: The AI agent finds that the study still to do needs more hours than the Student's availability holds before the target date
-    kind: actor
+  - text: The study still to do needs more hours than the Student's availability holds before the target date
+    kind: condition
     actor: ai-agent
     entities:
-      - { entity: student, effect: reads, facts: [] }
+      - { entity: topic, effect: reads, facts: [Estimated hours] }
+      - { entity: student, effect: reads, facts: [Weekly availability] }
+    contexts:
+      agent:
+        place: planner-agent
   - text: The AI agent leaves a plan that fills the available time, with the hours that do not fit as its shortfall
     kind: actor
     actor: ai-agent
     entities:
-      - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared at] }
+      - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared by, Prepared at] }
     contexts:
       agent:
         place: planner-agent
@@ -45,11 +41,11 @@ steps:
         place: planner-agent
 ---
 
-# Propose a plan that falls short
+# Propose a revision that falls short
 
 ## Trigger
 
-The Student asks their AI agent to plan a goal that needs more study than their availability holds before its date.
+The AI agent revises a goal whose remaining study no longer fits the time before its date.
 
 ## Outcome
 

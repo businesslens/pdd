@@ -32,6 +32,7 @@ steps:
         place: planner-web::goal-detail
   - text: Nothing about the goal or its topics changes
     kind: condition
+    actor: student
     entities:
       - { entity: goal, effect: reads, facts: [] }
       - { entity: topic, effect: reads, facts: [] }

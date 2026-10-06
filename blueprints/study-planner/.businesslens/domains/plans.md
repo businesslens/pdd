@@ -4,9 +4,9 @@ colorSlot: 4
 
 # Plans
 
-Study plans the Student's AI agent prepares for a goal, the weekly
-availability they are built around, and the Student's decision to accept or
-decline each one.
+Study plans for a goal, built by the planner or left by the Student's AI agent,
+the weekly availability they are built around, and the Student's decision to
+accept or dismiss each one.
 
 ## Boundary
 

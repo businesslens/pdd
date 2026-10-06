@@ -5,6 +5,9 @@ relations:
   - entity: goal
     verb: owns
     cardinality: one-to-many
+  - entity: ai-agent
+    verb: connects
+    cardinality: one-to-many
 ---
 
 # Student

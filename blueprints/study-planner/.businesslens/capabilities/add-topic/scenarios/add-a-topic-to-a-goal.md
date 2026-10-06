@@ -21,6 +21,7 @@ steps:
         place: planner-web::goal-detail
   - text: The goal's study still to do grows by the topic's estimate
     kind: condition
+    actor: student
     entities:
       - { entity: goal, effect: reads, facts: [] }
       - { entity: topic, effect: reads, facts: [Estimated hours] }

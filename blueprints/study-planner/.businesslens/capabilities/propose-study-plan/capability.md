@@ -3,18 +3,16 @@ domain: plans
 availability: [ { place: planner-agent } ]
 ---
 
-# Study plan proposals
+# Study plan proposal
 
-Lets the Student's AI agent leave a study plan for a goal: sessions that divide
-the study still to do across the Student's weekly availability before the
-target date, with an explanation of what it did. The agent prepares one when
-the Student asks it to plan a goal, and a revised one when it finds a missed
-session. The Product checks every plan against the availability and the
-schedule before keeping it. A plan only proposes; the schedule changes when the
-Student accepts it.
+Lets the Student's AI agent leave a revised study plan for a goal, typically
+after it finds a missed session: sessions that divide the study still to do
+across the Student's weekly availability before the target date, with an
+explanation of what it moved. The Product checks every plan against the
+availability and the schedule before keeping it, and the plan waits for the
+Student like one the planner built.
 
 ## Intent
 
-Let an agent do the arithmetic of fitting topics into the time the Student has,
-and keep doing it as plans meet real weeks, without taking the schedule out of
-the Student's hands.
+Keep the schedule honest as plans meet real weeks, with the Student's own
+agent doing the rearranging and the Student deciding.

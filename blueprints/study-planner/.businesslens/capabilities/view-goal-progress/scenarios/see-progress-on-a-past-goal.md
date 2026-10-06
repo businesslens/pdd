@@ -22,6 +22,7 @@ steps:
         place: planner-web::goal-detail
   - text: The goal is shown as past, and no study plan can be asked for it
     kind: condition
+    actor: student
     entities:
       - { entity: goal, effect: reads, facts: [Target date] }
       - { entity: study-plan, effect: reads, facts: [] }

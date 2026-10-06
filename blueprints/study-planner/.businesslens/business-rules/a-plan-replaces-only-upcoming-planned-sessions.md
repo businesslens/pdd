@@ -1,16 +1,15 @@
 ---
 appliesTo:
-  - type: capability
-    id: accept-study-plan
-  - type: journey
-    id: plan-a-goal
+  - type: entity
+    id: study-plan
+    facts: [Replaced sessions]
 ---
 
 # A plan replaces only upcoming planned sessions
 
-Accepting a study plan removes only the goal's planned sessions that have not
-yet started. Logged sessions, missed sessions and the sessions of other goals
-stay exactly as they were.
+A study plan replaces only its goal's planned sessions that have not yet
+started. Logged sessions, missed sessions and the sessions of other goals stay
+exactly as they were when it is accepted.
 
 ## Rationale
 

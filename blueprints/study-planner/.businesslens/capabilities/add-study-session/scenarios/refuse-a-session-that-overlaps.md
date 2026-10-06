@@ -14,6 +14,7 @@ steps:
         place: planner-web::schedule
   - text: The new session would overlap another session in the schedule
     kind: condition
+    actor: student
     entities:
       - { entity: study-session, effect: reads, facts: [Start, Planned minutes] }
     contexts:
