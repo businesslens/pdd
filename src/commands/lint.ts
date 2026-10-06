@@ -523,15 +523,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     'accept', 'activate', 'add', 'allow', 'answer', 'apply', 'approve', 'archive', 'assign', 'authorize', 'back', 'block', 'book', 'browse', 'build',
     'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
     'configure', 'confirm', 'connect', 'contribute', 'create', 'deactivate', 'decide', 'decline', 'delete',
-    'deliver', 'disable', 'discover', 'download', 'duplicate', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
+    'deliver', 'disable', 'disconnect', 'discover', 'dismiss', 'download', 'duplicate', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
     'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
     'keep', 'leave', 'link', 'lint', 'list', 'log', 'manage', 'map', 'mark', 'merge', 'move', 'name',
-    'open', 'order', 'organize', 'pause', 'pay', 'pin', 'place', 'plan', 'preserve', 'publish', 'pull',
-    'read', 'receive', 'recover', 'refresh', 'refund', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
+    'open', 'order', 'organize', 'pause', 'pay', 'pin', 'place', 'plan', 'preserve', 'propose', 'publish', 'pull',
+    'read', 'receive', 'recover', 'refresh', 'refund', 'reopen', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
     'report', 'request', 'resend', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
     'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
     'share', 'ship', 'show', 'sign', 'star', 'start', 'stop', 'submit', 'subscribe', 'switch',
-    'synchronize', 'track', 'transfer', 'unarchive', 'unfollow', 'unlink', 'unlist', 'unpin', 'unpublish', 'unresolve', 'unstar', 'unsubscribe', 'update', 'upload', 'verify',
+    'synchronize', 'track', 'transfer', 'unarchive', 'unassign', 'uncheck', 'unfollow', 'unlink', 'unlist', 'unpin', 'unpublish', 'unresolve', 'unstar', 'unsubscribe', 'update', 'upload', 'verify',
     'view', 'withdraw', 'write'
   ])
   /*

@@ -794,9 +794,11 @@ AI enters a model in exactly one of two ways, decided by who initiates:
 
 Either way, what the AI produces and the Product keeps is a draft until a person
 decides it. A kept draft is its own Entity when it keeps facts its target never
-has — a reason, a source passage — and otherwise a `Draft` State of the target.
+has — a reason, a source passage — and otherwise a `Proposed` State of the
+target. A draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`.
 Accepting and dismissing a kept draft are each a Capability, being later acts on
-something a run produced; a Business Rule says only the person decides it, and
+something a run produced — `accept-<draft>` and `dismiss-<draft>` for a draft
+Entity, `accept-proposed-<thing>` and `dismiss-proposed-<thing>` for a State; a Business Rule says only the person decides it, and
 another that the draft changes nothing until accepted. A draft that only fills
 an editor the person has not saved is not kept: saving is the acceptance, and it
 needs no Capability of its own.
@@ -1498,6 +1500,12 @@ Rule needs only to resolve: neither a grant nor a prohibition requires a
 matching operation, Screen disclosure or fact use to exist, and a prohibition
 never needs an example of the prohibited behavior.
 
+**One permission Rule per grant.** Operations on one Entity that the same grant
+admits share one Rule — its target omits `effect` when every operation shares
+it — and an operation whose grant differs has a Rule of its own: creating a card
+open to any board member and deleting it open only to an admin are two Rules,
+changing and deleting it by the same members are one.
+
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
 own places — the union of the places its contextualized Steps name — and a
@@ -1679,7 +1687,10 @@ granted through `configuredBy`, with no Capability creating it; the people
 holding them are one acting Entity, and a configuration that also grants
 directly to people stays an Entity of its own. A role held per container, such
 as an organization or a project, is held through a membership Entity that does
-not act, whose Role fact names it. A relation any role holder can hold — a
+not act, whose Role fact names it. Such a role administers its container, not
+the Product: the container's settings and member pages are `authenticated`
+places, and the membership's Role in a grant's `when` decides who changes them;
+`restricted` is only the Product's own administration area. A relation any role holder can hold — a
 message's sender — is declared to each role Entity, with one `related` grant
 per role. Facts of the person whatever their role live once on an Account
 Entity that does not act, related one-to-one to each role Entity. A Step any of

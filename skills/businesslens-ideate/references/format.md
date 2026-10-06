@@ -84,7 +84,10 @@ and members) granted through `configuredBy`, with no Capability that creates
 it; a configuration that also grants directly to people stays its own Entity,
 and the people who hold configured roles are one acting Entity. A role held per
 container, such as an organization or a project, is held through a membership
-Entity that does not act, whose Role fact names the role. A relation that holds
+Entity that does not act, whose Role fact names the role. Such a role
+administers its container, not the Product: the container's settings and
+member pages stay `authenticated`, with the Role in a grant's `when`;
+`restricted` is only the Product's own administration area. A relation that holds
 whatever role a person has (the sender of a message) is declared to each role
 Entity that can hold it, and ownership is one `related` grant per role. Facts
 that belong to the person whatever their role — email, display and
@@ -310,8 +313,11 @@ Lead and section-body fragments do not contain another H1 or H2.
   acts for through `related` (a person `connects` an AI agent); a bare
   `actors: [ai-agent]` grants every agent. What the AI produces and the Product
   keeps is a draft: its own Entity when it keeps facts the target never has (a
-  reason, a source passage), otherwise a `Draft` State of the target. Accepting
-  and dismissing a kept draft are each a Capability; one Business Rule says only
+  reason, a source passage), otherwise a `Proposed` State of the target. A
+  draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`.
+  Accepting and dismissing a kept draft are each a Capability —
+  `accept-<draft>`/`dismiss-<draft>` for a draft Entity,
+  `accept-proposed-<thing>`/`dismiss-proposed-<thing>` for a State; one Business Rule says only
   the person decides it, another that it changes nothing until accepted. A
   draft that only fills an editor the person has not saved is not kept, and
   saving is the acceptance.
@@ -378,8 +384,10 @@ Lead and section-body fragments do not contain another H1 or H2.
   and who may perform it ("Only the owner reads an unpublished collection"), an
   invariant what always holds. A consequence, a feature, or the mechanism
   behind the Rule belongs in the lead or `## Rationale`, never the title; from
-  the title and `appliesTo` alone, the grants' who is no surprise. An Entity
-  target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`:
+  the title and `appliesTo` alone, the grants' who is no surprise. Operations
+  on one Entity that the same grant admits share one permission Rule (omit
+  `effect` when all of them do); an operation whose grant differs has its own.
+  An Entity target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`:
   **a target selects; a grant conditions.** `effect`, `from` and `to` select
   Steps by the keys their `entities` entry carries (`from` with
   `changes|removes`, `to` with `creates|changes`, neither with `reads`);
