@@ -20,16 +20,15 @@ steps:
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Owner picks one of them and saves the note
+  - text: The Owner picks one of them
     kind: actor
     actor: owner
     entities:
-      - { entity: note, effect: reads, facts: [] }
-
+      - { entity: tag, effect: reads, facts: [] }
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Product keeps the note with the tag on it
+  - text: The Product puts the tag on the note
     kind: product
     actor: owner
     entities:
