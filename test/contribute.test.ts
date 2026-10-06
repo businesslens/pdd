@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { runContribute } from '../src/commands/contribute.js'
+import { MODEL_README } from '../src/core/model-readme.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 const temporaryDirectories: string[] = []
@@ -203,8 +204,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     // The point of the whole flow: the model in the pull request is regenerated
     // from a portable report, so no workspace reference survives into it.
     const contents = recorded.prContents ?? {}
-    expect(contents['blueprints/fixture-shop/.businesslens/README.md'])
-      .toContain('BusinessLens Product Model')
+    expect(contents['blueprints/fixture-shop/.businesslens/README.md']).toBe(MODEL_README)
     expect(contents['blueprints/fixture-shop/.businesslens/product/logo.svg']).toContain('<svg')
     const modelFiles = Object.entries(contents)
       .filter(([file]) => file.startsWith('blueprints/fixture-shop/.businesslens/'))

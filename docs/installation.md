@@ -24,11 +24,12 @@ BusinessLens skills. It never creates `.businesslens/`; the skills do that.
 | --- | --- |
 | [`businesslens-map`](./skill-businesslens-map.md) | Reads an existing repository and drafts its Product Model |
 | [`businesslens-ideate`](./skill-businesslens-ideate.md) | Turns an idea or a change into an approved model change |
-| [`businesslens-verify`](./skill-businesslens-verify.md) | Checks the code against the model and resolves what disagrees |
+| [`businesslens-verify`](./skill-businesslens-verify.md) | Implements the model in phases, checks the code against it, and resolves what disagrees |
 
-You run them inside your coding agent, not in the terminal: `/businesslens-map`
-in Claude Code and most agents, `$businesslens-map` in Codex. These pages show
-the `/` form.
+They run inside your coding agent, not in the terminal. Usually you just ask
+("add guest checkout to the product", "implement it") and your agent picks the
+skill. To run one by name, use `/businesslens-map` in Claude Code and most
+agents, `$businesslens-map` in Codex. These pages show the `/` form.
 
 Check it worked: in your agent type `/businesslens-` and the three skills
 appear (Codex: `$businesslens-`).

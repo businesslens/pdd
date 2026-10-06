@@ -1,6 +1,6 @@
 ---
 name: businesslens-ideate
-description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model. Use to explore product directions, define a blank-slate product, plan a capability or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code or verify implementation alignment.
+description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model (PDD). Use when the user asks to add, change or remove what the product does (“add X to the product”, “make a PDD change”), to explore product directions, define a blank-slate product, plan a capability or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code, implement the model in code, or verify implementation alignment.
 ---
 
 # Decide intended product behavior
@@ -122,14 +122,18 @@ Read before authoring:
     sound, not implemented or verified, so walk the rubric's **Check the whole
     model before approval** list again; a fix that changes product behavior
     goes back to the user for approval before it is written.
-12. Report the approved delta and implementation acceptance contract. The next
-    phase is implementation in the user's own workflow, followed by
-    `businesslens-verify`.
-    Do not implement from this skill.
+12. Report the approved delta and its acceptance contract, then end with one
+    line offering to implement it: the user can say *implement it*, and
+    `businesslens-verify` implements the change in phases in the user's own way
+    of working, checking each part. Do not implement from this skill.
 
 ## Guardrails
 
 - Never write model meaning without explicit approval.
+- Approval is explicit and covers the delta you presented. A reply that hands
+  you the open questions ("take your recommendation", "you decide") settles
+  those questions; it does not approve the change. Present the complete delta
+  with the answers applied and wait for approval before writing.
 - Never persist rejected approaches, reasons another option was not selected,
   or deliberation history anywhere in `.businesslens/`, including resource prose,
   supporting sections, limitations, README, and additional files. Keep decision

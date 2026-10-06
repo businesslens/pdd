@@ -125,10 +125,42 @@ names, and read each Interface's access from who reaches its places. Draft
 every resource by the format reference, apply the border above, draft honest
 coverage and necessary relationships, and get approval before writing.
 
+## Slices and phases
+
+A slice is the unit verify checks and reports: what one inspection can confirm.
+
+- One Capability with its Capability Scenarios, the Entity facts and states its
+  Steps touch, the Screens placing it, and the Business Rules targeting it.
+- A Journey is its own slice, after every Capability it carries the Actor
+  through; it builds only the hand-offs between them.
+- An Interface or Experience is built with the first slice placed there. A
+  Variation goes with each slice it varies; its default alternative first.
+
+Order slices so that:
+
+- whatever an Actor must reach first, such as access or setup, comes first;
+- the slice whose Step creates a thing precedes every slice whose Steps read,
+  change or move it;
+- otherwise, by Domain id, then by resource id, so two runs agree.
+
+A phase is the unit handed to the builder by default: the slices whose needs
+are already met.
+
+- The first phase holds the shared groundwork no slice owns, such as storage,
+  access and the application shell, together with every slice that needs
+  nothing another slice creates.
+- Each next phase holds the slices whose needs the earlier phases met. A
+  Journey joins the phase after its last Capability.
+- Within a phase, slices keep the order above.
+
+The pace changes only how much is handed over at once: one phase (the
+default), one slice when the user asks for one at a time, or the whole plan
+when the user asks for it in one go. Checking stays per slice at every pace.
+
 ## Stop safely
 
-Beyond the stops in the skill's steps 7–9 (no builder, an unchanged
-build-directed gap, unverifiable evidence):
+Beyond the stops in the skill's steps 7–9 (the user implements elsewhere, an
+unchanged build-directed gap, unverifiable evidence):
 
 - Product authority remains undecided: wait for that decision.
 - Structural blocker prevents model comparison: report the lint finding first.

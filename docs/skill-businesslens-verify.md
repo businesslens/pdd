@@ -1,6 +1,6 @@
 ---
 title: verify
-description: Check that the Product Model and the code agree, and resolve every gap you approve until they do or something blocks.
+description: Implement the Product Model in code, in phases, or check that the model and the code agree, and resolve every gap you approve until they do or something blocks.
 section: open-source
 group: Skills
 order: 19
@@ -8,11 +8,12 @@ order: 19
 
 # `businesslens-verify`
 
-**Verify checks that the Product Model and the code agree, and fixes each gap
-the way you decide.**
+**Verify makes the Product Model and the code agree: it implements what the
+model describes and the code lacks, and fixes each other gap the way you
+decide.**
 
-Use it after you implement a change, after a refactor, when you suspect drift, or
-before a release.
+Your agent uses it when you ask it to implement the model, all of it or a part.
+Run it yourself after a refactor, when you suspect drift, or before a release.
 
 ```text
 /businesslens-verify
@@ -23,6 +24,42 @@ before a release.
 
 With no scope, it checks what changed on the current branch.
 
+## Implement from the model
+
+Ask your agent to implement, for example "implement our PDD", "implement it"
+after ideate, or "implement saving an item". "Build" works too. You don't name
+the skill.
+
+1. **A plan.** Everything the model describes that the code doesn't do yet is
+   the plan, cut into **slices**: one Capability with its Scenarios and the
+   Screens and Rules that go with it, or one Journey after its Capabilities.
+   Slices are grouped into **phases**: the first holds the shared groundwork
+   (storage, sign-in, the app shell) and the slices that need nothing else;
+   each next phase holds the slices the earlier ones made possible.
+2. **Your agent implements each phase your usual way**: plan mode, an SDD tool,
+   your repository's conventions and tests. It never edits `.businesslens/`.
+3. **Verify checks every slice of the phase** before the next phase starts, and
+   hands back anything still missing.
+4. **Questions come to you.** If the model is ambiguous or seems wrong, the work
+   stops and verify settles it with you, updating the model only with your
+   approval. Nothing is decided in code.
+5. **A report**: what was implemented in order, anything blocked, and anything
+   the implementation added that the model doesn't describe yet.
+
+### Choose the pace
+
+| Say | What happens | Use it when |
+| --- | --- | --- |
+| Nothing, or "in phases" | One phase at a time, each slice checked before the next phase (the default) | Most work: a new product, a Blueprint, a large change |
+| "One slice at a time" or "slice by slice" | One slice, checked, then the next | You want to review each part, or the model is new to you |
+| "In one go", "all at once" or "without phases" | Every slice at once, then every slice checked | A small change, or you want the fastest run |
+
+The pace changes how much your agent implements before a check, never what is
+checked: every slice is checked against the model either way.
+
+To implement in another tool or session instead, say so: verify gives you a
+**handoff packet** for the work.
+
 ## What you get
 
 1. **Lint**, so a broken file is reported before anything else.
@@ -32,7 +69,7 @@ With no scope, it checks what changed on the current branch.
 3. **One question per decision**, with what the model says, what the code does,
    the files it read, and a recommendation.
 4. **The fix, after you approve.** A model change is shown in full and written;
-   a code change goes to your coding agent.
+   your agent makes a code change your usual way.
 5. **A fresh check after every change.** Earlier findings are discarded and
    derived again. If the same gap comes back unchanged after an implementation
    attempt, it stops rather than loop.
@@ -78,8 +115,7 @@ An example finding:
 >   the total with 100.
 > - **Recommendation:** keep the Rule; add the threshold check.
 >
-> After you approve, verify hands the change to your coding agent and checks
-> again.
+> After you approve, your agent adds the check and verify checks again.
 
 ## Scope
 
@@ -95,15 +131,15 @@ itself, with your approval.
 
 ## Report only or resolve
 
-By default verify resolves: it writes approved model changes and hands approved
-code changes to your coding agent. `report only` returns the same findings and
+By default verify resolves: it writes approved model changes, and your agent
+makes approved code changes. `report only` returns the same findings and
 recommendations and changes nothing.
 
-Verify never writes code itself. When no coding agent is available to take a
-code fix, it stops with a **handoff packet** (the expected behavior, the
-affected resources, the gap, acceptance criteria, and file leads) that you
-can give to any agent or person. The agent that builds must not edit
-`.businesslens/`.
+Verify's checking never writes or runs code. Code is written by your agent,
+which never edits `.businesslens/`. When you implement in another tool or
+session, verify stops with a **handoff packet** (the expected behavior, the
+affected resources, the gap, acceptance criteria, and file leads) that you can
+give to any agent or person.
 
 Findings are never saved: every run derives them again from the model and the
 code as they are now.

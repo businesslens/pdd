@@ -7,6 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
+import { MODEL_README } from '../src/core/model-readme.js'
 import { projectPortableReport, type ProductReportV17 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
@@ -279,9 +280,9 @@ describe('open report', () => {
       expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
 
       const readme = readFileSync(join(fresh, '.businesslens', 'README.md'), 'utf8')
-      expect(readme).toContain('BusinessLens Product Model')
-      expect(readme).toContain('Treat Capability Scenarios as local acceptance contracts')
-      expect(readme).toContain('References are optional navigation and context')
+      expect(readme).toBe(MODEL_README)
+      expect(readme).toContain('use the `businesslens-verify`')
+      expect(readme).toContain('Capability Scenarios are acceptance tests')
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
