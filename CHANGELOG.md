@@ -9,14 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Personal Productivity (Notes App, Bookmark Manager, Habit Tracker), Team Collaboration (Kanban Board, Team Wiki, Polls & Decisions), Public Participation (Form & Survey Builder, Event RSVP), Learning & Education (Flashcard App, Quiz Builder, Study Planner) and Developer Tools (URL Shortener, Public Status Page, Code Snippet Sharing).
-- **Blueprints:** Blueprints with AI show one of two shapes: your own AI agent connects and proposes while you decide, or the product drafts on request and nothing takes effect until you accept it.
+- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Personal Productivity, Team Collaboration, Public Participation, Learning & Education and Developer Tools.
 
 ### Changed
 
 - **Blueprints:** The Content Feed Reader now belongs to Personal Productivity.
 - **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it.
-- **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. What either produces stays a draft until a person accepts it.
+- **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it.
 - Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.
 - A Journey continues only where the product carries the same person on; something shown where they already are does not count.
 - **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product.

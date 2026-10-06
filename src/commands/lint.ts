@@ -122,7 +122,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * can rely on. Wording about the model itself — what it does not cover — is a
    * gap in the mapping, and coverage.md is where gaps and exclusions live.
    */
-  const MODEL_LANGUAGE = /\bnot model(?:l)?ed\b|\boutside (?:the|this) model\b|\bin the model\b|\bthe model does not\b/i
+  // "in the model" is left out on purpose: a limitation about a language
+  // model's provider ("nothing is kept in the model provider's logs") is a
+  // real Product constraint, and the phrase cannot tell the two apart.
+  const MODEL_LANGUAGE = /\bnot model(?:l)?ed\b|\boutside (?:the|this) model\b|\bthe model does not\b/i
   for (const limitation of model.product.limitations) {
     if (MODEL_LANGUAGE.test(limitation)) {
       warnings.push(`product.md: limitation "${limitation}" speaks about the model; limitations state deliberate product constraints, so record a gap in coverage.md`)
@@ -597,7 +600,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ['pin', ['unpin']],
     ['star', ['unstar']],
     ['link', ['unlink']],
-    ['check', ['uncheck']]
+    ['check', ['uncheck']],
+    ['assign', ['unassign']],
+    ['connect', ['disconnect']],
+    ['start', ['stop']],
+    ['tag', ['untag']]
   ]
   const opposites = new Map<string, Set<string>>()
   for (const [verb, others] of OPPOSITE_VERBS) {
@@ -606,13 +613,35 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       opposites.set(other, (opposites.get(other) || new Set()).add(verb))
     }
   }
-  const capabilityVerbs = new Map(model.capabilities.map(capability => [capability.id, leadingVerb(capability.id)]))
+  /*
+   * Two spellings the first segment alone misses: "stop sharing" opens with
+   * `stop` and carries the verb it reverses in its second segment, and
+   * "mark read" / "mark unread" share `mark` and differ in their last word.
+   * Each returns the two verbs as the author wrote them, or nothing.
+   */
+  const verbStem = (verb: string) => verb.replace(/e$/, '')
+  const stopPhrase = (stopper: string[], verb: string) =>
+    stopper[0] === 'stop' && verb !== 'stop' && verb.length > 2 && (stopper[1] || '').startsWith(verbStem(verb))
+  const oppositeVerbs = (capabilityId: string, scenarioId: string): [string, string] | undefined => {
+    const capability = capabilityId.split('-')
+    const scenario = scenarioId.split('-')
+    const capabilityVerb = capability[0] || ''
+    const scenarioVerb = scenario[0] || ''
+    if (opposites.get(capabilityVerb)?.has(scenarioVerb)) return [capabilityVerb, scenarioVerb]
+    if (stopPhrase(scenario, capabilityVerb)) return [capabilityVerb, `stop ${scenario[1]}`]
+    if (stopPhrase(capability, scenarioVerb)) return [`stop ${capability[1]}`, scenarioVerb]
+    if (capabilityVerb === 'mark' && scenarioVerb === 'mark') {
+      const state = capability.at(-1)
+      const opposite = state === 'read' ? 'unread' : state === 'unread' ? 'read' : undefined
+      if (opposite && scenario.slice(1).includes(opposite)) return [`mark ${state}`, `mark ${opposite}`]
+    }
+    return undefined
+  }
   for (const scenario of model.capabilityScenarios) {
-    const capabilityVerb = capabilityVerbs.get(scenario.capability)
-    const scenarioVerb = leadingVerb(scenario.id)
-    if (capabilityVerb && opposites.get(capabilityVerb)?.has(scenarioVerb)) {
+    const pair = oppositeVerbs(scenario.capability, scenario.id)
+    if (pair) {
       warnings.push(
-        `${scenario.file}: opens with "${scenarioVerb}" under Capability "${scenario.capability}", whose verb is "${capabilityVerb}"; opposite verbs are separate Capabilities`
+        `${scenario.file}: opens with "${pair[1]}" under Capability "${scenario.capability}", whose verb is "${pair[0]}"; opposite verbs are separate Capabilities`
       )
     }
   }
@@ -1230,13 +1259,17 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${scenario.file}: an achieved Journey Scenario needs at least two distinct Capabilities`)
     } else if (scenario.result === 'achieved' && journey) {
       /* The Product carries the Journey's own Actor across; a hand-off to
-         another Actor carries nobody, so only Steps the Journey Actor performs
-         or is attributed count toward the two Capabilities. */
-      const carried = new Set(scenario.steps
-        .filter(step => step.capability && step.actor && journeyActorSet.has(step.actor))
-        .map(step => step.capability))
-      if (carried.size < 2) {
-        errors.push(`${scenario.file}: an achieved Journey Scenario must carry its Journey Actor through at least two Capabilities; Steps of another Actor do not count`)
+         another Actor carries nobody, so only Steps one Journey Actor performs
+         or is attributed count toward the two Capabilities — counted per
+         Actor, since an agent proposing and a person accepting are two Actors
+         each using one Capability, not one Actor carried through two. */
+      const carried = new Map<string, Set<string>>()
+      for (const step of scenario.steps) {
+        if (!step.capability || !step.actor || !journeyActorSet.has(step.actor)) continue
+        carried.set(step.actor, (carried.get(step.actor) || new Set()).add(step.capability))
+      }
+      if (![...carried.values()].some(capabilities => capabilities.size >= 2)) {
+        errors.push(`${scenario.file}: an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities; Steps of another Actor, or of another Journey Actor, do not add up`)
       }
     }
   }
@@ -1521,11 +1554,29 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       }
       const singleTarget = entityTargets.length === 1 ? entityTargets[0] : undefined
       const targetEntity = singleTarget ? entitiesById.get(singleTarget.id) : undefined
+      /* One permission Rule per operation: a target without `effect` selects
+         creates, changes, removes and reads at once, so two authors would
+         split the same policy differently. Naming the effect is the shape. */
+      for (const target of entityTargets) {
+        if (target.effect === undefined) {
+          warnings.push(`${rule.file}: target "entity:${target.id}" names no "effect"; each operation gets its own permission Rule naming its effect`)
+        }
+      }
       for (const [grantIndex, grant] of rule.permits.entries()) {
         const grantLabel = `${rule.file}: grant ${grantIndex + 1}`
         for (const actorId of grant.actors) requireActor(grantLabel, actorId)
-        if (grant.actors.includes('ai-agent') && !grant.related.length) {
+        /* An AI agent acts for the person who connected it, so a grant to
+           it names that person on its path: a bare grant admits every agent,
+           and a path that never reaches a person — `leaves ai-agent` alone —
+           says which agent wrote a thing, not who authorized it. */
+        const reachesAgent = grant.actors.includes('ai-agent') || grant.related.at(-1)?.entity === 'ai-agent'
+        if (reachesAgent && !grant.related.length) {
           warnings.push(`${grantLabel}: grants "ai-agent" with no "related" path, which admits any AI agent; say whose AI agent it is through "related"`)
+        } else if (reachesAgent && singleTarget) {
+          const path = [singleTarget.id, ...grant.related.slice(0, -1).map(segment => segment.entity)]
+          if (!path.some(id => entitiesById.get(id)?.kind === 'person')) {
+            warnings.push(`${grantLabel}: reaches "ai-agent" without passing a person; walk "related" through the person who connected the agent`)
+          }
         }
         if (grant.configuredBy !== undefined && !entityIds.has(grant.configuredBy)) {
           errors.push(`${grantLabel}: "configuredBy" references missing entity "${grant.configuredBy}"`)
@@ -1725,10 +1776,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const ungoverned = new Set<string>()
   for (const scenario of allScenarios) {
     for (const [index, step] of scenario.steps.entries()) {
-      if (step.kind !== 'actor' || !step.actor) continue
+      // A Step attributed to an Actor — a Product Step carrying `actor` — is
+      // that Actor's operation for permission purposes, exactly as when the
+      // Actor performs it; only unattended Steps, which act for nobody, skip.
+      if (!step.actor || step.unattended) continue
       for (const entry of step.entities) {
         const effect = entry.effect ?? 'changes'
         if (effect !== 'changes' && effect !== 'removes') continue
+        // An Actor changing its own record (an Owner turning on one of their
+        // settings) is that person's own business, not a gap in who may act.
         if (entry.entity === step.actor || !governedEntities.has(entry.entity)) continue
         const key = `${entry.entity}|${effect}`
         if (ungoverned.has(key)) continue

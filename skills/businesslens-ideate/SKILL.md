@@ -85,7 +85,9 @@ Read before authoring:
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
-9. Present the complete model delta before writing: every resource added,
+9. Walk the rubric's **Check the whole model before approval** list against
+   the proposed delta and fold what it finds into the proposal. Then present
+   the complete model delta before writing: every resource added,
    changed, or removed; Capability and Journey acceptance Scenarios;
    relationship repairs; limitations; implementation work implied; and
    significant omissions, consequential modeling boundaries and material
@@ -115,8 +117,9 @@ Read before authoring:
     ```
 
     Fix every error and assess each warning. Green lint means structurally
-    sound, not implemented or verified, so then walk the rubric's **Check the
-    whole model before approval** list and fix what it finds before reporting.
+    sound, not implemented or verified, so walk the rubric's **Check the whole
+    model before approval** list again; a fix that changes product behavior
+    goes back to the user for approval before it is written.
 12. Report the approved delta and implementation acceptance contract. The next
     phase is implementation in the user's own workflow, followed by
     `businesslens-verify`.

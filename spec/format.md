@@ -1352,7 +1352,9 @@ the control that made it — changing a vote, changing an RSVP — is a Scenario
 the submitting Capability, not a Capability of its own; withdrawing it through a
 control of its own is. Putting an entry on a thing's list and taking it off — a
 tag, an assignee, a member — are two Capabilities even inside the thing's edit
-form, because each entry is a thing of its own. An on/off switch among a
+form, when each entry is a thing of its own: an Entity, or a person. A value
+inside one fact of the thing — a choice question's options, a snippet's tags
+kept as a fact — changes with that fact. An on/off switch among a
 settings section's settings stays part of that section's one Capability.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
@@ -1660,7 +1662,13 @@ scalar or `{ configuredBy: <entity-id> }`.
 
 `fact` defaults to a fact of the targeted Entity and may name another through
 `entity`, which is how thresholds and feature flags work: the value is a fact of
-a settings Entity and the Rule reads it. `state` says *the instance is in state
+a settings Entity and the Rule reads it. **Which instance a named `entity`
+reads is fixed by the grant:** when that Entity lies on the grant's `related`
+path, the condition reads the instance the path reaches — the one nearest the
+acting Entity where the type repeats — so a per-board role reads the acting
+person's own Board membership, never the membership being changed; when it lies
+off the path, the Entity has one instance, the Product's settings. A condition
+on the targeted thing itself names no `entity`. `state` says *the instance is in state
 X when the operation happens*: it must be a state of the targeted Entity, it is
 valid on every target but `creates`, and it cannot be combined with `entity`.
 It exists because two kinds of Step carry no state for a target to select by — a

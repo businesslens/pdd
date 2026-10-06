@@ -2124,12 +2124,42 @@ permits: []`)
         '  - text: The shopper submits checkout\n    kind: actor\n    actor: shopper',
         '  - text: The shopper submits checkout\n    kind: actor\n    actor: store-admin'
       ))
-      expect(run(cwd).errors).toContain(`${scenario}: an achieved Journey Scenario must carry its Journey Actor through at least two Capabilities; Steps of another Actor do not count`)
+      expect(run(cwd).errors).toContain(`${scenario}: an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities; Steps of another Actor, or of another Journey Actor, do not add up`)
     })
 
     it('counts the Journey Actor\'s own Capabilities, so the golden Journeys pass', () => {
       const cwd = fixtureCopy()
-      expect(run(cwd).errors.join('\n')).not.toContain('must carry its Journey Actor')
+      expect(run(cwd).errors.join('\n')).not.toContain('must carry one Journey Actor')
+    })
+
+    it('counts each Journey Actor apart, so two Actors using one Capability each carry nobody', () => {
+      const cwd = fixtureCopy()
+      const journey = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
+      const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+      writeFileSync(journey, readFileSync(journey, 'utf8').replace('actors: [shopper]', 'actors: [shopper, payment-gateway]'))
+      // The shopper browses, an admin places the order, the gateway settles it: one Capability per Journey Actor.
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+        '  - text: The shopper submits checkout\n    kind: actor\n    actor: shopper',
+        '  - text: The shopper submits checkout\n    kind: actor\n    actor: store-admin'
+      ))
+      expect(run(cwd).errors.join('\n')).toContain(`${scenario}: an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities`)
+    })
+
+    it('lets another Journey Actor take part while one Actor is carried through two Capabilities', () => {
+      const cwd = fixtureCopy()
+      const journey = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
+      writeFileSync(journey, readFileSync(journey, 'utf8').replace('actors: [shopper]', 'actors: [shopper, payment-gateway]'))
+      expect(run(cwd).errors.join('\n')).not.toContain('must carry one Journey Actor')
+    })
+
+    it('counts a Product Step attributed to the Journey Actor as theirs', () => {
+      const cwd = fixtureCopy()
+      const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+      writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+        '  - text: The shopper submits checkout\n    kind: actor\n    actor: shopper',
+        '  - text: The shopper submits checkout\n    kind: product\n    actor: shopper'
+      ))
+      expect(run(cwd).errors.join('\n')).not.toContain('must carry one Journey Actor')
     })
 
     it('warns when a Capability Scenario opens with the opposite of its Capability\'s verb', () => {
@@ -2142,6 +2172,37 @@ permits: []`)
       )
       const file = join(capabilities, 'follow-order/scenarios/unfollow-an-order.md')
       expect(run(cwd).warnings).toContain(`${file}: opens with "unfollow" under Capability "follow-order", whose verb is "follow"; opposite verbs are separate Capabilities`)
+    })
+
+    const oppositeCase = (capabilityId: string, scenarioId: string) => {
+      const cwd = fixtureCopy()
+      const capabilities = join(cwd, '.businesslens/capabilities')
+      cpSync(join(capabilities, 'track-order'), join(capabilities, capabilityId), { recursive: true })
+      const file = join(capabilities, `${capabilityId}/scenarios/${scenarioId}.md`)
+      renameSync(join(capabilities, `${capabilityId}/scenarios/check-an-order-and-its-refund.md`), file)
+      return { file, warnings: run(cwd).warnings }
+    }
+
+    it.each([
+      ['assign-order', 'unassign-an-order', 'unassign', 'assign'],
+      ['connect-order', 'disconnect-an-order', 'disconnect', 'connect'],
+      ['tag-order', 'untag-an-order', 'untag', 'tag'],
+      ['start-order', 'stop-an-order', 'stop', 'start'],
+      ['share-order', 'stop-sharing-an-order', 'stop sharing', 'share'],
+      ['mark-order-read', 'mark-an-order-unread', 'mark unread', 'mark read'],
+      ['mark-order-unread', 'mark-an-order-read', 'mark read', 'mark unread']
+    ])('warns on %s holding %s', (capabilityId, scenarioId, scenarioVerb, capabilityVerb) => {
+      const { file, warnings } = oppositeCase(capabilityId, scenarioId)
+      expect(warnings).toContain(`${file}: opens with "${scenarioVerb}" under Capability "${capabilityId}", whose verb is "${capabilityVerb}"; opposite verbs are separate Capabilities`)
+    })
+
+    it.each([
+      ['share-order', 'stop-an-order'],
+      ['mark-order-read', 'mark-an-order-read-in-bulk'],
+      ['assign-order', 'review-an-order'],
+      ['assign-order', 'assign-an-order-again']
+    ])('stays quiet on %s holding %s', (capabilityId, scenarioId) => {
+      expect(oppositeCase(capabilityId, scenarioId).warnings.join('\n')).not.toContain('opposite verbs are separate Capabilities')
     })
 
     it('leaves a Capability Scenario alone when its verb is not an opposite', () => {
@@ -2168,6 +2229,22 @@ permits: []`)
       // The Rule now governs every read of an order; only its path is under test here.
       expect(result.errors.join('\n')).not.toContain('"related"')
       expect(result.warnings.join('\n')).not.toContain('admits any AI agent')
+      expect(result.warnings.join('\n')).not.toContain('without passing a person')
+    })
+
+    it('warns when an AI agent grant names the agent but never the person it acts for', () => {
+      const cwd = fixtureCopy()
+      writeResource(join(cwd, '.businesslens/entities/ai-agent.md'), '---\nkind: system\nacts: external\nrelations:\n  - entity: order\n    verb: leaves\n    cardinality: one-to-many\n---\n\n# AI agent\n\nAn AI agent harness a shopper connects.\n')
+      writeRule(cwd, 'the-agent-that-left-it-reads-an-order', 'appliesTo:\n  - type: entity\n    id: order\n    effect: reads\npermits:\n  - related:\n      - { verb: leaves, entity: ai-agent }')
+      const rule = join(cwd, '.businesslens/business-rules/the-agent-that-left-it-reads-an-order.md')
+      expect(run(cwd).warnings).toContain(`${rule}: grant 1: reaches "ai-agent" without passing a person; walk "related" through the person who connected the agent`)
+    })
+
+    it('warns when a permission Rule names no effect', () => {
+      const cwd = fixtureCopy()
+      writeRule(cwd, 'only-a-shopper-handles-a-cart', 'appliesTo:\n  - type: entity\n    id: cart\npermits:\n  - actors: [shopper]')
+      const rule = join(cwd, '.businesslens/business-rules/only-a-shopper-handles-a-cart.md')
+      expect(run(cwd).warnings).toContain(`${rule}: target "entity:cart" names no "effect"; each operation gets its own permission Rule naming its effect`)
     })
 
     it('warns when an Actor changes an Entity whose other changes the Rules govern', () => {
@@ -2175,6 +2252,29 @@ permits: []`)
       // Creating a cart is governed; removing it at checkout is not.
       writeRule(cwd, 'only-a-shopper-creates-a-cart', 'appliesTo:\n  - type: entity\n    id: cart\n    effect: creates\npermits:\n  - actors: [shopper]')
       expect(run(cwd).warnings.join('\n')).toContain('"shopper" removes "cart", which no permission Rule selects')
+    })
+
+    it('counts a Product Step attributed to an Actor as that Actor\'s change', () => {
+      const cwd = fixtureCopy()
+      writeRule(cwd, 'only-a-shopper-creates-a-cart', 'appliesTo:\n  - type: entity\n    id: cart\n    effect: creates\npermits:\n  - actors: [shopper]')
+      // Every Step that empties the cart becomes a Product Step attributed to the shopper.
+      const files = [
+        'capabilities/place-order/scenarios/sell-the-last-available-unit.md',
+        'capabilities/place-order/scenarios/complete-checkout-without-review.md',
+        'capabilities/place-order/scenarios/complete-checkout.md',
+        'journeys/browse-and-buy/scenarios/cancel-an-order-before-fulfilment.md',
+        'journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md',
+        'journeys/browse-and-buy/scenarios/browse-and-complete-checkout-with-manual-confirmation.md',
+        'journeys/browse-buy-and-track/scenarios/buy-and-follow-the-order.md'
+      ].map(file => join(cwd, '.businesslens', file))
+      for (const file of files) {
+        const steps = readFileSync(file, 'utf8').split('\n  - text:')
+        writeFileSync(file, steps.map(step => step.includes('entity: cart, effect: removes')
+          ? step.replace('    kind: actor\n', '    kind: product\n')
+          : step).join('\n  - text:'))
+      }
+      const warnings = run(cwd).warnings.join('\n')
+      expect(warnings).toContain('"shopper" removes "cart", which no permission Rule selects')
     })
 
     it('stays quiet once a Rule says who may make that change', () => {
@@ -2195,6 +2295,13 @@ permits: []`)
       const cwd = fixtureCopy()
       const product = join(cwd, '.businesslens/product/product.md')
       writeFileSync(product, readFileSync(product, 'utf8').replace('limitations: []', 'limitations: ["Gift cards cannot be bought."]'))
+      expect(run(cwd).warnings.join('\n')).not.toContain('speaks about the model')
+    })
+
+    it('accepts a limitation about a language model\'s provider', () => {
+      const cwd = fixtureCopy()
+      const product = join(cwd, '.businesslens/product/product.md')
+      writeFileSync(product, readFileSync(product, 'utf8').replace('limitations: []', 'limitations: ["No customer data is retained in the model provider\'s logs."]'))
       expect(run(cwd).warnings.join('\n')).not.toContain('speaks about the model')
     })
   })

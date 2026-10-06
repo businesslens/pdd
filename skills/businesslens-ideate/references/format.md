@@ -86,7 +86,11 @@ and the people who hold configured roles are one acting Entity. A role held per
 container, such as an organization or a project, is held through a membership
 Entity that does not act, whose Role fact names the role. Such a role
 administers its container, not the Product: the container's settings and
-member pages stay `authenticated`, with the Role in a grant's `when`;
+member pages stay `authenticated`, with the Role in a grant's `when`. A
+condition's `entity` that lies on the grant's `related` path reads the instance
+the path reaches (nearest the acting Entity where the type repeats), so the
+Role read is the acting person's own membership; off the path, it is the
+Product's one settings instance;
 `restricted` is only the Product's own administration area. A relation that holds
 whatever role a person has (the sender of a message) is declared to each role
 Entity that can hold it, and ownership is one `related` grant per role. Facts
@@ -238,7 +242,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   earlier submission through the control that made it (a vote, an RSVP) is a
   Scenario of the submitting Capability. Putting an entry on a thing's list
   and taking it off (a tag, an assignee, a member) are two Capabilities even
-  inside its edit form; an on/off switch among a settings section's settings
+  inside its edit form when the entry is an Entity or a person; a value inside
+  one fact (a question's options) changes with that fact; an on/off switch among a settings section's settings
   stays part of that section's one Capability. An umbrella verb — manage, organize,
   handle — hides Capabilities; name each verb its controls show.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed

@@ -226,6 +226,17 @@ so it names that Capability.
 person follows, or an AI agent's proposal a person then accepts, joins two
 Capabilities in sequence but carries nobody: the goal changes hands.
 
+**A role condition read from the thing being changed.** When an admin changes a
+member's role, reading Role from the targeted membership grants by the victim's
+role, not the actor's. A condition on a path Entity reads the instance the path
+reaches; a condition on the target names no Entity.
+
+**Removing children with their parent, deferred.** Deleting a card removes
+other people's comments, and a grant broad enough to admit that cascade also
+admits deleting any comment directly. Saying "removed with its card" on the
+Step needs a field the report contract does not carry yet; until it does, a
+container's administrator is granted the removal openly, as moderation.
+
 ## AI
 
 **A built-in AI assistant as an Entity that acts.** It reads like a

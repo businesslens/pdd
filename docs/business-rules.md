@@ -57,6 +57,12 @@ says whether they may.
 - **Alternative grants share one Rule.** Two permission Rules on the same
   operation must both allow it, so *the owner may* and *an admin may*, written
   apart, would mean only someone who is both.
+- **One permission Rule per operation.** Creating, changing and removing a
+  Card are three Rules, each naming its `effect`, even when the same people may
+  do all three.
+- **A role condition reads the actor's own role.** On a per-board role, the
+  Role a grant checks is the acting person's own membership, reached through
+  `related`, never the membership being changed.
 - **Ordinary copy is design; contractual wording is a Rule.** When exact words
   are required, the Rule says so and cites the authoritative
   [Reference](./references.md).
