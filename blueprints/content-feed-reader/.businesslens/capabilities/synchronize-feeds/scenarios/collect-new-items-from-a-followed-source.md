@@ -29,6 +29,18 @@ steps:
       mobile-source-focused:
         place: reader-mobile::source-focused-library::source-list
     actor: reader
+  - text: The Product records when each feed was last read successfully
+    kind: product
+    actor: reader
+    entities:
+      - { entity: source, facts: [ Last read ] }
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
+      mobile-source-focused:
+        place: reader-mobile::source-focused-library::source-list
   - text: Items the Reader's library does not already hold are collected
     kind: product
     actor: reader
