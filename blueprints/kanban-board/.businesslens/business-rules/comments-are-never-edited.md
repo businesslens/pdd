@@ -8,8 +8,8 @@ permits: []
 
 # Nobody edits a comment
 
-A posted comment keeps the words it was posted with. Its author may delete it,
-but nobody changes it.
+A posted comment keeps the words it was posted with. Its author or an admin of
+the board may delete it, but nobody changes it.
 
 ## Rationale
 

@@ -3,11 +3,13 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Teammate asks to delete a card
+  - text: The Teammate asks to delete a comment a colleague wrote
     kind: actor
     actor: teammate
     entities:
-      - { entity: card, effect: reads, facts: [Title] }
+      - { entity: comment, effect: reads, facts: [Text] }
+      - { entity: teammate, as: colleague, effect: reads, facts: [Name] }
+      - { entity: card, effect: reads, facts: [] }
     contexts:
       web:
         place: board-web::card-detail
@@ -20,12 +22,11 @@ steps:
     contexts:
       web:
         place: board-web::card-detail
-  - text: The Product asks the Teammate to confirm that the card and its comments go for good
+  - text: The Product asks the Teammate to confirm that the colleague's comment goes for good
     kind: product
     actor: teammate
     entities:
-      - { entity: card, effect: reads, facts: [Title] }
-      - { entity: comment, effect: reads, facts: [] }
+      - { entity: comment, effect: reads, facts: [Text] }
     contexts:
       web:
         place: board-web::card-detail
@@ -36,37 +37,34 @@ steps:
     contexts:
       web:
         place: board-web::card-detail
-  - text: The Product deletes the card for good, with its comments and stall flags
+  - text: The Product deletes the comment for good
     kind: product
     actor: teammate
     entities:
-      - { entity: card, effect: removes }
       - { entity: comment, effect: removes }
-      - { entity: stall-flag, as: raised, effect: removes, from: Raised }
-      - { entity: stall-flag, as: cleared, effect: removes, from: Cleared }
     contexts:
       web:
         place: board-web::card-detail
-  - text: Its column no longer shows it, for every member
+  - text: The comment is gone from the card for every member, and the other comments keep their order
     kind: condition
     actor: teammate
     entities:
-      - { entity: column, effect: reads, facts: [] }
-      - { entity: board, effect: reads, facts: [] }
+      - { entity: comment, effect: reads, facts: [Posted at] }
+      - { entity: card, effect: reads, facts: [] }
     contexts:
       web:
-        place: board-web::board
+        place: board-web::card-detail
 ---
 
-# Delete a card
+# Delete a colleague's comment as an admin
 
 ## Trigger
 
-An admin decides a card is not work the team will do, such as one added by mistake.
+An admin of the board decides a comment someone else wrote does not belong on the card.
 
 ## Outcome
 
-The card, its comments and its stall flags are gone for good, and the other cards in its column keep their order.
+The comment is gone for good, and the card, its author's membership and everyone else's comments are unchanged.
 
 ## Edge cases
 

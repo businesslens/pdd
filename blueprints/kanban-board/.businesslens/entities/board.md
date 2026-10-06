@@ -21,3 +21,4 @@ with it.
 
 - **Name** — what the team calls the board
 - **Stall threshold** — how many calendar days, weekends included, a card may stay in one column before the Product flags it as stalled; seven unless an admin changes it
+- **Member count** — how many Teammates are members of it; none only while the Product is creating it, before its creator becomes its first admin

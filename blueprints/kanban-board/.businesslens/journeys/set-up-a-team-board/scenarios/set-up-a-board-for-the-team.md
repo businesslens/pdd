@@ -19,7 +19,7 @@ steps:
     capability: create-board
     entities:
       - { entity: board-membership, as: own, effect: creates, facts: [Role] }
-      - { entity: board, effect: reads, facts: [] }
+      - { entity: board, effect: reads, facts: [Member count] }
     contexts:
       web:
         place: board-web::board-list
