@@ -14,6 +14,10 @@ steps:
     kind: product
     entities:
       - { entity: source, effect: reads, facts: [ Feed address ] }
+  - text: The Product records when the feed was last read successfully
+    kind: product
+    entities:
+      - { entity: source, facts: [ Last read ] }
   - text: Items the library does not already hold are collected
     kind: product
     entities:

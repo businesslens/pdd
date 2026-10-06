@@ -19,6 +19,7 @@ steps:
         place: reader-mobile::source-focused-library::source-list
   - text: The Product reports that the source could not be reached
     kind: product
+    actor: reader
     entities:
       - { entity: source, from: Reachable, to: Unreachable, facts: [] }
     contexts:
