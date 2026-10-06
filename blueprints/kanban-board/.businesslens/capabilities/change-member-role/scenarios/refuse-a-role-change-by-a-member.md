@@ -1,18 +1,19 @@
 ---
-kind: primary
+kind: validation
 routes:
   web: Web
 steps:
-  - text: The Teammate changes another member's role to Admin
+  - text: The Teammate, whose role on the board is Member, tries to change a colleague's role
     kind: actor
     actor: teammate
     entities:
       - { entity: board-membership, as: other, effect: reads, facts: [Role] }
       - { entity: teammate, as: colleague, effect: reads, facts: [Name] }
+      - { entity: board, effect: reads, facts: [] }
     contexts:
       web:
         place: board-web::board-settings
-  - text: The Product confirms the Teammate is an admin of the board
+  - text: The Product checks the role of the Teammate on the board, not the colleague's, and refuses
     kind: product
     actor: teammate
     entities:
@@ -21,23 +22,27 @@ steps:
     contexts:
       web:
         place: board-web::board-settings
-  - text: The other member now holds the role Admin on the board
-    kind: product
+  - text: The colleague's role is unchanged
+    kind: condition
     actor: teammate
     entities:
-      - { entity: board-membership, as: other, effect: changes, facts: [Role] }
+      - { entity: board-membership, as: other, effect: reads, facts: [Role] }
       - { entity: board, effect: reads, facts: [] }
     contexts:
       web:
         place: board-web::board-settings
 ---
 
-# Make a member an admin
+# Refuse a role change by a member
 
 ## Trigger
 
-An admin wants another member to share in arranging the board.
+A Teammate whose role on the board is Member tries to make a colleague an admin, or an admin a Member.
 
 ## Outcome
 
-The member is an admin of the board, and every other membership is unchanged.
+Every role on the board is unchanged.
+
+## Edge cases
+
+- The Member tries to make themselves an admin → refused the same way.

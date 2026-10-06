@@ -11,9 +11,11 @@ permits:
 
 # Only members and their AI agents open a board
 
-A board and everything on it are visible to the Teammates who are its members,
-to an AI agent a member has connected, and to the Product's own check for
-stalled cards. Anyone else cannot open the board or learn that it exists.
+A board is visible to the Teammates who are its members, to an AI agent a
+member has connected, and to the Product's own check for stalled cards. Anyone
+else cannot open the board or learn that it exists. What is on it, its columns,
+cards, comments, stall flags and proposed cards, is governed the same way by a
+Rule of its own.
 
 ## Rationale
 

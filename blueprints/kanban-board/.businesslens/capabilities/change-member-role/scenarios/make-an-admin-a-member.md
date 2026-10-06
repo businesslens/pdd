@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Teammate changes another member's role to Admin
+  - text: The Teammate changes another admin's role to Member
     kind: actor
     actor: teammate
     entities:
@@ -12,7 +12,7 @@ steps:
     contexts:
       web:
         place: board-web::board-settings
-  - text: The Product confirms the Teammate is an admin of the board
+  - text: The Product confirms the Teammate is an admin of the board, and that the Teammate stays one
     kind: product
     actor: teammate
     entities:
@@ -21,7 +21,7 @@ steps:
     contexts:
       web:
         place: board-web::board-settings
-  - text: The other member now holds the role Admin on the board
+  - text: The other member now holds the role Member on the board
     kind: product
     actor: teammate
     entities:
@@ -32,12 +32,12 @@ steps:
         place: board-web::board-settings
 ---
 
-# Make a member an admin
+# Make an admin a member
 
 ## Trigger
 
-An admin wants another member to share in arranging the board.
+An admin wants another admin to stop arranging the board and go back to working on its cards.
 
 ## Outcome
 
-The member is an admin of the board, and every other membership is unchanged.
+The other Teammate is a Member of the board, the Teammate is still its admin, and every other membership is unchanged.
