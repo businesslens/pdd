@@ -327,7 +327,7 @@ describe('local Product Report server', () => {
     expect((await get(viewer.url)).status).toBe(200)
   })
 
-  it('reports and adds the GitHub star only from the report itself', async () => {
+  it('reports, adds and removes the GitHub star only from the report itself', async () => {
     let starred = false
     let fail = false
     const githubStar: GithubStarClient = {
@@ -335,6 +335,10 @@ describe('local Product Report server', () => {
       star: async () => {
         if (fail) throw new Error('offline')
         starred = true
+      },
+      unstar: async () => {
+        if (fail) throw new Error('offline')
+        starred = false
       }
     }
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, githubStar })
@@ -359,15 +363,32 @@ describe('local Product Report server', () => {
     expect(await accepted.json()).toEqual({ state: 'starred' })
     expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'starred' })
 
-    const unsupported = await fetch(path, { method: 'DELETE', headers: { origin: viewer.url } })
+    // Nor can it unstar.
+    for (const headers of [{}, { origin: 'https://example.com' }, { origin: 'null' }] as Record<string, string>[]) {
+      expect((await fetch(path, { method: 'DELETE', headers })).status).toBe(403)
+    }
+    expect(starred).toBe(true)
+
+    fail = true
+    expect((await fetch(path, { method: 'DELETE', headers: { origin: viewer.url } })).status).toBe(502)
+    expect(starred).toBe(true)
+
+    fail = false
+    const removed = await fetch(path, { method: 'DELETE', headers: { origin: viewer.url } })
+    expect(removed.status).toBe(200)
+    expect(await removed.json()).toEqual({ state: 'not-starred' })
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'not-starred' })
+
+    const unsupported = await fetch(path, { method: 'PUT', headers: { origin: viewer.url } })
     expect(unsupported.status).toBe(405)
-    expect(unsupported.headers.get('allow')).toBe('GET, HEAD, POST')
+    expect(unsupported.headers.get('allow')).toBe('GET, HEAD, POST, DELETE')
   })
 
   it('reports the GitHub star as unavailable when gh cannot answer', async () => {
     const githubStar: GithubStarClient = {
       state: async () => { throw new Error('gh exploded') },
-      star: async () => {}
+      star: async () => {},
+      unstar: async () => {}
     }
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, githubStar })
     viewers.push(viewer)
