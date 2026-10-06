@@ -1,7 +1,5 @@
 ---
 appliesTo:
-  - type: capability
-    id: view-status-page
   - type: entity
     id: component
     effect: reads

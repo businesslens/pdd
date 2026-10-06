@@ -29,7 +29,6 @@ what is working right now. Operators list the components of their service and
 set each one's status, declare incidents and post updates on a timeline until
 they are resolved, and schedule maintenance ahead of time. Visitors read the
 page without an account and can subscribe by email to hear about every update.
-
 During an incident an operator can ask for a draft: from the operator's rough
 notes, the Product fills in the text of the next update with a language model.
 
