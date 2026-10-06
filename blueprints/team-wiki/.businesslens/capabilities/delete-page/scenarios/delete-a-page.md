@@ -24,18 +24,19 @@ steps:
     kind: actor
     actor: member
     entities:
-      - { entity: page, effect: removes }
+      - { entity: page, effect: reads, facts: [] }
     contexts:
       web:
         place: wiki-web::workspace::space
-  - text: The Product deletes its revisions with it, and every suggestion left for it, whatever its state
+  - text: The Product deletes the page with its revisions and every suggestion left for it, whatever its state
     kind: product
     actor: member
     entities:
-      - { entity: revision, effect: removes }
-      - { entity: suggestion, as: proposed,  effect: removes, from: Proposed }
-      - { entity: suggestion, as: accepted,  effect: removes, from: Accepted }
-      - { entity: suggestion, as: dismissed, effect: removes, from: Dismissed }
+      - { entity: page,       effect: removes }
+      - { entity: revision,   effect: removes, with: page }
+      - { entity: suggestion, as: proposed,  effect: removes, from: Proposed,  with: page }
+      - { entity: suggestion, as: accepted,  effect: removes, from: Accepted,  with: page }
+      - { entity: suggestion, as: dismissed, effect: removes, from: Dismissed, with: page }
     contexts:
       web:
         place: wiki-web::workspace::space

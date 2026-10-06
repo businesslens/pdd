@@ -10,5 +10,5 @@ permits:
 
 # Only an Editor deletes a space's pages
 
-A page is deleted, with its history, only by a Member whose
-role in that space is Editor, and only once they confirm.
+A page is deleted, with its history and every suggestion left for it, only by
+a Member whose role in that space is Editor, and only once they confirm.
