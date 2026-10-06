@@ -24,10 +24,10 @@ steps:
     actor: creator
     entities:
       - { entity: form, effect: removes, from: Draft }
-      - { entity: choice-question, as: included-choice, effect: removes, from: Included }
-      - { entity: choice-question, as: proposed-choice, effect: removes, from: Proposed }
-      - { entity: entry-question, as: included-entry, effect: removes, from: Included }
-      - { entity: entry-question, as: proposed-entry, effect: removes, from: Proposed }
+      - { entity: choice-question, as: included-choice, effect: removes, from: Included, with: form }
+      - { entity: choice-question, as: proposed-choice, effect: removes, from: Proposed, with: form }
+      - { entity: entry-question, as: included-entry, effect: removes, from: Included, with: form }
+      - { entity: entry-question, as: proposed-entry, effect: removes, from: Proposed, with: form }
     contexts:
       web:
         place: forms-web::form-workspace::form-detail
