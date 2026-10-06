@@ -3,7 +3,7 @@ kind: primary
 routes:
   web: Web
 steps:
-  - text: The Owner types a word no tag has into the open note's tags
+  - text: The Owner types a word no tag has into the open note's tags and adds it
     kind: actor
     actor: owner
     entities:
@@ -12,16 +12,7 @@ steps:
     contexts:
       web:
         place: notes-web::note-editor
-  - text: The Owner saves the note
-    kind: actor
-    actor: owner
-    entities:
-      - { entity: note, effect: reads, facts: [] }
-
-    contexts:
-      web:
-        place: notes-web::note-editor
-  - text: The Product creates the tag and keeps the note with it on
+  - text: The Product creates the tag and puts it on the note
     kind: product
     actor: owner
     entities:

@@ -8,7 +8,7 @@ permits:
 # Only the owner removes a suggestion
 
 A proposed suggestion goes away only when the Owner who keeps its note deletes
-that note. The AI agent that left it cannot withdraw it.
+that note, after confirming. The AI agent that left it cannot withdraw it.
 
 ## Rationale
 

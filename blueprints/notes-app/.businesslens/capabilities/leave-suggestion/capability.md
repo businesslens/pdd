@@ -8,7 +8,7 @@ references:
     title: Notes assumptions
 ---
 
-# Organization suggestions
+# Suggestion leaving
 
 Lets the AI agent an Owner connects read their notes and leave a suggestion for
 one note at a time: an existing notebook to file it in, tags to put on it, and

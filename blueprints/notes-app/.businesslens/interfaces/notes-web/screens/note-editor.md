@@ -9,7 +9,8 @@ entryPoints:
 
 # Note editor
 
-One note opened to work on: its title, body and tags to edit and save together,
-the notebook it is filed in, and the notes it links to. From here the owner
-changes the words, links another note, tags it, files or moves it — into a
-notebook created on the spot if needed — and deletes it.
+One note opened to work on: its title and body to edit and save together, the
+tags it carries, the notebook it is filed in, and the notes it links to. From
+here the owner changes the words, links another note, puts a tag on it or takes
+one off, files or moves it — into a notebook created on the spot if needed —
+and deletes it.

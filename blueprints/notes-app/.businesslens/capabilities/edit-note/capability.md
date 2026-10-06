@@ -5,12 +5,10 @@ availability: [ { place: notes-web }, { place: notes-mobile } ]
 
 # Note editing
 
-Changes a note's title, body, links and tags, kept together when the Owner
-saves, without changing where it is filed. Saving a tag no note carried before
-creates it, and taking a tag off its last note ends it. Tags are chosen on the
-web.
+Changes a note's title, body and links, kept together when the Owner saves,
+without changing its tags or where it is filed.
 
 ## Intent
 
-Keep everything about a note's own words and grouping in one place, so tagging
-across notebooks never means filing a note twice.
+Let the Owner keep working on a thought after capturing it, and connect it to
+the notes it relates to.
