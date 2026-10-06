@@ -10,7 +10,7 @@ permits:
 
 # Only the board's admins add columns to it
 
-A column is added to a board only by a Teammate whose role on that board is Admin. Creating a board gives it its first columns.
+A column is added to a board only by a Teammate whose role on that board is Admin. Creating a board gives it its first columns once its creator is its first admin.
 
 ## Rationale
 

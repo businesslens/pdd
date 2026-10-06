@@ -8,9 +8,10 @@ permits:
     when: [{ entity: board-membership, fact: Role, is: Admin }]
 ---
 
-# Only the board's admins rename its columns
+# Only the board's admins rename or move its columns
 
-A column is renamed only by a Teammate whose role on that board is Admin.
+A column is renamed, or moved to another place among the board's columns, only
+by a Teammate whose role on that board is Admin.
 
 ## Rationale
 

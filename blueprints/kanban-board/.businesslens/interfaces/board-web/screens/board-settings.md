@@ -11,5 +11,5 @@ entryPoints:
 
 One board's name and stall threshold, and its members with the role each
 holds. Every member sees them; admins change the name and threshold, add
-members, change their roles and remove them here, and any member leaves the
-board from here.
+members, change their roles, remove them and delete the board here, and any
+member leaves the board from here.

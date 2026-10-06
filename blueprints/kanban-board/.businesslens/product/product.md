@@ -8,12 +8,12 @@ authors:
 license: MIT
 languages: [en]
 limitations:
-  - Bring your own AI agent; the Product does not include one.
   - Boards are private to their members. There is no public link or guest access.
   - A Teammate is added to a board by the email address of an existing account; there is no invitation for someone without one.
-  - Boards are never deleted; their members leave them instead.
+  - Deleted boards, cards and comments are gone for good; there is no trash to restore them from.
   - Cards are never archived. Finished work stays in the board's last column.
   - Comments are never edited.
+  - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research
     role: context

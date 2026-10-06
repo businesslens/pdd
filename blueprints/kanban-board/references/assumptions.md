@@ -8,8 +8,9 @@ These are assumptions to validate, not claims that research has proved them.
   members, and Members who work on cards.
 - To do, Doing and Done are the columns most teams start from, and they rename
   or add columns once the board is in use.
-- Seven days in one column is a sensible default before a card counts as
-  stalled, and teams adjust it per board rather than per column.
+- Seven calendar days in one column, weekends included, is a sensible default
+  before a card counts as stalled, and teams adjust it per board rather than
+  per column.
 - Teams want stalled cards flagged by the board itself, whether or not anyone
   has connected an AI agent.
 - A stall flag that clears when the card moves is enough; members do not need
@@ -20,7 +21,7 @@ These are assumptions to validate, not claims that research has proved them.
   proposed for a new goal.
 - Teams treat the board's last column as done, so finished cards do not need
   to be archived; cards added by mistake are deleted instead.
-- A board outlives the work on it; members who are done with one leave it
-  rather than delete it.
+- Members who are done with a board leave it; deleting a whole board, with
+  everyone's work on it, is rare enough to rest with its admins.
 
 Future research may change the Product Model; this file does not override it.
