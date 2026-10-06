@@ -11,6 +11,7 @@ limitations:
   - Notes belong to one person. There is no sharing, publishing, or collaboration.
   - There is no trash or version history; a deleted note is gone for good.
   - Tags are never renamed; a tag ends when no note carries it.
+  - The Owner signs in with an existing account; signing up and managing accounts are not part of this product.
   - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research

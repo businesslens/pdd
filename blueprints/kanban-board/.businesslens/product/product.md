@@ -13,6 +13,7 @@ limitations:
   - Deleted boards, cards and comments are gone for good; there is no trash to restore them from.
   - Cards are never archived. Finished work stays in the board's last column.
   - Comments are never edited.
+  - Teammates sign in with an existing account; signing up and managing accounts are not part of this product.
   - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research

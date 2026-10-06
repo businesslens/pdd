@@ -14,6 +14,9 @@ limitations:
   - When the Developer asks, a language model drafts a title, a description and tags into the editor, and may be wrong. The Developer decides what is saved, and everything else works while the model is unavailable.
   - Highlighting follows the language the Developer chooses. The Product never runs, checks or formats code.
   - An unlisted snippet's address cannot be guessed, but anyone who holds it can read the snippet.
+  - Developers sign in with an existing account to write snippets, while anyone reads public and unlisted ones without one; signing up and managing accounts are not part of this product.
+  - There are no profile pages listing a Developer's snippets.
+  - Public snippets are not reported or moderated within the product.
 references:
   - kind: research
     role: context

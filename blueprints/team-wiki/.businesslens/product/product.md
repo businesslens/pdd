@@ -14,6 +14,7 @@ limitations:
   - Two editors do not edit one page together live. The second save meets the first as a conflict to resolve, never a silent overwrite.
   - There are no comments, page watching or notifications.
   - The wiki keeps no record of the questions a Member asks their AI agent; only suggestions are kept.
+  - Members and Administrators sign in with an existing account, and who belongs to the team is managed outside the wiki.
   - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research

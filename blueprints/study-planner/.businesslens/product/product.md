@@ -12,6 +12,7 @@ limitations:
   - The planner does not read from or write to outside calendars, and sends no reminders.
   - Study plans are built from the Student's own topic estimates and weekly availability. The planner never judges what the Student has learned or how hard a topic is.
   - Logged study is never edited; a session logged by mistake is deleted and logged again.
+  - The Student signs in with an existing account; signing up and managing accounts are not part of this product.
   - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research

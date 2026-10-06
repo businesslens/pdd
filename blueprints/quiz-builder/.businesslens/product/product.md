@@ -13,6 +13,7 @@ limitations:
   - A short answer scores only when it matches one of the creator's accepted answers; anything else stays incorrect until the creator grades it.
   - A language model drafts questions from source material and may be wrong. The creator accepts or dismisses each draft, and everything else works while the model is unavailable.
   - Classes are rosters for sharing quizzes, with no due dates, timers or gradebook. A learner leaves a class only when its creator removes them, and a quiz stays assigned to a class once shared with it.
+  - Creators and learners sign in with an existing account; signing up and managing accounts are not part of this product.
 references:
   - kind: research
     role: context

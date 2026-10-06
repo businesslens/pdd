@@ -12,6 +12,7 @@ limitations:
   - Import reads a bookmarks file exported from a browser. Nothing stays in sync with a browser, and nothing is exported back to one.
   - The Product keeps links, not copies of pages. It does not archive page contents or check whether a link still works.
   - Tags are never renamed. A tag is removed when the last bookmark carrying it loses it.
+  - The Owner signs in with an existing account; signing up and managing accounts are not part of this product.
   - Bring your own AI agent; the Product does not include one.
 references:
   - kind: research

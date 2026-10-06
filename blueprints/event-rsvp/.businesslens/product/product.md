@@ -15,6 +15,7 @@ limitations:
   - The Product does not sell tickets, take payments or check guests in at the door.
   - Messages to guests go out by email in one direction and are never changed or deleted once sent; guests do not reply inside the Product.
   - A language model drafts a message's wording from the event's details and may be wrong. The host edits and decides what is sent, and messaging works while it is unavailable.
+  - Hosts sign in with an existing account; signing up and managing accounts are not part of this product.
 references:
   - kind: research
     role: context

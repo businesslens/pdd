@@ -11,6 +11,8 @@ limitations:
   - Cards are plain front-and-back text. There are no images, audio, or other kinds of card.
   - A shared deck opens only for other Learners, who may copy it but never edit it. There is no anonymous preview, public catalog of decks, or commenting.
   - A language model drafts card proposals from the notes a Learner pastes and may be wrong. The Learner decides what reaches a deck, and everything else works while the model is unavailable.
+  - Learners sign in with an existing account; signing up and managing accounts are not part of this product.
+  - The Product sends no study reminders; a Learner sees which cards are due when they open a deck.
 references:
   - kind: research
     role: context

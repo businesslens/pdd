@@ -12,6 +12,7 @@ limitations:
   - A habit is done or not done on a day, so a check-in holds nothing to edit; a wrong day is unchecked. There are no quantities, timers, notes or habits to avoid.
   - The Product sends no reminders or notifications; the Owner comes to it.
   - A language model writes each weekly reflection's summary and drafts its suggested adjustment, and it may be wrong; the Owner decides every suggestion. While it is unavailable, a reflection carries its consistency figures alone and everything else works.
+  - The Owner signs in with an existing account; signing up and managing accounts are not part of this product.
 references:
   - kind: research
     role: context

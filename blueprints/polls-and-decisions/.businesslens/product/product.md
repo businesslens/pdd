@@ -14,6 +14,7 @@ limitations:
   - A decision is never deleted, and once recorded it is final. Revisiting a question means asking it again in a new poll.
   - A language model writes comment summaries and draft decisions and may be wrong; only the poll's owner sees them, and nothing is the team's decision until the owner records it. While the model is unavailable, everything else works and the owner writes the decision themselves.
   - The Product sends no reminders, notifications or messages outside the web application.
+  - Members sign in with an existing account, and who belongs to the team is managed outside the product.
 references:
   - kind: research
     role: context

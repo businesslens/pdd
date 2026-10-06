@@ -12,6 +12,7 @@ limitations:
   - The product reads syndicated feeds but does not publish feeds of its own.
   - Items are never deleted from a library; unfollowing a source keeps everything it already delivered.
   - A source keeps the name and feed address it was followed with; changing either means unfollowing it and following it again.
+  - Readers sign in with an existing account, while Visitors read published collections without one; signing up and managing accounts are not part of this product.
 references:
   - kind: visual
     role: intent

@@ -15,6 +15,7 @@ limitations:
   - Incidents, their updates and maintenance windows are never deleted, and a posted update is never edited; a correction is a later update.
   - A maintenance window's times and components are never edited; a changed plan is a cancelled window and a new one.
   - A language model drafts an update's message from the Operator's notes and can get it wrong; the Operator edits it and decides whether to post it. While the language model is unavailable, Operators write every update themselves.
+  - Operators sign in with an existing account, and who belongs to the operator team is managed outside the product; Visitors read the page without one.
 references:
   - kind: research
     role: context

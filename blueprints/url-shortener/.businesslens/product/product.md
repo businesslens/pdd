@@ -14,6 +14,7 @@ limitations:
   - Analytics count follows and describe where they came from; they never tell Visitors apart, so there are no unique-visitor counts.
   - Links are never deleted; disabling one stops its redirect, and its slug is never given to another link.
   - An API key keeps the name it was created with; it is revoked, never edited.
+  - The Owner signs in with an existing account, while Visitors follow short links without one; signing up and managing accounts are not part of this product.
 references:
   - kind: research
     role: context
