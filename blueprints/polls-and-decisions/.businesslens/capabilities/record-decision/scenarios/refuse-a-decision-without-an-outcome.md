@@ -3,11 +3,12 @@ kind: validation
 routes:
   web: Web
 steps:
-  - text: The Member clears the outcome of a draft decision they own
+  - text: The Member writes a rationale but leaves the outcome empty on the decision for a poll they own
     kind: actor
     actor: member
     entities:
-      - { entity: decision, facts: [Outcome] }
+      - { entity: poll, effect: reads, facts: [] }
+      - { entity: decision, effect: reads, facts: [] }
     contexts:
       web:
         place: polls-web::decision
@@ -19,19 +20,11 @@ steps:
     contexts:
       web:
         place: polls-web::decision
-  - text: The Product explains that a decision needs an outcome before it is recorded
+  - text: The Product explains that a decision needs an outcome before it is recorded, and keeps the rationale as written
     kind: product
     actor: member
     entities:
       - { entity: decision, effect: reads, facts: [] }
-    contexts:
-      web:
-        place: polls-web::decision
-  - text: The decision stays a draft with its rationale as written
-    kind: condition
-    actor: member
-    entities:
-      - { entity: decision, effect: reads, facts: [Rationale] }
     contexts:
       web:
         place: polls-web::decision
@@ -41,9 +34,9 @@ steps:
 
 ## Trigger
 
-The poll's owner records a draft decision whose outcome is empty.
+The poll's owner records a decision whose outcome is empty.
 
 ## Outcome
 
-Nothing is recorded, the team sees no decision, and the owner keeps the draft
-to complete.
+Nothing is recorded, the team sees no decision, and the owner keeps what they
+wrote to complete.

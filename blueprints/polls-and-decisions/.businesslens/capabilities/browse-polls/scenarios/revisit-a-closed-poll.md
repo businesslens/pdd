@@ -57,4 +57,4 @@ The Member is on the closed poll and sees the decision it led to.
 
 ## Edge cases
 
-- No decision has been recorded for it yet → the poll shows none, and nothing of a draft.
+- No decision has been recorded for it yet → the poll shows none.

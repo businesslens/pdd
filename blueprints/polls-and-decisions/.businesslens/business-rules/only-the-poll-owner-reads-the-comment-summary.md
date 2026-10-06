@@ -2,15 +2,16 @@
 appliesTo:
   - type: entity
     id: poll
+    effect: reads
     facts: [Comment summary]
 permits:
   - related: [{ verb: owns, entity: member }]
 ---
 
-# Only the poll owner asks for and reads the comment summary
+# Only the poll owner reads the comment summary
 
-Only the Member who owns a poll asks for a generated summary of its comments,
-and only they see it. Other Members read the comments themselves.
+Only the Member who owns a poll sees the generated summary of its comments.
+Other Members read the comments themselves.
 
 ## Rationale
 

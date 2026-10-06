@@ -1,17 +1,16 @@
 ---
-domain: decisions
+domain: polls
 availability: [{ place: polls-web }]
 ---
 
 # Decision drafting
 
-Starts the decision for a closed poll as a draft only its owner sees. When the
-owner asks for a generated draft, the Product sends the question, the final
-results and the comments to a language model and keeps the proposed outcome and
-rationale it returns; otherwise the draft starts blank for the owner to write.
+On a closed poll, when its owner asks, the Product sends the question, the final
+results and the comments to a language model and opens the poll's decision with
+the proposed outcome and rationale filled in, marked as generated. Nothing is
+kept: the draft lasts until the owner records the decision or leaves.
 
 ## Intent
 
 Give the owner a head start on the record without letting anything become the
-team's decision before the owner has read it. A generated draft is only ever a
-proposal the owner edits and records, or leaves.
+team's decision before the owner has read and recorded it.

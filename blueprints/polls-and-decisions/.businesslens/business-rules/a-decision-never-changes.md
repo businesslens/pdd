@@ -3,11 +3,10 @@ appliesTo:
   - type: entity
     id: decision
     effect: changes
-    from: Recorded
 permits: []
 ---
 
-# A recorded decision never changes
+# A decision never changes
 
 Once recorded, a decision's outcome, rationale and final results stay as they
 were recorded, for everyone, including its poll's owner.

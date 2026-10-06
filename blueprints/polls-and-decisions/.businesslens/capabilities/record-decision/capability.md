@@ -5,8 +5,9 @@ availability: [{ place: polls-web }]
 
 # Decision recording
 
-Lets the poll's owner edit a draft decision's outcome and rationale and record
-it, making it the team's final, shared record.
+Lets a closed poll's owner write its decision's outcome and rationale, in their
+own words or edited from a generated draft, and record it, making it the team's
+final, shared record.
 
 ## Intent
 

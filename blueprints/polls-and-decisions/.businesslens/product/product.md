@@ -8,11 +8,11 @@ authors:
 license: MIT
 languages: [en]
 limitations:
-  - A poll's question, options and settings never change once it is open, and a poll is never deleted.
+  - A poll's question, options and settings never change once it is open. Its owner can delete it, with its comments, until the first vote is cast, and never after.
   - A vote can be changed until its poll closes, but never withdrawn.
-  - Comments are never edited or deleted.
+  - Comments are never edited, and are deleted only with their poll.
   - A decision is never deleted, and once recorded it is final. Revisiting a question means asking it again in a new poll.
-  - A language model writes comment summaries and draft decisions from one poll's question, options, results and comments, and can misread the discussion. Only the poll's owner sees what it writes, and nothing reaches the team until the owner records a decision. While the model is unavailable, the owner gets no new summary and writes the decision themselves.
+  - A language model writes comment summaries and draft decisions and may be wrong; only the poll's owner sees them, and nothing is the team's decision until the owner records it. While the model is unavailable, everything else works and the owner writes the decision themselves.
   - The Product sends no reminders, notifications or messages outside the web application.
 references:
   - kind: research

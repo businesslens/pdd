@@ -22,20 +22,20 @@ steps:
     contexts:
       web:
         place: polls-web::poll
-  - text: The Product generates a draft decision with a language model from the question, final results and comments
+  - text: The Product sends the poll's question, final results and comments to a language model
     kind: product
     actor: member
     capability: draft-decision
     entities:
       - { entity: poll, effect: reads, facts: [Question, Tally] }
       - { entity: comment, effect: reads, facts: [Text] }
-      - { entity: decision, effect: creates, to: Draft, facts: [Outcome, Rationale, Final results, Generated draft] }
-  - text: The Product opens the draft for the Member, marked as generated and ready to edit
+  - text: The Product opens the poll's decision with the returned outcome and rationale filled in, marked as generated and not yet saved
     kind: product
     actor: member
     capability: draft-decision
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Rationale, Final results, Generated draft] }
+      - { entity: decision, effect: reads, facts: [] }
+      - { entity: poll, effect: reads, facts: [Question, Tally] }
     contexts:
       web:
         place: polls-web::decision
@@ -43,8 +43,7 @@ steps:
     kind: actor
     actor: member
     capability: record-decision
-    entities:
-      - { entity: decision, facts: [Outcome, Rationale] }
+    entities: []
     contexts:
       web:
         place: polls-web::decision
@@ -53,7 +52,7 @@ steps:
     actor: member
     capability: record-decision
     entities:
-      - { entity: decision, from: Draft, to: Recorded, facts: [Recorded at] }
+      - { entity: decision, effect: creates, facts: [Outcome, Rationale, Final results, Generated draft, Recorded at] }
     contexts:
       web:
         place: polls-web::decision
@@ -62,7 +61,7 @@ steps:
     actor: member
     capability: record-decision
     entities:
-      - { entity: decision, effect: reads, facts: [Outcome, Recorded at] }
+      - { entity: decision, effect: reads, facts: [Outcome, Generated draft, Recorded at] }
     contexts:
       web:
         place: polls-web::decision
