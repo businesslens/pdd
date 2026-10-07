@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-10-07
+
 ### Added
 
-- **Report:** Search (⌘K) also finds the report's pages — Overview and every collection — and opens them as the sidebar does.
+- **Report:** Search (⌘K) also finds the report's pages — Overview and every collection — and opens them as the sidebar does. ([#105](https://github.com/businesslens/pdd/pull/105)) ([f47fc30](https://github.com/businesslens/pdd/commit/f47fc301f02ae9aa63c92a09f4bd3194e0ad6ae4))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.30.0...v0.31.0][0.31.0]
 
 ## [0.30.0] - 2026-10-07
 
@@ -1144,7 +1152,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/businesslens/pdd/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/businesslens/pdd/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/businesslens/pdd/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/businesslens/pdd/compare/v0.28.0...v0.29.0
