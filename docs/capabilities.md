@@ -3,7 +3,7 @@ title: Capabilities
 description: The things your product lets someone do, where each is offered, and the Capability Scenarios that show each one working.
 section: open-source
 group: Product Model
-order: 11
+order: 12
 terms:
   - term: Capability
     definition: "A durable thing the Product lets someone do, such as checkout or order cancellation, independent of any one route, command or module."

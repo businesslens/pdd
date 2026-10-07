@@ -3,7 +3,7 @@ title: Business Rules
 description: What must always hold in your product, and who may do what (constraints, derivations and permissions), each stated once with everything it applies to.
 section: open-source
 group: Product Model
-order: 13
+order: 14
 terms:
   - term: Business Rule
     aliases: [Rule]

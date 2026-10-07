@@ -3,7 +3,7 @@ title: References
 description: Point any resource at material kept outside the model (code, a PRD, a design, research), saying what it is and why it is attached.
 section: open-source
 group: Product Model
-order: 15
+order: 16
 terms:
   - term: Reference
     anchor: asset-or-reference

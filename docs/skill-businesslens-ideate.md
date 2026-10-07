@@ -3,7 +3,7 @@ title: ideate
 description: Explore or define intended behavior, then write only the exact Product Model change you approve.
 section: open-source
 group: Skills
-order: 18
+order: 19
 ---
 
 # `businesslens-ideate`

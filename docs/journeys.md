@@ -3,7 +3,7 @@ title: Journeys
 description: Goals where your product carries a person from one Capability into the next, and the Journey Scenarios that walk each path.
 section: open-source
 group: Product Model
-order: 12
+order: 13
 terms:
   - term: Journey
     definition: "A goal where the Product carries one person from one Capability into the next until the goal is met, such as browse and buy."

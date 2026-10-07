@@ -92,6 +92,9 @@ review a change, or verify. See [`view`](./cli-view.md) for the options.
 - Write outside `.businesslens/`, or edit your AGENTS.md, CLAUDE.md or README.
 - Commit for you.
 
+In the skills these are instructions to your agent, not a sandbox: what it may
+actually run or write is up to its host. See [Trust model](./trust-model.md).
+
 ## Next
 
 - [Installation](./installation.md): install the skills into your coding agent.

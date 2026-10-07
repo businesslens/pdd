@@ -3,7 +3,7 @@ title: verify
 description: Implement the Product Model in code, in phases, or check that the model and the code agree, and resolve every gap you approve until they do or something blocks.
 section: open-source
 group: Skills
-order: 19
+order: 20
 ---
 
 # `businesslens-verify`
@@ -147,5 +147,7 @@ code as they are now.
 ## Related
 
 - [Development loop](./index.md#the-development-loop)
+- [Trust model](./trust-model.md): what lint, verify, your tests and your
+  review each establish, and what enforces each safeguard.
 - [Lint in CI](./cli-lint.md#run-it-in-ci): lint checks structure; only verify
   checks meaning.

@@ -3,7 +3,7 @@ title: Entities
 description: The things your product keeps or reasons about (orders, products, settings) and the people and systems that act on it, with what it knows about each and the States it moves through.
 section: open-source
 group: Product Model
-order: 8
+order: 9
 terms:
   - term: Entity
     definition: "A thing the Product keeps or reasons about, including the people and systems that act on it."
