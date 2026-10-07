@@ -231,18 +231,11 @@ member's role, reading Role from the targeted membership grants by the victim's
 role, not the actor's. A condition on a path Entity reads the instance the path
 reaches; a condition on the target names no Entity.
 
-**Removing children with their parent, deferred.** Deleting a card removes
-other people's comments, and a grant broad enough to admit that cascade also
-admits deleting any comment directly. Saying "removed with its card" on the
-Step needs a field the report contract does not carry yet; until it does, a
-container's administrator is granted the removal openly, as moderation.
-
-**Supersedes the deferral above: granting a cascade through the container.** A
-grant wide enough to admit removing other people's comments with their card
-admits removing any one of them directly, and no condition can tell the two
-apart. A `removes` entry now says `with` what it goes, and the removal it goes
-with is what needs permission; the report carries the field, so the deferral's
-reason no longer holds.
+**Granting a cascade through the container.** Deleting a card removes other
+people's comments, and a grant wide enough to admit that cascade also admits
+removing any one of them directly; no condition tells the two apart. A
+`removes` entry says `with` what it goes instead, and only the removal it goes
+with needs permission.
 
 **`with` accepted in either direction of a relation.** `comment with card` and
 `card with comment` both linted clean, and the second let a card's removal

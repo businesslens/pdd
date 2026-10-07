@@ -90,8 +90,8 @@ member pages stay `authenticated`, with the Role in a grant's `when`. A
 condition's `entity` that lies on the grant's `related` path reads the instance
 the path reaches (nearest the acting Entity where the type repeats), so the
 Role read is the acting person's own membership; off the path, it is the
-Product's one settings instance;
-`restricted` is only the Product's own administration area. A relation that holds
+Product's one settings instance. `restricted` is only the Product's own
+administration area. A relation that holds
 whatever role a person has (the sender of a message) is declared to each role
 Entity that can hold it, and ownership is one `related` grant per role. Facts
 that belong to the person whatever their role — email, display and
@@ -321,8 +321,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   behind an `agent` Interface, and every grant naming it reaches the person it
   acts for through `related` (a person `connects` an AI agent); a bare
   `actors: [ai-agent]` grants every agent. What the AI produces to change
-  something a person owns, and the Product keeps, is a draft (a kept summary
-  that changes nothing is not): its own Entity when it keeps facts the target never has (a
+  something a person owns, and the Product keeps, is a draft (a summary that
+  changes nothing is not): its own Entity when it keeps facts the target never has (a
   reason, a source passage), otherwise a `Proposed` State of the target. A
   draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`, and
   `Outdated` where the Product closes it because its target changed.

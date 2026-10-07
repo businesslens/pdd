@@ -68,7 +68,8 @@ without executing it.
 
 ## Check the whole model before approval
 
-Walk these after `lint` is clean; lint cannot see them.
+Walk these on the proposed delta before presenting it, and again once `lint`
+is clean; lint cannot see them.
 
 - **Lifecycle:** every Entity a person creates can be changed and removed by a
   Capability, or a Product limitation says it is not ("Links are never
@@ -100,9 +101,6 @@ Walk these after `lint` is clean; lint cannot see them.
 - Resolve material points before approval instead of guessing; one still open
   is stated in the prose of the resource it affects, never in coverage. An
   unchosen option is not a limitation or product exclusion.
-- Say what the Product leaves to other systems once, as a product-language
-  limitation ("People sign in with their existing account; managing accounts
-  is not part of this product."), never in coverage.
 - Keep screenshots, mockups, design systems, research, and sitemaps external.
   References may attach them with `role: intent` or `role: context`, but
   BusinessLens neither creates nor certifies them.

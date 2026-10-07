@@ -73,15 +73,11 @@ products have none.
   Capability's Scenario, never a Journey wrapper.
 - **Being sent back to where you were going after signing in** is not a
   hand-off.
-- **Something shown where you already are** — drafts appearing in the editor
-  you are working in — is that Capability's result, not a hand-off.
+- **Staying where you are is not a hand-off**: drafts appearing in the editor
+  you are working in, or going back to what you were doing after creating
+  something inline.
 - **An email carries only when your own action sent it.** A message someone
   else's action or a schedule sends starts a new visit, not a Journey.
-- **Going back to what you were doing** after creating something inline is not
-  a hand-off.
-- **The redirect names the Capability that made it**: creating a board and
-  landing on it is `create-board`; the Journey continues with the first thing
-  you then do there.
 
 ## The file
 

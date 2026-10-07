@@ -729,6 +729,10 @@ scenarioKinds:
     name: Edge case
     description: Alternative or failure path.
     colorSlot: 6
+  - id: validation
+    name: Validation
+    description: Input or an act the Product refuses while preserving the Actor's work.
+    colorSlot: 3
 ```
 
 ### `interfaces/<id>.md` or `interfaces/<id>/interface.md`
@@ -833,8 +837,8 @@ AI enters a model in exactly one of two ways, decided by who initiates:
   `actors: [ai-agent]` grants every agent, and `lint` warns.
 
 Either way, what the AI produces to change something a person owns, and the
-Product keeps, is a draft until that person decides it; a kept summary that
-changes nothing is not a draft, only marked as generated. A kept draft is its own Entity when it keeps facts its target never
+Product keeps, is a draft until that person decides it; a summary that
+changes nothing is not a draft. A kept draft is its own Entity when it keeps facts its target never
 has — a reason, a source passage — and otherwise a `Proposed` State of the
 target. A draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`,
 and `Outdated` where the Product closes it because its target changed.
@@ -1378,7 +1382,7 @@ the same Capability, available there too. A continuation several Capabilities
 share — a second factor after any sign-in method — is its own Capability: the
 ones it continues end their Scenarios at the hand-off, and a Journey joins them.
 
-**Opposite verbs are separate Capabilities.** A reversible pair — publish and
+**Opposite verbs are separate Capabilities.** An opposing pair — publish and
 unpublish, enable and disable, follow and unfollow, pause and resume, accept and
 dismiss, share and stop sharing, open and close — is two Capabilities, because
 each control shows its own verb, even where one button toggles between them.
