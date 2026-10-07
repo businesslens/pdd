@@ -36,10 +36,16 @@ export const CoverageDocumentSchema = z.strictObject({
   limitations: z.array(CoverageAreaSchema)
 }).superRefine((coverage, ctx) => {
   const areas = [...coverage.covered, ...coverage.exclusions, ...coverage.unmapped, ...coverage.limitations]
-  /* A model tied to no code has empty coverage, scope included; once a mapping
-     records code, the scope says how far it reaches. */
+  /* A model tied to no code has empty coverage, scope and method included, so
+     it has one spelling; once a mapping records code, the scope says how far
+     it reaches. */
   if (areas.length && coverage.scope === '') {
     ctx.addIssue({ code: 'custom', path: ['scope'], message: 'Scope is required once Coverage records code; say the breadth of code the model accounts for' })
+  }
+  if (!areas.length) {
+    for (const field of ['scope', 'method'] as const) {
+      if (coverage[field] !== '') ctx.addIssue({ code: 'custom', path: [field], message: `A ${field} with no Coverage entry claims code nothing records; leave it "" until a mapping records code` })
+    }
   }
   const descriptions = areas.map(area => area.description)
   if (new Set(descriptions).size !== descriptions.length) ctx.addIssue({ code: 'custom', message: 'Coverage descriptions must be unique across covered, exclusions, unmapped and limitations' })

@@ -2286,8 +2286,9 @@ Every key is required and unknown keys are errors. The body is only
 `# Coverage`; `coverage.json` is not accepted.
 
 - `scope` — the breadth of code the model accounts for: single-line Markdown,
-  non-empty whenever any list has an entry.
-- `method` — one short single-line note on how the code was inspected, or `""`.
+  non-empty whenever any list has an entry and `""` when none does.
+- `method` — one short single-line note on how the code was inspected, or `""`;
+  always `""` when no list has an entry.
 - `covered` — code areas whose product behavior the model describes.
 - `exclusions` — code deliberately outside the model because it is not product
   behavior: presentation layers, packaging, plugin manifests, tooling. An
@@ -2311,7 +2312,9 @@ invalid; brackets and braces are ordinary file-name characters, as in
 `pages/[id].vue`. A missing workspace path is not an error.
 
 **A model tied to no code yet has empty coverage**: all four lists empty, and
-`scope` and `method` may then be `""`. That is every Blueprint and every model
+`scope` and `method` then `""` — a scope or method with no entry is an error,
+so an empty model has one spelling, and the first entry written brings its
+`scope` with it. That is every Blueprint and every model
 decided before its code exists. Coverage is written by mapping — mapping an
 established repository, or verification mapping behavior it found the model
 missing — and never by deciding intended behavior, so a model designed and then

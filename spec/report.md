@@ -27,8 +27,9 @@ files are derived artifacts and must not be edited or committed.
 
 `build/report.json` is a Product Report with `schemaVersion: "17.0.0"`. It
 contains the product resources, relationships, intent, portable references,
-structured supporting sections, identity, attribution, resource counts, and
-coverage needed to reconstruct the model. Its top-level `summary` is the short
+structured supporting sections, identity, attribution, and resource counts
+needed to reconstruct the model; its coverage is empty, as every portable
+report's is. Its top-level `summary` is the short
 Product description, falling back to the full description; its top-level
 `counts` object contains resource totals. Product identity and attribution
 fields are always present, `null` or empty when the folder omits them.
@@ -324,9 +325,10 @@ operators in [`docs/cli-pull.md`](../docs/cli-pull.md#catalog-contract).
 ## Coverage
 
 `coverage` carries the fields of [`coverage.md`](./format.md#coveragemd) with the
-same strict validation: every entry names at least one path, and `scope` is
-non-empty whenever an entry exists. Coverage describes the origin repository's
-code, so a portable report carries none, and expansion writes empty coverage.
+same strict validation: every entry names at least one path, `scope` is
+non-empty whenever an entry exists, and `scope` and `method` are `""` when none
+does. Coverage describes the origin repository's code, so a portable report
+carries none, and expansion writes empty coverage.
 
 ## Portable projection
 
@@ -373,7 +375,8 @@ framework and the catalog apply this same exported function, contributors and
 the server cannot disagree about what a delivered report exposes.
 `validateProductReport` rejects a report that declares `referenceProfile:
 portable` while still carrying a code reference, implementation reference,
-repository-relative reference, or any Coverage entry.
+repository-relative reference, or any Coverage entry; since Coverage with no
+entry has an empty `scope` and `method`, it carries no Coverage at all.
 
 `blueprint export` writes the portable report. Contribution applies
 the same idempotent projection before opening a public pull request. `open` and

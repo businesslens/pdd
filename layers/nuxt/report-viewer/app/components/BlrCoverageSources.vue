@@ -51,7 +51,7 @@ const readingKey = (path: string) => `statements:${normalizeCoveragePath(path)}`
 const readable = computed(() => [...index.value.keys()].map(readingKey))
 
 // One expansion set over both axes, so Expand all and Collapse all cover each.
-const whole = computed(() => coverageStatementTree(all.value.filter(statement => statement.paths.length)))
+const whole = computed(() => coverageStatementTree(all.value))
 const allBranches = computed(() => repositoryTreeNodes(whole.value).filter(node => node.children.length).map(node => node.value))
 const keys = computed(() => [
   ...allBranches.value,

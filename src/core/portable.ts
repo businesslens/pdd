@@ -1720,6 +1720,9 @@ export function validateProductReport(report: ProductReportV17): string[] {
         issues.push(`referenceProfile is portable but coverage.${kind} describes the origin repository's code`)
       }
     }
+    for (const field of ['scope', 'method'] as const) {
+      if (report.coverage[field]) issues.push(`referenceProfile is portable but coverage.${field} describes the origin repository's code`)
+    }
     const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {

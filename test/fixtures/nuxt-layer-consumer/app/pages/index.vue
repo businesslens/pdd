@@ -73,9 +73,9 @@ const report: ProductReportV17 = {
     variations: []
   },
   coverage: {
-    scope: 'The fixture Product.',
+    scope: '',
     exclusions: [],
-    method: 'Static packed-artifact smoke fixture.',
+    method: '',
     covered: [],
     unmapped: [],
     limitations: []

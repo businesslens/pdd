@@ -206,7 +206,7 @@ All of these are errors:
 - No unknown frontmatter keys, and each recognized `##` section at most once.
 - `coverage.md` has every field, unique descriptions, and only `# Coverage` in
   its body; every entry names at least one path, and `scope` is set whenever
-  there is an entry.
+  there is an entry. With no entry, `scope` and `method` are both `""`.
 
 Warnings:
 
