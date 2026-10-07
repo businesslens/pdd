@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as sdk from '../src/report.js'
 import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
+import { expandProductReport } from '../src/commands/open.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
 import type { ProductReportV18, ReportReference } from '../src/core/portable.js'
@@ -846,10 +847,14 @@ describe('a removal that goes with another, on the wire', () => {
   beforeAll(() => {
     root = mkdtempSync(join(tmpdir(), 'bl-with-'))
     cpSync(FIXTURE, root, { recursive: true })
+    /* A refund that holds its follow-ups, so two refunds removed in one Step
+       have a declared direction: the follow-up goes with the refund. */
+    const refund = join(root, '.businesslens/entities/refund.md')
+    writeFileSync(refund, readFileSync(refund, 'utf8').replace('domain: ordering\n', 'domain: ordering\nrelations:\n  - entity: refund\n    verb: is followed by\n    cardinality: one-to-many\n'))
     const file = join(root, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace(
       '      - { entity: cart, effect: removes }\n',
-      '      - { entity: cart, effect: removes }\n      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n'
+      '      - { entity: cart, effect: removes }\n      - { entity: refund, as: original, effect: removes, from: Requested }\n      - { entity: refund, as: follow-up, effect: removes, from: Requested, with: original }\n'
     ))
   })
   afterAll(() => rmSync(root, { recursive: true, force: true }))
@@ -862,7 +867,7 @@ describe('a removal that goes with another, on the wire', () => {
 
   it('resolves the reference to the record it goes with, and every other record carries null', () => {
     const report = compileReport(loadModel(root), '2026-01-01')
-    expect(goingWith(report)).toEqual([expect.objectContaining({ entityId: 'catalog-product', effect: 'removes', with: { entityId: 'cart', as: null } })])
+    expect(goingWith(report)).toEqual([expect.objectContaining({ entityId: 'refund', as: 'follow-up', effect: 'removes', with: { entityId: 'refund', as: 'original' } })])
     expect(sdk.validateProductReport(report)).toEqual([])
   })
 
@@ -871,5 +876,54 @@ describe('a removal that goes with another, on the wire', () => {
     const [entry] = goingWith(report)
     entry!.with = { entityId: 'order', as: null }
     expect(sdk.validateProductReport(report).join('\n')).toContain('must name another "removes" record of this step')
+  })
+
+  it('refuses a "with" toward an Entity that declares no holding relation', () => {
+    const report = compileReport(loadModel(root), '2026-01-01')
+    const refund = report.model.entities.find(entity => entity.id === 'refund')!
+    refund.relations = refund.relations.map(relation => ({ ...relation, cardinality: 'many-to-many' }))
+    expect(sdk.validateProductReport(report).join('\n')).toContain('"refund" goes with "refund", but "refund" declares no one-to-many or one-to-one relation to "refund"')
+  })
+
+  it('round-trips through open: the folder names the same record the report resolved', () => {
+    const report = compileReport(loadModel(root), '2026-01-01')
+    const target = mkdtempSync(join(tmpdir(), 'bl-with-open-'))
+    try {
+      expandProductReport(target, report, false)
+      const again = compileReport(loadModel(target), '2026-01-01')
+      expect(goingWith(again).map(entry => [entry.entityId, entry.as, entry.with])).toEqual(goingWith(report).map(entry => [entry.entityId, entry.as, entry.with]))
+    } finally {
+      rmSync(target, { recursive: true, force: true })
+    }
+  })
+
+  it('refuses two records of a step with one reference', () => {
+    const report = compileReport(loadModel(root), '2026-01-01')
+    const [entry] = goingWith(report)
+    entry!.as = 'cart'
+    expect(sdk.validateProductReport(report).join('\n')).toContain('entity references contains duplicate "cart"')
+  })
+})
+
+describe('a Journey on the wire', () => {
+  const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
+
+  it('refuses an achieved Journey Scenario that carries no one Journey Actor through two Capabilities, as lint does', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-01-01')
+    expect(sdk.validateProductReport(report)).toEqual([])
+    const scenario = report.model.journeyScenarios.find(item => item.result === 'achieved')!
+    const capabilities = [...new Set(scenario.steps.flatMap(step => step.capabilityId ? [step.capabilityId] : []))]
+    expect(capabilities.length).toBeGreaterThanOrEqual(2)
+    // Every Step after the first Capability's is no longer the Journey Actor's.
+    for (const step of scenario.steps) {
+      if (step.capabilityId && step.capabilityId !== capabilities[0] && step.kind !== 'actor') step.actorId = null
+    }
+    for (const step of scenario.steps) {
+      if (step.capabilityId && step.capabilityId !== capabilities[0] && step.kind === 'actor') {
+        step.kind = 'product'
+        step.actorId = null
+      }
+    }
+    expect(sdk.validateProductReport(report).join('\n')).toContain('an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities')
   })
 })

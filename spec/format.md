@@ -703,10 +703,15 @@ Report. Public Blueprints require it; general local Product Models may omit it.
 Beside the logo, `product/` may hold one optional `cover.webp`: an illustration
 a catalog shows on the Product's card. It is presentation, never product
 meaning, so nothing in the model refers to it and the Product Report does not
-carry it. It is a WebP image, 16:9 within one percent, at least 1200 pixels
-wide, and at most 1 MiB — four times the logo's limit because it is a raster
-picture, and one format so that a catalog serves every cover the same way. Only
-the folder form can hold it: a compact `product.md` has no `product/` beside it.
+carry it. It is a WebP image, 16:9 within one percent, at least 1200 and at
+most 4096 pixels wide and at most 2304 high, and at most 1 MiB — four times the
+logo's limit because it is a raster picture, and one format so that a catalog
+serves every cover the same way. It must be a well-formed still WebP: the RIFF
+size matches the file, every chunk lies inside it, and it holds exactly one
+image — a lone lossy `VP8 ` or lossless `VP8L` chunk, or a `VP8X` header whose
+canvas matches that one image, with only `ICCP`, `ALPH`, `EXIF` and `XMP `
+beside it. An animated WebP is not a cover. Only the folder form can hold it: a
+compact `product.md` has no `product/` beside it.
 
 General Product Models may omit this metadata. The public Blueprint publication
 profile requires a category, at least one tag, at least one
@@ -2179,14 +2184,23 @@ has one, otherwise by its `entity` — that it is removed because of:
     - { entity: comment, effect: removes, with: card }
 ```
 
-The two Entities are joined by a relation, in either direction, and a `with`
-chain never returns to where it started; `lint` errors otherwise, and on `with`
-outside a `removes` entry or naming no `removes` entry of the Step. **The
+**A removal goes `with` the Entity that holds it:** the Entity it names must
+declare a `one-to-many` or `one-to-one` relation to the dependent's Entity, so
+the direction is read from the relation's declared side. A Card that declares
+`one-to-many` Comments lets `comment` go `with: card`; `card` going `with:
+comment` is an error, because Comment declares nothing to Card, and a
+`many-to-many` relation holds nothing. Two entries of the same Entity need that
+Entity to declare such a relation to itself. A `with` chain never returns to
+where it started; `lint` errors otherwise, and on `with` outside a `removes`
+entry or naming no `removes` entry of the Step. Within one Step every entry's
+reference — its `as`, otherwise its `entity` — is unique, so a `with` names
+exactly one entry. **The
 removal it goes with is what needs permission:** a permission Rule on the
 dependent Entity's `removes` never selects a `with` removal, so *only its
 author deletes a comment* and *a member deletes a card, comments and all* hold
-together. A Step that removes two related Entities with no `with` on either is a
-`lint` warning: one of them almost always goes because of the other.
+together. A Step that removes two Entities where one holds the other, with no
+`with` on either, is a `lint` warning: the held one almost always goes because
+of the other.
 
 **Steps chain, per instance.** Where a prior Step in the same Scenario left an
 `(entity, as)` pair in a state, this Step's `from` for that pair must equal it.

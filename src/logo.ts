@@ -2,6 +2,8 @@ import { SaxesParser } from 'saxes'
 
 export {
   MAX_PRODUCT_COVER_BYTES,
+  MAX_PRODUCT_COVER_HEIGHT,
+  MAX_PRODUCT_COVER_WIDTH,
   MIN_PRODUCT_COVER_WIDTH,
   PRODUCT_COVER_FILENAME,
   productCoverDimensions,

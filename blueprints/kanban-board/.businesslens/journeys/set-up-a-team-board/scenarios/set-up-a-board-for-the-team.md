@@ -49,7 +49,7 @@ steps:
     capability: add-member
     entities:
       - { entity: teammate, as: colleague, effect: reads, facts: [Email address] }
-      - { entity: board-membership, as: colleague, effect: creates, facts: [Role] }
+      - { entity: board-membership, as: colleague-membership, effect: creates, facts: [Role] }
       - { entity: board, effect: reads, facts: [] }
     contexts:
       web:

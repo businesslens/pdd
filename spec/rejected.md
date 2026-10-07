@@ -244,6 +244,12 @@ apart. A `removes` entry now says `with` what it goes, and the removal it goes
 with is what needs permission; the report carries the field, so the deferral's
 reason no longer holds.
 
+**`with` accepted in either direction of a relation.** `comment with card` and
+`card with comment` both linted clean, and the second let a card's removal
+escape every Rule on removing cards, a prohibition included. The removal goes
+with the Entity that declares the holding relation, so one cascade has one
+encoding.
+
 ## AI
 
 **A built-in AI assistant as an Entity that acts.** It reads like a

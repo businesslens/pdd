@@ -41,9 +41,15 @@ export interface ProductCoverFile {
 /** Read an optional Product cover the same way: no links, no special files. */
 export function readProductCover(modelRoot: string): ProductCoverFile | undefined {
   const file = join(modelRoot, '.businesslens', 'product', PRODUCT_COVER_FILENAME)
-  if (!existsSync(file)) return undefined
-
-  const stat = lstatSync(file)
+  // lstat, not existsSync: existsSync follows a symlink, so a broken one would
+  // read as no cover instead of being refused.
+  let stat: ReturnType<typeof lstatSync>
+  try {
+    stat = lstatSync(file)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+    throw error
+  }
   if (stat.isSymbolicLink() || !stat.isFile()) {
     throw new Error('cover.webp must be a regular file, not a symbolic link')
   }

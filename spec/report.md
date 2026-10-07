@@ -122,10 +122,13 @@ record. It is an exhaustive claim for reads, changes and creation, not an
 unspecified subset. `with` is `null` or the `{ entityId, as }` of another
 `removes` record of the same step that this removal goes with, resolved on the
 wire from the folder's alias-or-id reference; it is non-null only on a
-`removes` record, never names its own record, joins two Entities that share a
-relation, and never forms a cycle within the step. A permission Rule on an
+`removes` record, never names its own record, names a record whose Entity
+declares a `one-to-many` or `one-to-one` relation to this record's Entity (a
+self-relation when both are the same Entity), and never forms a cycle within
+the step. A permission Rule on an
 Entity's `removes` selects no record whose `with` is non-null. One step never
-carries two records for one `(entityId, as)` pair.
+carries two records with one reference — the `as`, otherwise the `entityId` —
+so a `with` resolves to one record.
 
 A Business Rule record carries its `appliesTo` targets and a `permits` field.
 An Entity target is `{ type: "entity", entityId, effect, from, to, facts,
@@ -285,8 +288,9 @@ Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Scenario
 Actors, Capabilities, route ids, and Context places resolve to existing
 resources, every contextualized Step assigns every route, no two routes repeat
-the same place sequence, every achieved Journey Scenario uses at least two
-distinct Capabilities, every actor reference names an Entity that `acts`, every
+the same place sequence, every achieved Journey Scenario carries one of its
+Journey's Actors — performing or attributed — through at least two distinct
+Capabilities, as `lint` requires, every actor reference names an Entity that `acts`, every
 step's `entities` records and every Rule's targets and grants resolve, and
 Interface, Experience, Screen, Entity, and Capability consistency holds. Product
 Report v18 is the only accepted report version — there is no compatibility

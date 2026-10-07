@@ -123,8 +123,8 @@ Errors:
 - Every language is a well-formed tag, like `en` or `pt-BR`, listed once.
 - `logo.svg` is a plain file of at most 256 KiB with a `viewBox`: shapes only,
   with no scripts, animation, text, external links or embedded content.
-- `cover.webp` is a plain WebP file of at most 1 MiB, 16:9 and at least 1200
-  pixels wide.
+- `cover.webp` is a plain, well-formed still WebP of at most 1 MiB, 16:9, and
+  1200 to 4096 pixels wide. An animated WebP is refused.
 
 Warnings:
 

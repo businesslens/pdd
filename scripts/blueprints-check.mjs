@@ -112,8 +112,10 @@ for (const slug of entries) {
 
   // A cover is optional; when present it is checked like the logo.
   const coverFile = join(dir, '.businesslens', 'product', 'cover.webp')
-  if (existsSync(coverFile)) {
-    const stat = await lstat(coverFile)
+  // lstat rather than existsSync, which follows links: a broken link is refused, not skipped.
+  const coverStat = await lstat(coverFile).catch(error => (error.code === 'ENOENT' ? undefined : Promise.reject(error)))
+  if (coverStat) {
+    const stat = coverStat
     if (stat.isSymbolicLink() || !stat.isFile()) {
       errors.push(`${label}: .businesslens/product/cover.webp must be a regular file, not a symbolic link`)
     } else {

@@ -778,17 +778,28 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
     } else if (!Array.isArray(item.facts)) {
       issues.push(`${entryLabel}: "facts" is required as a list, including [] when no named facts are affected`)
     }
-    const goesWith = stringField(item, 'with', issues, entryLabel)
+    let goesWith = stringField(item, 'with', issues, entryLabel)
     if (goesWith !== undefined && resolved !== 'removes') {
+      // The entry stays, without the misplaced key, so later checks see the Step as written.
       issues.push(`${entryLabel}: "with" belongs on a "removes" entry; only a removal goes with another`)
-      continue
+      goesWith = undefined
     }
     entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts, ...(goesWith !== undefined ? { with: goesWith } : {}) })
   }
   /* A removal goes with another removal of this same Step, named the way the
      Step names it: by alias when the entry has one, by Entity id otherwise. */
   const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
-  const byReference = new Map(entries.map(entry => [referenceOf(entry), entry]))
+  /* One reference names one entry, or a `with` would mean one entry to the
+     parser and another to the exporter. */
+  const byReference = new Map<string, ScenarioStepEntity>()
+  for (const entry of entries) {
+    const reference = referenceOf(entry)
+    if (byReference.has(reference)) {
+      issues.push(`${label}: two entries are named "${reference}"; give each its own "as" so every entry of a Step has one name`)
+      continue
+    }
+    byReference.set(reference, entry)
+  }
   for (const entry of entries) {
     if (entry.with === undefined) continue
     const target = byReference.get(entry.with)

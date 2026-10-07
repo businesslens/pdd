@@ -1802,14 +1802,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   /*
-   * A removal that goes `with` another needs the two things related, or the
-   * claim that one goes because of the other says nothing a reader can check.
-   * Two related things removed in one Step with no `with` on either nearly
-   * always hide one: a card's comments go because the card does.
+   * A removal goes `with` the thing that holds it, read from the relation's
+   * declared side: the holder declares a one-to-many or one-to-one relation to
+   * the held, itself included. One cascade then has one encoding — `comment`
+   * with `card`, never `card` with `comment`. Removing a holder and what it
+   * holds in one Step with no `with` nearly always hides one.
    */
-  const relatedEntities = (left: string, right: string) =>
-    (entitiesById.get(left)?.relations ?? []).some(relation => relation.entity === right)
-    || (entitiesById.get(right)?.relations ?? []).some(relation => relation.entity === left)
+  const holds = (holder: string, held: string) => (entitiesById.get(holder)?.relations ?? [])
+    .some(relation => relation.entity === held && (relation.cardinality === 'one-to-many' || relation.cardinality === 'one-to-one'))
   for (const scenario of allScenarios) {
     for (const [index, step] of scenario.steps.entries()) {
       const label = `${scenario.file}: step ${index + 1}`
@@ -1818,15 +1818,16 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       for (const entry of removals) {
         if (entry.with === undefined) continue
         const target = removals.find(other => referenceOf(other) === entry.with)
-        if (target && target.entity !== entry.entity && !relatedEntities(entry.entity, target.entity)) {
-          errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but no relation joins "${entry.entity}" and "${target.entity}"; relate them, or the removal is not one that goes with the other`)
+        if (target && !holds(target.entity, entry.entity)) {
+          errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but "${target.entity}" declares no one-to-many or one-to-one relation to "${entry.entity}"; a removal goes with the thing that holds it${holds(entry.entity, target.entity) ? `, so "${entry.with}" goes "with" "${referenceOf(entry)}"` : ''}`)
         }
       }
       for (const [position, left] of removals.entries()) {
         for (const right of removals.slice(position + 1)) {
-          if (left.entity === right.entity || left.with !== undefined || right.with !== undefined) continue
-          if (!relatedEntities(left.entity, right.entity)) continue
-          warnings.push(`${label}: removes "${referenceOf(right)}" alongside "${referenceOf(left)}", which it relates to; say which goes with the other through "with"`)
+          if (left.with !== undefined || right.with !== undefined) continue
+          const [holder, held] = holds(left.entity, right.entity) ? [left, right] : holds(right.entity, left.entity) ? [right, left] : []
+          if (!holder || !held) continue
+          warnings.push(`${label}: removes "${referenceOf(held)}" alongside "${referenceOf(holder)}", which holds it; say "${referenceOf(held)}" goes "with" "${referenceOf(holder)}"`)
         }
       }
     }

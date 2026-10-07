@@ -554,8 +554,12 @@ creation, never inferred from form fields or padded with incidental
 implementation data; `[]` names no facts, never unspecified. Removal has no
 `facts`. A removal that happens because another removal of the same Step does
 — a card's comments going with the card — says `with: <alias or entity id of
-that entry>`; the two Entities must be related, the removal it goes with is
-what needs permission, and two related removals with no `with` are a warning. An Actor read on a Screen must occur in that Screen's `shows`; Product
+that entry>`, naming the Entity that holds it: the named Entity must declare a
+`one-to-many` or `one-to-one` relation to the dependent's (itself, for two of the
+same Entity), so `comment` goes `with: card`, never the reverse. The removal it
+goes with is what needs permission, two removals where one holds the other with
+no `with` are a warning, and each entry's `as`-or-`entity` reference is unique
+in its Step. An Actor read on a Screen must occur in that Screen's `shows`; Product
 and condition Steps may consult undisplayed facts. A Step lists every thing it
 moves, one entry per `(entity, as)` pair; `as` is a scenario-local alias for two
 instances of one Entity, and once used, used everywhere in the Scenario. Where

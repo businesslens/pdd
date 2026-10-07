@@ -988,10 +988,13 @@ export function validateProductReport(report: ProductReportV18): string[] {
        * all, and one Step states one thing about one instance.
        */
       requireUniqueValues(issues, stepLabel, 'entities', step.entities.map(entry => `${entry.entityId}\u0000${entry.as ?? ''}`))
+      // The folder names an entry by its alias, otherwise its Entity, so that name is unique too.
+      requireUniqueValues(issues, stepLabel, 'entity references', step.entities.map(entry => entry.as ?? entry.entityId))
       if (!parentCapabilityId && !step.capabilityId && step.entities.some(entry => entry.effect !== 'reads')) {
         issues.push(`${stepLabel}: a Journey Step that creates, changes or removes an Entity needs a capabilityId`)
       }
-      /* A removal goes with another removal of this Step, of a related Entity,
+      /* A removal goes with another removal of this Step whose Entity holds it —
+         declares a one-to-many or one-to-one relation to it, itself included —
          and following `with` always ends at one that goes with nothing. */
       const recordKey = (entityId: string, as: string | null) => `${entityId}\u0000${as ?? ''}`
       const removalRecords = new Map(step.entities
@@ -1004,10 +1007,10 @@ export function validateProductReport(report: ProductReportV18): string[] {
           issues.push(`${stepLabel}: "with" on "${entry.entityId}" must name another "removes" record of this step, from a "removes" record`)
           continue
         }
-        const related = (left: string, right: string) =>
-          (entitiesById.get(left)?.relations ?? []).some(relation => relation.entityId === right)
-        if (target.entityId !== entry.entityId && !related(entry.entityId, target.entityId) && !related(target.entityId, entry.entityId)) {
-          issues.push(`${stepLabel}: "${entry.entityId}" goes with "${target.entityId}", which shares no relation with it`)
+        const holds = (holder: string, held: string) => (entitiesById.get(holder)?.relations ?? [])
+          .some(relation => relation.entityId === held && (relation.cardinality === 'one-to-many' || relation.cardinality === 'one-to-one'))
+        if (!holds(target.entityId, entry.entityId)) {
+          issues.push(`${stepLabel}: "${entry.entityId}" goes with "${target.entityId}", but "${target.entityId}" declares no one-to-many or one-to-one relation to "${entry.entityId}"`)
         }
         const visited = new Set<typeof entry>()
         let current: typeof entry | undefined = entry
@@ -1225,6 +1228,19 @@ export function validateProductReport(report: ProductReportV18): string[] {
     journeyScenarioSteps.set(scenario.id, capabilitySteps)
     if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capabilityId)).size < 2) {
       issues.push(`${label}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    } else if (scenario.result === 'achieved' && journey) {
+      /* As lint counts it: the Product carries one Journey Actor across, so only
+         Steps that Actor performs or is attributed count, per Actor. A report
+         lint would refuse is refused here too, so a catalog never accepts what
+         `open` and `pull` then reject. */
+      const carried = new Map<string, Set<string>>()
+      for (const step of scenario.steps) {
+        if (!step.capabilityId || !step.actorId || !journeyActorSet.has(step.actorId)) continue
+        carried.set(step.actorId, (carried.get(step.actorId) || new Set()).add(step.capabilityId))
+      }
+      if (![...carried.values()].some(capabilities => capabilities.size >= 2)) {
+        issues.push(`${label}: an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities`)
+      }
     }
   }
 

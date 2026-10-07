@@ -210,6 +210,10 @@ describe('lintModel', () => {
     symlinkSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'), join(linked, '.businesslens/product/cover.webp'))
     expect(run(linked).errors).toContain('cover.webp: cover.webp must be a regular file, not a symbolic link')
 
+    const broken = fixtureCopy()
+    symlinkSync(join(broken, 'no-such-cover.webp'), join(broken, '.businesslens/product/cover.webp'))
+    expect(run(broken).errors).toContain('cover.webp: cover.webp must be a regular file, not a symbolic link')
+
     const other = fixtureCopy()
     writeFileSync(join(other, '.businesslens/product/cover.png'), cover)
     expect(run(other).errors).toContain('product/cover.png: the Product folder may contain only product.md, logo.svg and cover.webp')
@@ -2520,55 +2524,87 @@ permits:
 describe('a removal that goes with another', () => {
   const CHECKOUT = '.businesslens/capabilities/place-order/scenarios/complete-checkout.md'
   const CART_LINE = '      - { entity: cart, effect: removes }\n'
+  /* An earlier order and one of its refunds, removed in one Step: Order declares
+     a one-to-many relation to Refund, so the refund is the one that is held. */
+  const EARLIER = '      - { entity: order, as: earlier, effect: removes, from: Pending }\n'
+  const REFUND = '      - { entity: refund, effect: removes, from: Requested'
   function withCart(cwd: string, replacement: string): string {
     const file = join(cwd, CHECKOUT)
     const source = readFileSync(file, 'utf8')
     expect(source).toContain(CART_LINE)
-    writeFileSync(file, source.replace(CART_LINE, replacement))
+    writeFileSync(file, source.replace(CART_LINE, `${CART_LINE}${replacement}`))
     return file
   }
 
-  it('warns when one Step removes two related things and neither says which goes with the other', () => {
+  it('warns when one Step removes a thing and what it holds and neither says it goes with the other', () => {
     const cwd = fixtureCopy()
-    const file = withCart(cwd, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available }\n`)
-    expect(run(cwd).warnings.join('\n')).toContain(`${file}: step 5: removes "catalog-product" alongside "cart", which it relates to; say which goes with the other through "with"`)
+    const file = withCart(cwd, `${EARLIER}${REFUND} }\n`)
+    expect(run(cwd).warnings.join('\n')).toContain(`${file}: step 5: removes "refund" alongside "earlier", which holds it; say "refund" goes "with" "earlier"`)
   })
 
-  it('accepts a removal that goes with a related removal of the same Step', () => {
+  it('accepts a removal that goes with the thing that holds it', () => {
     const cwd = fixtureCopy()
-    withCart(cwd, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
+    withCart(cwd, `${EARLIER}${REFUND}, with: earlier }\n`)
     const result = run(cwd)
-    expect(result.errors).toEqual([])
+    expect(result.errors.join('\n')).not.toContain('"with"')
     expect(result.warnings.join('\n')).not.toContain('alongside')
   })
 
-  it('refuses "with" outside a removal, naming no removal of the Step, or joining unrelated things', () => {
+  it('refuses the reverse direction, and a relation that holds nothing', () => {
     const cwd = fixtureCopy()
-    const file = withCart(cwd, `      - { entity: cart, effect: removes, with: basket }\n      - { entity: refund, effect: removes, from: Requested, with: cart }\n`)
-    const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('"cart" goes "with" "basket", which names no other "removes" entry of this Step')
-    expect(errors).toContain(`${file}: step 5: "refund" goes "with" "cart", but no relation joins "refund" and "cart"`)
+    const file = withCart(cwd, '      - { entity: order, as: earlier, effect: removes, from: Pending, with: refund }\n' + `${REFUND} }\n`)
+    expect(run(cwd).errors.join('\n')).toContain(`${file}: step 5: "earlier" goes "with" "refund", but "refund" declares no one-to-many or one-to-one relation to "order"; a removal goes with the thing that holds it, so "refund" goes "with" "earlier"`)
+    const manyToMany = fixtureCopy()
+    const other = join(manyToMany, CHECKOUT)
+    writeFileSync(other, readFileSync(other, 'utf8').replace(CART_LINE, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`))
+    expect(run(manyToMany).errors.join('\n')).toContain('"catalog-product" goes "with" "cart", but "cart" declares no one-to-many or one-to-one relation to "catalog-product"')
+  })
+
+  it('needs a self-relation for two removals of the same Entity', () => {
+    const cwd = fixtureCopy()
+    const file = withCart(cwd, '      - { entity: refund, as: original, effect: removes, from: Requested }\n      - { entity: refund, as: follow-up, effect: removes, from: Requested, with: original }\n')
+    expect(run(cwd).errors.join('\n')).toContain(`${file}: step 5: "follow-up" goes "with" "original", but "refund" declares no one-to-many or one-to-one relation to "refund"`)
+    const related = fixtureCopy()
+    const refund = join(related, '.businesslens/entities/refund.md')
+    writeFileSync(refund, readFileSync(refund, 'utf8').replace('domain: ordering\n', 'domain: ordering\nrelations:\n  - entity: refund\n    verb: is followed by\n    cardinality: one-to-many\n'))
+    withCart(related, '      - { entity: refund, as: original, effect: removes, from: Requested }\n      - { entity: refund, as: follow-up, effect: removes, from: Requested, with: original }\n')
+    expect(run(related).errors).toEqual([])
+  })
+
+  it('refuses "with" outside a removal or naming no removal of the Step, and keeps the entry', () => {
+    const cwd = fixtureCopy()
+    withCart(cwd, '      - { entity: refund, effect: removes, from: Requested, with: basket }\n')
+    expect(run(cwd).errors.join('\n')).toContain('"refund" goes "with" "basket", which names no other "removes" entry of this Step')
     const second = fixtureCopy()
     const order = join(second, CHECKOUT)
     writeFileSync(order, readFileSync(order, 'utf8').replace('to: Pending, facts: [Items ordered', 'to: Pending, with: cart, facts: [Items ordered'))
-    expect(run(second).errors.join('\n')).toContain('"with" belongs on a "removes" entry; only a removal goes with another')
+    const errors = run(second).errors.join('\n')
+    expect(errors).toContain('"with" belongs on a "removes" entry; only a removal goes with another')
+    // The order entry survives the misplaced key, so nothing reports it missing from the Step.
+    expect(errors).not.toMatch(/step 5: .*"order"[^\n]*not listed|names "Order"/)
+  })
+
+  it('refuses two entries of a Step with one name', () => {
+    const cwd = fixtureCopy()
+    const file = withCart(cwd, '      - { entity: refund, as: cart, effect: removes, from: Requested }\n')
+    expect(run(cwd).errors.join('\n')).toContain(`${file}: step 5: two entries are named "cart"; give each its own "as" so every entry of a Step has one name`)
   })
 
   it('refuses a "with" chain that returns to where it started', () => {
     const cwd = fixtureCopy()
-    withCart(cwd, `      - { entity: cart, effect: removes, with: catalog-product }\n      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
+    withCart(cwd, '      - { entity: order, as: earlier, effect: removes, from: Pending, with: refund }\n' + `${REFUND}, with: earlier }\n`)
     expect(run(cwd).errors.join('\n')).toContain('returns to where it started; one removal must be what the others go with')
   })
 
   it('lets the removal it goes with carry the permission', () => {
     const cwd = fixtureCopy()
-    writeRule(cwd, 'catalog-products-are-never-removed', 'appliesTo:\n  - type: entity\n    id: catalog-product\n    effect: removes\npermits: []')
-    withCart(cwd, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available }\n`)
-    expect(run(cwd).errors.join('\n')).toContain('which rule "catalog-products-are-never-removed" forbids to everyone')
+    writeRule(cwd, 'refunds-are-never-removed', 'appliesTo:\n  - type: entity\n    id: refund\n    effect: removes\npermits: []')
+    withCart(cwd, `${EARLIER}${REFUND} }\n`)
+    expect(run(cwd).errors.join('\n')).toContain('which rule "refunds-are-never-removed" forbids to everyone')
     const second = fixtureCopy()
-    writeRule(second, 'catalog-products-are-never-removed', 'appliesTo:\n  - type: entity\n    id: catalog-product\n    effect: removes\npermits: []')
-    withCart(second, `${CART_LINE}      - { entity: catalog-product, effect: removes, from: Available, with: cart }\n`)
-    expect(run(second).errors.join('\n')).not.toContain('forbids to everyone')
+    writeRule(second, 'refunds-are-never-removed', 'appliesTo:\n  - type: entity\n    id: refund\n    effect: removes\npermits: []')
+    withCart(second, `${EARLIER}${REFUND}, with: earlier }\n`)
+    expect(run(second).errors.join('\n')).not.toContain('"refunds-are-never-removed" forbids')
   })
 })
 

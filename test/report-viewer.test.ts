@@ -1474,7 +1474,7 @@ describe('composed lifecycle', () => {
  * container leads with what it delivers. The second Screen is built by hand on
  * top of the fixture so the reading is pinned to the wire.
  */
-describe('Screens on the v17 wire', () => {
+describe('Screens on the v18 wire', () => {
   const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
   const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
   const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'

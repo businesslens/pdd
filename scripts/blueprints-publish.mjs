@@ -158,8 +158,9 @@ for (const slug of slugs) {
   // The catalog fetches an optional cover from the pinned commit, as it does the
   // logo; check it here so a bad one fails before anything is published.
   const coverFile = join(dir, '.businesslens', 'product', 'cover.webp')
-  if (existsSync(coverFile)) {
-    const coverStat = await lstat(coverFile)
+  // lstat rather than existsSync, which follows links: a broken link is refused, not skipped.
+  const coverStat = await lstat(coverFile).catch(error => (error.code === 'ENOENT' ? undefined : Promise.reject(error)))
+  if (coverStat) {
     if (coverStat.isSymbolicLink() || !coverStat.isFile()) {
       fail(`blueprints/${slug}: .businesslens/product/cover.webp must be a regular file`)
     }
