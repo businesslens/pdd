@@ -57,7 +57,9 @@ providers use their standard user directories.
 
 For non-interactive installation, provider flags, and collision safety, see
 [`businesslens install`](./cli-install.md). To refresh an installation, see
-[`businesslens update`](./cli-update.md).
+[`businesslens update`](./cli-update.md). With the CLI installed globally,
+[`businesslens completion`](./cli-completion.md) adds Tab completion to your
+shell.
 
 ## Claude Code plugin
 

@@ -24,6 +24,7 @@ npx businesslens <command> [options]
 | [`blueprint open`](./cli-open.md) | Open a local Blueprint |
 | [`blueprint pull`](./cli-pull.md) | Pull a catalog Blueprint |
 | [`blueprint contribute`](./cli-contribute.md) | Contribute a Blueprint |
+| [`completion`](./cli-completion.md) | Print a shell completion script |
 | `help [command]` | Show help for a command |
 
 The `blueprint` commands move a Product Model between repositories as a

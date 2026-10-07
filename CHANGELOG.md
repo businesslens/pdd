@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Report:** Search (⌘K) also finds the report's pages — Overview and every collection — and opens them as the sidebar does.
+- **CLI:** Tab completion for Bash, Zsh and Fish: `businesslens completion <shell>` prints a script that completes commands, options, scopes, agents and paths.
 
 ## [0.30.0] - 2026-10-07
 
