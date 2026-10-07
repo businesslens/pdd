@@ -1,7 +1,7 @@
 ---
 id: polls-and-decisions
 summary: Put a question to the team as a poll, vote and argue while it is open, and keep the outcome as a decision the team can look up.
-category: team-collaboration
+category: collaboration
 tags: [multi-user, ai-assisted]
 authors:
   - name: BusinessLens

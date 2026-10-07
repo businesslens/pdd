@@ -1,7 +1,7 @@
 ---
 id: url-shortener
 summary: Turn long addresses into short links on the web or through an API, disable them or let them expire, and see how often and where they are followed.
-category: developer-tools
+category: dev-tools
 tags: [single-user, public, api]
 authors:
   - name: BusinessLens

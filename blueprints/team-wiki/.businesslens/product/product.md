@@ -1,7 +1,7 @@
 ---
 id: team-wiki
 summary: Keep a team's knowledge in permissioned spaces of nested pages with revision history, find it by search, and let members' AI agents answer from it and suggest updates.
-category: team-collaboration
+category: collaboration
 tags: [multi-user, agentic]
 authors:
   - name: BusinessLens

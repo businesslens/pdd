@@ -1,7 +1,7 @@
 ---
 id: businesslens
 summary: Keep intended product behavior in a reviewable model alongside the code.
-category: developer-tools
+category: dev-tools
 tags: [product-model, coding-agents, developer-tools, specification]
 authors:
   - name: BusinessLens

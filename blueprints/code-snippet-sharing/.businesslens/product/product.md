@@ -1,7 +1,7 @@
 ---
 id: code-snippet-sharing
 summary: Keep code snippets with their language, description and tags, share them by unlisted link or in public, fork others' public snippets, and revise code with kept history.
-category: developer-tools
+category: dev-tools
 tags: [multi-user, public, ai-assisted]
 authors:
   - name: BusinessLens

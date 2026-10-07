@@ -1,7 +1,7 @@
 ---
 id: bookmark-manager
 summary: A private library of links you save yourself, from browser, phone or a browser's export, filed and tagged, with your own AI agent suggesting tidying.
-category: personal-productivity
+category: productivity
 tags: [single-user, agentic]
 authors:
   - name: BusinessLens

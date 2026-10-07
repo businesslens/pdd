@@ -1,7 +1,7 @@
 ---
 id: flashcard-app
 summary: Build flashcard decks, study what is due with spaced repetition on the web or a phone, draft cards from pasted notes, and share decks for others to copy.
-category: learning-and-education
+category: education
 tags: [multi-user, ai-assisted]
 authors:
   - name: BusinessLens

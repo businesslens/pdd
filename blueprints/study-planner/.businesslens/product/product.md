@@ -1,7 +1,7 @@
 ---
 id: study-planner
 summary: Set dated study goals with estimated topics, get a schedule built around your weekly hours, log what you study, and let your AI agent propose revisions.
-category: learning-and-education
+category: education
 tags: [single-user, agentic]
 authors:
   - name: BusinessLens

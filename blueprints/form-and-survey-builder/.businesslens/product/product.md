@@ -1,7 +1,7 @@
 ---
 id: form-and-survey-builder
 summary: Build a form or survey, share it through a public link, collect answers from people without accounts, and review, summarize and export what came back.
-category: public-participation
+category: community
 tags: [multi-user, public, ai-assisted]
 authors:
   - name: BusinessLens

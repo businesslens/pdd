@@ -1,7 +1,7 @@
 ---
 id: notes-app
 summary: Capture quick notes into an inbox, file them into notebooks, tag and link them, find them again, and let your own AI agent suggest where they belong.
-category: personal-productivity
+category: productivity
 tags: [single-user, agentic]
 authors:
   - name: BusinessLens

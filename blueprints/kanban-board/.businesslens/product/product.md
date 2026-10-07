@@ -1,7 +1,7 @@
 ---
 id: kanban-board
 summary: Plan and track a small team's work on shared boards of columns and cards, with stalled work flagged and an AI agent proposing the next cards.
-category: team-collaboration
+category: collaboration
 tags: [multi-user, agentic]
 authors:
   - name: BusinessLens

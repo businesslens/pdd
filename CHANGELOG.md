@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Personal Productivity, Team Collaboration, Public Participation, Learning & Education and Developer Tools.
+- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Productivity, Collaboration, Community, Education and Dev Tools.
 
 ### Changed
 
-- **Blueprints:** The Content Feed Reader now belongs to Personal Productivity.
+- **Blueprints:** The Content Feed Reader now belongs to Productivity.
 - **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it.
 - **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it.
 - Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.

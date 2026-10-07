@@ -1,7 +1,7 @@
 ---
 id: public-status-page
 summary: Publish a public page of your components and their current status, keep visitors informed through incidents and scheduled maintenance, and email confirmed subscribers every update an operator posts.
-category: developer-tools
+category: dev-tools
 tags: [multi-user, public, ai-assisted]
 authors:
   - name: BusinessLens

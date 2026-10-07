@@ -1,7 +1,7 @@
 ---
 id: content-feed-reader
 summary: Follow feeds, catch up and keep worthwhile items in a private web or mobile library, and publish read-only collections for the web.
-category: personal-productivity
+category: productivity
 tags: [single-user, public]
 authors:
   - name: BusinessLens

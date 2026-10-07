@@ -1,7 +1,7 @@
 ---
 id: quiz-builder
 summary: Build quizzes of multiple-choice, true/false and short-answer questions, share them by link or with a class, score each learner's one attempt, and practice what was missed.
-category: learning-and-education
+category: education
 tags: [multi-user, ai-assisted]
 authors:
   - name: BusinessLens

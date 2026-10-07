@@ -1,7 +1,7 @@
 ---
 id: habit-tracker
 summary: Define habits on a daily, chosen-day or weekly schedule, check them off, follow their streaks, pause one without losing it, and read an optional weekly reflection.
-category: personal-productivity
+category: productivity
 tags: [single-user, ai-assisted]
 authors:
   - name: BusinessLens

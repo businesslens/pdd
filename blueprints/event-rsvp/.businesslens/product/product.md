@@ -1,7 +1,7 @@
 ---
 id: event-rsvp
 summary: Create an event, share one invitation link, collect going, maybe and not going answers without guest accounts, keep a waitlist once it is full, and message the guests.
-category: public-participation
+category: community
 tags: [multi-user, public, ai-assisted]
 authors:
   - name: BusinessLens
