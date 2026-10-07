@@ -1,11 +1,13 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
-    <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
-  </picture>
+  <a href="https://businesslens.io">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
+      <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
+    </picture>
+  </a>
 </p>
 
-<h1 align="center">BusinessLens</h1>
+<h1 align="center"><a href="https://businesslens.io">BusinessLens</a></h1>
 <p align="center"><strong>Product-Driven Development for coding agents</strong></p>
 <p align="center">Your AI agent is guessing what the product is. Give it, and your team, one Product Model to build from and check against.</p>
 
@@ -24,12 +26,7 @@
 </p>
 
 <p align="center">
-<strong>Map your own repo.</strong> Run <code>npx businesslens install</code>, then <code>/businesslens-map</code> in your agent,<br>
-then <code>npx businesslens view</code>. You get <code>.businesslens/</code> and this report, for your code.
-</p>
-
-<p align="center">
-<sub>Or browse ours first: <code>npx businesslens view businesslens/pdd</code></sub>
+<a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
 </p>
 
 ---
