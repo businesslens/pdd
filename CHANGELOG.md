@@ -9,23 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- An Entity your product keeps exactly one of, such as its own settings, says `singleton: true`.
+- **Skills:** One way to model plan and flag gates, activity logs shown to users, and support staff acting for a customer.
+- Your product's own settings can be marked `singleton: true`.
 
 ### Changed
 
-- A permission condition always reads one thing: the person acting, the thing the rule governs leads to (the quiz a question is in), or your product's settings.
-- A feature a plan or flag turns off also closes, through permission conditions, every permission only it uses.
-- Support staff acting as a customer are recorded as support, and their permissions can require the customer's consent.
-- An activity or audit log your product shows its users is one Entity, and one Business Rule says what it records.
-- A threshold your customers set names the fact that holds it, such as a workspace's approval threshold.
-- Creating a thing can create what belongs to it in the same step: the creation says what it goes `with`, so a new board's first admin or a new page's first revision needs no permission of its own.
+- Permission conditions always read one specific thing, and a threshold names the fact that holds it.
+- Creating something can create what belongs to it in the same step, such as a new board's first admin.
 - Reports use format version 19; re-export Blueprints after updating.
-- **CLI:** `lint` refuses a permission condition that could read any of many things.
-- **CLI:** `lint` warns on a Capability named with an umbrella verb such as manage.
+- **CLI:** `lint` catches a condition that could read any of many things, and a Capability named with an umbrella verb such as manage.
 
 ### Removed
 
-- **Report:** `businesslens/report` no longer exports the versioned `ProductReportV18` and `ProductReportV18Schema` names; use `ProductReport` and `ProductReportSchema`.
+- **Report:** The versioned `ProductReportV18` names; use `ProductReport` and `ProductReportSchema`.
 
 ## [0.31.0] - 2026-10-07
 
