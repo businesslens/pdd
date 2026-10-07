@@ -7,21 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-07
+
 ### Added
 
-- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Productivity, Collaboration, Dev Tools, Community and Education.
-- **Blueprints:** A Blueprint can carry a cover image, `product/cover.webp`, shown on its catalog card; each of the fifteen launch Blueprints has one.
+- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Productivity, Collaboration, Dev Tools, Community and Education. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- **Blueprints:** A Blueprint can carry a cover image, `product/cover.webp`, shown on its catalog card; each of the fifteen launch Blueprints has one. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
 
 ### Changed
 
-- **Blueprints:** The Content Feed Reader now belongs to Productivity.
-- **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it.
-- **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it.
-- Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.
-- A Journey continues only where the product carries the same person on; something shown where they already are does not count.
-- Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission.
-- Reports use a new format version; re-export Blueprints after updating.
-- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product.
+- **Blueprints:** The Content Feed Reader now belongs to Productivity. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- A Journey continues only where the product carries the same person on; something shown where they already are does not count. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- Reports use a new format version; re-export Blueprints after updating. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product. ([#88](https://github.com/businesslens/pdd/pull/88)) ([4cc2750](https://github.com/businesslens/pdd/commit/4cc27502fc5a27068ad6bee2ba4f70e9e0d561da))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.29.1...v0.30.0][0.30.0]
 
 ## [0.29.1] - 2026-10-07
 
@@ -1132,7 +1140,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.29.1...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/businesslens/pdd/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/businesslens/pdd/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/businesslens/pdd/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/businesslens/pdd/compare/v0.27.0...v0.28.0
