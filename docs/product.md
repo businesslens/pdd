@@ -3,7 +3,7 @@ title: Product
 description: The one product a Product Model describes (its name, its promise, the languages it is delivered in, its known boundaries, and what it needs to be published as a Blueprint).
 section: open-source
 group: Product Model
-order: 8
+order: 7
 terms:
   - term: Product
     definition: "The one coherent value promise this model describes, and the boundary drawn around it."

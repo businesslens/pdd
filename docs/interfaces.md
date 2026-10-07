@@ -3,7 +3,7 @@ title: Interfaces
 description: The web apps, mobile apps, CLIs, APIs and webhooks through which people and systems reach your product, the parts inside them, and the places where facts and abilities are met.
 section: open-source
 group: Product Model
-order: 10
+order: 9
 terms:
   - term: Interface
     definition: "A supported way for Actors to reach the Product, such as a web app, a mobile app, a CLI, a partner API or an inbound webhook."

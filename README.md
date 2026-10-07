@@ -69,7 +69,7 @@ and nothing a rebuild is free to change:
 
 * 📝 **Markdown-native:** every resource is a plain `.md` file in your repo, reviewed in pull requests
 
-* ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them ([what each one establishes](https://businesslens.io/docs/trust-model))
+* ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
 
 * 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
 

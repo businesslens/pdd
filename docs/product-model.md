@@ -3,7 +3,7 @@ title: Model overview
 description: The Product Model in five minutes (what the .businesslens/ folder holds, what each resource type is for, and how to tell them apart).
 section: open-source
 group: Product Model
-order: 7
+order: 6
 terms:
   - term: Product Model
     anchor: the-shape-of-a-model

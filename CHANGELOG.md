@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Docs:** A Trust model page shows what lint, verify, your tests and your own review each establish, and which safeguards are enforced by code, by skill instructions or by your agent's host.
 - An Entity your product keeps exactly one of, such as its own settings, says `singleton: true`.
 
 ### Changed

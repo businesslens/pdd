@@ -3,7 +3,7 @@ title: Variations
 description: Feature flags, settings, plan tiers, A/B tests and API versions, when your product works in more than one supported way and something decides which way applies.
 section: open-source
 group: Product Model
-order: 15
+order: 14
 terms:
   - term: Variation
     definition: "A product that works in more than one supported way, with what decides which way applies: a feature flag, a setting, a plan, an A/B test or a version."

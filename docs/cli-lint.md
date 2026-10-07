@@ -3,7 +3,7 @@ title: lint
 description: Check that a Product Model is structurally sound (files, relationships, Steps, Rules and References) without claiming it matches the code.
 section: open-source
 group: CLI
-order: 24
+order: 23
 ---
 
 # `businesslens lint`
@@ -40,8 +40,7 @@ npx businesslens lint [--json]
 
 It only reads. A clean result means the model is well formed, not that it
 matches the code. Use [`businesslens-verify`](./skill-businesslens-verify.md)
-for that. [Trust model](./trust-model.md) sets the two side by side with your
-tests and your own review.
+for that.
 
 ## JSON output
 

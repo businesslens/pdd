@@ -3,7 +3,7 @@ title: Domains
 description: Optional subject areas, such as ordering or billing, that follow the Product's own sections and group its Capabilities and Entities without owning them.
 section: open-source
 group: Product Model
-order: 11
+order: 10
 terms:
   - term: Domain
     definition: "A subject area of the Product, such as ordering or billing, that classifies related Capabilities and Entities."
