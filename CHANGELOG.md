@@ -21,7 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A Journey continues only where the product carries the same person on; something shown where they already are does not count.
 - Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission.
 - Reports use a new format version; re-export Blueprints after updating.
-- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, limitations that describe the model instead of the product, and a Coverage entry that names no code.
+- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product.
+
+## [0.29.1] - 2026-10-07
+
+### Changed
+
+- **Docs:** The README and the Get started guides lead with mapping your own repository, and say what to ask your agent for everyday changes. ([#100](https://github.com/businesslens/pdd/pull/100)) ([b8f4398](https://github.com/businesslens/pdd/commit/b8f43987ad817ced5de8e4769642e5fdeafe3b4b))
+- **Skills:** Asking your agent to "map this repo into a Product Model" starts map. ([#100](https://github.com/businesslens/pdd/pull/100)) ([b8f4398](https://github.com/businesslens/pdd/commit/b8f43987ad817ced5de8e4769642e5fdeafe3b4b))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.29.0...v0.29.1][0.29.1]
 
 ## [0.29.0] - 2026-10-07
 
@@ -1119,7 +1132,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.29.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.29.1...HEAD
+[0.29.1]: https://github.com/businesslens/pdd/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/businesslens/pdd/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/businesslens/pdd/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/businesslens/pdd/compare/v0.26.0...v0.27.0

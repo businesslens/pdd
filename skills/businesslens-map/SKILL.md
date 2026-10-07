@@ -1,6 +1,6 @@
 ---
 name: businesslens-map
-description: Create or expand a .businesslens/ Product Model by inspecting established behavior in an existing Git repository. Use for first-time BusinessLens adoption when code already exists, for a named area that is absent or deliberately untrusted, or to expand known model coverage; do not use as a daily freshness check or to decide new product behavior.
+description: Create or expand a .businesslens/ Product Model by inspecting established behavior in an existing Git repository. Use for first-time BusinessLens adoption when code already exists (“map this repo into a Product Model”), for a named area that is absent or deliberately untrusted, or to expand known model coverage; do not use as a daily freshness check or to decide new product behavior.
 ---
 
 # Map established product behavior

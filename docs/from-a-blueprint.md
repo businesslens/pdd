@@ -3,7 +3,7 @@ title: From a Blueprint
 description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then ask your agent to implement it.
 section: open-source
 group: Get started
-order: 4
+order: 5
 ---
 
 # Start from a Blueprint
@@ -46,13 +46,14 @@ were given.
    npx businesslens view
    ```
 
-3. If you want something more or different, ask your agent for the change (or
-   run `/businesslens-ideate`) and approve it first.
+3. If you want something more or different, ask your agent for the change,
+   such as "add guest checkout to the product", and approve it first.
 
 4. Ask your agent to implement it: "implement our PDD".
    [Verify](./skill-businesslens-verify.md) plans the work in phases: your agent
    implements each phase your usual way, and verify checks it before the next.
    Say "in one go" to skip phases, or "one slice at a time" to go slower; see
    [Choose the pace](./skill-businesslens-verify.md#choose-the-pace).
-   Run `/businesslens-verify` yourself whenever you want to be sure.
+   Ask your agent to check the code against the model whenever you want to be
+   sure, or run `/businesslens-verify` by name.
 

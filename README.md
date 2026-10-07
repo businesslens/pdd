@@ -1,13 +1,15 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
-    <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
-  </picture>
+  <a href="https://businesslens.io">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
+      <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
+    </picture>
+  </a>
 </p>
 
-<h1 align="center">BusinessLens</h1>
+<h1 align="center"><a href="https://businesslens.io">BusinessLens</a></h1>
 <p align="center"><strong>Product-Driven Development for coding agents</strong></p>
-<p align="center">Your AI agent is guessing what the product is. Give it, and your team, one Product Model to build from and check against.</p>
+<p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/businesslens"><img src="https://img.shields.io/npm/v/businesslens" alt="npm version"></a>
@@ -24,7 +26,7 @@
 </p>
 
 <p align="center">
-Try it yourself: <code>npx businesslens view businesslens/pdd</code>
+<a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
 </p>
 
 ---
@@ -81,13 +83,7 @@ and nothing a rebuild is free to change:
 
 ---
 
-## The development loop
-
-<p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
-</p>
-
-## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
+## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Get started
 
 ```bash
 npx businesslens install
@@ -95,22 +91,50 @@ npx businesslens install
 
 Then start from where you are, inside your agent (Codex uses `$` instead of `/`):
 
-| You have | Run | Guide |
-| --- | --- | --- |
-| Existing code | `/businesslens-map` | [From your repo](./docs/from-your-repo.md) |
-| An idea | `/businesslens-ideate` | [From an idea](./docs/from-an-idea.md) |
-| A familiar kind of product | `npx businesslens blueprint pull <name>` | [From a Blueprint](./docs/from-a-blueprint.md) |
+### Map existing repo (recommended)
 
-Then every change runs the loop. You just ask; your agent picks the skill:
+Have code? Run the map skill:
 
 ```text
-add guest checkout to the product   # ideate: approve the model change
-implement it                        # verify: your agent implements in phases, verify checks each
-/businesslens-verify this branch    # any time you want to be sure
+/businesslens-map
 ```
 
-`map` is for adopting BusinessLens or covering more of the product; `verify` is
-the everyday skill.
+It reads the code without running it, asks what the code can't answer, and
+writes `.businesslens/` once you approve. Then open the report:
+
+```bash
+npx businesslens view
+```
+
+[From your repo](https://businesslens.io/docs/from-your-repo)
+
+### Start from an idea
+
+No code yet? Describe the product you want:
+
+```text
+I want to build a booking app for dog walkers
+```
+
+You pick from a few product shapes, then approve the model.
+[From an idea](https://businesslens.io/docs/from-an-idea)
+
+### Start from a Blueprint
+
+A familiar kind of product? Pull a reviewed model:
+
+```bash
+npx businesslens blueprint pull <name>
+```
+
+[Browse the catalog](https://businesslens.io/blueprints) ·
+[From a Blueprint](https://businesslens.io/docs/from-a-blueprint)
+
+## The development loop
+
+<p align="center">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
+</p>
 
 ## <img src="./.github/readme/app-window.svg" alt="" width="28" height="28" align="top"> Web interface
 
@@ -131,7 +155,7 @@ npx businesslens view --port 8080 --no-open
 
 ## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI reference
 
-Every command and option: [CLI reference](./docs/cli.md).
+Every command and option: [CLI reference](https://businesslens.io/docs/cli).
 
 Quick examples: `businesslens install`, `businesslens update`,
 `businesslens lint`, `businesslens view`, `businesslens blueprint export`,
