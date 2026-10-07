@@ -10,45 +10,8 @@ Never disclose a vulnerability in a public issue, and do not include credentials
 
 Only the latest published release receives security fixes.
 
-## Trust boundaries
+## Scope
 
-BusinessLens has three kinds of safeguard, and only the first is enforced by
-code.
+In scope: the `businesslens` CLI, or the lint runner the skills use, running code from a repository it reads, or writing a file that repository owns (such as `AGENTS.md`, `CLAUDE.md` or the README), or overwriting a file BusinessLens does not own without `--force`.
 
-**Enforced by code**
-
-- `businesslens lint` only reads: the `.businesslens/` files and which files
-  Git tracks (`git ls-files`). It runs nothing from the repository.
-- The skills' runner (`skills/*/scripts/run-businesslens.mjs`) runs only
-  `lint`, from a temporary folder outside the target repository, with the CLI
-  version the skills were installed from.
-
-**Instructions the skills give the agent**
-
-- During analysis, never run the repository's code, scripts or tests.
-- Write product meaning only inside `.businesslens/`, and only after the user
-  approves the complete change.
-- When implementing, never edit `.businesslens/`; bring product questions back
-  to the user.
-- In report-only mode, change nothing. Never stage, commit or publish.
-
-An agent usually follows these, with no guarantee. None of them is a security
-boundary.
-
-**Enforced by the agent's host**
-
-What the agent can actually run, read, write or reach over the network is set
-by its host — Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot — through
-its permission prompts, sandbox and allow-lists. If running unreviewed code
-matters, configure the host.
-
-**Not enforced today**
-
-- Nothing in code stops an agent from running repository code, or writing
-  outside `.businesslens/`, during analysis.
-- No check confirms that a `.businesslens/` change was approved, or that an
-  implementing agent left the folder alone; the pull-request diff is where both
-  show.
-- `businesslens-verify` runs only when an agent runs it. Its findings are
-  re-derived each run and never stored, so there is no recorded "verified"
-  state to trust or to go stale.
+Out of scope: an AI agent not following a skill's instructions. The skills only instruct the agent, and nothing technically enforces those instructions. What an agent can actually run or change is controlled by the tool it runs in, such as Claude Code's permission prompts.
