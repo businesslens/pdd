@@ -144,7 +144,8 @@ A representative model can therefore look like this:
 ├── product.md               # compact Product when it has no logo
 ├── product/                 # expanded Product alternative
 │   ├── product.md
-│   └── logo.svg             # optional locally; required for a public Blueprint
+│   ├── logo.svg             # optional locally; required for a public Blueprint
+│   └── cover.webp           # optional catalog cover
 │
 │   ── Interface → Experience → Screen: where Actors meet the Product ──
 ├── interfaces/<interface-id>/
@@ -698,6 +699,14 @@ It is a self-contained, UTF-8 SVG with a `viewBox`, at most 256 KiB, and cannot
 contain active content, event handlers, embedded documents, imports, or network
 references. It is rendered only as an image and is not embedded in the Product
 Report. Public Blueprints require it; general local Product Models may omit it.
+
+Beside the logo, `product/` may hold one optional `cover.webp`: an illustration
+a catalog shows on the Product's card. It is presentation, never product
+meaning, so nothing in the model refers to it and the Product Report does not
+carry it. It is a WebP image, 16:9 within one percent, at least 1200 pixels
+wide, and at most 1 MiB — four times the logo's limit because it is a raster
+picture, and one format so that a catalog serves every cover the same way. Only
+the folder form can hold it: a compact `product.md` has no `product/` beside it.
 
 General Product Models may omit this metadata. The public Blueprint publication
 profile requires a category, at least one tag, at least one

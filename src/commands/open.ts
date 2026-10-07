@@ -24,7 +24,7 @@ import { lintModel } from './lint.js'
 import { FOLDER_SCHEMA, loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
 import { UsageError } from '../core/usage-error.js'
-import { validateProductLogo } from '../logo.js'
+import { validateProductCover, validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
@@ -511,6 +511,8 @@ export interface ExpandedProductReport {
 export interface ExpandProductReportOptions {
   /** Optional Product logo to restore into the expanded model. */
   logo?: Uint8Array
+  /** Optional Product cover, restored beside the logo; a model without a logo has no `product/` for it. */
+  cover?: Uint8Array
 }
 
 export function expandProductReport(
@@ -532,6 +534,11 @@ export function expandProductReport(
       const issues = validateProductLogo(options.logo)
       if (issues.length) throw new Error(`The Product logo is invalid: ${issues.join('; ')}`)
       writeBytes(join(stagedRoot, 'product', 'logo.svg'), options.logo)
+      if (options.cover) {
+        const coverIssues = validateProductCover(options.cover)
+        if (coverIssues.length) throw new Error(`The Product cover is invalid: ${coverIssues.join('; ')}`)
+        writeBytes(join(stagedRoot, 'product', 'cover.webp'), options.cover)
+      }
     }
     // Expansion is the one canonical report-to-model primitive used by open,
     // pull, and contribution. Keeping orientation here makes their model trees

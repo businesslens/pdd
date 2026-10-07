@@ -400,7 +400,7 @@ npx businesslens blueprint open ./report.json
 `.businesslens/`. Leaf resources are written compactly as `<id>.md`; a resource
 is written as `<id>/<type>.md` only when report content gives it child resources.
 A Product pulled with a separate `logo.svg` similarly expands from `product.md`
-to `product/product.md`. `npx businesslens blueprint pull <blueprint-slug>` anonymously
+to `product/product.md`, with an optional `cover.webp` beside the logo. `npx businesslens blueprint pull <blueprint-slug>` anonymously
 retrieves the current public Blueprint for that catalog slug and invokes the
 same expansion path without saving a user-facing report download.
 

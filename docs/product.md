@@ -88,12 +88,14 @@ A logo expands the Product into a folder:
 ```text
 .businesslens/product/
 ├── product.md
-└── logo.svg
+├── logo.svg
+└── cover.webp      # optional
 ```
 
 A model without a logo stays compact, as `product.md`. To publish the model as
 a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is), it needs a `category`,
-at least one tag, at least one author, a `license`, and `logo.svg`.
+at least one tag, at least one author, a `license`, and `logo.svg`. An optional
+`cover.webp` is the illustration the catalog shows on its card.
 
 ## How it connects
 
@@ -109,8 +111,8 @@ at least one tag, at least one author, a `license`, and `logo.svg`.
 Errors:
 
 - Exactly one manifest: `product.md` or `product/product.md`, never both.
-- `product/` holds only `product.md` and `logo.svg`, and a `product/` folder
-  needs its logo. Without one, use `product.md`.
+- `product/` holds only `product.md`, `logo.svg` and an optional `cover.webp`,
+  and a `product/` folder needs its logo. Without one, use `product.md`.
 - No unknown frontmatter keys, and `## Intent` at most once.
 - `id` is present, lowercase kebab-case and at most 64 characters; the H1 and
   description are present.
@@ -121,6 +123,8 @@ Errors:
 - Every language is a well-formed tag, like `en` or `pt-BR`, listed once.
 - `logo.svg` is a plain file of at most 256 KiB with a `viewBox`: shapes only,
   with no scripts, animation, text, external links or embedded content.
+- `cover.webp` is a plain WebP file of at most 1 MiB, 16:9 and at least 1200
+  pixels wide.
 
 Warnings:
 

@@ -28,10 +28,12 @@ npx businesslens blueprint pull <name> [--catalog <origin>] [--force]
 ## What it does
 
 1. Fetches the report from the catalog, anonymously (no account or sign-in).
-2. Checks it, then fetches the Product logo if the catalog has one. A missing or
-   invalid logo is skipped, not an error.
+2. Checks it, then fetches the Product logo and cover if the catalog has them.
+   A missing or invalid one is skipped, not an error, and a cover comes only
+   with a logo.
 3. Expands it exactly as [`blueprint open`](./cli-open.md) does, with the logo
-   restored as `.businesslens/product/logo.svg`.
+   restored as `.businesslens/product/logo.svg` and the cover as
+   `.businesslens/product/cover.webp`.
 
 ## Safety
 
@@ -53,6 +55,7 @@ Serve two anonymous endpoints:
 | --- | --- |
 | `GET /api/v1/blueprints/:slug/report.json` | The report, with `x-businesslens-blueprint: <slug>` and `x-businesslens-report-digest: <sha-256 hex of the canonical report JSON>`; `404` unknown, `410` withdrawn, `503` unavailable |
 | `GET /api/v1/blueprints/:slug/logo.svg` | The Product logo, optional |
+| `GET /api/v1/blueprints/:slug/cover.webp` | The Product cover, optional |
 
 `pull` asks for `application/vnd.businesslens.report+json; version=18` and
 also accepts `application/json`.

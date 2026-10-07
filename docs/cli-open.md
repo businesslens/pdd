@@ -42,7 +42,7 @@ npx businesslens --cwd ./new-product blueprint open ./report.json
 Everything except repository navigation comes through (see
 [what export keeps](./cli-export.md#portable-export)). Coverage comes through
 empty: no code in your repository has been mapped to the model yet. A report
-carries no logo, so the Product is written compact, as
+carries no logo or cover, so the Product is written compact, as
 `product.md`.
 
 ## Safety

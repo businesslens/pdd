@@ -30,7 +30,8 @@ None.
    `.businesslens/cache/build.json` stamp. Both are generated and gitignored, and
    replaced on every run.
 
-The report carries no logo: `.businesslens/product/logo.svg` stays behind.
+The report carries no logo or cover: `.businesslens/product/logo.svg` and
+`cover.webp` stay behind.
 
 ## Portable export
 

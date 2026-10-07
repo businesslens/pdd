@@ -29,7 +29,8 @@ npx businesslens blueprint contribute [--yes]
   author, and an SPDX license.
 - A logo. Move a compact `.businesslens/product.md` to
   `.businesslens/product/product.md` and add `logo.svg` beside it. See
-  [Logo and publishing](./product.md#logo-and-publishing).
+  [Logo and publishing](./product.md#logo-and-publishing). An optional
+  `cover.webp` beside it is carried into the pull request too.
 
 Your Product id becomes the Blueprint's catalog slug, and the name others pull.
 

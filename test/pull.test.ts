@@ -14,6 +14,7 @@ const temporaryDirectories: string[] = []
 
 let report: Record<string, unknown>
 let logo: Buffer
+const cover = readFileSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'))
 
 function temporary(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix))
@@ -44,6 +45,10 @@ function logoResponse(): Response {
   return new Response(logo, { status: 200, headers: { 'content-type': 'image/svg+xml' } })
 }
 
+function coverResponse(): Response {
+  return new Response(cover, { status: 200, headers: { 'content-type': 'image/webp' } })
+}
+
 beforeAll(() => {
   const source = temporary('bl-pull-source-')
   cpSync(FIXTURE, source, { recursive: true })
@@ -72,6 +77,7 @@ describe('pull', () => {
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
       urls.push(String(url))
       if (String(url).endsWith('/logo.svg')) return logoResponse()
+      if (String(url).endsWith('/cover.webp')) return coverResponse()
       requested = { url: String(url), init }
       return reportResponse()
     }) as unknown as typeof globalThis.fetch
@@ -91,6 +97,34 @@ describe('pull', () => {
       '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
     ))).toBe(true)
     expect(readFileSync(join(target, '.businesslens/product/logo.svg'))).toEqual(logo)
+    expect(urls).toContain('https://businesslens.io/api/v1/blueprints/fixture-shop/cover.webp')
+    expect(readFileSync(join(target, '.businesslens/product/cover.webp'))).toEqual(cover)
+  })
+
+  it('skips a missing or invalid cover, and asks for none without a logo', async () => {
+    const missing = temporary('bl-pull-no-cover-')
+    const fetchMissing = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
+      ? logoResponse()
+      : String(url).endsWith('/cover.webp') ? new Response('', { status: 404 }) : reportResponse()) as unknown as typeof globalThis.fetch
+    expect(await runPull(missing, 'fixture-shop', { force: false }, { fetch: fetchMissing, env: {} })).toBe(0)
+    expect(existsSync(join(missing, '.businesslens/product/logo.svg'))).toBe(true)
+    expect(existsSync(join(missing, '.businesslens/product/cover.webp'))).toBe(false)
+
+    const invalid = temporary('bl-pull-bad-cover-')
+    const fetchInvalid = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
+      ? logoResponse()
+      : String(url).endsWith('/cover.webp') ? new Response('<svg/>', { status: 200 }) : reportResponse()) as unknown as typeof globalThis.fetch
+    expect(await runPull(invalid, 'fixture-shop', { force: false }, { fetch: fetchInvalid, env: {} })).toBe(0)
+    expect(existsSync(join(invalid, '.businesslens/product/cover.webp'))).toBe(false)
+
+    const urls: string[] = []
+    const noLogo = temporary('bl-pull-cover-without-logo-')
+    const fetchNoLogo = vi.fn(async (url: string) => {
+      urls.push(String(url))
+      return String(url).endsWith('/logo.svg') ? new Response('', { status: 404 }) : reportResponse()
+    }) as unknown as typeof globalThis.fetch
+    expect(await runPull(noLogo, 'fixture-shop', { force: false }, { fetch: fetchNoLogo, env: {} })).toBe(0)
+    expect(urls.some(url => url.endsWith('/cover.webp'))).toBe(false)
   })
 
   it('does not require the optional GitHub logo', async () => {
@@ -147,7 +181,8 @@ describe('pull', () => {
     )).toBe(0)
     expect(urls).toEqual([
       'https://catalog.example.com/api/v1/blueprints/fixture-shop/report.json',
-      'https://catalog.example.com/api/v1/blueprints/fixture-shop/logo.svg'
+      'https://catalog.example.com/api/v1/blueprints/fixture-shop/logo.svg',
+      'https://catalog.example.com/api/v1/blueprints/fixture-shop/cover.webp'
     ])
   })
 

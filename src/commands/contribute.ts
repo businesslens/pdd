@@ -12,7 +12,7 @@ import { buildProject } from './export.js'
 import { expandProductReport } from './open.js'
 import { lintModel } from './lint.js'
 import { UsageError } from '../core/usage-error.js'
-import { readProductLogo } from '../core/logo-file.js'
+import { readProductCover, readProductLogo } from '../core/logo-file.js'
 
 /**
  * Where contributions go.
@@ -167,7 +167,8 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     workspace = mkdtempSync(join(tmpdir(), 'businesslens-contribute-'))
     const regenerated = join(workspace, 'model')
     mkdirSync(regenerated, { recursive: true })
-    expandProductReport(regenerated, portable, false, { logo: logo.bytes })
+    const cover = readProductCover(modelRoot)
+    expandProductReport(regenerated, portable, false, { logo: logo.bytes, ...(cover ? { cover: cover.bytes } : {}) })
 
     if (!options.yes) {
       if (!process.stdin.isTTY) {

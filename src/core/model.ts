@@ -19,7 +19,7 @@ import {
   uniqueStringListField
 } from './frontmatter.js'
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
-import { readProductLogo } from './logo-file.js'
+import { readProductCover, readProductLogo } from './logo-file.js'
 import {
   bulletList, decisionPoints, namedStates, parseMarkdown, section
 } from './markdown.js'
@@ -1163,6 +1163,11 @@ export function loadModel(cwd: string): PddModel {
     } catch (error) {
       issues.push(`logo.svg: ${(error as Error).message}`)
     }
+    try {
+      readProductCover(cwd)
+    } catch (error) {
+      issues.push(`cover.webp: ${(error as Error).message}`)
+    }
   }
 
   let config = { schema: FOLDER_SCHEMA, sddPaths: [] as string[] }
@@ -1241,8 +1246,8 @@ export function loadModel(cwd: string): PddModel {
   }
   if (hasProductDirectory) {
     for (const entry of readdirSync(productDirectory, { withFileTypes: true })) {
-      if (entry.name === '.DS_Store' || entry.name === 'product.md' || entry.name === 'logo.svg') continue
-      issues.push(`product/${entry.name}: the Product folder may contain only product.md and logo.svg`)
+      if (['.DS_Store', 'product.md', 'logo.svg', 'cover.webp'].includes(entry.name)) continue
+      issues.push(`product/${entry.name}: the Product folder may contain only product.md, logo.svg and cover.webp`)
     }
   }
 

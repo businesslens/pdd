@@ -12,7 +12,7 @@ import { lstat, readdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { validateBlueprintReport } from '../dist/report.js'
-import { validateProductLogo } from '../dist/logo.js'
+import { validateProductCover, validateProductLogo } from '../dist/logo.js'
 import { parse as parseYaml } from 'yaml'
 
 const root = process.cwd()
@@ -105,6 +105,19 @@ for (const slug of entries) {
       errors.push(`${label}: .businesslens/product/logo.svg must be a regular file, not a symbolic link`)
     } else {
       for (const issue of validateProductLogo(await readFile(logoFile))) {
+        errors.push(`${label}: ${issue}`)
+      }
+    }
+  }
+
+  // A cover is optional; when present it is checked like the logo.
+  const coverFile = join(dir, '.businesslens', 'product', 'cover.webp')
+  if (existsSync(coverFile)) {
+    const stat = await lstat(coverFile)
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+      errors.push(`${label}: .businesslens/product/cover.webp must be a regular file, not a symbolic link`)
+    } else {
+      for (const issue of validateProductCover(await readFile(coverFile))) {
         errors.push(`${label}: ${issue}`)
       }
     }

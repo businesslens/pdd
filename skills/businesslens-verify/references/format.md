@@ -21,7 +21,7 @@ A representative model looks like this:
 ├── taxonomies.yaml
 ├── coverage.md
 ├── .gitignore
-├── product.md                    # or product/product.md beside logo.svg
+├── product.md                    # or product/product.md beside logo.svg (and an optional cover.webp)
 ├── interfaces/<id>/
 │   ├── interface.md
 │   ├── screens/<id>.md                       # when no Experience divides it

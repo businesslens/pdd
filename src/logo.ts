@@ -1,5 +1,14 @@
 import { SaxesParser } from 'saxes'
 
+export {
+  MAX_PRODUCT_COVER_BYTES,
+  MIN_PRODUCT_COVER_WIDTH,
+  PRODUCT_COVER_FILENAME,
+  productCoverDimensions,
+  validateProductCover,
+  type ProductCoverDimensions
+} from './cover.js'
+
 /** The one Product logo location understood by BusinessLens. */
 export const PRODUCT_LOGO_FILENAME = 'logo.svg'
 

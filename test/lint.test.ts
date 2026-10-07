@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, rmdirSync, unlinkSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, rmdirSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -194,6 +194,25 @@ describe('lintModel', () => {
     unlinkSync(join(cwd, '.businesslens/product/logo.svg'))
 
     expect(run(cwd).errors).toContain('product/ has no logo asset; use product.md')
+  })
+
+  it('accepts an optional cover beside the logo and checks it like the logo', () => {
+    const cover = readFileSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'))
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/product/cover.webp'), cover)
+    expect(run(cwd).errors).toEqual([])
+
+    const invalid = fixtureCopy()
+    writeFileSync(join(invalid, '.businesslens/product/cover.webp'), '<svg/>')
+    expect(run(invalid).errors).toContain('cover.webp: cover.webp must be a WebP image')
+
+    const linked = fixtureCopy()
+    symlinkSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'), join(linked, '.businesslens/product/cover.webp'))
+    expect(run(linked).errors).toContain('cover.webp: cover.webp must be a regular file, not a symbolic link')
+
+    const other = fixtureCopy()
+    writeFileSync(join(other, '.businesslens/product/cover.png'), cover)
+    expect(run(other).errors).toContain('product/cover.png: the Product folder may contain only product.md, logo.svg and cover.webp')
   })
 
   it('rejects an unrecognized child directory inside a resource folder', () => {

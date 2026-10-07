@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Productivity, Collaboration, Dev Tools, Community and Education.
+- **Blueprints:** A Blueprint can carry a cover image, `product/cover.webp`, shown on its catalog card; each of the fifteen launch Blueprints has one.
 
 ### Changed
 

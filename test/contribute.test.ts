@@ -160,6 +160,7 @@ describe('contribute', { timeout: 30_000 }, () => {
 
     // The fixture deliberately carries code references — that is the leak being tested.
     cpSync(FIXTURE, model, { recursive: true })
+    cpSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'), join(model, '.businesslens/product/cover.webp'))
     initialize(model)
     expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('kind: code')
@@ -200,6 +201,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(files.some(file => file === 'blueprints/fixture-shop/blueprint.yaml')).toBe(false)
     expect(files.some(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
     expect(files).toContain('blueprints/fixture-shop/.businesslens/product/logo.svg')
+    expect(files).toContain('blueprints/fixture-shop/.businesslens/product/cover.webp')
 
     // The point of the whole flow: the model in the pull request is regenerated
     // from a portable report, so no workspace reference survives into it.

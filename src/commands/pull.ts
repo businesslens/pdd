@@ -5,7 +5,7 @@ import { reportDigest } from '../core/report-digest.js'
 import { cliVersion } from '../version.js'
 import { expandProductReport } from './open.js'
 import { UsageError } from '../core/usage-error.js'
-import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
+import { MAX_PRODUCT_COVER_BYTES, MAX_PRODUCT_LOGO_BYTES, validateProductCover, validateProductLogo } from '../logo.js'
 
 const REPORT_MEDIA_TYPE = 'application/vnd.businesslens.report+json'
 /* The only accepted report version is the schema's own major; the catalog is
@@ -106,6 +106,37 @@ async function fetchOptionalLogo(
   }
 }
 
+async function fetchOptionalCover(
+  fetch: typeof globalThis.fetch,
+  catalog: string,
+  blueprint: string
+): Promise<Uint8Array | undefined> {
+  try {
+    const response = await fetch(
+      `${catalog}/api/v1/blueprints/${blueprint}/cover.webp`,
+      {
+        headers: {
+          accept: 'image/webp',
+          'user-agent': `businesslens/${cliVersion()}`
+        },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(15_000)
+      }
+    )
+    if (!response.ok || (response.status >= 300 && response.status < 400)) return undefined
+    const length = Number(response.headers.get('content-length') || 0)
+    if (length > MAX_PRODUCT_COVER_BYTES) return undefined
+    const cover = await readLimitedBytes(
+      response,
+      MAX_PRODUCT_COVER_BYTES,
+      'The Product cover exceeds the 1 MiB safety limit.'
+    )
+    return validateProductCover(cover).length ? undefined : cover
+  } catch {
+    return undefined
+  }
+}
+
 export async function runPull(
   cwd: string,
   name: string,
@@ -201,9 +232,11 @@ export async function runPull(
   }
 
   const logo = await fetchOptionalLogo(fetch, catalog, blueprint)
+  // A cover lives beside the logo in `product/`, so it is fetched only with one.
+  const cover = logo ? await fetchOptionalCover(fetch, catalog, blueprint) : undefined
 
   try {
-    const opened = expandProductReport(cwd, report, options.force, logo ? { logo } : {})
+    const opened = expandProductReport(cwd, report, options.force, logo ? { logo, ...(cover ? { cover } : {}) } : {})
     console.log(`Pulled ${parsedName} into ${opened.root}.`)
     return 0
   } catch (error) {
