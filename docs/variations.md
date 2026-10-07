@@ -89,7 +89,7 @@ two forms.
 | What you see | Model it as |
 | --- | --- |
 | A flag or setting that switches between two complete forms of a place or flow, such as a product page with or without stock | A Variation |
-| A flag, plan or setting that only turns a feature on or off | An ordinary resource whose description (the paragraph under its title) says it exists only while the switch is on; every permission grant only that feature passes, such as refunding on paid plans, also gets the switch as a condition on its [Business Rule](./business-rules.md#grant-keys) |
+| A flag, plan or setting that only turns a feature on or off | An ordinary resource whose description (the paragraph under its title) says it exists only while the switch is on; its permissions carry the switch as a [condition](./business-rules.md#grant-keys) |
 | A flag that only decides *who may* do something, such as self-service cancellation | A permission condition on a [Business Rule](./business-rules.md#grant-keys) |
 | A threshold or other value one policy reads | Content of that one resource |
 | A difference only in looks, or a setting that only changes looks, such as dark mode | Design, not modeled; attach a Reference if useful |

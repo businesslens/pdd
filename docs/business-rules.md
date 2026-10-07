@@ -64,23 +64,10 @@ says whether they may.
   comments never selects the comments a deleted card takes with it, and a Rule
   on adding members never selects the first membership a new board is created
   with.
-- **A condition reads one instance, never any of many.** In order: the actor
-  itself; a per-board Role on the `related` path, the acting person's own
-  membership; the one the governed thing leads to, such as *the Quiz reveals
-  answers* for a Question, which has exactly one Quiz; or Store settings marked
-  [`singleton`](./entities.md#the-file). Anything else could be any of many.
-  Give a grant with several `actors` one grant per actor before conditioning
-  one of them.
-- **A feature a plan or flag turns off is closed by its grants.** Every grant
-  only the feature's Steps pass carries the switch: refunds exist only on paid
-  plans and only refunds move an Order to Refunded, so each grant of that Rule
-  carries `when: [{ entity: workspace, fact: Plan, is: Paid }]`, and the
-  Capability's lead says so too. A read-only feature, or one whose Steps pass
-  only grants ungated behavior passes too, has only its lead.
-- **Support acting as a customer is still support.** Its Steps name the support
-  Actor, and each Rule support may pass gains a grant for it, conditioned on the
-  customer's consent where the Product asks for it:
-  `{ actors: [support-agent], when: [{ entity: shopper, fact: Support access, is: On }] }`.
+- **A condition reads one instance, never any of many.** The actor itself; a
+  per-board Role on the `related` path, the acting person's own membership;
+  the one the governed thing leads to, such as the Quiz a Question is in; or
+  Store settings marked [`singleton`](./entities.md#the-file).
 - **Ordinary copy is design; contractual wording is a Rule.** When exact words
   are required, the Rule says so and cites the authoritative
   [Reference](./references.md).
@@ -228,16 +215,6 @@ when:
 grant's `when`. Business Rules vary only when a setting switches between two
 complete policies, such as Standard or Strict refund review.
 
-### A log of what happened
-
-An activity or audit log the Product shows an Actor is an
-[Entity](./entities.md), and one Rule without `permits` says what it records:
-*every change to an Order is recorded in its activity*, targeting the Order
-operations and the log Entity. No Step lists the entry it causes; the Rule
-records one for every Step it selects. A Step reading the log lists what it
-reads, as usual. Entries written while support acts as a customer
-name the support Actor.
-
 ### A product's own roles
 
 Each role the Product ships is an Entity that acts, granted through `actors`:
@@ -272,10 +249,7 @@ Errors:
   ends on, so nobody could satisfy it.
 - A condition without exactly one of the eight operators, a fact or State that
   does not resolve, or a `state` on a `creates` target; a condition `entity`
-  that could be any of many instances: not the actor, off the `related` path,
-  not `singleton`, and not reached from the governed thing, or reached only
-  through two relations joining the same pair; a condition `entity` naming
-  the governed thing itself.
+  or threshold that could be any of many instances.
 - A Step performing an operation `permits: []` forbids; a governed operation
   whose Step has no actor, or one no grant could admit; an unattended Scenario
   no `unattended` grant allows; a Screen presenting governed facts to an

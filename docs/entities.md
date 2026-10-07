@@ -55,8 +55,7 @@ Entities are its nouns, and the ones that act are **Actors**.
 | The person browsing and buying, who owns their orders | Shopper (acts) |
 | What the store sells, Available or Unavailable | Catalog product |
 | Money returned against an order, with its own amount and reason | Refund |
-| The switches a store sets, such as self-service cancellation | Store settings (singleton) |
-| What changed on an order and who changed it, shown to the store's admins | Order activity entry |
+| The switches a store sets, such as self-service cancellation | Store settings |
 | The processor that posts settlement results back | Payment gateway (acts) |
 
 ## When you create one
@@ -75,11 +74,10 @@ Entities are its nouns, and the ones that act are **Actors**.
   kind"* is several. When it is close, split.
 - **Identity, not storage.** A draft the Product never saves is still an Entity
   when someone points at it; a database row nobody can name is not.
-- **A log is an Entity when an Actor reads it.** An activity or audit log the
-  store's admins open is one Entity (who acted, what changed, when), and one
-  [Business Rule](./business-rules.md#a-log-of-what-happened) says what it
-  records; no Step lists the entry it causes. A log only your own team reads is
-  machinery and stays out.
+- **A log is an Entity when an Actor reads it.** An activity log the store's
+  admins open is one Entity, and one [Business Rule](./business-rules.md) says
+  what it records; no Step lists the entries. A log only your team reads stays
+  out.
 
 ## Actors: an Entity that acts
 
@@ -185,11 +183,8 @@ A person who browses the catalog and buys products.
 Every Entity has at least one of `## Information kept`, `## States` or `acts`. A
 payment gateway may keep nothing and exist because it acts.
 
-**`singleton: true`** marks the Product's own settings, kept once: Store
-settings in a shop that is one store. A Business Rule can read a singleton's
-fact from anywhere. Settings each Workspace or Organization keeps are not
-singletons, since there is one per container; a Rule reads them through the
-thing it governs, such as the Workspace a Document belongs to.
+**`singleton: true`** marks the Product's own settings, kept once. Settings
+each Workspace keeps are not singletons.
 
 ## Named facts
 
