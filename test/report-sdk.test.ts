@@ -891,7 +891,7 @@ describe('a removal that goes with another, on the wire', () => {
     const report = compileReport(loadModel(root), '2026-01-01')
     const [entry] = goingWith(report)
     entry!.with = { entityId: 'order', as: null }
-    expect(sdk.validateProductReport(report).join('\n')).toContain('must name another "removes" record of this step')
+    expect(sdk.validateProductReport(report).join('\n')).toContain('must name another record of this step with the same effect')
   })
 
   it('refuses a "with" toward an Entity that declares no holding relation', () => {

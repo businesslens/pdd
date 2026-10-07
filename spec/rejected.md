@@ -277,7 +277,11 @@ reaches; a condition on the target names no Entity.
 people's comments, and a grant wide enough to admit that cascade also admits
 removing any one of them directly; no condition tells the two apart. A
 `removes` entry says `with` what it goes instead, and only the removal it goes
-with needs permission.
+with needs permission. **Granting a container's first membership** failed the
+same way from the other side: a grant admitting the creator's own Owner
+membership — the holder of a new membership, or anyone while a member count is
+zero — also admits making oneself Owner elsewhere, or needs a fact that exists
+only to say *being created*. A `creates` entry goes `with` the container instead.
 
 **`with` accepted in either direction of a relation.** `comment with card` and
 `card with comment` both linted clean, and the second let a card's removal

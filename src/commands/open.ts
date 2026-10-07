@@ -134,7 +134,7 @@ function grantRecord(grant: ReportGrant): Record<string, unknown> {
       ...(condition.operator
         ? {
             [condition.operator]: typeof condition.value === 'object' && condition.value !== null
-              ? { configuredBy: condition.value.configuredByEntityId }
+              ? { entity: condition.value.entityId, fact: condition.value.fact }
               : condition.value ?? undefined
           }
         : {})

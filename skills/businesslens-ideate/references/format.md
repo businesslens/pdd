@@ -468,7 +468,10 @@ Lead and section-body fragments do not contain another H1 or H2.
   described with Actors above), or `{ state: X }` for the instance's current
   state (valid on every target but `creates`, needed because reads and
   information changes carry no state to select by). A value is a scalar or
-  `{ configuredBy: <entity-id> }`. Permission claims appear only here, never in
+  the fact holding the threshold, `{ entity: <entity-id>, fact: <fact name> }`
+  (a fact that Entity keeps, read as one instance just as a condition's
+  `entity` is: `over: { entity: workspace, fact: Approval threshold }`).
+  Permission claims appear only here, never in
   Scenario prose. No structured `when` exists on Capability targets. The
   experiment engine is ordinary Product Entities and behavior only when running
   experiments is the Product's purpose. An outbound message (an email, push or
@@ -589,13 +592,16 @@ state resolves. `facts` is required on reads, changes and creation: the
 exhaustive unique list of named Product facts affected, including defaults on
 creation, never inferred from form fields or padded with incidental
 implementation data; `[]` names no facts, never unspecified. Removal has no
-`facts`. A removal that happens because another removal of the same Step does
-— a card's comments going with the card — says `with: <alias or entity id of
-that entry>`, naming the Entity that holds it: the named Entity must declare a
-`one-to-many` or `one-to-one` relation to the dependent's (itself, for two of the
-same Entity), so `comment` goes `with: card`, never the reverse. The removal it
-goes with is what needs permission, two removals where one holds the other with
-no `with` are a warning, and each entry's `as`-or-`entity` reference is unique
+`facts`. A creation or removal that happens because another of the same Step
+and effect does — a card's comments going with the card, a new board's first
+membership (its creator's, as Admin) going with the board, a new page's first
+revision — says `with: <alias or entity id of that entry>`, naming the Entity
+that holds it: the named Entity must declare a `one-to-many` or `one-to-one`
+relation to the dependent's (itself, for two of the same Entity), so `comment`
+goes `with: card`, never the reverse. Put a thing created only because another
+is in that creation's Step. The creation or removal it goes with is what needs
+permission, so no grant is written for the dependent; two creations or two
+removals where one holds the other with no `with` are a warning, and each entry's `as`-or-`entity` reference is unique
 in its Step. An Actor read on a Screen must occur in that Screen's `shows`; Product
 and condition Steps may consult undisplayed facts. A Step lists every thing it
 moves, one entry per `(entity, as)` pair; `as` is a scenario-local alias for two

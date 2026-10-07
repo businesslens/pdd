@@ -12,12 +12,12 @@ steps:
     contexts:
       web:
         place: board-web::board-settings
-  - text: The Product checks the role of the Teammate on the board and refuses, because having created the board admitted only its first membership
+  - text: The Product checks the role of the Teammate on the board and refuses, because creating the board made them its first admin and nothing more
     kind: product
     actor: teammate
     entities:
       - { entity: board-membership, effect: reads, facts: [Role] }
-      - { entity: board, effect: reads, facts: [Member count] }
+      - { entity: board, effect: reads, facts: [] }
     contexts:
       web:
         place: board-web::board-settings

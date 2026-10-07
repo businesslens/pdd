@@ -320,7 +320,7 @@ export function compileReport(
             value: condition.value === undefined
               ? null
               : typeof condition.value === 'object'
-                ? { configuredByEntityId: condition.value.configuredBy }
+                ? { entityId: condition.value.entity, fact: condition.value.fact }
                 : condition.value
           })),
           unattended: grant.unattended === true,

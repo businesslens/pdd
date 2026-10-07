@@ -1539,19 +1539,28 @@ Lead.
     )
   })
 
-  it('resolves configuredBy on a grant and on a threshold', () => {
+  it('resolves configuredBy on a grant, and a threshold as one fact of one instance', () => {
     const cwd = fixtureCopy()
-    writeRule(cwd, 'large-refunds-are-approved', `appliesTo:
+    const errorsWith = (frontmatter: string) => {
+      writeRule(cwd, 'large-refunds-are-approved', frontmatter)
+      return run(cwd).errors.join('\n')
+    }
+    const refund = (threshold: string) => `appliesTo:
   - type: entity
     id: order
     effect: changes
     to: Refunded
 permits:
   - configuredBy: approval-policy
-    when: [{ fact: Total charged, over: { configuredBy: approval-policy } }]`)
-    const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('grant 1: "configuredBy" references missing entity "approval-policy"')
-    expect(errors).toContain('condition 1: "configuredBy" references missing entity "approval-policy"')
+    when: [{ fact: Total charged, over: ${threshold} }]`
+    const missing = errorsWith(refund('{ entity: approval-policy, fact: Limit }'))
+    expect(missing).toContain('grant 1: "configuredBy" references missing entity "approval-policy"')
+    expect(missing).toContain('condition 1: the threshold references missing entity "approval-policy"')
+    expect(errorsWith(refund('{ entity: store-settings, fact: Limit }'))).toContain('the threshold\'s "Limit" is not a fact of entity "store-settings"')
+    // Many Catalog products, and no one of them is the Order's.
+    expect(errorsWith(refund('{ entity: catalog-product, fact: Price }'))).toContain('the threshold reads "catalog-product"')
+    // The old shape named an Entity and no fact.
+    expect(errorsWith(refund('{ configuredBy: store-settings }'))).toContain('needs a scalar or { entity: <entity-id>, fact: <fact name> }')
   })
 
   it('keys an entry point by the Interface type or another Interface id, never an unknown surface', () => {
@@ -2631,7 +2640,7 @@ describe('a removal that goes with another', () => {
     expect(run(related).errors).toEqual([])
   })
 
-  it('refuses "with" outside a removal or naming no removal of the Step, and keeps the entry', () => {
+  it('refuses "with" outside a creation or removal, or naming no entry of the same effect, and keeps the entry', () => {
     const cwd = fixtureCopy()
     withCart(cwd, '      - { entity: refund, effect: removes, from: Requested, with: basket }\n')
     expect(run(cwd).errors.join('\n')).toContain('"refund" goes "with" "basket", which names no other "removes" entry of this Step')
@@ -2639,9 +2648,14 @@ describe('a removal that goes with another', () => {
     const order = join(second, CHECKOUT)
     writeFileSync(order, readFileSync(order, 'utf8').replace('to: Pending, facts: [Items ordered', 'to: Pending, with: cart, facts: [Items ordered'))
     const errors = run(second).errors.join('\n')
-    expect(errors).toContain('"with" belongs on a "removes" entry; only a removal goes with another')
-    // The order entry survives the misplaced key, so nothing reports it missing from the Step.
+    // The cart is removed, not created, so the new order cannot go with it.
+    expect(errors).toContain('"order" goes "with" "cart", which names no other "creates" entry of this Step')
+    // The order entry survives the unresolved key, so nothing reports it missing from the Step.
     expect(errors).not.toMatch(/step 5: .*"order"[^\n]*not listed|names "Order"/)
+    const third = fixtureCopy()
+    const changed = join(third, CHECKOUT)
+    writeFileSync(changed, readFileSync(changed, 'utf8').replace('{ entity: shopper, effect: changes, facts: [Delivery address] }', '{ entity: shopper, effect: changes, facts: [Delivery address], with: cart }'))
+    expect(run(third).errors.join('\n')).toContain('"with" belongs on a "creates" or "removes" entry; only a creation or a removal goes with another')
   })
 
   it('refuses two entries of a Step with one name', () => {
@@ -2653,7 +2667,7 @@ describe('a removal that goes with another', () => {
   it('refuses a "with" chain that returns to where it started', () => {
     const cwd = fixtureCopy()
     withCart(cwd, '      - { entity: order, as: earlier, effect: removes, from: Pending, with: refund }\n' + `${REFUND}, with: earlier }\n`)
-    expect(run(cwd).errors.join('\n')).toContain('returns to where it started; one removal must be what the others go with')
+    expect(run(cwd).errors.join('\n')).toContain('returns to where it started; one entry must be what the others go with')
   })
 
   it('lets the removal it goes with carry the permission', () => {
@@ -2665,6 +2679,31 @@ describe('a removal that goes with another', () => {
     writeRule(second, 'refunds-are-never-removed', 'appliesTo:\n  - type: entity\n    id: refund\n    effect: removes\npermits: []')
     withCart(second, `${EARLIER}${REFUND}, with: earlier }\n`)
     expect(run(second).errors.join('\n')).not.toContain('"refunds-are-never-removed" forbids')
+  })
+
+  /* A new Order's first Refund is unusual, but it is the shape: created because
+     the Order is, in the same Step, so only creating the Order needs a grant. */
+  it('lets the creation it goes with carry the permission, and warns when it is unsaid', () => {
+    const ORDER = '      - { entity: order, effect: creates, to: Pending, facts: [Items ordered, Delivery details, Subtotal, Tax, Discount, Total charged, Margin, When placed] }\n'
+    const FIRST_REFUND = '      - { entity: refund, effect: creates, to: Requested, facts: [Amount]'
+    const forbid = 'appliesTo:\n  - type: entity\n    id: refund\n    effect: creates\npermits: []'
+    const withRefund = (cwd: string, entry: string) => {
+      const file = join(cwd, CHECKOUT)
+      writeFileSync(file, readFileSync(file, 'utf8').replace(ORDER, ORDER + entry))
+    }
+    const cwd = fixtureCopy()
+    writeRule(cwd, 'refunds-are-never-created', forbid)
+    withRefund(cwd, `${FIRST_REFUND} }\n`)
+    const unsaid = run(cwd)
+    expect(unsaid.errors.join('\n')).toMatch(/complete-checkout\.md: step 5: creates "refund"[^\n]*"refunds-are-never-created" forbids to everyone/)
+    expect(unsaid.warnings.join('\n')).toContain('creates "refund" alongside "order", which holds it; say "refund" goes "with" "order"')
+    const second = fixtureCopy()
+    writeRule(second, 'refunds-are-never-created', forbid)
+    withRefund(second, `${FIRST_REFUND}, with: order }\n`)
+    const said = run(second)
+    // Refunds created by other Scenarios still meet the Rule; this one goes with its Order.
+    expect(said.errors.join('\n')).not.toMatch(/complete-checkout\.md: step 5: creates "refund"/)
+    expect(said.warnings.join('\n')).not.toContain('alongside "order"')
   })
 })
 

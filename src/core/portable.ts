@@ -399,7 +399,7 @@ export const ReportGrantConditionSchema = z.strictObject({
     z.string().min(1),
     z.number(),
     z.boolean(),
-    z.strictObject({ configuredByEntityId: IdSchema })
+    z.strictObject({ entityId: IdSchema, fact: SingleLineTextSchema })
   ]).nullable()
 })
 
@@ -997,14 +997,15 @@ export function validateProductReport(report: ProductReport): string[] {
          declares a one-to-many or one-to-one relation to it, itself included —
          and following `with` always ends at one that goes with nothing. */
       const recordKey = (entityId: string, as: string | null) => `${entityId}\u0000${as ?? ''}`
-      const removalRecords = new Map(step.entities
-        .filter(entry => entry.effect === 'removes')
+      const recordsOf = (effect: string) => new Map(step.entities
+        .filter(entry => entry.effect === effect)
         .map(entry => [recordKey(entry.entityId, entry.as), entry]))
       for (const entry of step.entities) {
         if (entry.with === null) continue
+        const removalRecords = recordsOf(entry.effect)
         const target = removalRecords.get(recordKey(entry.with.entityId, entry.with.as))
-        if (entry.effect !== 'removes' || !target || target === entry) {
-          issues.push(`${stepLabel}: "with" on "${entry.entityId}" must name another "removes" record of this step, from a "removes" record`)
+        if ((entry.effect !== 'removes' && entry.effect !== 'creates') || !target || target === entry) {
+          issues.push(`${stepLabel}: "with" on "${entry.entityId}" must name another record of this step with the same effect, from a "creates" or "removes" record`)
           continue
         }
         const holds = (holder: string, held: string) => (entitiesById.get(holder)?.relations ?? [])
@@ -1386,7 +1387,7 @@ export function validateProductReport(report: ProductReport): string[] {
     ...(grant.configuredByEntityId ? [grant.configuredByEntityId] : []),
     ...grant.when.flatMap(condition => [
       ...(condition.entityId ? [condition.entityId] : []),
-      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.configuredByEntityId] : [])
+      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.entityId] : [])
     ])
   ])))
   for (const entity of model.entities) {
@@ -1677,8 +1678,24 @@ export function validateProductReport(report: ProductReport): string[] {
             })
             if (issue) issues.push(`${conditionLabel}: ${issue}`)
           }
-          if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredByEntityId)) {
-            issues.push(`${conditionLabel}: configuredByEntityId references missing entity "${condition.value.configuredByEntityId}"`)
+          if (typeof condition.value === 'object' && condition.value !== null) {
+            const threshold = condition.value
+            const thresholdHolder = entitiesById.get(threshold.entityId)
+            if (!thresholdHolder) {
+              issues.push(`${conditionLabel}: the threshold references missing entity "${threshold.entityId}"`)
+            } else {
+              for (const issue of unknownFactIssues(threshold.entityId, [threshold.fact], thresholdHolder)) issues.push(`${conditionLabel}: the threshold's ${issue}`)
+              const targetId = singleTarget?.type === 'entity' ? singleTarget.entityId : undefined
+              const issue = threshold.entityId === targetId ? undefined : conditionInstanceIssue({
+                entityId: threshold.entityId,
+                actorIds: grant.actorIds,
+                pathIds: grant.related.map(segment => segment.entityId),
+                targetId,
+                singletonIds,
+                relations: relationEdges
+              })
+              if (issue) issues.push(`${conditionLabel}: the threshold ${issue}`)
+            }
           }
         }
       }

@@ -1483,7 +1483,7 @@ permits:
       - { fact: Total charged, at-most: 100 }
   - configuredBy: store-settings
     when:
-      - { fact: Total charged, over: { configuredBy: store-settings } }
+      - { fact: Total charged, over: { entity: store-settings, fact: Refund approval threshold } }
 ---
 
 # Refunds need an operator
@@ -1712,10 +1712,10 @@ one operator, or a `state`:
 
 ```yaml
 when:
-  - { fact: Total charged, over: 100 }                                  # hard-coded
-  - { fact: Total charged, over: { configuredBy: approval-policy } }    # customer-set
-  - { entity: workspace-settings, fact: Approval required, is: true }   # feature flag
-  - { state: Published }                                                # the instance's state
+  - { fact: Total charged, over: 100 }                                            # hard-coded
+  - { fact: Total charged, over: { entity: workspace, fact: Approval threshold } } # customer-set
+  - { entity: workspace, fact: Approval required, is: true }                      # feature flag
+  - { state: Published }                                                          # the instance's state
 ```
 
 | Operator | Meaning |
@@ -1735,7 +1735,11 @@ facts are untyped: `over: 99.99` is the wrong rule for money and for time.
 `lint` checks the fact and any named Entity resolve, and that a named Entity
 is read as one instance (below), and nothing more — whether
 *Total charged* holds a number is `verify`'s job against code. A threshold is a
-scalar or `{ configuredBy: <entity-id> }`.
+scalar, or the fact that holds it, `{ entity: <entity-id>, fact: <fact name> }`:
+the fact must be one that Entity keeps, and its instance is resolved exactly as
+a condition's `entity` is, below — a threshold of the targeted Entity itself
+names that Entity. There is no other way to say *the threshold the customer
+set*.
 
 `fact` defaults to a fact of the targeted Entity and may name another through
 `entity`, which is how thresholds, feature flags and a container's own settings
@@ -2255,9 +2259,10 @@ Entity is aliased anywhere in a Scenario, every mention of it in that Scenario
 is aliased: a bare `collection` beside a `collection (source)` is an error, not
 a third instance.
 
-**`with` says a removal goes with another.** A `removes` entry may carry
-`with`, naming another `removes` entry of the same Step — by its `as` when it
-has one, otherwise by its `entity` — that it is removed because of:
+**`with` says a creation or removal goes with another.** A `creates` or
+`removes` entry may carry `with`, naming another entry of the same Step and the
+same effect — by its `as` when it has one, otherwise by its `entity` — that it
+is created or removed because of:
 
 ```yaml
 - text: The Teammate deletes the card and every comment on it
@@ -2266,25 +2271,36 @@ has one, otherwise by its `entity` — that it is removed because of:
   entities:
     - { entity: card,    effect: removes, from: Active }
     - { entity: comment, effect: removes, with: card }
+
+- text: The Teammate creates a board by naming it and becomes its first admin
+  kind: actor
+  actor: teammate
+  entities:
+    - { entity: board,            effect: creates, facts: [Name] }
+    - { entity: board-membership, effect: creates, facts: [Role], with: board }
 ```
 
-**A removal goes `with` the Entity that holds it:** the Entity it names must
+**It goes `with` the Entity that holds it:** the Entity it names must
 declare a `one-to-many` or `one-to-one` relation to the dependent's Entity, so
 the direction is read from the relation's declared side. A Card that declares
 `one-to-many` Comments lets `comment` go `with: card`; `card` going `with:
 comment` is an error, because Comment declares nothing to Card, and a
 `many-to-many` relation holds nothing. Two entries of the same Entity need that
 Entity to declare such a relation to itself. A `with` chain never returns to
-where it started; `lint` errors otherwise, and on `with` outside a `removes`
-entry or naming no `removes` entry of the Step. Within one Step every entry's
+where it started; `lint` errors otherwise, and on `with` outside a `creates`
+or `removes` entry or naming no entry of the Step with the same effect. Within one Step every entry's
 reference — its `as`, otherwise its `entity` — is unique, so a `with` names
 exactly one entry. **The
-removal it goes with is what needs permission:** a permission Rule on the
-dependent Entity's `removes` never selects a `with` removal, so *only its
-author deletes a comment* and *a member deletes a card, comments and all* hold
-together. A Step that removes two Entities where one holds the other, with no
-`with` on either, is a `lint` warning: the held one almost always goes because
-of the other.
+creation or removal it goes with is what needs permission:** a permission Rule
+on the dependent Entity's `creates` or `removes` never selects a `with` entry,
+so *only its author deletes a comment* and *a member deletes a card, comments
+and all* hold together, and so do *only a board's admins add members* and *any
+Teammate creates a board, becoming its first admin* — the first membership
+needs no grant of its own, and none may be written to admit it. A thing
+created only because another is goes in the same Step as that creation. A Step
+that creates or removes two Entities where one holds the other, with no `with`
+on either, is a `lint` warning: the held one almost always goes because of the
+other.
 
 **Steps chain, per instance.** Where a prior Step in the same Scenario left an
 `(entity, as)` pair in a state, this Step's `from` for that pair must equal it.

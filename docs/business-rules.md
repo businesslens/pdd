@@ -60,8 +60,10 @@ says whether they may.
 - **One permission Rule per operation.** Creating, changing and removing a
   Card are three Rules, each naming its `effect`, even when the same people may
   do all three.
-- **A removal that goes `with` another is the other's to permit.** A Rule on
-  removing comments never selects the comments a deleted card takes with it.
+- **What goes `with` another is the other's to permit.** A Rule on removing
+  comments never selects the comments a deleted card takes with it, and a Rule
+  on adding members never selects the first membership a new board is created
+  with.
 - **A condition reads one instance, never any of many.** In order: the actor
   itself; a per-board Role on the `related` path, the acting person's own
   membership; the one the governed thing leads to, such as *the Quiz reveals
@@ -218,6 +220,7 @@ when:
   - { state: Pending }                                                    # the thing's State
   - { fact: Total charged, at-most: 100 }                                 # a fact of the thing
   - { entity: store-settings, fact: Self-service cancellation, is: true } # a setting
+  - { fact: Total charged, over: { entity: store-settings, fact: Refund approval threshold } } # a threshold the store sets
 ```
 
 **A setting that only decides who may do something is a condition, not a

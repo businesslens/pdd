@@ -1613,7 +1613,7 @@ export function projectReportWorkspace(report: ProductReport): ReportWorkspace {
   const entityTitle = (id: string) => entityById.get(id)?.title ?? id
   const describeValue = (value: ReportGrantCondition['value']): string => {
     if (value === null) return ''
-    if (typeof value === 'object') return `the ${entityTitle(value.configuredByEntityId)} threshold`
+    if (typeof value === 'object') return `${entityTitle(value.entityId)}'s ${value.fact}`
     return String(value)
   }
   const describeCondition = (condition: ReportGrantCondition, targetId: string): string => {

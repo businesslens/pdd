@@ -429,7 +429,7 @@ describe('stable Product Report', () => {
     const refunds = workspace.rules.find((item: any) => item.id === 'refunds-need-an-operator')!
     expect(refunds.grants.map((grant: any) => grant.sentence)).toEqual([
       'Store admin when Total charged at most 100',
-      'whoever Store settings configures when Total charged over the Store settings threshold'
+      'whoever Store settings configures when Total charged over Store settings\'s Refund approval threshold'
     ])
     expect(workspace.rules.find((item: any) => item.id === 'orders-are-never-deleted')!.prohibits).toBe(true)
     expect(workspace.rules.find((item: any) => item.id === 'a-refund-is-visible-to-its-shopper')!.grants[0].who)
@@ -1403,7 +1403,7 @@ describe('composed lifecycle', () => {
     /* The grants are the Rule's own reading, each in full. */
     expect(rule.grants.map((grant: any) => grant.sentence)).toEqual([
       'Store admin when Total charged at most 100',
-      'whoever Store settings configures when Total charged over the Store settings threshold'
+      'whoever Store settings configures when Total charged over Store settings\'s Refund approval threshold'
     ])
 
     /* The measuring copy and the canvas draw the same label, so the reserved box is the drawn box. */

@@ -38,7 +38,8 @@ const conditions = computed(() => props.grant.when.map(condition => ({
   condition,
   subject: entity(condition.entityId ?? props.targetId),
   operator: condition.operator ? OPERATORS[condition.operator] ?? condition.operator : '',
-  threshold: condition.value !== null && typeof condition.value === 'object' ? entity(condition.value.configuredByEntityId) : null,
+  threshold: condition.value !== null && typeof condition.value === 'object' ? entity(condition.value.entityId) : null,
+  thresholdFact: condition.value !== null && typeof condition.value === 'object' ? condition.value.fact : '',
   value: condition.value !== null && typeof condition.value !== 'object' ? String(condition.value) : ''
 })))
 </script>
@@ -95,9 +96,8 @@ const conditions = computed(() => props.grant.when.map(condition => ({
           <span class="font-medium text-highlighted">{{ item.condition.fact }}</span>
           <span class="blr-rule-grant-word">{{ item.operator }}</span>
           <template v-if="item.threshold">
-            <span class="blr-rule-grant-word">the</span>
             <BlrEntityChip :entity="item.threshold" @select="emit('select', $event)" />
-            <span class="blr-rule-grant-word">threshold</span>
+            <span class="font-medium text-highlighted">{{ item.thresholdFact }}</span>
           </template>
           <span v-else-if="item.value" class="font-mono text-xs text-highlighted">{{ item.value }}</span>
         </template>

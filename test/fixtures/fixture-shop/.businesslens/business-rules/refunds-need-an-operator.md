@@ -8,7 +8,7 @@ permits:
   - actors: [store-admin]
     when: [{ fact: Total charged, at-most: 100 }]
   - configuredBy: store-settings
-    when: [{ fact: Total charged, over: { configuredBy: store-settings } }]
+    when: [{ fact: Total charged, over: { entity: store-settings, fact: Refund approval threshold } }]
 references:
   - kind: code
     role: implementation

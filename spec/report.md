@@ -122,13 +122,13 @@ empty when the step affects no named facts and always empty on a `removes`
 record. It is an exhaustive claim for reads, changes and creation, not an
 unspecified subset; the one entry it never carries is the activity or audit
 entry a recording Business Rule makes for the step. `with` is `null` or the `{ entityId, as }` of another
-`removes` record of the same step that this removal goes with, resolved on the
-wire from the folder's alias-or-id reference; it is non-null only on a
-`removes` record, never names its own record, names a record whose Entity
+record of the same step and effect that this creation or removal goes with,
+resolved on the wire from the folder's alias-or-id reference; it is non-null
+only on a `creates` or `removes` record, never names its own record, names a record whose Entity
 declares a `one-to-many` or `one-to-one` relation to this record's Entity (a
 self-relation when both are the same Entity), and never forms a cycle within
 the step. A permission Rule on an
-Entity's `removes` selects no record whose `with` is non-null. One step never
+Entity's `creates` or `removes` selects no record whose `with` is non-null. One step never
 carries two records with one reference — the `as`, otherwise the `entityId` —
 so a `with` resolves to one record.
 
@@ -143,13 +143,13 @@ booleans, `when` is an array of `{ entityId, fact, state, operator, value }`
 conditions where exactly one of `fact` with `operator` or `state` is set,
 `operator` is one of `over`, `under`, `at-least`, `at-most`, `is`, `is-not`,
 `present`, `absent`, and `value` is an untyped scalar, `null`, or
-`{ configuredByEntityId }`.
+`{ entityId, fact }`, the fact holding the threshold.
 
 Validation resolves every edge, exactly as it resolves Interface and Capability
 relations: a `relations` target, a Screen `entities` record's `entityId`, every step
 `entities` record's `entityId`, every Entity target's `entityId`, every grant's
-`actorIds`, `related` segment and `configuredByEntityId`, and every condition's
-`entityId` must name an Entity in the same report; every actor reference must
+`actorIds`, `related` segment and `configuredByEntityId`, every condition's
+`entityId` and every threshold value's `entityId` must name an Entity in the same report; every actor reference must
 name one that `acts`; a relation never reads `many-to-one`; a step record's `from` and `to` must be
 states of the named Entity and follow its effect — `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither; every
@@ -163,7 +163,7 @@ prohibition. A Rule's `from`, `to`, `facts` and condition `state` and `fact` val
 the targeted Entity; a `related` path walks declared relations and their
 inverses one unambiguous hop at a time and ends on an Entity that `acts`; and an
 Entity no step changes, no Screen presents, nothing names as an actor, no Rule
-reads through a condition's `entityId` or a `configuredByEntityId`, and no
+reads through a condition's or threshold's `entityId` or a `configuredByEntityId`, and no
 Variation chooses by is invalid — a read step never counts. The report is
 expanded straight into an authored folder, so a report carrying an edge the
 folder rules reject would produce a `.businesslens/` that fails `lint`.

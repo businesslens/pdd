@@ -29,7 +29,7 @@ steps:
     actor: developer
     entities:
       - { entity: snippet, effect: creates, to: Private, facts: [Title, Description, Language, Tags, Code, Address] }
-      - { entity: revision, effect: creates, facts: [Number, Code, Language, Saved at] }
+      - { entity: revision, effect: creates, facts: [Number, Code, Language, Saved at], with: snippet }
     contexts:
       web:
         place: snippets-web::workspace::snippet-editor

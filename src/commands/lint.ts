@@ -768,7 +768,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...(grant.configuredBy ? [grant.configuredBy] : []),
     ...grant.when.flatMap(condition => [
       ...(condition.entity ? [condition.entity] : []),
-      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.configuredBy] : [])
+      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.entity] : [])
     ])
   ])))
   /* Named as an actor anywhere: a Step, a surface, a Journey, or a grant. */
@@ -1663,8 +1663,25 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
             })
             if (issue) errors.push(`${conditionLabel}: ${issue}`)
           }
-          if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredBy)) {
-            errors.push(`${conditionLabel}: "configuredBy" references missing entity "${condition.value.configuredBy}"`)
+          /* A threshold another fact holds is read like a condition's `entity`:
+             one instance, or the condition says nothing. */
+          if (typeof condition.value === 'object' && condition.value !== null) {
+            const threshold = condition.value
+            const thresholdHolder = entitiesById.get(threshold.entity)
+            if (!thresholdHolder) {
+              errors.push(`${conditionLabel}: the threshold references missing entity "${threshold.entity}"`)
+            } else {
+              for (const issue of unknownFactIssues(threshold.entity, [threshold.fact], thresholdHolder)) errors.push(`${conditionLabel}: the threshold's ${issue}`)
+              const issue = threshold.entity === singleTarget?.id ? undefined : conditionInstanceIssue({
+                entityId: threshold.entity,
+                actorIds: grant.actors,
+                pathIds: grant.related.map(segment => segment.entity),
+                targetId: singleTarget?.id,
+                singletonIds,
+                relations: relationEdges
+              })
+              if (issue) errors.push(`${conditionLabel}: the threshold ${issue}`)
+            }
           }
         }
       }
@@ -1846,21 +1863,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   for (const scenario of allScenarios) {
     for (const [index, step] of scenario.steps.entries()) {
       const label = `${scenario.file}: step ${index + 1}`
-      const removals = step.entities.filter(entry => entry.effect === 'removes')
       const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
-      for (const entry of removals) {
-        if (entry.with === undefined) continue
-        const target = removals.find(other => referenceOf(other) === entry.with)
-        if (target && !holds(target.entity, entry.entity)) {
-          errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but "${target.entity}" declares no one-to-many or one-to-one relation to "${entry.entity}"; a removal goes with the thing that holds it${holds(entry.entity, target.entity) ? `, so "${entry.with}" goes "with" "${referenceOf(entry)}"` : ''}`)
+      for (const effect of ['removes', 'creates'] as const) {
+        const entries = step.entities.filter(entry => entry.effect === effect)
+        const noun = effect === 'removes' ? 'a removal' : 'a creation'
+        for (const entry of entries) {
+          if (entry.with === undefined) continue
+          const target = entries.find(other => referenceOf(other) === entry.with)
+          if (target && !holds(target.entity, entry.entity)) {
+            errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but "${target.entity}" declares no one-to-many or one-to-one relation to "${entry.entity}"; ${noun} goes with the thing that holds it${holds(entry.entity, target.entity) ? `, so "${entry.with}" goes "with" "${referenceOf(entry)}"` : ''}`)
+          }
         }
-      }
-      for (const [position, left] of removals.entries()) {
-        for (const right of removals.slice(position + 1)) {
-          if (left.with !== undefined || right.with !== undefined) continue
-          const [holder, held] = holds(left.entity, right.entity) ? [left, right] : holds(right.entity, left.entity) ? [right, left] : []
-          if (!holder || !held) continue
-          warnings.push(`${label}: removes "${referenceOf(held)}" alongside "${referenceOf(holder)}", which holds it; say "${referenceOf(held)}" goes "with" "${referenceOf(holder)}"`)
+        for (const [position, left] of entries.entries()) {
+          for (const right of entries.slice(position + 1)) {
+            if (left.with !== undefined || right.with !== undefined) continue
+            const [holder, held] = holds(left.entity, right.entity) ? [left, right] : holds(right.entity, left.entity) ? [right, left] : []
+            if (!holder || !held) continue
+            warnings.push(`${label}: ${effect} "${referenceOf(held)}" alongside "${referenceOf(holder)}", which holds it; say "${referenceOf(held)}" goes "with" "${referenceOf(holder)}"`)
+          }
         }
       }
     }
