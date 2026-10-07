@@ -9,7 +9,7 @@
 
 <h1 align="center"><a href="https://businesslens.io">BusinessLens</a></h1>
 <p align="center"><strong>Product-Driven Development for coding agents</strong></p>
-<p align="center">Your AI agent is guessing what the product is. Give it, and your team, one Product Model to build from and check against.</p>
+<p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/businesslens"><img src="https://img.shields.io/npm/v/businesslens" alt="npm version"></a>
