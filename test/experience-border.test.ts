@@ -6,7 +6,7 @@ import { compileReport } from '../src/commands/export.js'
 import { lintModel } from '../src/commands/lint.js'
 import { expandProductReport } from '../src/commands/open.js'
 import { loadModel } from '../src/core/model.js'
-import { ProductReportV18Schema, validateProductReport } from '../src/core/portable.js'
+import { ProductReportSchema, validateProductReport } from '../src/core/portable.js'
 
 const TRACKED = ['README.md', 'src/routes/storefront.ts', 'src/routes/admin.ts',
   'src/services/catalog.ts', 'src/services/orders.ts', 'src/services/payments.ts',

@@ -1,3 +1,7 @@
+---
+singleton: true
+---
+
 # Store settings
 
 The policy knobs a store sets for itself, which the Product reads when it

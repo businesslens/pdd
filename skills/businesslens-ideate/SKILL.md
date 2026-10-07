@@ -81,7 +81,11 @@ Read before authoring:
      model.
    - **Who may.** A permission is a grant on a Business Rule targeting the
      operation, never a sentence in a Scenario; an operation nobody may perform
-     is `permits: []`.
+     is `permits: []`. A feature a plan or flag turns off puts the switch in
+     the `when` of every grant only it passes; every condition reads one
+     instance; support acting as a customer is still the support Actor; a log
+     shown to an Actor is an Entity one Rule records. The format reference has
+     each shape.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.

@@ -86,3 +86,113 @@ export function screenReadIssues(
   }
   return issues
 }
+
+/** One declared relation, read source to target, as both callers hold it. */
+export interface RelationEdge {
+  from: string
+  to: string
+  cardinality: string
+}
+
+export interface ConditionInstance {
+  /** The Entity a grant condition names through `entity`. */
+  entityId: string
+  /** The grant's `actors`. Only a grant admitting exactly one Entity fixes who acts. */
+  actorIds: readonly string[]
+  /** Every Entity the grant's `related` path passes through, in order; the last one acts. */
+  pathIds: readonly string[]
+  /** The Rule's one Entity target, when it has exactly one. */
+  targetId: string | undefined
+  singletonIds: ReadonlySet<string>
+  relations: readonly RelationEdge[]
+}
+
+/*
+ * The hops along which an instance has exactly one of the next: from the
+ * `many` side of a `one-to-many` back to its one, and both ways along a
+ * `one-to-one`. A self-relation is never walked, because naming the Entity does
+ * not give it a direction. A pair joined twice keeps both hops, so a walk
+ * through it can be told apart from one through a single relation.
+ */
+function toOneHops(relations: readonly RelationEdge[]): Map<string, string[]> {
+  const hops = new Map<string, string[]>()
+  const add = (from: string, to: string) => hops.set(from, [...(hops.get(from) ?? []), to])
+  for (const relation of relations) {
+    if (relation.from === relation.to) continue
+    if (relation.cardinality === 'one-to-many') add(relation.to, relation.from)
+    if (relation.cardinality === 'one-to-one') {
+      add(relation.from, relation.to)
+      add(relation.to, relation.from)
+    }
+  }
+  return hops
+}
+
+function reachableFrom(start: string, hops: Map<string, string[]>): Set<string> {
+  const reached = new Set([start])
+  const pending = [start]
+  while (pending.length) {
+    for (const next of hops.get(pending.pop()!) ?? []) {
+      if (!reached.has(next)) {
+        reached.add(next)
+        pending.push(next)
+      }
+    }
+  }
+  return reached
+}
+
+/**
+ * A grant condition naming another Entity must read one instance of it: the
+ * acting one, the one on the `related` path, the one the targeted instance has
+ * through to-one relations, or the Product's one `singleton`. A condition that
+ * could read any of many instances says nothing, so `lint` refuses it.
+ */
+export function conditionInstanceIssue(condition: ConditionInstance): string | undefined {
+  const { entityId, targetId } = condition
+  /* A path that passes the target's own type again reads that instance — the
+     acting person's membership, never the one being changed. */
+  const acting = condition.pathIds.at(-1) ?? (condition.actorIds.length === 1 ? condition.actorIds[0] : undefined)
+  if (entityId === acting || condition.pathIds.includes(entityId) || condition.singletonIds.has(entityId)) {
+    return undefined
+  }
+  if (entityId === targetId) {
+    return `names "${entityId}", the Rule's own target; a condition on the governed thing names no "entity"`
+  }
+  const ways = 'walk to it with "related", relate it to-one, or declare it "singleton"'
+  const several = condition.actorIds.includes(entityId)
+    ? `; the grant admits more than one Entity, so give "${entityId}" a grant of its own`
+    : ''
+  const unreached = `reads "${entityId}", which is not the acting Entity, lies off the grant's "related" path and is not "singleton"`
+  if (targetId === undefined) return `${unreached}, and the Rule has no one Entity target to reach it from${several || `; ${ways}`}`
+
+  /* Two walks through different Entities are the model saying they meet at
+     one instance — a Habit's and its Reflection's Owner — which only `verify`
+     can hold against code. Two relations joining the same pair never meet: an
+     Account that sends and receives Transfers is two Accounts. */
+  const hops = toOneHops(condition.relations)
+  const reached = reachableFrom(targetId, hops)
+  if (!reached.has(entityId)) return `${unreached}, and no to-one relation reaches it from "${targetId}"${several || `; ${ways}`}`
+  for (const from of reached) {
+    const nexts = hops.get(from) ?? []
+    const twice = nexts.find((next, index) => nexts.indexOf(next) !== index)
+    if (twice !== undefined && reachableFrom(twice, hops).has(entityId)) {
+      return `reads "${entityId}" through "${from}" and "${twice}", which two relations join, so which one it reads is unclear; walk to it with "related"`
+    }
+  }
+  return undefined
+}
+
+/**
+ * A `singleton` is one instance, so it is never a relation's `many` end: the
+ * target of a `one-to-many`, or either end of a `many-to-many`.
+ */
+export function singletonRelationIssue(relation: RelationEdge, singletonIds: ReadonlySet<string>): string | undefined {
+  const many = relation.cardinality === 'many-to-many'
+    ? [relation.from, relation.to]
+    : relation.cardinality === 'one-to-many' ? [relation.to] : []
+  const single = many.find(id => singletonIds.has(id))
+  return single === undefined
+    ? undefined
+    : `is ${relation.cardinality}, but "${single}" is singleton and there is only one`
+}

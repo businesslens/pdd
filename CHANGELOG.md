@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A permission that depends on a setting, such as a workspace's approval limit, says whose setting it is: the person's, their workspace's, or the whole product's. Mark the product's own settings `singleton: true`.
+- Creating something can create what belongs to it in the same step, such as a new board's first admin.
+- Reports use format version 19; re-export Blueprints after updating.
+- **CLI:** `lint` catches a permission that doesn't say whose setting it reads, and a Capability named with an umbrella verb such as manage.
+
+### Removed
+
+- **Report:** The versioned `ProductReportV18` names; use `ProductReport` and `ProductReportSchema`.
+
 ## [0.31.0] - 2026-10-07
 
 ### Added

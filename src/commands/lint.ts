@@ -4,7 +4,7 @@ import {
 } from '../core/variations.js'
 import { undeclaredEntityMentions } from '../core/entity-mentions.js'
 import {
-  interfaceLanguageIssues, isLanguageTag, screenEntityIssues, screenReadIssues, unknownFactIssues
+  conditionInstanceIssue, interfaceLanguageIssues, singletonRelationIssue, isLanguageTag, screenEntityIssues, screenReadIssues, unknownFactIssues
 } from '../core/model-checks.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
@@ -189,6 +189,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   ].map(place => ({ id: place.id, label: place.file }))))
 
   const entityIds = new Set(model.entities.map(item => item.id))
+  const singletonIds = new Set(model.entities.filter(entity => entity.singleton).map(entity => entity.id))
   const entitiesById = new Map(model.entities.map(item => [item.id, item]))
   const namedEntities = model.entities.map(entity => ({ id: entity.id, title: entity.doc.title }))
   /*
@@ -648,6 +649,22 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   /*
+   * An umbrella verb names a bucket, not a control: `manage-orders` hides
+   * refunding, merging and confirming, which the split test makes separate
+   * Capabilities. Read from the first segment directly, like the opposite
+   * pairs, so a verb the lexicon lacks is still caught.
+   */
+  const UMBRELLA_VERBS = new Set(['manage', 'organize', 'handle', 'administer'])
+  for (const capability of model.capabilities) {
+    const verb = leadingVerb(capability.id)
+    if (UMBRELLA_VERBS.has(verb)) {
+      warnings.push(
+        `${capability.file}: capability id "${capability.id}" leads with the umbrella verb "${verb}"; name each verb its controls show — opposite and distinct verbs are separate Capabilities`
+      )
+    }
+  }
+
+  /*
    * Behavioral ids draw their noun half from that vocabulary. Two independent
    * mappings of one repository agreed on 95% of the Capabilities they found and
    * shared 29% of the ids, because one wrote `install-skills` where the other
@@ -751,7 +768,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...(grant.configuredBy ? [grant.configuredBy] : []),
     ...grant.when.flatMap(condition => [
       ...(condition.entity ? [condition.entity] : []),
-      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.configuredBy] : [])
+      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.entity] : [])
     ])
   ])))
   /* Named as an actor anywhere: a Step, a surface, a Journey, or a grant. */
@@ -830,6 +847,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       const key = `${relation.entity}\0${relation.verb}`
       if (relationTargets.has(key)) errors.push(`${entity.file}: duplicate relation "${relation.verb} ${relation.entity}"`)
       relationTargets.add(key)
+      const singletonIssue = singletonRelationIssue({ from: entity.id, to: relation.entity, cardinality: relation.cardinality }, singletonIds)
+      if (singletonIssue) errors.push(`${entity.file}: relation "${relation.verb} ${relation.entity}" ${singletonIssue}`)
 
       /*
        * Now that a relation states both ends, an Entity relating back is the
@@ -1353,6 +1372,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * one relation or it is an error naming what went wrong. A self-relation is
    * refused: naming the Entity does not give it a direction.
    */
+  const relationEdges = model.entities.flatMap(entity => entity.relations.map(relation => ({
+    from: entity.id, to: relation.entity, cardinality: relation.cardinality
+  })))
   const walkRelated = (start: string, segments: RelatedSegment[], label: string): string | undefined => {
     let current = start
     for (const [index, segment] of segments.entries()) {
@@ -1630,8 +1652,36 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           if (holder && condition.fact !== undefined && !holder.informationKept.some(item => item.name === condition.fact)) {
             errors.push(`${conditionLabel}: "${condition.fact}" is not a fact of entity "${holderId}"`)
           }
-          if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredBy)) {
-            errors.push(`${conditionLabel}: "configuredBy" references missing entity "${condition.value.configuredBy}"`)
+          if (holder && condition.entity !== undefined) {
+            const issue = conditionInstanceIssue({
+              entityId: condition.entity,
+              actorIds: grant.actors,
+              pathIds: grant.related.map(segment => segment.entity),
+              targetId: singleTarget?.id,
+              singletonIds,
+              relations: relationEdges
+            })
+            if (issue) errors.push(`${conditionLabel}: ${issue}`)
+          }
+          /* A threshold another fact holds is read like a condition's `entity`:
+             one instance, or the condition says nothing. */
+          if (typeof condition.value === 'object' && condition.value !== null) {
+            const threshold = condition.value
+            const thresholdHolder = entitiesById.get(threshold.entity)
+            if (!thresholdHolder) {
+              errors.push(`${conditionLabel}: the threshold references missing entity "${threshold.entity}"`)
+            } else {
+              for (const issue of unknownFactIssues(threshold.entity, [threshold.fact], thresholdHolder)) errors.push(`${conditionLabel}: the threshold's ${issue}`)
+              const issue = threshold.entity === singleTarget?.id ? undefined : conditionInstanceIssue({
+                entityId: threshold.entity,
+                actorIds: grant.actors,
+                pathIds: grant.related.map(segment => segment.entity),
+                targetId: singleTarget?.id,
+                singletonIds,
+                relations: relationEdges
+              })
+              if (issue) errors.push(`${conditionLabel}: the threshold ${issue}`)
+            }
           }
         }
       }
@@ -1813,21 +1863,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   for (const scenario of allScenarios) {
     for (const [index, step] of scenario.steps.entries()) {
       const label = `${scenario.file}: step ${index + 1}`
-      const removals = step.entities.filter(entry => entry.effect === 'removes')
       const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
-      for (const entry of removals) {
-        if (entry.with === undefined) continue
-        const target = removals.find(other => referenceOf(other) === entry.with)
-        if (target && !holds(target.entity, entry.entity)) {
-          errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but "${target.entity}" declares no one-to-many or one-to-one relation to "${entry.entity}"; a removal goes with the thing that holds it${holds(entry.entity, target.entity) ? `, so "${entry.with}" goes "with" "${referenceOf(entry)}"` : ''}`)
+      for (const effect of ['removes', 'creates'] as const) {
+        const entries = step.entities.filter(entry => entry.effect === effect)
+        const noun = effect === 'removes' ? 'a removal' : 'a creation'
+        for (const entry of entries) {
+          if (entry.with === undefined) continue
+          const target = entries.find(other => referenceOf(other) === entry.with)
+          if (target && !holds(target.entity, entry.entity)) {
+            errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but "${target.entity}" declares no one-to-many or one-to-one relation to "${entry.entity}"; ${noun} goes with the thing that holds it${holds(entry.entity, target.entity) ? `, so "${entry.with}" goes "with" "${referenceOf(entry)}"` : ''}`)
+          }
         }
-      }
-      for (const [position, left] of removals.entries()) {
-        for (const right of removals.slice(position + 1)) {
-          if (left.with !== undefined || right.with !== undefined) continue
-          const [holder, held] = holds(left.entity, right.entity) ? [left, right] : holds(right.entity, left.entity) ? [right, left] : []
-          if (!holder || !held) continue
-          warnings.push(`${label}: removes "${referenceOf(held)}" alongside "${referenceOf(holder)}", which holds it; say "${referenceOf(held)}" goes "with" "${referenceOf(holder)}"`)
+        for (const [position, left] of entries.entries()) {
+          for (const right of entries.slice(position + 1)) {
+            if (left.with !== undefined || right.with !== undefined) continue
+            const [holder, held] = holds(left.entity, right.entity) ? [left, right] : holds(right.entity, left.entity) ? [right, left] : []
+            if (!holder || !held) continue
+            warnings.push(`${label}: ${effect} "${referenceOf(held)}" alongside "${referenceOf(holder)}", which holds it; say "${referenceOf(held)}" goes "with" "${referenceOf(holder)}"`)
+          }
         }
       }
     }

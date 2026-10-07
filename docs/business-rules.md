@@ -60,11 +60,14 @@ says whether they may.
 - **One permission Rule per operation.** Creating, changing and removing a
   Card are three Rules, each naming its `effect`, even when the same people may
   do all three.
-- **A removal that goes `with` another is the other's to permit.** A Rule on
-  removing comments never selects the comments a deleted card takes with it.
-- **A role condition reads the actor's own role.** On a per-board role, the
-  Role a grant checks is the acting person's own membership, reached through
-  `related`, never the membership being changed.
+- **What goes `with` another is the other's to permit.** A Rule on removing
+  comments never selects the comments a deleted card takes with it, and a Rule
+  on adding members never selects the first membership a new board is created
+  with.
+- **A condition reads one instance, never any of many.** The actor itself; a
+  per-board Role on the `related` path, the acting person's own membership;
+  the one the governed thing leads to, such as the Quiz a Question is in; or
+  Store settings marked [`singleton`](./entities.md#the-file).
 - **Ordinary copy is design; contractual wording is a Rule.** When exact words
   are required, the Rule says so and cites the authoritative
   [Reference](./references.md).
@@ -204,6 +207,7 @@ when:
   - { state: Pending }                                                    # the thing's State
   - { fact: Total charged, at-most: 100 }                                 # a fact of the thing
   - { entity: store-settings, fact: Self-service cancellation, is: true } # a setting
+  - { fact: Total charged, over: { entity: store-settings, fact: Refund approval threshold } } # a threshold the store sets
 ```
 
 **A setting that only decides who may do something is a condition, not a
@@ -244,7 +248,8 @@ Errors:
   direction); a grant whose `actors` leaves out the Entity its `related` path
   ends on, so nobody could satisfy it.
 - A condition without exactly one of the eight operators, a fact or State that
-  does not resolve, or a `state` on a `creates` target.
+  does not resolve, or a `state` on a `creates` target; a condition `entity`
+  or threshold that could be any of many instances.
 - A Step performing an operation `permits: []` forbids; a governed operation
   whose Step has no actor, or one no grant could admit; an unattended Scenario
   no `unattended` grant allows; a Screen presenting governed facts to an

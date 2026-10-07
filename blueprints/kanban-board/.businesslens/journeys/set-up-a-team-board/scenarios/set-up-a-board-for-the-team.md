@@ -4,22 +4,13 @@ result: achieved
 routes:
   web: Web
 steps:
-  - text: The Teammate creates a board by naming it
+  - text: The Teammate creates a board by naming it and becomes its first admin
     kind: actor
     actor: teammate
     capability: create-board
     entities:
       - { entity: board, effect: creates, facts: [Name, Stall threshold] }
-    contexts:
-      web:
-        place: board-web::board-list
-  - text: The Product makes the Teammate the first admin of the board
-    kind: product
-    actor: teammate
-    capability: create-board
-    entities:
-      - { entity: board-membership, as: own, effect: creates, facts: [Role] }
-      - { entity: board, effect: reads, facts: [Member count] }
+      - { entity: board-membership, as: own, effect: creates, facts: [Role], with: board }
     contexts:
       web:
         place: board-web::board-list

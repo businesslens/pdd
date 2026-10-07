@@ -62,9 +62,12 @@ Read before authoring:
      nothing changes, is a question for the author or a gap in the
      inspection, never something to fill by inference.
    - **Permissions.** Every authorization check the code performs — a role
-     check, an ownership check, a threshold — becomes a grant on a Business
-     Rule targeting the operation it guards; an operation the code refuses to
-     everyone is `permits: []`.
+     check, an ownership check, a threshold, a plan or flag gating a feature —
+     becomes a grant on a Business Rule targeting the operation it guards; an
+     operation the code refuses to everyone is `permits: []`. Every condition
+     reads one instance; support acting as a customer is still the support
+     Actor; an activity log shown to an Actor is an Entity one Rule records.
+     The format reference has each shape.
    - **Hand-offs.** Write a Journey wherever the Product itself carries an
      Actor from one Capability into the next toward one outcome — creating a
      thing and landing in its editor, a required next Step, an emailed link to

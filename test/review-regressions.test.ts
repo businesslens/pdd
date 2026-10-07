@@ -116,7 +116,7 @@ describe('merge review regressions', () => {
 
   it.each([
     ['experience', 'customer-web::storefront', 'browse-catalog'],
-    ['interface', 'admin-web', 'manage-orders']
+    ['interface', 'admin-web', 'confirm-order']
   ])('keeps directly placed behavior in %s Delivery, Rows and Graph despite Screen exposure', (kind, id, capabilityId) => {
     const model = loadModel(fixture)
     const scenario = model.capabilityScenarios.find(item => item.capability === capabilityId)!
@@ -216,7 +216,7 @@ describe('merge review regressions', () => {
       expect(text).toContain(from)
       writeFileSync(file, text.replaceAll(from, to))
     }
-    edit('capabilities/manage-orders/scenarios/merge-duplicate-orders.md',
+    edit('capabilities/merge-orders/scenarios/merge-duplicate-orders.md',
       '{ entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled, facts: [] }',
       '{ entity: order, as: duplicate, effect: changes, facts: [Items ordered] }')
     edit('capabilities/cancel-order/scenarios/cancel-your-own-unpaid-order.md',

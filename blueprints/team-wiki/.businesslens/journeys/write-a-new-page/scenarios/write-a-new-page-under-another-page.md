@@ -10,7 +10,7 @@ steps:
     capability: create-page
     entities:
       - { entity: page, effect: creates, facts: [Title, Content, Parent page, Last edited at] }
-      - { entity: revision, effect: creates, facts: [Title, Content, Saved at, Origin] }
+      - { entity: revision, effect: creates, facts: [Title, Content, Saved at, Origin], with: page }
     contexts:
       web:
         place: wiki-web::workspace::page

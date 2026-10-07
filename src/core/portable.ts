@@ -6,7 +6,7 @@ import * as z from 'zod'
 import { reportVariationMembership } from './variation-membership.js'
 import { undeclaredEntityMentions } from './entity-mentions.js'
 import {
-  interfaceLanguageIssues, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
+  conditionInstanceIssue, interfaceLanguageIssues, singletonRelationIssue, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
 } from './model-checks.js'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace, placeIdentityIssues } from './ids.js'
@@ -15,7 +15,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '18.0.0'
+export const REPORT_SCHEMA_VERSION = '19.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -215,6 +215,8 @@ export const ReportEntitySchema = z.strictObject({
   kind: z.enum(['person', 'system']).nullable(),
   /** Which side of the Product boundary it acts from; null for a thing that does not act. */
   acts: z.enum(['external', 'internal']).nullable(),
+  /** The Product keeps exactly one — its own settings — so a grant condition reads it from anywhere. */
+  singleton: z.boolean(),
   /** What the Product keeps about the thing, by name. Never how it is stored. */
   informationKept: z.array(ReportEntityFactSchema),
   relations: z.array(ReportEntityRelationSchema),
@@ -397,7 +399,7 @@ export const ReportGrantConditionSchema = z.strictObject({
     z.string().min(1),
     z.number(),
     z.boolean(),
-    z.strictObject({ configuredByEntityId: IdSchema })
+    z.strictObject({ entityId: IdSchema, fact: SingleLineTextSchema })
   ]).nullable()
 })
 
@@ -460,7 +462,7 @@ export const ReportVariationSchema = z.strictObject({
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV18Schema = z.strictObject({
+export const ProductReportSchema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -499,10 +501,7 @@ export const ProductReportV18Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV18Schema
-
-export type ProductReportV18 = z.infer<typeof ProductReportV18Schema>
-export type ProductReport = ProductReportV18
+export type ProductReport = z.infer<typeof ProductReportSchema>
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -535,7 +534,7 @@ export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV18['model']
+export type ReportModel = ProductReport['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -544,7 +543,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV18Schema` leaves this record incomplete and fails
+ * collection in `ProductReportSchema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -689,7 +688,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV18): string[] {
+export function validateProductReport(report: ProductReport): string[] {
   const issues: string[] = []
   const { model } = report
   /* Member key → Variation id. A Rule in a Variation applies only under its set's conditions, never unconditionally. */
@@ -716,6 +715,7 @@ export function validateProductReport(report: ProductReportV18): string[] {
   const domainIds = new Set(model.domains.map(item => item.id))
   const capabilityIds = new Set(model.capabilities.map(item => item.id))
   const entityIds = new Set(model.entities.map(item => item.id))
+  const singletonIds = new Set(model.entities.filter(entity => entity.singleton).map(entity => entity.id))
   const entitiesById = new Map(model.entities.map(item => [item.id, item]))
   const capabilitiesById = new Map(model.capabilities.map(item => [item.id, item]))
   const capabilityAvailability = new Map<string, Set<string>>()
@@ -997,14 +997,15 @@ export function validateProductReport(report: ProductReportV18): string[] {
          declares a one-to-many or one-to-one relation to it, itself included —
          and following `with` always ends at one that goes with nothing. */
       const recordKey = (entityId: string, as: string | null) => `${entityId}\u0000${as ?? ''}`
-      const removalRecords = new Map(step.entities
-        .filter(entry => entry.effect === 'removes')
+      const recordsOf = (effect: string) => new Map(step.entities
+        .filter(entry => entry.effect === effect)
         .map(entry => [recordKey(entry.entityId, entry.as), entry]))
       for (const entry of step.entities) {
         if (entry.with === null) continue
+        const removalRecords = recordsOf(entry.effect)
         const target = removalRecords.get(recordKey(entry.with.entityId, entry.with.as))
-        if (entry.effect !== 'removes' || !target || target === entry) {
-          issues.push(`${stepLabel}: "with" on "${entry.entityId}" must name another "removes" record of this step, from a "removes" record`)
+        if ((entry.effect !== 'removes' && entry.effect !== 'creates') || !target || target === entry) {
+          issues.push(`${stepLabel}: "with" on "${entry.entityId}" must name another record of this step with the same effect, from a "creates" or "removes" record`)
           continue
         }
         const holds = (holder: string, held: string) => (entitiesById.get(holder)?.relations ?? [])
@@ -1386,7 +1387,7 @@ export function validateProductReport(report: ProductReportV18): string[] {
     ...(grant.configuredByEntityId ? [grant.configuredByEntityId] : []),
     ...grant.when.flatMap(condition => [
       ...(condition.entityId ? [condition.entityId] : []),
-      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.configuredByEntityId] : [])
+      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.entityId] : [])
     ])
   ])))
   for (const entity of model.entities) {
@@ -1398,6 +1399,7 @@ export function validateProductReport(report: ProductReportV18): string[] {
     if ((entity.acts === null) !== (entity.kind === null)) {
       issues.push(`${label}: kind and acts are present together or not at all`)
     }
+    if (entity.singleton && entity.acts !== null) issues.push(`${label}: an Entity that acts is never singleton`)
     if (entity.domainId && !domainIds.has(entity.domainId)) {
       issues.push(`${label}: references missing domain "${entity.domainId}"`)
     }
@@ -1418,6 +1420,8 @@ export function validateProductReport(report: ProductReportV18): string[] {
       const key = `${relation.entityId}\u0000${relation.verb}`
       if (relationKeys.has(key)) issues.push(`${label}: duplicate relation "${relation.verb} ${relation.entityId}"`)
       relationKeys.add(key)
+      const singletonIssue = singletonRelationIssue({ from: entity.id, to: relation.entityId, cardinality: relation.cardinality }, singletonIds)
+      if (singletonIssue) issues.push(`${label}: relation "${relation.verb} ${relation.entityId}" ${singletonIssue}`)
 
       /* A relation states both ends, so an Entity relating back is very often
          the same relationship written twice — but it can equally be a second,
@@ -1440,6 +1444,9 @@ export function validateProductReport(report: ProductReportV18): string[] {
    * relations and their inverses, one unambiguous hop at a time, onto an
    * Entity that acts.
    */
+  const relationEdges = model.entities.flatMap(entity => entity.relations.map(relation => ({
+    from: entity.id, to: relation.entityId, cardinality: relation.cardinality
+  })))
   const walkRelated = (start: string, segments: Array<{ verb: string, entityId: string }>, label: string): string | undefined => {
     let current = start
     for (const [index, segment] of segments.entries()) {
@@ -1660,8 +1667,35 @@ export function validateProductReport(report: ProductReportV18): string[] {
           if (holder && !holder.informationKept.some(item => item.name === condition.fact)) {
             issues.push(`${conditionLabel}: "${condition.fact}" is not a fact of entity "${holderId}"`)
           }
-          if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredByEntityId)) {
-            issues.push(`${conditionLabel}: configuredByEntityId references missing entity "${condition.value.configuredByEntityId}"`)
+          if (holder && condition.entityId !== null) {
+            const issue = conditionInstanceIssue({
+              entityId: condition.entityId,
+              actorIds: grant.actorIds,
+              pathIds: grant.related.map(segment => segment.entityId),
+              targetId: singleTarget?.type === 'entity' ? singleTarget.entityId : undefined,
+              singletonIds,
+              relations: relationEdges
+            })
+            if (issue) issues.push(`${conditionLabel}: ${issue}`)
+          }
+          if (typeof condition.value === 'object' && condition.value !== null) {
+            const threshold = condition.value
+            const thresholdHolder = entitiesById.get(threshold.entityId)
+            if (!thresholdHolder) {
+              issues.push(`${conditionLabel}: the threshold references missing entity "${threshold.entityId}"`)
+            } else {
+              for (const issue of unknownFactIssues(threshold.entityId, [threshold.fact], thresholdHolder)) issues.push(`${conditionLabel}: the threshold's ${issue}`)
+              const targetId = singleTarget?.type === 'entity' ? singleTarget.entityId : undefined
+              const issue = threshold.entityId === targetId ? undefined : conditionInstanceIssue({
+                entityId: threshold.entityId,
+                actorIds: grant.actorIds,
+                pathIds: grant.related.map(segment => segment.entityId),
+                targetId,
+                singletonIds,
+                relations: relationEdges
+              })
+              if (issue) issues.push(`${conditionLabel}: the threshold ${issue}`)
+            }
           }
         }
       }
@@ -1820,7 +1854,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV18): ProductReportV18 {
+export function projectPortableReport(report: ProductReport): ProductReport {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1865,8 +1899,8 @@ export function projectPortableReport(report: ProductReportV18): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV18 {
-  const parsed = ProductReportV18Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReport {
+  const parsed = ProductReportSchema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1892,7 +1926,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV18): string[] {
+export function validateBlueprintReport(report: ProductReport): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

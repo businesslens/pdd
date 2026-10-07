@@ -83,6 +83,18 @@ aliases exist to remove, and the explicit spelling costs one word.
 two independent authors back together on coverage. Surfacing what the composed
 machine is missing is the honest version; coercing coverage is not.
 
+**An activity entry created on every audited Step.** Complete, and the only
+encoding the composed lifecycle could check, but it repeats one fact on every
+Step that changes an audited thing, and a model that skips it still lints clean.
+One Rule naming the recorded operations says it once, and `verify` holds the
+code to it. **Not modelling a log the Product shows its users** fails the other
+way: an administrator points at *this entry*, so it passes the Entity test.
+
+**A `singleton` inferred from structure** — an Entity no Step creates, or one
+nothing relates to. Settings a setup Step creates would be refused, and a
+Catalog product whose instances pre-exist would pass. One explicit key is
+cheaper than a guess `lint` would sometimes get wrong.
+
 ## Business Rules and permission
 
 **`permits: []` as an error**, on the ground that a lifecycle without the
@@ -137,6 +149,36 @@ structured derivation needs defined behaviour for types, units, money, rounding,
 collections, missing values, and time, and that is not added casually. If it
 comes, `appliesTo.facts` identifies the result and the derivation names its
 inputs without repeating the target.
+
+**Off-path conditions read only a settings Entity.** The first reading of a
+condition `entity` off the `related` path: one instance, the Product's
+settings, with no way to say so. It gave no meaning to *the Quiz this Question
+is in*, *the Owner of this Habit*, a Workspace's plan or a customer's consent to
+support access, which shipped models already wrote, and it could not be
+checked. Superseded by reading the instance the target reaches through to-one
+relations, with `singleton` marking the settings case.
+
+**Two equally short to-one walks as a `lint` error.** A suggestion's Habit and
+its Reflection each have one Owner, and it is the same Owner. Refusing the
+diamond leaves an `unattended` grant, which cannot walk `related`, with no way
+out; the model's claim that the walks meet is `verify`'s to check. The claim
+does not stretch to two relations joining one pair: an Account that sends and
+receives Transfers is two Accounts by construction, so that walk is refused
+rather than trusted. **A condition naming the relation verbs it walks** would
+let it say which; it was not added, because no shipped model needs it and
+`related` already names verbs where an Actor ends the path.
+
+**A plan or flag gate carried only by the gated resource's lead.** Refunds that
+exist only on paid plans are also *nobody may refund on a free plan*, and only
+the grant form lets `lint` check every Step. Kept only where no grant can carry
+it: a read-only feature, or an operation ungated behaviour also performs.
+
+**An "on behalf of" qualifier on a Step, or the customer as the actor while
+support acts for them.** The qualifier gives `lint` nothing it could check that
+the support Actor plus a consent condition on its grants does not already, and
+naming the customer hides exactly what a support-access policy is about. A
+support Experience duplicating the customer's Screens was rejected with them:
+Experiences divide by audience and access, and impersonation is neither.
 
 ## The Product Report
 
@@ -235,7 +277,11 @@ reaches; a condition on the target names no Entity.
 people's comments, and a grant wide enough to admit that cascade also admits
 removing any one of them directly; no condition tells the two apart. A
 `removes` entry says `with` what it goes instead, and only the removal it goes
-with needs permission.
+with needs permission. **Granting a container's first membership** failed the
+same way from the other side: a grant admitting the creator's own Owner
+membership — the holder of a new membership, or anyone while a member count is
+zero — also admits making oneself Owner elsewhere, or needs a fact that exists
+only to say *being created*. A `creates` entry goes `with` the container instead.
 
 **`with` accepted in either direction of a relation.** `comment with card` and
 `card with comment` both linted clean, and the second let a card's removal

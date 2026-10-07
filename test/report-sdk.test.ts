@@ -11,7 +11,7 @@ import { compileReport } from '../src/commands/export.js'
 import { expandProductReport } from '../src/commands/open.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV18, ReportReference } from '../src/core/portable.js'
+import type { ProductReport, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -37,9 +37,8 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('18.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('19.0.0')
     for (const name of [
-      'ProductReportV18Schema',
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
       'ReportGrantSchema',
@@ -68,6 +67,8 @@ describe('report SDK entry point', () => {
     ]) {
       expect(sdk, `missing export ${name}`).toHaveProperty(name)
     }
+    /* One report shape is current, so no export carries a version in its name. */
+    expect(Object.keys(sdk).filter(name => /^ProductReportV\d/.test(name))).toEqual([])
     expect(sdk.INTERFACE_TYPES).toEqual([
       'web', 'mobile-app', 'desktop-app', 'cli', 'api', 'webhook', 'messaging', 'voice', 'device', 'agent'
     ])
@@ -108,9 +109,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV18
+  let report: ProductReport
 
-  const allReferences = (value: ProductReportV18): ReportReference[] => [
+  const allReferences = (value: ProductReport): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -238,7 +239,7 @@ describe('projectPortableReport', () => {
           text: 'The store admin reviews the blocked attempt',
           kind: 'actor',
           actorId: 'store-admin',
-          capabilityId: 'manage-orders',
+          capabilityId: 'confirm-order',
           entities: [],
           unattended: false,
           contexts: [{
@@ -259,10 +260,10 @@ describe('projectPortableReport', () => {
       withFailure.model.screens.find(screen => screen.id === screenId)!.journeyScenarioIds.push('checkout-needs-operator-help')
     }
     withFailure.counts.journeyScenarios += 1
-    // Manual confirmation is an achieved alternative, so Order management is primary, not failure-only.
+    // Manual confirmation is an achieved alternative, so Order confirmation is primary, not failure-only.
     withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order']
 
-    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'])
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'confirm-order', 'place-order', 'settle-payment'])
     expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
@@ -521,9 +522,9 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const cart = (value: ProductReportV18) => value.model.entities.find(item => item.id === 'cart')!
+    const cart = (value: ProductReport) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV18) => void]> = [
+    const cases: Array<[string, (value: ProductReport) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
@@ -577,7 +578,7 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const moveOf = (value: ProductReportV18) => {
+    const moveOf = (value: ProductReport) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
           const entry = step.entities.find(item => item.from !== null && item.to !== null)
@@ -625,7 +626,7 @@ describe('projectPortableReport', () => {
     )
 
     const chained = structuredClone(report)
-    const refund = chained.model.capabilityScenarios.find(item => item.id === 'refund-order')!
+    const refund = chained.model.capabilityScenarios.find(item => item.id === 'refund-a-confirmed-order')!
     const firstOrder = refund.steps[0]!.entities.find(item => item.entityId === 'order')!
     firstOrder.effect = 'changes'
     firstOrder.from = 'Pending'
@@ -637,7 +638,7 @@ describe('projectPortableReport', () => {
 
     /* Attribution on a Product Step still does not make it an Actor Step. */
     const attributedOnly = structuredClone(report)
-    const attributedScenario = attributedOnly.model.capabilityScenarios.find(item => item.id === 'refund-order')!
+    const attributedScenario = attributedOnly.model.capabilityScenarios.find(item => item.id === 'refund-a-confirmed-order')!
     attributedScenario.steps.find(item => item.kind === 'actor')!.kind = 'product'
     expect(sdk.validateProductReport(attributedOnly).join('\n')).toContain(
       'needs at least one actor Step, or an unattended first condition Step'
@@ -655,7 +656,7 @@ describe('projectPortableReport', () => {
    * every path, every fact — and never a claim that a grant is satisfied.
    */
   it('resolves a permission Rule the way the folder does', () => {
-    const rule = (value: ProductReportV18, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReport, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
     rule(behavioural, 'payment-before-confirmation').appliesTo = [
@@ -679,13 +680,30 @@ describe('projectPortableReport', () => {
     rule(noSuchFact, 'refunds-need-an-operator').permits![0]!.when[0]!.fact = 'Weight'
     expect(sdk.validateProductReport(noSuchFact).join('\n')).toContain('"Weight" is not a fact of entity "order"')
 
+    const manyInstances = structuredClone(report)
+    rule(manyInstances, 'refunds-need-an-operator').permits![0]!.when.push({
+      entityId: 'catalog-product', fact: 'Price', operator: 'present', value: true, state: null
+    })
+    expect(sdk.validateProductReport(manyInstances).join('\n')).toContain('reads "catalog-product", which is not the acting Entity')
+    manyInstances.model.entities.find(entity => entity.id === 'catalog-product')!.singleton = true
+    expect(sdk.validateProductReport(manyInstances).join('\n')).not.toContain('reads "catalog-product"')
+
+    // The report refuses what the folder refuses: a singleton that acts, or on a relation's many end.
+    const singletons = structuredClone(report)
+    const admin = singletons.model.entities.find(entity => entity.id === 'store-admin')!
+    admin.singleton = true
+    singletons.model.entities.find(entity => entity.id === 'order')!.relations.push({ entityId: 'store-settings', verb: 'is priced by', cardinality: 'many-to-many' })
+    const singletonIssues = sdk.validateProductReport(singletons).join('\n')
+    expect(singletonIssues).toContain('entity "store-admin": an Entity that acts is never singleton')
+    expect(singletonIssues).toContain('relation "is priced by store-settings" is many-to-many, but "store-settings" is singleton')
+
     const closed = structuredClone(report)
     expect(rule(closed, 'orders-are-never-deleted').permits).toEqual([])
     expect(rule(closed, 'payment-before-confirmation').permits).toBeNull()
   })
 
   it('applies permission Rules to the Steps and Screens they govern', () => {
-    const rule = (value: ProductReportV18, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReport, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const forbidden = structuredClone(report)
     rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
@@ -818,15 +836,13 @@ describe('projectPortableReport', () => {
     expect(sdk.validateProductReport(reachedFrom).filter(issue => /entry point/.test(issue))).toEqual([])
   })
 
-  it('rejects historical Product Reports without normalization, in one sentence', () => {
-    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0', '10.0.0', '11.0.0', '12.0.0', '13.0.0', '14.0.0', '15.0.0', '16.0.0']) {
-      const legacy = structuredClone(report) as Record<string, any>
-      legacy.schemaVersion = schemaVersion
-      expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
-      expect(() => sdk.parseProductReport(legacy)).toThrow(
-        `This is a Product Report of schema version ${schemaVersion}; only 18.0.0 is accepted`
-      )
-    }
+  it('rejects an older Product Report without normalization, in one sentence', () => {
+    const older = structuredClone(report) as Record<string, any>
+    older.schemaVersion = '17.0.0'
+    expect(sdk.ProductReportSchema.safeParse(older).success).toBe(false)
+    expect(() => sdk.parseProductReport(older)).toThrow(
+      `This is a Product Report of schema version 17.0.0; only ${sdk.REPORT_SCHEMA_VERSION} is accepted`
+    )
     // Any other shape failure names the first offending path, never Zod's issue array.
     const shapeless = structuredClone(report) as Record<string, any>
     shapeless.model.entities[0].acts = 'sideways'
@@ -859,7 +875,7 @@ describe('a removal that goes with another, on the wire', () => {
   })
   afterAll(() => rmSync(root, { recursive: true, force: true }))
 
-  function goingWith(report: ProductReportV18) {
+  function goingWith(report: ProductReport) {
     return report.model.capabilityScenarios
       .flatMap(scenario => scenario.steps.flatMap(step => step.entities))
       .filter(entry => entry.with !== null)
@@ -875,7 +891,7 @@ describe('a removal that goes with another, on the wire', () => {
     const report = compileReport(loadModel(root), '2026-01-01')
     const [entry] = goingWith(report)
     entry!.with = { entityId: 'order', as: null }
-    expect(sdk.validateProductReport(report).join('\n')).toContain('must name another "removes" record of this step')
+    expect(sdk.validateProductReport(report).join('\n')).toContain('must name another record of this step with the same effect')
   })
 
   it('refuses a "with" toward an Entity that declares no holding relation', () => {

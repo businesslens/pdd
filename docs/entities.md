@@ -74,6 +74,10 @@ Entities are its nouns, and the ones that act are **Actors**.
   kind"* is several. When it is close, split.
 - **Identity, not storage.** A draft the Product never saves is still an Entity
   when someone points at it; a database row nobody can name is not.
+- **A log is an Entity when an Actor reads it.** An activity log the store's
+  admins open is one Entity, and one [Business Rule](./business-rules.md) says
+  what it records; no Step lists the entries. A log only your team reads stays
+  out.
 
 ## Actors: an Entity that acts
 
@@ -169,6 +173,7 @@ A person who browses the catalog and buys products.
 | --- | --- | --- |
 | H1 and lead | yes | The thing's name and what it is |
 | `acts`, `kind` | for an Actor | How it acts; see [Actors](#actors-an-entity-that-acts) |
+| `singleton` | no | `true` when the Product keeps exactly one: its own settings |
 | `domain` | no | One existing [Domain](./domains.md) |
 | `relations` | no | Its relationships to other Entities |
 | `references` | no | Code or documents behind it, in the [Reference](./references.md) shape |
@@ -177,6 +182,9 @@ A person who browses the catalog and buys products.
 
 Every Entity has at least one of `## Information kept`, `## States` or `acts`. A
 payment gateway may keep nothing and exist because it acts.
+
+**`singleton: true`** marks the Product's own settings, kept once. Settings
+each Workspace keeps are not singletons.
 
 ## Named facts
 
@@ -250,6 +258,8 @@ Errors:
   `actors/` folder.
 - A relation to a missing Entity, a duplicate relation, or `many-to-one`; a
   Domain that does not exist.
+- `singleton` other than `true`, `singleton` on an Entity that acts, or a
+  singleton on a relation's many end.
 - An `actor` or `actors` entry naming an Entity that does not act.
 - An orphan, as above.
 

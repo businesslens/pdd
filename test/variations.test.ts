@@ -6,7 +6,7 @@ import { compileReport } from '../src/commands/export.js'
 import { lintModel } from '../src/commands/lint.js'
 import { expandProductReport } from '../src/commands/open.js'
 import { loadModel, type PddModel, type VariationResource } from '../src/core/model.js'
-import { ProductReportV18Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
+import { ProductReportSchema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
 import {
   VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, type VariationKind, type VariationMemberType, type VariationSet
 } from '../src/core/variations.js'
@@ -120,7 +120,7 @@ describe('Variation resources', () => {
     const set = { ...record, alternatives: record.alternatives.map(item => ({ id: item.resourceId, selectedWhen: item.selectedWhen, label: item.label })) }
     mutate(set)
     Object.assign(record, { ...set, alternatives: set.alternatives.map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })) })
-    const parsed = ProductReportV18Schema.safeParse(wire)
+    const parsed = ProductReportSchema.safeParse(wire)
     if (parsed.success) expect(validateProductReport(wire).join('\n')).toContain(message)
     else expect(parsed.error.issues.some(issue => issue.path[0] === 'model' && issue.path[1] === 'variations')).toBe(true)
   })
@@ -403,6 +403,7 @@ describe('Variations in the Product Report', () => {
       .toEqual(['Cancellation requested → Cancelled', 'Confirmed → Cancelled', 'Pending → Cancellation requested'])
   })
 
+
   it('sets alternatives side by side on matrix axes and dashes cells only some choices hold', () => {
     const workspace = shop()
     expect(adjacentAlternatives(workspace.capabilities).map((item: any) => item.id).indexOf('request-cancellation'))
@@ -421,10 +422,16 @@ describe('Variations in the Product Report', () => {
     expect(cell('entity:shopper->capability:place-order').condition).toBe('Only under Checkout review: Complete checkout')
     // A cell is never dashed for its own column's Variation.
     expect(cell('entity:order->capability:cancel-order').condition).toBeUndefined()
-    // Order management stays solid while one change inside it is conditional.
-    const management = cell('entity:order->capability:manage-orders')
-    expect(management.condition).toBeUndefined()
-    expect(management.mutations[0].variants.filter((variant: any) => variant.condition).map((variant: any) => `${variant.from}>${variant.to}`)).toEqual(['Pending>Confirmed'])
+    // A cell stays solid while one change inside it is conditional: give the
+    // refund Capability the manual-confirmation Step, which only one Order
+    // confirmation alternative takes, beside the refund every path can make.
+    const report = compileReport(loadModel(SHOP), '2026-09-27')
+    const manual = report.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout-with-manual-confirmation')!
+    manual.steps.find(step => step.capabilityId === 'confirm-order')!.capabilityId = 'refund-order'
+    const mixed = projections.mutationProjection(projectReportWorkspace(report)).cells.find((item: any) => item.id === 'entity:order->capability:refund-order')
+    expect(mixed.condition).toBeUndefined()
+    expect(mixed.mutations[0].variants.filter((variant: any) => variant.condition).map((variant: any) => `${variant.from}>${variant.to}`)).toEqual(['Pending>Confirmed'])
+    expect(mixed.mutations[0].variants.some((variant: any) => !variant.condition)).toBe(true)
   })
 
   it('folds graph trees like the Rows tree and frames an Entity Variation', () => {

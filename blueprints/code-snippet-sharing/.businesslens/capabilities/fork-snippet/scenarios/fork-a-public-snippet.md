@@ -25,7 +25,7 @@ steps:
     entities:
       - { entity: snippet, as: original, effect: reads, facts: [Title, Description, Language, Tags, Code] }
       - { entity: snippet, as: fork, effect: creates, to: Private, facts: [Title, Description, Language, Tags, Code, Address, Forked from] }
-      - { entity: revision, effect: creates, facts: [Number, Code, Language, Saved at] }
+      - { entity: revision, effect: creates, facts: [Number, Code, Language, Saved at], with: fork }
     contexts:
       web:
         place: snippets-web::workspace::snippet

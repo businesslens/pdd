@@ -274,8 +274,8 @@ Errors:
 - Each `entities` entry names a real Entity and its real States and facts;
   `facts` is required, except on `removes`, which has none; a `from` matches
   where an earlier Step left the thing.
-- `with` sits only on a `removes` entry, names another removal of the same Step
-  whose Entity holds this one (it declares a `one-to-many` or `one-to-one`
+- `with` sits only on a `creates` or `removes` entry, names another entry of the
+  same Step and effect whose Entity holds this one (it declares a `one-to-many` or `one-to-one`
   relation to it), and never loops back; no two entries of a Step share an
   `as`-or-`entity` reference.
 - Step text that names an Entity's title must list that Entity.
@@ -287,7 +287,10 @@ Warnings:
 
 - A Capability or Scenario id that reads as a noun phrase instead of starting
   with a verb, or that shortens the name of an Entity the model declares.
-- A Step that removes a thing and what it holds with no `with` on either.
+- A Step that creates or removes a thing and what it holds with no `with` on
+  either.
 - A Capability Scenario that opens with the opposite of its Capability's verb,
   such as `enable-a-disabled-link` under `disable-link`: opposite verbs are
   separate Capabilities.
+- A Capability named with an umbrella verb, such as `manage-orders`: name each
+  verb its controls show.

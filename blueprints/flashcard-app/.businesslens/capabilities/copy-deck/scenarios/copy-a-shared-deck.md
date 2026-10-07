@@ -25,7 +25,7 @@ steps:
     actor: learner
     entities:
       - { entity: deck, as: copy, effect: creates, to: Private, facts: [Name, Copied from] }
-      - { entity: card, as: copied-card, effect: creates, to: New, facts: [Front, Back, Due on] }
+      - { entity: card, as: copied-card, effect: creates, to: New, facts: [Front, Back, Due on], with: copy }
     contexts:
       web:
         place: flashcards-web::shared-deck

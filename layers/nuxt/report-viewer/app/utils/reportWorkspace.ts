@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV18,
+  ProductReport,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -791,7 +791,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV18): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReport): ReportWorkspace {
   const model = report.model
   const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
@@ -1613,7 +1613,7 @@ export function projectReportWorkspace(report: ProductReportV18): ReportWorkspac
   const entityTitle = (id: string) => entityById.get(id)?.title ?? id
   const describeValue = (value: ReportGrantCondition['value']): string => {
     if (value === null) return ''
-    if (typeof value === 'object') return `the ${entityTitle(value.configuredByEntityId)} threshold`
+    if (typeof value === 'object') return `${entityTitle(value.entityId)}'s ${value.fact}`
     return String(value)
   }
   const describeCondition = (condition: ReportGrantCondition, targetId: string): string => {

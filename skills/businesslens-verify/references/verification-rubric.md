@@ -30,7 +30,8 @@ external systems, or live data state from source code.
   implementation flag, and that each declared relation and its cardinality
   hold. For every Step's `entities`, confirm the code performs each declared
   effect, moves the thing between exactly the states named, touches nothing the
-  Step leaves out, and reads, changes or initializes exactly the `facts` it
+  Step leaves out (apart from the log entry a recording Rule makes, checked
+  under **What is recorded**), and reads, changes or initializes exactly the `facts` it
   cites.
 - **Screens.** Compare each place against its view's code: the facts disclosed
   match `shows` and the inputs match `collects`; each derived Capability is one
@@ -46,7 +47,14 @@ external systems, or live data state from source code.
   as **not established**. Confirm a fact-scoped Rule — a derivation, a field's
   visibility or edit — against the code that computes, shows or writes the
   fact, at every Screen presenting it and every Step citing it, never Entity
-  presence alone.
+  presence alone. A condition naming another Entity reads the one instance the
+  model fixes: confirm the code checks that instance — where two to-one walks
+  reach it, that they meet at one — and that a `singleton` is kept once. Steps
+  support takes while acting as a customer must be refused without the consent
+  a grant requires.
+- **What is recorded.** For each Rule that says a log Entity records
+  operations, confirm the code writes an entry, naming who acted, for every
+  Step the Rule selects and for nothing it leaves out.
 - **What varies.** Trace each alternative under its own `selectedWhen`: the
   code supports it now, reads the named setting, assignment or discriminator to
   choose it, applies the stated default for a missing or unsupported choice,

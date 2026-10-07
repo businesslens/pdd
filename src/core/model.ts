@@ -140,6 +140,8 @@ export interface EntityResource extends ResourceFile {
    * contract the Product must keep stable; absent for a thing that does not.
    */
   acts?: string
+  /** The Product keeps exactly one: its own settings. A grant condition reads it from anywhere. */
+  singleton: boolean
   relations: EntityRelation[]
   states: ReturnType<typeof namedStates>
 }
@@ -296,8 +298,8 @@ export interface BusinessRuleEntityTarget {
 export const GRANT_OPERATORS = ['over', 'under', 'at-least', 'at-most', 'is', 'is-not', 'present', 'absent'] as const
 export type GrantOperator = typeof GRANT_OPERATORS[number]
 
-/** A threshold is a scalar, or the id of the Entity the customer sets it on. */
-export type GrantValue = string | number | boolean | { configuredBy: string }
+/** A threshold is a scalar, or the fact that holds it: `{ entity, fact }`. */
+export type GrantValue = string | number | boolean | { entity: string, fact: string }
 
 /**
  * One `when` condition. Either a fact with exactly one operator — on the
@@ -779,15 +781,16 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       issues.push(`${entryLabel}: "facts" is required as a list, including [] when no named facts are affected`)
     }
     let goesWith = stringField(item, 'with', issues, entryLabel)
-    if (goesWith !== undefined && resolved !== 'removes') {
+    if (goesWith !== undefined && resolved !== 'removes' && resolved !== 'creates') {
       // The entry stays, without the misplaced key, so later checks see the Step as written.
-      issues.push(`${entryLabel}: "with" belongs on a "removes" entry; only a removal goes with another`)
+      issues.push(`${entryLabel}: "with" belongs on a "creates" or "removes" entry; only a creation or a removal goes with another`)
       goesWith = undefined
     }
     entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts, ...(goesWith !== undefined ? { with: goesWith } : {}) })
   }
-  /* A removal goes with another removal of this same Step, named the way the
-     Step names it: by alias when the entry has one, by Entity id otherwise. */
+  /* A creation or removal goes with another of the same effect in this same
+     Step, named the way the Step names it: by alias when the entry has one, by
+     Entity id otherwise. */
   const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
   /* One reference names one entry, or a `with` would mean one entry to the
      parser and another to the exporter. */
@@ -803,8 +806,9 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
   for (const entry of entries) {
     if (entry.with === undefined) continue
     const target = byReference.get(entry.with)
-    if (!target || target === entry || (target.effect ?? 'changes') !== 'removes') {
-      issues.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", which names no other "removes" entry of this Step`)
+    const effect = entry.effect ?? 'changes'
+    if (!target || target === entry || (target.effect ?? 'changes') !== effect) {
+      issues.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", which names no other "${effect}" entry of this Step`)
       delete entry.with
     }
   }
@@ -816,7 +820,7 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       current = byReference.get(current.with)
     }
     if (current && visited.has(current)) {
-      issues.push(`${label}: "with" on "${referenceOf(entry)}" returns to where it started; one removal must be what the others go with`)
+      issues.push(`${label}: "with" on "${referenceOf(entry)}" returns to where it started; one entry must be what the others go with`)
       break
     }
   }
@@ -1051,16 +1055,19 @@ function grantConditionsField(raw: unknown, issues: string[], label: string): Gr
     } else if (typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean') {
       value = rawValue
     } else if (typeof rawValue === 'object' && rawValue !== null && !Array.isArray(rawValue)) {
+      /* A threshold someone sets is a fact, named like every other fact the
+         model cites, so `lint` can check it exists and which instance holds it. */
       const holder = rawValue as Record<string, unknown>
-      rejectUnknownKeys(holder, ['configuredBy'], issues, `${conditionLabel}: "${operator}"`)
-      const configuredBy = stringField(holder, 'configuredBy', issues, `${conditionLabel}: "${operator}"`)
-      if (!configuredBy) {
-        issues.push(`${conditionLabel}: "${operator}" needs a scalar or { configuredBy: <entity-id> }`)
+      rejectUnknownKeys(holder, ['entity', 'fact'], issues, `${conditionLabel}: "${operator}"`)
+      const holderEntity = stringField(holder, 'entity', issues, `${conditionLabel}: "${operator}"`)
+      const holderFact = stringField(holder, 'fact', issues, `${conditionLabel}: "${operator}"`)
+      if (!holderEntity || !holderFact) {
+        issues.push(`${conditionLabel}: "${operator}" needs a scalar or { entity: <entity-id>, fact: <fact name> }`)
         continue
       }
-      value = { configuredBy }
+      value = { entity: holderEntity, fact: holderFact }
     } else {
-      issues.push(`${conditionLabel}: "${operator}" needs a scalar or { configuredBy: <entity-id> }`)
+      issues.push(`${conditionLabel}: "${operator}" needs a scalar or { entity: <entity-id>, fact: <fact name> }`)
       continue
     }
     conditions.push({ entity, fact, operator, value })
@@ -1449,7 +1456,7 @@ export function loadModel(cwd: string): PddModel {
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } =
-        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions'], issues)
+        readResource(location, ['domain', 'kind', 'acts', 'singleton', 'relations', 'transitions'], issues)
       /* The lifecycle is composed from Steps. A list that restated it was the
          second authority the format removed, and the message names the first. */
       if (data.transitions !== undefined) {
@@ -1475,6 +1482,15 @@ export function loadModel(cwd: string): PddModel {
       }
       if (acts === undefined && kind !== undefined) {
         issues.push(`${file}: "kind" is only valid together with "acts"`)
+      }
+      /* One instance is a claim about settings, never about who acts: a role is
+         as many people as hold it. Absence says nothing, so only `true` exists. */
+      if (data.singleton !== undefined && data.singleton !== true) {
+        issues.push(`${file}: "singleton" is true or absent`)
+      }
+      const singleton = data.singleton === true
+      if (singleton && acts !== undefined) {
+        issues.push(`${file}: an Entity that acts is never "singleton"; it is as many as act`)
       }
 
       // Identity, not storage: a thing may be worth naming for what the Product
@@ -1525,6 +1541,7 @@ export function loadModel(cwd: string): PddModel {
         informationKept,
         kind,
         acts,
+        singleton,
         relations,
         states
       }

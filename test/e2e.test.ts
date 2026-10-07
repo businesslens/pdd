@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV18Schema } from '../src/core/portable.js'
+import { ProductReportSchema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,10 +41,10 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV18Schema.parse(output)
+    const parsed = ProductReportSchema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '18.0.0',
+      schemaVersion: '19.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -56,8 +56,8 @@ describe('end to end on a real git repo', () => {
       screens: 7,
       domains: 1,
       entities: 10,
-      capabilities: 7,
-      capabilityScenarios: 18,
+      capabilities: 9,
+      capabilityScenarios: 19,
       journeys: 2,
       journeyScenarios: 4,
       businessRules: 14,
@@ -67,7 +67,7 @@ describe('end to end on a real git repo', () => {
     // alternative included; `cancel-order` appears only in the not-achieved one,
     // so it is failure-only.
     expect(parsed.model.journeys[0]).toMatchObject({
-      capabilityIds: ['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'],
+      capabilityIds: ['browse-catalog', 'confirm-order', 'place-order', 'settle-payment'],
       failureOnlyCapabilityIds: ['cancel-order']
     })
     // An Actor is an Entity that acts; the wire says which of the two it is.

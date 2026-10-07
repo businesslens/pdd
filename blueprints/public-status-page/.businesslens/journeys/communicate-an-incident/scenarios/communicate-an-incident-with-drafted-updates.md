@@ -10,7 +10,7 @@ steps:
     capability: declare-incident
     entities:
       - { entity: incident, effect: creates, to: Investigating, facts: [Title, Impact, Affected components, Started at] }
-      - { entity: incident-update, as: first-update, effect: creates, facts: [Message, Incident status, Posted at] }
+      - { entity: incident-update, as: first-update, effect: creates, facts: [Message, Incident status, Posted at], with: incident }
     contexts:
       web:
         place: status-web::operator-console::new-incident
