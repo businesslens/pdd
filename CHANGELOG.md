@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-10-07
+
 ### Changed
 
-- Coverage now describes only which of your code a model accounts for, each entry naming its folders; what the product leaves out is said in its limitations. A model or Blueprint with no code yet has empty coverage, and the report says so.
-- Reports use a new format version; re-export Blueprints after updating.
+- Coverage now describes only which of your code a model accounts for, each entry naming its folders; what the product leaves out is said in its limitations. A model or Blueprint with no code yet has empty coverage, and the report says so. ([#98](https://github.com/businesslens/pdd/pull/98)) ([2caf3d9](https://github.com/businesslens/pdd/commit/2caf3d9fc9602303fb7366b8b861dbe7fd743ea2))
+- Reports use a new format version; re-export Blueprints after updating. ([#98](https://github.com/businesslens/pdd/pull/98)) ([2caf3d9](https://github.com/businesslens/pdd/commit/2caf3d9fc9602303fb7366b8b861dbe7fd743ea2))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.28.0...v0.29.0][0.29.0]
 
 ## [0.28.0] - 2026-10-06
 
@@ -1095,7 +1103,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.29.0...HEAD
+[0.29.0]: https://github.com/businesslens/pdd/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/businesslens/pdd/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/businesslens/pdd/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/businesslens/pdd/compare/v0.25.1...v0.26.0
