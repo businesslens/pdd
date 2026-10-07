@@ -92,10 +92,6 @@ review a change, or verify. See [`view`](./cli-view.md) for the options.
 - Write outside `.businesslens/`, or edit your AGENTS.md, CLAUDE.md or README.
 - Commit for you.
 
-These are instructions the skills give your agent, and nothing technically
-enforces them. What your agent can actually run or change is controlled by the
-tool it runs in, such as Claude Code's permission prompts.
-
 ## Next
 
 - [Installation](./installation.md): install the skills into your coding agent.
