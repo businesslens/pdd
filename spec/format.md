@@ -1063,7 +1063,8 @@ activity or audit log a customer's administrators read passes the naming test
 — *this entry* — and is one Entity whose facts name who acted, what changed and
 when, presented by the Screen that shows it. What it records is said once, by
 a Business Rule without `permits` that targets the recorded operations and the
-log Entity: *every change to an Order is recorded in its activity*. No Step
+log Entity, the log's target a bare `{ type: entity, id }` with no `effect`:
+*every change to an Order is recorded in its activity*. No Step
 lists the entry its operation causes — the Rule makes it for every Step it
 selects, the one exception to [exhaustive Step lists](#scenario-sections). A
 Step reading the log lists the entries it reads, like any read. A log no Actor reads,
@@ -1316,8 +1317,9 @@ operator works under. It is optional, valid only as `true`, and invalid on an
 Entity that `acts`. A grant condition reads a `singleton` Entity's one
 instance from anywhere; settings each Workspace or Organization keeps are not
 `singleton`, because there are as many as there are containers, and a
-condition reaches them through the targeted instance. A `one-to-many` relation
-whose `many` side is a `singleton` is an error.
+condition reaches them through the targeted instance. A relation with a
+`singleton` on a `many` end — the target of a `one-to-many`, either end of a
+`many-to-many` — is an error.
 
 **No orphans.** An Entity must be changed by a Step, presented by a Screen,
 named as an actor — on a Step, an Interface, an Experience, a Journey, or a
@@ -1730,7 +1732,8 @@ when:
 **The operator implies the comparison; the fact declares no type.** `at-least`
 and `at-most` exist because the off-by-one argument holds only for integers and
 facts are untyped: `over: 99.99` is the wrong rule for money and for time.
-`lint` checks the fact and any named Entity resolve, and nothing more — whether
+`lint` checks the fact and any named Entity resolve, and that a named Entity
+is read as one instance (below), and nothing more — whether
 *Total charged* holds a number is `verify`'s job against code. A threshold is a
 scalar or `{ configuredBy: <entity-id> }`.
 
@@ -1741,9 +1744,11 @@ on the targeted thing itself names no `entity`. **Which instance a named
 `entity` reads is fixed by the model**, and the first of these that applies
 decides:
 
-1. **The acting Entity** — named in the grant's `actors`, or where its
-   `related` path ends: the instance acting, so `actors: [member]` with
-   `{ entity: member, fact: Verified, is: true }` reads the member who acts.
+1. **The acting Entity** — the one Entity the grant's `actors` names, or where
+   its `related` path ends: the instance acting, so `actors: [member]` with
+   `{ entity: member, fact: Verified, is: true }` reads the member who acts. A
+   grant whose `actors` lists several Entities fixes none of them; a condition
+   on one of them is a grant of its own.
 2. **On the grant's `related` path:** the instance the path reaches — the one
    nearest the acting Entity where the type repeats — so a per-board role reads
    the acting person's own Board membership, never the membership being
@@ -1754,13 +1759,17 @@ decides:
    the Owner of the Habit a Check-in records, the Workspace a Document belongs
    to. A hop is to-one from the `many` side of a `one-to-many` relation and
    both ways of a `one-to-one`; `many-to-many` and self-relations are never
-   walked. Where two walks reach it — a suggestion's Habit and its Reflection
-   both have an Owner — the model says they meet at one instance, and `verify`
-   checks it.
+   walked. Where two walks through different Entities reach it — a
+   suggestion's Habit and its Reflection both have an Owner — the model says
+   they meet at one instance, and `verify` checks it. Two relations joining the
+   same pair never meet — an Account that sends and receives Transfers is two
+   Accounts — so a walk through them reads nothing.
 4. **A `singleton` Entity:** the Product's settings, its one instance.
 
-An `entity` none of these reaches is a `lint` error: a condition that could
-read any of many instances says nothing. Walk to it with `related`, give it a
+An `entity` none of these reaches, a walk through two relations joining one
+pair, and an `entity` naming the target itself with no path passing it again
+are `lint` errors: a condition that could read any of many instances says
+nothing. Walk to it with `related`, give it a
 to-one relation, or, when the Product keeps exactly one, declare it
 `singleton`. `state` says *the instance is in state
 X when the operation happens*: it must be a state of the targeted Entity, it is
@@ -1844,7 +1853,9 @@ Structure — errors unless marked:
   `entity`; a `state` that is not a state of the targeted Entity, on a
   `creates` target, or combined with `entity`.
 - A condition `entity` that is not the acting Entity, lies off the `related`
-  path, is not `singleton`, and is reached from the target by no to-one walk.
+  path, is not `singleton`, and is reached from the target by no to-one walk,
+  or only through two relations joining one pair; an `entity` naming the
+  target itself.
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
   `removes` or `reads` target.

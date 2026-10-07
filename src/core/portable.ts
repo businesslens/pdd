@@ -6,7 +6,7 @@ import * as z from 'zod'
 import { reportVariationMembership } from './variation-membership.js'
 import { undeclaredEntityMentions } from './entity-mentions.js'
 import {
-  conditionInstanceIssue, interfaceLanguageIssues, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
+  conditionInstanceIssue, interfaceLanguageIssues, singletonRelationIssue, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
 } from './model-checks.js'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace, placeIdentityIssues } from './ids.js'
@@ -715,6 +715,7 @@ export function validateProductReport(report: ProductReport): string[] {
   const domainIds = new Set(model.domains.map(item => item.id))
   const capabilityIds = new Set(model.capabilities.map(item => item.id))
   const entityIds = new Set(model.entities.map(item => item.id))
+  const singletonIds = new Set(model.entities.filter(entity => entity.singleton).map(entity => entity.id))
   const entitiesById = new Map(model.entities.map(item => [item.id, item]))
   const capabilitiesById = new Map(model.capabilities.map(item => [item.id, item]))
   const capabilityAvailability = new Map<string, Set<string>>()
@@ -1418,9 +1419,8 @@ export function validateProductReport(report: ProductReport): string[] {
       const key = `${relation.entityId}\u0000${relation.verb}`
       if (relationKeys.has(key)) issues.push(`${label}: duplicate relation "${relation.verb} ${relation.entityId}"`)
       relationKeys.add(key)
-      if (relation.cardinality === 'one-to-many' && entitiesById.get(relation.entityId)?.singleton) {
-        issues.push(`${label}: relation "${relation.verb} ${relation.entityId}" is one-to-many, but "${relation.entityId}" is singleton and there is only one`)
-      }
+      const singletonIssue = singletonRelationIssue({ from: entity.id, to: relation.entityId, cardinality: relation.cardinality }, singletonIds)
+      if (singletonIssue) issues.push(`${label}: relation "${relation.verb} ${relation.entityId}" ${singletonIssue}`)
 
       /* A relation states both ends, so an Entity relating back is very often
          the same relationship written twice — but it can equally be a second,
@@ -1443,7 +1443,6 @@ export function validateProductReport(report: ProductReport): string[] {
    * relations and their inverses, one unambiguous hop at a time, onto an
    * Entity that acts.
    */
-  const singletonIds = new Set(model.entities.filter(entity => entity.singleton).map(entity => entity.id))
   const relationEdges = model.entities.flatMap(entity => entity.relations.map(relation => ({
     from: entity.id, to: relation.entityId, cardinality: relation.cardinality
   })))
@@ -1670,7 +1669,7 @@ export function validateProductReport(report: ProductReport): string[] {
           if (holder && condition.entityId !== null) {
             const issue = conditionInstanceIssue({
               entityId: condition.entityId,
-              actingIds: [...grant.actorIds, ...grant.related.slice(-1).map(segment => segment.entityId), ...(grant.self && singleTarget?.type === 'entity' ? [singleTarget.entityId] : [])],
+              actorIds: grant.actorIds,
               pathIds: grant.related.map(segment => segment.entityId),
               targetId: singleTarget?.type === 'entity' ? singleTarget.entityId : undefined,
               singletonIds,

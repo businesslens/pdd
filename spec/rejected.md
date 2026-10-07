@@ -161,7 +161,12 @@ relations, with `singleton` marking the settings case.
 **Two equally short to-one walks as a `lint` error.** A suggestion's Habit and
 its Reflection each have one Owner, and it is the same Owner. Refusing the
 diamond leaves an `unattended` grant, which cannot walk `related`, with no way
-out; the model's claim that the walks meet is `verify`'s to check.
+out; the model's claim that the walks meet is `verify`'s to check. The claim
+does not stretch to two relations joining one pair: an Account that sends and
+receives Transfers is two Accounts by construction, so that walk is refused
+rather than trusted. **A condition naming the relation verbs it walks** would
+let it say which; it was not added, because no shipped model needs it and
+`related` already names verbs where an Actor ends the path.
 
 **A plan or flag gate carried only by the gated resource's lead.** Refunds that
 exist only on paid plans are also *nobody may refund on a free plan*, and only

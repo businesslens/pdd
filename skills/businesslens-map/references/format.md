@@ -88,14 +88,21 @@ Entity that does not act, whose Role fact names the role. Such a role
 administers its container, not the Product: the container's settings and
 member pages stay `authenticated`, with the Role in a grant's `when`. A
 condition's `entity` reads one instance, the first that applies: the acting
-Entity itself; on the grant's `related` path, the instance the path reaches
+Entity itself (the one Entity `actors` names, or where `related` ends — a grant
+listing several actors fixes none, so a condition on one of them is its own
+grant); on the grant's `related` path, the instance the path reaches
 (nearest the acting Entity where the type repeats), so the Role read is the
 acting person's own membership; the one the targeted instance has, walking
 relations where every hop leaves exactly one (from the `many` side of a
 `one-to-many`, either way along a `one-to-one`; never `many-to-many` or a
 self-relation) — the Quiz a Question is in, the Workspace a Document belongs
-to; or a `singleton: true` Entity, the Product's one settings instance. Any
-other `entity` is a `lint` error: walk to it with `related`, relate it to-one,
+to; where two walks through different Entities reach it (a suggestion's Habit
+and its Reflection each have an Owner), the model claims they meet at one
+instance and `verify` checks it, while two relations joining the same pair (an
+Account that sends and receives Transfers) never meet and read nothing; or a
+`singleton: true` Entity, the Product's one settings instance. A condition on
+the governed thing itself names no `entity`. Any other `entity` is a `lint`
+error: walk to it with `related`, relate it to-one,
 or mark it `singleton` when the Product keeps exactly one. Settings each
 Workspace keeps are never `singleton`. Support staff acting in a customer's
 account, logged in as them or through access the customer grants, are still
@@ -377,12 +384,14 @@ Lead and section-body fragments do not contain another H1 or H2.
   that the Product shows an Actor (an activity or audit log an administrator
   reads) is one Entity — who acted, what changed, when — presented by its
   Screen, and one Business Rule without `permits` targeting the recorded
-  operations and the log Entity says what it records ("Every change to an
+  operations and the log Entity (a bare `{ type: entity, id }`, no `effect`)
+  says what it records ("Every change to an
   Order is recorded in its activity"); no Step lists the entry its operation
   causes, while a Step reading the log lists the entries it reads. A log only
   the team running the Product reads is a receipt and is not modelled. Optional
   `singleton: true` marks the Product's own settings, kept exactly once; never
-  on an Entity that acts, and nothing relates to it `one-to-many`. An Entity must be
+  on an Entity that acts, and never a relation's `many` end (the target of a
+  `one-to-many`, either end of a `many-to-many`). An Entity must be
   changed by a Step, presented by a Screen, named as an actor somewhere, or
   read by a Business Rule as a condition's `entity` or a `configuredBy`; a
   Step's read never counts, and neither does a relation from another Entity.

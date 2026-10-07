@@ -30,7 +30,8 @@ external systems, or live data state from source code.
   implementation flag, and that each declared relation and its cardinality
   hold. For every Step's `entities`, confirm the code performs each declared
   effect, moves the thing between exactly the states named, touches nothing the
-  Step leaves out, and reads, changes or initializes exactly the `facts` it
+  Step leaves out (apart from the log entry a recording Rule makes, checked
+  under **What is recorded**), and reads, changes or initializes exactly the `facts` it
   cites.
 - **Screens.** Compare each place against its view's code: the facts disclosed
   match `shows` and the inputs match `collects`; each derived Capability is one

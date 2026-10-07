@@ -688,6 +688,15 @@ describe('projectPortableReport', () => {
     manyInstances.model.entities.find(entity => entity.id === 'catalog-product')!.singleton = true
     expect(sdk.validateProductReport(manyInstances).join('\n')).not.toContain('reads "catalog-product"')
 
+    // The report refuses what the folder refuses: a singleton that acts, or on a relation's many end.
+    const singletons = structuredClone(report)
+    const admin = singletons.model.entities.find(entity => entity.id === 'store-admin')!
+    admin.singleton = true
+    singletons.model.entities.find(entity => entity.id === 'order')!.relations.push({ entityId: 'store-settings', verb: 'is priced by', cardinality: 'many-to-many' })
+    const singletonIssues = sdk.validateProductReport(singletons).join('\n')
+    expect(singletonIssues).toContain('entity "store-admin": an Entity that acts is never singleton')
+    expect(singletonIssues).toContain('relation "is priced by store-settings" is many-to-many, but "store-settings" is singleton')
+
     const closed = structuredClone(report)
     expect(rule(closed, 'orders-are-never-deleted').permits).toEqual([])
     expect(rule(closed, 'payment-before-confirmation').permits).toBeNull()

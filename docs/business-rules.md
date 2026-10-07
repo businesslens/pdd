@@ -62,11 +62,13 @@ says whether they may.
   do all three.
 - **A removal that goes `with` another is the other's to permit.** A Rule on
   removing comments never selects the comments a deleted card takes with it.
-- **A condition reads one instance, never any of many.** A fact of the acting
-  Entity is the actor's own; a per-board Role is the acting person's own
-  membership, reached through `related`; *the Quiz reveals answers* is the
-  Quiz the governed Question is in, reached because a Question has exactly one
-  Quiz; Store settings marked `singleton` are the one there is.
+- **A condition reads one instance, never any of many.** In order: the actor
+  itself; a per-board Role on the `related` path, the acting person's own
+  membership; the one the governed thing leads to, such as *the Quiz reveals
+  answers* for a Question, which has exactly one Quiz; or Store settings marked
+  [`singleton`](./entities.md#the-file). Anything else could be any of many.
+  Give a grant with several `actors` one grant per actor before conditioning
+  one of them.
 - **A feature a plan or flag turns off is closed by its grants.** Every grant
   only the feature's Steps pass carries the switch: refunds exist only on paid
   plans and only refunds move an Order to Refunded, so each grant of that Rule
@@ -223,12 +225,6 @@ when:
 grant's `when`. Business Rules vary only when a setting switches between two
 complete policies, such as Standard or Strict refund review.
 
-A condition naming another `entity` reads, first that applies: the acting
-Entity itself; the instance on the grant's `related` path; the one the governed
-thing has, walking relations where each step leaves exactly one (an Order's
-Shopper, a Document's Workspace); or a [`singleton`](./entities.md#the-file).
-Anything else could be any of many, and `lint` refuses it.
-
 ### A log of what happened
 
 An activity or audit log the Product shows an Actor is an
@@ -274,7 +270,9 @@ Errors:
 - A condition without exactly one of the eight operators, a fact or State that
   does not resolve, or a `state` on a `creates` target; a condition `entity`
   that could be any of many instances: not the actor, off the `related` path,
-  not `singleton`, and not reached from the governed thing.
+  not `singleton`, and not reached from the governed thing, or reached only
+  through two relations joining the same pair; a condition `entity` naming
+  the governed thing itself.
 - A Step performing an operation `permits: []` forbids; a governed operation
   whose Step has no actor, or one no grant could admit; an unattended Scenario
   no `unattended` grant allows; a Screen presenting governed facts to an

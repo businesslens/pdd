@@ -264,7 +264,7 @@ Errors:
 - A relation to a missing Entity, a duplicate relation, or `many-to-one`; a
   Domain that does not exist.
 - `singleton` other than `true`, `singleton` on an Entity that acts, or a
-  `one-to-many` relation to a singleton.
+  singleton on a relation's many end.
 - An `actor` or `actors` entry naming an Entity that does not act.
 - An orphan, as above.
 

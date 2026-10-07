@@ -2030,6 +2030,16 @@ permits:
     // Order was placed for many Catalog products: no one of them is the refund's.
     expect(errorsWith(refundRule('{ entity: catalog-product, fact: Price, present: true }')))
       .toContain('reads "catalog-product", which is not the acting Entity, lies off the grant\'s "related" path and is not "singleton", and no to-one relation reaches it from "refund"')
+    // A grant admitting two Entities fixes neither as the one acting.
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: catalog-product
+    effect: changes
+permits:
+  - actors: [shopper, store-admin]
+    when: [{ entity: shopper, fact: Delivery address, present: true }]`)).toContain('give "shopper" a grant of its own')
+    // A condition on the governed thing names no entity.
+    expect(errorsWith(refundRule('{ entity: refund, fact: Amount, present: true }'))).toContain('the Rule\'s own target')
 
     const settings = join(cwd, '.businesslens/entities/store-settings.md')
     writeFileSync(settings, readFileSync(settings, 'utf8').replace('singleton: true', 'singleton: false'))

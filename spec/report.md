@@ -120,7 +120,8 @@ than defaulted, so a reader never has to know which value the folder omits —
 `from` and `to` are nullable state names, and `facts` is an array of fact names,
 empty when the step affects no named facts and always empty on a `removes`
 record. It is an exhaustive claim for reads, changes and creation, not an
-unspecified subset. `with` is `null` or the `{ entityId, as }` of another
+unspecified subset; the one entry it never carries is the activity or audit
+entry a recording Business Rule makes for the step. `with` is `null` or the `{ entityId, as }` of another
 `removes` record of the same step that this removal goes with, resolved on the
 wire from the folder's alias-or-id reference; it is non-null only on a
 `removes` record, never names its own record, names a record whose Entity
