@@ -136,14 +136,6 @@ npx businesslens blueprint pull <name>
   <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
 </p>
 
-Every change after that, you just ask:
-
-```text
-add guest checkout to the product   # ideate: approve the model change
-implement it                        # your agent implements in phases; verify checks each
-check the code against the model    # verify, whenever you want to be sure
-```
-
 ## <img src="./.github/readme/app-window.svg" alt="" width="28" height="28" align="top"> Web interface
 
 Read the Product Model as a report in your browser. It updates automatically
