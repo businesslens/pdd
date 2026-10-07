@@ -6,7 +6,7 @@ import { loadModel } from '../src/core/model.js'
 const source = (path: string) => readFileSync(join(__dirname, '../layers/nuxt/report-viewer', path), 'utf8')
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, collectionForKey, resourceViewLinks } = await utility('reportDestinations')
+const { REPORT_DESTINATIONS, REPORT_PAGES, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, collectionForKey, resourceViewLinks } = await utility('reportDestinations')
 const { resourceTabPushesHistory } = await utility('resourceNavigation')
 const { findProductTopologyView } = await utility('productTopologyViews')
 const { resourceConnectionRows } = await utility('resourceConnections')
@@ -34,6 +34,20 @@ describe('report destinations', () => {
       // Variations are rows only: a set has no derivation of its own to draw.
       expect(modes, rail).toEqual(rail === 'variation' ? [] : ['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
     }
+  })
+
+  it('offers the rail\'s destinations as search Pages, opened by the rail\'s own handler', () => {
+    expect(REPORT_PAGES.map((page: any) => [page.kind, page.label])).toEqual([
+      ['product', 'Overview'], ['entity', 'Entities'], ['interface', 'Interfaces'], ['domain', 'Domains'],
+      ['capability', 'Capabilities'], ['journey', 'Journeys'], ['rule', 'Business Rules'], ['variation', 'Variations']
+    ])
+    expect(source('app/components/BlrRail.vue')).toContain('REPORT_PAGES')
+    const palette = source('app/components/BlrSearchPalette.vue')
+    expect(palette).toContain('REPORT_PAGES')
+    expect(palette).toContain("label: 'Pages'")
+    const shell = source('app/components/BlrReportShell.vue')
+    expect(shell).toContain('@kind="setKind"')
+    expect(shell).toContain('@page="setKind"')
   })
 
   it('closes a resource-only address to its rail collection, Variations included', () => {

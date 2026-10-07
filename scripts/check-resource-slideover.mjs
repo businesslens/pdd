@@ -152,7 +152,7 @@ try {
     await page.goto(origin)
     if (width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
     await page.getByRole('button', { name: /Search/ }).first().click()
-    await page.getByPlaceholder('Search every resource in this model…').fill('Order')
+    await page.getByPlaceholder('Search pages and resources…').fill('Order')
     await page.getByRole('option').filter({ hasText: /^Order/ }).first().click()
     await expect(panel).toBeVisible()
     expect(urlValue(page, 's')).toBe('overview')
