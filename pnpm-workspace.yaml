@@ -1,0 +1,9 @@
+packages:
+  - viewer/app
+
+allowBuilds:
+  esbuild: true
+  vue-demi: true
+
+overrides:
+  rolldown: 1.0.0-beta.19

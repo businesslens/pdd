@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { MAIN_RESOURCE_KINDS } from '../utils/reportDestinations'
-import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import type { ReportPage } from '../utils/reportDestinations'
+import { COLLECTION_PAGES, OVERVIEW_PAGE, REPORT_PAGES } from '../utils/reportDestinations'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -15,35 +15,24 @@ const props = defineProps<{
 const emit = defineEmits<{ kind: [kind: ReportResourceKind] }>()
 
 type RailItem = NavigationMenuItem & { iconColor?: string, count?: number }
-const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
 const activeColor = computed(() => {
-  const meta = props.activeSection === 'overview'
-    ? ENTITY_KIND_META.product
-    : RAIL_KINDS.find(kind => kind.kind === props.activeSection)
-  return meta ? `var(--blr-slot-${meta.slot})` : 'var(--ui-text-muted)'
+  const page = REPORT_PAGES.find(item => item.section === props.activeSection)
+  return page ? `var(--blr-slot-${page.slot})` : 'var(--ui-text-muted)'
 })
-const overviewItems = computed<RailItem[]>(() => [{
-  label: 'Overview',
-  icon: ENTITY_KIND_META.product.icon,
-  iconColor: `var(--blr-slot-${ENTITY_KIND_META.product.slot})`,
-  active: props.activeSection === 'overview',
-  'data-current': props.activeSection === 'overview',
-  'aria-label': 'Overview',
-  onSelect: () => emit('kind', 'product')
-}])
+const railItem = (page: ReportPage): RailItem => ({
+  label: page.label,
+  icon: page.icon,
+  iconColor: `var(--blr-slot-${page.slot})`,
+  active: props.activeSection === page.section,
+  'data-current': props.activeSection === page.section,
+  'aria-label': page.label,
+  onSelect: () => emit('kind', page.kind)
+})
+const overviewItems = computed<RailItem[]>(() => [railItem(OVERVIEW_PAGE)])
 const items = computed<RailItem[][]>(() => [
   [
     { label: 'Resources', type: 'label' },
-    ...RAIL_KINDS.map(meta => ({
-      label: meta.plural,
-      icon: meta.icon,
-      iconColor: `var(--blr-slot-${meta.slot})`,
-      count: props.counts[meta.kind],
-      active: props.activeSection === meta.kind,
-      'data-current': props.activeSection === meta.kind,
-      'aria-label': meta.plural,
-      onSelect: () => emit('kind', meta.kind)
-    }))
+    ...COLLECTION_PAGES.map(page => ({ ...railItem(page), count: props.counts[page.kind] }))
   ]
 ])
 const menuUi = computed(() => ({

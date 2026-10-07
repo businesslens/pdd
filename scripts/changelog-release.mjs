@@ -2,8 +2,8 @@
 
 // Roll [Unreleased] into the version in package.json.
 //
-//   npm version <version> --no-git-tag-version
-//   npm run changelog:release [-- --base <ref>] [-- --date YYYY-MM-DD]
+//   pnpm version <version> --no-git-tag-version
+//   pnpm changelog:release [--base <ref>] [--date YYYY-MM-DD]
 //
 // Each entry is annotated with the pull request and squash commit that added
 // it, found by blaming CHANGELOG.md at the base (default `origin/main`, so

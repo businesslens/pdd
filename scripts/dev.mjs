@@ -15,7 +15,7 @@ function fail(message) {
 }
 
 if (args.length > 1 || (args[0] && args[0] !== '--unlink')) {
-  fail('Usage: npm run dev [-- --unlink]')
+  fail('Usage: pnpm dev [--unlink]')
 }
 
 try {
@@ -28,11 +28,11 @@ try {
   }
 
   const tsdown = join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'tsdown.cmd' : 'tsdown')
-  if (!existsSync(tsdown)) fail('Dependencies are not installed. Run `npm ci` first.')
+  if (!existsSync(tsdown)) fail('Dependencies are not installed. Run `pnpm install` first.')
 
-  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
   console.log('Building BusinessLens and the local viewer before activation...')
-  const build = spawnSync(npm, ['run', 'build'], { cwd: root, stdio: 'inherit' })
+  // Windows runs pnpm through its .cmd shim, which Node spawns only in a shell.
+  const build = spawnSync('pnpm', ['build'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' })
   if (build.error) fail(build.error.message)
   if (build.status !== 0) process.exit(build.status ?? 1)
 

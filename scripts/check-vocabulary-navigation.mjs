@@ -2,11 +2,11 @@
 /**
  * Browser regressions for vocabulary navigation, against a running report.
  *
- * npm run build
- * npm run view:fixture -- --no-open --port 4317
+ * pnpm build
+ * pnpm view:fixture --no-open --port 4317
  * node scripts/check-vocabulary-navigation.mjs http://127.0.0.1:4317
  *
- * Requires Playwright Chromium (`npx playwright install chromium`). Kept
+ * Requires Playwright Chromium (`pnpm exec playwright install chromium`). Kept
  * separate from the Node test suite so it does not require a browser install.
  */
 import { chromium, expect } from '@playwright/test'

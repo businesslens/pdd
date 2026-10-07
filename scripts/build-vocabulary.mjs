@@ -2,7 +2,7 @@
 /**
  * Generate the report vocabulary registry from its owning documentation pages.
  *
- * The registry is committed, like a lockfile: `npm run check` regenerates it
+ * The registry is committed, like a lockfile: `pnpm check` regenerates it
  * in memory and fails when it differs from the tree, so a definition edited in
  * a page cannot reach the docs site while the report still shows the old line.
  */

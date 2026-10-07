@@ -13,9 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      # Installs the exact pnpm pinned by package.json's packageManager.
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run verify
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # A lockfile that no longer matches package.json fails here.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify

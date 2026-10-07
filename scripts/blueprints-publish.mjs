@@ -29,7 +29,7 @@ function fail(message) {
 }
 
 function showHelp() {
-  console.log(`Usage: npm run blueprints:publish -- [options]
+  console.log(`Usage: pnpm blueprints:publish [options]
 
 Build and publish every Blueprint under blueprints/ to a catalog. Blueprints
 present in the catalog but absent locally are withdrawn.
@@ -66,7 +66,7 @@ for (let index = 0; index < args.length; index += 1) {
     origin = value
     index += 1
   } else {
-    fail(`Unknown option "${arg}". Run \`npm run blueprints:publish -- --help\` for usage.`)
+    fail(`Unknown option "${arg}". Run \`pnpm blueprints:publish --help\` for usage.`)
   }
 }
 

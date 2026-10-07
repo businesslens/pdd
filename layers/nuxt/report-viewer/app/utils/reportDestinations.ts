@@ -1,5 +1,6 @@
 import type { AnyResourceView, DomainView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
 import type { ProductTopologyViewId } from './productTopologyViews'
+import { ENTITY_KIND_META } from './reportWorkspace'
 import { ruleAttachments } from './topologyTargets'
 import { relatedIds } from './resourceFacets'
 
@@ -18,6 +19,12 @@ export const REPORT_DESTINATIONS = [
 ] as const
 
 export const MAIN_RESOURCE_KINDS = ['entity', 'interface', 'domain', 'capability', 'journey', 'rule', 'variation'] as const
+/** The rail's destinations in its order: the Product's Overview, then the collections. Search offers the same pages. */
+export interface ReportPage { kind: ReportResourceKind, section: string, label: string, icon: string, slot: number }
+export const OVERVIEW_PAGE: ReportPage = { kind: 'product', section: 'overview', label: 'Overview', icon: ENTITY_KIND_META.product.icon, slot: ENTITY_KIND_META.product.slot }
+export const COLLECTION_PAGES: ReportPage[] = MAIN_RESOURCE_KINDS
+  .map(kind => ({ kind, section: kind, label: ENTITY_KIND_META[kind].plural, icon: ENTITY_KIND_META[kind].icon, slot: ENTITY_KIND_META[kind].slot }))
+export const REPORT_PAGES: ReportPage[] = [OVERVIEW_PAGE, ...COLLECTION_PAGES]
 export const destinationForSection = (section: string) => REPORT_DESTINATIONS.find(item => item.section === section)
 export const destinationForView = (view: ProductTopologyViewId) => REPORT_DESTINATIONS.find(item => item.view === view)
 export const destinationForLocation = (section: string, tab: string) => REPORT_DESTINATIONS.find(item => item.rail === section && item.mode === tab)

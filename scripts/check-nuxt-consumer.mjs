@@ -6,13 +6,15 @@
  * after the release is tagged. A Product Report schema change that leaves the
  * fixture's sample report behind passed every PR check and failed there (0.25.0
  * kept `navigation` in it). This runs the fixture's `prepare:nuxt` and
- * `typecheck` in `npm run verify`, so the drift fails the pull request instead.
+ * `typecheck` in `pnpm verify`, so the drift fails the pull request instead.
  *
- * It packs without lifecycle scripts, so run it after `npm run build`. The
- * fixture's own dependencies are installed from the registry into a temporary
- * copy; nothing is written inside the repository.
+ * It packs without lifecycle scripts, so run it after `pnpm build`. `pnpm pack`
+ * cannot skip the prepack build, so npm packs the same file set here, and the
+ * fixture stands in for an npm consumer: its own dependencies are installed
+ * from the registry into a temporary copy; nothing is written inside the
+ * repository. Publish repeats it with pnpm.
  *
- * Usage: npm run check:consumer
+ * Usage: pnpm check:consumer
  */
 import { execFileSync } from 'node:child_process'
 import { cpSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'

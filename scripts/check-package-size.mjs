@@ -33,7 +33,9 @@ for (const budget of budgets) {
   }
 }
 
-// Check the compressed artifact here as well as in Publish. Prose rendering adds
+// Check the compressed artifact here as well as in Publish. `pnpm pack` cannot
+// skip the prepack build this check runs after, so npm, which ships with Node,
+// measures the same file set here. Prose rendering adds
 // a small client-side runtime, and Coverage, sidebar, matrix, Business Rule and
 // Lifecycle readings fit within this shared archive budget; keep it explicit.
 const maximumTarballBytes = 2304 * 1024

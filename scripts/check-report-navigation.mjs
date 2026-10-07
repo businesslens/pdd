@@ -35,6 +35,23 @@ try {
     page.on('pageerror', error => errors.push(error.message))
     await page.goto(origin)
     await expect(page.locator('.blr-report-shell')).toBeVisible()
+    /* Search offers the rail's pages and opens them as the rail does, history included. */
+    await page.keyboard.press('ControlOrMeta+K')
+    const palette = page.getByPlaceholder('Search pages and resources…')
+    await palette.fill('Business Rules')
+    await expect(page.getByRole('group', { name: 'Pages' }).getByRole('option')).toHaveText(['Business Rules'])
+    await page.keyboard.press('Enter')
+    await expect(palette).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Business Rules')
+    await expect(page).toHaveURL(/[?&]s=rule(?:&|$)/)
+    await page.keyboard.press('ControlOrMeta+K')
+    await palette.fill('Overview')
+    await page.getByRole('group', { name: 'Pages' }).getByRole('option', { name: 'Overview' }).click()
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
+    await page.goBack()
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Business Rules')
+    await page.goForward()
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
     for (const collection of graphs) {
       const section = sectionOf[collection]
       await choose(page, collection)

@@ -5,19 +5,26 @@ stays reusable, self-contained, and well-scoped.
 
 ## Local development
 
+The repository is a pnpm workspace: the package itself plus the private local
+viewer in `viewer/app`. `package.json` pins the pnpm version in
+`packageManager`; with Corepack (`corepack enable`) or pnpm 9.7 or later, that
+exact version runs. It needs Node.js 22.13 or later, newer than the published
+package's own floor: consumers still install `businesslens` on Node.js 20.12
+or later, with any package manager.
+
 Activate the current PDD worktree as the machine-wide development CLI and keep
 all published package outputs current:
 
 ```bash
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 The initial build must succeed before `~/.local/bin/bl` is atomically linked to
 this worktree. The command then runs `tsdown --watch` in the foreground; stopping
-the watcher leaves `bl` pointing at the last successful build. Run `npm run
-dev` in another worktree to switch the link, `bl --dev-info` to inspect it, and
-`npm run dev:unlink` from the active worktree to remove it.
+the watcher leaves `bl` pointing at the last successful build. Run `pnpm dev` in
+another worktree to switch the link, `bl --dev-info` to inspect it, and
+`pnpm dev:unlink` from the active worktree to remove it.
 
 From any target repository, `bl lint` and the other public commands use the
 active checkout. Installed map, ideate, and verify skills recognize the same explicit
@@ -36,7 +43,9 @@ development launcher; without it they retain their release-pinned npm runner.
    list new skills in `.claude-plugin/plugin.json`. BusinessLens analysis never
    executes target code; verify delegates implementation to a harness-supplied
    builder and then inspects again.
-5. Run `npm run verify` before opening a PR.
+5. Run `pnpm verify` before opening a PR. Change dependencies with `pnpm add` or
+   `pnpm remove` and commit the updated `pnpm-lock.yaml`; CI installs with
+   `--frozen-lockfile` and fails when it drifts.
 6. Do not add secrets, customer data, or private repository URLs.
 
 ## Demo GIF
@@ -45,5 +54,5 @@ development launcher; without it they retain their release-pinned npm runner.
 report, opened with `npx businesslens view businesslens/pdd` as the README
 invites readers to. That command reads the default branch on GitHub, so
 re-record after a model or report change has merged:
-`npm run build && npm run demo:record`. It needs Git access to GitHub,
+`pnpm build && pnpm demo:record`. It needs Git access to GitHub,
 Playwright's Chromium and `ffmpeg`, and fails if the GIF exceeds 5 MB.

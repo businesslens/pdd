@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Report:** Search (⌘K) also finds the report's pages — Overview and every collection — and opens them as the sidebar does.
+
 ## [0.30.0] - 2026-10-07
 
 ### Added

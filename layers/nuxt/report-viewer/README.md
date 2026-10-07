@@ -805,6 +805,11 @@ Variation is added around them, the way each drawing's lines already read.
 Search keeps the name that matched: a Variation wears its set mark, and an
 alternative adds a chip naming its Variation.
 
+Search (⌘K or Ctrl+K) also lists Pages, ahead of the resources: Overview and
+the seven collections, under the rail's labels and icons, from the same list
+the rail draws. Choosing a page closes the palette and opens it as the rail
+does, so the address and Back behave the same.
+
 Check it against the Fixture Shop with `node scripts/check-variations.mjs
 <viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the
 collection and its owner lines, set rows in a list and a tab, the switcher by

@@ -87,7 +87,7 @@ try {
   await expectCollectionDrawing(page, 'graph')
 
   await rail.getByRole('button', { name: 'Search Product Model', exact: true }).click()
-  const search = page.getByPlaceholder('Search every resource in this model…')
+  const search = page.getByPlaceholder('Search pages and resources…')
   await expect(search).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(search).toHaveCount(0)

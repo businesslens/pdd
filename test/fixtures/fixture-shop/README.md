@@ -4,7 +4,7 @@ A tiny fake webshop used as the BusinessLens golden fixture.
 
 ## Variation examples
 
-Run `npm run view:fixture` from the repository root and open **Variations** in
+Run `pnpm view:fixture` from the repository root and open **Variations** in
 the rail. Each set is one file in `.businesslens/variations/`; its alternatives
 are ordinary resources that carry no Variation keys.
 

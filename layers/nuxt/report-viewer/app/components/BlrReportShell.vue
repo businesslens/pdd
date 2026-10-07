@@ -968,6 +968,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       v-model:open="searchOpen"
       :workspace="workspace"
       @select="onSearchSelect"
+      @page="setKind"
     />
 
     <BlrVocabulary :context="vocabularyContext" tooltips />

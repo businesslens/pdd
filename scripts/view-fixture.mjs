@@ -15,7 +15,7 @@
  * exactly as it would on a model at its own root. Nothing is written to the
  * source tree, and the copy is removed on exit.
  *
- * Usage: npm run view:fixture [-- [model-dir] [--port <port>] [--no-open]]
+ * Usage: pnpm view:fixture [model-dir] [--port <port>] [--no-open]
  */
 import { spawn, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdtempSync, rmSync, watch } from 'node:fs'
@@ -40,7 +40,7 @@ function fail(message) {
   process.exit(1)
 }
 
-if (!existsSync(cli)) fail('dist/cli.js is missing. Run `npm run build:core` first.')
+if (!existsSync(cli)) fail('dist/cli.js is missing. Run `pnpm build:core` first.')
 if (!existsSync(join(source, '.businesslens'))) fail(`${source} holds no .businesslens/ directory.`)
 
 function git(cwd, ...gitArgs) {
