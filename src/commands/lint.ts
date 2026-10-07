@@ -648,6 +648,22 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   /*
+   * An umbrella verb names a bucket, not a control: `manage-orders` hides
+   * refunding, merging and confirming, which the split test makes separate
+   * Capabilities. Read from the first segment directly, like the opposite
+   * pairs, so a verb the lexicon lacks is still caught.
+   */
+  const UMBRELLA_VERBS = new Set(['manage', 'organize', 'handle', 'administer'])
+  for (const capability of model.capabilities) {
+    const verb = leadingVerb(capability.id)
+    if (UMBRELLA_VERBS.has(verb)) {
+      warnings.push(
+        `${capability.file}: capability id "${capability.id}" leads with the umbrella verb "${verb}"; name each verb its controls show — opposite and distinct verbs are separate Capabilities`
+      )
+    }
+  }
+
+  /*
    * Behavioral ids draw their noun half from that vocabulary. Two independent
    * mappings of one repository agreed on 95% of the Capabilities they found and
    * shared 29% of the ids, because one wrote `install-skills` where the other

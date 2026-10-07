@@ -403,6 +403,7 @@ describe('Variations in the Product Report', () => {
       .toEqual(['Cancellation requested → Cancelled', 'Confirmed → Cancelled', 'Pending → Cancellation requested'])
   })
 
+
   it('sets alternatives side by side on matrix axes and dashes cells only some choices hold', () => {
     const workspace = shop()
     expect(adjacentAlternatives(workspace.capabilities).map((item: any) => item.id).indexOf('request-cancellation'))
@@ -421,10 +422,16 @@ describe('Variations in the Product Report', () => {
     expect(cell('entity:shopper->capability:place-order').condition).toBe('Only under Checkout review: Complete checkout')
     // A cell is never dashed for its own column's Variation.
     expect(cell('entity:order->capability:cancel-order').condition).toBeUndefined()
-    // Order management stays solid while one change inside it is conditional.
-    const management = cell('entity:order->capability:manage-orders')
-    expect(management.condition).toBeUndefined()
-    expect(management.mutations[0].variants.filter((variant: any) => variant.condition).map((variant: any) => `${variant.from}>${variant.to}`)).toEqual(['Pending>Confirmed'])
+    // A cell stays solid while one change inside it is conditional: give the
+    // refund Capability the manual-confirmation Step, which only one Order
+    // confirmation alternative takes, beside the refund every path can make.
+    const report = compileReport(loadModel(SHOP), '2026-09-27')
+    const manual = report.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout-with-manual-confirmation')!
+    manual.steps.find(step => step.capabilityId === 'confirm-order')!.capabilityId = 'refund-order'
+    const mixed = projections.mutationProjection(projectReportWorkspace(report)).cells.find((item: any) => item.id === 'entity:order->capability:refund-order')
+    expect(mixed.condition).toBeUndefined()
+    expect(mixed.mutations[0].variants.filter((variant: any) => variant.condition).map((variant: any) => `${variant.from}>${variant.to}`)).toEqual(['Pending>Confirmed'])
+    expect(mixed.mutations[0].variants.some((variant: any) => !variant.condition)).toBe(true)
   })
 
   it('folds graph trees like the Rows tree and frames an Entity Variation', () => {

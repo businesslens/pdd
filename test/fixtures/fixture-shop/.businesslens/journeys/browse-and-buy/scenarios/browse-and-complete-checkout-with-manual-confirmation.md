@@ -28,7 +28,7 @@ steps:
   - text: A store operator confirms the paid order
     kind: actor
     actor: store-admin
-    capability: manage-orders
+    capability: confirm-order
     entities:
       - { entity: order, effect: changes, from: Pending, to: Confirmed, facts: [] }
     contexts:

@@ -149,7 +149,7 @@ try {
     await expect(panel.locator('[data-flow-ready=true]')).toBeVisible()
     await panel.locator('[data-lifecycle-unplaced]').getByRole('button', { name: 'Information changed' }).click()
     await expect(inspector).toContainText('This change has no specified states.')
-    await expect(inspector.locator('a[data-resource-key="capability:manage-orders"]')).toBeVisible()
+    await expect(inspector.locator('a[data-resource-key="capability:merge-orders"]')).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await page.keyboard.press('Escape')
     await expect(panel).toHaveCount(0)

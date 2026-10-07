@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A Journey continues only where the product carries the same person on; something shown where they already are does not count.
 - Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission.
 - Reports use a new format version; re-export Blueprints after updating.
-- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, and limitations that describe the model instead of the product.
+- **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, limitations that describe the model instead of the product, and a Capability named with an umbrella verb such as manage.
 
 ## [0.29.1] - 2026-10-07
 

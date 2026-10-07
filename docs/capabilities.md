@@ -291,3 +291,5 @@ Warnings:
 - A Capability Scenario that opens with the opposite of its Capability's verb,
   such as `enable-a-disabled-link` under `disable-link`: opposite verbs are
   separate Capabilities.
+- A Capability named with an umbrella verb, such as `manage-orders`: name each
+  verb its controls show.

@@ -7,10 +7,10 @@ references:
 availability: [{ place: admin-web }, { place: operator-cli }]
 ---
 
-# Order management
+# Order merging
 
-Lets a store administrator review and update existing orders.
+Lets a store administrator merge a duplicate unpaid order into the original.
 
 ## Intent
 
-Give operators a controlled way to resolve order issues.
+Give operators a controlled way to resolve an order placed twice.
