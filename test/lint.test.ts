@@ -2003,6 +2003,42 @@ relations:
   })
 
   /*
+   * A condition naming another Entity reads one instance of it: the acting
+   * one, the one on the related path, the one the target has through to-one
+   * relations, or the Product's singleton settings. Anything else says nothing.
+   */
+  it('refuses a grant condition that could read any of many instances', () => {
+    const cwd = fixtureCopy()
+    const errorsWith = (frontmatter: string) => {
+      writeRule(cwd, 'probe', frontmatter)
+      return run(cwd).errors.filter(error => error.includes('probe')).join('\n')
+    }
+    const refundRule = (when: string) => `appliesTo:
+  - type: entity
+    id: refund
+    effect: creates
+permits:
+  - actors: [store-admin]
+    when: [${when}]`
+
+    // refund → order → shopper, each hop to-one: the Shopper who owns the refunded Order.
+    expect(errorsWith(refundRule('{ entity: shopper, fact: Delivery address, present: true }'))).toBe('')
+    // The store's one settings instance, read from anywhere.
+    expect(errorsWith(refundRule('{ entity: store-settings, fact: Refund approval threshold, present: true }'))).toBe('')
+    // The acting Entity reads the instance acting.
+    expect(errorsWith(refundRule('{ entity: store-admin, fact: Shift, present: true }'))).not.toContain('reads "store-admin"')
+    // Order was placed for many Catalog products: no one of them is the refund's.
+    expect(errorsWith(refundRule('{ entity: catalog-product, fact: Price, present: true }')))
+      .toContain('reads "catalog-product", which is not the acting Entity, lies off the grant\'s "related" path and is not "singleton", and no to-one relation reaches it from "refund"')
+
+    const settings = join(cwd, '.businesslens/entities/store-settings.md')
+    writeFileSync(settings, readFileSync(settings, 'utf8').replace('singleton: true', 'singleton: false'))
+    expect(run(cwd).errors.join('\n')).toContain('"singleton" is true or absent')
+    writeFileSync(settings, readFileSync(settings, 'utf8').replace('singleton: false', 'singleton: true\nacts: internal\nkind: system'))
+    expect(run(cwd).errors.join('\n')).toContain('an Entity that acts is never "singleton"')
+  })
+
+  /*
    * A target selects a Step by the keys its `entities` entry carries; a grant
    * is possible for the Step's actor when every who-key it carries could be
    * that actor. Rules selecting one operation AND.

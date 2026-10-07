@@ -215,6 +215,7 @@ export function compileReport(
         ...(entity.domain ? { domainId: entity.domain } : {}),
         kind: (entity.kind as 'person' | 'system' | undefined) ?? null,
         acts: (entity.acts as 'external' | 'internal' | undefined) ?? null,
+        singleton: entity.singleton,
         informationKept: entity.informationKept.map(fact => ({ name: fact.name, description: fact.description })),
         relations: entity.relations.map(relation => ({
           entityId: relation.entity, verb: relation.verb, cardinality: relation.cardinality

@@ -5,7 +5,7 @@ const route = useRoute()
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
 const report: ProductReport = {
-  schemaVersion: '18.0.0',
+  schemaVersion: '19.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
   summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',
@@ -43,6 +43,7 @@ const report: ProductReport = {
       description: 'A person viewing the report.',
       kind: 'person',
       acts: 'external',
+      singleton: false,
       informationKept: [],
       relations: [{ entityId: 'reader', verb: 'knows', cardinality: 'many-to-many' }],
       states: [{ name: 'Active', content: 'The Reader is active.' }, { name: 'Unreached', content: 'No Step reaches this State.' }],

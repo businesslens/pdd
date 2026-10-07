@@ -6,7 +6,7 @@ import * as z from 'zod'
 import { reportVariationMembership } from './variation-membership.js'
 import { undeclaredEntityMentions } from './entity-mentions.js'
 import {
-  interfaceLanguageIssues, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
+  conditionInstanceIssue, interfaceLanguageIssues, LANGUAGE_TAG_PATTERN, screenEntityIssues, screenReadIssues, unknownFactIssues
 } from './model-checks.js'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace, placeIdentityIssues } from './ids.js'
@@ -15,7 +15,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '18.0.0'
+export const REPORT_SCHEMA_VERSION = '19.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -215,6 +215,8 @@ export const ReportEntitySchema = z.strictObject({
   kind: z.enum(['person', 'system']).nullable(),
   /** Which side of the Product boundary it acts from; null for a thing that does not act. */
   acts: z.enum(['external', 'internal']).nullable(),
+  /** The Product keeps exactly one — its own settings — so a grant condition reads it from anywhere. */
+  singleton: z.boolean(),
   /** What the Product keeps about the thing, by name. Never how it is stored. */
   informationKept: z.array(ReportEntityFactSchema),
   relations: z.array(ReportEntityRelationSchema),
@@ -1395,6 +1397,7 @@ export function validateProductReport(report: ProductReport): string[] {
     if ((entity.acts === null) !== (entity.kind === null)) {
       issues.push(`${label}: kind and acts are present together or not at all`)
     }
+    if (entity.singleton && entity.acts !== null) issues.push(`${label}: an Entity that acts is never singleton`)
     if (entity.domainId && !domainIds.has(entity.domainId)) {
       issues.push(`${label}: references missing domain "${entity.domainId}"`)
     }
@@ -1415,6 +1418,9 @@ export function validateProductReport(report: ProductReport): string[] {
       const key = `${relation.entityId}\u0000${relation.verb}`
       if (relationKeys.has(key)) issues.push(`${label}: duplicate relation "${relation.verb} ${relation.entityId}"`)
       relationKeys.add(key)
+      if (relation.cardinality === 'one-to-many' && entitiesById.get(relation.entityId)?.singleton) {
+        issues.push(`${label}: relation "${relation.verb} ${relation.entityId}" is one-to-many, but "${relation.entityId}" is singleton and there is only one`)
+      }
 
       /* A relation states both ends, so an Entity relating back is very often
          the same relationship written twice — but it can equally be a second,
@@ -1437,6 +1443,10 @@ export function validateProductReport(report: ProductReport): string[] {
    * relations and their inverses, one unambiguous hop at a time, onto an
    * Entity that acts.
    */
+  const singletonIds = new Set(model.entities.filter(entity => entity.singleton).map(entity => entity.id))
+  const relationEdges = model.entities.flatMap(entity => entity.relations.map(relation => ({
+    from: entity.id, to: relation.entityId, cardinality: relation.cardinality
+  })))
   const walkRelated = (start: string, segments: Array<{ verb: string, entityId: string }>, label: string): string | undefined => {
     let current = start
     for (const [index, segment] of segments.entries()) {
@@ -1656,6 +1666,17 @@ export function validateProductReport(report: ProductReport): string[] {
           }
           if (holder && !holder.informationKept.some(item => item.name === condition.fact)) {
             issues.push(`${conditionLabel}: "${condition.fact}" is not a fact of entity "${holderId}"`)
+          }
+          if (holder && condition.entityId !== null) {
+            const issue = conditionInstanceIssue({
+              entityId: condition.entityId,
+              actingIds: [...grant.actorIds, ...grant.related.slice(-1).map(segment => segment.entityId), ...(grant.self && singleTarget?.type === 'entity' ? [singleTarget.entityId] : [])],
+              pathIds: grant.related.map(segment => segment.entityId),
+              targetId: singleTarget?.type === 'entity' ? singleTarget.entityId : undefined,
+              singletonIds,
+              relations: relationEdges
+            })
+            if (issue) issues.push(`${conditionLabel}: ${issue}`)
           }
           if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredByEntityId)) {
             issues.push(`${conditionLabel}: configuredByEntityId references missing entity "${condition.value.configuredByEntityId}"`)

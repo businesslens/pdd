@@ -37,7 +37,7 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('18.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('19.0.0')
     for (const name of [
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
@@ -679,6 +679,14 @@ describe('projectPortableReport', () => {
     const noSuchFact = structuredClone(report)
     rule(noSuchFact, 'refunds-need-an-operator').permits![0]!.when[0]!.fact = 'Weight'
     expect(sdk.validateProductReport(noSuchFact).join('\n')).toContain('"Weight" is not a fact of entity "order"')
+
+    const manyInstances = structuredClone(report)
+    rule(manyInstances, 'refunds-need-an-operator').permits![0]!.when.push({
+      entityId: 'catalog-product', fact: 'Price', operator: 'present', value: true, state: null
+    })
+    expect(sdk.validateProductReport(manyInstances).join('\n')).toContain('reads "catalog-product", which is not the acting Entity')
+    manyInstances.model.entities.find(entity => entity.id === 'catalog-product')!.singleton = true
+    expect(sdk.validateProductReport(manyInstances).join('\n')).not.toContain('reads "catalog-product"')
 
     const closed = structuredClone(report)
     expect(rule(closed, 'orders-are-never-deleted').permits).toEqual([])

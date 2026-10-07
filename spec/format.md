@@ -494,7 +494,16 @@ discriminator — or by the deployment, fixed before the behavior starts:
 plan or licence enables it,** stays an ordinary resource, mapped even where the
 running edition hides it. Its lead names what it exists under — registration
 exists only while the sign-in method is password — and `verify` checks it. No
-field or Rule carries the dependency.
+field or Variation carries the dependency. **An Entity operation only it
+performs is closed by the switch through a grant as well:** when a Rule target
+can select an operation the gated Capabilities' Steps perform without selecting
+any other Capability's Steps — refunds are the only behaviour moving an Order
+to Refunded — every
+grant of that operation's permission Rule carries the switch as a `when`
+condition, so `lint` checks every Step against it, and a Rule is written for
+the operation when none exists. A read-only feature, or one whose operation
+ungated behaviour also performs — publishing on a schedule beside publishing by
+hand — has its lead alone. The lead names the switch either way.
 
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, spelled as that type's ordinary ids — a
@@ -1048,6 +1057,16 @@ Capability that produces it.
 the Product needs in order to work safely — ask who the record is *for*. An
 Actor never points at these; the Product does.
 
+**A record of what happened that the Product shows an Actor is an Entity.** An
+activity or audit log a customer's administrators read passes the naming test
+— *this entry* — and is one Entity whose facts name who acted, what changed and
+when, presented by the Screen that shows it. What it records is said once, by
+a Business Rule without `permits` that targets the recorded operations and the
+log Entity: *every change to an Order is recorded in its activity*. No Step
+lists the entry — the Rule makes it for every Step it selects, the one
+exception to [exhaustive Step lists](#scenario-sections). A log no Actor reads,
+kept for the team running the Product, is a receipt and is not modelled.
+
 **Not the Product itself.** Its surfaces, its shipped content, and its closed
 vocabularies are what the Product *is*, not what it keeps. A Product keeps
 information about *instances* of an Entity; where there are no instances, only
@@ -1288,6 +1307,15 @@ are invalid sections: the frontmatter and the Steps are the one authority.
   Entity whose instances pre-exist the model.
 
 `domain` is optional and single. H1 = name and the lead paragraph = description.
+
+**`singleton: true`** says the Product keeps exactly one of this Entity — its
+own settings, such as Store settings with the refund threshold every store
+operator works under. It is optional, valid only as `true`, and invalid on an
+Entity that `acts`. A grant condition reads a `singleton` Entity's one
+instance from anywhere; settings each Workspace or Organization keeps are not
+`singleton`, because there are as many as there are containers, and a
+condition reaches them through the targeted instance. A `one-to-many` relation
+whose `many` side is a `singleton` is an error.
 
 **No orphans.** An Entity must be changed by a Step, presented by a Screen,
 named as an actor — on a Step, an Interface, an Experience, a Journey, or a
@@ -1705,14 +1733,34 @@ facts are untyped: `over: 99.99` is the wrong rule for money and for time.
 scalar or `{ configuredBy: <entity-id> }`.
 
 `fact` defaults to a fact of the targeted Entity and may name another through
-`entity`, which is how thresholds and feature flags work: the value is a fact of
-a settings Entity and the Rule reads it. **Which instance a named `entity`
-reads is fixed by the grant:** when that Entity lies on the grant's `related`
-path, the condition reads the instance the path reaches — the one nearest the
-acting Entity where the type repeats — so a per-board role reads the acting
-person's own Board membership, never the membership being changed; when it lies
-off the path, the Entity has one instance, the Product's settings. A condition
-on the targeted thing itself names no `entity`. `state` says *the instance is in state
+`entity`, which is how thresholds, feature flags and a container's own settings
+work: the value is a fact of another Entity and the Rule reads it. A condition
+on the targeted thing itself names no `entity`. **Which instance a named
+`entity` reads is fixed by the model**, and the first of these that applies
+decides:
+
+1. **The acting Entity** — named in the grant's `actors`, or where its
+   `related` path ends: the instance acting, so `actors: [member]` with
+   `{ entity: member, fact: Verified, is: true }` reads the member who acts.
+2. **On the grant's `related` path:** the instance the path reaches — the one
+   nearest the acting Entity where the type repeats — so a per-board role reads
+   the acting person's own Board membership, never the membership being
+   changed.
+3. **The targeted instance's own:** the one instance the targeted instance has,
+   reached from the Rule's one Entity target by walking declared relations and
+   their inverses where every hop leaves exactly one — the Quiz a Question is in,
+   the Owner of the Habit a Check-in records, the Workspace a Document belongs
+   to. A hop is to-one from the `many` side of a `one-to-many` relation and
+   both ways of a `one-to-one`; `many-to-many` and self-relations are never
+   walked. Where two walks reach it — a suggestion's Habit and its Reflection
+   both have an Owner — the model says they meet at one instance, and `verify`
+   checks it.
+4. **A `singleton` Entity:** the Product's settings, its one instance.
+
+An `entity` none of these reaches is a `lint` error: a condition that could
+read any of many instances says nothing. Walk to it with `related`, give it a
+to-one relation, or, when the Product keeps exactly one, declare it
+`singleton`. `state` says *the instance is in state
 X when the operation happens*: it must be a state of the targeted Entity, it is
 valid on every target but `creates`, and it cannot be combined with `entity`.
 It exists because two kinds of Step carry no state for a target to select by — a
@@ -1727,6 +1775,7 @@ encoding, and each case has exactly one:
 | What differs | How it is modeled |
 | --- | --- |
 | Only who may perform one Entity operation | A settings fact read by a permission grant's `when`. One Rule; no Variation |
+| Whether a resource exists at all — a feature a plan, flag or licence turns off | An ordinary resource whose lead names the switch; an Entity operation only it performs also carries the switch as a grant's `when` ([Variations](#variations)) |
 | Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations) of the smallest resource containing the difference: Configuration, Experiment or Version. Business Rules vary only between whole policies. An A/B test whose arms differ in one Step is an Experiment of two Scenarios |
 | Only how something looks | Design: `visual` References with `role: intent`. Not modeled |
 | A branch on state the behavior meets — out of stock, payment declined | Scenario conditions and outcomes; a Business Rule states constraints shared by several behaviors |
@@ -1792,6 +1841,8 @@ Structure — errors unless marked:
   the eight; a `fact` that does not resolve on the targeted Entity or on
   `entity`; a `state` that is not a state of the targeted Entity, on a
   `creates` target, or combined with `entity`.
+- A condition `entity` that is not the acting Entity, lies off the `related`
+  path, is not `singleton`, and is reached from the target by no to-one walk.
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
   `removes` or `reads` target.
@@ -2116,6 +2167,18 @@ on the public page the person is sent to. A Business Rule reads a Step's actor
 as *who did*, against a grant's *who may*; the Business Rule section defines a
 possible grant.
 
+**Support acting as a customer is still support.** While staff act in a
+customer's account — logged in as them, or through access the customer grants
+— the Steps they take name the support Entity as `actor`, at the customer's own
+places, whose `actors` therefore include it; there is no Experience of its own
+for it. Starting and ending that access is a Capability of its own. Each Rule
+whose operation support may perform there gains a grant for support,
+conditioned on the customer's consent when the Product asks for it —
+`{ actors: [support-agent], when: [{ entity: shopper, fact: Support access, is: On }] }`
+reads the Shopper who owns the targeted Order — and a Rule support must never
+pass, such as changing the customer's password, gains none. An activity entry
+recorded meanwhile names the support Entity as who acted.
+
 A Scenario needs at least one `actor` Step **or** an unattended trigger: a first
 Step of `kind: condition` carrying `unattended: true`, for behavior with no
 Actor to name — a schedule the Product owns, an expiry, a retry. An unattended
@@ -2130,7 +2193,9 @@ availability Context.
 
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`. Silence is impossible; an omission is a claim that can
-be reviewed, linted, and contradicted by code. Each entry is
+be reviewed, linted, and contradicted by code. The one Entity a Step never
+lists is an activity or audit entry a Business Rule records for it
+([Entities](#entitiesidmd-or-entitiesidentitymd)). Each entry is
 `{ entity, as, effect, from, to, facts, with }`:
 
 ```yaml

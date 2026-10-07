@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v18 renderer used by `businesslens view` and exported
+The stable Product Report v19 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and

@@ -140,6 +140,8 @@ export interface EntityResource extends ResourceFile {
    * contract the Product must keep stable; absent for a thing that does not.
    */
   acts?: string
+  /** The Product keeps exactly one: its own settings. A grant condition reads it from anywhere. */
+  singleton: boolean
   relations: EntityRelation[]
   states: ReturnType<typeof namedStates>
 }
@@ -1449,7 +1451,7 @@ export function loadModel(cwd: string): PddModel {
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } =
-        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions'], issues)
+        readResource(location, ['domain', 'kind', 'acts', 'singleton', 'relations', 'transitions'], issues)
       /* The lifecycle is composed from Steps. A list that restated it was the
          second authority the format removed, and the message names the first. */
       if (data.transitions !== undefined) {
@@ -1475,6 +1477,15 @@ export function loadModel(cwd: string): PddModel {
       }
       if (acts === undefined && kind !== undefined) {
         issues.push(`${file}: "kind" is only valid together with "acts"`)
+      }
+      /* One instance is a claim about settings, never about who acts: a role is
+         as many people as hold it. Absence says nothing, so only `true` exists. */
+      if (data.singleton !== undefined && data.singleton !== true) {
+        issues.push(`${file}: "singleton" is true or absent`)
+      }
+      const singleton = data.singleton === true
+      if (singleton && acts !== undefined) {
+        issues.push(`${file}: an Entity that acts is never "singleton"; it is as many as act`)
       }
 
       // Identity, not storage: a thing may be worth naming for what the Product
@@ -1525,6 +1536,7 @@ export function loadModel(cwd: string): PddModel {
         informationKept,
         kind,
         acts,
+        singleton,
         relations,
         states
       }

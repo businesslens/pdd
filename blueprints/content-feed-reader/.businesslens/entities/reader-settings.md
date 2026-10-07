@@ -1,5 +1,6 @@
 ---
 domain: collections
+singleton: true
 ---
 
 # Reader settings

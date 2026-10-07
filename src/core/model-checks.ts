@@ -86,3 +86,72 @@ export function screenReadIssues(
   }
   return issues
 }
+
+/** One declared relation, read source to target, as both callers hold it. */
+export interface RelationEdge {
+  from: string
+  to: string
+  cardinality: string
+}
+
+export interface ConditionInstance {
+  /** The Entity a grant condition names through `entity`. */
+  entityId: string
+  /** Who the grant admits: its `actors`, where its `related` path ends, the target under `self`. */
+  actingIds: readonly string[]
+  /** Every Entity the grant's `related` path passes through. */
+  pathIds: readonly string[]
+  /** The Rule's one Entity target, when it has exactly one. */
+  targetId: string | undefined
+  singletonIds: ReadonlySet<string>
+  relations: readonly RelationEdge[]
+}
+
+/*
+ * The hops along which an instance has exactly one of the next: from the
+ * `many` side of a `one-to-many` back to its one, and both ways along a
+ * `one-to-one`. A self-relation is never walked, because naming the Entity does
+ * not give it a direction.
+ */
+function toOneHops(relations: readonly RelationEdge[]): Map<string, string[]> {
+  const hops = new Map<string, string[]>()
+  const add = (from: string, to: string) => hops.set(from, [...(hops.get(from) ?? []), to])
+  for (const relation of relations) {
+    if (relation.from === relation.to) continue
+    if (relation.cardinality === 'one-to-many') add(relation.to, relation.from)
+    if (relation.cardinality === 'one-to-one') {
+      add(relation.from, relation.to)
+      add(relation.to, relation.from)
+    }
+  }
+  return hops
+}
+
+/**
+ * A grant condition naming another Entity must read one instance of it: the
+ * acting one, the one on the `related` path, the one the targeted instance has
+ * through to-one relations, or the Product's one `singleton`. A condition that
+ * could read any of many instances says nothing, so `lint` refuses it.
+ */
+export function conditionInstanceIssue(condition: ConditionInstance): string | undefined {
+  const { entityId, targetId } = condition
+  if (condition.actingIds.includes(entityId) || condition.pathIds.includes(entityId) || condition.singletonIds.has(entityId)) {
+    return undefined
+  }
+  const ways = 'walk to it with "related", relate it to-one, or declare it "singleton"'
+  const unreached = `reads "${entityId}", which is not the acting Entity, lies off the grant's "related" path and is not "singleton"`
+  if (targetId === undefined) return `${unreached}, and the Rule has no one Entity target to reach it from; ${ways}`
+
+  /* Breadth-first over to-one hops. Two equally short walks are the model
+     saying they meet at one instance — a Habit's and its Reflection's Owner —
+     which only `verify` can hold against code. */
+  const hops = toOneHops(condition.relations)
+  const reached = new Set([targetId])
+  let frontier = [targetId]
+  while (frontier.length && !reached.has(entityId)) {
+    frontier = [...new Set(frontier.flatMap(from => hops.get(from) ?? []))].filter(id => !reached.has(id))
+    for (const id of frontier) reached.add(id)
+  }
+  if (!reached.has(entityId)) return `${unreached}, and no to-one relation reaches it from "${targetId}"; ${ways}`
+  return undefined
+}

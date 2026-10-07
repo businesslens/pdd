@@ -262,6 +262,7 @@ function writeReport(root: string, report: ProductReport, hasLogo: boolean): voi
       frontmatter(compactRecord({
         kind: entity.kind ?? undefined,
         acts: entity.acts ?? undefined,
+        singleton: entity.singleton || undefined,
         domain: entity.domainId,
         relations: entity.relations.length
           ? entity.relations.map(relation => ({

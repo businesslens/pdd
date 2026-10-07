@@ -4,7 +4,7 @@ import {
 } from '../core/variations.js'
 import { undeclaredEntityMentions } from '../core/entity-mentions.js'
 import {
-  interfaceLanguageIssues, isLanguageTag, screenEntityIssues, screenReadIssues, unknownFactIssues
+  conditionInstanceIssue, interfaceLanguageIssues, isLanguageTag, screenEntityIssues, screenReadIssues, unknownFactIssues
 } from '../core/model-checks.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
@@ -846,6 +846,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       const key = `${relation.entity}\0${relation.verb}`
       if (relationTargets.has(key)) errors.push(`${entity.file}: duplicate relation "${relation.verb} ${relation.entity}"`)
       relationTargets.add(key)
+      if (relation.cardinality === 'one-to-many' && model.entities.some(other => other.id === relation.entity && other.singleton)) {
+        errors.push(`${entity.file}: relation "${relation.verb} ${relation.entity}" is one-to-many, but "${relation.entity}" is singleton and there is only one`)
+      }
 
       /*
        * Now that a relation states both ends, an Entity relating back is the
@@ -1369,6 +1372,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * one relation or it is an error naming what went wrong. A self-relation is
    * refused: naming the Entity does not give it a direction.
    */
+  const singletonIds = new Set(model.entities.filter(entity => entity.singleton).map(entity => entity.id))
+  const relationEdges = model.entities.flatMap(entity => entity.relations.map(relation => ({
+    from: entity.id, to: relation.entity, cardinality: relation.cardinality
+  })))
   const walkRelated = (start: string, segments: RelatedSegment[], label: string): string | undefined => {
     let current = start
     for (const [index, segment] of segments.entries()) {
@@ -1645,6 +1652,17 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           }
           if (holder && condition.fact !== undefined && !holder.informationKept.some(item => item.name === condition.fact)) {
             errors.push(`${conditionLabel}: "${condition.fact}" is not a fact of entity "${holderId}"`)
+          }
+          if (holder && condition.entity !== undefined) {
+            const issue = conditionInstanceIssue({
+              entityId: condition.entity,
+              actingIds: [...grant.actors, ...grant.related.slice(-1).map(segment => segment.entity), ...(grant.self && singleTarget ? [singleTarget.id] : [])],
+              pathIds: grant.related.map(segment => segment.entity),
+              targetId: singleTarget?.id,
+              singletonIds,
+              relations: relationEdges
+            })
+            if (issue) errors.push(`${conditionLabel}: ${issue}`)
           }
           if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredBy)) {
             errors.push(`${conditionLabel}: "configuredBy" references missing entity "${condition.value.configuredBy}"`)

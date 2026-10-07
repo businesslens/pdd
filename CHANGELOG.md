@@ -7,9 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Docs:** A Trust model page shows what lint, verify, your tests and your own review each establish, and which safeguards are enforced by code, by skill instructions or by your agent's host.
+- An Entity your product keeps exactly one of, such as its own settings, says `singleton: true`.
+
 ### Changed
 
+- A permission condition always reads one thing: the person acting, the thing the rule governs leads to (the quiz a question is in), or your product's settings.
+- A feature a plan or flag turns off also closes, through permission conditions, every permission only it uses.
+- Support staff acting as a customer are recorded as support, and their permissions can require the customer's consent.
+- An activity or audit log your product shows its users is one Entity, and one Business Rule says what it records.
+- Reports use format version 19; re-export Blueprints after updating.
+- **CLI:** `lint` refuses a permission condition that could read any of many things.
 - **CLI:** `lint` warns on a Capability named with an umbrella verb such as manage.
+
+### Removed
+
+- **Report:** `businesslens/report` no longer exports the versioned `ProductReportV18` and `ProductReportV18Schema` names; use `ProductReport` and `ProductReportSchema`.
 
 ## [0.31.0] - 2026-10-07
 
@@ -46,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [@itai-gendler](https://github.com/itai-gendler)
 
 **Full Changelog**: [v0.29.1...v0.30.0][0.30.0]
+
+### Removed
+
+- **SDK:** `businesslens/report` no longer exports the versioned `ProductReportV18` and `ProductReportV18Schema` names; use `ProductReport` and `ProductReportSchema`.
 
 ## [0.29.1] - 2026-10-07
 

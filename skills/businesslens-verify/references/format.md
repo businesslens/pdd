@@ -87,10 +87,24 @@ container, such as an organization or a project, is held through a membership
 Entity that does not act, whose Role fact names the role. Such a role
 administers its container, not the Product: the container's settings and
 member pages stay `authenticated`, with the Role in a grant's `when`. A
-condition's `entity` that lies on the grant's `related` path reads the instance
-the path reaches (nearest the acting Entity where the type repeats), so the
-Role read is the acting person's own membership; off the path, it is the
-Product's one settings instance. `restricted` is only the Product's own
+condition's `entity` reads one instance, the first that applies: the acting
+Entity itself; on the grant's `related` path, the instance the path reaches
+(nearest the acting Entity where the type repeats), so the Role read is the
+acting person's own membership; the one the targeted instance has, walking
+relations where every hop leaves exactly one (from the `many` side of a
+`one-to-many`, either way along a `one-to-one`; never `many-to-many` or a
+self-relation) — the Quiz a Question is in, the Workspace a Document belongs
+to; or a `singleton: true` Entity, the Product's one settings instance. Any
+other `entity` is a `lint` error: walk to it with `related`, relate it to-one,
+or mark it `singleton` when the Product keeps exactly one. Settings each
+Workspace keeps are never `singleton`. Support staff acting in a customer's
+account, logged in as them or through access the customer grants, are still
+support: their Steps name the support Entity as `actor` at the customer's own
+places (whose `actors` include it; no Experience of its own), starting and
+ending that access is its own Capability, and each Rule support may pass there
+gains a grant for it, conditioned on the customer's consent when the Product
+asks for it (`{ actors: [support-agent], when: [{ entity: shopper, fact: Support access, is: On }] }`,
+the targeted Order's own Shopper). `restricted` is only the Product's own
 administration area. A relation that holds
 whatever role a person has (the sender of a message) is declared to each role
 Entity that can hold it, and ownership is one `related` grant per role. Facts
@@ -357,7 +371,15 @@ Lead and section-body fragments do not contain another H1 or H2.
   cites; one with any of them is its own Entity, however firmly the larger
   thing contains it. Containment is storage,
   and the closed-vocabulary exclusion reads against the thing you would name,
-  not the classification above it. When close, split. An Entity must be
+  not the classification above it. When close, split. A log of what happened
+  that the Product shows an Actor (an activity or audit log an administrator
+  reads) is one Entity — who acted, what changed, when — presented by its
+  Screen, and one Business Rule without `permits` targeting the recorded
+  operations and the log Entity says what it records ("Every change to an
+  Order is recorded in its activity"); no Step lists the entries. A log only
+  the team running the Product reads is a receipt and is not modelled. Optional
+  `singleton: true` marks the Product's own settings, kept exactly once; never
+  on an Entity that acts, and nothing relates to it `one-to-many`. An Entity must be
   changed by a Step, presented by a Screen, named as an actor somewhere, or
   read by a Business Rule as a condition's `entity` or a `configuredBy`; a
   Step's read never counts, and neither does a relation from another Entity.
@@ -430,7 +452,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   configuration) — plus optional `when`, a list of AND-ed conditions, each
   `{ fact, <operator>: value }` with one of
   `over|under|at-least|at-most|is|is-not|present|absent`, optionally `entity`
-  to read another Entity's fact, or `{ state: X }` for the instance's current
+  to read another Entity's fact (always one instance of it, resolved as
+  described with Actors above), or `{ state: X }` for the instance's current
   state (valid on every target but `creates`, needed because reads and
   information changes carry no state to select by). A value is a scalar or
   `{ configuredBy: <entity-id> }`. Permission claims appear only here, never in
@@ -545,6 +568,8 @@ on its own — a schedule it owns, an expiry, a retry — is such a Scenario,
 available where an Actor observes the outcome.
 
 **`entities` is required on every Step** and `[]` when it touches nothing.
+The one Entity a Step never lists is a log entry a recording Business Rule
+makes for it.
 Each entry is `{ entity, as?, effect, from?, to?, facts?, with? }`: `effect` is
 `creates|changes|removes|reads`, defaulting to `changes`; `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither. Every
@@ -926,7 +951,14 @@ setting, plan or licence enables it** — registration while the sign-in method
 is password, social sign-in while a provider is configured, a guest role a
 paid plan enables — stays an ordinary resource, modeled even where the running
 or planned edition hides it. Its lead names what it exists under, and `verify` checks it.
-No field or Rule carries the dependency.
+No field or Variation carries the dependency. An Entity operation only it
+performs is closed by the switch through a grant as well: when a Rule target
+can select an operation the gated Capabilities' Steps perform without selecting
+any other Capability's Steps (refunds are the only behavior moving an Order to
+Refunded), every grant of that operation's permission Rule carries the switch
+as a `when` condition, and a Rule is written for it when none exists. A
+read-only feature, or one whose operation ungated behavior also performs
+(scheduled publishing beside publishing by hand), has its lead alone.
 
 `kind`, `of`, `takesEffect`, `stability` and `alternatives` are required, and
 so are each alternative's `id` and `selectedWhen`.

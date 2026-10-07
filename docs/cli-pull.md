@@ -57,7 +57,7 @@ Serve two anonymous endpoints:
 | `GET /api/v1/blueprints/:slug/logo.svg` | The Product logo, optional |
 | `GET /api/v1/blueprints/:slug/cover.webp` | The Product cover, optional |
 
-`pull` asks for `application/vnd.businesslens.report+json; version=18` and
+`pull` asks for `application/vnd.businesslens.report+json; version=19` and
 also accepts `application/json`.
 
 ## Next

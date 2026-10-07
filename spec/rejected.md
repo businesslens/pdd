@@ -83,6 +83,18 @@ aliases exist to remove, and the explicit spelling costs one word.
 two independent authors back together on coverage. Surfacing what the composed
 machine is missing is the honest version; coercing coverage is not.
 
+**An activity entry created on every audited Step.** Complete, and the only
+encoding the composed lifecycle could check, but it repeats one fact on every
+Step that changes an audited thing, and a model that skips it still lints clean.
+One Rule naming the recorded operations says it once, and `verify` holds the
+code to it. **Not modelling a log the Product shows its users** fails the other
+way: an administrator points at *this entry*, so it passes the Entity test.
+
+**A `singleton` inferred from structure** — an Entity no Step creates, or one
+nothing relates to. Settings a setup Step creates would be refused, and a
+Catalog product whose instances pre-exist would pass. One explicit key is
+cheaper than a guess `lint` would sometimes get wrong.
+
 ## Business Rules and permission
 
 **`permits: []` as an error**, on the ground that a lifecycle without the
@@ -137,6 +149,31 @@ structured derivation needs defined behaviour for types, units, money, rounding,
 collections, missing values, and time, and that is not added casually. If it
 comes, `appliesTo.facts` identifies the result and the derivation names its
 inputs without repeating the target.
+
+**Off-path conditions read only a settings Entity.** The first reading of a
+condition `entity` off the `related` path: one instance, the Product's
+settings, with no way to say so. It gave no meaning to *the Quiz this Question
+is in*, *the Owner of this Habit*, a Workspace's plan or a customer's consent to
+support access, which shipped models already wrote, and it could not be
+checked. Superseded by reading the instance the target reaches through to-one
+relations, with `singleton` marking the settings case.
+
+**Two equally short to-one walks as a `lint` error.** A suggestion's Habit and
+its Reflection each have one Owner, and it is the same Owner. Refusing the
+diamond leaves an `unattended` grant, which cannot walk `related`, with no way
+out; the model's claim that the walks meet is `verify`'s to check.
+
+**A plan or flag gate carried only by the gated resource's lead.** Refunds that
+exist only on paid plans are also *nobody may refund on a free plan*, and only
+the grant form lets `lint` check every Step. Kept only where no grant can carry
+it: a read-only feature, or an operation ungated behaviour also performs.
+
+**An "on behalf of" qualifier on a Step, or the customer as the actor while
+support acts for them.** The qualifier gives `lint` nothing it could check that
+the support Actor plus a consent condition on its grants does not already, and
+naming the customer hides exactly what a support-access policy is about. A
+support Experience duplicating the customer's Screens was rejected with them:
+Experiences divide by audience and access, and impersonation is neither.
 
 ## The Product Report
 
