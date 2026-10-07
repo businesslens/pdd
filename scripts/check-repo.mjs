@@ -22,7 +22,7 @@ async function exists(path) {
 }
 
 const REQUIRED = [
-  'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
+  'README.md', 'LICENSE', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
   'docs/cli.md', 'docs/cli-view.md',
@@ -42,7 +42,7 @@ for (const file of REQUIRED) {
 }
 
 const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
-const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8'))
+const workspace = parseYaml(await readFile(resolve(root, 'pnpm-workspace.yaml'), 'utf8'))
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const localViewer = JSON.parse(await readFile(resolve(root, 'viewer/app/package.json'), 'utf8'))
@@ -121,14 +121,22 @@ if (pkg.repository?.url !== 'git+https://github.com/businesslens/pdd.git') {
 if (pkg.version !== plugin.version) {
   errors.push(`version mismatch: package.json ${pkg.version} vs plugin.json ${plugin.version}`)
 }
-if (pkg.version !== lock.version || pkg.version !== lock.packages?.['']?.version) {
-  errors.push(
-    `version mismatch: package.json ${pkg.version} vs package-lock.json `
-    + `${lock.version}/${lock.packages?.['']?.version}`
-  )
+/*
+ * pnpm is the repository's package manager, pinned exactly so every checkout and
+ * CI run resolves the same lockfile the same way. The lockfile records no
+ * package versions, so version alignment is checked between the manifests.
+ */
+if (!/^pnpm@\d+\.\d+\.\d+$/.test(pkg.packageManager ?? '')) {
+  errors.push(`package.json packageManager must pin an exact pnpm version, found ${pkg.packageManager}`)
 }
-if (!pkg.workspaces?.includes('viewer/app') || pkg.workspaces?.includes('packages/*')) {
-  errors.push('package.json workspaces must include only the private viewer app, not a public viewer package')
+if (await exists('package-lock.json') || await exists('npm-shrinkwrap.json')) {
+  errors.push('the repository is installed with pnpm; remove npm lockfiles')
+}
+if (pkg.workspaces || pkg.overrides) {
+  errors.push('package.json must not declare npm workspaces or overrides; pnpm-workspace.yaml owns them')
+}
+if (JSON.stringify(workspace?.packages) !== JSON.stringify(['viewer/app'])) {
+  errors.push('pnpm-workspace.yaml packages must include only the private viewer app, not a public viewer package')
 }
 if (localViewer.version !== pkg.version) {
   errors.push(
@@ -140,9 +148,6 @@ if (localViewer.private !== true) {
 }
 if (localViewer.dependencies?.['@businesslens/report-viewer']) {
   errors.push('viewer/app must consume root-owned Layers, not @businesslens/report-viewer')
-}
-if (lock.packages?.['viewer/app']?.version !== pkg.version) {
-  errors.push('package-lock.json workspace versions must match package.json')
 }
 if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.config.ts'
   || pkg.exports?.['./nuxt/theme'] !== './layers/nuxt/theme/nuxt.config.ts'
@@ -414,7 +419,7 @@ errors.push(...vocabulary.errors)
 if (!vocabulary.errors.length) {
   const actual = await readFile(resolve(root, VOCABULARY_MODULE), 'utf8').catch(() => null)
   if (actual !== renderModule(vocabulary.terms)) {
-    errors.push(`${VOCABULARY_MODULE} is stale; run \`npm run vocabulary\``)
+    errors.push(`${VOCABULARY_MODULE} is stale; run \`pnpm vocabulary\``)
   }
 }
 

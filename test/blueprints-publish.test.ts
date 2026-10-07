@@ -29,7 +29,7 @@ describe('Blueprint publishing script', () => {
       const result = publish(option)
       expect(result.status).toBe(0)
       expect(result.stderr).toBe('')
-      expect(result.stdout).toContain('Usage: npm run blueprints:publish -- [options]')
+      expect(result.stdout).toContain('Usage: pnpm blueprints:publish [options]')
       expect(result.stdout).toContain('--catalog <origin>')
       expect(result.stdout).toContain('--dry-run')
       expect(result.stdout).toContain('--yes')
@@ -43,7 +43,7 @@ describe('Blueprint publishing script', () => {
     const result = publish('--wat')
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('Unknown option "--wat"')
-    expect(result.stderr).toContain('npm run blueprints:publish -- --help')
+    expect(result.stderr).toContain('pnpm blueprints:publish --help')
   })
 
   it('reports a missing catalog origin before requiring the key', () => {

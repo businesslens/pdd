@@ -17,9 +17,9 @@
  * Every beat is current report behavior; nothing is mocked. The opening
  * terminal prints the `view` command's own output, captured from the server.
  *
- * Requires a build (`npm run build`), git with access to GitHub, Playwright's
+ * Requires a build (`pnpm build`), git with access to GitHub, Playwright's
  * Chromium and ffmpeg.
- * Usage: npm run demo:record [-- [--out <gif>] [--frames <dir>]]
+ * Usage: pnpm demo:record [--out <gif>] [--frames <dir>]
  */
 import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'

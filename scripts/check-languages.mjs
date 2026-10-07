@@ -1,7 +1,7 @@
 /**
  * Browser regression for languages in the Fixture Shop report.
  *
- * Run against `npm run view:fixture -- --no-open --port 43213` after building:
+ * Run against `pnpm view:fixture --no-open --port 43213` after building:
  *   node scripts/check-languages.mjs [viewer-url]
  */
 import { chromium, expect } from '@playwright/test'

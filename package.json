@@ -12,12 +12,10 @@
   "bugs": {
     "url": "https://github.com/businesslens/pdd/issues"
   },
+  "packageManager": "pnpm@11.9.0",
   "publishConfig": {
     "access": "public"
   },
-  "workspaces": [
-    "viewer/app"
-  ],
   "bin": {
     "businesslens": "dist/cli.js"
   },
@@ -58,15 +56,15 @@
     "skills"
   ],
   "scripts": {
-    "build": "npm run build:core && npm run build:viewer",
+    "build": "pnpm build:core && pnpm build:viewer",
     "build:core": "tsdown",
-    "build:viewer": "npm run build --workspace @businesslens/local-report-viewer && node scripts/copy-viewer.mjs",
+    "build:viewer": "pnpm --filter @businesslens/local-report-viewer build && node scripts/copy-viewer.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:unlink": "node scripts/dev.mjs --unlink",
     "view:fixture": "node scripts/view-fixture.mjs",
     "demo:record": "node scripts/record-demo.mjs",
     "typecheck": "tsc --noEmit",
-    "typecheck:viewer": "npm run typecheck --workspace @businesslens/local-report-viewer",
+    "typecheck:viewer": "pnpm --filter @businesslens/local-report-viewer typecheck",
     "test": "vitest run",
     "package:size": "node scripts/check-package-size.mjs",
     "theme:icons": "node scripts/build-theme-icons.mjs",
@@ -76,9 +74,9 @@
     "check": "node scripts/check-repo.mjs",
     "changelog:release": "node scripts/changelog-release.mjs",
     "check:consumer": "node scripts/check-nuxt-consumer.mjs",
-    "verify": "npm run typecheck && npm run typecheck:viewer && npm run build && npm run package:size && npm run check:consumer && npm test && npm run check && npm run blueprints:check",
+    "verify": "pnpm typecheck && pnpm typecheck:viewer && pnpm build && pnpm package:size && pnpm check:consumer && pnpm test && pnpm check && pnpm blueprints:check",
     "version": "node scripts/sync-version.mjs",
-    "prepack": "npm run build"
+    "prepack": "pnpm build"
   },
   "engines": {
     "node": ">=20.12.0"
@@ -150,8 +148,5 @@
     "tsdown": "^0.12.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
-  },
-  "overrides": {
-    "rolldown": "1.0.0-beta.19"
   }
 }

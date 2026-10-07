@@ -1,7 +1,7 @@
 /**
  * Browser regression for Variations in the Fixture Shop report.
  *
- * Run against `npm run view:fixture -- --no-open --port 43213` after building:
+ * Run against `pnpm view:fixture --no-open --port 43213` after building:
  *   node scripts/check-variations.mjs [viewer-url]
  * Set BLR_VARIATION_SCREENSHOTS to a directory to save captures.
  */

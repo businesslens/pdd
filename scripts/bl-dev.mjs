@@ -16,7 +16,7 @@ if (args.length === 1 && args[0] === '--dev-root') {
 }
 if (args.length === 1 && args[0] === '--dev-cli') {
   if (!existsSync(cli)) {
-    console.error(`The active BusinessLens CLI is not built at ${cli}. Run \`npm run dev\` in ${root}.`)
+    console.error(`The active BusinessLens CLI is not built at ${cli}. Run \`pnpm dev\` in ${root}.`)
     process.exit(1)
   }
   console.log(cli)
@@ -33,7 +33,7 @@ if (args.length === 1 && args[0] === '--dev-info') {
 }
 
 if (!existsSync(cli)) {
-  console.error(`The active BusinessLens CLI is not built at ${cli}. Run \`npm run dev\` in ${root}.`)
+  console.error(`The active BusinessLens CLI is not built at ${cli}. Run \`pnpm dev\` in ${root}.`)
   process.exit(1)
 }
 

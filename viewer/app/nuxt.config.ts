@@ -81,6 +81,13 @@ export default defineNuxtConfig({
   // Keep the downloadable CLI within its archive budget as graph engines grow.
   vite: { build: { minify: 'terser', terserOptions: { compress: { passes: 2 } } } },
   devtools: { enabled: false },
+  // The theme self-hosts these families through its @fontsource stylesheets.
+  // @nuxt/fonts would resolve them again — from this app's node_modules or a
+  // CDN, at build time — and ship a second copy of every face.
+  fonts: {
+    families: ['Archivo Variable', 'Inter Variable', 'IBM Plex Mono']
+      .map(name => ({ name, provider: 'none' }))
+  },
   colorMode: {
     preference: 'light',
     fallback: 'light'

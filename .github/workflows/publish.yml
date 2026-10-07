@@ -18,14 +18,19 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
+      # The repository's pinned pnpm, from package.json's packageManager. It
+      # also serves the pnpm consumer smoke test below.
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
+      # npm publishes the packed tarball through trusted publishing (OIDC) and
+      # stands in for npm consumers in the smoke test.
       - name: Use OIDC-capable npm
-        run: npm install --global npm@11.9.0 pnpm@10.15.0
+        run: npm install --global npm@11.9.0
 
       - name: Verify release tag
         shell: bash
@@ -36,8 +41,8 @@ jobs:
             exit 1
           fi
 
-      - run: npm ci
-      - run: npm run verify
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
 
       - name: Pack release artifact
         id: pack
@@ -45,7 +50,7 @@ jobs:
         run: |
           pack_dir="$(mktemp -d)"
           package_version="$(node --print "require('./package.json').version")"
-          npm pack --pack-destination "$pack_dir"
+          pnpm pack --pack-destination "$pack_dir"
           tarball="$pack_dir/businesslens-${package_version}.tgz"
           test -f "$tarball"
           node scripts/check-package-size.mjs "$tarball"

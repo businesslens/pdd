@@ -47,7 +47,7 @@ were costed and then chosen against, so the same argument is not had twice.
   `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
-- `test/fixtures/fixture-shop/` — the golden lint fixture. `npm run view:fixture`
+- `test/fixtures/fixture-shop/` — the golden lint fixture. `pnpm view:fixture`
   opens it in the local report as its own repository, since its code references
   resolve only from a Git root of its own.
 
@@ -79,7 +79,7 @@ were costed and then chosen against, so the same argument is not had twice.
 - **`docs/` explains the model, never the report.** A derivation is a fact about
   the model and belongs here; the surface that draws it does not.
 - Define vocabulary in the owning doc's `terms:` frontmatter. Run
-  `npm run vocabulary` after edits and commit the generated registry.
+  `pnpm vocabulary` after edits and commit the generated registry.
 - Keep definitions self-contained and capitalize referenced types. Put the page's
   main term first; CLI pages do not declare terms.
 - Experiences and Screens are sections of `docs/interfaces.md`, including their
@@ -313,11 +313,16 @@ costed already.
 - Write an entry under `[Unreleased]` in the pull request that makes the change,
   with no links: the pull request and commit are added when the release is
   rolled.
-- Run `npm run verify` after any change.
-- Inspect `npm pack --dry-run` before a release.
+- The repository installs with pnpm, pinned in `packageManager`;
+  `pnpm-lock.yaml` is the only lockfile. Consumers install the published
+  package with any package manager, so the Publish smoke test keeps both npm
+  and pnpm consumers, and installed skill runners keep using npm to run the
+  published package in target repositories.
+- Run `pnpm verify` after any change.
+- Inspect `pnpm pack --dry-run` before a release.
 - Prepare a release in its own pull request that only rolls the changelog and
-  bumps the version: `npm version <version> --no-git-tag-version`, fetch, then
-  `npm run changelog:release`. It blames each `[Unreleased]` entry at
+  bumps the version: `pnpm version <version> --no-git-tag-version`, fetch, then
+  `pnpm changelog:release`. It blames each `[Unreleased]` entry at
   `origin/main` and appends the merged pull request and commit that added it,
   then writes the contributors, the Full Changelog line and the compare links.
   It refuses an entry the release pull request itself wrote, because that
