@@ -24,9 +24,13 @@ were costed and then chosen against, so the same argument is not had twice.
 ## Layout
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
-  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
-  Only documented commands and options are accepted. Removed spellings use
-  normal usage errors; there are no hidden migration commands or scope aliases.
+  `completion`, and the `blueprint` namespace (`export`, `open`, `pull`,
+  `contribute`). Only documented commands and options are accepted. Removed
+  spellings use normal usage errors; there are no hidden migration commands or
+  scope aliases. The one internal entry, `__complete`, is the protocol the
+  printed completion scripts call on Tab: it reads the Commander tree before
+  parsing and is not a command. Declare how a new option or argument value
+  completes beside its definition (`completes()` in `src/core/completion.ts`).
   Before launch, publication or installation alone does not require historical
   behavior. Coordinate current producer and consumer changes together.
 - `src/commands/` — public command implementations.
