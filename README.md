@@ -106,7 +106,7 @@ writes `.businesslens/` once you approve. Then open the report:
 npx businesslens view
 ```
 
-[From your repo](./docs/from-your-repo.md)
+[From your repo](https://businesslens.io/docs/from-your-repo)
 
 ### Start from an idea
 
@@ -117,7 +117,7 @@ I want to build a booking app for dog walkers
 ```
 
 You pick from a few product shapes, then approve the model.
-[From an idea](./docs/from-an-idea.md)
+[From an idea](https://businesslens.io/docs/from-an-idea)
 
 ### Start from a Blueprint
 
@@ -128,7 +128,7 @@ npx businesslens blueprint pull <name>
 ```
 
 [Browse the catalog](https://businesslens.io/blueprints) ·
-[From a Blueprint](./docs/from-a-blueprint.md)
+[From a Blueprint](https://businesslens.io/docs/from-a-blueprint)
 
 ## The development loop
 
@@ -163,7 +163,7 @@ npx businesslens view --port 8080 --no-open
 
 ## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI reference
 
-Every command and option: [CLI reference](./docs/cli.md).
+Every command and option: [CLI reference](https://businesslens.io/docs/cli).
 
 Quick examples: `businesslens install`, `businesslens update`,
 `businesslens lint`, `businesslens view`, `businesslens blueprint export`,
