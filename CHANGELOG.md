@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Productivity, Collaboration, Community, Education and Dev Tools.
+- **Blueprints:** Fourteen new Blueprints, so the catalog launches with fifteen across five categories: Productivity, Collaboration, Dev Tools, Community and Education.
 
 ### Changed
 
