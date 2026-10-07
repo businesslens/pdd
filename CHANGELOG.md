@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Blueprints:** The Content Feed Reader now belongs to Personal Productivity.
-- Coverage now describes only which of your code a model accounts for, each entry naming its folders; what the product leaves out is said in its limitations. A model or Blueprint with no code yet has empty coverage, and the report says so.
 - **Skills:** Ideate checks the whole model before approval: every thing people create can be changed and removed, every Journey is found, opposite actions are separate Capabilities, and every action says who may do it.
 - **Skills:** A product's AI is modelled one of two ways: a model the product calls to draft, or your own AI agent connecting to it. A kept proposal to change something you own waits until you accept it.
 - Publishing and unpublishing, and other opposite actions, are separate Capabilities; changing your own vote or answer stays part of giving it.
@@ -22,6 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting a thing can remove what belongs to it: a removal says what it goes `with`, and only removing the thing itself needs permission.
 - Reports use a new format version; re-export Blueprints after updating.
 - **CLI:** `lint` catches a Journey that never carries its own person through two Capabilities, an opposite action hidden inside a Capability, an AI agent permission that names no person, an unguarded change, limitations that describe the model instead of the product, and a Coverage entry that names no code.
+
+## [0.29.0] - 2026-10-07
+
+### Changed
+
+- Coverage now describes only which of your code a model accounts for, each entry naming its folders; what the product leaves out is said in its limitations. A model or Blueprint with no code yet has empty coverage, and the report says so. ([#98](https://github.com/businesslens/pdd/pull/98)) ([2caf3d9](https://github.com/businesslens/pdd/commit/2caf3d9fc9602303fb7366b8b861dbe7fd743ea2))
+- Reports use a new format version; re-export Blueprints after updating. ([#98](https://github.com/businesslens/pdd/pull/98)) ([2caf3d9](https://github.com/businesslens/pdd/commit/2caf3d9fc9602303fb7366b8b861dbe7fd743ea2))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.28.0...v0.29.0][0.29.0]
 
 ## [0.28.0] - 2026-10-06
 
@@ -1106,7 +1118,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.29.0...HEAD
+[0.29.0]: https://github.com/businesslens/pdd/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/businesslens/pdd/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/businesslens/pdd/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/businesslens/pdd/compare/v0.25.1...v0.26.0

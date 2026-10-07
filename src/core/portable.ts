@@ -15,7 +15,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '17.0.0'
+export const REPORT_SCHEMA_VERSION = '18.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -460,7 +460,7 @@ export const ReportVariationSchema = z.strictObject({
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV17Schema = z.strictObject({
+export const ProductReportV18Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -499,10 +499,10 @@ export const ProductReportV17Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV17Schema
+export const ProductReportSchema = ProductReportV18Schema
 
-export type ProductReportV17 = z.infer<typeof ProductReportV17Schema>
-export type ProductReport = ProductReportV17
+export type ProductReportV18 = z.infer<typeof ProductReportV18Schema>
+export type ProductReport = ProductReportV18
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -535,7 +535,7 @@ export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV17['model']
+export type ReportModel = ProductReportV18['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -544,7 +544,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV17Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV18Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -689,7 +689,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV17): string[] {
+export function validateProductReport(report: ProductReportV18): string[] {
   const issues: string[] = []
   const { model } = report
   /* Member key → Variation id. A Rule in a Variation applies only under its set's conditions, never unconditionally. */
@@ -1749,6 +1749,9 @@ export function validateProductReport(report: ProductReportV17): string[] {
         issues.push(`referenceProfile is portable but coverage.${kind} describes the origin repository's code`)
       }
     }
+    for (const field of ['scope', 'method'] as const) {
+      if (report.coverage[field]) issues.push(`referenceProfile is portable but coverage.${field} describes the origin repository's code`)
+    }
     const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {
@@ -1801,7 +1804,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV17): ProductReportV17 {
+export function projectPortableReport(report: ProductReportV18): ProductReportV18 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1846,8 +1849,8 @@ export function projectPortableReport(report: ProductReportV17): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV17 {
-  const parsed = ProductReportV17Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV18 {
+  const parsed = ProductReportV18Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1873,7 +1876,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV17): string[] {
+export function validateBlueprintReport(report: ProductReportV18): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

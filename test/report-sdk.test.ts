@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV17, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV18, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -36,9 +36,9 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('17.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('18.0.0')
     for (const name of [
-      'ProductReportV17Schema',
+      'ProductReportV18Schema',
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
       'ReportGrantSchema',
@@ -107,9 +107,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV17
+  let report: ProductReportV18
 
-  const allReferences = (value: ProductReportV17): ReportReference[] => [
+  const allReferences = (value: ProductReportV18): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -520,9 +520,9 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const cart = (value: ProductReportV17) => value.model.entities.find(item => item.id === 'cart')!
+    const cart = (value: ProductReportV18) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV17) => void]> = [
+    const cases: Array<[string, (value: ProductReportV18) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
@@ -576,7 +576,7 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const moveOf = (value: ProductReportV17) => {
+    const moveOf = (value: ProductReportV18) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
           const entry = step.entities.find(item => item.from !== null && item.to !== null)
@@ -654,7 +654,7 @@ describe('projectPortableReport', () => {
    * every path, every fact — and never a claim that a grant is satisfied.
    */
   it('resolves a permission Rule the way the folder does', () => {
-    const rule = (value: ProductReportV17, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV18, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
     rule(behavioural, 'payment-before-confirmation').appliesTo = [
@@ -684,7 +684,7 @@ describe('projectPortableReport', () => {
   })
 
   it('applies permission Rules to the Steps and Screens they govern', () => {
-    const rule = (value: ProductReportV17, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV18, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const forbidden = structuredClone(report)
     rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
@@ -823,7 +823,7 @@ describe('projectPortableReport', () => {
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
       expect(() => sdk.parseProductReport(legacy)).toThrow(
-        `This is a Product Report of schema version ${schemaVersion}; only 17.0.0 is accepted`
+        `This is a Product Report of schema version ${schemaVersion}; only 18.0.0 is accepted`
       )
     }
     // Any other shape failure names the first offending path, never Zod's issue array.
@@ -854,7 +854,7 @@ describe('a removal that goes with another, on the wire', () => {
   })
   afterAll(() => rmSync(root, { recursive: true, force: true }))
 
-  function goingWith(report: ProductReportV17) {
+  function goingWith(report: ProductReportV18) {
     return report.model.capabilityScenarios
       .flatMap(scenario => scenario.steps.flatMap(step => step.entities))
       .filter(entry => entry.with !== null)

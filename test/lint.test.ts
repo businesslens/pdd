@@ -1592,7 +1592,7 @@ An order exists.
   it('allows missing references and known unmapped behavior without a status', () => {
     for (const unmapped of [[], [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }]]) {
       const cwd = fixtureCopy()
-      editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, scope: 'The fixture Product.', method: 'Authored model', covered: [] })
+      editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, covered: [], ...unmapped.length ? {} : { scope: '', method: '' } })
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
       const scenarioFile = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
@@ -2566,6 +2566,15 @@ describe('Coverage records which code the model accounts for', () => {
     const file = join(cwd, '.businesslens/coverage.md')
     editCoverage(file, { scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
     expect(run(cwd).errors.filter(error => error.startsWith('coverage.md'))).toEqual([])
+  })
+
+  it('errors on a scope or method that no Coverage entry backs', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { scope: 'The storefront.', method: 'Static inspection.', covered: [], exclusions: [], unmapped: [], limitations: [] })
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('coverage.md: scope: A scope with no Coverage entry claims code nothing records')
+    expect(errors).toContain('coverage.md: method: A method with no Coverage entry claims code nothing records')
   })
 
   it('requires a scope once coverage records code', () => {

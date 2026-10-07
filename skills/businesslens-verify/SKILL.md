@@ -139,8 +139,9 @@ the diff.
    - Run the internal scoped-map protocol. Inspect established behavior, settle
      the undetermined calls in rounds, then draft only the missing model area
      and necessary relationships, record that code in coverage (its folders,
-     under `covered`, or `limitations` where behavior stayed uncertain), and get
-     approval before writing. This branch is mapping, so it faces every call
+     under `covered`, or `limitations` where behavior stayed uncertain; when
+     coverage was empty, also set `scope` to the breadth of code now
+     accounted for), and get approval before writing. This branch is mapping, so it faces every call
      mapping faces; the rubric's scoped-mapping section carries the method.
    - Write the approved delta, then return to step 4.
 

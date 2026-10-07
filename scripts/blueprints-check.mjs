@@ -86,7 +86,9 @@ for (const slug of entries) {
   // Blueprint is tied to no code, so its authored coverage is empty.
   const coverageFile = join(dir, '.businesslens', 'coverage.md')
   if (existsSync(coverageFile)) {
-    const frontmatter = (await readFile(coverageFile, 'utf8')).match(/^---\n([\s\S]*?)\n---/)?.[1]
+    // Line endings are normalized as the model loader does, so CRLF cannot hide an entry.
+    const frontmatter = (await readFile(coverageFile, 'utf8')).replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---/)?.[1]
+    if (frontmatter === undefined) errors.push(`${label}: .businesslens/coverage.md has no frontmatter`)
     const coverage = frontmatter ? parseYaml(frontmatter) ?? {} : {}
     const recorded = ['covered', 'exclusions', 'unmapped', 'limitations'].filter(kind => coverage[kind]?.length)
     if (recorded.length || coverage.scope || coverage.method) {

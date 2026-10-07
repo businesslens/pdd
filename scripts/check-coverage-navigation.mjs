@@ -18,7 +18,7 @@ const plannedPath = 'coverage-fixture/nested/planned.ts'
 const annotated = structuredClone(report)
 annotated.coverage.scope = 'Shopping, checkout and customer refunds.'
 annotated.coverage.method = 'Static source inspection.'
-annotated.coverage.limitations = [{ description: 'Model-wide policy uncertainty.', paths: ['coverage-fixture/'] }, { description: 'Local retry policy could not be established.', paths: [samplePath] }, { description: 'A limitation with its own location.', paths: ['coverage-fixture/uncertain.ts'] }]
+annotated.coverage.limitations = [{ description: 'Policy code whose behavior could not be established.', paths: ['coverage-fixture/policy/'] }, { description: 'Local retry policy could not be established.', paths: [samplePath] }, { description: 'A limitation with its own location.', paths: ['coverage-fixture/uncertain.ts'] }]
 annotated.coverage.covered = [{ description: 'Shopping behavior.', paths: ['coverage-fixture/'] }, { description: 'Fulfillment behavior.', paths: ['coverage-fixture/nested/'] }, { description: 'Selected behavior.', paths: [samplePath] }, { description: 'Planned behavior in its own folder.', paths: ['coverage-fixture/planned/'] }]
 annotated.coverage.exclusions = [{ description: 'An approved exclusion with a file.', paths: [samplePath, 'coverage-fixture/help/guide.md'] }, { description: 'An exclusion in its own folder.', paths: ['coverage-fixture/vendor/'] }]
 annotated.coverage.unmapped = [{ description: 'A known gap with a file.', paths: [samplePath] }, { description: 'Another gap at the same location.', paths: [samplePath] }, { description: 'A known gap in its own folder.', paths: ['coverage-fixture/jobs/'] }, { description: 'Planned behavior without a current file.', paths: [plannedPath] }]
@@ -67,7 +67,7 @@ try {
     await capture(page, `${width}-summary`)
     // Limitations have no section of their own; every statement names its code.
     await expect(details.getByRole('region', { name: 'Model-wide limitations', exact: true })).toHaveCount(0)
-    await expect(details).not.toContainText('Model-wide policy uncertainty.')
+    await expect(details).not.toContainText('Policy code whose behavior could not be established.')
     await expect(sources).toBeVisible()
     const search = sources.getByRole('textbox', { name: 'Find recorded paths' })
     const summary = kind => sources.locator(`[data-coverage-summary="${kind}"]`)
@@ -183,7 +183,7 @@ try {
     await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'false')
     await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     await expect(path('coverage-fixture/uncertain.ts')).toBeVisible()
-    await expect(statementsAt('coverage-fixture')).toContainText('Model-wide policy uncertainty.')
+    await expect(statementsAt('coverage-fixture/policy')).toContainText('Policy code whose behavior could not be established.')
     await chooseFilter('Unmapped')
     await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     await expect(path(plannedPath)).toBeVisible()

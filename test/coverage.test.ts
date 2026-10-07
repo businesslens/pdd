@@ -8,7 +8,7 @@ import { CoverageDocumentSchema } from '../src/core/coverage.js'
 const coverage = { scope: 'Shopping behavior.', exclusions: [], method: '', covered: [], limitations: [] }
 it('accepts authored Coverage and rejects retired inspection records in models and reports', () => {
   for (const schema of [CoverageDocumentSchema, ReportCoverageSchema]) {
-    const document = { ...coverage, unmapped: [] }
+    const document = { ...coverage, unmapped: [{ description: 'Subscription code.', paths: ['src/subscriptions/'] }] }
     expect(schema.safeParse(document).success).toBe(true)
     for (const status of ['draft', 'partial', 'complete']) {
       expect(schema.safeParse({ ...document, status }).success).toBe(false)
@@ -28,6 +28,16 @@ describe('described Coverage areas and limitations', () => {
     const at = (path: string) => CoverageDocumentSchema.safeParse({ ...coverage, unmapped: [{ description: 'A gap.', paths: [path] }] }).success
     for (const path of ['pages/products/[id].vue', 'app/[slug]/page.tsx', 'src/{legacy}/']) expect(at(path)).toBe(true)
     for (const path of ['src/*.ts', 'src/file?.ts', '../outside', 'src/a.ts#Symbol', 'src/a.ts:12']) expect(at(path)).toBe(false)
+  })
+
+  it('gives empty coverage one spelling: no scope or method without an entry', () => {
+    const empty = { scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] }
+    expect(CoverageDocumentSchema.safeParse(empty).success).toBe(true)
+    for (const field of ['scope', 'method'] as const) {
+      const claimed = CoverageDocumentSchema.safeParse({ ...empty, [field]: 'Origin storefront.' })
+      expect(claimed.success).toBe(false)
+      expect(claimed.error?.issues.map(issue => issue.path.join('.'))).toEqual([field])
+    }
   })
 
   it('requires every entry to name its code, in every category', () => {
@@ -82,6 +92,11 @@ describe('described Coverage areas and limitations', () => {
       invalid.coverage.scope = 'The storefront.'
       invalid.coverage[kind] = [{ description: 'Refund code.', paths: ['src/refunds/'] }]
       expect(validateProductReport(invalid)).toContain(`referenceProfile is portable but coverage.${kind} describes the origin repository's code`)
+    }
+    for (const field of ['scope', 'method'] as const) {
+      const invalid = structuredClone(portable)
+      invalid.coverage[field] = 'The origin storefront.'
+      expect(validateProductReport(invalid)).toEqual([`referenceProfile is portable but coverage.${field} describes the origin repository's code`])
     }
   })
 })

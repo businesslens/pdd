@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v17 renderer used by `businesslens view` and exported
+The stable Product Report v18 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -315,7 +315,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV17` from `businesslens/report`. There is
+`report` must be a `ProductReportV18` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and

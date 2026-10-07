@@ -509,8 +509,9 @@ non-empty `paths`, at the highest level that still guides an agent — a folder,
 or a single file only when it is the area — and its description names the code
 area, never a product feature. A model tied to no code yet — a Blueprint, or a
 model decided before its code exists — has empty coverage: `scope: ""`,
-`method: ""` and four empty lists. Coverage is written by mapping code, never
-by deciding intended behavior. Each entry
+`method: ""` and four empty lists; a scope or method with no entry is an
+error, and the first entry written must bring its `scope`. Coverage is written
+by mapping code, never by deciding intended behavior. Each entry
 is `{ description, paths }`: a one-line description, unique across all four
 lists, of one code area with all its paths. Paths are repository-relative and
 directories end in `/`; no traversal, `*` or `?` wildcards, URLs, backslashes or
@@ -772,7 +773,8 @@ Missing References are valid. Product meaning may change only in `product.md`,
 taxonomies, and resource prose/relationships after approval. Coverage records
 which code the model accounts for, so verification writes it only in the
 Unmapped branch, where it maps behavior the model was missing: an entry for
-that code, at folder level. A post-alignment navigation refresh may refresh or remove stale
+that code, at folder level, and, when coverage was empty, the `scope` that
+entry needs. A post-alignment navigation refresh may refresh or remove stale
 implementation References and change nothing else: no product prose or
 relationship.
 

@@ -509,8 +509,9 @@ non-empty `paths`, at the highest level that still guides an agent — a folder,
 or a single file only when it is the area — and its description names the code
 area, never a product feature. A model tied to no code yet — a Blueprint, or a
 model decided before its code exists — has empty coverage: `scope: ""`,
-`method: ""` and four empty lists. Coverage is written by mapping code, never
-by deciding intended behavior. Each entry
+`method: ""` and four empty lists; a scope or method with no entry is an
+error, and the first entry written must bring its `scope`. Coverage is written
+by mapping code, never by deciding intended behavior. Each entry
 is `{ description, paths }`: a one-line description, unique across all four
 lists, of one code area with all its paths. Paths are repository-relative and
 directories end in `/`; no traversal, `*` or `?` wildcards, URLs, backslashes or

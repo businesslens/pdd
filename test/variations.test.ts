@@ -6,7 +6,7 @@ import { compileReport } from '../src/commands/export.js'
 import { lintModel } from '../src/commands/lint.js'
 import { expandProductReport } from '../src/commands/open.js'
 import { loadModel, type PddModel, type VariationResource } from '../src/core/model.js'
-import { ProductReportV17Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
+import { ProductReportV18Schema, projectPortableReport, validateProductReport } from '../src/core/portable.js'
 import {
   VARIATION_COLLECTION_OF, VARIATION_KINDS, VARIATION_MEMBER_TYPES, type VariationKind, type VariationMemberType, type VariationSet
 } from '../src/core/variations.js'
@@ -120,7 +120,7 @@ describe('Variation resources', () => {
     const set = { ...record, alternatives: record.alternatives.map(item => ({ id: item.resourceId, selectedWhen: item.selectedWhen, label: item.label })) }
     mutate(set)
     Object.assign(record, { ...set, alternatives: set.alternatives.map(item => ({ resourceId: item.id, selectedWhen: item.selectedWhen, label: item.label })) })
-    const parsed = ProductReportV17Schema.safeParse(wire)
+    const parsed = ProductReportV18Schema.safeParse(wire)
     if (parsed.success) expect(validateProductReport(wire).join('\n')).toContain(message)
     else expect(parsed.error.issues.some(issue => issue.path[0] === 'model' && issue.path[1] === 'variations')).toBe(true)
   })
