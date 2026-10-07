@@ -47,7 +47,6 @@
   },
   "files": [
     "CHANGELOG.md",
-    "completions",
     "dist",
     "docs",
     "!docs/images",

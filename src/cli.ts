@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path'
-import { Argument, Command, CommanderError, Help, InvalidArgumentError, Option } from 'commander'
+import { Command, CommanderError, Help, InvalidArgumentError } from 'commander'
 import { runContribute } from './commands/contribute.js'
 import { runExport } from './commands/export.js'
 import { runInstall } from './commands/install.js'
@@ -10,16 +10,6 @@ import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
 import { runView } from './commands/view.js'
 import { checkForCliUpdate } from './core/cli-update.js'
-import type { CompletionShell } from './core/completion.js'
-import {
-  COMPLETE_ENTRY,
-  COMPLETION_SHELLS,
-  complete,
-  completes,
-  completionScript,
-  formatCompletion
-} from './core/completion.js'
-import { PROVIDERS } from './core/providers.js'
 import { cliVersion } from './version.js'
 
 interface InstallCliOptions {
@@ -96,20 +86,6 @@ function pullRequestNumber(value: string): number {
   return Number(value)
 }
 
-const PROVIDER_VALUES = PROVIDERS.map(({ id, name }) => ({ value: id, description: name }))
-const SCOPE_VALUES = [{ value: 'project' }, { value: 'global' }]
-
-function providersOption(description: string): Option {
-  return completes(new Option('--providers <list>', description), { values: PROVIDER_VALUES, list: true })
-}
-
-function scopeOption(): Option {
-  return completes(
-    new Option('--scope <scope>', 'Installation scope: project or global').argParser(scope),
-    { values: SCOPE_VALUES }
-  )
-}
-
 function commandsBeforeOptions(output: string): string {
   const trailingNewline = output.endsWith('\n') ? '\n' : ''
   const sections = output.trimEnd().split(/\n{2,}/)
@@ -127,7 +103,7 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .name('businesslens')
     .description('Product-Driven Development for coding agents')
     .usage('<command> [options]')
-    .addOption(completes(new Option('-c, --cwd <path>', 'Run from another directory'), { native: 'directories' }))
+    .option('-c, --cwd <path>', 'Run from another directory')
     .version(cliVersion(), '-V, --version', 'Show the CLI version')
     .helpOption('-h, --help', 'Show help for command')
     .helpCommand('help [command]', 'Show help for command')
@@ -141,8 +117,7 @@ function createProgram(setExitCode: (code: number) => void): Command {
     })
     .exitOverride()
     .hook('preAction', async (_program, action) => {
-      // A completion script is shell code; nothing may prompt into it.
-      if (action.name() === 'blueprint' || action.name() === 'completion') return
+      if (action.name() === 'blueprint') return
       const exitCode = await checkForCliUpdate()
       if (exitCode !== undefined) throw new StopInvocation(exitCode)
     })
@@ -151,8 +126,8 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .command('install')
     .summary('Install BusinessLens skills')
     .description('Install BusinessLens skills for detected AI harnesses.')
-    .addOption(providersOption('Comma-separated providers: claude,codex,cursor,gemini,github'))
-    .addOption(scopeOption())
+    .option('--providers <list>', 'Comma-separated providers: claude,codex,cursor,gemini,github')
+    .option('--scope <scope>', 'Installation scope: project or global', scope)
     .option('--yes', 'Accept detected providers and default to project scope')
     .option('--force', 'Replace an unmarked colliding BusinessLens skill directory')
     .action(async (options: InstallCliOptions, command: Command) => {
@@ -163,8 +138,8 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .command('update')
     .summary('Update managed skill installations')
     .description('Update BusinessLens-managed skill installations.')
-    .addOption(providersOption('Limit discovery to: claude,codex,cursor,gemini,github'))
-    .addOption(scopeOption())
+    .option('--providers <list>', 'Limit discovery to: claude,codex,cursor,gemini,github')
+    .option('--scope <scope>', 'Installation scope: project or global', scope)
     .option('--force', 'Replace an unmarked collision inside a managed installation')
     .action(async (options: UpdateCliOptions, command: Command) => {
       setExitCode(await runUpdate(cwdFor(command), options))
@@ -218,10 +193,9 @@ function createProgram(setExitCode: (code: number) => void): Command {
     })
 
   blueprint
-    .command('open')
+    .command('open <report>')
     .summary('Open a local Blueprint')
     .description('Expand a local Product Report into .businesslens/.')
-    .addArgument(completes(new Argument('<report>'), { native: 'files', extension: '.json' }))
     .option('--force', 'Back up and replace a non-empty .businesslens/ directory')
     .action(async (report: string, options: ForceCliOptions, command: Command) => {
       setExitCode(await runOpen(cwdFor(command), report, Boolean(options.force)))
@@ -249,27 +223,12 @@ function createProgram(setExitCode: (code: number) => void): Command {
       setExitCode(await runContribute(cwdFor(command), { yes: Boolean(options.yes) }))
     })
 
-  program
-    .command('completion')
-    .summary('Print a shell completion script')
-    .description('Print the completion script for a shell. Nothing is written or installed.')
-    .addArgument(new Argument('<shell>', 'Shell to complete').choices(COMPLETION_SHELLS))
-    .action((shell: CompletionShell) => {
-      process.stdout.write(completionScript(shell))
-    })
-
   return program
 }
 
 async function main(argv = process.argv): Promise<number> {
   let exitCode = 0
   const program = createProgram(code => { exitCode = code })
-
-  // The printed completion scripts ask here on every Tab: read the tree, print, stop.
-  if (argv[2] === COMPLETE_ENTRY) {
-    process.stdout.write(formatCompletion(complete(program, argv.slice(3))))
-    return 0
-  }
 
   if (argv.length === 2) {
     program.outputHelp()

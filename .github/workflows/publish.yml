@@ -66,10 +66,6 @@ jobs:
           npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --version
           npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --help \
             | grep 'view \[options\]' >/dev/null
-          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens completion bash \
-            | grep '__complete' >/dev/null
-          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens __complete '' \
-            | grep '^completion' >/dev/null
           npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens install \
             --providers claude,codex \
             --scope project \
