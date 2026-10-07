@@ -59,6 +59,6 @@ to be.
 ## Outcome
 
 The Journey goal is achieved: the repository holds an approved, structurally
-sound model of the behavior it already has, with its scope, explicit exclusions
-and known gaps named. Supporting References attach the evidence used to describe
+sound model of the behavior it already has, with its coverage naming the code
+it accounts for, the code excluded and the code still unmodeled. Supporting References attach the evidence used to describe
 the behavior.

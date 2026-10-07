@@ -69,8 +69,12 @@ behavior without executing it.
 - While a choice remains open, discuss a recommendation and its tradeoff in the
   conversation. After resolution, record the resulting product meaning without
   retaining discarded directions or replaying settled discussion on later runs.
-- Record material unresolved points as limitations instead of guessing; an
+- Resolve material points before approval instead of guessing; one still open
+  is stated in the prose of the resource it affects, never in coverage. An
   unchosen option is not a limitation or product exclusion.
+- Say what the Product leaves to other systems once, as a product-language
+  limitation ("People sign in with their existing account; managing accounts
+  is not part of this product."), never in coverage.
 - Keep screenshots, mockups, design systems, research, and sitemaps external.
   References may attach them with `role: intent` or `role: context`, but
   BusinessLens neither creates nor certifies them.

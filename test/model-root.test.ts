@@ -71,7 +71,8 @@ describe('resolveModelRoot', () => {
     cpSync(BLUEPRINT, join(loose, '.businesslens'), { recursive: true })
 
     const { report } = buildProject(loose)
-    expect(report.coverage.covered).toEqual([{ description: 'Feed subscription, entry collection and reader organization of saved content.', paths: [] }])
+    // A Blueprint is tied to no code, so its coverage is empty.
+    expect(report.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
     expect(Object.values(report.model).flatMap(value =>
       Array.isArray(value) ? value.flatMap(item => item.references || []) : []
     ).every(reference => /^https?:\/\//.test(reference.target))).toBe(true)

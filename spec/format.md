@@ -140,7 +140,7 @@ A representative model can therefore look like this:
 .businesslens/
 ├── config.yaml              # tool config (committed)
 ├── taxonomies.yaml          # scenario kinds (committed)
-├── coverage.md              # model scope and known gaps (committed)
+├── coverage.md              # which code the model accounts for (committed)
 ├── product.md               # compact Product when it has no logo
 ├── product/                 # expanded Product alternative
 │   ├── product.md
@@ -548,7 +548,8 @@ All alternatives are currently supported; none is a default, parent or
 historical version. Do not create alternatives for every parameter value,
 Scenario outcome or visual treatment, and do not invent settings, allocations,
 defaults or timing: an optional field the evidence does not establish is
-omitted, a required one says so, and Coverage records the gap. `lint` checks
+omitted, a required one says so, and in a model mapped from code, Coverage
+`limitations` records that code. `lint` checks
 structure and references, never whether conditions are exhaustive.
 
 ## References
@@ -682,8 +683,11 @@ preference, the device locale — is a kept fact such as *Preferred language*
 and the Steps that set and read it. None is a Variation: each language is the
 same resource, not an alternative form of it.
 
-Product `limitations` are deliberate constraints of the Product; gaps and
-uncertainty in the model belong in [`coverage.md`](#coveragemd).
+Product `limitations` are deliberate constraints of the Product, including what
+it leaves to other systems ("People sign in with their existing account"),
+stated as product facts. [`coverage.md`](#coveragemd) says nothing about what
+the Product is or is not: it records which of the repository's code the model
+accounts for.
 
 The compact form is `.businesslens/product.md`. Adding a Product logo expands
 it to `.businesslens/product/product.md`, with the identity asset at
@@ -2250,22 +2254,29 @@ theirs.
 
 ### `coverage.md`
 
+**Coverage records which of the repository's code the model accounts for**, at
+the highest level that still guides an agent: which code areas the model
+describes, which are deliberately not product behavior, which hold behavior the
+model does not describe yet, and where behavior could not be established. It is
+about code and nothing else. What the Product is or is not belongs in
+`product.md` — its description, Intent and limitations — and never here.
+
 ```markdown
 ---
-scope: Customer purchasing and order fulfillment.
+scope: The storefront and order services.
 method: Static inspection of source and supporting documentation.
 covered:
-  - description: Customer checkout and order tracking.
+  - description: Checkout and order tracking code.
     paths: [src/checkout/, src/orders/]
 exclusions:
-  - description: Staff payroll is deliberately outside this model's scope.
-    paths: [server/payroll/]
+  - description: The design system and email templates.
+    paths: [src/ui/, emails/]
 unmapped:
-  - description: Background fulfillment jobs are not modeled.
+  - description: Background fulfillment jobs.
     paths: [server/jobs/]
 limitations:
-  - description: The retry policy for failed deliveries could not be established.
-    paths: [src/orders/]
+  - description: Delivery retries, whose policy lives in runtime configuration.
+    paths: [src/orders/retry.ts]
 ---
 
 # Coverage
@@ -2274,23 +2285,52 @@ limitations:
 Every key is required and unknown keys are errors. The body is only
 `# Coverage`; `coverage.json` is not accepted.
 
-- `scope` — the intended breadth of the model: non-empty single-line Markdown.
-- `method` — one short single-line note on how the model was authored, or `""`.
-- `covered` — behavior the model represents.
-- `exclusions` — approved omissions. An oversight or unfinished inspection never
-  becomes an exclusion without approval.
-- `unmapped` — known behavior within scope that is not modeled.
-- `limitations` — material uncertainty in what could be established. Missing
+- `scope` — the breadth of code the model accounts for: single-line Markdown,
+  non-empty whenever any list has an entry.
+- `method` — one short single-line note on how the code was inspected, or `""`.
+- `covered` — code areas whose product behavior the model describes.
+- `exclusions` — code deliberately outside the model because it is not product
+  behavior: presentation layers, packaging, plugin manifests, tooling. An
+  oversight or unfinished inspection never becomes an exclusion without
+  approval.
+- `unmapped` — code holding product behavior the model does not describe yet.
+- `limitations` — code whose behavior could not be established. Missing
   behavior belongs in `unmapped`, and not executing code belongs in `method`.
 
-Each entry is exactly `description` and `paths`. Descriptions are non-empty
-single-line Markdown without an H1 or H2, unique across all four lists. Paths
-are unique repository-relative POSIX paths, directories ending in `/`, or `[]`
-when no location is known. Absolute paths, URLs, backslashes, `*` and `?`
-wildcards, `.` or `..` segments, empty segments, surrounding whitespace, control
-characters, and fragment or line suffixes are invalid; brackets and braces are
-ordinary file-name characters, as in `pages/[id].vue`. A missing workspace path
-is not an error. Descriptions survive the portable projection; paths do not.
+Each entry is exactly `description` and `paths`, and **every entry names its
+code**: `paths` is non-empty, at folder level wherever a folder is the area and
+a single file only when that file is the area. Coverage never maps file by
+file; the model's resources and their References carry the detail.
+Descriptions name the code area, not product features — "Checkout and order
+tracking code", not "Shoppers can track orders" — as non-empty single-line
+Markdown without an H1 or H2, unique across all four lists. Paths are unique
+repository-relative POSIX paths, directories ending in `/`. Absolute paths,
+URLs, backslashes, `*` and `?` wildcards, `.` or `..` segments, empty segments,
+surrounding whitespace, control characters, and fragment or line suffixes are
+invalid; brackets and braces are ordinary file-name characters, as in
+`pages/[id].vue`. A missing workspace path is not an error.
+
+**A model tied to no code yet has empty coverage**: all four lists empty, and
+`scope` and `method` may then be `""`. That is every Blueprint and every model
+decided before its code exists. Coverage is written by mapping — mapping an
+established repository, or verification mapping behavior it found the model
+missing — and never by deciding intended behavior, so a model designed and then
+implemented keeps empty coverage until something maps its code. Empty coverage
+claims nothing; it means only that no mapping has recorded which code the model
+accounts for.
+
+```markdown
+---
+scope: ""
+method: ""
+covered: []
+exclusions: []
+unmapped: []
+limitations: []
+---
+
+# Coverage
+```
 
 Coverage has no status. An empty `unmapped` list means only that no gaps are
 recorded, and known gaps never relax the structural requirements: every model

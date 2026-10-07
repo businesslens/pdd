@@ -4,7 +4,7 @@ acts: external
 references:
   - kind: doc
     role: context
-    target: docs/the-loop.md
+    target: docs/index.md
 ---
 
 # Developer

@@ -38,7 +38,7 @@ those resources in a repository and where the evidence stops.
 Capability Scenarios state observable acceptance for one Capability. Cover
 primary, permission, validation, conflict, and external-failure behavior only
 where the Product distinguishes them. Where the line falls between a Scenario
-and an `## Edge cases` bullet is the author's call and belongs in the Coverage
+and an `## Edge cases` bullet is the author's call and belongs in the Acceptance
 round.
 
 ## Entity granularity
@@ -76,9 +76,15 @@ its authoritative Reference the same way; how a design meets it stays design.
 
 ## Describe coverage
 
-Fill `coverage.md` as the format reference shapes it. Coverage never states
-whether behavior is implemented or verified. A small, honest model with
-recorded gaps is better than a broad model built from guesses.
+Fill `coverage.md` as the format reference shapes it: which of the repository's
+code the model accounts for, at the highest level that still guides an agent —
+the folders whose behavior the model describes, the code deliberately outside
+it because it is not product behavior, code holding behavior not yet modeled,
+and code whose behavior could not be established. Every entry names its paths;
+never map file by file, and never state what the Product is or is not here.
+Coverage never states whether behavior is implemented or verified. A small,
+honest model with recorded gaps is better than a broad model built from
+guesses.
 
 ## Use References honestly
 

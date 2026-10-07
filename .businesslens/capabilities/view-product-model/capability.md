@@ -20,9 +20,10 @@ resources by kind, opens any resource’s reading, reads a thing's lifecycle as 
 Steps compose it, searches by name, and keeps their place across a save and a
 reload.
 
-Coverage in Overview explains current breadth,
-exclusions and known gaps directly, with recorded paths linking to related
-context and References. Reading never records inspection or changes the repository.
+Coverage in Overview shows which of the repository's code the model accounts
+for, by location, with recorded paths linking to related context and
+References; a model tied to no code yet says so instead. Reading never records
+inspection or changes the repository.
 
 ## Intent
 

@@ -4,7 +4,7 @@
  * category cards, then every authored statement written under the path it names.
  *
  * The four category cards are the only category filter and count whole authored
- * statements, including those with no location. Search finds recorded paths,
+ * statements, each naming at least one location. Search finds recorded paths,
  * as a file finder would: it narrows the tree to the paths whose name contains
  * what was typed and opens the folders above them, and never matches prose.
  */
@@ -28,15 +28,12 @@ const filter = ref<CoverageStatementKind | null>(null)
 const query = ref('')
 
 const all = computed(() => coverageStatements(props.workspace.coverage))
-const searching = computed(() => Boolean(query.value.trim()))
 const shown = computed(() => all.value.filter(statement => !filter.value || statement.kind === filter.value))
 // A search narrows paths, not statements: a statement also recorded elsewhere
 // never drags its other locations into the result.
 const located = computed(() => shown.value
   .map(statement => ({ ...statement, paths: statement.paths.filter(path => coveragePathMatches(path, query.value)) }))
   .filter(statement => statement.paths.length))
-// With no path, a statement cannot answer a path search.
-const unlocated = computed(() => searching.value ? [] : shown.value.filter(statement => !statement.paths.length))
 const nodes = computed(() => coverageStatementTree(located.value))
 const branches = computed(() => repositoryTreeNodes(nodes.value).filter(node => node.children.length).map(node => node.value))
 // Indexed once per reading, so each row looks its statements up rather than
@@ -167,14 +164,6 @@ onMounted(() => reveal(focused.value))
       {{ query ? 'No recorded path matches this search.' : filter ? 'No recorded locations in this category.' : 'No repository paths recorded.' }}
     </p>
 
-    <section v-if="unlocated.length" class="min-w-0 space-y-3 border-t border-default pt-4" aria-label="No location recorded">
-      <h3 class="text-sm font-semibold text-highlighted">No location recorded <span class="blr-meta ms-1">{{ unlocated.length }}</span></h3>
-      <ul class="space-y-4">
-        <li v-for="(statement, index) in unlocated" :key="index" data-coverage-entry>
-          <BlrCoverageStatement :statement="statement" />
-        </li>
-      </ul>
-    </section>
   </section>
 </template>
 

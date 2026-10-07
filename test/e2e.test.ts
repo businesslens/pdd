@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV16Schema } from '../src/core/portable.js'
+import { ProductReportV17Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,10 +41,10 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV16Schema.parse(output)
+    const parsed = ProductReportV17Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '16.0.0',
+      schemaVersion: '17.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -114,7 +114,7 @@ describe('end to end on a real git repo', () => {
     )].flat()
     expect(references.some(reference => reference.kind === 'code')).toBe(false)
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
-    expect(parsed.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
+    expect(parsed.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
     expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
       .toContainEqual({ type: 'entity', entityId: 'order', effect: 'changes', from: null, to: 'Confirmed', facts: [], contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
@@ -130,20 +130,18 @@ describe('end to end on a real git repo', () => {
     expect(JSON.stringify(second.report)).toBe(JSON.stringify(first.report))
   })
 
-  it('builds a planned model with known gaps and no status', () => {
+  it('builds a planned model tied to no code, with empty coverage and no status', () => {
     const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-planned-'))
     try {
       cpSync(FIXTURE, isolated, { recursive: true })
       writeFileSync(
         join(isolated, '.businesslens/coverage.md'),
         `---
-scope: The intended Product behavior.
+scope: ""
 exclusions: []
-method: Planned before implementation
+method: ""
 covered: []
-unmapped:
-  - description: Subscription purchases are not modeled.
-    paths: []
+unmapped: []
 limitations: []
 ---
 
@@ -158,7 +156,7 @@ limitations: []
       sh(isolated, 'git', 'commit', '-m', 'fixture')
       const { coverage } = buildProject(isolated).report
       expect(coverage).not.toHaveProperty('status')
-      expect(coverage.unmapped).toEqual([{ description: 'Subscription purchases are not modeled.', paths: [] }])
+      expect(coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
     } finally {
       rmSync(isolated, { recursive: true, force: true })
     }

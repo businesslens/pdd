@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 const statementsModule = '../layers/nuxt/report-viewer/app/utils/coverageStatements.ts'
-const { coverageStatements, coverageStatementIndex, coveragePathMatches } = await import(statementsModule)
+const { coverageStatements, coverageStatementIndex, coveragePathMatches, coverageRecordsCode } = await import(statementsModule)
 const treeModule = '../layers/nuxt/report-viewer/app/utils/coverageTree.ts'
 const { coverageStatementTree } = await import(treeModule)
 const repositoryModule = '../layers/nuxt/report-viewer/app/utils/repositoryTree.ts'
@@ -134,4 +134,17 @@ it('round-trips the focused Coverage path, including the repository root', () =>
   expect(coverageFromQuery({ cp: '.' })).toEqual({ path: '.' })
   expect(coverageFromQuery({ cp: ['src/'] })).toEqual({ path: null })
   expect(coverageToQuery({ path: null })).toEqual({ cp: undefined })
+})
+
+describe('Coverage tied to code or not', () => {
+  it('reads a Blueprint as tied to no code and a mapped model as tied to its code', async () => {
+    const { join } = await import('node:path')
+    const { loadModel } = await import('../src/core/model.js')
+    const { compileReport } = await import('../src/commands/export.js')
+    const blueprint = compileReport(loadModel(join(__dirname, '../blueprints/content-feed-reader')), '2026-10-06')
+    const mapped = compileReport(loadModel(join(__dirname, 'fixtures', 'fixture-shop')), '2026-10-06')
+    expect(coverageRecordsCode(blueprint.coverage)).toBe(false)
+    expect(coverageRecordsCode(mapped.coverage)).toBe(true)
+    expect(coverageRecordsCode({ covered: [], exclusions: [{ description: 'Payroll code.', paths: ['payroll/'] }], unmapped: [], limitations: [] })).toBe(true)
+  })
 })

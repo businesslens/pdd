@@ -52,4 +52,5 @@ without disturbing the rest of it.
 ## Outcome
 
 The named area is modeled, the surrounding model still means what it meant, and
-coverage reflects the new breadth. A mature model was not silently replaced.
+coverage names the newly mapped code, at folder level. A mature model was not
+silently replaced.

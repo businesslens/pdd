@@ -1,18 +1,18 @@
 ---
-scope: The terminal command, installed agent skills, local Product Report, and Blueprint movement between repositories.
+scope: The CLI source, the bundled agent skills, the local report viewer, and the portable Blueprint code.
 method: Authored through static inspection of source and supporting documentation, without executing target code.
 covered:
-  - description: Terminal commands for skill installation, model linting and opening the local report.
+  - description: The CLI entry point and its command implementations.
     paths: [src/cli.ts, src/commands/]
-  - description: Agent workflows for mapping established behavior, defining intended behavior and verifying model alignment.
+  - description: The bundled agent skills and their references.
     paths: [skills/]
-  - description: Local Product Report navigation, resource readings and Coverage context.
+  - description: The report viewer layer and the local viewer host.
     paths: [layers/nuxt/report-viewer/, viewer/]
-  - description: Blueprint export, opening, pulling and contribution between repositories.
+  - description: The Blueprint commands and the portable report code.
     paths: [src/commands/, src/core/portable.ts]
 unmapped: []
 exclusions:
-  - description: The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope.
+  - description: The public Nuxt layers and package entry points that third-party hosts consume.
     paths:
       - layers/nuxt/report-viewer/
       - layers/nuxt/theme/
@@ -20,11 +20,11 @@ exclusions:
       - src/report.ts
       - src/logo.ts
       - package.json
-  - description: The visual identity — palette, type, approved surfaces, logo and icon family — and shared background experiments are deliberately outside this model’s scope.
+  - description: The visual identity and background-experiment layers.
     paths:
       - layers/nuxt/theme/
       - layers/nuxt/theme-lab/
-  - description: Installing skills through the Claude plugin marketplace is deliberately outside this model’s scope.
+  - description: The Claude plugin marketplace manifest.
     paths:
       - .claude-plugin/
 limitations:

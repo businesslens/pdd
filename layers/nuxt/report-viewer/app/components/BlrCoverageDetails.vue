@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * The authored description of the model's breadth, under the field names the
- * model uses. Method is one short line by format, so it is read, not disclosed.
+ * The authored breadth of code the model accounts for, under the field names
+ * the model uses. Method is one short line by format, so it is read, not disclosed.
  */
 import type { ReportWorkspace } from '../utils/reportWorkspace'
 

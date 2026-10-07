@@ -144,8 +144,8 @@ the Rule, and it still covers a refund added later from another State.
 `permits` says who may perform the selected operation, and it needs Entity
 targets only. A read restricted in one place (a download page) is `effect:
 reads` on the Entity narrowed with `contexts` to that place. A restricted read
-on the same Screen as ordinary reading cannot be told apart yet: note it as a
-gap in [Coverage](./product-model.md#coverage).
+on the same Screen as ordinary reading cannot be told apart yet: say so in the
+Rule's prose.
 
 | `permits` | Says |
 | --- | --- |

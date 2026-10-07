@@ -130,6 +130,10 @@ Lead and section-body fragments do not contain another H1 or H2.
   lowercase kebab-case, `authors` are `{ name, url? }` records, and `license`
   is an SPDX identifier. Report hosts read those four as portable Product
   identity and attribution, so a model intended for a Blueprint authors them.
+  `limitations` are deliberate constraints of the Product, written as product
+  facts ("Comments are never edited"), including what it leaves to other
+  systems ("People sign in with their existing account"); a sentence about the
+  model itself — "not modelled", "outside the model" — is never a limitation.
   `languages` is a unique list of language tags the Product serves — `en`,
   `de-DE`, `pt-BR`, each matching `^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$`; an
   Interface may narrow it, and Experiences and Screens never carry it. Content
@@ -413,16 +417,20 @@ Lead and section-body fragments do not contain another H1 or H2.
   effect. An achieved Scenario traverses at least two distinct Capabilities.
 - `coverage.md`: frontmatter with exactly `scope`, `method`, `covered`,
   `exclusions`, `unmapped` and `limitations`, and a body of only `# Coverage`.
-  There is no status.
+  There is no status. **Coverage records which of the repository's code the
+  model accounts for, and nothing else**; what the Product is or is not belongs
+  in `product.md`.
 
 ```markdown
 ---
-scope: The intended Product behavior.
-method: Authored from discussion of intended behavior.
+scope: The storefront and order services.
+method: Static inspection of source and supporting documentation.
 covered:
-  - description: Customer checkout and order tracking.
-    paths: []
-exclusions: []
+  - description: Checkout and order tracking code.
+    paths: [src/checkout/, src/orders/]
+exclusions:
+  - description: The design system and email templates.
+    paths: [src/ui/, emails/]
 unmapped: []
 limitations: []
 ---
@@ -430,18 +438,26 @@ limitations: []
 # Coverage
 ```
 
-`scope` is the model's intended breadth in one line; `method` is one short line
-on how it was authored, or `""`. `covered` is represented behavior,
-`exclusions` approved omissions (never turn skipped work into one), `unmapped`
-known behavior within scope that is not modeled, and `limitations` material
-uncertainty (not missing behavior, and not "code was not executed"). Each entry
+`scope` is the breadth of code the model accounts for, in one line; `method` is
+one short line on how the code was inspected, or `""`. `covered` is code whose
+product behavior the model describes, `exclusions` code deliberately outside
+the model because it is not product behavior (never turn skipped work into
+one), `unmapped` code holding product behavior the model does not describe yet,
+and `limitations` code whose behavior could not be established (not missing
+behavior, and not "code was not executed"). Every entry names its code with a
+non-empty `paths`, at the highest level that still guides an agent — a folder,
+or a single file only when it is the area — and its description names the code
+area, never a product feature. A model tied to no code yet — a Blueprint, or a
+model decided before its code exists — has empty coverage: `scope: ""`,
+`method: ""` and four empty lists. Coverage is written by mapping code, never
+by deciding intended behavior. Each entry
 is `{ description, paths }`: a one-line description, unique across all four
-lists, of one coherent behavior with all its paths. Paths are repository-relative,
-directories end in `/`, and `[]` means no known location; no traversal, `*` or
-`?` wildcards, URLs, backslashes or fragment/line suffixes, while brackets, as
-in `pages/[id].vue`, are ordinary. An empty `unmapped` list never means complete,
-and known gaps never relax structural checks. Blueprints keep descriptions and
-drop paths.
+lists, of one code area with all its paths. Paths are repository-relative and
+directories end in `/`; no traversal, `*` or `?` wildcards, URLs, backslashes or
+fragment/line suffixes, while brackets, as in `pages/[id].vue`, are ordinary.
+An empty `unmapped` list never means complete, and known gaps never relax
+structural checks. A Blueprint carries no coverage: its code, if any, is
+another repository's.
 
 Both Scenario types have no lead prose, author `routes` and `steps` in
 frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
@@ -732,8 +748,8 @@ intended product behavior.
 - Domains group the model by subject; they are not modules or services.
 - References are navigation and context. They never prove the code matches and
   never prescribe a design.
-- `coverage.md` says how much of the product the model describes, never what
-  is built.
+- `coverage.md` says which of the repository's code the model accounts for,
+  never whether that code matches it; it stays empty until code is mapped.
 
 ## Reading order
 
@@ -885,6 +901,6 @@ orphan.
 intent establishes; never invent Entities, settings, allocations, defaults or
 timing. Omit an optional field the evidence or approved intent does not
 establish, say so in a
-required one such as `takesEffect`, and record the gap as unresolved in
-Coverage. `lint` validates structure and references, never whether conditions
+required one such as `takesEffect`, and, when the model was mapped from code,
+record that code under Coverage `limitations`. `lint` validates structure and references, never whether conditions
 are exhaustive.

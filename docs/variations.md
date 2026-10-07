@@ -139,7 +139,8 @@ Membership lives only here: no alternative's own file mentions the Variation.
 | `version` | Contracts or forms live together, such as API v1 and v2 | Optional `discriminator`; each alternative needs a `label` |
 
 Don't invent what you don't know: leave out an optional field, say "unknown" in
-a required one, and note the gap in [Coverage](./product-model.md#coverage).
+a required one, and in a model mapped from code, list that code under
+[Coverage](./product-model.md#coverage) `limitations`.
 
 ## What lint checks
 

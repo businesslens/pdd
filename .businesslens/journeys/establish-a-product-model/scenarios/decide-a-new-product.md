@@ -59,4 +59,5 @@ before anything is built.
 ## Outcome
 
 The Journey goal is achieved: the repository holds an approved model of intended
-behavior, and an acceptance contract to build against. Nothing was implemented.
+behavior, and an acceptance contract to build against. Its coverage starts
+empty, since no code exists yet. Nothing was implemented.

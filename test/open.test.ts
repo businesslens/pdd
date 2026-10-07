@@ -8,7 +8,7 @@ import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
 import { MODEL_README } from '../src/core/model-readme.js'
-import { projectPortableReport, type ProductReportV16 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV17 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -26,7 +26,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV16): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV17): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -113,8 +113,7 @@ describe('open report', () => {
 
     const rebuilt = buildProject(target)
     expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(original.report))
-    expect(rebuilt.report.coverage).not.toHaveProperty('status')
-    expect(rebuilt.report.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
+    expect(rebuilt.report.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
     expect(Object.values(rebuilt.report.model).flatMap(value =>
       Array.isArray(value) ? value.flatMap(item => item.references || []) : []
     ).every(reference =>
@@ -179,7 +178,7 @@ describe('open report', () => {
     }
   })
 
-  it('round-trips all Coverage descriptions while removing repository paths', async () => {
+  it('opens with empty Coverage, since the origin repository\'s code says nothing about this one', async () => {
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-unmapped-'))
     initialize(fresh)
     try {
@@ -195,12 +194,7 @@ describe('open report', () => {
 
       expect(await runOpen(fresh, file, false)).toBe(0)
       const imported = loadModel(fresh)
-      expect(imported.coverage).not.toHaveProperty('status')
-      expect(imported.coverage.scope).toBe(report.coverage.scope)
-      expect(imported.coverage.exclusions).toEqual([{ description: 'Staff payroll stays outside this model.', paths: [] }])
-      expect(imported.coverage.unmapped).toEqual([{ description: 'Back-office dispute handling', paths: [] }])
-      expect(imported.coverage.covered).toEqual([{ description: 'Shopping **behavior**.', paths: [] }])
-      expect(imported.coverage.limitations).toEqual([{ description: 'Dispute retry policy is uncertain.', paths: [] }])
+      expect(imported.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
       expect(buildProject(fresh).report.coverage).toEqual(imported.coverage)
       const markdown = readFileSync(join(fresh, '.businesslens/coverage.md'), 'utf8')
       expect(markdown.trim().endsWith('# Coverage')).toBe(true)
@@ -321,24 +315,14 @@ describe('open report', () => {
     }
   })
 
-  it('replaces only coverage method, and keeps the author\'s area and limitation descriptions', async () => {
-    // Only `method` is a claim about origin, so only `method` is rewritten. What
-    // the author said about the model's breadth comes through as
-    // written — the recipient must be able to tell which limitations are the
-    // author's, which they cannot if expansion adds one in the author's voice.
+  it('writes empty Coverage and adds no claim in the author\'s voice', async () => {
+    // Coverage records which of a repository's code the model accounts for, and
+    // no code here has been mapped yet, so an opened model starts with none.
     const opened = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
-    expect(loadModel(source).coverage.limitations).toEqual([])
-    expect(loadModel(target).coverage.limitations).toEqual([])
     expect(opened).not.toMatch(/^review:|^rationale:/m)
     expect(opened).toContain('\n# Coverage\n')
-    expect(opened).not.toContain('Implementation alignment must be verified')
-    expect(opened).toContain('Opened from a portable Product Report')
-    expect(opened).toContain('implementation alignment has not been verified in this repository.')
-    expect(loadModel(target).coverage).toMatchObject({
-      unmapped: [],
-      limitations: [],
-      covered: [{ description: 'Customer shopping, checkout and staff order management.', paths: [] }]
-    })
+    expect(opened).not.toContain('Opened from a portable Product Report')
+    expect(loadModel(target).coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
   })
 
   it('expands to a fixed point so a re-opened model is byte-identical', async () => {

@@ -40,7 +40,7 @@ Your Product id becomes the Blueprint's catalog slug, and the name others pull.
    the metadata and logo above.
 3. Regenerates the model from that portable report in a temporary directory, so
    the pull request holds exactly what `blueprint pull` will produce. Code
-   References, local paths and Coverage paths are dropped by the
+   References, local paths and Coverage are dropped by the
    [projection](./cli-export.md#portable-export), not refused.
 4. Asks you to confirm, unless you pass `--yes`.
 5. Forks the upstream into your account and syncs it with the upstream (or, if

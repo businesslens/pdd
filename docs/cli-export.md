@@ -41,7 +41,7 @@ product meaning:
 | --- | --- |
 | `references` | Keep only HTTP(S) `intent` and `context` References, never kind `code` |
 | `entryPoints` | Remove repository paths and `file:` URLs; keep Product routes, HTTP(S) URLs, other deep links and commands |
-| `coverage` entry `paths` | Empty every list; keep the descriptions |
+| `coverage` | Emptied: Coverage describes this repository's code, which a Blueprint does not carry |
 | `referenceProfile` | Set to `portable` |
 
 See [Coverage](./product-model.md#coverage) and [References](./references.md).
