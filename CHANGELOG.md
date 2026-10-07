@@ -7,17 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- **Skills:** One way to model plan and flag gates, activity logs shown to users, and support staff acting for a customer.
-- Your product's own settings can be marked `singleton: true`.
-
 ### Changed
 
-- Permission conditions always read one specific thing, and a threshold names the fact that holds it.
+- **Skills:** Your agent models paid-only features, an activity log your users can see, and support staff working inside a customer's account the same way every time, so two models of one product agree.
+- A permission that depends on a setting, such as a workspace's approval limit, says whose setting it is: the person's, their workspace's, or the whole product's. Mark the product's own settings `singleton: true`.
 - Creating something can create what belongs to it in the same step, such as a new board's first admin.
 - Reports use format version 19; re-export Blueprints after updating.
-- **CLI:** `lint` catches a condition that could read any of many things, and a Capability named with an umbrella verb such as manage.
+- **CLI:** `lint` catches a permission that doesn't say whose setting it reads, and a Capability named with an umbrella verb such as manage.
 
 ### Removed
 
