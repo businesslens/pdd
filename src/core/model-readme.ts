@@ -60,8 +60,8 @@ intended product behavior.
 - Domains group the model by subject; they are not modules or services.
 - References are navigation and context. They never prove the code matches and
   never prescribe a design.
-- \`coverage.md\` says how much of the product the model describes, never what
-  is built.
+- \`coverage.md\` says which of the repository's code the model accounts for,
+  never whether that code matches it; it stays empty until code is mapped.
 
 ## Reading order
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Coverage now describes only which of your code a model accounts for, each entry naming its folders; what the product leaves out is said in its limitations. A model or Blueprint with no code yet has empty coverage, and the report says so.
+- Reports use a new format version; re-export Blueprints after updating.
+
 ## [0.28.0] - 2026-10-06
 
 ### Added

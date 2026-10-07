@@ -29,7 +29,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: product-model, effect: changes, facts: [Coverage, Method] }
+      - { entity: product-model, effect: changes, facts: [] }
     contexts:
       harness:
         place: agent-skills
@@ -51,8 +51,8 @@ implementation starts.
 ## Outcome
 
 The model states the intended behavior, and the Developer holds an acceptance
-contract to build against. Coverage still describes model breadth and says
-nothing about whether the change is built.
+contract to build against. Coverage is left as it is: it records which code the
+model accounts for, and deciding behavior writes none.
 
 ## Edge cases
 

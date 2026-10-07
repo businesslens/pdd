@@ -6,8 +6,8 @@ import { normalizeCoveragePath } from './coveragePaths'
  *
  * `coverage.md` authors four lists that share an entry shape. The report reads
  * them as one set of statements whose category is an attribute, so a category
- * with nothing in it renders nothing at all, and a statement with no paths is
- * simply one with no locations rather than a section of its own.
+ * with nothing in it renders nothing at all. Every statement names the code it
+ * is about, so every statement has at least one location.
  */
 export type CoverageStatementKind = 'covered' | 'exclusions' | 'unmapped' | 'limitations'
 
@@ -35,28 +35,28 @@ export const COVERAGE_KIND_META: Record<CoverageStatementKind, CoverageKindMeta>
   covered: {
     label: 'Covered',
     singular: 'Covered',
-    blurb: 'Represented in the model',
+    blurb: 'Code the model describes',
     icon: 'i-lucide-circle-check',
     tone: '[--coverage-accent:var(--blr-coverage-covered)]'
   },
   exclusions: {
     label: 'Exclusions',
     singular: 'Excluded',
-    blurb: 'Approved omissions',
+    blurb: 'Code that is not product behavior',
     icon: 'i-lucide-square-minus',
     tone: '[--coverage-accent:var(--blr-coverage-exclusions)]'
   },
   unmapped: {
     label: 'Unmapped',
     singular: 'Unmapped',
-    blurb: 'Known modeling gaps',
+    blurb: 'Code with behavior not yet modeled',
     icon: 'i-lucide-circle-dashed',
     tone: '[--coverage-accent:var(--blr-coverage-unmapped)]'
   },
   limitations: {
     label: 'Limitations',
     singular: 'Limitation',
-    blurb: 'Uncertainty in what could be established',
+    blurb: 'Code whose behavior could not be established',
     icon: 'i-lucide-triangle-alert',
     tone: '[--coverage-accent:var(--blr-coverage-limitations)]'
   }
@@ -92,4 +92,13 @@ export function coverageStatementIndex(statements: CoverageStatement[]) {
 export function coveragePathMatches(path: string, query: string) {
   const needle = query.trim().toLowerCase()
   return !needle || path.toLowerCase().includes(needle)
+}
+
+/**
+ * Whether Coverage records any code. A model tied to no code yet — every
+ * Blueprint, any model decided before its code — records none, and its reading
+ * says so instead of drawing empty cards.
+ */
+export function coverageRecordsCode(coverage: Pick<ReportWorkspace['coverage'], CoverageStatementKind>) {
+  return COVERAGE_KIND_ORDER.some(kind => coverage[kind].length > 0)
 }

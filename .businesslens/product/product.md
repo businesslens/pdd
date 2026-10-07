@@ -36,8 +36,8 @@ product serves, what they accomplish, the things it keeps and changes, and the
 rules governing behavior and permission. Agent skills author the model and
 check its agreement with implementation. The command-line tool installs those
 skills, checks the model's structure, opens a private local report, and moves
-models between repositories as portable Blueprints. The report presents authored
-model scope and known gaps without claiming agreement with implementation.
+models between repositories as portable Blueprints. The report presents which
+code the model accounts for without claiming agreement with implementation.
 
 ## Intent
 

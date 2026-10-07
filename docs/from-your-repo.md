@@ -34,7 +34,8 @@ Use this door when you already have code and no `.businesslens/` you trust.
    - Flags and settings that switch behavior appear as
      [Variations](./variations.md), not duplicate Capabilities.
    - Who may do what is in [Business Rules](./business-rules.md).
-   - What map couldn't see is listed in `coverage.md`.
+   - Which code the model accounts for, and what map left out or couldn't
+     establish, is listed in `coverage.md`.
 
 4. See what you got:
 

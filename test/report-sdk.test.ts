@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV16, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV17, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -36,9 +36,9 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('16.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('17.0.0')
     for (const name of [
-      'ProductReportV16Schema',
+      'ProductReportV17Schema',
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
       'ReportGrantSchema',
@@ -107,9 +107,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV16
+  let report: ProductReportV17
 
-  const allReferences = (value: ProductReportV16): ReportReference[] => [
+  const allReferences = (value: ProductReportV17): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -311,7 +311,7 @@ describe('projectPortableReport', () => {
       { type: 'mobile', path: 'fixture-shop://checkout' },
       { type: 'cli', path: 'shop checkout' }
     ])
-    expect(portable.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
+    expect(portable.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
   })
 
   it('rejects portable reports that still expose workspace references', () => {
@@ -330,9 +330,10 @@ describe('projectPortableReport', () => {
     }
 
     const withCoveredAreas = structuredClone(base)
-    withCoveredAreas.coverage.covered = [{ description: 'Shopping', paths: ['src/'] }]
+    withCoveredAreas.coverage.scope = 'The storefront.'
+    withCoveredAreas.coverage.covered = [{ description: 'Shopping code', paths: ['src/'] }]
     expect(sdk.validateProductReport(withCoveredAreas)).toContain(
-      'referenceProfile is portable but coverage.covered paths name repository areas'
+      'referenceProfile is portable but coverage.covered describes the origin repository\'s code'
     )
   })
 
@@ -492,7 +493,7 @@ describe('projectPortableReport', () => {
     }
     incomplete.model.screens = incomplete.model.screens
       .filter(screen => !screen.id.startsWith('customer-mobile::'))
-    incomplete.coverage.unmapped = [{ description: 'Subscription purchases are not modeled.', paths: [] }]
+    incomplete.coverage.unmapped = [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }]
     expect(sdk.validateProductReport(incomplete)).toContain(
       'capability "place-order": availability Context place "customer-mobile::storefront" needs Capability Scenario coverage'
     )
@@ -519,9 +520,9 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const cart = (value: ProductReportV16) => value.model.entities.find(item => item.id === 'cart')!
+    const cart = (value: ProductReportV17) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV16) => void]> = [
+    const cases: Array<[string, (value: ProductReportV17) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
@@ -575,7 +576,7 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const moveOf = (value: ProductReportV16) => {
+    const moveOf = (value: ProductReportV17) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
           const entry = step.entities.find(item => item.from !== null && item.to !== null)
@@ -653,7 +654,7 @@ describe('projectPortableReport', () => {
    * every path, every fact — and never a claim that a grant is satisfied.
    */
   it('resolves a permission Rule the way the folder does', () => {
-    const rule = (value: ProductReportV16, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV17, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
     rule(behavioural, 'payment-before-confirmation').appliesTo = [
@@ -683,7 +684,7 @@ describe('projectPortableReport', () => {
   })
 
   it('applies permission Rules to the Steps and Screens they govern', () => {
-    const rule = (value: ProductReportV16, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV17, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const forbidden = structuredClone(report)
     rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
@@ -822,7 +823,7 @@ describe('projectPortableReport', () => {
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
       expect(() => sdk.parseProductReport(legacy)).toThrow(
-        `This is a Product Report of schema version ${schemaVersion}; only 16.0.0 is accepted`
+        `This is a Product Report of schema version ${schemaVersion}; only 17.0.0 is accepted`
       )
     }
     // Any other shape failure names the first offending path, never Zod's issue array.

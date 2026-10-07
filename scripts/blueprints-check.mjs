@@ -13,6 +13,7 @@ import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { validateBlueprintReport } from '../dist/report.js'
 import { validateProductLogo } from '../dist/logo.js'
+import { parse as parseYaml } from 'yaml'
 
 const root = process.cwd()
 const cli = resolve(root, 'dist/cli.js')
@@ -67,9 +68,7 @@ function workspaceMaterial(report) {
     }
   }
   for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations']) {
-    if (report.coverage?.[kind]?.some(area => area.paths?.length)) {
-      found.push(`coverage.${kind} paths contain repository locations`)
-    }
+    if (report.coverage?.[kind]?.length) found.push(`coverage.${kind} describes repository code`)
   }
   if (report.repository?.link) found.push(`repository.link ${report.repository.link}`)
   if (report.repository?.entryPoint) found.push(`repository.entryPoint ${report.repository.entryPoint}`)
@@ -83,6 +82,20 @@ for (const slug of entries) {
     errors.push(`${label}: .businesslens/ is missing`)
     continue
   }
+  // Coverage records which of a repository's code the model accounts for. A
+  // Blueprint is tied to no code, so its authored coverage is empty.
+  const coverageFile = join(dir, '.businesslens', 'coverage.md')
+  if (existsSync(coverageFile)) {
+    // Line endings are normalized as the model loader does, so CRLF cannot hide an entry.
+    const frontmatter = (await readFile(coverageFile, 'utf8')).replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---/)?.[1]
+    if (frontmatter === undefined) errors.push(`${label}: .businesslens/coverage.md has no frontmatter`)
+    const coverage = frontmatter ? parseYaml(frontmatter) ?? {} : {}
+    const recorded = ['covered', 'exclusions', 'unmapped', 'limitations'].filter(kind => coverage[kind]?.length)
+    if (recorded.length || coverage.scope || coverage.method) {
+      errors.push(`${label}: .businesslens/coverage.md must be empty — a Blueprint is tied to no code, so it records no scope, method or ${recorded.join(', ') || 'entries'}`)
+    }
+  }
+
   const logoFile = join(dir, '.businesslens', 'product', 'logo.svg')
   if (!existsSync(logoFile)) {
     errors.push(`${label}: .businesslens/product/logo.svg is required`)

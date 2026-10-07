@@ -18,10 +18,10 @@ const plannedPath = 'coverage-fixture/nested/planned.ts'
 const annotated = structuredClone(report)
 annotated.coverage.scope = 'Shopping, checkout and customer refunds.'
 annotated.coverage.method = 'Static source inspection.'
-annotated.coverage.limitations = [{ description: 'Model-wide policy uncertainty.', paths: [] }, { description: 'Local retry policy could not be established.', paths: [samplePath] }, { description: 'A limitation with its own location.', paths: ['coverage-fixture/uncertain.ts'] }]
-annotated.coverage.covered = [{ description: 'Shopping behavior.', paths: ['coverage-fixture/'] }, { description: 'Fulfillment behavior.', paths: ['coverage-fixture/nested/'] }, { description: 'Selected behavior.', paths: [samplePath] }, { description: 'Planned behavior with no location.', paths: [] }]
-annotated.coverage.exclusions = [{ description: 'An approved exclusion with a file.', paths: [samplePath, 'coverage-fixture/help/guide.md'] }, { description: 'An exclusion with no location.', paths: [] }]
-annotated.coverage.unmapped = [{ description: 'A known gap with a file.', paths: [samplePath] }, { description: 'Another gap at the same location.', paths: [samplePath] }, { description: 'A known gap with no location.', paths: [] }, { description: 'Planned behavior without a current file.', paths: [plannedPath] }]
+annotated.coverage.limitations = [{ description: 'Policy code whose behavior could not be established.', paths: ['coverage-fixture/policy/'] }, { description: 'Local retry policy could not be established.', paths: [samplePath] }, { description: 'A limitation with its own location.', paths: ['coverage-fixture/uncertain.ts'] }]
+annotated.coverage.covered = [{ description: 'Shopping behavior.', paths: ['coverage-fixture/'] }, { description: 'Fulfillment behavior.', paths: ['coverage-fixture/nested/'] }, { description: 'Selected behavior.', paths: [samplePath] }, { description: 'Planned behavior in its own folder.', paths: ['coverage-fixture/planned/'] }]
+annotated.coverage.exclusions = [{ description: 'An approved exclusion with a file.', paths: [samplePath, 'coverage-fixture/help/guide.md'] }, { description: 'An exclusion in its own folder.', paths: ['coverage-fixture/vendor/'] }]
+annotated.coverage.unmapped = [{ description: 'A known gap with a file.', paths: [samplePath] }, { description: 'Another gap at the same location.', paths: [samplePath] }, { description: 'A known gap in its own folder.', paths: ['coverage-fixture/jobs/'] }, { description: 'Planned behavior without a current file.', paths: [plannedPath] }]
 annotated.references.push({ kind: 'code', role: 'implementation', target: samplePath })
 const linkedResource = annotated.model.capabilities[0]
 linkedResource.references.push({ kind: 'code', role: 'implementation', target: samplePath })
@@ -65,9 +65,9 @@ try {
     // Coverage never opens a panel: every statement is written where it is recorded.
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await capture(page, `${width}-summary`)
-    // Model-wide Limitations have no section of their own; they are unlocated statements.
+    // Limitations have no section of their own; every statement names its code.
     await expect(details.getByRole('region', { name: 'Model-wide limitations', exact: true })).toHaveCount(0)
-    await expect(details).not.toContainText('Model-wide policy uncertainty.')
+    await expect(details).not.toContainText('Policy code whose behavior could not be established.')
     await expect(sources).toBeVisible()
     const search = sources.getByRole('textbox', { name: 'Find recorded paths' })
     const summary = kind => sources.locator(`[data-coverage-summary="${kind}"]`)
@@ -91,7 +91,8 @@ try {
       await expect(summary(kind).locator('[data-coverage-summary-count]')).toHaveText(String(count))
       await expect(summary(kind)).toHaveAttribute('aria-pressed', 'false')
     }
-    await expect(sources.getByRole('region', { name: 'No location recorded', exact: true }).locator('[data-coverage-entry]')).toHaveCount(4)
+    // Every statement names its code, so none is listed apart from the tree.
+    await expect(sources.getByRole('region', { name: 'No location recorded', exact: true })).toHaveCount(0)
 
     // An explanation is asked for. Folders open; their prose does not come with them.
     await expect(sources.locator('[data-repository-tree] [data-coverage-statement]')).toHaveCount(0)
@@ -167,14 +168,14 @@ try {
       .toContainText('coverage-fixture/help/guide.md')
     await capture(page, `${width}-sources`)
 
-    // Cards are the sole category filter and narrow paths and unlocated statements alike.
+    // Cards are the sole category filter and narrow the tree to their statements' paths.
     await chooseFilter('Exclusions')
     await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'true')
     await expect(path(plannedPath)).toHaveCount(0)
     await expect(path(samplePath)).toBeVisible()
     await expect(statementsAt(samplePath)).toHaveCount(1)
-    await expect(sources.locator('[data-coverage-entry]')).toHaveCount(1)
-    await expect(sources.locator('[data-coverage-entry]')).toContainText('An exclusion with no location.')
+    await expect(path('coverage-fixture/vendor')).toBeVisible()
+    await expect(sources.locator('[data-coverage-entry]')).toHaveCount(0)
     await expect(summary('exclusions').locator('[data-coverage-summary-count]')).toHaveText('2')
     await capture(page, `${width}-active-summary`)
     await chooseFilter('Limitations')
@@ -182,7 +183,7 @@ try {
     await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'false')
     await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     await expect(path('coverage-fixture/uncertain.ts')).toBeVisible()
-    await expect(sources.locator('[data-coverage-entry]')).toContainText('Model-wide policy uncertainty.')
+    await expect(statementsAt('coverage-fixture/policy')).toContainText('Policy code whose behavior could not be established.')
     await chooseFilter('Unmapped')
     await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     await expect(path(plannedPath)).toBeVisible()
@@ -292,27 +293,16 @@ try {
     await expect(sources).toBeVisible()
     await expect(path(samplePath)).toHaveCount(0)
 
+    // A model tied to no code has empty coverage and says so instead of drawing cards.
     currentReport = structuredClone(annotated)
-    for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations']) for (const area of currentReport.coverage[kind]) area.paths = []
-    await page.goto(`${origin}/?t=coverage`)
-    await expect(sources.locator('[data-repository-path]')).toHaveCount(0)
-    await expect(sources.getByText('No repository paths recorded.', { exact: true })).toBeVisible()
-    await expect(sources).toContainText('A known gap with no location.')
-    await capture(page, `${width}-no-paths`)
-    currentReport = structuredClone(currentReport)
     for (const key of ['covered', 'exclusions', 'unmapped', 'limitations']) currentReport.coverage[key] = []
+    currentReport.coverage.scope = ''
     currentReport.coverage.method = ''
-    await page.reload()
-    await expect(details.getByRole('region', { name: 'Status', exact: true })).toHaveCount(0)
+    await page.goto(`${origin}/?t=coverage`)
+    await expect(coverage.locator('[data-coverage-empty]')).toContainText("This model isn't tied to code yet.")
+    await expect(sources).toHaveCount(0)
     await expect(page.locator('[data-report-status]')).not.toContainText(/Coverage:|draft|partial|complete/i)
-    for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations']) await expect(summary(kind).locator('[data-coverage-summary-count]')).toHaveText('0')
-    await summary('unmapped').click()
-    await expect(summary('unmapped')).toHaveAttribute('aria-pressed', 'true')
-    await expect(sources.getByText('No recorded locations in this category.', { exact: true })).toBeVisible()
-    await summary('unmapped').click()
-    // An empty Method is not recorded, so it has no field.
-    await expect(methodDetails).toHaveCount(0)
-    await expect(details.getByRole('region', { name: 'Model-wide limitations', exact: true })).toHaveCount(0)
+    await capture(page, `${width}-no-code`)
     expect(inventoryRequests).toBe(0)
 
     currentReport = report

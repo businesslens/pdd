@@ -19,7 +19,7 @@ steps:
   - text: The Product fetches the report anonymously, confirms it is the named Blueprint, and confirms the body matches the digest the catalog declared
     kind: product
     entities:
-      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning] }
     contexts:
       terminal:
         place: businesslens-cli
@@ -33,7 +33,7 @@ steps:
     kind: product
     actor: developer
     entities:
-      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning, Coverage] }
+      - { entity: blueprint, effect: reads, facts: [Schema version, Product identity, Product meaning] }
       - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
     contexts:
       terminal:

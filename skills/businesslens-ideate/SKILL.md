@@ -56,7 +56,7 @@ Read before authoring:
    surfaces are supported Interfaces); then **Granularity** (one Capability or
    several; a family that could be one Entity or several, quoted with both
    counts; a Journey or a plausible sequence; a Business Rule or one
-   Capability's prose); then **Coverage** (how many Scenarios each Capability
+   Capability's prose); then **Acceptance** (how many Scenarios each Capability
    needs, and where the line falls between a Scenario and an `## Edge cases`
    bullet); then **Naming** (the Product's own word for each thing now
    settled). Quick mode keeps its three batched questions.
@@ -93,9 +93,10 @@ Read before authoring:
    `Open questions` only when questions remain. Get explicit approval.
 10. After approval, write only inside `.businesslens/`:
     - blank slate: create the complete layout, canonical README, `.gitignore`,
-      taxonomies, product, coverage, and all approved resources;
+      taxonomies, product, an empty coverage (`scope: ""`, `method: ""`, four
+      empty lists), and all approved resources;
     - existing product: edit the living model to the intended state and repair
-      relationships;
+      relationships, leaving coverage as it is;
     - resolution: apply only the approved narrow delta.
 
     Write current product meaning under the guardrails below.
@@ -104,8 +105,9 @@ Read before authoring:
     and preserve existing References only where they remain useful. Keep every
     role honest and add no invented local targets: an intended-behavior model
     has no implementation to point at yet, and a `role: implementation` target
-    that does not exist is a claim, not a link. Coverage describes model breadth
-    and known gaps, not whether the plan is built; never author a status.
+    that does not exist is a claim, not a link. Coverage records which code the
+    model accounts for and is written only by mapping that code, so never add
+    coverage entries here, and never author a status.
 11. Run the bundled linter outside the untrusted target:
 
     ```bash

@@ -27,7 +27,7 @@ steps:
     contexts:
       local:
         place: local-report-web::product-overview
-  - text: The Developer opens Coverage to read how much is modeled and how it was produced
+  - text: The Developer opens Coverage to read which code the model accounts for and how it was inspected
     kind: actor
     actor: developer
     entities:
@@ -70,6 +70,6 @@ address bar, and nothing has been written or transmitted.
 - Asking for a specific port, or for the address to be printed without opening a browser, changes only how the report is reached.
 - Searching by name lands on the resource's reading directly, for the same reason a collection row does.
 - Coverage presents Scope, Method and four cards counting and filtering Covered, Exclusions, Unmapped and Limitations in one summary above the location tree.
-- The location tree marks each path with its categories' icons, finds paths by name, and reads a path's statements in place; statements without paths remain visible below the tree.
+- The location tree marks each path with its categories' icons, finds paths by name, and reads a path's statements in place.
+- A model tied to no code yet shows one statement that it isn't tied to code, instead of empty cards and an empty tree.
 - Coverage paths and References never establish file-level completeness or implementation alignment.
-- Planned paths and gaps without locations remain readable without repository access.

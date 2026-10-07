@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 const statementsModule = '../layers/nuxt/report-viewer/app/utils/coverageStatements.ts'
-const { coverageStatements, coverageStatementIndex, coveragePathMatches } = await import(statementsModule)
+const { coverageStatements, coverageStatementIndex, coveragePathMatches, coverageRecordsCode } = await import(statementsModule)
 const treeModule = '../layers/nuxt/report-viewer/app/utils/coverageTree.ts'
 const { coverageStatementTree } = await import(treeModule)
 const repositoryModule = '../layers/nuxt/report-viewer/app/utils/repositoryTree.ts'
@@ -15,24 +15,21 @@ const tree = (coverage: any, kind?: string) => coverageStatementTree(coverageSta
 
 const coverage = {
   covered: described(['src/', './notes/']),
-  limitations: [{ description: 'A local uncertainty', paths: ['src/a.ts'] }, { description: 'A model-wide uncertainty', paths: [] }],
+  limitations: [{ description: 'A local uncertainty', paths: ['src/a.ts'] }],
   exclusions: [{ description: 'An excluded area', paths: ['src/'] }],
   unmapped: [
     { description: 'A missing behavior', paths: ['src/a.ts', 'src/b.ts'] },
-    { description: 'Planned behavior', paths: ['future/new.ts'] },
-    { description: 'No location yet', paths: [] }
+    { description: 'Planned behavior', paths: ['future/new.ts'] }
   ]
 }
 
 describe('Coverage as one set of statements', () => {
   it('reads the four authored lists as one set whose category is an attribute', () => {
     const statements = coverageStatements(coverage)
-    expect(statements).toHaveLength(8)
+    expect(statements).toHaveLength(6)
     expect(statements.map((statement: any) => statement.kind)).toEqual([
-      'covered', 'covered', 'exclusions', 'unmapped', 'unmapped', 'unmapped', 'limitations', 'limitations'
+      'covered', 'covered', 'exclusions', 'unmapped', 'unmapped', 'limitations'
     ])
-    expect(statements.filter((statement: any) => !statement.paths.length).map((statement: any) => statement.description))
-      .toEqual(['No location yet', 'A model-wide uncertainty'])
   })
 
   it('gives a folder only what is recorded at it, never what sits beneath it', () => {
@@ -122,9 +119,8 @@ describe('Coverage location tree', () => {
     expect(at(uncertain, 'jobs/retry.ts').map((statement: any) => statement.kind)).toEqual(['limitations'])
   })
 
-  it('does not invent a repository location for unlocated statements', () => {
-    const unlocated = { limitations: [], covered: described([]), exclusions: [{ description: 'Outside scope', paths: [] }], unmapped: [{ description: 'Unlocated gap', paths: [] }] }
-    expect(tree(unlocated)).toEqual([])
+  it('draws no tree for a model tied to no code', () => {
+    expect(tree({ covered: [], exclusions: [], unmapped: [], limitations: [] })).toEqual([])
   })
 })
 
@@ -134,4 +130,17 @@ it('round-trips the focused Coverage path, including the repository root', () =>
   expect(coverageFromQuery({ cp: '.' })).toEqual({ path: '.' })
   expect(coverageFromQuery({ cp: ['src/'] })).toEqual({ path: null })
   expect(coverageToQuery({ path: null })).toEqual({ cp: undefined })
+})
+
+describe('Coverage tied to code or not', () => {
+  it('reads a Blueprint as tied to no code and a mapped model as tied to its code', async () => {
+    const { join } = await import('node:path')
+    const { loadModel } = await import('../src/core/model.js')
+    const { compileReport } = await import('../src/commands/export.js')
+    const blueprint = compileReport(loadModel(join(__dirname, '../blueprints/content-feed-reader')), '2026-10-06')
+    const mapped = compileReport(loadModel(join(__dirname, 'fixtures', 'fixture-shop')), '2026-10-06')
+    expect(coverageRecordsCode(blueprint.coverage)).toBe(false)
+    expect(coverageRecordsCode(mapped.coverage)).toBe(true)
+    expect(coverageRecordsCode({ covered: [], exclusions: [{ description: 'Payroll code.', paths: ['payroll/'] }], unmapped: [], limitations: [] })).toBe(true)
+  })
 })

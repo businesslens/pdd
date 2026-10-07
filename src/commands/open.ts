@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV16,
+  ProductReportV17,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -27,10 +27,6 @@ import { UsageError } from '../core/usage-error.js'
 import { validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-/* `method` is the one coverage field expansion rewrites: it states how the
-   model was derived, which is a claim about origin, and a Blueprint carries
-   none. Authored descriptions pass through untouched. */
-const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; implementation alignment has not been verified in this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -51,7 +47,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV16['references']): Array<Record<string, string>> {
+function references(value: ProductReportV17['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -194,7 +190,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV17, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -217,10 +213,9 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
   )
   write(
     join(root, 'coverage.md'),
-    frontmatter({
-      ...report.coverage,
-      method: OPEN_COVERAGE_METHOD
-    }) + body('Coverage', '', '', [], [])
+    /* A portable report carries no coverage: no code in this repository has
+       been mapped to the model yet. */
+    frontmatter({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] }) + body('Coverage', '', '', [], [])
   )
 
   for (const productInterface of report.model.interfaces) {
@@ -396,8 +391,8 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV16['model']['capabilityScenarios'][number]
-      | ProductReportV16['model']['journeyScenarios'][number]
+      | ProductReportV17['model']['capabilityScenarios'][number]
+      | ProductReportV17['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -506,7 +501,7 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV16
+  report: ProductReportV17
   root: string
 }
 

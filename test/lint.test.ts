@@ -259,7 +259,7 @@ describe('lintModel', () => {
     expect(invalidPath.join('\n')).toContain('coverage.md: unmapped.0.paths.0')
     expect(scopeErrors(invalidPath)).toEqual([])
 
-    editCoverage(file, { unmapped: [{ description: 'Refunds are not modeled.', paths: [] }], limitations: [{ description: 'Refunds are not modeled.', paths: [] }] })
+    editCoverage(file, { unmapped: [{ description: 'Refund code.', paths: ['src/refunds/'] }], limitations: [{ description: 'Refund code.', paths: ['src/refunds/'] }] })
     const duplicate = run(cwd).errors.filter(error => /unique/.test(error))
     expect(duplicate).toHaveLength(1)
     expect(scopeErrors(run(cwd).errors)).toEqual([])
@@ -794,7 +794,7 @@ Read-only status an operator can query without a session.
     expect(run(cwd).errors.join('\n')).toContain('availability Context place "operator-cli" needs Capability Scenario coverage')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
-    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchases are not modeled.', paths: [] }] })
+    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }] })
     const result = run(cwd)
     expect(result.errors.some(error => error.includes('needs Capability Scenario coverage'))).toBe(true)
     expect(result.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(false)
@@ -851,7 +851,7 @@ Filed away.
     expect(run(cwd).errors.join('\n')).toContain('step 1: text names "Shopper" and "entities" does not declare it')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
-    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchases are not modeled.', paths: [] }] })
+    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }] })
     const result = run(cwd)
     expect(result.errors.some(error => error.includes('does not declare it'))).toBe(true)
     expect(result.warnings.some(warning => warning.includes('does not declare it'))).toBe(false)
@@ -1590,9 +1590,9 @@ An order exists.
   })
 
   it('allows missing references and known unmapped behavior without a status', () => {
-    for (const unmapped of [[], [{ description: 'Subscription purchases are not modeled.', paths: [] }]]) {
+    for (const unmapped of [[], [{ description: 'Subscription purchase code.', paths: ['src/subscriptions/'] }]]) {
       const cwd = fixtureCopy()
-      editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, scope: 'The fixture Product.', method: 'Authored model', covered: [] })
+      editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, covered: [], ...unmapped.length ? {} : { scope: '', method: '' } })
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
       const scenarioFile = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
@@ -2304,5 +2304,36 @@ permits:
       writeFileSync(file, readFileSync(file, 'utf8').replace('access: public', 'access: public\nversion: v2'))
       expect(run(cwd).errors.join('\n')).toContain('unknown frontmatter key "version"')
     })
+  })
+})
+describe('Coverage records which code the model accounts for', () => {
+  it('errors on a Coverage entry that names no code', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { exclusions: [{ description: 'Payroll code.', paths: [] }] })
+    expect(run(cwd).errors.join('\n')).toContain('coverage.md: exclusions.0.paths: A Coverage entry names the code it is about; give it at least one path')
+  })
+
+  it('accepts empty coverage for a model tied to no code, scope and method included', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
+    expect(run(cwd).errors.filter(error => error.startsWith('coverage.md'))).toEqual([])
+  })
+
+  it('errors on a scope or method that no Coverage entry backs', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { scope: 'The storefront.', method: 'Static inspection.', covered: [], exclusions: [], unmapped: [], limitations: [] })
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('coverage.md: scope: A scope with no Coverage entry claims code nothing records')
+    expect(errors).toContain('coverage.md: method: A method with no Coverage entry claims code nothing records')
+  })
+
+  it('requires a scope once coverage records code', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    editCoverage(file, { scope: '' })
+    expect(run(cwd).errors.join('\n')).toContain('coverage.md: scope: Scope is required once Coverage records code')
   })
 })

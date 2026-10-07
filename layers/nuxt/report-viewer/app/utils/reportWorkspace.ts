@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV16,
+  ProductReportV17,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -791,7 +791,7 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV16): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV17): ReportWorkspace {
   const model = report.model
   const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {

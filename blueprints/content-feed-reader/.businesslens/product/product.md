@@ -11,6 +11,7 @@ limitations:
   - Public collection links open on the web; the mobile application serves the reader's private library.
   - Sharing is read-only. There is no commenting, co-editing, or social graph.
   - The product reads syndicated feeds but does not publish feeds of its own.
+  - Readers sign in with an existing account, while Visitors read published collections without one.
 references:
   - kind: visual
     role: intent
