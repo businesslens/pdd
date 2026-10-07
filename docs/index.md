@@ -64,9 +64,9 @@ implement the change, and verify plans the work in phases: your agent
 implements each phase, and verify checks every part of it before the next
 starts. You can also
 [choose the pace](./skill-businesslens-verify.md#choose-the-pace): one part at
-a time, or everything in one go without phases. Run `/businesslens-verify`
-yourself whenever you want to be sure, for example
-before a release.
+a time, or everything in one go without phases. Ask your agent to check the
+code against the model whenever you want to be sure, for example before a
+release.
 
 Ideate changes the model only with your approval. Your agent changes the code
 and never the model. A product question that comes up while implementing comes

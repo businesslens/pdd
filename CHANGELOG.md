@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs:** The README and the Get started guides lead with mapping your own repository, and say what to ask your agent for everyday changes.
+- **Skills:** Asking your agent to "map this repo into a Product Model" starts map.
+
 ## [0.29.0] - 2026-10-07
 
 ### Changed
