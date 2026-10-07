@@ -69,13 +69,17 @@ const reportMajor = reportVersion?.split('.')[0]
 if (!reportVersion || !reportMajor) {
   errors.push('src/core/portable.ts must declare REPORT_SCHEMA_VERSION')
 } else {
+  /* The report is current-only, so the public type carries no version in its name. */
+  const versionedName = /\bProductReportV\d+/
   if (!reportViewerReadme.includes(`Product Report v${reportMajor}`)
-    || !reportViewerReadme.includes(`ProductReportV${reportMajor}`)) {
-    errors.push(`report-viewer README must document Product Report v${reportMajor}`)
+    || !reportViewerReadme.includes('`ProductReport`')
+    || versionedName.test(reportViewerReadme)) {
+    errors.push(`report-viewer README must document Product Report v${reportMajor} as \`ProductReport\``)
   }
-  if (!nuxtConsumerFixture.includes(`ProductReportV${reportMajor}`)
+  if (!/\bProductReport\b/.test(nuxtConsumerFixture)
+    || versionedName.test(nuxtConsumerFixture)
     || !nuxtConsumerFixture.includes(`schemaVersion: '${reportVersion}'`)) {
-    errors.push(`packed Nuxt consumer must exercise Product Report v${reportMajor}`)
+    errors.push(`packed Nuxt consumer must exercise Product Report v${reportMajor} as ProductReport`)
   }
   /*
    * The version travels in the report media type, and the two registers a

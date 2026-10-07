@@ -308,6 +308,13 @@ compatibility statement, because there is no compatibility reader: a report of
 another major is refused rather than migrated, and a minor or patch never
 changes what a reader must understand.
 
+The report itself is current-only. `schemaVersion` exists so the catalog
+boundary can negotiate, and so a reader can refuse a stale report in one
+sentence; nothing else branches on it. No type, schema or export carries a
+version in its name — `ProductReport` and `ProductReportSchema` are the only
+names — and no migration or historical reader exists. `generator.version`
+records which BusinessLens release produced a report, for provenance only.
+
 `blueprint pull` asks for exactly the version it reads:
 
 ```text

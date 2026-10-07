@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { ProductReportV18 } from 'businesslens/report'
+import type { ProductReport } from 'businesslens/report'
 
 const route = useRoute()
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
-const report: ProductReportV18 = {
+const report: ProductReport = {
   schemaVersion: '18.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',

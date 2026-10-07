@@ -55,7 +55,6 @@ export {
   ReportVariationAlternativeSchema,
   ReportCoverageSchema,
   ReportUnmappedAreaSchema,
-  ProductReportV18Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -65,7 +64,6 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV18,
   ProductReport,
   ReportCoverage,
   ReportUnmappedArea,
