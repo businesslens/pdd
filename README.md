@@ -24,7 +24,12 @@
 </p>
 
 <p align="center">
-Try it yourself: <code>npx businesslens view businesslens/pdd</code>
+<strong>Map your own repo.</strong> Run <code>npx businesslens install</code>, then <code>/businesslens-map</code> in your agent,<br>
+then <code>npx businesslens view</code>. You get <code>.businesslens/</code> and this report, for your code.
+</p>
+
+<p align="center">
+<sub>Or browse ours first: <code>npx businesslens view businesslens/pdd</code></sub>
 </p>
 
 ---
@@ -81,13 +86,7 @@ and nothing a rebuild is free to change:
 
 ---
 
-## The development loop
-
-<p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
-</p>
-
-## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Getting started
+## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Get started
 
 ```bash
 npx businesslens install
@@ -95,22 +94,58 @@ npx businesslens install
 
 Then start from where you are, inside your agent (Codex uses `$` instead of `/`):
 
-| You have | Run | Guide |
-| --- | --- | --- |
-| Existing code | `/businesslens-map` | [From your repo](./docs/from-your-repo.md) |
-| An idea | `/businesslens-ideate` | [From an idea](./docs/from-an-idea.md) |
-| A familiar kind of product | `npx businesslens blueprint pull <name>` | [From a Blueprint](./docs/from-a-blueprint.md) |
+### Map existing repo (recommended)
 
-Then every change runs the loop. You just ask; your agent picks the skill:
+Have code? Run the map skill:
+
+```text
+/businesslens-map
+```
+
+It reads the code without running it, asks what the code can't answer, and
+writes `.businesslens/` once you approve. Then open the report:
+
+```bash
+npx businesslens view
+```
+
+[From your repo](./docs/from-your-repo.md)
+
+### Start from an idea
+
+No code yet? Describe the product you want:
+
+```text
+I want to build a booking app for dog walkers
+```
+
+You pick from a few product shapes, then approve the model.
+[From an idea](./docs/from-an-idea.md)
+
+### Start from a Blueprint
+
+A familiar kind of product? Pull a reviewed model:
+
+```bash
+npx businesslens blueprint pull <name>
+```
+
+[Browse the catalog](https://businesslens.io/blueprints) ·
+[From a Blueprint](./docs/from-a-blueprint.md)
+
+## The development loop
+
+<p align="center">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
+</p>
+
+Every change after that, you just ask:
 
 ```text
 add guest checkout to the product   # ideate: approve the model change
-implement it                        # verify: your agent implements in phases, verify checks each
-/businesslens-verify this branch    # any time you want to be sure
+implement it                        # your agent implements in phases; verify checks each
+check the code against the model    # verify, whenever you want to be sure
 ```
-
-`map` is for adopting BusinessLens or covering more of the product; `verify` is
-the everyday skill.
 
 ## <img src="./.github/readme/app-window.svg" alt="" width="28" height="28" align="top"> Web interface
 
