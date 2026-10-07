@@ -8,8 +8,9 @@ stays reusable, self-contained, and well-scoped.
 The repository is a pnpm workspace: the package itself plus the private local
 viewer in `viewer/app`. `package.json` pins the pnpm version in
 `packageManager`; with Corepack (`corepack enable`) or pnpm 9.7 or later, that
-exact version runs. Consumers still install the published `businesslens`
-package with any package manager.
+exact version runs. It needs Node.js 22.13 or later, newer than the published
+package's own floor: consumers still install `businesslens` on Node.js 20.12
+or later, with any package manager.
 
 Activate the current PDD worktree as the machine-wide development CLI and keep
 all published package outputs current:

@@ -30,9 +30,9 @@ try {
   const tsdown = join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'tsdown.cmd' : 'tsdown')
   if (!existsSync(tsdown)) fail('Dependencies are not installed. Run `pnpm install` first.')
 
-  const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
   console.log('Building BusinessLens and the local viewer before activation...')
-  const build = spawnSync(pnpm, ['build'], { cwd: root, stdio: 'inherit' })
+  // Windows runs pnpm through its .cmd shim, which Node spawns only in a shell.
+  const build = spawnSync('pnpm', ['build'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' })
   if (build.error) fail(build.error.message)
   if (build.status !== 0) process.exit(build.status ?? 1)
 

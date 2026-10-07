@@ -1242,7 +1242,7 @@ describe('stable Product Report', () => {
     expect(reportShell.match(/<BlrReportSidebar/g)).toHaveLength(2)
     expect(sidebar).not.toContain('data-report-home')
     expect(source('app/components/BlrRail.vue')).toContain("onSelect: () => emit('kind', page.kind)")
-    expect(source('app/utils/reportDestinations.ts')).toContain("kind === 'product' ? 'Overview'")
+    expect(source('app/utils/reportDestinations.ts')).toContain("section: 'overview', label: 'Overview'")
     expect(sidebar).not.toContain('v-if="logoSrc"')
     expect(source('app/components/BlrOverview.vue')).toContain('v-if="logoSrc"')
     expect(reportShell).toContain(":ui=\"{ content: 'w-72 max-w-[90vw]' }\"")

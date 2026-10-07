@@ -125,8 +125,9 @@ if (pkg.version !== plugin.version) {
  * pnpm is the repository's package manager, pinned exactly so every checkout and
  * CI run resolves the same lockfile the same way. The lockfile records no
  * package versions, so version alignment is checked between the manifests.
+ * Corepack may append the release's integrity hash; the pin is exact either way.
  */
-if (!/^pnpm@\d+\.\d+\.\d+$/.test(pkg.packageManager ?? '')) {
+if (!/^pnpm@\d+\.\d+\.\d+(\+sha\d+\.[0-9a-f]+)?$/.test(pkg.packageManager ?? '')) {
   errors.push(`package.json packageManager must pin an exact pnpm version, found ${pkg.packageManager}`)
 }
 if (await exists('package-lock.json') || await exists('npm-shrinkwrap.json')) {

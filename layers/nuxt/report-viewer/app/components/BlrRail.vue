@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { REPORT_PAGES } from '../utils/reportDestinations'
+import type { ReportPage } from '../utils/reportDestinations'
+import { COLLECTION_PAGES, OVERVIEW_PAGE, REPORT_PAGES } from '../utils/reportDestinations'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -14,26 +15,24 @@ const props = defineProps<{
 const emit = defineEmits<{ kind: [kind: ReportResourceKind] }>()
 
 type RailItem = NavigationMenuItem & { iconColor?: string, count?: number }
-const [OVERVIEW, ...COLLECTIONS] = REPORT_PAGES
-const sectionOf = (kind: ReportResourceKind) => kind === 'product' ? 'overview' : kind
 const activeColor = computed(() => {
-  const page = REPORT_PAGES.find(item => sectionOf(item.kind) === props.activeSection)
+  const page = REPORT_PAGES.find(item => item.section === props.activeSection)
   return page ? `var(--blr-slot-${page.slot})` : 'var(--ui-text-muted)'
 })
-const railItem = (page: typeof REPORT_PAGES[number]): RailItem => ({
+const railItem = (page: ReportPage): RailItem => ({
   label: page.label,
   icon: page.icon,
   iconColor: `var(--blr-slot-${page.slot})`,
-  active: props.activeSection === sectionOf(page.kind),
-  'data-current': props.activeSection === sectionOf(page.kind),
+  active: props.activeSection === page.section,
+  'data-current': props.activeSection === page.section,
   'aria-label': page.label,
   onSelect: () => emit('kind', page.kind)
 })
-const overviewItems = computed<RailItem[]>(() => [railItem(OVERVIEW!)])
+const overviewItems = computed<RailItem[]>(() => [railItem(OVERVIEW_PAGE)])
 const items = computed<RailItem[][]>(() => [
   [
     { label: 'Resources', type: 'label' },
-    ...COLLECTIONS.map(page => ({ ...railItem(page), count: props.counts[page.kind] }))
+    ...COLLECTION_PAGES.map(page => ({ ...railItem(page), count: props.counts[page.kind] }))
   ]
 ])
 const menuUi = computed(() => ({
