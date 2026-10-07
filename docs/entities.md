@@ -78,7 +78,7 @@ Entities are its nouns, and the ones that act are **Actors**.
 - **A log is an Entity when an Actor reads it.** An activity or audit log the
   store's admins open is one Entity (who acted, what changed, when), and one
   [Business Rule](./business-rules.md#a-log-of-what-happened) says what it
-  records; no Step lists the entries. A log only your own team reads is
+  records; no Step lists the entry it causes. A log only your own team reads is
   machinery and stays out.
 
 ## Actors: an Entity that acts

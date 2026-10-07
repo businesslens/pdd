@@ -62,10 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Full Changelog**: [v0.29.1...v0.30.0][0.30.0]
 
-### Removed
-
-- **SDK:** `businesslens/report` no longer exports the versioned `ProductReportV18` and `ProductReportV18Schema` names; use `ProductReport` and `ProductReportSchema`.
-
 ## [0.29.1] - 2026-10-07
 
 ### Changed

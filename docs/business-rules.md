@@ -67,11 +67,12 @@ says whether they may.
   membership, reached through `related`; *the Quiz reveals answers* is the
   Quiz the governed Question is in, reached because a Question has exactly one
   Quiz; Store settings marked `singleton` are the one there is.
-- **A feature a plan or flag turns off is closed by a grant.** When refunds
-  exist only on paid plans and only refunds move an Order to Refunded, every
-  grant of that Rule carries `when: [{ entity: workspace, fact: Plan, is: Paid }]`,
-  and the Capability's lead says so too. A read-only feature, or one sharing
-  its operation with ungated behavior, has only its lead.
+- **A feature a plan or flag turns off is closed by its grants.** Every grant
+  only the feature's Steps pass carries the switch: refunds exist only on paid
+  plans and only refunds move an Order to Refunded, so each grant of that Rule
+  carries `when: [{ entity: workspace, fact: Plan, is: Paid }]`, and the
+  Capability's lead says so too. A read-only feature, or one whose Steps pass
+  only grants ungated behavior passes too, has only its lead.
 - **Support acting as a customer is still support.** Its Steps name the support
   Actor, and each Rule support may pass gains a grant for it, conditioned on the
   customer's consent where the Product asks for it:
@@ -233,8 +234,9 @@ Anything else could be any of many, and `lint` refuses it.
 An activity or audit log the Product shows an Actor is an
 [Entity](./entities.md), and one Rule without `permits` says what it records:
 *every change to an Order is recorded in its activity*, targeting the Order
-operations and the log Entity. No Step lists the entries; the Rule records one
-for every Step it selects. Entries written while support acts as a customer
+operations and the log Entity. No Step lists the entry it causes; the Rule
+records one for every Step it selects. A Step reading the log lists what it
+reads, as usual. Entries written while support acts as a customer
 name the support Actor.
 
 ### A product's own roles

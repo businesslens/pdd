@@ -100,8 +100,10 @@ or mark it `singleton` when the Product keeps exactly one. Settings each
 Workspace keeps are never `singleton`. Support staff acting in a customer's
 account, logged in as them or through access the customer grants, are still
 support: their Steps name the support Entity as `actor` at the customer's own
-places (whose `actors` include it; no Experience of its own), starting and
-ending that access is its own Capability, and each Rule support may pass there
+places (whose `actors` include it; no Experience of its own), entering and
+leaving the account is not a Capability of its own, the customer's consent is
+their own setting, turned on and off like any other (opposite verbs and all),
+and each Rule support may pass there
 gains a grant for it, conditioned on the customer's consent when the Product
 asks for it (`{ actors: [support-agent], when: [{ entity: shopper, fact: Support access, is: On }] }`,
 the targeted Order's own Shopper). `restricted` is only the Product's own
@@ -376,7 +378,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   reads) is one Entity — who acted, what changed, when — presented by its
   Screen, and one Business Rule without `permits` targeting the recorded
   operations and the log Entity says what it records ("Every change to an
-  Order is recorded in its activity"); no Step lists the entries. A log only
+  Order is recorded in its activity"); no Step lists the entry its operation
+  causes, while a Step reading the log lists the entries it reads. A log only
   the team running the Product reads is a receipt and is not modelled. Optional
   `singleton: true` marks the Product's own settings, kept exactly once; never
   on an Entity that acts, and nothing relates to it `one-to-many`. An Entity must be
@@ -568,8 +571,8 @@ on its own — a schedule it owns, an expiry, a retry — is such a Scenario,
 available where an Actor observes the outcome.
 
 **`entities` is required on every Step** and `[]` when it touches nothing.
-The one Entity a Step never lists is a log entry a recording Business Rule
-makes for it.
+The one thing a Step never lists is the log entry a recording Business Rule
+makes for it; reading the log is an ordinary read.
 Each entry is `{ entity, as?, effect, from?, to?, facts?, with? }`: `effect` is
 `creates|changes|removes|reads`, defaulting to `changes`; `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither. Every
@@ -951,14 +954,16 @@ setting, plan or licence enables it** — registration while the sign-in method
 is password, social sign-in while a provider is configured, a guest role a
 paid plan enables — stays an ordinary resource, modeled even where the running
 or planned edition hides it. Its lead names what it exists under, and `verify` checks it.
-No field or Variation carries the dependency. An Entity operation only it
-performs is closed by the switch through a grant as well: when a Rule target
-can select an operation the gated Capabilities' Steps perform without selecting
-any other Capability's Steps (refunds are the only behavior moving an Order to
-Refunded), every grant of that operation's permission Rule carries the switch
-as a `when` condition, and a Rule is written for it when none exists. A
-read-only feature, or one whose operation ungated behavior also performs
-(scheduled publishing beside publishing by hand), has its lead alone.
+No field or Variation carries the dependency. What it does to Entities is
+closed by the switch through grants as well: every grant that admits only the
+gated behavior's Steps carries the switch as a `when` condition — each grant
+of the refund Rule (refunds are the only behavior moving an Order to
+Refunded), and the `unattended` grant through which the Product sends what a
+Pro workspace scheduled, even inside an ungated Capability. A gated operation
+no Rule governs yet gets one (picking a send date changes a fact nothing else
+changes). A read-only feature, or one whose Steps pass only grants ungated
+behavior passes too (archiving many Cards at once beside archiving one), has
+its lead alone.
 
 `kind`, `of`, `takesEffect`, `stability` and `alternatives` are required, and
 so are each alternative's `id` and `selectedWhen`.

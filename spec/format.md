@@ -494,16 +494,17 @@ discriminator — or by the deployment, fixed before the behavior starts:
 plan or licence enables it,** stays an ordinary resource, mapped even where the
 running edition hides it. Its lead names what it exists under — registration
 exists only while the sign-in method is password — and `verify` checks it. No
-field or Variation carries the dependency. **An Entity operation only it
-performs is closed by the switch through a grant as well:** when a Rule target
-can select an operation the gated Capabilities' Steps perform without selecting
-any other Capability's Steps — refunds are the only behaviour moving an Order
-to Refunded — every
-grant of that operation's permission Rule carries the switch as a `when`
-condition, so `lint` checks every Step against it, and a Rule is written for
-the operation when none exists. A read-only feature, or one whose operation
-ungated behaviour also performs — publishing on a schedule beside publishing by
-hand — has its lead alone. The lead names the switch either way.
+field or Variation carries the dependency. **What it does to Entities is
+closed by the switch through grants as well:** every grant that admits only
+the gated behaviour's Steps carries the switch as a `when` condition, so
+`lint` checks every Step against it — each grant of the Rule for refunds, the
+only behaviour moving an Order to Refunded, and the `unattended` grant through
+which the Product sends what a Pro workspace scheduled, even inside an ungated
+Capability. A gated operation no Rule governs yet gets one: picking a send date
+changes a fact nothing else changes. A read-only feature, or one whose Steps
+pass only grants ungated behaviour passes too — archiving many Cards at once
+beside archiving one — has its lead alone. The lead names the switch either
+way.
 
 **Membership lives only on the set.** `alternatives` lists at least two distinct
 resources of the type `of` names, spelled as that type's ordinary ids — a
@@ -1063,8 +1064,9 @@ activity or audit log a customer's administrators read passes the naming test
 when, presented by the Screen that shows it. What it records is said once, by
 a Business Rule without `permits` that targets the recorded operations and the
 log Entity: *every change to an Order is recorded in its activity*. No Step
-lists the entry — the Rule makes it for every Step it selects, the one
-exception to [exhaustive Step lists](#scenario-sections). A log no Actor reads,
+lists the entry its operation causes — the Rule makes it for every Step it
+selects, the one exception to [exhaustive Step lists](#scenario-sections). A
+Step reading the log lists the entries it reads, like any read. A log no Actor reads,
 kept for the team running the Product, is a receipt and is not modelled.
 
 **Not the Product itself.** Its surfaces, its shipped content, and its closed
@@ -1775,7 +1777,7 @@ encoding, and each case has exactly one:
 | What differs | How it is modeled |
 | --- | --- |
 | Only who may perform one Entity operation | A settings fact read by a permission grant's `when`. One Rule; no Variation |
-| Whether a resource exists at all — a feature a plan, flag or licence turns off | An ordinary resource whose lead names the switch; an Entity operation only it performs also carries the switch as a grant's `when` ([Variations](#variations)) |
+| Whether a resource exists at all — a feature a plan, flag or licence turns off | An ordinary resource whose lead names the switch; every grant only it passes also carries the switch as a `when` ([Variations](#variations)) |
 | Which of two or more complete, supported forms of one resource applies, chosen by a setting, an assignment or a version | A [Variation](#variations) of the smallest resource containing the difference: Configuration, Experiment or Version. Business Rules vary only between whole policies. An A/B test whose arms differ in one Step is an Experiment of two Scenarios |
 | Only how something looks | Design: `visual` References with `role: intent`. Not modeled |
 | A branch on state the behavior meets — out of stock, payment declined | Scenario conditions and outcomes; a Business Rule states constraints shared by several behaviors |
@@ -2171,7 +2173,9 @@ possible grant.
 customer's account — logged in as them, or through access the customer grants
 — the Steps they take name the support Entity as `actor`, at the customer's own
 places, whose `actors` therefore include it; there is no Experience of its own
-for it. Starting and ending that access is a Capability of its own. Each Rule
+for it. Support entering and leaving the account is not a Capability: what
+they do there is. The customer's consent is a setting of theirs, turned on and
+off like any other, opposite verbs and all. Each Rule
 whose operation support may perform there gains a grant for support,
 conditioned on the customer's consent when the Product asks for it —
 `{ actors: [support-agent], when: [{ entity: shopper, fact: Support access, is: On }] }`
@@ -2193,8 +2197,8 @@ availability Context.
 
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`. Silence is impossible; an omission is a claim that can
-be reviewed, linted, and contradicted by code. The one Entity a Step never
-lists is an activity or audit entry a Business Rule records for it
+be reviewed, linted, and contradicted by code. The one thing a Step never
+lists is the activity or audit entry a Business Rule records for it
 ([Entities](#entitiesidmd-or-entitiesidentitymd)). Each entry is
 `{ entity, as, effect, from, to, facts, with }`:
 
