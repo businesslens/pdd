@@ -238,7 +238,7 @@ describe('projectPortableReport', () => {
           text: 'The store admin reviews the blocked attempt',
           kind: 'actor',
           actorId: 'store-admin',
-          capabilityId: 'manage-orders',
+          capabilityId: 'confirm-order',
           entities: [],
           unattended: false,
           contexts: [{
@@ -259,10 +259,10 @@ describe('projectPortableReport', () => {
       withFailure.model.screens.find(screen => screen.id === screenId)!.journeyScenarioIds.push('checkout-needs-operator-help')
     }
     withFailure.counts.journeyScenarios += 1
-    // Manual confirmation is an achieved alternative, so Order management is primary, not failure-only.
+    // Manual confirmation is an achieved alternative, so Order confirmation is primary, not failure-only.
     withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order']
 
-    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'])
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'confirm-order', 'place-order', 'settle-payment'])
     expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
@@ -625,7 +625,7 @@ describe('projectPortableReport', () => {
     )
 
     const chained = structuredClone(report)
-    const refund = chained.model.capabilityScenarios.find(item => item.id === 'refund-order')!
+    const refund = chained.model.capabilityScenarios.find(item => item.id === 'refund-a-confirmed-order')!
     const firstOrder = refund.steps[0]!.entities.find(item => item.entityId === 'order')!
     firstOrder.effect = 'changes'
     firstOrder.from = 'Pending'
@@ -637,7 +637,7 @@ describe('projectPortableReport', () => {
 
     /* Attribution on a Product Step still does not make it an Actor Step. */
     const attributedOnly = structuredClone(report)
-    const attributedScenario = attributedOnly.model.capabilityScenarios.find(item => item.id === 'refund-order')!
+    const attributedScenario = attributedOnly.model.capabilityScenarios.find(item => item.id === 'refund-a-confirmed-order')!
     attributedScenario.steps.find(item => item.kind === 'actor')!.kind = 'product'
     expect(sdk.validateProductReport(attributedOnly).join('\n')).toContain(
       'needs at least one actor Step, or an unattended first condition Step'

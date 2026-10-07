@@ -309,8 +309,8 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.** A
   Capability, Capability Scenario, Journey, and Journey Scenario name something
   the Product or an Actor *does*, so their ids begin with a verb:
-  `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
-  `order-management`. A Domain, Entity, Interface, Experience, and Screen name
+  `browse-catalog`, not `catalog-browsing`; `refund-order`, not
+  `order-refund`. A Domain, Entity, Interface, Experience, and Screen name
   something that *is*, so their ids are noun phrases: `shopper`, `ordering`,
   `listing`, `customer-web`.
 

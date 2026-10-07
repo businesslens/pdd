@@ -31,7 +31,7 @@ references:
     target: src/services/orders.ts#OrderService.refund
 ---
 
-# Refund an order
+# Refund a confirmed order
 
 ## Trigger
 

@@ -56,8 +56,8 @@ describe('end to end on a real git repo', () => {
       screens: 7,
       domains: 1,
       entities: 10,
-      capabilities: 7,
-      capabilityScenarios: 18,
+      capabilities: 9,
+      capabilityScenarios: 19,
       journeys: 2,
       journeyScenarios: 4,
       businessRules: 14,
@@ -67,7 +67,7 @@ describe('end to end on a real git repo', () => {
     // alternative included; `cancel-order` appears only in the not-achieved one,
     // so it is failure-only.
     expect(parsed.model.journeys[0]).toMatchObject({
-      capabilityIds: ['browse-catalog', 'manage-orders', 'place-order', 'settle-payment'],
+      capabilityIds: ['browse-catalog', 'confirm-order', 'place-order', 'settle-payment'],
       failureOnlyCapabilityIds: ['cancel-order']
     })
     // An Actor is an Entity that acts; the wire says which of the two it is.

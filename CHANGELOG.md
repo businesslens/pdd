@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **CLI:** `lint` warns on a Capability named with an umbrella verb such as manage.
+
 ## [0.31.0] - 2026-10-07
 
 ### Added

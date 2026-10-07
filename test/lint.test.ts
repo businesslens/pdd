@@ -236,8 +236,8 @@ describe('lintModel', () => {
       screens: 7,
       domains: 1,
       entities: 10,
-      capabilities: 7,
-      capabilityScenarios: 18,
+      capabilities: 9,
+      capabilityScenarios: 19,
       journeys: 2,
       journeyScenarios: 4,
       businessRules: 14
@@ -509,7 +509,7 @@ Lead.
       '- { entity: refund, effect: reads, facts: [Amount, Reason] }',
       '- { entity: refund, effect: reads, facts: [Amount] }'
     ))
-    const console = join(bl, 'capabilities/manage-orders/scenarios/refund-order.md')
+    const console = join(bl, 'capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     writeFileSync(console, readFileSync(console, 'utf8').replace(
       '- { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
       '- { entity: order, effect: reads, facts: [Margin] }'
@@ -638,9 +638,10 @@ Read-only status an operator can query without a session.
 `
     )
     for (const relative of [
-      '.businesslens/capabilities/manage-orders/capability.md',
-      '.businesslens/capabilities/manage-orders/scenarios/refund-order.md',
-      '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md'
+      '.businesslens/capabilities/refund-order/capability.md',
+      '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md',
+      '.businesslens/capabilities/merge-orders/capability.md',
+      '.businesslens/capabilities/merge-orders/scenarios/merge-duplicate-orders.md'
     ]) {
       const file = join(cwd, relative)
       writeFileSync(
@@ -719,7 +720,7 @@ Read-only status an operator can query without a session.
 
   it('requires every Scenario Actor to participate in a selected Context', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const scenario = join(cwd, '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replaceAll(
       'actor: store-admin',
       'actor: shopper'
@@ -808,10 +809,10 @@ Read-only status an operator can query without a session.
 
   it('requires Scenario coverage for declared Capabilities even with known unmapped behavior', () => {
     const cwd = fixtureCopy()
-    rmSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios'), { recursive: true })
+    rmSync(join(cwd, '.businesslens/capabilities/refund-order/scenarios'), { recursive: true })
     compactResource(
-      join(cwd, '.businesslens/capabilities/manage-orders/capability.md'),
-      join(cwd, '.businesslens/capabilities/manage-orders.md')
+      join(cwd, '.businesslens/capabilities/refund-order/capability.md'),
+      join(cwd, '.businesslens/capabilities/refund-order.md')
     )
 
     expect(run(cwd).errors.join('\n')).toContain('availability Context place "operator-cli" needs Capability Scenario coverage')
@@ -843,7 +844,7 @@ Read-only status an operator can query without a session.
 
 Filed away.
 `)
-    const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
+    const merge = join(cwd, '.businesslens/capabilities/merge-orders/scenarios/merge-duplicate-orders.md')
     writeFileSync(merge, readFileSync(merge, 'utf8').replace(
       'as: duplicate, effect: changes, from: Pending, to: Cancelled',
       'as: duplicate, effect: changes, from: Archived, to: Cancelled'
@@ -912,7 +913,7 @@ Filed away.
    */
   it('chains Steps per instance and points at aliases', () => {
     const cwd = fixtureCopy()
-    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const refund = join(cwd, '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     const source = readFileSync(refund, 'utf8')
     writeFileSync(refund, source.replace(
       '      - { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
@@ -922,7 +923,7 @@ Filed away.
       '"order" was left in "Confirmed" by an earlier Step, not "Pending"; if these are different instances, give them aliases'
     )
 
-    const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
+    const merge = join(cwd, '.businesslens/capabilities/merge-orders/scenarios/merge-duplicate-orders.md')
     writeFileSync(merge, readFileSync(merge, 'utf8').replace(
       '{ entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled, facts: [] }',
       '{ entity: order, effect: changes, from: Pending, to: Cancelled, facts: [] }'
@@ -999,7 +1000,7 @@ Filed away.
 
   it('refuses two entries for one instance, and state keys an effect cannot carry', () => {
     const cwd = fixtureCopy()
-    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const refund = join(cwd, '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     const source = readFileSync(refund, 'utf8')
     const withEntry = (entry: string) => {
       writeFileSync(refund, source.replace(
@@ -1066,16 +1067,16 @@ Filed away.
       'appliesTo:\n  - type: entity\n    id: order\n    effect: changes\n    to: Confirmed',
       `appliesTo:
   - type: capability
-    id: manage-orders
-  - type: capability-scenario
     id: refund-order
+  - type: capability-scenario
+    id: refund-a-confirmed-order
     contexts:
       - place: customer-web::storefront`
     ))
 
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('Context place "customer-web::storefront" is outside target "capability-scenario:refund-order"')
-    expect(errors).toContain('target "capability-scenario:refund-order" is redundant with capability target "manage-orders"')
+    expect(errors).toContain('Context place "customer-web::storefront" is outside target "capability-scenario:refund-a-confirmed-order"')
+    expect(errors).toContain('target "capability-scenario:refund-a-confirmed-order" is redundant with capability target "refund-order"')
   })
 
   it('lets a Rule Context select descendants and rejects redundant nested selectors', () => {
@@ -1303,7 +1304,7 @@ permits:
   it('divides an Interface only when no available Capability bridges its audiences, as an error', () => {
     const cwd = fixtureCopy()
     const adminWeb = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
-    // admin-web now serves shoppers too; manage-orders is reached by the admin,
+    // admin-web now serves shoppers too; refund-order is reached by the admin,
     // cancel-order by the shopper, and nothing bridges them. (The fixture's
     // admin-cancels-a-paid-order and cancellation-request Scenarios would bridge
     // them, so they go.)
@@ -1359,7 +1360,7 @@ A shopper disputes an order with an operator.
 Both have looked at the same order record.
 `)
     const screen = join(cwd, '.businesslens/interfaces/admin-web/screens/order-detail.md')
-    writeFileSync(screen, readFileSync(screen, 'utf8').replace('  - manage-orders\n', '  - manage-orders\n  - review-orders\n'))
+    writeFileSync(screen, readFileSync(screen, 'utf8').replace('  - refund-order\n', '  - refund-order\n  - review-orders\n'))
     const bridged = run(cwd)
     expect(bridged.errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
   })
@@ -1484,17 +1485,17 @@ Lead.
     // A declared noun spanning segments: `refund-request` is the thing approved.
     entity('approve-refund-request', 'Approve refund request')
     // The spec's own counter-example: `order` is a thing, so the id carries no verb.
-    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/order-management'), { recursive: true })
+    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/order-management'), { recursive: true })
     // The noun half is matched against things, never against a Screen's name:
     // `record` ends the `product-record` Screen but names no Entity.
-    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/browse-record'), { recursive: true })
+    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/browse-record'), { recursive: true })
     // `product` ends the `catalog-product` Entity, so the declared name is suggested.
-    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/price-product'), { recursive: true })
+    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/price-product'), { recursive: true })
     // Scenarios are behavioural ids too.
-    cpSync(join(bl, 'capabilities/manage-orders/scenarios/refund-order.md'), join(bl, 'capabilities/manage-orders/scenarios/refund-processing.md'))
+    cpSync(join(bl, 'capabilities/refund-order/scenarios/refund-a-confirmed-order.md'), join(bl, 'capabilities/refund-order/scenarios/refund-processing.md'))
     // A declared thing ending in -ment is the object, not a nominalisation, even after a verb the list lacks.
     entity('document', 'Document')
-    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/duplicate-document'), { recursive: true })
+    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/duplicate-document'), { recursive: true })
 
     const warnings = run(cwd).warnings.join('\n')
     expect(warnings).not.toContain('"order-line" opens with a verb')
@@ -1513,9 +1514,9 @@ Lead.
     const cwd = fixtureCopy()
     writeRule(cwd, 'orders-are-merged-by-hand', `appliesTo:
   - type: capability
-    id: manage-orders`)
+    id: merge-orders`)
     expect(run(cwd).warnings.join('\n')).toContain(
-      'orders-are-merged-by-hand.md: governs only "manage-orders"; a constraint true of one behavior belongs to it as a condition Step or Outcome, not a Business Rule'
+      'orders-are-merged-by-hand.md: governs only "merge-orders"; a constraint true of one behavior belongs to it as a condition Step or Outcome, not a Business Rule'
     )
   })
 
@@ -1617,7 +1618,7 @@ An order exists.
       const cwd = fixtureCopy()
       editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, covered: [], ...unmapped.length ? {} : { scope: '', method: '' } })
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
-      const scenarioFile = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+      const scenarioFile = join(cwd, '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
       writeFileSync(journeyFile, readFileSync(journeyFile, 'utf8').replace(referenceBlock, ''))
       writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replace(referenceBlock, ''))
@@ -1893,7 +1894,7 @@ Lead.
 
     expect(errorsWith(`appliesTo:
   - type: capability
-    id: manage-orders
+    id: refund-order
 permits:
   - actors: [store-admin]`)).toContain('"permits" needs Entity targets only')
 
@@ -2008,7 +2009,7 @@ relations:
    */
   it('holds Steps to the Rules that govern them', () => {
     const cwd = fixtureCopy()
-    const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
+    const merge = join(cwd, '.businesslens/capabilities/merge-orders/scenarios/merge-duplicate-orders.md')
     writeFileSync(merge, readFileSync(merge, 'utf8').replace(
       'as: duplicate, effect: changes, from: Pending, to: Cancelled',
       'as: duplicate, effect: changes, from: Refunded, to: Cancelled'
@@ -2029,7 +2030,7 @@ permits:
     )
     unlinkSync(join(cwd, '.businesslens/business-rules/gateway-only.md'))
 
-    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const refund = join(cwd, '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     const source = readFileSync(refund, 'utf8')
     writeFileSync(refund, source.replace('    kind: product\n    actor: store-admin\n', '    kind: product\n'))
     expect(run(cwd).errors.join('\n')).toContain(
@@ -2049,7 +2050,7 @@ permits:
     // inside the Scenario's places. Reading it as happening nowhere would let
     // deleting a key walk out of an authorization claim.
     const cwd = fixtureCopy()
-    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const refund = join(cwd, '.businesslens/capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     writeFileSync(refund, readFileSync(refund, 'utf8').replace(
       `      - { entity: refund, effect: creates, to: Requested, facts: [Amount, Reason] }
     contexts:
@@ -2233,6 +2234,19 @@ permits: []`)
       const capabilities = join(cwd, '.businesslens/capabilities')
       cpSync(join(capabilities, 'track-order'), join(capabilities, 'follow-order'), { recursive: true })
       expect(run(cwd).warnings.join('\n')).not.toContain('opposite verbs are separate Capabilities')
+    })
+
+    it.each(['manage', 'organize', 'handle', 'administer'])('warns on a Capability named with the umbrella verb "%s"', (verb) => {
+      const cwd = fixtureCopy()
+      const capabilities = join(cwd, '.businesslens/capabilities')
+      cpSync(join(capabilities, 'refund-order'), join(capabilities, `${verb}-orders`), { recursive: true })
+      expect(run(cwd).warnings).toContain(
+        `${join(capabilities, `${verb}-orders`, 'capability.md')}: capability id "${verb}-orders" leads with the umbrella verb "${verb}"; name each verb its controls show — opposite and distinct verbs are separate Capabilities`
+      )
+    })
+
+    it('leaves the golden fixture, whose Capabilities each name one verb, without umbrella warnings', () => {
+      expect(run(fixtureCopy()).warnings.join('\n')).not.toContain('umbrella verb')
     })
 
     it('warns when a grant admits any AI agent instead of the one a person connected', () => {

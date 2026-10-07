@@ -163,8 +163,8 @@ describe('stable Product Report', () => {
     // whose Step draws it and its co-effects. The Rules governing it are read
     // on the Steps they select.
     const arc = (from: string, to: string) => order.arcs.find((item: any) => item.from === from && item.to === to)
-    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['manage-orders', 'settle-payment'])
-    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'] })
+    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['confirm-order', 'settle-payment'])
+    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['refund-order'] })
     expect(arc('Confirmed', 'Refunded').coEffects).toEqual([{ entityId: 'refund', effect: 'creates', to: 'Requested' }])
     expect(order.arcs.find((item: any) => item.effect === 'creates').to).toBe('Pending')
     expect(order.states.every((state: any) => state.reached)).toBe(true)
@@ -173,7 +173,7 @@ describe('stable Product Report', () => {
     expect(order.noCreation).toBe(false)
 
     // Both relations are derived from the Steps and Screens, never authored here.
-    expect(order.changedByIds).toEqual(['cancel-order', 'manage-orders', 'place-order', 'request-cancellation', 'settle-payment'])
+    expect(order.changedByIds).toEqual(['cancel-order', 'confirm-order', 'merge-orders', 'place-order', 'refund-order', 'request-cancellation', 'settle-payment'])
     expect(order.readByIds).toEqual(['track-order'])
     expect(order.presentedOnIds).toEqual([
       'admin-web::order-detail',
@@ -240,7 +240,7 @@ describe('stable Product Report', () => {
   it('reads both ends of a move off the Step, and an alias off an instance', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
-    const refund = workspace.capabilityScenarios.find((item: any) => item.id === 'refund-order')!
+    const refund = workspace.capabilityScenarios.find((item: any) => item.id === 'refund-a-confirmed-order')!
     const refunded = refund.steps.flatMap((step: any) => step.entities).find((entry: any) => entry.to === 'Refunded')!
     expect(refunded).toMatchObject({ entityId: 'order', effect: 'changes', from: 'Confirmed', to: 'Refunded' })
 
@@ -320,7 +320,7 @@ describe('stable Product Report', () => {
     const order = workspace.entities.find((item: any) => item.id === 'order')!
     const stateOf = (name: string) => order.states.find((state: any) => state.name === name)!
 
-    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-through-the-v2-contract', 'confirm-an-order-when-the-gateway-settles'])
+    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-a-paid-order', 'confirm-an-order-through-the-v2-contract', 'confirm-an-order-when-the-gateway-settles'])
     expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'browse-and-complete-checkout-with-manual-confirmation', 'buy-and-follow-the-order', 'cancel-an-order-before-fulfilment'])
     expect(stateOf('Refunded').journeyScenarioIds).toEqual(['cancel-an-order-before-fulfilment'])
     expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'complete-checkout-without-review', 'sell-the-last-available-unit'])
@@ -1329,7 +1329,7 @@ describe('composed lifecycle', () => {
   it('draws an arc a Rule closes to everyone as forbidden', async () => {
     const { buildEntityLifecycle, lifecycleArcLabel, LIFECYCLE_END } = await import(lifecycleModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
-    addStep(report, 'manage-orders', [{ entityId: 'order', as: null, effect: 'removes', from: 'Cancelled', to: null }])
+    addStep(report, 'merge-orders', [{ entityId: 'order', as: null, effect: 'removes', from: 'Cancelled', to: null }])
     const workspace = workspaceOf(report)
     const order = entityOf(workspace, 'order')
     const index = arcOf(order, 'Cancelled', '', 'removes')
@@ -1348,7 +1348,7 @@ describe('composed lifecycle', () => {
     const drawn = new Set(graph.edges.map((edge: any) => edge.id))
 
     const stateless = order.arcs.find((arc: any) => arc.effect === 'changes' && !arc.to)
-    expect(stateless.capabilityIds).toEqual(['manage-orders'])
+    expect(stateless.capabilityIds).toEqual(['merge-orders'])
     expect(drawn.has(lifecycleArcEdgeId(order.id, stateless))).toBe(false)
     expect(order.arcs).toHaveLength(8)
     expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(7)
@@ -1376,12 +1376,12 @@ describe('composed lifecycle', () => {
     expect(order.arcs.every((arc: any) => !('ruleIds' in arc))).toBe(true)
 
     const edges = buildEntityLifecycle(workspace, order).edges
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded')).toMatchObject({ label: 'Order management' })
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded')).toMatchObject({ label: 'Order refund' })
     expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
       .toMatchObject({ label: 'Order cancellation' })
     expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
     /* On the canvas the label is a badge wearing the Capability's mark; the text stays its alternative. */
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded').badges).toEqual([{ kind: 'capability', text: 'Order management' }])
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded').badges).toEqual([{ kind: 'capability', text: 'Order refund' }])
     expect(edges.every((edge: any) => edge.badges.every((badge: any) => badge.kind !== 'rule'))).toBe(true)
     for (const edge of edges.filter((item: any) => item.forbidden)) expect(edge.badges).toEqual([{ icon: 'i-lucide-ban', text: 'Forbidden' }])
 
@@ -1394,12 +1394,12 @@ describe('composed lifecycle', () => {
       expect(scenario.stepRuleIds).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
       for (const item of step.governedBy) expect(item.entries.every((index: number) => step.entities[index])).toBe(true)
     }
-    const manage = workspace.capabilities.find((item: any) => item.id === 'manage-orders')
+    const manage = workspace.capabilities.find((item: any) => item.id === 'refund-order')
     expect(manage.stepRuleIds).toEqual(expect.arrayContaining(['refunds-need-an-operator', 'who-may-change-an-order']))
     expect(attachedRules(workspace, manage).find((item: any) => item.rule.id === 'refunds-need-an-operator'))
       .toMatchObject({ hookLabel: 'Governs its Steps', hook: 'changes Order to Refunded' })
     const rule = workspace.rules.find((item: any) => item.id === 'refunds-need-an-operator')
-    expect(rule.stepCapabilityIds).toContain('manage-orders')
+    expect(rule.stepCapabilityIds).toContain('refund-order')
     /* The grants are the Rule's own reading, each in full. */
     expect(rule.grants.map((grant: any) => grant.sentence)).toEqual([
       'Store admin when Total charged at most 100',
