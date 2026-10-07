@@ -1,5 +1,5 @@
 ---
-title: Overview
+title: CLI overview
 description: Install skills, lint and view a Product Model locally, and move Blueprints between repositories with the BusinessLens CLI.
 section: open-source
 group: CLI
