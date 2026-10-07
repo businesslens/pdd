@@ -7,16 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-10-07
+
 ### Changed
 
-- A permission that depends on a setting, such as a workspace's approval limit, says whose setting it is: the person's, their workspace's, or the whole product's. Mark the product's own settings `singleton: true`.
-- Creating something can create what belongs to it in the same step, such as a new board's first admin.
-- Reports use format version 19; re-export Blueprints after updating.
-- **CLI:** `lint` catches a permission that doesn't say whose setting it reads, and a Capability named with an umbrella verb such as manage.
+- A permission that depends on a setting, such as a workspace's approval limit, says whose setting it is: the person's, their workspace's, or the whole product's. Mark the product's own settings `singleton: true`. ([#108](https://github.com/businesslens/pdd/pull/108)) ([5618c05](https://github.com/businesslens/pdd/commit/5618c05ee38bc28459060b4009dfb4b38cdc5270))
+- Creating something can create what belongs to it in the same step, such as a new board's first admin. ([#108](https://github.com/businesslens/pdd/pull/108)) ([5618c05](https://github.com/businesslens/pdd/commit/5618c05ee38bc28459060b4009dfb4b38cdc5270))
+- Reports use format version 19; re-export Blueprints after updating. ([#108](https://github.com/businesslens/pdd/pull/108)) ([5618c05](https://github.com/businesslens/pdd/commit/5618c05ee38bc28459060b4009dfb4b38cdc5270))
+- **CLI:** `lint` catches a permission that doesn't say whose setting it reads, and a Capability named with an umbrella verb such as manage. ([#108](https://github.com/businesslens/pdd/pull/108)) ([5618c05](https://github.com/businesslens/pdd/commit/5618c05ee38bc28459060b4009dfb4b38cdc5270))
 
 ### Removed
 
-- **Report:** The versioned `ProductReportV18` names; use `ProductReport` and `ProductReportSchema`.
+- **Report:** The versioned `ProductReportV18` names; use `ProductReport` and `ProductReportSchema`. ([#108](https://github.com/businesslens/pdd/pull/108)) ([5618c05](https://github.com/businesslens/pdd/commit/5618c05ee38bc28459060b4009dfb4b38cdc5270))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.31.0...v0.32.0][0.32.0]
 
 ## [0.31.0] - 2026-10-07
 
@@ -1167,7 +1175,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/businesslens/pdd/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/businesslens/pdd/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/businesslens/pdd/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/businesslens/pdd/compare/v0.29.0...v0.29.1
