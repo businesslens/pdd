@@ -14,6 +14,7 @@ const temporaryDirectories: string[] = []
 
 let report: Record<string, unknown>
 let logo: Buffer
+const cover = readFileSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'))
 
 function temporary(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix))
@@ -33,7 +34,7 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=17',
+      'content-type': 'application/vnd.businesslens.report+json; version=18',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
@@ -42,6 +43,10 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
 
 function logoResponse(): Response {
   return new Response(logo, { status: 200, headers: { 'content-type': 'image/svg+xml' } })
+}
+
+function coverResponse(): Response {
+  return new Response(cover, { status: 200, headers: { 'content-type': 'image/webp' } })
 }
 
 beforeAll(() => {
@@ -72,6 +77,7 @@ describe('pull', () => {
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
       urls.push(String(url))
       if (String(url).endsWith('/logo.svg')) return logoResponse()
+      if (String(url).endsWith('/cover.webp')) return coverResponse()
       requested = { url: String(url), init }
       return reportResponse()
     }) as unknown as typeof globalThis.fetch
@@ -84,13 +90,41 @@ describe('pull', () => {
     )
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=17')
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=18')
     expect(existsSync(join(target, '.businesslens/product/product.md'))).toBe(true)
     expect(existsSync(join(
       target,
       '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
     ))).toBe(true)
     expect(readFileSync(join(target, '.businesslens/product/logo.svg'))).toEqual(logo)
+    expect(urls).toContain('https://businesslens.io/api/v1/blueprints/fixture-shop/cover.webp')
+    expect(readFileSync(join(target, '.businesslens/product/cover.webp'))).toEqual(cover)
+  })
+
+  it('skips a missing or invalid cover, and asks for none without a logo', async () => {
+    const missing = temporary('bl-pull-no-cover-')
+    const fetchMissing = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
+      ? logoResponse()
+      : String(url).endsWith('/cover.webp') ? new Response('', { status: 404 }) : reportResponse()) as unknown as typeof globalThis.fetch
+    expect(await runPull(missing, 'fixture-shop', { force: false }, { fetch: fetchMissing, env: {} })).toBe(0)
+    expect(existsSync(join(missing, '.businesslens/product/logo.svg'))).toBe(true)
+    expect(existsSync(join(missing, '.businesslens/product/cover.webp'))).toBe(false)
+
+    const invalid = temporary('bl-pull-bad-cover-')
+    const fetchInvalid = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
+      ? logoResponse()
+      : String(url).endsWith('/cover.webp') ? new Response('<svg/>', { status: 200 }) : reportResponse()) as unknown as typeof globalThis.fetch
+    expect(await runPull(invalid, 'fixture-shop', { force: false }, { fetch: fetchInvalid, env: {} })).toBe(0)
+    expect(existsSync(join(invalid, '.businesslens/product/cover.webp'))).toBe(false)
+
+    const urls: string[] = []
+    const noLogo = temporary('bl-pull-cover-without-logo-')
+    const fetchNoLogo = vi.fn(async (url: string) => {
+      urls.push(String(url))
+      return String(url).endsWith('/logo.svg') ? new Response('', { status: 404 }) : reportResponse()
+    }) as unknown as typeof globalThis.fetch
+    expect(await runPull(noLogo, 'fixture-shop', { force: false }, { fetch: fetchNoLogo, env: {} })).toBe(0)
+    expect(urls.some(url => url.endsWith('/cover.webp'))).toBe(false)
   })
 
   it('does not require the optional GitHub logo', async () => {
@@ -147,7 +181,8 @@ describe('pull', () => {
     )).toBe(0)
     expect(urls).toEqual([
       'https://catalog.example.com/api/v1/blueprints/fixture-shop/report.json',
-      'https://catalog.example.com/api/v1/blueprints/fixture-shop/logo.svg'
+      'https://catalog.example.com/api/v1/blueprints/fixture-shop/logo.svg',
+      'https://catalog.example.com/api/v1/blueprints/fixture-shop/cover.webp'
     ])
   })
 
@@ -219,7 +254,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=17',
+        'content-type': 'application/vnd.businesslens.report+json; version=18',
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': 'a'.repeat(64)
       }
@@ -243,7 +278,7 @@ describe('pull', () => {
     })) as unknown as typeof globalThis.fetch
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(errors[0]).toContain('The catalog serves Product Report version 11; this CLI reads version 17 only')
+    expect(errors[0]).toContain('The catalog serves Product Report version 11; this CLI reads version 18 only')
     expect(existsSync(join(target, '.businesslens'))).toBe(false)
   })
 
@@ -257,14 +292,14 @@ describe('pull', () => {
       : new Response(JSON.stringify(stale), {
         status: 200,
         headers: {
-          'content-type': 'application/vnd.businesslens.report+json; version=17',
+          'content-type': 'application/vnd.businesslens.report+json; version=18',
           'x-businesslens-blueprint': 'fixture-shop',
           'x-businesslens-report-digest': reportDigest(stale)
         }
       })) as unknown as typeof globalThis.fetch
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(errors[0]).toBe('This is a Product Report of schema version 12.0.0; only 17.0.0 is accepted, and there is no compatibility reader. Export it again with a current businesslens.')
+    expect(errors[0]).toBe('This is a Product Report of schema version 12.0.0; only 18.0.0 is accepted, and there is no compatibility reader. Export it again with a current businesslens.')
   })
 
   it('refuses a report served for a different Blueprint', async () => {
@@ -294,7 +329,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=17',
+        'content-type': 'application/vnd.businesslens.report+json; version=18',
         'content-length': String(9 * 1024 * 1024),
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': reportDigest(report)

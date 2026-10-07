@@ -99,7 +99,7 @@ const key = process.env.BUSINESSLENS_CATALOG_KEY
 if (!key) fail('BUSINESSLENS_CATALOG_KEY is not set.')
 
 const { projectPortableReport } = await import('../dist/report.js')
-const { validateProductLogo } = await import('../dist/logo.js')
+const { validateProductCover, validateProductLogo } = await import('../dist/logo.js')
 
 function git(...gitArgs) {
   return execFileSync('git', ['-C', root, ...gitArgs], { encoding: 'utf8' }).trim()
@@ -155,6 +155,18 @@ for (const slug of slugs) {
   }
   const logoIssues = validateProductLogo(await readFile(logoFile))
   if (logoIssues.length) fail(`blueprints/${slug}: ${logoIssues.join('; ')}`)
+  // The catalog fetches an optional cover from the pinned commit, as it does the
+  // logo; check it here so a bad one fails before anything is published.
+  const coverFile = join(dir, '.businesslens', 'product', 'cover.webp')
+  // lstat rather than existsSync, which follows links: a broken link is refused, not skipped.
+  const coverStat = await lstat(coverFile).catch(error => (error.code === 'ENOENT' ? undefined : Promise.reject(error)))
+  if (coverStat) {
+    if (coverStat.isSymbolicLink() || !coverStat.isFile()) {
+      fail(`blueprints/${slug}: .businesslens/product/cover.webp must be a regular file`)
+    }
+    const coverIssues = validateProductCover(await readFile(coverFile))
+    if (coverIssues.length) fail(`blueprints/${slug}: ${coverIssues.join('; ')}`)
+  }
   try {
     execFileSync(process.execPath, [cli, '--cwd', dir, 'blueprint', 'export'], { stdio: 'pipe' })
   } catch (error) {

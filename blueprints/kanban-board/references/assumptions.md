@@ -1,0 +1,27 @@
+# Team board assumptions
+
+These are assumptions to validate, not claims that research has proved them.
+
+- A small team, roughly two to ten people, keeps one board per stream of work
+  and expects everyone on it to see the same columns and cards.
+- Two roles per board are enough: Admins who arrange the board and its
+  members, and Members who work on cards.
+- To do, Doing and Done are the columns most teams start from, and they rename
+  or add columns once the board is in use.
+- Seven calendar days in one column, weekends included, is a sensible default
+  before a card counts as stalled, and teams adjust it per board rather than
+  per column.
+- Teams want stalled cards flagged by the board itself, whether or not anyone
+  has connected an AI agent.
+- A stall flag that clears when the card moves is enough; members do not need
+  to dismiss flags by hand.
+- Members trust an AI agent's proposals more when nothing reaches the board
+  until a member accepts it, and when the agent cannot move or edit cards.
+- A next step proposed for a stalled card is as useful to a team as cards
+  proposed for a new goal.
+- Teams treat the board's last column as done, so finished cards do not need
+  to be archived; cards added by mistake are deleted instead.
+- Members who are done with a board leave it; deleting a whole board, with
+  everyone's work on it, is rare enough to rest with its admins.
+
+Future research may change the Product Model; this file does not override it.

@@ -71,8 +71,9 @@ Read before authoring:
    decision point or a grant's `when` by **What selects** under its Variations.
    Then sweep:
    - **Verbs.** Distinguish durable Capabilities from complete Actor goals and
-     give every Capability per-Capability acceptance; plan a Journey wherever
-     the Product carries the Actor from one Capability into another.
+     give every Capability per-Capability acceptance; give each verb a control
+     shows its own Capability, opposite verbs included; plan a Journey wherever
+     the Product carries the same Actor from one Capability into another.
    - **Nouns.** Every new thing has a Step that creates it and a Step for each
      state it can reach, and a Screen presenting it with its facts, or the
      delta says why not. Where a family of things could be one Entity or
@@ -84,7 +85,9 @@ Read before authoring:
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
-9. Present the complete model delta before writing: every resource added,
+9. Walk the rubric's **Check the whole model before approval** list against
+   the proposed delta and fold what it finds into the proposal. Then present
+   the complete model delta before writing: every resource added,
    changed, or removed; Capability and Journey acceptance Scenarios;
    relationship repairs; limitations; implementation work implied; and
    significant omissions, consequential modeling boundaries and material
@@ -116,7 +119,9 @@ Read before authoring:
     ```
 
     Fix every error and assess each warning. Green lint means structurally
-    sound, not implemented or verified.
+    sound, not implemented or verified, so walk the rubric's **Check the whole
+    model before approval** list again; a fix that changes product behavior
+    goes back to the user for approval before it is written.
 12. Report the approved delta and its acceptance contract, then end with one
     line offering to implement it: the user can say *implement it*, and
     `businesslens-verify` implements the change in phases in the user's own way

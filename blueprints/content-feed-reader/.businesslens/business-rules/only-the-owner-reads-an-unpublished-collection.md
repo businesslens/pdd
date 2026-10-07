@@ -12,7 +12,7 @@ permits:
 # Only the owner reads an unpublished collection
 
 A collection is read by its owner always, and by anyone else only while it is
-published. Once an owner unlists it, its public address serves no collection
+published. Once an owner unpublishes it, its public address serves no collection
 contents.
 
 ## Rationale

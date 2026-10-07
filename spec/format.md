@@ -144,7 +144,8 @@ A representative model can therefore look like this:
 ├── product.md               # compact Product when it has no logo
 ├── product/                 # expanded Product alternative
 │   ├── product.md
-│   └── logo.svg             # optional locally; required for a public Blueprint
+│   ├── logo.svg             # optional locally; required for a public Blueprint
+│   └── cover.webp           # optional catalog cover
 │
 │   ── Interface → Experience → Screen: where Actors meet the Product ──
 ├── interfaces/<interface-id>/
@@ -699,6 +700,19 @@ contain active content, event handlers, embedded documents, imports, or network
 references. It is rendered only as an image and is not embedded in the Product
 Report. Public Blueprints require it; general local Product Models may omit it.
 
+Beside the logo, `product/` may hold one optional `cover.webp`: an illustration
+a catalog shows on the Product's card. It is presentation, never product
+meaning, so nothing in the model refers to it and the Product Report does not
+carry it. It is a WebP image, 16:9 within one percent, at least 1200 and at
+most 4096 pixels wide and at most 2304 high, and at most 1 MiB — four times the
+logo's limit because it is a raster picture, and one format so that a catalog
+serves every cover the same way. It must be a well-formed still WebP: the RIFF
+size matches the file, every chunk lies inside it, and it holds exactly one
+image — a lone lossy `VP8 ` or lossless `VP8L` chunk, or a `VP8X` header whose
+canvas matches that one image, with only `ICCP`, `ALPH`, `EXIF` and `XMP `
+beside it. An animated WebP is not a cover. Only the folder form can hold it: a
+compact `product.md` has no `product/` beside it.
+
 General Product Models may omit this metadata. The public Blueprint publication
 profile requires a category, at least one tag, at least one
 author, a license, and `logo.svg`. There is no separate Blueprint manifest.
@@ -715,6 +729,10 @@ scenarioKinds:
     name: Edge case
     description: Alternative or failure path.
     colorSlot: 6
+  - id: validation
+    name: Validation
+    description: Input or an act the Product refuses while preserving the Actor's work.
+    colorSlot: 3
 ```
 
 ### `interfaces/<id>.md` or `interfaces/<id>/interface.md`
@@ -801,6 +819,36 @@ is a dependency; a feed provider that pushes updates to the Product acts.
 
 There is no external-system resource type. An outbound dependency shared by several
 Capabilities is described by each Capability that depends on it.
+
+### AI in a Product
+
+AI enters a model in exactly one of two ways, decided by who initiates:
+
+- **A model the Product calls is an outbound dependency.** Drafting,
+  summarizing or classifying that a person asks for, or that the Product runs on
+  its own schedule, is a Product Step; the Capability names the language model
+  and what triggers the call, and the model gets no Entity that acts and no
+  Interface. What the person sees while the model is unavailable is an `edge`
+  Capability Scenario.
+- **The person's own agent harness acts.** It is `ai-agent`, the
+  acting Entity the acts table names, reaching the Product through an `agent` Interface.
+  Every grant naming it reaches the person it acts for through `related` — a
+  relation such as *a Member connects an AI agent* — because a bare
+  `actors: [ai-agent]` grants every agent, and `lint` warns.
+
+Either way, what the AI produces to change something a person owns, and the
+Product keeps, is a draft until that person decides it; a summary that
+changes nothing is not a draft. A kept draft is its own Entity when it keeps facts its target never
+has — a reason, a source passage — and otherwise a `Proposed` State of the
+target. A draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`,
+and `Outdated` where the Product closes it because its target changed.
+Accepting and dismissing a kept draft are each a Capability, being later acts on
+something a run produced — `accept-<draft>` and `dismiss-<draft>` for a draft
+Entity, `accept-proposed-<thing>` and `dismiss-proposed-<thing>` for a State, where
+dismissing removes the proposed thing; a Business Rule says only the person decides it, and
+another that the draft changes nothing until accepted. A draft that only fills
+an editor the person has not saved is not kept: saving is the acceptance, and it
+needs no Capability of its own.
 
 ### `interfaces/<interface-id>/experiences/<id>.md` or `<id>/experience.md`
 
@@ -1334,6 +1382,25 @@ the same Capability, available there too. A continuation several Capabilities
 share — a second factor after any sign-in method — is its own Capability: the
 ones it continues end their Scenarios at the hand-off, and a Journey joins them.
 
+**Opposite verbs are separate Capabilities.** An opposing pair — publish and
+unpublish, enable and disable, follow and unfollow, pause and resume, accept and
+dismiss, share and stop sharing, open and close — is two Capabilities, because
+each control shows its own verb, even where one button toggles between them.
+Returning to an earlier State with the *same* verb is a Scenario of that verb:
+republishing an unpublished collection is `publish-collection`, reopening a
+closed form is `reopen-form` only because the control says *reopen*. One
+control that sets one fact to one of several values — a visibility of private,
+unlisted or public — is one Capability, `change-<thing>-<fact>`, with a Scenario
+per value worth distinguishing. Changing one's own earlier submission through
+the control that made it — changing a vote, changing an RSVP — is a Scenario of
+the submitting Capability, not a Capability of its own; withdrawing it through a
+control of its own is. Putting an entry on a thing's list and taking it off — a
+tag, an assignee, a member — are two Capabilities even inside the thing's edit
+form, when each entry is a thing of its own: an Entity, or a person. A value
+inside one fact of the thing — a choice question's options, a snippet's tags
+kept as a fact — changes with that fact. An on/off switch among a
+settings section's settings stays part of that section's one Capability.
+
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
 A Business Rule states a durable constraint, derivation, or authorization policy
@@ -1485,6 +1552,14 @@ Rule needs only to resolve: neither a grant nor a prohibition requires a
 matching operation, Screen disclosure or fact use to exist, and a prohibition
 never needs an example of the prohibited behavior.
 
+**One permission Rule per operation.** Each `effect` Actors perform on an
+Entity — `creates`, `changes`, `removes`, and `reads` where a grant restricts
+it — is governed by a Rule of its own, its target naming that `effect`, even
+where two operations happen to share a grant: a `related` grant starts from one
+Entity target, and a target without `effect` would also select reads.
+Deciding a draft is a `changes` or `removes` from its `Proposed` State and
+needs no Rule beyond these unless its grant differs.
+
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
 own places — the union of the places its contextualized Steps name — and a
@@ -1631,7 +1706,13 @@ scalar or `{ configuredBy: <entity-id> }`.
 
 `fact` defaults to a fact of the targeted Entity and may name another through
 `entity`, which is how thresholds and feature flags work: the value is a fact of
-a settings Entity and the Rule reads it. `state` says *the instance is in state
+a settings Entity and the Rule reads it. **Which instance a named `entity`
+reads is fixed by the grant:** when that Entity lies on the grant's `related`
+path, the condition reads the instance the path reaches — the one nearest the
+acting Entity where the type repeats — so a per-board role reads the acting
+person's own Board membership, never the membership being changed; when it lies
+off the path, the Entity has one instance, the Product's settings. A condition
+on the targeted thing itself names no `entity`. `state` says *the instance is in state
 X when the operation happens*: it must be a state of the targeted Entity, it is
 valid on every target but `creates`, and it cannot be combined with `entity`.
 It exists because two kinds of Step carry no state for a target to select by — a
@@ -1666,7 +1747,10 @@ granted through `configuredBy`, with no Capability creating it; the people
 holding them are one acting Entity, and a configuration that also grants
 directly to people stays an Entity of its own. A role held per container, such
 as an organization or a project, is held through a membership Entity that does
-not act, whose Role fact names it. A relation any role holder can hold — a
+not act, whose Role fact names it. Such a role administers its container, not
+the Product: the container's settings and member pages are `authenticated`
+places, and the membership's Role in a grant's `when` decides who changes them;
+`restricted` is only the Product's own administration area. A relation any role holder can hold — a
 message's sender — is declared to each role Entity, with one `related` grant
 per role. Facts of the person whatever their role live once on an Account
 Entity that does not act, related one-to-one to each role Entity. A Step any of
@@ -1915,7 +1999,18 @@ for a model mapped from code and one decided before any code exists. An
 orchestration, shared state, or a cross-Interface hand-off is not required, and
 a merely plausible sequence of independent Product actions is not a Journey. A
 wizard is one Screen and says nothing about Journeys: the Scenario walking it is a Journey Scenario only where it crosses
-Capabilities. Whether the repository implements the Journey is `verify`'s
+Capabilities. The carrying Step belongs to the run that ends with it, so it
+names the Capability that carries — `create-board` for the redirect into the
+new board — and the next Capability is the first one the Actor then uses where
+they were carried. A result or a pending decision shown where the Actor already
+is carries nobody: drafted cards appearing in the editor the Actor is working
+in are the drafting Capability's outcome, not a hand-off. Steps of other Actors
+may sit between, but only the Journey Actor's Steps — performed, or attributed
+to them — count toward its two Capabilities, and `lint` errors when they do
+not. An emailed link carries only when the Journey Actor's own run sent it; a
+message another Actor's run or the Product's schedule sends starts a new
+visit, not a Journey. Returning from a thing created inline to the act already
+in progress — creating a notebook while filing a note — is not a hand-off. Whether the repository implements the Journey is `verify`'s
 finding. One achieved Journey Scenario is valid coverage. A goal with no
 achieved multi-Capability path belongs to Capability behavior.
 
@@ -2036,7 +2131,7 @@ availability Context.
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`. Silence is impossible; an omission is a claim that can
 be reviewed, linted, and contradicted by code. Each entry is
-`{ entity, as, effect, from, to, facts }`:
+`{ entity, as, effect, from, to, facts, with }`:
 
 ```yaml
 - text: The Reader moves the item from one collection to another
@@ -2079,6 +2174,37 @@ id its own label. Entries without one are a single unnamed instance. Once an
 Entity is aliased anywhere in a Scenario, every mention of it in that Scenario
 is aliased: a bare `collection` beside a `collection (source)` is an error, not
 a third instance.
+
+**`with` says a removal goes with another.** A `removes` entry may carry
+`with`, naming another `removes` entry of the same Step — by its `as` when it
+has one, otherwise by its `entity` — that it is removed because of:
+
+```yaml
+- text: The Teammate deletes the card and every comment on it
+  kind: actor
+  actor: teammate
+  entities:
+    - { entity: card,    effect: removes, from: Active }
+    - { entity: comment, effect: removes, with: card }
+```
+
+**A removal goes `with` the Entity that holds it:** the Entity it names must
+declare a `one-to-many` or `one-to-one` relation to the dependent's Entity, so
+the direction is read from the relation's declared side. A Card that declares
+`one-to-many` Comments lets `comment` go `with: card`; `card` going `with:
+comment` is an error, because Comment declares nothing to Card, and a
+`many-to-many` relation holds nothing. Two entries of the same Entity need that
+Entity to declare such a relation to itself. A `with` chain never returns to
+where it started; `lint` errors otherwise, and on `with` outside a `removes`
+entry or naming no `removes` entry of the Step. Within one Step every entry's
+reference — its `as`, otherwise its `entity` — is unique, so a `with` names
+exactly one entry. **The
+removal it goes with is what needs permission:** a permission Rule on the
+dependent Entity's `removes` never selects a `with` removal, so *only its
+author deletes a comment* and *a member deletes a card, comments and all* hold
+together. A Step that removes two Entities where one holds the other, with no
+`with` on either, is a `lint` warning: the held one almost always goes because
+of the other.
 
 **Steps chain, per instance.** Where a prior Step in the same Scenario left an
 `(entity, as)` pair in a state, this Step's `from` for that pair must equal it.

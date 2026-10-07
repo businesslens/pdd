@@ -73,6 +73,11 @@ products have none.
   Capability's Scenario, never a Journey wrapper.
 - **Being sent back to where you were going after signing in** is not a
   hand-off.
+- **Staying where you are is not a hand-off**: drafts appearing in the editor
+  you are working in, or going back to what you were doing after creating
+  something inline.
+- **An email carries only when your own action sent it.** A message someone
+  else's action or a schedule sends starts a new visit, not a Journey.
 
 ## The file
 
@@ -212,7 +217,9 @@ Errors:
   includes each of its actors.
 - A Journey Scenario needs `kind`, `result`, `routes`, `steps`, `## Trigger` and
   `## Outcome`, and at least one Step naming a Capability.
-- An achieved Journey Scenario uses at least two different Capabilities.
+- An achieved Journey Scenario uses at least two different Capabilities, and
+  carries its own Journey Actor through at least two of them; Steps of another
+  Actor don't count.
 - Each route's first placed Actor Step belongs to a Journey actor.
 - A Step that creates, changes or removes something names a `capability`, and a
   Step naming one happens inside that Capability's availability.

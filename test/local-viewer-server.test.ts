@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
 import type { GithubStarClient } from '../src/core/github-star.js'
-import type { ProductReportV17 } from '../src/core/portable.js'
+import type { ProductReportV18 } from '../src/core/portable.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 
@@ -131,8 +131,8 @@ function staticViewer(): string {
   return directory
 }
 
-function report(): ProductReportV17 {
-  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV17
+function report(): ProductReportV18 {
+  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV18
 }
 
 const logo = (color = '#80552b') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="${color}"/></svg>`

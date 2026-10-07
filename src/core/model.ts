@@ -19,7 +19,7 @@ import {
   uniqueStringListField
 } from './frontmatter.js'
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
-import { readProductLogo } from './logo-file.js'
+import { readProductCover, readProductLogo } from './logo-file.js'
 import {
   bulletList, decisionPoints, namedStates, parseMarkdown, section
 } from './markdown.js'
@@ -223,6 +223,12 @@ export interface ScenarioStepEntity {
   to?: string
   /** Exhaustive named facts affected; empty for presence/state-only operations and removal. */
   facts: string[]
+  /**
+   * On a removal only: the other removal of this Step it goes with, named by
+   * that entry's alias when it has one and by its Entity id otherwise. The
+   * removal it goes with is what needs permission.
+   */
+  with?: string
 }
 
 export interface ScenarioStep {
@@ -721,7 +727,7 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       continue
     }
     const item = entry as Record<string, unknown>
-    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to', 'facts'], issues, entryLabel)
+    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to', 'facts', 'with'], issues, entryLabel)
     const entity = stringField(item, 'entity', issues, entryLabel) || ''
     if (!entity) {
       issues.push(`${entryLabel}: needs an "entity"`)
@@ -772,7 +778,47 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
     } else if (!Array.isArray(item.facts)) {
       issues.push(`${entryLabel}: "facts" is required as a list, including [] when no named facts are affected`)
     }
-    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts })
+    let goesWith = stringField(item, 'with', issues, entryLabel)
+    if (goesWith !== undefined && resolved !== 'removes') {
+      // The entry stays, without the misplaced key, so later checks see the Step as written.
+      issues.push(`${entryLabel}: "with" belongs on a "removes" entry; only a removal goes with another`)
+      goesWith = undefined
+    }
+    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts, ...(goesWith !== undefined ? { with: goesWith } : {}) })
+  }
+  /* A removal goes with another removal of this same Step, named the way the
+     Step names it: by alias when the entry has one, by Entity id otherwise. */
+  const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
+  /* One reference names one entry, or a `with` would mean one entry to the
+     parser and another to the exporter. */
+  const byReference = new Map<string, ScenarioStepEntity>()
+  for (const entry of entries) {
+    const reference = referenceOf(entry)
+    if (byReference.has(reference)) {
+      issues.push(`${label}: two entries are named "${reference}"; give each its own "as" so every entry of a Step has one name`)
+      continue
+    }
+    byReference.set(reference, entry)
+  }
+  for (const entry of entries) {
+    if (entry.with === undefined) continue
+    const target = byReference.get(entry.with)
+    if (!target || target === entry || (target.effect ?? 'changes') !== 'removes') {
+      issues.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", which names no other "removes" entry of this Step`)
+      delete entry.with
+    }
+  }
+  for (const entry of entries) {
+    const visited = new Set<ScenarioStepEntity>()
+    let current: ScenarioStepEntity | undefined = entry
+    while (current?.with !== undefined && !visited.has(current)) {
+      visited.add(current)
+      current = byReference.get(current.with)
+    }
+    if (current && visited.has(current)) {
+      issues.push(`${label}: "with" on "${referenceOf(entry)}" returns to where it started; one removal must be what the others go with`)
+      break
+    }
   }
   return entries
 }
@@ -1128,6 +1174,11 @@ export function loadModel(cwd: string): PddModel {
     } catch (error) {
       issues.push(`logo.svg: ${(error as Error).message}`)
     }
+    try {
+      readProductCover(cwd)
+    } catch (error) {
+      issues.push(`cover.webp: ${(error as Error).message}`)
+    }
   }
 
   let config = { schema: FOLDER_SCHEMA, sddPaths: [] as string[] }
@@ -1206,8 +1257,8 @@ export function loadModel(cwd: string): PddModel {
   }
   if (hasProductDirectory) {
     for (const entry of readdirSync(productDirectory, { withFileTypes: true })) {
-      if (entry.name === '.DS_Store' || entry.name === 'product.md' || entry.name === 'logo.svg') continue
-      issues.push(`product/${entry.name}: the Product folder may contain only product.md and logo.svg`)
+      if (['.DS_Store', 'product.md', 'logo.svg', 'cover.webp'].includes(entry.name)) continue
+      issues.push(`product/${entry.name}: the Product folder may contain only product.md, logo.svg and cover.webp`)
     }
   }
 

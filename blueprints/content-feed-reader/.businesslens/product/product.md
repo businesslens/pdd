@@ -1,17 +1,18 @@
 ---
 id: content-feed-reader
 summary: Follow feeds, catch up and keep worthwhile items in a private web or mobile library, and publish read-only collections for the web.
-category: content
-tags: [content, reading, syndication]
+category: productivity
+tags: [single-user, public]
 authors:
   - name: BusinessLens
 license: MIT
 languages: [en, de, fr]
 limitations:
-  - Public collection links open on the web; the mobile application serves the reader's private library.
   - Sharing is read-only. There is no commenting, co-editing, or social graph.
   - The product reads syndicated feeds but does not publish feeds of its own.
-  - Readers sign in with an existing account, while Visitors read published collections without one.
+  - Items are never deleted from a library; unfollowing a source keeps everything it already delivered.
+  - A source keeps the name and feed address it was followed with; changing either means unfollowing it and following it again.
+  - Readers sign in with an existing account, while Visitors read published collections without one; signing up and managing accounts are not part of this product.
 references:
   - kind: visual
     role: intent
@@ -27,12 +28,13 @@ references:
 
 A focused reading product for people who follow more sources than they can keep
 up with. It synchronizes followed feeds into a private library, remembers reading
-progress, lets readers save and organize worthwhile items, and publishes a
-collection as a read-only web link.
+progress, lets readers save worthwhile items and gather them into collections,
+and publishes a collection as a read-only web link.
 
 ## Intent
 
-Make a growing stream of syndicated content feel finite and dependable. The
-Reader controls what they follow, what they have read, and what they choose to
-keep. Sharing exposes only the collection the reader deliberately publishes;
-the rest of the library remains private.
+People who follow many sources face a stream that never ends and never feels
+caught up, and what they wanted to keep gets lost in it. The Product makes that
+stream finite and dependable: the Reader controls what they follow, what they
+have read, and what they choose to keep. Sharing exposes only the collection
+the Reader deliberately publishes; the rest of the library remains private.

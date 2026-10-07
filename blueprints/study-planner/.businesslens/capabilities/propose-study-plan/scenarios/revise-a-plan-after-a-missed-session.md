@@ -1,0 +1,72 @@
+---
+kind: primary
+routes:
+  agent: Agent
+steps:
+  - text: The AI agent asks for the Student's schedule
+    kind: actor
+    actor: ai-agent
+    entities:
+      - { entity: student, effect: reads, facts: [] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The Product provides the sessions, with those whose day passed unlogged shown as missed, and the Student's weekly availability
+    kind: product
+    actor: ai-agent
+    entities:
+      - { entity: study-session, effect: reads, facts: [Start, Planned minutes, Logged minutes] }
+      - { entity: student, effect: reads, facts: [Weekly availability] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The AI agent divides the missed goal's study still to do again, across the availability before the target date
+    kind: actor
+    actor: ai-agent
+    entities:
+      - { entity: goal, effect: reads, facts: [Target date] }
+      - { entity: topic, effect: reads, facts: [Estimated hours] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The AI agent leaves the revised plan, explaining which missed study it moved and where
+    kind: actor
+    actor: ai-agent
+    entities:
+      - { entity: study-plan, effect: creates, to: Proposed, facts: [Proposed sessions, Replaced sessions, Explanation, Shortfall, Prepared by, Prepared at] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The Product confirms that every proposed session fits the availability and overlaps no other session, and keeps the plan
+    kind: product
+    actor: ai-agent
+    entities:
+      - { entity: study-plan, effect: reads, facts: [Proposed sessions] }
+    contexts:
+      agent:
+        place: planner-agent
+  - text: The revised plan waits in Plans for the Student, and the schedule still shows the session as missed
+    kind: condition
+    actor: ai-agent
+    entities:
+      - { entity: study-plan, effect: reads, facts: [] }
+      - { entity: study-session, effect: reads, facts: [] }
+      - { entity: student, effect: reads, facts: [] }
+    contexts:
+      agent:
+        place: planner-agent
+---
+
+# Revise a plan after a missed session
+
+## Trigger
+
+The AI agent looks over the Student's schedule and finds a planned session whose day passed without being logged, for a goal still ahead.
+
+## Outcome
+
+A revised plan waits for the Student's review; the schedule has not changed.
+
+## Edge cases
+
+- The goal is past → the Product refuses the plan and keeps nothing.

@@ -21,7 +21,7 @@ A representative model looks like this:
 ├── taxonomies.yaml
 ├── coverage.md
 ├── .gitignore
-├── product.md                    # or product/product.md beside logo.svg
+├── product.md                    # or product/product.md beside logo.svg (and an optional cover.webp)
 ├── interfaces/<id>/
 │   ├── interface.md
 │   ├── screens/<id>.md                       # when no Experience divides it
@@ -84,7 +84,14 @@ and members) granted through `configuredBy`, with no Capability that creates
 it; a configuration that also grants directly to people stays its own Entity,
 and the people who hold configured roles are one acting Entity. A role held per
 container, such as an organization or a project, is held through a membership
-Entity that does not act, whose Role fact names the role. A relation that holds
+Entity that does not act, whose Role fact names the role. Such a role
+administers its container, not the Product: the container's settings and
+member pages stay `authenticated`, with the Role in a grant's `when`. A
+condition's `entity` that lies on the grant's `related` path reads the instance
+the path reaches (nearest the acting Entity where the type repeats), so the
+Role read is the acting person's own membership; off the path, it is the
+Product's one settings instance. `restricted` is only the Product's own
+administration area. A relation that holds
 whatever role a person has (the sender of a message) is declared to each role
 Entity that can hold it, and ownership is one `related` grant per role. Facts
 that belong to the person whatever their role — email, display and
@@ -225,6 +232,21 @@ Lead and section-body fragments do not contain another H1 or H2.
   sign-in method) is its own Capability: the ones it continues end their
   Scenarios at the hand-off, stating it in their Outcome, and a Journey joins
   them. Splitting neither creates nor removes a Domain.
+
+  **Opposite verbs are separate Capabilities** — publish and unpublish, enable
+  and disable, follow and unfollow, pause and resume, accept and dismiss, share
+  and stop sharing, open and close — even where one button toggles: each
+  control shows its own verb. Returning to an earlier State with the *same*
+  verb is a Scenario (republishing is `publish-collection`). One control that
+  sets one fact to one of several values — visibility private, unlisted or
+  public — is one Capability, `change-<thing>-<fact>`. Changing one's own
+  earlier submission through the control that made it (a vote, an RSVP) is a
+  Scenario of the submitting Capability. Putting an entry on a thing's list
+  and taking it off (a tag, an assignee, a member) are two Capabilities even
+  inside its edit form when the entry is an Entity or a person; a value inside
+  one fact (a question's options) changes with that fact; an on/off switch among a settings section's settings
+  stays part of that section's one Capability. An umbrella verb — manage, organize,
+  handle — hides Capabilities; name each verb its controls show.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A
@@ -289,6 +311,29 @@ Lead and section-body fragments do not contain another H1 or H2.
   calls out to does not act; a privilege that exists only in code is
   authorization, not product meaning, and is never modelled.
 
+  **AI enters in exactly one of two ways, decided by who initiates.** A model
+  the Product calls — drafting, summarizing or classifying a person asks for,
+  or the Product runs on its schedule — is an outbound dependency: a Product
+  Step, the Capability naming the language model and what triggers the call,
+  no Entity that acts, no Interface, and an `edge` Capability Scenario for what
+  the person sees while the model is unavailable. A built-in "assistant" is
+  this case and never an Actor. The person's own agent harness is `ai-agent`
+  behind an `agent` Interface, and every grant naming it reaches the person it
+  acts for through `related` (a person `connects` an AI agent); a bare
+  `actors: [ai-agent]` grants every agent. What the AI produces to change
+  something a person owns, and the Product keeps, is a draft (a summary that
+  changes nothing is not): its own Entity when it keeps facts the target never has (a
+  reason, a source passage), otherwise a `Proposed` State of the target. A
+  draft Entity's States are `Proposed`, then `Accepted` or `Dismissed`, and
+  `Outdated` where the Product closes it because its target changed.
+  Accepting and dismissing a kept draft are each a Capability —
+  `accept-<draft>`/`dismiss-<draft>` for a draft Entity,
+  `accept-proposed-<thing>`/`dismiss-proposed-<thing>` for a State, where
+  dismissing removes the proposed thing; one Business Rule says only
+  the person decides it, another that it changes nothing until accepted. A
+  draft that only fills an editor the person has not saved is not kept, and
+  saving is the acceptance.
+
   An Entity is a thing an Actor points at and the Product tells apart —
   identity, not storage: a shopper says "this order", never "this order line",
   so the lines are information kept inside Order, and a word for all of them
@@ -351,8 +396,11 @@ Lead and section-body fragments do not contain another H1 or H2.
   and who may perform it ("Only the owner reads an unpublished collection"), an
   invariant what always holds. A consequence, a feature, or the mechanism
   behind the Rule belongs in the lead or `## Rationale`, never the title; from
-  the title and `appliesTo` alone, the grants' who is no surprise. An Entity
-  target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`:
+  the title and `appliesTo` alone, the grants' who is no surprise. Each
+  operation Actors perform on an Entity — `creates`, `changes`, `removes`, and
+  `reads` where a grant restricts it — has its own permission Rule naming that
+  `effect`, even where two share a grant.
+  An Entity target is `{ type: entity, id, effect?, from?, to?, facts?, contexts? }`:
   **a target selects; a grant conditions.** `effect`, `from` and `to` select
   Steps by the keys their `entities` entry carries (`from` with
   `changes|removes`, `to` with `creates|changes`, neither with `reads`);
@@ -408,7 +456,19 @@ Lead and section-body fragments do not contain another H1 or H2.
   automatically once checks pass. Neither is a hand-off to a different Actor,
   such as an invitation another person follows: the Actor carried must be the
   same one. The test is structural, so "omit rather than assert" does not apply
-  to it. Every Journey needs achieved Journey Scenario coverage for every
+  to it. The carrying Step ends the run that carries, so it names that
+  Capability (`create-board` for the redirect into the new board), and the
+  next Capability is the first one the Actor then uses where they were carried.
+  A result or pending decision shown where the Actor already is carries nobody:
+  drafts appearing in the editor the Actor is working in are the drafting
+  Capability's outcome. Other Actors' Steps may sit between, but only Steps the
+  Journey Actor performs or is attributed count toward its two Capabilities.
+  An emailed link carries only when the Journey Actor's own run sent it, and
+  returning from a thing created inline to the act in progress carries
+  nobody.
+  To find every Journey, read each Capability Scenario's last Product Step:
+  wherever it lands the Actor at a place offering another Capability they then
+  use, there is a Journey. Every Journey needs achieved Journey Scenario coverage for every
   Journey Actor. It has no `entryPoints`; resolve presentation routes from the
   first Actor-owned placed Step's Context place and its Interface or Experience.
 - Journey Scenario: taxonomy `kind`, `result: achieved|not-achieved`, named
@@ -485,14 +545,21 @@ on its own — a schedule it owns, an expiry, a retry — is such a Scenario,
 available where an Actor observes the outcome.
 
 **`entities` is required on every Step** and `[]` when it touches nothing.
-Each entry is `{ entity, as?, effect, from?, to?, facts? }`: `effect` is
+Each entry is `{ entity, as?, effect, from?, to?, facts?, with? }`: `effect` is
 `creates|changes|removes|reads`, defaulting to `changes`; `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither. Every
 state resolves. `facts` is required on reads, changes and creation: the
 exhaustive unique list of named Product facts affected, including defaults on
 creation, never inferred from form fields or padded with incidental
 implementation data; `[]` names no facts, never unspecified. Removal has no
-`facts`. An Actor read on a Screen must occur in that Screen's `shows`; Product
+`facts`. A removal that happens because another removal of the same Step does
+— a card's comments going with the card — says `with: <alias or entity id of
+that entry>`, naming the Entity that holds it: the named Entity must declare a
+`one-to-many` or `one-to-one` relation to the dependent's (itself, for two of the
+same Entity), so `comment` goes `with: card`, never the reverse. The removal it
+goes with is what needs permission, two removals where one holds the other with
+no `with` are a warning, and each entry's `as`-or-`entity` reference is unique
+in its Step. An Actor read on a Screen must occur in that Screen's `shows`; Product
 and condition Steps may consult undisplayed facts. A Step lists every thing it
 moves, one entry per `(entity, as)` pair; `as` is a scenario-local alias for two
 instances of one Entity, and once used, used everywhere in the Scenario. Where

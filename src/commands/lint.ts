@@ -117,6 +117,21 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   if (!model.product.id) errors.push('product.md: missing id')
   requireTitle('product.md', model.product.doc.title, model.product.doc.lead)
   validateSections('product.md', model.product.doc, ['Intent'])
+  /*
+   * A Product limitation is a deliberate constraint a reader of the Product
+   * can rely on, including what the Product leaves to other systems. Wording
+   * about the model itself — what it does not cover — says nothing a reader of
+   * the Product can rely on; the product fact behind it is the limitation.
+   */
+  // "in the model" is left out on purpose: a limitation about a language
+  // model's provider ("nothing is kept in the model provider's logs") is a
+  // real Product constraint, and the phrase cannot tell the two apart.
+  const MODEL_LANGUAGE = /\bnot model(?:l)?ed\b|\boutside (?:the|this) model\b|\bthe model does not\b/i
+  for (const limitation of model.product.limitations) {
+    if (MODEL_LANGUAGE.test(limitation)) {
+      warnings.push(`product.md: limitation "${limitation}" speaks about the model; state the product fact instead, such as what the Product leaves to other systems`)
+    }
+  }
   if (model.product.summary && (/\r|\n/.test(model.product.summary) || model.product.summary.length > 400)) {
     errors.push('product.md: summary must be a single line with at most 400 characters')
   }
@@ -512,15 +527,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     'accept', 'activate', 'add', 'allow', 'answer', 'apply', 'approve', 'archive', 'assign', 'authorize', 'back', 'block', 'book', 'browse', 'build',
     'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
     'configure', 'confirm', 'connect', 'contribute', 'create', 'deactivate', 'decide', 'decline', 'delete',
-    'deliver', 'disable', 'discover', 'download', 'duplicate', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
+    'deliver', 'disable', 'disconnect', 'discover', 'dismiss', 'download', 'duplicate', 'edit', 'enable', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
     'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
     'keep', 'leave', 'link', 'lint', 'list', 'log', 'manage', 'map', 'mark', 'merge', 'move', 'name',
-    'open', 'order', 'organize', 'pause', 'pay', 'pin', 'place', 'plan', 'preserve', 'publish', 'pull',
-    'read', 'receive', 'recover', 'refresh', 'refund', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
+    'open', 'order', 'organize', 'pause', 'pay', 'pin', 'place', 'plan', 'preserve', 'propose', 'publish', 'pull',
+    'read', 'receive', 'recover', 'refresh', 'refund', 'reopen', 'regenerate', 'register', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
     'report', 'request', 'resend', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
     'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
     'share', 'ship', 'show', 'sign', 'star', 'start', 'stop', 'submit', 'subscribe', 'switch',
-    'synchronize', 'track', 'transfer', 'unarchive', 'unfollow', 'unlink', 'unlist', 'unpin', 'unpublish', 'unresolve', 'unstar', 'unsubscribe', 'update', 'upload', 'verify',
+    'synchronize', 'track', 'transfer', 'unarchive', 'unassign', 'uncheck', 'unfollow', 'unlink', 'unlist', 'unpin', 'unpublish', 'unresolve', 'unstar', 'unsubscribe', 'update', 'upload', 'verify',
     'view', 'withdraw', 'write'
   ])
   /*
@@ -555,6 +570,79 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (NOMINALISED.test(last) && !declared && !carriesVerb) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" reads as a noun phrase; a behavioral id starts with a verb`
+      )
+    }
+  }
+
+  /*
+   * The split test separates parts that differ in verb, and the verb is the one
+   * the control shows. A Scenario that opens with the opposite of its
+   * Capability's verb — `enable-a-disabled-link` under `disable-link` — is the
+   * other half of a toggle folded in, and two encodings of one product would
+   * disagree on the Capability count. The first id segment is read directly:
+   * `unlist` and `unfollow` need not be in the lexicon to be opposites.
+   */
+  const leadingVerb = (id: string) => id.split('-')[0] || ''
+  const OPPOSITE_VERBS: Array<[string, string[]]> = [
+    ['publish', ['unpublish', 'unlist']],
+    ['enable', ['disable']],
+    ['follow', ['unfollow']],
+    ['pause', ['resume']],
+    ['accept', ['dismiss', 'decline']],
+    ['share', ['unshare']],
+    ['open', ['close']],
+    ['reopen', ['close']],
+    ['subscribe', ['unsubscribe']],
+    ['join', ['leave']],
+    ['add', ['remove']],
+    ['save', ['unsave', 'remove']],
+    ['archive', ['restore', 'unarchive']],
+    ['lock', ['unlock']],
+    ['pin', ['unpin']],
+    ['star', ['unstar']],
+    ['link', ['unlink']],
+    ['check', ['uncheck']],
+    ['assign', ['unassign']],
+    ['connect', ['disconnect']],
+    ['start', ['stop']],
+    ['tag', ['untag']]
+  ]
+  const opposites = new Map<string, Set<string>>()
+  for (const [verb, others] of OPPOSITE_VERBS) {
+    for (const other of others) {
+      opposites.set(verb, (opposites.get(verb) || new Set()).add(other))
+      opposites.set(other, (opposites.get(other) || new Set()).add(verb))
+    }
+  }
+  /*
+   * Two spellings the first segment alone misses: "stop sharing" opens with
+   * `stop` and carries the verb it reverses in its second segment, and
+   * "mark read" / "mark unread" share `mark` and differ in their last word.
+   * Each returns the two verbs as the author wrote them, or nothing.
+   */
+  const verbStem = (verb: string) => verb.replace(/e$/, '')
+  const stopPhrase = (stopper: string[], verb: string) =>
+    stopper[0] === 'stop' && verb !== 'stop' && verb.length > 2 && (stopper[1] || '').startsWith(verbStem(verb))
+  const oppositeVerbs = (capabilityId: string, scenarioId: string): [string, string] | undefined => {
+    const capability = capabilityId.split('-')
+    const scenario = scenarioId.split('-')
+    const capabilityVerb = capability[0] || ''
+    const scenarioVerb = scenario[0] || ''
+    if (opposites.get(capabilityVerb)?.has(scenarioVerb)) return [capabilityVerb, scenarioVerb]
+    if (stopPhrase(scenario, capabilityVerb)) return [capabilityVerb, `stop ${scenario[1]}`]
+    if (stopPhrase(capability, scenarioVerb)) return [`stop ${capability[1]}`, scenarioVerb]
+    if (capabilityVerb === 'mark' && scenarioVerb === 'mark') {
+      const state = capability.at(-1)
+      const opposite = state === 'read' ? 'unread' : state === 'unread' ? 'read' : undefined
+      if (opposite && scenario.slice(1).includes(opposite)) return [`mark ${state}`, `mark ${opposite}`]
+    }
+    return undefined
+  }
+  for (const scenario of model.capabilityScenarios) {
+    const pair = oppositeVerbs(scenario.capability, scenario.id)
+    if (pair) {
+      warnings.push(
+        `${scenario.file}: opens with "${pair[1]}" under Capability "${scenario.capability}", whose verb is "${pair[0]}"; opposite verbs are separate Capabilities`
       )
     }
   }
@@ -1170,6 +1258,20 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     journeyScenarioActors.set(scenario.id, scenarioActors)
     if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capability)).size < 2) {
       errors.push(`${scenario.file}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    } else if (scenario.result === 'achieved' && journey) {
+      /* The Product carries the Journey's own Actor across; a hand-off to
+         another Actor carries nobody, so only Steps one Journey Actor performs
+         or is attributed count toward the two Capabilities — counted per
+         Actor, since an agent proposing and a person accepting are two Actors
+         each using one Capability, not one Actor carried through two. */
+      const carried = new Map<string, Set<string>>()
+      for (const step of scenario.steps) {
+        if (!step.capability || !step.actor || !journeyActorSet.has(step.actor)) continue
+        carried.set(step.actor, (carried.get(step.actor) || new Set()).add(step.capability))
+      }
+      if (![...carried.values()].some(capabilities => capabilities.size >= 2)) {
+        errors.push(`${scenario.file}: an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities; Steps of another Actor, or of another Journey Actor, do not add up`)
+      }
     }
   }
 
@@ -1453,9 +1555,30 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       }
       const singleTarget = entityTargets.length === 1 ? entityTargets[0] : undefined
       const targetEntity = singleTarget ? entitiesById.get(singleTarget.id) : undefined
+      /* One permission Rule per operation: a target without `effect` selects
+         creates, changes, removes and reads at once, so two authors would
+         split the same policy differently. Naming the effect is the shape. */
+      for (const target of entityTargets) {
+        if (target.effect === undefined) {
+          warnings.push(`${rule.file}: target "entity:${target.id}" names no "effect"; each operation gets its own permission Rule naming its effect`)
+        }
+      }
       for (const [grantIndex, grant] of rule.permits.entries()) {
         const grantLabel = `${rule.file}: grant ${grantIndex + 1}`
         for (const actorId of grant.actors) requireActor(grantLabel, actorId)
+        /* An AI agent acts for the person who connected it, so a grant to
+           it names that person on its path: a bare grant admits every agent,
+           and a path that never reaches a person — `leaves ai-agent` alone —
+           says which agent wrote a thing, not who authorized it. */
+        const reachesAgent = grant.actors.includes('ai-agent') || grant.related.at(-1)?.entity === 'ai-agent'
+        if (reachesAgent && !grant.related.length) {
+          warnings.push(`${grantLabel}: grants "ai-agent" with no "related" path, which admits any AI agent; say whose AI agent it is through "related"`)
+        } else if (reachesAgent && singleTarget) {
+          const path = [singleTarget.id, ...grant.related.slice(0, -1).map(segment => segment.entity)]
+          if (!path.some(id => entitiesById.get(id)?.kind === 'person')) {
+            warnings.push(`${grantLabel}: reaches "ai-agent" without passing a person; walk "related" through the person who connected the agent`)
+          }
+        }
         if (grant.configuredBy !== undefined && !entityIds.has(grant.configuredBy)) {
           errors.push(`${grantLabel}: "configuredBy" references missing entity "${grant.configuredBy}"`)
         }
@@ -1569,7 +1692,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     contextPlaces: operationPlaces(
       step.contexts.map(context => context.place),
       scenarioPlaces.get(scenarioFile) ?? []
-    )
+    ),
+    goesWith: entry.with !== undefined
   })
   const permissionRules = permissionRuleResources.map(rule => ({
     id: rule.id,
@@ -1635,6 +1759,75 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           if (selected.length && selected.every(entry => entry.from === condition.state)) {
             warnings.push(`${rule.file}: grant ${grantIndex + 1}: "state: ${condition.state}" is redundant; every selected Step already leaves from it`)
           }
+        }
+      }
+    }
+  }
+
+  /*
+   * Where the model already decides who may change an Entity, an Actor's
+   * change or removal of it that no permission Rule selects is the gap a
+   * reader will hit: the Rules say who may edit a Question, and nothing says
+   * who may remove one. Creating is left open, since anyone a place admits
+   * usually may make their own, and an Entity with no permission Rule at all is
+   * a model that has not taken up authorization, which is not lint's call.
+   * Reported once per Entity and effect.
+   */
+  const governedEntities = new Set(permissionRuleResources.flatMap(rule =>
+    rule.appliesTo.flatMap(target => target.type === 'entity' && target.effect !== 'reads' ? [target.id] : [])))
+  const ungoverned = new Set<string>()
+  for (const scenario of allScenarios) {
+    for (const [index, step] of scenario.steps.entries()) {
+      // A Step attributed to an Actor — a Product Step carrying `actor` — is
+      // that Actor's operation for permission purposes, exactly as when the
+      // Actor performs it; only unattended Steps, which act for nobody, skip.
+      if (!step.actor || step.unattended) continue
+      for (const entry of step.entities) {
+        const effect = entry.effect ?? 'changes'
+        if (effect !== 'changes' && effect !== 'removes') continue
+        // A removal that goes with another is permitted by that removal.
+        if (entry.with !== undefined) continue
+        // An Actor changing its own record (an Owner turning on one of their
+        // settings) is that person's own business, not a gap in who may act.
+        if (entry.entity === step.actor || !governedEntities.has(entry.entity)) continue
+        const key = `${entry.entity}|${effect}`
+        if (ungoverned.has(key)) continue
+        const governed = permissionRuleResources.some(rule => rule.appliesTo.some(target =>
+          target.type === 'entity' && selects(target, entry, step, scenario.file)))
+        if (governed) continue
+        ungoverned.add(key)
+        warnings.push(`${scenario.file}: step ${index + 1}: "${step.actor}" ${effect} "${entry.entity}", which no permission Rule selects, though Rules govern who may change it otherwise; say who may`)
+      }
+    }
+  }
+
+  /*
+   * A removal goes `with` the thing that holds it, read from the relation's
+   * declared side: the holder declares a one-to-many or one-to-one relation to
+   * the held, itself included. One cascade then has one encoding — `comment`
+   * with `card`, never `card` with `comment`. Removing a holder and what it
+   * holds in one Step with no `with` nearly always hides one.
+   */
+  const holds = (holder: string, held: string) => (entitiesById.get(holder)?.relations ?? [])
+    .some(relation => relation.entity === held && (relation.cardinality === 'one-to-many' || relation.cardinality === 'one-to-one'))
+  for (const scenario of allScenarios) {
+    for (const [index, step] of scenario.steps.entries()) {
+      const label = `${scenario.file}: step ${index + 1}`
+      const removals = step.entities.filter(entry => entry.effect === 'removes')
+      const referenceOf = (entry: ScenarioStepEntity) => entry.as ?? entry.entity
+      for (const entry of removals) {
+        if (entry.with === undefined) continue
+        const target = removals.find(other => referenceOf(other) === entry.with)
+        if (target && !holds(target.entity, entry.entity)) {
+          errors.push(`${label}: "${referenceOf(entry)}" goes "with" "${entry.with}", but "${target.entity}" declares no one-to-many or one-to-one relation to "${entry.entity}"; a removal goes with the thing that holds it${holds(entry.entity, target.entity) ? `, so "${entry.with}" goes "with" "${referenceOf(entry)}"` : ''}`)
+        }
+      }
+      for (const [position, left] of removals.entries()) {
+        for (const right of removals.slice(position + 1)) {
+          if (left.with !== undefined || right.with !== undefined) continue
+          const [holder, held] = holds(left.entity, right.entity) ? [left, right] : holds(right.entity, left.entity) ? [right, left] : []
+          if (!holder || !held) continue
+          warnings.push(`${label}: removes "${referenceOf(held)}" alongside "${referenceOf(holder)}", which holds it; say "${referenceOf(held)}" goes "with" "${referenceOf(holder)}"`)
         }
       }
     }

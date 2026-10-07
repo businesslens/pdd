@@ -106,6 +106,12 @@ it the id `ai-agent`, `kind: system`, `acts: external`. It qualifies because it
 chooses what to inspect, what to propose and when to stop. A CI runner executing
 a fixed command does not.
 
+A built-in AI feature is different: when the Product itself calls a language
+model to draft or summarize, that model is a dependency of the Capability, and
+the drafting is a Product Step. It never acts, however much it feels like an
+assistant. Whichever way AI enters, a kept proposal to change something a
+person owns waits until that person accepts it.
+
 ## The file
 
 `entities/<id>.md`: one folder for every Entity, whether or not it acts.

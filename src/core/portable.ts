@@ -15,7 +15,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '17.0.0'
+export const REPORT_SCHEMA_VERSION = '18.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -305,7 +305,9 @@ export const ReportScenarioStepEntitySchema = z.strictObject({
   from: SingleLineTextSchema.nullable(),
   to: SingleLineTextSchema.nullable(),
   /** The exhaustive facts read, changed or initialized; empty on removal. */
-  facts: z.array(SingleLineTextSchema)
+  facts: z.array(SingleLineTextSchema),
+  /** On a removal, the other removal of this step it goes with. */
+  with: z.strictObject({ entityId: IdSchema, as: IdSchema.nullable() }).nullable()
 })
 
 export const ReportScenarioStepSchema = z.strictObject({
@@ -458,7 +460,7 @@ export const ReportVariationSchema = z.strictObject({
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV17Schema = z.strictObject({
+export const ProductReportV18Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -497,10 +499,10 @@ export const ProductReportV17Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV17Schema
+export const ProductReportSchema = ProductReportV18Schema
 
-export type ProductReportV17 = z.infer<typeof ProductReportV17Schema>
-export type ProductReport = ProductReportV17
+export type ProductReportV18 = z.infer<typeof ProductReportV18Schema>
+export type ProductReport = ProductReportV18
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -533,7 +535,7 @@ export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV17['model']
+export type ReportModel = ProductReportV18['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -542,7 +544,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV17Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV18Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -687,7 +689,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV17): string[] {
+export function validateProductReport(report: ProductReportV18): string[] {
   const issues: string[] = []
   const { model } = report
   /* Member key → Variation id. A Rule in a Variation applies only under its set's conditions, never unconditionally. */
@@ -986,8 +988,37 @@ export function validateProductReport(report: ProductReportV17): string[] {
        * all, and one Step states one thing about one instance.
        */
       requireUniqueValues(issues, stepLabel, 'entities', step.entities.map(entry => `${entry.entityId}\u0000${entry.as ?? ''}`))
+      // The folder names an entry by its alias, otherwise its Entity, so that name is unique too.
+      requireUniqueValues(issues, stepLabel, 'entity references', step.entities.map(entry => entry.as ?? entry.entityId))
       if (!parentCapabilityId && !step.capabilityId && step.entities.some(entry => entry.effect !== 'reads')) {
         issues.push(`${stepLabel}: a Journey Step that creates, changes or removes an Entity needs a capabilityId`)
+      }
+      /* A removal goes with another removal of this Step whose Entity holds it —
+         declares a one-to-many or one-to-one relation to it, itself included —
+         and following `with` always ends at one that goes with nothing. */
+      const recordKey = (entityId: string, as: string | null) => `${entityId}\u0000${as ?? ''}`
+      const removalRecords = new Map(step.entities
+        .filter(entry => entry.effect === 'removes')
+        .map(entry => [recordKey(entry.entityId, entry.as), entry]))
+      for (const entry of step.entities) {
+        if (entry.with === null) continue
+        const target = removalRecords.get(recordKey(entry.with.entityId, entry.with.as))
+        if (entry.effect !== 'removes' || !target || target === entry) {
+          issues.push(`${stepLabel}: "with" on "${entry.entityId}" must name another "removes" record of this step, from a "removes" record`)
+          continue
+        }
+        const holds = (holder: string, held: string) => (entitiesById.get(holder)?.relations ?? [])
+          .some(relation => relation.entityId === held && (relation.cardinality === 'one-to-many' || relation.cardinality === 'one-to-one'))
+        if (!holds(target.entityId, entry.entityId)) {
+          issues.push(`${stepLabel}: "${entry.entityId}" goes with "${target.entityId}", but "${target.entityId}" declares no one-to-many or one-to-one relation to "${entry.entityId}"`)
+        }
+        const visited = new Set<typeof entry>()
+        let current: typeof entry | undefined = entry
+        while (current?.with && !visited.has(current)) {
+          visited.add(current)
+          current = removalRecords.get(recordKey(current.with.entityId, current.with.as))
+        }
+        if (current && visited.has(current)) issues.push(`${stepLabel}: "with" on "${entry.entityId}" forms a cycle`)
       }
       for (const entry of step.entities) {
         const entity = entitiesById.get(entry.entityId)
@@ -1197,6 +1228,19 @@ export function validateProductReport(report: ProductReportV17): string[] {
     journeyScenarioSteps.set(scenario.id, capabilitySteps)
     if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capabilityId)).size < 2) {
       issues.push(`${label}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    } else if (scenario.result === 'achieved' && journey) {
+      /* As lint counts it: the Product carries one Journey Actor across, so only
+         Steps that Actor performs or is attributed count, per Actor. A report
+         lint would refuse is refused here too, so a catalog never accepts what
+         `open` and `pull` then reject. */
+      const carried = new Map<string, Set<string>>()
+      for (const step of scenario.steps) {
+        if (!step.capabilityId || !step.actorId || !journeyActorSet.has(step.actorId)) continue
+        carried.set(step.actorId, (carried.get(step.actorId) || new Set()).add(step.capabilityId))
+      }
+      if (![...carried.values()].some(capabilities => capabilities.size >= 2)) {
+        issues.push(`${label}: an achieved Journey Scenario must carry one Journey Actor through at least two Capabilities`)
+      }
     }
   }
 
@@ -1668,7 +1712,8 @@ export function validateProductReport(report: ProductReportV17): string[] {
         from: entry.from,
         to: entry.to,
         facts: entry.facts,
-        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places)
+        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places),
+        goesWith: entry.with !== null
       })))
     }),
     screens: model.screens.map(screen => {
@@ -1775,7 +1820,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV17): ProductReportV17 {
+export function projectPortableReport(report: ProductReportV18): ProductReportV18 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1820,8 +1865,8 @@ export function projectPortableReport(report: ProductReportV17): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV17 {
-  const parsed = ProductReportV17Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV18 {
+  const parsed = ProductReportV18Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1847,7 +1892,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV17): string[] {
+export function validateBlueprintReport(report: ProductReportV18): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

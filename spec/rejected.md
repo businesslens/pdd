@@ -205,6 +205,56 @@ group sync into its own Capability keeps its setting from crossing sign-in's,
 but creates Capabilities the split test would not make, only to host a
 Variation.
 
+**A reversible pair as one Capability.** Folding publish and unpublish, or
+enable and disable, into one toggle Capability reads naturally, but fifteen
+Blueprints authored in parallel folded some pairs and split others, and both
+linted clean. The verb each control shows decides it the same way every time;
+the cost is a few more Capabilities.
+
+**Changing one's own submission as a Capability of its own.** Changing a vote
+or an RSVP goes through the control that made it, under the same grant, so a
+separate Capability would split on nothing the split test names.
+
+## Journeys
+
+**Naming a carrying Step after the destination Capability.** Parallel authors
+named the redirect after the creating Capability, after the destination, or
+after nothing, and all three linted clean. The redirect ends the creating run,
+so it names that Capability.
+
+**A Journey carried by a different Actor's Step.** An invitation another
+person follows, or an AI agent's proposal a person then accepts, joins two
+Capabilities in sequence but carries nobody: the goal changes hands.
+
+**A role condition read from the thing being changed.** When an admin changes a
+member's role, reading Role from the targeted membership grants by the victim's
+role, not the actor's. A condition on a path Entity reads the instance the path
+reaches; a condition on the target names no Entity.
+
+**Granting a cascade through the container.** Deleting a card removes other
+people's comments, and a grant wide enough to admit that cascade also admits
+removing any one of them directly; no condition tells the two apart. A
+`removes` entry says `with` what it goes instead, and only the removal it goes
+with needs permission.
+
+**`with` accepted in either direction of a relation.** `comment with card` and
+`card with comment` both linted clean, and the second let a card's removal
+escape every Rule on removing cards, a prohibition included. The removal goes
+with the Entity that declares the holding relation, so one cascade has one
+encoding.
+
+## AI
+
+**A built-in AI assistant as an Entity that acts.** It reads like a
+collaborator, and authors modelled it so, but it is the Product's own component
+calling a model: it keeps no inbound contract and its privileges are
+authorization, not product meaning. Its work is a Product Step; only a harness
+the person brings acts.
+
+**An AI draft always as its own Entity, or always as a State.** Either rule is
+simpler, but each mis-models half the cases: a drafted question is the question
+it becomes, while a filing suggestion keeps a reason no bookmark has.
+
 ## Coverage
 
 **Coverage as the model's breadth, with optional paths.** Superseded. One file

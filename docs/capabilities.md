@@ -90,6 +90,11 @@ different ways, from different starting states, or chosen by a setting. See
 | Entering a second factor after any sign-in method | Its own Capability |
 | Searching, filtering or sorting the catalog | Part of browsing |
 | A shopper and an operator both cancel orders | One: a different Actor is not a permission of its own |
+| Publishing and unpublishing a collection | Two: opposite verbs, even behind one toggle button |
+| Republishing a collection that was unpublished | Part of publishing: the same verb from another state |
+| Setting a snippet to private, unlisted or public with one control | One: `change-snippet-visibility` |
+| Changing your vote before the poll closes | Part of voting: the same control changes your own submission |
+| Tagging a note and taking a tag off, both in the note's edit form | Two: each tag is an entry of its own |
 
 The same verb reached from somewhere else (changing your password when sign-in
 demands it) is the same Capability, offered there too.
@@ -220,6 +225,10 @@ is exhaustive: `[]` means none, never "unspecified".
     - { entity: cart, effect: removes }
 ```
 
+When removing one thing removes others with it — a card's comments go with
+the card — each of those entries says `with: card`. Only the removal it goes
+with needs permission, so *only its author deletes a comment* still holds.
+
 A Scenario's **Ends with** is where each thing it touched is left. Across the
 whole model, Step entries make up each Entity's lifecycle.
 
@@ -265,6 +274,10 @@ Errors:
 - Each `entities` entry names a real Entity and its real States and facts;
   `facts` is required, except on `removes`, which has none; a `from` matches
   where an earlier Step left the thing.
+- `with` sits only on a `removes` entry, names another removal of the same Step
+  whose Entity holds this one (it declares a `one-to-many` or `one-to-one`
+  relation to it), and never loops back; no two entries of a Step share an
+  `as`-or-`entity` reference.
 - Step text that names an Entity's title must list that Entity.
 - `contexts` maps every route, stays inside the Capability's availability, and
   supports the Step's Actor; no two routes visit the same places.
@@ -274,3 +287,7 @@ Warnings:
 
 - A Capability or Scenario id that reads as a noun phrase instead of starting
   with a verb, or that shortens the name of an Entity the model declares.
+- A Step that removes a thing and what it holds with no `with` on either.
+- A Capability Scenario that opens with the opposite of its Capability's verb,
+  such as `enable-a-disabled-link` under `disable-link`: opposite verbs are
+  separate Capabilities.

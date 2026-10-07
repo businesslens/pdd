@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV17,
+  ProductReportV18,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -24,7 +24,7 @@ import { lintModel } from './lint.js'
 import { FOLDER_SCHEMA, loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
 import { UsageError } from '../core/usage-error.js'
-import { validateProductLogo } from '../logo.js'
+import { validateProductCover, validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
@@ -47,7 +47,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV17['references']): Array<Record<string, string>> {
+function references(value: ProductReportV18['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -113,7 +113,10 @@ function stepEntities(step: ReportScenarioStep): Array<Record<string, unknown>> 
       as: entry.as ?? undefined,
       effect: entry.effect === 'changes' ? undefined : entry.effect,
       from: entry.from ?? undefined,
-      to: entry.to ?? undefined
+      to: entry.to ?? undefined,
+      /* The folder names the entry it goes with as the Step names it: by
+         alias when it has one, by Entity id otherwise. */
+      with: entry.with ? entry.with.as ?? entry.with.entityId : undefined
     }),
     ...(entry.effect === 'removes' ? {} : { facts: entry.facts })
   }))
@@ -190,7 +193,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV17, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV18, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -391,8 +394,8 @@ function writeReport(root: string, report: ProductReportV17, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV17['model']['capabilityScenarios'][number]
-      | ProductReportV17['model']['journeyScenarios'][number]
+      | ProductReportV18['model']['capabilityScenarios'][number]
+      | ProductReportV18['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -501,13 +504,15 @@ function writeReport(root: string, report: ProductReportV17, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV17
+  report: ProductReportV18
   root: string
 }
 
 export interface ExpandProductReportOptions {
   /** Optional Product logo to restore into the expanded model. */
   logo?: Uint8Array
+  /** Optional Product cover, restored beside the logo; a model without a logo has no `product/` for it. */
+  cover?: Uint8Array
 }
 
 export function expandProductReport(
@@ -529,6 +534,11 @@ export function expandProductReport(
       const issues = validateProductLogo(options.logo)
       if (issues.length) throw new Error(`The Product logo is invalid: ${issues.join('; ')}`)
       writeBytes(join(stagedRoot, 'product', 'logo.svg'), options.logo)
+      if (options.cover) {
+        const coverIssues = validateProductCover(options.cover)
+        if (coverIssues.length) throw new Error(`The Product cover is invalid: ${coverIssues.join('; ')}`)
+        writeBytes(join(stagedRoot, 'product', 'cover.webp'), options.cover)
+      }
     }
     // Expansion is the one canonical report-to-model primitive used by open,
     // pull, and contribution. Keeping orientation here makes their model trees

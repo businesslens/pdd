@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { ProductReportV17 } from 'businesslens/report'
+import type { ProductReportV18 } from 'businesslens/report'
 
 const route = useRoute()
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
-const report: ProductReportV17 = {
-  schemaVersion: '17.0.0',
+const report: ProductReportV18 = {
+  schemaVersion: '18.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
   summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',
@@ -90,7 +90,7 @@ if (route.query.matrices === '1') {
     id: 'register-reader', capabilityId: 'register-reader', title: 'Register a Reader', kindId: 'success', actorIds: ['reader'],
     routes: [{ id: 'web', name: 'Web' }], trigger: 'A Reader registers.', outcome: 'The Reader is active.', decisionPoints: [], edgeCases: [],
     steps: [{ text: 'Create the Reader.', kind: 'product', actorId: 'reader', capabilityId: null, unattended: false,
-      entities: [{ entityId: 'reader', as: null, effect: 'creates', from: null, to: 'Active', facts: [] }], contexts: [{ routeId: 'web', placeId: 'web' }] }],
+      entities: [{ entityId: 'reader', as: null, effect: 'creates', from: null, to: 'Active', facts: [], with: null }], contexts: [{ routeId: 'web', placeId: 'web' }] }],
     ...content
   })
   report.model.businessRules.push({ id: 'readers-start-active', title: 'Readers start active', statement: 'A new Reader is active.', rationale: '', permits: null,

@@ -10,4 +10,4 @@ entryPoints:
 
 Presents one published collection — its name, its owner, and the items in the
 owner's order — to anyone holding its web address, and nothing once the owner
-has unlisted it.
+has unpublished or deleted it.

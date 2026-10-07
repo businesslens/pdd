@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
-import type { ProductReportV17 } from '../src/core/portable.js'
+import type { ProductReportV18 } from '../src/core/portable.js'
 
 // A preview that throws is a server fault, whatever the error says.
 vi.mock('../src/core/local-markdown-preview.js', () => ({
@@ -50,7 +50,7 @@ describe('local reference previews', () => {
 
     const viewer = await startLocalViewer({
       viewerRoot,
-      compile: () => ({ id: 'fixture-shop', title: 'Fixture Shop' }) as ProductReportV17,
+      compile: () => ({ id: 'fixture-shop', title: 'Fixture Shop' }) as ProductReportV18,
       assetRoot: repository
     })
     viewers.push(viewer)

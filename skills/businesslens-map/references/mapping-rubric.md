@@ -35,9 +35,11 @@ those resources in a repository and where the evidence stops.
 
 ## Acceptance coverage
 
-Capability Scenarios state observable acceptance for one Capability. Cover
-primary, permission, validation, conflict, and external-failure behavior only
-where the Product distinguishes them. Where the line falls between a Scenario
+Capability Scenarios state observable acceptance for one Capability. Cover the
+primary path, refusals of who may act, invalid input, conflicts, and external
+failures only where the Product distinguishes them. These are cases, not kinds:
+record each under a `kind` that `taxonomies.yaml` declares — a refusal of who
+may act is `validation`, a conflict or an unavailable dependency is `edge`. Where the line falls between a Scenario
 and an `## Edge cases` bullet is the author's call and belongs in the Acceptance
 round.
 
