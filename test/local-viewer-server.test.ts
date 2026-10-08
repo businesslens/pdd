@@ -3,7 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
+import { startLocalViewer, type LocalViewer, type LocalViewerBuild, type LocalViewerStatus } from '../src/core/local-viewer-server.js'
 import type { GithubStarClient } from '../src/core/github-star.js'
 import type { ProductReport } from '../src/core/portable.js'
 import { compileReport } from '../src/commands/export.js'
@@ -255,8 +255,8 @@ describe('local Product Report server', () => {
     viewers.push(viewer)
     expect(viewer.status().error).toContain('coverage.json is not supported')
     await eventAfter(viewer.url, 'report', () => rmSync(legacy), WATCH_TEST_TIMEOUT_MS - 500)
-    expect(viewer.status()).toEqual({ ready: true, error: undefined })
-    await eventAfter(viewer.url, 'compile-error', () => writeFileSync(legacy, '{}'), WATCH_TEST_TIMEOUT_MS - 500)
+    expect(viewer.status()).toEqual({ ready: true, state: 'ready', error: undefined })
+    await eventAfter(viewer.url, 'status', () => writeFileSync(legacy, '{}'), WATCH_TEST_TIMEOUT_MS - 500)
     expect(viewer.status().error).toContain('coverage.json is not supported')
   })
 
@@ -483,7 +483,7 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    expect(viewer.status()).toEqual({ ready: false, error: 'No Product Model yet. Waiting for .businesslens/ to be created.' })
+    expect(viewer.status()).toEqual({ ready: false, state: 'waiting', error: 'No Product Model yet. Waiting for .businesslens/ to be created.' })
     const waiting = await get(viewer.url, '/_businesslens/report.json')
     expect(waiting.status).toBe(422)
     expect(JSON.parse(waiting.body).message).toContain('Waiting for .businesslens/')
@@ -507,6 +507,47 @@ describe('local Product Report server', () => {
     const edited = eventAfter(viewer.url, 'report', () => writeFileSync(product, 'Edited after binding'), WATCH_TEST_TIMEOUT_MS - 500)
     expect(await edited).toContain('event: report')
     expect(JSON.parse((await get(viewer.url, '/_businesslens/report.json')).body).title).toBe('Edited after binding')
+  })
+
+  it('serves a report that builds with errors beside it, keeps it when the model stops building, and says so', async () => {
+    let outcome: LocalViewerBuild = {
+      report: report(),
+      issues: [{ severity: 'error', message: 'README.md is missing', file: 'README.md' }]
+    }
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: () => outcome })
+    viewers.push(viewer)
+
+    const degraded = await get(viewer.url, '/_businesslens/report.json')
+    expect(degraded.status).toBe(200)
+    expect(degraded.headers['x-businesslens-report-state']).toBe('degraded')
+    const first = JSON.parse((await get(viewer.url, '/_businesslens/status.json')).body) as LocalViewerStatus
+    expect(first).toMatchObject({ state: 'degraded', issues: outcome.issues })
+    expect(first.builtAt).toEqual(expect.any(Number))
+    expect(first.request).toContain('- README.md is missing')
+
+    const broken = { severity: 'error' as const, message: 'References missing domain "orderng"', file: 'capabilities/place-order/capability.md' }
+    const status = eventAfter(viewer.url, 'status', () => {
+      outcome = { issues: [broken] }
+      viewer.refresh()
+    })
+    expect(await status).toContain('"state":"stale"')
+    const stale = await get(viewer.url, '/_businesslens/report.json')
+    expect(stale.status).toBe(200)
+    expect(stale.headers['x-businesslens-report-state']).toBe('stale')
+    const second = JSON.parse((await get(viewer.url, '/_businesslens/status.json')).body) as LocalViewerStatus
+    expect(second).toMatchObject({ state: 'stale', issues: [broken], builtAt: first.builtAt })
+  })
+
+  it('has nothing to serve when the first build is refused', async () => {
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      compile: () => ({ issues: [{ severity: 'error', message: 'References missing domain "orderng"' }] })
+    })
+    viewers.push(viewer)
+    const response = await get(viewer.url, '/_businesslens/report.json')
+    expect(response.status).toBe(422)
+    expect(response.headers['x-businesslens-report-state']).toBe('blocked')
+    expect(JSON.parse((await get(viewer.url, '/_businesslens/status.json')).body)).toMatchObject({ state: 'blocked', builtAt: null })
   })
 
   it('returns a safe compile error without stopping the viewer', async () => {

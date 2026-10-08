@@ -5,6 +5,7 @@ import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import type { ProductReport } from './portable.js'
+import { failureIssue, issuesAsRequest, type ModelIssue } from './model-issues.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
@@ -12,6 +13,7 @@ import { ghStarClient, type GithubStarClient, type GithubStarState } from './git
 
 const LOOPBACK_HOST = '127.0.0.1'
 const REPORT_PATH = '/_businesslens/report.json'
+const STATUS_PATH = '/_businesslens/status.json'
 const EVENTS_PATH = '/_businesslens/events'
 const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
@@ -68,7 +70,7 @@ export interface LocalViewer {
   /** Compile immediately. Primarily useful to deterministic tests and recovery controls. */
   refresh: () => void
   /** Whether a report is on screen, and otherwise why not. */
-  status: () => { ready: boolean, error?: string }
+  status: () => { ready: boolean, state: LocalViewerState, error?: string }
   /**
    * Attach a model after the server is up. A viewer started before
    * `.businesslens/` exists waits with a message; binding gives it what to
@@ -83,10 +85,39 @@ export type LocalViewerBinding = Pick<LocalViewerOptions,
   'compile' | 'initialReport' | 'watchRoot' | 'gitIndexFile' | 'logoFile' | 'assetRoot'>
 const BINDING_KEYS = ['compile', 'initialReport', 'watchRoot', 'gitIndexFile', 'logoFile', 'assetRoot'] as const
 
+/**
+ * What one compile produced: a report when the compiler accepted the model,
+ * and every issue either way. A plain report means a build with no issues.
+ */
+export interface LocalViewerBuild {
+  report?: ProductReport
+  issues: ModelIssue[]
+}
+
+/**
+ * Where the viewer stands.
+ *
+ * `degraded` serves the current report with errors beside it; `stale` serves
+ * the last report that built because the current model does not; `blocked`
+ * has nothing to serve yet.
+ */
+export type LocalViewerState = 'waiting' | 'ready' | 'degraded' | 'stale' | 'blocked'
+
+/** The problems the page shows, served at `status.json` and on every change. */
+export interface LocalViewerStatus {
+  state: LocalViewerState
+  revision: number
+  issues: ModelIssue[]
+  /** When the served report compiled, in epoch milliseconds. */
+  builtAt: number | null
+  /** The errors as a request ready to paste into an agent. */
+  request: string | null
+}
+
 export interface LocalViewerOptions {
   port?: number
   /** Absent until a model is bound: the viewer then serves the waiting message. */
-  compile?: () => ProductReport
+  compile?: () => ProductReport | LocalViewerBuild
   /** What `report.json` and the stream say while no model is bound. */
   waitingMessage?: string
   initialReport?: ProductReport
@@ -112,13 +143,13 @@ interface ReportSnapshot {
   report?: ProductReport
   error?: string
   revision: number
+  state: LocalViewerState
 }
 
-interface ReportEvent {
-  type: 'report' | 'compile-error'
-  revision: number
-  message?: string
-}
+type ReportEvent = { type: 'report', revision: number } | ({ type: 'status' } & LocalViewerStatus)
+
+const isBuild = (value: ProductReport | LocalViewerBuild): value is LocalViewerBuild =>
+  Array.isArray((value as LocalViewerBuild).issues) && !('schemaVersion' in value)
 
 /**
  * Compile once per source edit and retain the last valid result.
@@ -131,6 +162,9 @@ class LocalReportStore {
   private report?: ProductReport
   private serialized?: string
   private error?: string
+  private issues: ModelIssue[] = []
+  private builtAt: number | null = null
+  private statusKey = ''
   private revision = 0
   private timer?: ReturnType<typeof setTimeout>
   private watcher?: FSWatcher
@@ -158,6 +192,8 @@ class LocalReportStore {
     this.report = undefined
     this.serialized = undefined
     this.error = undefined
+    this.issues = []
+    this.builtAt = null
     this.attach()
     if (binding.initialReport) this.accept(binding.initialReport, true)
     else this.refresh(true)
@@ -180,7 +216,10 @@ class LocalReportStore {
         if (!this.isModelSource(filename)) return
         schedule(this.isLogoSource(filename))
       })
-      this.watcher.on('error', error => this.reject(`File watching failed: ${error.message}`))
+      this.watcher.on('error', (error) => {
+        const message = `File watching failed: ${error.message}. Restart businesslens view to follow edits again.`
+        this.reject(message, [{ severity: 'error', message }])
+      })
     }
     if (options.gitIndexFile) {
       // Git replaces its index atomically; stat polling follows replacements
@@ -202,25 +241,51 @@ class LocalReportStore {
   }
 
   snapshot(): ReportSnapshot {
-    return { report: this.report, error: this.error, revision: this.revision }
+    return { report: this.report, error: this.error, revision: this.revision, state: this.state() }
+  }
+
+  private state(): LocalViewerState {
+    if (!this.options.compile && !this.report) return 'waiting'
+    if (this.error !== undefined) return this.report ? 'stale' : 'blocked'
+    return this.issues.some(issue => issue.severity === 'error') ? 'degraded' : 'ready'
+  }
+
+  status(): LocalViewerStatus {
+    return {
+      state: this.state(),
+      revision: this.revision,
+      issues: this.issues,
+      builtAt: this.report ? this.builtAt : null,
+      request: this.issues.length && this.options.compile ? issuesAsRequest(this.issues) : null
+    }
   }
 
   subscribe(listener: (event: ReportEvent) => void): () => void {
     this.listeners.add(listener)
-    if (this.error) listener({ type: 'compile-error', revision: this.revision, message: this.error })
+    listener({ type: 'status', ...this.status() })
     return () => this.listeners.delete(listener)
   }
 
   refresh(notify = true, forceNotify = false): void {
     const compile = this.options.compile
     if (!compile) {
-      this.reject(this.options.waitingMessage ?? 'No Product Model is bound to this viewer yet.', notify)
+      const message = this.options.waitingMessage ?? 'No Product Model is bound to this viewer yet.'
+      this.reject(message, [{ severity: 'error', message }], notify)
       return
     }
+    let build: LocalViewerBuild
     try {
-      this.accept(compile(), notify, forceNotify)
+      const outcome = compile()
+      build = isBuild(outcome) ? outcome : { report: outcome, issues: [] }
     } catch (error) {
-      this.reject((error as Error).message, notify)
+      const message = (error as Error).message
+      this.reject(message, [failureIssue(message)], notify)
+      return
+    }
+    if (build.report) this.accept(build.report, notify, forceNotify, build.issues)
+    else {
+      const errors = build.issues.filter(issue => issue.severity === 'error')
+      this.reject(errors.map(issue => issue.file ? `${issue.file}: ${issue.message}` : issue.message).join('\n') || 'The Product Model could not be compiled.', build.issues, notify)
     }
   }
 
@@ -251,24 +316,41 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReport, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReport, notify: boolean, forceNotify = false, issues: ModelIssue[] = []): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
     this.report = report
     this.serialized = serialized
     this.error = undefined
-    if (!notify || (!changed && !recovered && !forceNotify)) return
-    this.revision += 1
-    this.emit({ type: 'report', revision: this.revision })
+    this.issues = issues
+    if (changed || recovered || this.builtAt === null) this.builtAt = Date.now()
+    if (!notify) { this.statusKey = this.key(); return }
+    if (changed || recovered || forceNotify) {
+      this.revision += 1
+      this.emit({ type: 'report', revision: this.revision })
+    }
+    this.announce()
   }
 
-  private reject(message: string, notify = true): void {
-    if (message === this.error) return
+  private reject(message: string, issues: ModelIssue[], notify = true): void {
     this.error = message
-    if (!notify) return
+    this.issues = issues
+    if (!notify) { this.statusKey = this.key(); return }
+    this.announce()
+  }
+
+  /** Say the status again only when what a reader would see changed. */
+  private announce(): void {
+    const key = this.key()
+    if (key === this.statusKey) return
+    this.statusKey = key
     this.revision += 1
-    this.emit({ type: 'compile-error', revision: this.revision, message })
+    this.emit({ type: 'status', ...this.status() })
+  }
+
+  private key(): string {
+    return JSON.stringify([this.state(), this.issues, this.report ? this.builtAt : null])
   }
 
   private emit(event: ReportEvent): void {
@@ -501,11 +583,13 @@ function requestHandler(
     }
     if (pathname === REPORT_PATH) {
       const snapshot = store.snapshot()
+      response.setHeader('x-businesslens-report-state', snapshot.state)
       if (!snapshot.report) json(response, 422, { message: snapshot.error }, head)
-      else {
-        response.setHeader('x-businesslens-report-state', snapshot.error ? 'stale' : 'ready')
-        json(response, 200, snapshot.report, head)
-      }
+      else json(response, 200, snapshot.report, head)
+      return
+    }
+    if (pathname === STATUS_PATH) {
+      json(response, 200, store.status(), head)
       return
     }
     if (pathname === GITHUB_STAR_PATH) {
@@ -595,7 +679,7 @@ export async function startLocalViewer(options: LocalViewerOptions): Promise<Loc
         refresh: () => store.refresh(),
         status: () => {
           const snapshot = store.snapshot()
-          return { ready: Boolean(snapshot.report), error: snapshot.error }
+          return { ready: Boolean(snapshot.report), state: snapshot.state, error: snapshot.error }
         },
         bind: binding => store.bind(binding),
         close: () => new Promise<void>((resolveClose, rejectClose) => {

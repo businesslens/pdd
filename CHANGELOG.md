@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docs:** The README explains Product-Driven Development with the questions the Product Model answers, shown on the Kanban Board Blueprint.
 
+## [0.33.0] - 2026-10-08
+
+### Changed
+
+- **Report:** `businesslens view` opens a model with lint errors whenever it can still be built, and counts its problems in the header. A save that breaks the build keeps the last version on screen and says how old it is. ([#111](https://github.com/businesslens/pdd/pull/111)) ([1afb13c](https://github.com/businesslens/pdd/commit/1afb13c389749c2d137802324e0041dbacbfce96))
+- **Report:** Problems are listed by file, link to the resource they affect, and can be copied as a request for your agent. A resource shown without part of its file says so. ([#111](https://github.com/businesslens/pdd/pull/111)) ([1afb13c](https://github.com/businesslens/pdd/commit/1afb13c389749c2d137802324e0041dbacbfce96))
+- **Report:** A model that doesn't build yet, or a report that fails to draw, shows a clear full-page explanation instead of a raw error. ([#111](https://github.com/businesslens/pdd/pull/111)) ([1afb13c](https://github.com/businesslens/pdd/commit/1afb13c389749c2d137802324e0041dbacbfce96))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.32.0...v0.33.0][0.33.0]
+
 ## [0.32.0] - 2026-10-07
 
 ### Changed
@@ -1179,7 +1193,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.33.0...HEAD
+[0.33.0]: https://github.com/businesslens/pdd/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/businesslens/pdd/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/businesslens/pdd/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/businesslens/pdd/compare/v0.29.1...v0.30.0

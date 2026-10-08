@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import type { ProductReport } from 'businesslens/report'
+import type { LocalStatus } from '~/composables/useLocalProblems'
 
 const { data, error, refresh, status } = await useFetch<ProductReport>(
   '/_businesslens/report.json',
   { server: false, cache: 'no-store' }
 )
 
-const liveError = ref<string | null>(null)
+const problems = useLocalProblems()
+const drawerOpen = ref(false)
+const crash = ref<string | null>(null)
 const logoSrc = ref<string | null>(null)
 let logoRevision = 0
 let events: EventSource | undefined
@@ -32,22 +35,19 @@ onMounted(() => {
   events.addEventListener('open', () => { live.value = { ...live.value, connected: true }; void refresh() })
   events.addEventListener('error', () => { live.value = { ...live.value, connected: false } })
   events.addEventListener('report', (event) => {
-    liveError.value = null
     let revision = live.value.revision + 1
     try {
       revision = (JSON.parse((event as MessageEvent).data) as { revision?: number }).revision ?? revision
     } catch { /* The count is a courtesy. */ }
     live.value = { revision, updatedAt: Date.now(), connected: true }
+    crash.value = null
     void refresh()
     void refreshLogo()
   })
-  events.addEventListener('compile-error', (event) => {
+  events.addEventListener('status', (event) => {
     try {
-      const update = JSON.parse((event as MessageEvent).data) as { message?: string }
-      liveError.value = update.message ?? 'The Product Model could not be compiled.'
-    } catch {
-      liveError.value = 'The Product Model could not be compiled.'
-    }
+      problems.value = JSON.parse((event as MessageEvent).data) as LocalStatus
+    } catch { /* The next status replaces it. */ }
   })
 })
 
@@ -55,65 +55,83 @@ onBeforeUnmount(() => {
   events?.close()
 })
 
-const errorMessage = computed(() => {
-  if (liveError.value) return liveError.value
-  const failure = error.value as { data?: { message?: string }, message?: string } | null
-  return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
+const state = computed(() => problems.value?.state ?? null)
+/* No report to show: the CLI has none, or it was dropped when the CLI restarted. */
+const blocked = computed(() => state.value === 'blocked' || (!data.value && Boolean(error.value) && state.value !== 'waiting'))
+const blockedIssues = computed(() => problems.value?.issues
+  ?? [{ severity: 'error' as const, message: (error.value as { data?: { message?: string } } | null)?.data?.message ?? 'The Product Model could not be compiled.' }])
+
+/*
+  A resource the loader showed without part of its file says so in its own
+  reading. Only the current report has such resources; a stale one predates
+  the problem.
+*/
+const resourceNotices = computed(() => {
+  if (state.value !== 'degraded') return {}
+  const notices: Record<string, { title: string, description: string, detail?: string }> = {}
+  for (const issue of problems.value?.issues ?? []) {
+    if (!issue.incomplete || !issue.resource || notices[issue.resource]) continue
+    notices[issue.resource] = {
+      title: 'Shown incomplete',
+      description: `${issue.message.replace(/\.$/, '')}. Until it's fixed, this reading leaves out what that part of the file declares.`,
+      detail: issue.file ? `${issue.file}${issue.line ? ` · line ${issue.line}` : ''}` : undefined
+    }
+  }
+  return notices
 })
 
+/* Nothing left to list: the chip is gone, so the panel it opened goes too. */
+watch(() => problems.value?.issues.length ?? 0, (count) => { if (!count) drawerOpen.value = false })
+
+function openResource(key: string) {
+  resource.value = key
+  resourceTab.value = 'overview'
+}
+
+function onCrash(failure: unknown) {
+  crash.value = failure instanceof Error ? failure.message : String(failure)
+}
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col">
-    <UContainer v-if="status === 'pending' && !data" class="py-16">
+  <div class="relative flex h-full min-h-0 flex-col">
+    <LocalWaiting v-if="state === 'waiting'" :message="problems?.issues[0]?.message" />
+
+    <LocalBuildOverlay v-else-if="blocked" :issues="blockedIssues" :request="problems?.request" />
+
+    <UContainer v-else-if="status === 'pending' && !data" class="py-16">
       <div class="flex items-center gap-3 text-sm text-dimmed">
         <UIcon name="i-lucide-loader-circle" class="size-5 animate-spin" />
         Compiling the Product Model…
       </div>
     </UContainer>
 
-    <UContainer v-else-if="error && !data" class="min-h-0 flex-1 overflow-y-auto py-8">
-      <UAlert
-        icon="i-lucide-triangle-alert"
-        color="error"
-        variant="subtle"
-        title="The Product Model is not ready to view."
-        :description="errorMessage"
-        :ui="{ description: 'max-h-24 overflow-auto break-words' }"
-        :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }]"
-      />
-    </UContainer>
-
     <template v-else-if="data">
-      <UContainer v-if="liveError" class="shrink-0 pt-4">
-        <UAlert
-          icon="i-lucide-triangle-alert"
-          color="warning"
-          variant="subtle"
-          title="The latest model edit is not valid yet."
-          :description="liveError"
-          :ui="{ description: 'max-h-24 overflow-auto break-words' }"
-        />
-      </UContainer>
-      <BusinessLensReportViewer
-        v-model:section="section"
-        v-model:resource="resource"
-        v-model:tab="tab" v-model:resource-tab="resourceTab"
-        v-model:scenario-route="scenarioRoute"
-        v-model:route-columns="routeColumns"
-        v-model:topology="topology"
-        :report="data"
-        v-model:coverage="coverage"
-        :logo-src="logoSrc"
-        class="businesslens-local-report min-h-0 flex-1"
-      >
-        <!-- The pulse shows the local report's live connection state. -->
-        <template #status>
-          <LocalLivePulse />
-        </template>
-        <template #sidebar-header="{ collapsed }"><LocalViewerBrand :collapsed="collapsed" /></template>
-        <template #sidebar-footer="{ collapsed }"><LocalViewerTools :collapsed="collapsed" /></template>
-      </BusinessLensReportViewer>
+      <LocalBuildOverlay v-if="crash" :crash="crash" />
+      <NuxtErrorBoundary v-else @error="onCrash">
+        <BusinessLensReportViewer
+          v-model:section="section"
+          v-model:resource="resource"
+          v-model:tab="tab" v-model:resource-tab="resourceTab"
+          v-model:scenario-route="scenarioRoute"
+          v-model:route-columns="routeColumns"
+          v-model:topology="topology"
+          :report="data"
+          v-model:coverage="coverage"
+          :logo-src="logoSrc"
+          :resource-notices="resourceNotices"
+          class="businesslens-local-report min-h-0 flex-1"
+        >
+          <!-- Problems first, then the pulse: what to trust, then how fresh it is. -->
+          <template #status>
+            <LocalProblemsChip :report="data" :expanded="drawerOpen" @open="drawerOpen = !drawerOpen" />
+            <LocalLivePulse />
+          </template>
+          <template #sidebar-header="{ collapsed }"><LocalViewerBrand :collapsed="collapsed" /></template>
+          <template #sidebar-footer="{ collapsed }"><LocalViewerTools :collapsed="collapsed" /></template>
+        </BusinessLensReportViewer>
+      </NuxtErrorBoundary>
+      <LocalProblemsDrawer v-model:open="drawerOpen" :report="data" @resource="openResource" />
     </template>
   </div>
 </template>

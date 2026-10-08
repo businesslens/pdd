@@ -15,6 +15,7 @@ import {
   projectPortableReport,
   validateProductReport
 } from '../core/portable.js'
+import { failureIssue, modelIssues, type ModelIssue } from '../core/model-issues.js'
 import { cliVersion } from '../version.js'
 import { lintModel } from './lint.js'
 
@@ -385,6 +386,45 @@ export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot
   }
   const today = new Date().toISOString().slice(0, 10)
   return compileReport(model, today, gitRoot ?? modelRoot)
+}
+
+/** What the local viewer shows for one compile: a report when one builds, and every issue either way. */
+export interface ViewerBuild {
+  report?: ProductReport
+  issues: ModelIssue[]
+}
+
+/**
+ * Compile for the local viewer, which shows whatever the compiler accepts.
+ *
+ * Lint findings do not block here, unlike `lint` and `export`: a model whose
+ * only errors are housekeeping, or whose loader dropped part of one file,
+ * still yields a report worth reading, and the viewer lists the issues beside
+ * it. Only a model the compiler refuses has no report. A model that cannot be
+ * read at all comes back as one issue rather than an exception.
+ */
+export function buildViewerReport({ modelRoot, gitRoot }: ModelRoot): ViewerBuild {
+  let issues: ModelIssue[] = []
+  try {
+    const model = loadModel(modelRoot)
+    const tracked = gitRoot ? lsFiles(gitRoot) : []
+    const result = lintModel(model, tracked)
+    issues = modelIssues(result.errors, result.warnings, modelRoot)
+    const today = new Date().toISOString().slice(0, 10)
+    return { report: compileReport(model, today, gitRoot ?? modelRoot), issues }
+  } catch (error) {
+    // A refusal lint predicted is already listed; only an unexplained one adds its own text.
+    if (issues.some(issue => issue.severity === 'error')) return { issues }
+    return { issues: [...issues, failureIssue(firstLine(error), modelRoot)] }
+  }
+}
+
+function firstLine(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  // A schema refusal is a JSON dump; a report check lists what it refused.
+  if (message.startsWith('[')) return 'The model does not match the report format.'
+  const [head, detail] = message.split('\n')
+  return detail && head!.endsWith(':') ? `${head} ${detail.replace(/^- /, '')}` : head!
 }
 
 export function buildProject(cwd: string): BuildOutcome {

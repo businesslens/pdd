@@ -5,6 +5,7 @@ import { resourceViewLinks } from '../utils/reportDestinations'
 import { parentOf } from '../utils/pageSections'
 import { referenceHref } from '../utils/referenceNavigation'
 import { titledBy } from '../utils/variations'
+import { RESOURCE_NOTICES, type ReportResourceNotice } from '../utils/resourceNotices'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -23,6 +24,9 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 /* A Scenario is read inside its parent, so its address shows the parent's reading with its card open. */
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
+const notices = inject(RESOURCE_NOTICES, ref<Record<string, ReportResourceNotice>>({}))
+/* A Scenario reads inside its parent, so either one's notice belongs on this reading. */
+const notice = computed(() => (props.resource && notices.value[props.resource.key]) || (subject.value && notices.value[subject.value.key]) || null)
 /* What a title line names: an alternative's Variation, with the alternative in its picker. */
 const readingTitle = (resource: AnyResourceView) => titledBy(props.workspace, parentOf(props.workspace, resource) ?? resource).title
 const previousTitle = computed(() => props.previous ? readingTitle(props.previous) : '')
@@ -123,6 +127,20 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
         </header>
         <div ref="tabsTarget" v-show="!reference" class="blr-resource-tabs shrink-0" data-page-tabs-host />
         <div ref="pane" v-show="!reference" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="!reference && save()">
+          <UAlert
+            v-if="notice"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-triangle-alert"
+            :title="notice.title"
+            class="mb-4"
+            data-resource-notice
+          >
+            <template #description>
+              <p>{{ notice.description }}</p>
+              <p v-if="notice.detail" class="mt-1 font-mono text-xs opacity-80 [overflow-wrap:anywhere]">{{ notice.detail }}</p>
+            </template>
+          </UAlert>
           <BlrResourcePage
             v-if="resource && subject"
             :key="subject.key"

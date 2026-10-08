@@ -1,4 +1,4 @@
-import { compileResolvedWorkspaceReport } from './export.js'
+import { buildViewerReport, compileResolvedWorkspaceReport } from './export.js'
 import { git, repoRoot } from '../core/git.js'
 import { openBrowser, startLocalViewer, type LocalViewerBinding } from '../core/local-viewer-server.js'
 import { findModelRoot, resolveModelRoot, type ModelRoot } from '../core/model-root.js'
@@ -96,7 +96,7 @@ const GIT_RETRY_MS = 30_000
 /** A snapshot is fixed: nothing in it changes, so it is neither watched nor asked for its Git index. */
 function bindingFor(resolved: ModelRoot, live = true): LocalViewerBinding {
   return {
-    compile: () => compileResolvedWorkspaceReport(resolved),
+    compile: () => buildViewerReport(resolved),
     watchRoot: live ? join(resolved.modelRoot, '.businesslens') : undefined,
     gitIndexFile: live && resolved.gitRoot
       ? resolve(resolved.gitRoot, git(resolved.gitRoot, 'rev-parse', '--git-path', 'index'))
@@ -116,8 +116,10 @@ function bindingFor(resolved: ModelRoot, live = true): LocalViewerBinding {
  * The report is a place to watch a model being built, so the viewer starts
  * whatever state the model is in. No `.businesslens/` yet: it serves a waiting
  * message and binds the model the moment the directory appears. A model that
- * does not lint: it serves the errors and comes alive on the first clean save.
- * Only a port that cannot be opened stops it.
+ * does not lint still shows whenever the compiler accepts it, with its
+ * problems beside it; one the compiler refuses shows the problems alone and
+ * comes alive on the first save that fixes them. Only a port that cannot be
+ * opened stops it.
  */
 export async function runView(cwd: string, options: ViewOptions): Promise<number> {
   let source: ViewSource | undefined
@@ -137,7 +139,9 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     if (!resolved) {
       console.log(`No Product Model yet. Waiting for ${expected.join(' or ')} to be created.`)
     } else if (!viewer.status().ready) {
-      console.log('The Product Model does not compile yet; the report shows why and updates on the first clean save.')
+      console.log('The Product Model does not build yet; the report lists why and appears on the first save that fixes it.')
+    } else if (viewer.status().state === 'degraded') {
+      console.log('The Product Model has lint errors; the report shows them beside the model. Run businesslens lint for the full list.')
     }
     console.log('Press Ctrl+C to stop.')
     if (options.open) openBrowser(viewer.url)

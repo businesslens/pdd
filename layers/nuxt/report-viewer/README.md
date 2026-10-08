@@ -281,7 +281,13 @@ The working view's header serves as its navbar: the heading shares it with the
 generation date, above a bottom divider. The report schema version is not shown;
 it identifies a data format, not anything a reader of the Product acts on. A
 host's `status` slot replaces the generation date with its live connection state. Header metadata wraps onto a second line
-on narrow screens.
+on narrow screens. The bundled local viewer puts its problems chip in the same
+slot, before the pulse; the chip and the problems drawer it opens belong to the
+host, not to the report.
+Hosts can pass `resourceNotices`, keyed by resource key, as `{ title,
+description, detail? }`. A resource's reading shows its notice, or its parent's
+for a Scenario, above the reading as given. The local viewer uses it to say a
+resource is shown without part of its file.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
 utilities; both also appear in the mobile navigation drawer. The bundled local
 viewer places its version beside the brand in the sidebar header, followed by
