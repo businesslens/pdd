@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Report:** `businesslens view` opens a model with lint errors whenever it can still be built, and counts its problems in the header. A save that breaks the build keeps the last version on screen and says how old it is.
+- **Report:** Problems are listed by file, link to the resource they affect, and can be copied as a request for your agent. A resource shown without part of its file says so.
+- **Report:** A model that doesn't build yet, or a report that fails to draw, shows a clear full-page explanation instead of a raw error.
+
 ## [0.32.0] - 2026-10-07
 
 ### Changed

@@ -41,8 +41,20 @@ link stars it when you click it, or unstars it when you click it again. Without
 
 With no repository, `view` uses your local model. See
 [Choosing the Product Model](./cli.md#choosing-the-product-model). The report
-follows your edits: each valid save appears, and a save that does not lint shows
-why until it does. With no model yet, the page waits for one.
+follows your edits as you or your agent save them, and it still opens when the
+model has lint errors:
+
+- **The model builds with errors.** The report shows it and counts the problems
+  in its header. A resource missing part of its file because of an error says
+  so in its own reading.
+- **A save stops the model from building.** The report keeps the last version
+  that built, says how old it is, and lists what stops the rebuild.
+- **Nothing has built yet.** The page lists the errors by file, and turns into
+  the report on the first save that fixes them.
+
+Each list can be copied as a request for your agent. With no model yet, the
+page waits for one. Only `view` relaxes this: `lint` still fails and
+`blueprint export` still refuses a model with errors.
 
 ## A GitHub repository
 

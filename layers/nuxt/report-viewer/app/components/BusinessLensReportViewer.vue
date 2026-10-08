@@ -15,6 +15,7 @@ import { destinationForLocation } from '../utils/reportDestinations'
 import type { ProductReport } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
+import { RESOURCE_NOTICES, type ReportResourceNotice } from '../utils/resourceNotices'
 
 const props = withDefaults(defineProps<{
   report: ProductReport
@@ -28,7 +29,13 @@ const props = withDefaults(defineProps<{
   sidebarVocabulary?: boolean
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
-}>(), { sidebarVocabulary: true })
+  /**
+   * Host notices shown at the top of a resource's reading, keyed by resource
+   * key. The report renders them as given; what they say is the host's.
+   */
+  resourceNotices?: Record<string, ReportResourceNotice>
+}>(), { sidebarVocabulary: true, resourceNotices: () => ({}) })
+provide(RESOURCE_NOTICES, toRef(props, 'resourceNotices'))
 
 /**
  * The open section: `overview` or a main resource collection. Bindable so a

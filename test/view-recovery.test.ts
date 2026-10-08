@@ -77,14 +77,15 @@ it('says once that Git refuses a repository marker instead of asking it twice a 
   await new Promise(resolve => setTimeout(resolve, 3_000))
   expect(output.match(/Git could not open the repository/g)).toHaveLength(1)
   expect(output).not.toContain('Could not open the Product Model')
-  expect((await state(url)).status).toBe(422)
+  // Without its repository every code reference fails lint, but the report still builds.
+  expect((await state(url)).state).toBe('degraded')
 })
 
 it('rebinds a model already on screen when its enclosing repository is initialized', async () => {
   const root = scratch()
   cpSync(FIXTURE, root, { recursive: true })
   const url = await start(root)
-  expect((await state(url)).status).toBe(422)
+  expect((await state(url)).state).toBe('degraded')
   git(root, 'init', '--initial-branch=main')
   git(root, 'add', '.')
   await ready(url)
@@ -104,11 +105,11 @@ it.each([false, true])('recovers from index-only edits (linked worktree: %s)', a
   cpSync(FIXTURE, root, { recursive: true })
   // No index exists yet in the ordinary repository.
   const url = await start(root)
-  expect((await state(url)).status).toBe(422)
+  expect((await state(url)).state).toBe('degraded')
   git(root, 'add', '.')
   await ready(url)
   git(root, 'rm', '--cached', 'src/services/catalog.ts')
-  await expect.poll(async () => (await state(url)).state, { timeout: 15_000 }).toBe('stale')
+  await expect.poll(async () => (await state(url)).state, { timeout: 15_000 }).toBe('degraded')
   git(root, 'add', 'src/services/catalog.ts')
   await ready(url)
 })
