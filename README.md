@@ -8,7 +8,7 @@
 </p>
 
 <h1 align="center"><a href="https://businesslens.io">BusinessLens</a></h1>
-<p align="center"><strong>Open-source Product-Driven Development for coding agents</strong></p>
+<p align="center"><strong>Product-Driven Development for coding agents (OSS)</strong></p>
 <p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
