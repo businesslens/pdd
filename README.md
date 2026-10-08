@@ -96,7 +96,7 @@ npx businesslens view
 
 All 9 entities in the kanban model: what the product keeps, and who acts on it.
 
-<img src="./.github/readme/report/1a-entities.jpg" alt="Entities list: all 9 entities of the kanban model, grouped into Actors, Board settings, Cards, Proposals and No Domain" width="800">
+<img src="./.github/readme/report/1a-entities.jpg" alt="Entities list: the start of the kanban model's 9 entities, grouped by domain" width="800">
 
 Which capabilities create, change or remove each entity, filtered to the four
 capabilities around a proposed card:
@@ -111,7 +111,7 @@ capabilities around a proposed card:
 
 All 23 capabilities in the kanban model: what the product lets someone do.
 
-<img src="./.github/readme/report/2a-capabilities.jpg" alt="Capabilities list: the 23 capabilities of the kanban model, grouped by domain" width="800">
+<img src="./.github/readme/report/2a-capabilities.jpg" alt="Capabilities list: the start of the kanban model's 23 capabilities, grouped by domain" width="800">
 
 Which interfaces offer each capability, filtered to six card capabilities:
 
@@ -125,7 +125,7 @@ Which interfaces offer each capability, filtered to six card capabilities:
 All 32 business rules in the kanban model: what must always hold, and who may
 do what.
 
-<img src="./.github/readme/report/3a-business-rules.jpg" alt="Business rules list: the 32 business rules of the kanban model, grouped by domain" width="800">
+<img src="./.github/readme/report/3a-business-rules.jpg" alt="Business rules list: the start of the kanban model's 32 business rules, grouped by domain" width="800">
 
 Where each business rule is attached, filtered to the five attached to the
 Proposed card entity:
