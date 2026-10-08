@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-<a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
+<a href="https://businesslens.io/blueprints/kanban-board"><strong>View the Kanban Board Product Model live</strong></a>
 </p>
 
 > **Fully open source (MIT).** The format, the CLI, the agent skills and the
@@ -83,8 +83,9 @@ To show what a Product Model answers, here is one for a **kanban board**: a
 conceptual product where a small team plans its work on shared boards of
 columns and cards, and an **AI agent proposes the next cards**. It is the
 [Kanban Board](https://businesslens.io/blueprints/kanban-board) Blueprint, a
-model with no code behind it. Every answer below is read from the model, and
-you can open it yourself:
+model with no code behind it. Every answer below is read from the model. You
+can [view it live](https://businesslens.io/blueprints/kanban-board), or open it
+on your machine:
 
 ```bash
 npx businesslens blueprint pull kanban-board
@@ -149,6 +150,10 @@ by step:
   proposal, is refused the same way.
 
 <img src="./.github/readme/report/5-scenario.jpg" alt="The Refuse a direct change from the AI agent scenario: three steps, each with who acts, entity effects, where and the governing business rules, and its edge case" width="800">
+
+<p align="center">
+<a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
+</p>
 
 ## Who it helps
 
