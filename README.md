@@ -25,8 +25,6 @@
 <a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
 </p>
 
----
-
 ## The problem
 
 Where is your **product model** today? Scattered across tickets, design docs,
