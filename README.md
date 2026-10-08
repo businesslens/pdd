@@ -99,61 +99,77 @@ npx businesslens view
 ### 1. What does each capability change?
 
 The 9 entities in the kanban model (what the product keeps, and who acts on
-it), and which capabilities create, change or remove each one. For the
-capabilities around a proposed card:
+it), and which capabilities create, change or remove each one. The first
+screenshot lists all 9; the second is filtered to the four capabilities around
+a proposed card:
 
 - **Card proposals** creates a proposed card, never a card.
 - **Proposed card acceptance** is what turns it into a card on the board.
 - **Proposed card dismissal** changes the proposal and leaves the board alone.
 
-<img src="./.github/readme/report/1-what-changes-what.jpg" alt="Changes: Card and Proposed card against Card proposals, Proposed card acceptance, Proposed card dismissal and Card creation" width="800">
+<img src="./.github/readme/report/1a-entities.jpg" alt="Entities list: all 9 entities of the kanban model, grouped into Actors, Board settings, Cards, Proposals and No Domain" width="800">
+
+<img src="./.github/readme/report/1b-what-changes-what.jpg" alt="Changes, filtered to four capabilities: Card and Proposed card against Card proposals, Proposed card acceptance, Proposed card dismissal and Card creation" width="800">
 
 ### 2. Which interfaces offer each capability?
 
 All 23 capabilities in the kanban model, and which interfaces offer each one.
-For six card capabilities:
+The first screenshot lists them; the second is filtered to six card
+capabilities:
 
 - **The agent connection** offers one capability: proposing cards.
 - **Every change to a card** happens in the board web application, by a member.
 
-<img src="./.github/readme/report/2-compare-delivery.jpg" alt="Delivery: six card capabilities against the Agent connection and the Board web application" width="800">
+<img src="./.github/readme/report/2a-capabilities.jpg" alt="Capabilities list: the 23 capabilities of the kanban model, grouped by domain" width="800">
+
+<img src="./.github/readme/report/2b-compare-delivery.jpg" alt="Delivery, filtered to six card capabilities: which of them the Agent connection and the Board web application offer" width="800">
 
 ### 3. Where does each business rule apply?
 
-All 32 business rules in the kanban model, and where each one is attached. For
+All 32 business rules in the kanban model, and where each one is attached. The
+first screenshot lists them; the second is filtered to the five attached to
 the Proposed card entity:
 
 - **Creating one:** only an AI agent a member connected proposes cards.
 - **Deciding on one:** only the board's members accept or dismiss it.
 - **Deleting one:** it goes only with its board.
 
-<img src="./.github/readme/report/3-rule-attachments.jpg" alt="Attachments: five business rules attached to the Proposed card entity, as creates, changes, reads, removes and attached" width="600">
+<img src="./.github/readme/report/3a-business-rules.jpg" alt="Business rules list: the 32 business rules of the kanban model, grouped by domain" width="800">
+
+<img src="./.github/readme/report/3b-rule-attachments.jpg" alt="Attachments, filtered to the Proposed card entity: five business rules, as creates, changes, reads, removes and attached" width="600">
 
 ### 4. How does an entity move through its states?
 
-The Proposed card entity in the kanban model, and how it moves through its
-states:
+The Proposed card entity, one of the 9: the information kept about it, and how
+it moves through its states:
 
+- **Four pieces of information:** its title, description, reason and suggested
+  column.
 - **Three states:** Proposed, then Accepted or Dismissed. Created and Removed
   mark where its life begins and ends.
 - **Removing it** on its own is forbidden from every state; deleting its board
   removes it.
 
-<img src="./.github/readme/report/4-lifecycle.jpg" alt="Proposed card lifecycle: Card proposals creates it in Proposed; members accept or dismiss it. Removing it on its own is forbidden; deleting its board removes it" width="800">
+<img src="./.github/readme/report/4a-proposed-card.jpg" alt="Proposed card overview: its description and the four pieces of information it keeps" width="800">
+
+<img src="./.github/readme/report/4b-lifecycle.jpg" alt="Proposed card lifecycle: Card proposals creates it in Proposed; members accept or dismiss it. Removing it on its own is forbidden; deleting its board removes it" width="800">
 
 ### 5. What exactly happens in one scenario?
 
 The 4 scenarios of the Card proposals capability, then one of them opened step
 by step:
 
+- **Four scenarios:** proposing cards for a goal, proposing a next step for a
+  stalled card, and two refusals.
 - **Refuse a direct change from the AI agent:** the agent tries to move a card
-  itself, and the product refuses.
-- **Every step** says who acts, what is read, where, and which business rules
-  govern it.
+  itself, and the product refuses. Every step says who acts, what is read,
+  where, and which business rules govern it.
 - **Its edge case:** editing, deleting or creating a card, or accepting its own
   proposal, is refused the same way.
 
-<img src="./.github/readme/report/5-scenario.jpg" alt="The Refuse a direct change from the AI agent scenario: three steps, each with who acts, entity effects, where and the governing business rules, and its edge case" width="800">
+<img src="./.github/readme/report/5a-scenarios.jpg" alt="Card proposals scenarios: the four scenarios with their triggers and outcomes" width="800">
+
+<img src="./.github/readme/report/5b-scenario.jpg" alt="The Refuse a direct change from the AI agent scenario: three steps, each with who acts, entity effects, where and the governing business rules, and its edge case" width="800">
 
 ## Who it helps
 
