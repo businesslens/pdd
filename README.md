@@ -90,7 +90,7 @@ npx businesslens blueprint pull kanban-board
 npx businesslens view
 ```
 
-### 1. What does each capability change?
+### 1. Entities, and which capabilities change them
 
 All 9 entities in the kanban model: what the product keeps, and who acts on it.
 
@@ -105,7 +105,7 @@ capabilities around a proposed card:
 
 <img src="./.github/readme/report/1b-what-changes-what.jpg" alt="Changes, filtered to four capabilities: Card and Proposed card against Card proposals, Proposed card acceptance, Proposed card dismissal and Card creation" width="800">
 
-### 2. Which interfaces offer each capability?
+### 2. Capabilities, and which interfaces offer them
 
 All 23 capabilities in the kanban model: what the product lets someone do.
 
@@ -118,7 +118,7 @@ Which interfaces offer each capability, filtered to six card capabilities:
 
 <img src="./.github/readme/report/2b-compare-delivery.jpg" alt="Delivery, filtered to six card capabilities: which of them the Agent connection and the Board web application offer" width="800">
 
-### 3. Where does each business rule apply?
+### 3. Business rules, and where they apply
 
 All 32 business rules in the kanban model: what must always hold, and who may
 do what.
@@ -134,7 +134,7 @@ Proposed card entity:
 
 <img src="./.github/readme/report/3b-rule-attachments.jpg" alt="Attachments, filtered to the Proposed card entity: five business rules, as creates, changes, reads, removes and attached" width="600">
 
-### 4. How does an entity move through its states?
+### 4. An entity: what it keeps, and how its state changes
 
 The Proposed card entity, one of the 9, and the information kept about it:
 
@@ -152,7 +152,7 @@ How it moves through its states, and the capability behind every move:
 
 <img src="./.github/readme/report/4b-lifecycle.jpg" alt="Proposed card lifecycle: Card proposals creates it in Proposed; members accept or dismiss it. Removing it on its own is forbidden; deleting its board removes it" width="800">
 
-### 5. What exactly happens in one scenario?
+### 5. A capability's scenarios, and one step by step
 
 The 4 scenarios of the Card proposals capability:
 
