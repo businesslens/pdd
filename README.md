@@ -22,33 +22,49 @@
 </p>
 
 <p align="center">
-  <img src="./.github/demo.gif" alt="A tour of BusinessLens's own Product Model: npx businesslens view businesslens/pdd opens it in the local report, then its Entities, Capabilities, Interfaces and Business Rules, each drawn more than one way" width="800">
+  <img src="./.github/readme/report/overview.jpg" alt="The Kanban Board Blueprint open in the BusinessLens report: its description and intent, with 9 Entities, 2 Interfaces, 3 Domains, 23 Capabilities, 1 Journey and 32 Business Rules in the sidebar" width="800">
 </p>
 
 <p align="center">
 <a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
 </p>
 
+> **Fully open source (MIT).** The format, the CLI, the agent skills and the
+> report are all in this repository. No account, no hosted service and no
+> telemetry: the report runs on your own machine.
+
 ---
 
-> **BusinessLens** keeps what your product does in a Git-tracked
-> `.businesslens/` folder of Markdown files, and gives your coding agent the
-> skills to write it, follow it and check the code against it.
+## The problem
 
-## Why a Product Model in the AI era
+Where is your product model today? Scattered across tickets, design docs, the
+wiki, chats, source code, tests and people: shared by none, checked by nothing.
+So your AI agent guesses what the product is
+([AI is writing code for products it doesn't understand](https://businesslens.io/blog/your-agent-is-guessing)).
 
-Agents write code faster than anyone can explain to them what the product is.
-They fill the gaps by guessing, and the guesses ship.
+Spec-driven development (SDD) tools such as OpenSpec, spec-kit and Kiro describe
+each change, with the product mixed into its design, plan and tasks and spread
+across feature folders
+([SDD describes the change, not the product](https://businesslens.io/blog/pdd-and-spec-driven-development)).
 
-1. **One definition.** Not scattered across tickets, docs, chats and people, but one model beside the code.
-2. **Agents know what to build.** They read the Journeys, Scenarios and Rules instead of guessing.
-3. **Done means it matches the product.** Verify checks the code against the approved model.
-4. **Drift is easy to spot.** The model stays a clear reference as behavior changes.
-5. **Decisions travel with the code.** Model and code changes are reviewed in one pull request.
+Product-Driven Development (PDD) keeps the product in one place, apart from how
+it's built: a shared product model for agents and humans that is git-tracked,
+reviewable and verifiable
+([Introducing BusinessLens](https://businesslens.io/blog/introducing-businesslens)).
 
-**Dogfooded:** BusinessLens is developed with BusinessLens. Its own Product Model
-lives in this repository's [`.businesslens/` folder](./.businesslens/), and the
-demo above is that model in the local report.
+## The Product Model
+
+One definition of what the product does, as plain Markdown in a
+`.businesslens/` folder next to the code. The
+[Product Model](https://businesslens.io/docs/product-model) is made of:
+
+- **[Entities](https://businesslens.io/docs/entities)**: what the product keeps, and who acts on it. *Card, Board, AI agent*
+- **[Interfaces](https://businesslens.io/docs/interfaces)**: how people and systems reach the product. *Board web application, Agent connection*
+- **[Domains](https://businesslens.io/docs/domains)**: the subject areas the product is split into. *Cards, Board settings, Proposals*
+- **[Capabilities](https://businesslens.io/docs/capabilities)**: what the product lets someone do. *Card movement, Member addition, Card proposals*
+- **[Journeys](https://businesslens.io/docs/journeys)**: one goal, carried across several capabilities. *Set up a team board*
+- **[Business Rules](https://businesslens.io/docs/business-rules)**: what must always hold, and who may do what. *Only the board's members change its cards; A proposed card changes nothing on the board until a member accepts it*
+- **[Variations](https://businesslens.io/docs/variations)**: where the product works in more than one way. *Feature flag, Plan tier, A/B test*
 
 ## What the model covers, and what it doesn't
 
@@ -63,23 +79,75 @@ and nothing a rebuild is free to change:
 | Which rules apply | CLI syntax and flags |
 | What happens next | API style: CRUD or RPC |
 
-## Features
+## Questions the model answers
 
-* 🤖 **Agent skills:** map, ideate and verify for Claude Code, Codex, Cursor, Gemini CLI and GitHub Copilot
+`npx businesslens view` opens the model as a report in your browser. Here it is
+for the [Kanban Board](https://businesslens.io/blueprints/kanban-board)
+Blueprint, a team board where an AI agent proposes the next cards. Every answer
+below is read from its model, not from its code.
 
-* 📝 **Markdown-native:** every resource is a plain `.md` file in your repo, reviewed in pull requests
+### 1. What does each capability change?
 
-* ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
+Which capabilities create, change or remove each entity:
 
-* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
+- **Card proposals** creates a proposed card, never a card.
+- **Proposed card acceptance** is what turns it into a card on the board.
+- **Proposed card dismissal** changes the proposal and leaves the board alone.
 
-* 🖥️ **Local report:** `businesslens view` opens the model in your browser and follows your edits
+<img src="./.github/readme/report/1-what-changes-what.jpg" alt="What changes what: Card and Proposed card against Card proposals, Proposed card acceptance, Proposed card dismissal and Card creation" width="800">
 
-* 📦 **Blueprints:** start from a reviewed model for a common product instead of a blank page
+### 2. Where can each capability be done?
 
-* 🔒 **Local-first:** no account, no hosted service; the skills read your code and never run it
+Which interfaces offer each capability:
 
-* 🆓 MIT-licensed and open source
+- **The agent connection** offers one capability: proposing cards.
+- **Every change to a card** happens in the web application, by a member.
+
+<img src="./.github/readme/report/2-compare-delivery.jpg" alt="Compare delivery: six card capabilities against the Agent connection and the Board web application" width="800">
+
+### 3. Which rules apply, and to what?
+
+Every Business Rule attached to the proposed card, and what each one governs:
+
+- **Creating one:** only an AI agent a member connected proposes cards.
+- **Deciding on one:** only the board's members accept or dismiss it.
+- **Deleting one:** it goes only with its board.
+
+<img src="./.github/readme/report/3-rule-attachments.jpg" alt="Rule attachments: five Business Rules attached to the Proposed card, as creates, changes, reads, removes and attached" width="800">
+
+### 4. How does a proposed card move through its states?
+
+The Proposed card entity and the capability behind every move:
+
+- **Three states:** Proposed, then Accepted or Dismissed.
+- **Removing it** on its own is forbidden from every state.
+
+<img src="./.github/readme/report/4-lifecycle.jpg" alt="Proposed card lifecycle: created by Card proposals, then Accepted by Proposed card acceptance or Dismissed by Proposed card dismissal; removal is forbidden" width="800">
+
+### 5. What exactly happens in one scenario?
+
+The four scenarios of Card proposals, with one opened step by step:
+
+- **Refuse a direct change from the AI agent:** the agent tries to move a card
+  itself, and the product refuses.
+- **Every step** says who acts, what is read, where, and which rules govern it.
+
+<img src="./.github/readme/report/5-scenario.jpg" alt="The Refuse a direct change from the AI agent scenario: three steps, each with who acts, entity effects, where and the governing Business Rules" width="800">
+
+## Who it helps
+
+- **Maintainers and reviewers** see a behavior change as a change to the model,
+  reviewed in the same pull request as the code.
+- **New contributors** learn what the product does, who may do what and where,
+  without reading the whole codebase first.
+- **Product managers and docs writers** find answers in one place that links
+  back to the code it came from.
+- **Coding agents** read the Journeys, Scenarios and Rules before they change
+  anything, instead of guessing, and verify checks their code against the model.
+
+**Dogfooded:** BusinessLens is developed with BusinessLens. Its own Product Model
+lives in this repository's [`.businesslens/` folder](./.businesslens/); open it
+with `npx businesslens view businesslens/pdd`.
 
 ---
 
@@ -89,7 +157,9 @@ and nothing a rebuild is free to change:
 npx businesslens install
 ```
 
-Then start from where you are, inside your agent (Codex uses `$` instead of `/`):
+This adds the skills to Claude Code, Codex, Cursor, Gemini CLI and GitHub
+Copilot. Then start from where you are, inside your agent (Codex uses `$`
+instead of `/`):
 
 ### Map existing repo (recommended)
 
@@ -113,7 +183,7 @@ npx businesslens view
 No code yet? Describe the product you want:
 
 ```text
-I want to build a booking app for dog walkers
+/businesslens-ideate I want to build a booking app for dog walkers
 ```
 
 You pick from a few product shapes, then approve the model.
@@ -136,33 +206,18 @@ npx businesslens blueprint pull <name>
   <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
 </p>
 
-## <img src="./.github/readme/app-window.svg" alt="" width="28" height="28" align="top"> Web interface
+- **Ideate:** ask your agent for a product change. It proposes the change to the
+  model, and nothing is written until you approve it.
+- **Implement:** your agent builds it your way, in phases, with plan mode, an
+  SDD tool, or freestyle.
+- **Verify:** your agent checks the code against the approved model, phase by
+  phase, until they agree.
 
-Read the Product Model as a report in your browser. It updates automatically
-as you make changes. The server listens on `127.0.0.1` only and sends nothing
-anywhere.
+## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI
 
-```bash
-# This repository's model (opens the browser)
-npx businesslens view
-
-# A GitHub repository's pull request
-npx businesslens view acme/checkout --pr 12
-
-# Custom port, no browser
-npx businesslens view --port 8080 --no-open
-```
-
-## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI reference
-
-Every command and option: [CLI reference](https://businesslens.io/docs/cli).
-
-Quick examples: `businesslens install`, `businesslens update`,
-`businesslens lint`, `businesslens view`, `businesslens blueprint export`,
-`businesslens blueprint pull <name>`, `businesslens blueprint open <report>`,
-`businesslens blueprint contribute`.
-
-Full help: `npx businesslens --help`
+`install`, `update`, `lint`, `view` and the `blueprint` commands. Every command
+and option: [CLI reference](https://businesslens.io/docs/cli), or
+`npx businesslens --help`.
 
 ## License
 
