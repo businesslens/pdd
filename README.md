@@ -8,7 +8,7 @@
 </p>
 
 <h1 align="center"><a href="https://businesslens.io">BusinessLens</a></h1>
-<p align="center"><strong>Product-Driven Development for coding agents</strong></p>
+<p align="center"><strong>Open-source Product-Driven Development for coding agents</strong></p>
 <p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
@@ -24,10 +24,6 @@
 <p align="center">
 <a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
 </p>
-
-> **Fully open source (MIT).** The format, the CLI, the agent skills and the
-> report are all in this repository. No account, no hosted service and no
-> telemetry: the report runs on your own machine.
 
 ---
 
