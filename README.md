@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="./.github/readme/report/overview.jpg" alt="The Kanban Board Blueprint open in the BusinessLens report: its description and intent, with 9 Entities, 2 Interfaces, 3 Domains, 23 Capabilities, 1 Journey and 32 Business Rules in the sidebar" width="800">
+  <img src="./.github/readme/report/overview.jpg" alt="The Kanban Board Blueprint open in the BusinessLens report: the Product Overview with its description, intent and product details" width="800">
 </p>
 
 <p align="center">
@@ -113,16 +113,18 @@ Every Business Rule attached to the proposed card, and what each one governs:
 - **Deciding on one:** only the board's members accept or dismiss it.
 - **Deleting one:** it goes only with its board.
 
-<img src="./.github/readme/report/3-rule-attachments.jpg" alt="Rule attachments: five Business Rules attached to the Proposed card, as creates, changes, reads, removes and attached" width="800">
+<img src="./.github/readme/report/3-rule-attachments.jpg" alt="Rule attachments: five Business Rules attached to the Proposed card, as creates, changes, reads, removes and attached" width="600">
 
 ### 4. How does a proposed card move through its states?
 
 The Proposed card entity and the capability behind every move:
 
-- **Three states:** Proposed, then Accepted or Dismissed.
-- **Removing it** on its own is forbidden from every state.
+- **Three states:** Proposed, then Accepted or Dismissed. Created and Removed
+  mark where its life begins and ends.
+- **Removing it** on its own is forbidden from every state; deleting its board
+  removes it.
 
-<img src="./.github/readme/report/4-lifecycle.jpg" alt="Proposed card lifecycle: created by Card proposals, then Accepted by Proposed card acceptance or Dismissed by Proposed card dismissal; removal is forbidden" width="800">
+<img src="./.github/readme/report/4-lifecycle.jpg" alt="Proposed card lifecycle: Card proposals creates it in Proposed; members accept or dismiss it. Removing it on its own is forbidden; deleting its board removes it" width="800">
 
 ### 5. What exactly happens in one scenario?
 
@@ -131,8 +133,10 @@ The four scenarios of Card proposals, with one opened step by step:
 - **Refuse a direct change from the AI agent:** the agent tries to move a card
   itself, and the product refuses.
 - **Every step** says who acts, what is read, where, and which rules govern it.
+- **Its edge case:** editing, deleting or creating a card, or accepting its own
+  proposal, is refused the same way.
 
-<img src="./.github/readme/report/5-scenario.jpg" alt="The Refuse a direct change from the AI agent scenario: three steps, each with who acts, entity effects, where and the governing Business Rules" width="800">
+<img src="./.github/readme/report/5-scenario.jpg" alt="The Refuse a direct change from the AI agent scenario: three steps, each with who acts, entity effects, where and the governing Business Rules, and its edge case" width="800">
 
 ## Who it helps
 
@@ -140,8 +144,8 @@ The four scenarios of Card proposals, with one opened step by step:
   reviewed in the same pull request as the code.
 - **New contributors** learn what the product does, who may do what and where,
   without reading the whole codebase first.
-- **Product managers and docs writers** find answers in one place that links
-  back to the code it came from.
+- **Product managers and docs writers** find product answers in one place,
+  with optional references to the code and material behind them.
 - **Coding agents** read the Journeys, Scenarios and Rules before they change
   anything, instead of guessing, and verify checks their code against the model.
 
