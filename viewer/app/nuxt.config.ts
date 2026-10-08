@@ -95,7 +95,10 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
+        'lucide:circle-alert',
+        'lucide:info',
         'lucide:loader-circle',
+        'lucide:rotate-cw',
         'lucide:refresh-cw',
         'lucide:sliders-horizontal',
         'lucide:triangle-alert',
