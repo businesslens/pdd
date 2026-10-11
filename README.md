@@ -25,6 +25,16 @@
 <a href="#map-existing-repo-recommended"><strong>Map your own repo today!</strong></a>
 </p>
 
+<p align="center">
+<a href="#the-problem">The problem</a> ·
+<a href="#the-product-model">The Product Model</a> ·
+<a href="#clear-product-model-focused-sources">Where it fits</a> ·
+<a href="#example-the-product-model-of-a-kanban-board">Example</a> ·
+<a href="#-get-started">Get started</a> ·
+<a href="#the-development-loop">Development loop</a> ·
+<a href="#faq">FAQ</a>
+</p>
+
 ## The problem
 
 Where is your **product model** today? Scattered across tickets, design docs,
@@ -55,6 +65,27 @@ is made of:
 - **[Journeys](https://businesslens.io/docs/journeys):** one goal, carried across several capabilities (Browse and buy, Sign up, Reorder).
 - **[Business rules](https://businesslens.io/docs/business-rules):** what must always hold, and who may do what (Max 3 per order, Only managers refund, Total includes tax).
 - **[Variations](https://businesslens.io/docs/variations):** where the product works in more than one way (Feature flag, Plan tier, A/B test).
+
+## Clear product model. Focused sources.
+
+Bring knowledge from docs, designs, code, and people into one product model.
+Fill gaps, clarify uncertainty, and make every source leaner and more focused.
+
+<p align="center">
+  <img src="./.github/readme/product-knowledge.webp" alt="An engraved wheel with the product model at its center, connecting user-facing documentation, internal documentation, design and architecture, code and tests, and tickets, chats, and people." width="420">
+</p>
+
+*Each information source’s purpose, supported by a shared product model*
+
+| Information source | Purpose |
+| --- | --- |
+| **User docs** | Teaches people to use the product |
+| **Internal docs** | Records architecture, design decisions, and onboarding |
+| **Design & architecture** | Describes how it should look and work |
+| **Code & tests** | Implements and verifies how it is built |
+| **Tickets, chats & people** | Carry context, requests, and undocumented knowledge |
+
+More in the FAQ: [Why a Product Model](docs/faq.md#why-a-product-model).
 
 ## Why a Product Model in the AI era
 
