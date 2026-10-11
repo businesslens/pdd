@@ -5,11 +5,11 @@ description: Where to start from an existing repo, an idea, or a Blueprint — a
 
 # FAQ
 
-<a name="adopting-it"></a>
+<a name="why-a-product-model"></a>
 
-## Adopting it
+## Why a Product Model
 
-How the model fits your existing documentation, agents, review process, and team.
+How the model relates to the documentation, agent instructions, and knowledge you already have.
 
 ### We already have documentation. Why do we need a Product Model?
 
@@ -39,6 +39,19 @@ what its audience needs, and carries material that is not product definition at 
 style systems, deployment configuration, onboarding). It also **makes uncovered aspects visible**:
 if something is not in the model, nobody decided it.
 
+### We already have AGENTS.md and docs. Isn't that enough?
+
+It can, and they help. But user docs hold the user subset, and even internal docs are free-form:
+each written its own way, with no common structure, **mixing product decisions with design and
+implementation**. The rest stays in the code, or worse, **is not defined anywhere at all**. Every
+agent reconstructs it from scratch, possibly differently each time, **with nobody reviewing what it
+concluded**.
+
+The model is a structured way to define a product: a fixed set of resource types (entities,
+interfaces, capabilities, scenarios, business rules, variations) and how they connect. Technical
+aspects (architecture, design docs, ADRs) stay out of it, so you keep maintaining those however you
+like. [Read why your agent is guessing](https://businesslens.io/blog/your-agent-is-guessing).
+
 ### Why a structured format instead of free-form documentation?
 
 The format is the point. I have spent the recent months building this, drawing on years of product
@@ -57,25 +70,29 @@ had.
 The format is still in its early phases. It will evolve as adoption grows and feedback comes in, and
 it is open source precisely so that evolution is shared.
 
-### We already have AGENTS.md and docs. Isn't that enough?
+<a name="adopting-it"></a>
 
-It can, and they help. But user docs hold the user subset, and even internal docs are free-form:
-each written its own way, with no common structure, **mixing product decisions with design and
-implementation**. The rest stays in the code, or worse, **is not defined anywhere at all**. Every
-agent reconstructs it from scratch, possibly differently each time, **with nobody reviewing what it
-concluded**.
+## Adopting it
 
-The model is a structured way to define a product: a fixed set of resource types (entities,
-interfaces, capabilities, scenarios, business rules, variations) and how they connect. Technical
-aspects (architecture, design docs, ADRs) stay out of it, so you keep maintaining those however you
-like. [Read why your agent is guessing](https://businesslens.io/blog/your-agent-is-guessing).
+What changes for your team, your workflow, and your reviews — and what does not.
 
-### How is this different from DeepWiki or AI-generated docs?
+### Why should we add yet another tool to our stack?
 
-Tools like DeepWiki are useful for exploration, but they mix product rules, architecture,
-implementation details, and configuration together without drawing a boundary. **A Product Model
-draws that boundary explicitly**: it holds what the product is, and leaves everything else (user
-docs, internal docs, design, architecture, code) to the sources that already own it.
+PDD is not a standard tool you add to your workflow. It is a format, and the tooling around it just
+helps maintain it. The product definition **already exists**, scattered across docs, code, tickets,
+and people. PDD gives it a structured home so the rest of your tools can do their jobs better.
+
+Contributors who do not use agents work exactly as they do today. **Updating the model is the same
+kind of work** as updating docs or tests when behavior changes, not a new kind. You control when in
+your existing development loop the model gets updated and by whom, although the recommendation is to
+update the model before initiating new work as a best practice.
+
+### Doesn't this lock me into a new development lifecycle?
+
+No. **PDD does not touch how you implement**. You keep your current workflow, your coding agent,
+your planning tools. What PDD adds is a structured format for the product definition you already
+have, informally scattered across docs, code, tickets, and people. You are not adopting a new
+paradigm; you are giving a home to decisions that today live nowhere in particular.
 
 ### Doesn't keeping the model current add work to every PR?
 
@@ -103,23 +120,11 @@ npx businesslens view <owner>/<repo> --pr <n>
 
 A hosted, shareable link is something we are considering, but we do not see it as a blocker.
 
-### Why should we add yet another tool to our stack?
+<a name="what-it-is"></a>
 
-PDD is not a standard tool you add to your workflow. It is a format, and the tooling around it just
-helps maintain it. The product definition **already exists**, scattered across docs, code, tickets,
-and people. PDD gives it a structured home so the rest of your tools can do their jobs better.
+## What it is and isn't
 
-Contributors who do not use agents work exactly as they do today. **Updating the model is the same
-kind of work** as updating docs or tests when behavior changes, not a new kind. You control when in
-your existing development loop the model gets updated and by whom, although the recommendation is to
-update the model before initiating new work as a best practice.
-
-### Doesn't this lock me into a new development lifecycle?
-
-No. **PDD does not touch how you implement**. You keep your current workflow, your coding agent,
-your planning tools. What PDD adds is a structured format for the product definition you already
-have, informally scattered across docs, code, tickets, and people. You are not adopting a new
-paradigm; you are giving a home to decisions that today live nowhere in particular.
+How the Product Model relates to SDD frameworks, AI-generated docs, PRDs, user stories, ERDs, and design.
 
 ### How is this different from SDD?
 
@@ -129,20 +134,12 @@ work is designed, built, and split into tasks. PDD lets you choose whatever tool
 implementation. It does not touch that phase. [Read how PDD and SDD fit
 together](https://businesslens.io/blog/pdd-and-spec-driven-development).
 
-### Is this meant for open-source projects or also closed-source commercial ones?
+### How is this different from DeepWiki or AI-generated docs?
 
-Both. **Open-source projects are natural candidates** because most of their information sources are
-already in the repository, and they usually live in a single repo.
-
-Closed-source commercial projects benefit just as much, as long as the project is in a single
-repository. Multi-repository support is planned. [Follow the multi-repository support
-issue](https://github.com/businesslens/pdd/issues/17).
-
-<a name="what-it-is"></a>
-
-## What it is and isn't
-
-How the Product Model relates to PRDs, design specs, ERDs, and SDD frameworks.
+Tools like DeepWiki are useful for exploration, but they mix product rules, architecture,
+implementation details, and configuration together without drawing a boundary. **A Product Model
+draws that boundary explicitly**: it holds what the product is, and leaves everything else (user
+docs, internal docs, design, architecture, code) to the sources that already own it.
 
 ### Isn't this just a fancy PRD?
 
@@ -165,6 +162,16 @@ A PRD can inform the Product Model, but it does not replace it. Attach it as a P
 the intent role when it shaped approved meaning, or the context role when it preserves supporting
 history. The Product Model remains the self-contained statement of what the product has been
 approved to do. [See how references work](https://businesslens.io/docs/references).
+
+### Why doesn't the product model have a user story resource type?
+
+A user story can describe one ability, one acceptance case, or an entire multi-ability goal,
+depending on how a team sizes its backlog. It therefore has no single Product Model equivalent.
+
+BusinessLens maps its lasting meaning instead: the Entity that acts, a Capability and its Capability
+Scenarios for one ability, or a Journey and its Journey Scenarios for a broader goal. The original
+Jira story can remain linked as a context Reference. [Link external work with
+references](https://businesslens.io/docs/references).
 
 ### Isn't the Product Model just an ERD?
 
@@ -224,21 +231,11 @@ Whatever would still have to be true after the rebuild is the model's; whatever 
 to change is design. Design files, help text and API descriptions attach to the place they shape as
 References. [Read where the model stops](./interfaces.md#is-this-a-design-spec).
 
-### Why doesn't the product model have a user story resource type?
-
-A user story can describe one ability, one acceptance case, or an entire multi-ability goal,
-depending on how a team sizes its backlog. It therefore has no single Product Model equivalent.
-
-BusinessLens maps its lasting meaning instead: the Entity that acts, a Capability and its Capability
-Scenarios for one ability, or a Journey and its Journey Scenarios for a broader goal. The original
-Jira story can remain linked as a context Reference. [Link external work with
-references](https://businesslens.io/docs/references).
-
 <a name="getting-started"></a>
 
 ## Getting started
 
-Three ways in, what each one leaves in your repository, and the repository scope supported today.
+Three ways in, what each one leaves in your repository, and the projects supported today.
 
 ### I already have a codebase — where do I start?
 
@@ -279,12 +276,6 @@ versioned with the code it describes.
 No database, no service, and no lock-in: delete the directory and your repository is exactly as it
 was. [Read about the Product Model](./product-model.md).
 
-### My product spans multiple repositories — is that supported?
-
-Not yet. BusinessLens currently works with one repository at a time. [Follow the multi-repository
-support issue](https://github.com/businesslens/pdd/issues/17) for the design and implementation
-progress.
-
 ### When do I use map, and when do I use verify?
 
 Map is for adoption, a deliberately untrusted area, or expanding model coverage. It is not a daily
@@ -295,6 +286,21 @@ You rarely name either. Ask your agent to implement a change and PDD will run it
 agent implements each phase, and verify checks it before the next. Ask whether the code still
 matches the model whenever you want to be sure, for example before a release. [Read the verification
 loop](./skill-businesslens-verify.md).
+
+### Is this meant for open-source projects or also closed-source commercial ones?
+
+Both. **Open-source projects are natural candidates** because most of their information sources are
+already in the repository, and they usually live in a single repo.
+
+Closed-source commercial projects benefit just as much, as long as the project is in a single
+repository. Multi-repository support is planned. [Follow the multi-repository support
+issue](https://github.com/businesslens/pdd/issues/17).
+
+### My product spans multiple repositories — is that supported?
+
+Not yet. BusinessLens currently works with one repository at a time. [Follow the multi-repository
+support issue](https://github.com/businesslens/pdd/issues/17) for the design and implementation
+progress.
 
 <a name="trust-and-help"></a>
 
