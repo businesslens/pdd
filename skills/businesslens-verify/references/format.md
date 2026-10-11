@@ -834,9 +834,10 @@ orientation exactly:
 # Product Model
 
 This directory is the **Product Model** of this repository, kept with
-BusinessLens for Product-Driven Development (PDD): what the product does and for
-whom. It is plain Markdown tracked in Git, and it is the source of truth for
-intended product behavior.
+BusinessLens for Product-Driven Development (PDD): who the product serves, where
+they reach it, what it keeps, what it can do, and which rules must stay true. It
+is plain Markdown tracked in Git, and it is the source of truth for the intended
+product definition.
 
 ## If you are an agent working in this repository
 

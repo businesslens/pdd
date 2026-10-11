@@ -3,6 +3,7 @@ import { readFile, readdir, access } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import { changelogProblems } from './changelog.mjs'
+import { faqProblems } from './faq.mjs'
 import {
   VOCABULARY_MODULE,
   readVocabulary,
@@ -25,7 +26,7 @@ const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
-  'docs/cli.md', 'docs/cli-view.md',
+  'docs/cli.md', 'docs/cli-view.md', 'docs/faq.md',
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
   'layers/nuxt/report-viewer-lab/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
@@ -375,10 +376,18 @@ for (const name of docFiles) {
     errors.push(`docs/${name} frontmatter must be a YAML mapping`)
     continue
   }
-  for (const key of ['title', 'description', 'section', 'group']) {
+  const isFaq = name === 'faq.md'
+  for (const key of isFaq ? ['title', 'description'] : ['title', 'description', 'section', 'group']) {
     if (typeof data[key] !== 'string' || !data[key].trim()) {
       errors.push(`docs/${name} frontmatter is missing "${key}"`)
     }
+  }
+  if (isFaq) {
+    for (const key of ['section', 'group', 'order', 'terms']) {
+      if (key in data) errors.push(`docs/faq.md must not declare "${key}"; it is served at /faq`)
+    }
+    errors.push(...await faqProblems(source))
+    continue
   }
   const section = data.section
   if (section && !DOC_SECTIONS.has(section)) {

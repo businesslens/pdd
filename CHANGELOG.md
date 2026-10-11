@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Docs:** The FAQ is now available directly in the repository and supplies the website’s dedicated FAQ page.
+
 - **Docs:** The README explains Product-Driven Development with the questions the Product Model answers, shown on the Kanban Board Blueprint.
 
 ## [0.33.0] - 2026-10-08
