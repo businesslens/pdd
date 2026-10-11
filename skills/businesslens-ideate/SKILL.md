@@ -3,7 +3,7 @@ name: businesslens-ideate
 description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model (PDD). Use when the user asks to add, change or remove what the product does (“add X to the product”, “make a PDD change”), to explore product directions, define a blank-slate product, plan a capability or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code, implement the model in code, or verify implementation alignment.
 ---
 
-# Decide intended product behavior
+# Decide what the product should do
 
 Converge from intent to an approved Product Model change. Exploration writes
 nothing. Product meaning enters `.businesslens/` only after explicit approval.
