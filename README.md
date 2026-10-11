@@ -277,6 +277,11 @@ npx businesslens blueprint pull <name>
 and option: [CLI reference](https://businesslens.io/docs/cli), or
 `npx businesslens --help`.
 
+## FAQ
+
+Read the [frequently asked questions](docs/faq.md) about adopting BusinessLens,
+what the Product Model covers, and getting help.
+
 ## License
 
 BusinessLens is released under the **MIT License**: do anything, just give

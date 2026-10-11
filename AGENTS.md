@@ -55,10 +55,23 @@ were costed and then chosen against, so the same argument is not had twice.
 
 - `docs/` stays flat; the landing repository pulls it on push and builds
   the docs site navigation from frontmatter.
-- Every doc declares `title`, `description`, `section`, `group`, and
+- Regular docs declare `title`, `description`, `section`, `group`, and
   `order` (enforced by `scripts/check-repo.mjs`). `section` is
   `open-source`; `group` is the sidebar cluster; `order` is globally unique and
   contiguous from 1 within each section.
+- `docs/faq.md` is the dedicated `/faq` source, not a normal docs page. It
+  declares only `title` and `description`; it has no sidebar group, order, or
+  vocabulary terms. Questions and answers stay in its GitHub-readable body.
+  Each group starts with a stable HTML named anchor, an H2 and a description;
+  H3s introduce questions. Answers use paragraphs, bold text, Markdown links,
+  fenced shell commands and tables. A comparison has a lead, italic caption,
+  and three columns (row label plus two alternatives). A two-column table with
+  a lead becomes paired boundary lists; with an italic caption and headers
+  `Information source` / `Goal`, it becomes the source comparison, with bold
+  source labels marking highlighted rows. The final H2 has a contact paragraph
+  and two linked list items. Landing validates and renders these shapes.
+  Use relative `.md` links for docs; absolute `businesslens.io` links for site
+  routes. Absolute docs links retain the FAQ's explicit new-tab behavior.
 - Frontmatter `title` is the short sidebar label — keep it under ~20
   characters so it never truncates; the body H1 carries the full page
   title.
