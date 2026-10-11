@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docs:** The README explains Product-Driven Development with the questions the Product Model answers, shown on the Kanban Board Blueprint.
 
+- **Docs:** The README opens with a short map of its sections and shows where the Product Model fits beside docs, design, code and people.
+
 ## [0.33.0] - 2026-10-08
 
 ### Changed
