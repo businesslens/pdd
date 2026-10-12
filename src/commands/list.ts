@@ -32,6 +32,6 @@ export async function runList(dependencies: Partial<ListDependencies> = {}): Pro
   const sorted = [...blueprints].sort((left, right) => left.slug.localeCompare(right.slug))
   const width = Math.max(...sorted.map(entry => entry.slug.length))
   for (const entry of sorted) console.log(`${entry.slug.padEnd(width)}  ${entry.title}`)
-  console.log('\nPull one with: businesslens blueprint pull <name>')
+  console.log('\nPull one with: pdd-kit blueprint pull <name>')
   return 0
 }

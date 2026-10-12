@@ -15,7 +15,7 @@ const dirs: string[] = []
 function temp() { const path = mkdtempSync(join(tmpdir(), 'bl-border-')); dirs.push(path); return path }
 function fixture() { const path = temp(); cpSync(join(__dirname, 'fixtures/fixture-shop'), path, { recursive: true }); return path }
 function edit(cwd: string, path: string, transform: (text: string) => string) {
-  const file = join(cwd, '.businesslens', path)
+  const file = join(cwd, 'product-model', path)
   writeFileSync(file, transform(readFileSync(file, 'utf8')))
 }
 function errors(cwd: string) { return lintModel(loadModel(cwd), TRACKED).errors }
@@ -28,7 +28,7 @@ describe('reviewed experience border', () => {
     const cwd = fixture()
     edit(cwd, SCREEN, text => text.replace('shows: [Delivery address]', 'collects: [Delivery address]'))
     // A read prohibition is meaningful even when this surface only collects the fact.
-    writeFileSync(join(cwd, '.businesslens/business-rules/address-input-is-not-disclosure.md'), `---
+    writeFileSync(join(cwd, 'product-model/business-rules/address-input-is-not-disclosure.md'), `---
 appliesTo:
   - type: entity
     id: shopper
@@ -52,7 +52,7 @@ The address may be supplied here but is not disclosed by the Product.
     expect(errors(target)).toEqual([])
     expect(imported.screens.find(s => s.id === 'customer-web::storefront::product-record')!.entities.find(e => e.entity === 'shopper'))
       .toEqual({ entity: 'shopper', shows: [], collects: ['Delivery address'] })
-    expect(readFileSync(join(target, '.businesslens', SCREEN), 'utf8')).not.toMatch(/^capabilities:/m)
+    expect(readFileSync(join(target, 'product-model', SCREEN), 'utf8')).not.toMatch(/^capabilities:/m)
     expect(imported.capabilityScenarios.find(s => s.id === 'complete-checkout')!.steps.flatMap(s => s.entities).find(e => e.effect === 'creates')!.facts)
       .toContain('Total charged')
     expect(imported.capabilityScenarios.flatMap(s => s.steps).flatMap(s => s.entities).some(e => e.effect !== 'removes' && !e.facts.length)).toBe(true)

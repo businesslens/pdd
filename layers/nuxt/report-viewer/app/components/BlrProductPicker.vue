@@ -49,7 +49,7 @@ const items = computed<ProductItem[][]>(() => [[
         :trailing-icon="collapsed ? undefined : 'i-lucide-chevron-down'"
         :ui="{ trailingIcon: 'ms-auto size-4 shrink-0 text-muted' }"
       >
-        <BusinessLensProductLogo :src="logoSrc" class="shrink-0 rounded object-contain" :class="collapsed ? 'size-[17px]' : 'size-6'" />
+        <PddKitProductLogo :src="logoSrc" class="shrink-0 rounded object-contain" :class="collapsed ? 'size-[17px]' : 'size-6'" />
         <span v-if="!collapsed" class="truncate">{{ title }}</span>
       </UButton>
     </UTooltip>
@@ -57,7 +57,7 @@ const items = computed<ProductItem[][]>(() => [[
       <span v-if="item.icon" class="flex size-6 shrink-0 items-center justify-center">
         <UIcon :name="item.icon" class="size-4" />
       </span>
-      <BusinessLensProductLogo v-else :src="item.logoSrc" class="size-6 shrink-0 rounded object-contain" />
+      <PddKitProductLogo v-else :src="item.logoSrc" class="size-6 shrink-0 rounded object-contain" />
     </template>
     <template #item-trailing="{ item }">
       <template v-if="item.current">

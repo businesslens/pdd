@@ -1,0 +1,64 @@
+---
+kind: primary
+result: achieved
+routes:
+  adoption: Adoption
+steps:
+  - text: The Developer installs the pdd-kit skills for their harness
+    kind: actor
+    actor: developer
+    capability: install-agent-skills
+    entities:
+      - { entity: skill-installation, effect: creates, facts: [Provider, Scope, Version, Skills, Installed at] }
+    contexts:
+      adoption:
+        place: pdd-kit-cli
+  - text: The Developer asks their agent to map the repository
+    kind: actor
+    actor: developer
+    capability: map-established-behavior
+    entities: []
+    contexts:
+      adoption:
+        place: agent-skills
+  - text: The AI agent inspects established behavior without executing anything and proposes the model, its scope, exclusions, gaps and judgement calls
+    kind: actor
+    actor: ai-agent
+    capability: map-established-behavior
+    entities: []
+    contexts:
+      adoption:
+        place: agent-skills
+  - text: The Developer approves the proposed meaning, and the Product writes it
+    kind: actor
+    actor: developer
+    capability: map-established-behavior
+    entities:
+      - { entity: product-model, effect: creates, facts: [Product, Coverage, Method] }
+    contexts:
+      adoption:
+        place: agent-skills
+  - text: The Developer checks the written model's structure before committing it
+    kind: actor
+    actor: developer
+    capability: lint-product-model
+    entities:
+      - { entity: product-model, effect: reads, facts: [Product, Coverage, Method] }
+    contexts:
+      adoption:
+        place: pdd-kit-cli
+---
+
+# Map an existing repository
+
+## Trigger
+
+A repository already has product behavior and nowhere that says what it is meant
+to be.
+
+## Outcome
+
+The Journey goal is achieved: the repository holds an approved, structurally
+sound model of the behavior it already has, with its coverage naming the code
+it accounts for, the code excluded and the code still unmodeled. Supporting References attach the evidence used to describe
+the behavior.

@@ -31,7 +31,7 @@ const MAX_REPORT_BYTES = 8 * 1024 * 1024
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
     throw new UsageError(
-      '`open` accepts local Product Report files. Use `businesslens blueprint pull <blueprint>` for a published Blueprint.'
+      '`open` accepts local Product Report files. Use `pdd-kit blueprint pull <blueprint>` for a published Blueprint.'
     )
   }
   const file = isAbsolute(source) ? source : resolve(process.cwd(), source)
@@ -175,14 +175,14 @@ function writeBytes(path: string, content: Uint8Array): void {
 }
 
 function prepareTarget(cwd: string, force: boolean): string {
-  const root = resolve(cwd, '.businesslens')
+  const root = resolve(cwd, 'product-model')
   if (existsSync(root)) {
     const stat = lstatSync(root)
     if (stat.isSymbolicLink() || !stat.isDirectory()) {
-      throw new Error('Refusing to replace a non-directory or symbolic-link .businesslens target.')
+      throw new Error('Refusing to replace a non-directory or symbolic-link product-model target.')
     }
     if (readdirSync(root).length > 0) {
-      if (!force) throw new Error('.businesslens/ is not empty. Choose an empty target or pass --force to create a backup first.')
+      if (!force) throw new Error('product-model/ is not empty. Choose an empty target or pass --force to create a backup first.')
       const backup = `${root}.backup-${new Date().toISOString().replace(/[:.]/g, '-')}`
       renameSync(root, backup)
       console.log(`Backed up the existing product model to ${backup}.`)
@@ -526,10 +526,10 @@ export function expandProductReport(
   try {
     const sourceReport = parseProductReport(input)
     const report = parseProductReport(projectPortableReport(sourceReport))
-    const targetParent = dirname(resolve(cwd, '.businesslens'))
+    const targetParent = dirname(resolve(cwd, 'product-model'))
     mkdirSync(targetParent, { recursive: true })
-    staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
-    const stagedRoot = join(staging, '.businesslens')
+    staging = mkdtempSync(join(targetParent, 'product-model-open-'))
+    const stagedRoot = join(staging, 'product-model')
     writeReport(stagedRoot, report, Boolean(options.logo))
     if (options.logo) {
       const issues = validateProductLogo(options.logo)

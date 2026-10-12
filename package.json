@@ -1,23 +1,23 @@
 {
-  "name": "businesslens",
+  "name": "pdd-kit",
   "version": "0.33.0",
-  "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
+  "description": "Product-Driven Development for coding agents: a git-tracked Product Model in product-model/, verified against implementation.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/businesslens/pdd.git"
+    "url": "git+https://github.com/itai-gendler/pdd-kit.git"
   },
-  "homepage": "https://github.com/businesslens/pdd#readme",
+  "homepage": "https://pdd-kit.dev",
   "bugs": {
-    "url": "https://github.com/businesslens/pdd/issues"
+    "url": "https://github.com/itai-gendler/pdd-kit/issues"
   },
   "packageManager": "pnpm@11.9.0",
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "businesslens": "dist/cli.js"
+    "pdd-kit": "dist/cli.js"
   },
   "exports": {
     "./report": {
@@ -40,8 +40,8 @@
     "./nuxt/theme": "./layers/nuxt/theme/nuxt.config.ts",
     "./nuxt/theme-lab": "./layers/nuxt/theme-lab/nuxt.config.ts",
     "./theme-lab/variants": {
-      "types": "./dist/businesslensThemeLabVariants.d.ts",
-      "default": "./dist/businesslensThemeLabVariants.js"
+      "types": "./dist/pddKitThemeLabVariants.d.ts",
+      "default": "./dist/pddKitThemeLabVariants.js"
     },
     "./package.json": "./package.json"
   },
@@ -58,13 +58,13 @@
   "scripts": {
     "build": "pnpm build:core && pnpm build:viewer",
     "build:core": "tsdown",
-    "build:viewer": "pnpm --filter @businesslens/local-report-viewer build && node scripts/copy-viewer.mjs",
+    "build:viewer": "pnpm --filter @pdd-kit/local-report-viewer build && node scripts/copy-viewer.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:unlink": "node scripts/dev.mjs --unlink",
     "view:fixture": "node scripts/view-fixture.mjs",
     "demo:record": "node scripts/record-demo.mjs",
     "typecheck": "tsc --noEmit",
-    "typecheck:viewer": "pnpm --filter @businesslens/local-report-viewer typecheck",
+    "typecheck:viewer": "pnpm --filter @pdd-kit/local-report-viewer typecheck",
     "test": "vitest run",
     "package:size": "node scripts/check-package-size.mjs",
     "theme:icons": "node scripts/build-theme-icons.mjs",

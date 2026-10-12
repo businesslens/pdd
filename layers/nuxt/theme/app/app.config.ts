@@ -1,4 +1,4 @@
-// Stable BusinessLens-wide semantic colors for every Nuxt host surface.
+// Stable pdd-kit-wide semantic colors for every Nuxt host surface.
 export default defineAppConfig({
   ui: {
     colors: {
@@ -16,7 +16,7 @@ export default defineAppConfig({
       compoundVariants: [{
         color: 'neutral',
         variant: ['outline', 'soft', 'subtle'],
-        class: 'businesslens-neutral-badge'
+        class: 'pdd-kit-neutral-badge'
       }]
     }
   }

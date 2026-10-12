@@ -14,7 +14,7 @@ import { runUpdate } from '../src/commands/update.js'
 import { providerById } from '../src/core/providers.js'
 import { assertInstallTargets } from '../src/core/skill-installation.js'
 import {
-  BUSINESSLENS_SKILLS,
+  PDD_KIT_SKILLS,
   installSkillsToTarget
 } from '../src/core/skill-installation.js'
 
@@ -47,30 +47,30 @@ describe('skill installation', () => {
 
     for (const root of ['.claude', '.agents', '.cursor', '.gemini', '.github']) {
       const skillsDir = join(project, root, 'skills')
-      for (const skill of BUSINESSLENS_SKILLS) {
+      for (const skill of PDD_KIT_SKILLS) {
         expect(existsSync(join(skillsDir, skill, 'SKILL.md'))).toBe(true)
       }
-      const manifest = JSON.parse(readFileSync(join(skillsDir, '.businesslens-install.json'), 'utf8'))
+      const manifest = JSON.parse(readFileSync(join(skillsDir, '.pdd-kit-install.json'), 'utf8'))
       expect(manifest).toMatchObject({
         schema: 1,
-        package: 'businesslens',
+        package: 'pdd-kit',
         scope: 'project',
-        skills: [...BUSINESSLENS_SKILLS]
+        skills: [...PDD_KIT_SKILLS]
       })
     }
 
-    expect(existsSync(join(project, '.businesslens'))).toBe(false)
+    expect(existsSync(join(project, 'product-model'))).toBe(false)
     expect(existsSync(join(project, 'AGENTS.md'))).toBe(false)
     expect(existsSync(join(project, '.claude', 'commands'))).toBe(false)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-map', 'references', 'format.md'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-map', 'scripts', 'inventory-repository.mjs'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-map', 'scripts', 'run-businesslens.mjs'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-ideate', 'scripts', 'run-businesslens.mjs'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init'))).toBe(false)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-sync'))).toBe(false)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-contribute'))).toBe(false)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-publish'))).toBe(false)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-map', 'references', 'format.md'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-map', 'scripts', 'inventory-repository.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-map', 'scripts', 'run-pdd-kit.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-ideate', 'scripts', 'run-pdd-kit.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-verify', 'scripts', 'run-pdd-kit.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-kit-init'))).toBe(false)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-kit-sync'))).toBe(false)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-kit-contribute'))).toBe(false)
+    expect(existsSync(join(project, '.claude', 'skills', 'pdd-kit-publish'))).toBe(false)
   })
 
   it('uses provider-specific global destinations', () => {
@@ -87,21 +87,21 @@ describe('skill installation', () => {
     )
 
     expect(result.skillsDir).toBe(join(home, '.codex', 'skills'))
-    expect(existsSync(join(result.skillsDir, 'businesslens-map', 'SKILL.md'))).toBe(true)
+    expect(existsSync(join(result.skillsDir, 'pdd-map', 'SKILL.md'))).toBe(true)
     expect(existsSync(join(project, '.agents'))).toBe(false)
   })
 
   it('refuses an unowned collision unless force is explicit', () => {
     const project = temporary('bl-collision-')
-    const collision = join(project, '.claude', 'skills', 'businesslens-map')
+    const collision = join(project, '.claude', 'skills', 'pdd-map')
     mkdirSync(collision, { recursive: true })
-    writeFileSync(join(collision, 'SKILL.md'), '---\nname: businesslens-map\n---\nUnrelated.\n')
+    writeFileSync(join(collision, 'SKILL.md'), '---\nname: pdd-map\n---\nUnrelated.\n')
 
     expect(() => installSkillsToTarget(
       project,
       { provider: providerById('claude'), scope: 'project' },
       '9.9.9'
-    )).toThrow(/not marked as a BusinessLens-managed skill/)
+    )).toThrow(/not marked as a pdd-kit-managed skill/)
 
     expect(() => installSkillsToTarget(
       project,
@@ -109,22 +109,22 @@ describe('skill installation', () => {
       '9.9.9',
       { force: true }
     )).not.toThrow()
-    expect(readFileSync(join(collision, 'SKILL.md'), 'utf8')).toContain('BusinessLens')
+    expect(readFileSync(join(collision, 'SKILL.md'), 'utf8')).toContain('pdd-kit')
   })
 
-  it('refuses an unmarked directory even when its SKILL.md mentions BusinessLens', () => {
-    // A fork that kept the skill's name and the word BusinessLens is still
+  it('refuses an unmarked directory even when its SKILL.md mentions pdd-kit', () => {
+    // A fork that kept the skill's name and the word pdd-kit is still
     // somebody else's: only the install manifest proves ownership.
     const project = temporary('bl-fork-')
-    const fork = join(project, '.claude', 'skills', 'businesslens-map')
+    const fork = join(project, '.claude', 'skills', 'pdd-map')
     mkdirSync(fork, { recursive: true })
-    writeFileSync(join(fork, 'SKILL.md'), '---\nname: businesslens-map\ndescription: MY OWN FORK of the BusinessLens mapping skill\n---\nMY CUSTOM EDIT.\n')
+    writeFileSync(join(fork, 'SKILL.md'), '---\nname: pdd-map\ndescription: MY OWN FORK of the pdd-kit mapping skill\n---\nMY CUSTOM EDIT.\n')
 
     expect(() => installSkillsToTarget(
       project,
       { provider: providerById('claude'), scope: 'project' },
       '9.9.9'
-    )).toThrow(/not marked as a BusinessLens-managed skill/)
+    )).toThrow(/not marked as a pdd-kit-managed skill/)
     expect(readFileSync(join(fork, 'SKILL.md'), 'utf8')).toContain('MY CUSTOM EDIT')
   })
 
@@ -135,18 +135,18 @@ describe('skill installation', () => {
     const project = temporary('bl-hostile-manifest-')
     const skillsDir = join(project, '.agents', 'skills')
     const victim = join(project, 'victim')
-    const claimed = join(skillsDir, 'businesslens-map')
+    const claimed = join(skillsDir, 'pdd-map')
     mkdirSync(victim, { recursive: true })
     mkdirSync(claimed, { recursive: true })
-    writeFileSync(join(victim, 'secret.txt'), 'not BusinessLens property\n')
-    writeFileSync(join(claimed, 'SKILL.md'), '---\nname: businesslens-map\n---\nSomebody else.\n')
-    writeFileSync(join(skillsDir, '.businesslens-install.json'), JSON.stringify({
+    writeFileSync(join(victim, 'secret.txt'), 'not pdd-kit property\n')
+    writeFileSync(join(claimed, 'SKILL.md'), '---\nname: pdd-map\n---\nSomebody else.\n')
+    writeFileSync(join(skillsDir, '.pdd-kit-install.json'), JSON.stringify({
       schema: 1,
-      package: 'businesslens',
+      package: 'pdd-kit',
       version: '0.5.0',
       provider: 'codex',
       scope: 'project',
-      skills: ['businesslens-map', '../../victim'],
+      skills: ['pdd-map', '../../victim'],
       installedAt: '2026-01-01T00:00:00.000Z'
     }))
 
@@ -155,7 +155,7 @@ describe('skill installation', () => {
       project,
       { provider: providerById('codex'), scope: 'project' },
       '9.9.9'
-    )).toThrow(/not marked as a BusinessLens-managed skill/)
+    )).toThrow(/not marked as a pdd-kit-managed skill/)
     expect(existsSync(join(victim, 'secret.txt'))).toBe(true)
 
     // Not even `--force`, which grants overwriting this skills directory and
@@ -170,20 +170,20 @@ describe('skill installation', () => {
   })
 
   it('leaves a recorded name this Product could never have written', () => {
-    // A well-formed marker still only proves ownership of names BusinessLens
+    // A well-formed marker still only proves ownership of names pdd-kit
     // ships or once shipped; anything else in the list is somebody's own work.
     const project = temporary('bl-stale-name-')
     const skillsDir = join(project, '.agents', 'skills')
     const notOurs = join(skillsDir, 'my-notes')
     mkdirSync(notOurs, { recursive: true })
     writeFileSync(join(notOurs, 'SKILL.md'), '---\nname: my-notes\n---\nMine.\n')
-    writeFileSync(join(skillsDir, '.businesslens-install.json'), JSON.stringify({
+    writeFileSync(join(skillsDir, '.pdd-kit-install.json'), JSON.stringify({
       schema: 1,
-      package: 'businesslens',
+      package: 'pdd-kit',
       version: '0.5.0',
       provider: 'codex',
       scope: 'project',
-      skills: [...BUSINESSLENS_SKILLS, 'my-notes'],
+      skills: [...PDD_KIT_SKILLS, 'my-notes'],
       installedAt: '2026-01-01T00:00:00.000Z'
     }))
 
@@ -197,15 +197,15 @@ describe('skill installation', () => {
 
   it('checks every harness target before writing any', () => {
     const project = temporary('bl-check-first-')
-    const collision = join(project, '.agents', 'skills', 'businesslens-map')
+    const collision = join(project, '.agents', 'skills', 'pdd-map')
     mkdirSync(collision, { recursive: true })
-    writeFileSync(join(collision, 'SKILL.md'), '---\nname: businesslens-map\n---\nUnrelated.\n')
+    writeFileSync(join(collision, 'SKILL.md'), '---\nname: pdd-map\n---\nUnrelated.\n')
 
     const targets = [
       { provider: providerById('claude'), scope: 'project' as const },
       { provider: providerById('codex'), scope: 'project' as const }
     ]
-    expect(() => assertInstallTargets(project, targets)).toThrow(/not marked as a BusinessLens-managed skill/)
+    expect(() => assertInstallTargets(project, targets)).toThrow(/not marked as a pdd-kit-managed skill/)
     // The refusal came from the second target, and the first was never written.
     expect(existsSync(join(project, '.claude', 'skills'))).toBe(false)
     expect(() => assertInstallTargets(project, targets, { force: true })).not.toThrow()
@@ -214,20 +214,20 @@ describe('skill installation', () => {
   it('removes stale owned namespaced skills and leaves unowned files alone', () => {
     const project = temporary('bl-owned-skills-')
     const skillsDir = join(project, '.agents', 'skills')
-    const stale = join(skillsDir, 'businesslens-example')
-    const lookalike = join(skillsDir, 'businesslens-unowned')
+    const stale = join(skillsDir, 'pdd-kit-example')
+    const lookalike = join(skillsDir, 'pdd-kit-unowned')
     const unrelated = join(skillsDir, 'map')
     for (const directory of [stale, lookalike, unrelated]) {
       mkdirSync(directory, { recursive: true })
-      writeFileSync(join(directory, 'SKILL.md'), '# Example BusinessLens skill')
+      writeFileSync(join(directory, 'SKILL.md'), '# Example pdd-kit skill')
     }
-    writeFileSync(join(skillsDir, '.businesslens-install.json'), JSON.stringify({
+    writeFileSync(join(skillsDir, '.pdd-kit-install.json'), JSON.stringify({
       schema: 1,
-      package: 'businesslens',
+      package: 'pdd-kit',
       version: '0.12.0',
       provider: 'codex',
       scope: 'project',
-      skills: ['businesslens-example', 'map'],
+      skills: ['pdd-kit-example', 'map'],
       installedAt: '2026-01-01T00:00:00.000Z'
     }))
 
@@ -236,9 +236,9 @@ describe('skill installation', () => {
     expect(existsSync(lookalike)).toBe(true)
     expect(existsSync(unrelated)).toBe(true)
 
-    const command = join(project, '.claude', 'commands', 'businesslens', 'init.md')
-    mkdirSync(join(project, '.claude', 'commands', 'businesslens'), { recursive: true })
-    writeFileSync(command, '# BusinessLens command owned by another tool')
+    const command = join(project, '.claude', 'commands', 'pdd-kit', 'init.md')
+    mkdirSync(join(project, '.claude', 'commands', 'pdd-kit'), { recursive: true })
+    writeFileSync(command, '# pdd-kit command owned by another tool')
     installSkillsToTarget(project, { provider: providerById('claude'), scope: 'project' }, '9.9.9')
     expect(existsSync(command)).toBe(true)
   })
@@ -252,26 +252,26 @@ describe('skill installation', () => {
       '0.0.1'
     )
     const skillsDir = join(project, '.claude', 'skills')
-    const manifestFile = join(skillsDir, '.businesslens-install.json')
+    const manifestFile = join(skillsDir, '.pdd-kit-install.json')
     const originalManifest = JSON.parse(
       readFileSync(manifestFile, 'utf8')
     )
     originalManifest.skills = originalManifest.skills.filter(
-      (skill: string) => skill !== 'businesslens-verify'
+      (skill: string) => skill !== 'pdd-verify'
     )
     writeFileSync(manifestFile, `${JSON.stringify(originalManifest, null, 2)}\n`)
-    rmSync(join(skillsDir, 'businesslens-verify'), { recursive: true })
-    const product = join(project, '.businesslens', 'product.md')
-    mkdirSync(join(project, '.businesslens'), { recursive: true })
+    rmSync(join(skillsDir, 'pdd-verify'), { recursive: true })
+    const product = join(project, 'product-model', 'product.md')
+    mkdirSync(join(project, 'product-model'), { recursive: true })
     writeFileSync(product, '# Keep me\n')
 
     expect(await runUpdate(project, { scope: 'project' })).toBe(0)
     expect(readFileSync(product, 'utf8')).toBe('# Keep me\n')
-    expect(existsSync(join(skillsDir, 'businesslens-verify', 'SKILL.md'))).toBe(true)
+    expect(existsSync(join(skillsDir, 'pdd-verify', 'SKILL.md'))).toBe(true)
     const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
     expect(manifest.version).not.toBe('0.0.1')
     expect(manifest.installedAt).toBe(originalManifest.installedAt)
     expect(manifest.updatedAt).toBeDefined()
-    expect(manifest.skills).toEqual([...BUSINESSLENS_SKILLS])
+    expect(manifest.skills).toEqual([...PDD_KIT_SKILLS])
   })
 })

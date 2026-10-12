@@ -5,5 +5,5 @@
 ## Checklist
 
 - [ ] `pnpm verify` passes.
-- [ ] I followed [CONTRIBUTING.md](https://github.com/businesslens/pdd/blob/main/CONTRIBUTING.md).
+- [ ] I followed [CONTRIBUTING.md](https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md).
 - [ ] No secrets or private repository URLs in the diff or description.

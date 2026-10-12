@@ -14,7 +14,7 @@ export interface ModelIssue {
   severity: 'error' | 'warning'
   /** The message without its file prefix, starting with a capital letter. */
   message: string
-  /** Relative to `.businesslens/`; a folder ends with `/`. Absent when the issue has no file. */
+  /** Relative to `product-model/`; a folder ends with `/`. Absent when the issue has no file. */
   file?: string
   /** 1-based line in `file`, when the parser reported one. */
   line?: number
@@ -107,10 +107,10 @@ function excerptAround(folder: string, file: string, line: number): ModelIssue['
 /**
  * Turn one lint or loader line into an issue.
  *
- * @param modelRoot the directory that contains `.businesslens/`.
+ * @param modelRoot the directory that contains `product-model/`.
  */
 export function modelIssue(text: string, severity: ModelIssue['severity'], modelRoot: string): ModelIssue {
-  const folder = join(modelRoot, '.businesslens')
+  const folder = join(modelRoot, 'product-model')
   const prefix = folder + sep
   let raw = text.split(prefix).join('')
   const issue: ModelIssue = { severity, message: raw }
@@ -156,7 +156,7 @@ export function modelIssues(errors: string[], warnings: string[], modelRoot: str
 export function failureIssue(message: string, modelRoot?: string): ModelIssue {
   const unreadable = message.match(/^(E[A-Z]+): [^,]+, \w+ '(.+)'$/)
   if (unreadable && modelRoot) {
-    const folder = join(modelRoot, '.businesslens') + sep
+    const folder = join(modelRoot, 'product-model') + sep
     const file = unreadable[2]!.startsWith(folder) ? unreadable[2]!.slice(folder.length) : undefined
     const reason = unreadable[1] === 'EACCES' || unreadable[1] === 'EPERM' ? 'permission denied' : unreadable[1]!
     return { severity: 'error', message: `This file can't be read (${reason}).`, ...(file ? { file, resource: resourceKeyForModelPath(file) } : {}) }
@@ -174,7 +174,7 @@ export function issuesAsRequest(issues: ModelIssue[]): string {
     return `- ${where}${issue.message}`
   })
   const what = errors.length
-    ? `${errors.length} ${errors.length === 1 ? 'error' : 'errors'} that \`businesslens lint\` reports`
-    : `${listed.length} ${listed.length === 1 ? 'warning' : 'warnings'} from \`businesslens lint\``
-  return `The BusinessLens Product Model in .businesslens/ has ${what}. Fix them so the model lints clean:\n\n${lines.join('\n')}\n`
+    ? `${errors.length} ${errors.length === 1 ? 'error' : 'errors'} that \`pdd-kit lint\` reports`
+    : `${listed.length} ${listed.length === 1 ? 'warning' : 'warnings'} from \`pdd-kit lint\``
+  return `The pdd-kit Product Model in product-model/ has ${what}. Fix them so the model lints clean:\n\n${lines.join('\n')}\n`
 }

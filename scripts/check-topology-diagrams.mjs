@@ -229,11 +229,11 @@ async function selectView(page, view) {
 
 try {
   for (const url of urls) {
-    const report = await fetch(new URL('/_businesslens/report.json', url)).then(response => response.json())
+    const report = await fetch(new URL('/_pdd-kit/report.json', url)).then(response => response.json())
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' })
     const page = await context.newPage()
     page.on('pageerror', error => failures.push(`${report.id}: ${error.message}`))
-    // Dark mode is off (businesslens/pdd#70); restore the dark passes when it returns.
+    // Dark mode is off (itai-gendler/pdd-kit#70); restore the dark passes when it returns.
     for (const [width, height, dark] of [[1440, 1000, false], [1024, 768, false], [390, 844, false], [320, 844, false]]) {
       await page.setViewportSize({ width: 1440, height: 1000 })
       await page.goto(viewUrl(url, 'domain-reach'))
@@ -361,7 +361,7 @@ try {
   }
 
   // Dense overview and long unequal Scenario columns, using the same shipped renderer.
-  const base = await fetch(new URL('/_businesslens/report.json', urls[0])).then(response => response.json())
+  const base = await fetch(new URL('/_pdd-kit/report.json', urls[0])).then(response => response.json())
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const page = await context.newPage()
   page.on('pageerror', error => failures.push(`synthetic report: ${error.message}`))
@@ -371,7 +371,7 @@ try {
   for (const key of Object.keys(stress.model)) if (Array.isArray(stress.model[key])) stress.model[key] = []
   stress.model.entities = Array.from({ length: 500 }, (_, index) => ({ ...entity, id: `entity-${index}`, title: `Entity ${index} — a long readable title 資料`, states: [], relations: Array.from({ length: 4 }, (_, edge) => ({ entityId: `entity-${(index + edge + 1) % 500}`, verb: `relates ${edge}`, cardinality: 'one-to-many' })) }))
   for (const key of Object.keys(stress.counts)) stress.counts[key] = key === 'entities' ? 500 : 0
-  await page.route('**/_businesslens/report.json', route => route.fulfill({ json: stress }))
+  await page.route('**/_pdd-kit/report.json', route => route.fulfill({ json: stress }))
   const started = performance.now()
   await page.goto(`${urls[0]}/?s=entity`)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Entities')
@@ -384,7 +384,7 @@ try {
   await expect(page.locator('[data-resource-connections]').getByRole('heading', { name: 'Incoming' })).toBeVisible()
   await expect(page.locator('[data-resource-connections]').getByRole('heading', { name: 'Outgoing' })).toBeVisible()
   await checkBounds(page)
-  await page.unroute('**/_businesslens/report.json')
+  await page.unroute('**/_pdd-kit/report.json')
   const longReport = structuredClone(base)
   longReport.id = 'topology-long-scenarios'
   const journey = longReport.model.journeys[0]
@@ -399,7 +399,7 @@ try {
   for (const kind of ['interfaces', 'experiences', 'screens']) for (const [index, item] of longReport.model[kind].entries()) {
     item.title += ` — ${'A longer name 資料の順序 '.repeat(index % 3 + 1)}`
   }
-  await page.route('**/_businesslens/report.json', route => route.fulfill({ json: longReport }))
+  await page.route('**/_pdd-kit/report.json', route => route.fulfill({ json: longReport }))
   await page.goto(viewUrl(urls[0], 'delivery-map'))
   await checkTree(page)
   // The readable mobile opening can extend beyond the canvas. Use its public
@@ -422,12 +422,12 @@ try {
     await page.reload()
     await expect(columnPicker).toHaveValue(last)
   }
-  await page.unroute('**/_businesslens/report.json')
+  await page.unroute('**/_pdd-kit/report.json')
   const empty = structuredClone(stress)
   empty.id = 'topology-empty'
   empty.model.entities = []
   empty.counts.entities = 0
-  await page.route('**/_businesslens/report.json', route => route.fulfill({ json: empty }))
+  await page.route('**/_pdd-kit/report.json', route => route.fulfill({ json: empty }))
   /* An address naming no destination lands on the Overview rather than guessing. */
   await page.goto(`${urls[0]}/?s=topology&tv=unknown`)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')

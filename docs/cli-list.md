@@ -6,13 +6,13 @@ group: CLI
 order: 27
 ---
 
-# `businesslens blueprint list`
+# `pdd-kit blueprint list`
 
 List every published [Blueprint](./from-a-blueprint.md#what-a-blueprint-is) by
 the name [`blueprint pull`](./cli-pull.md) takes.
 
 ```bash
-npx businesslens blueprint list
+npx pdd-kit blueprint list
 ```
 
 It takes no options. The list is read from the same release `pull` downloads
@@ -22,11 +22,11 @@ from, so a Blueprint appears here within minutes of being merged.
 kanban-board   Kanban Board
 url-shortener  URL Shortener
 
-Pull one with: businesslens blueprint pull <name>
+Pull one with: pdd-kit blueprint pull <name>
 ```
 
 Exits 0 when the list is printed, 1 when the release or the network refuses it,
-and 2 for an invalid `BUSINESSLENS_BLUEPRINT_REPOSITORY`.
+and 2 for an invalid `PDD_KIT_BLUEPRINT_REPOSITORY`.
 
 ## Next
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { ProductReport } from 'businesslens/report'
+import type { ProductReport } from 'pdd-kit/report'
 import type { LocalIssue } from '~/composables/useLocalProblems'
 
 /**
  * Every problem with the model, most serious first, grouped by file.
  *
  * A file that defines a resource on screen links to its reading. Paths are
- * relative to `.businesslens/`, the folder the reader and their agent edit.
+ * relative to `product-model/`, the folder the reader and their agent edit.
  * The docked desktop panel and the phone sheet both render this.
  */
 const props = defineProps<{ report: ProductReport | null }>()

@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const SCRIPT = join(__dirname, '..', 'skills', 'businesslens-map', 'scripts', 'inventory-repository.mjs')
+const SCRIPT = join(__dirname, '..', 'skills', 'pdd-map', 'scripts', 'inventory-repository.mjs')
 const temporaryDirectories: string[] = []
 
 function git(cwd: string, ...args: string[]): void {
@@ -47,6 +47,6 @@ describe('repository inventory', () => {
     expect(inventory.candidates.documentation).toEqual({ files: ['docs/README.md'], omitted: 0 })
     expect(inventory.candidates.entryPoints).toEqual({ files: ['src/routes/checkout.ts'], omitted: 0 })
     expect(JSON.stringify(inventory)).not.toContain('untracked.ts')
-    expect(existsSync(join(repository, '.businesslens'))).toBe(false)
+    expect(existsSync(join(repository, 'product-model'))).toBe(false)
   })
 })

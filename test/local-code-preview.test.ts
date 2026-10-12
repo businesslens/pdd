@@ -33,7 +33,7 @@ async function reading(report: typeof fixture, root: string, target = report.ref
   if (!('document' in preview.data)) throw new Error(preview.data.message)
   return { ...preview.data, elements: elements(preview.data.document.nodes) }
 }
-const codeUrl = (target: string) => '/_businesslens/code?target=' + encodeURIComponent(target)
+const codeUrl = (target: string) => '/_pdd-kit/code?target=' + encodeURIComponent(target)
 
 describe('local code previews', () => {
   it('colors syntax in both themes, preserves exact source and targets complete symbol matches', async () => {
@@ -125,8 +125,8 @@ describe('local code previews', () => {
     const direct = await fetch(url, { headers: { accept: 'text/html' }, redirect: 'manual' })
     expect(direct.status).toBe(302)
     expect(new URL(direct.headers.get('location')!, viewer.url).searchParams.get('f')).toBe(url.pathname + url.search + '#reference')
-    expect(await fetch(new URL('/_businesslens/report.json', viewer.url)).then(response => response.json())).toEqual(report)
-    expect((await fetch(new URL('/_businesslens/file/src/main.ts', viewer.url))).status).toBe(404)
+    expect(await fetch(new URL('/_pdd-kit/report.json', viewer.url)).then(response => response.json())).toEqual(report)
+    expect((await fetch(new URL('/_pdd-kit/file/src/main.ts', viewer.url))).status).toBe(404)
     current = structuredClone(report)
     current.references = []
     viewer.refresh()

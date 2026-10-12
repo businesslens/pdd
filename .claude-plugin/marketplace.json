@@ -1,17 +1,17 @@
 {
-  "name": "businesslens",
+  "name": "pdd-kit",
   "owner": {
-    "name": "BusinessLens",
-    "url": "https://github.com/businesslens"
+    "name": "Itai Gendler",
+    "url": "https://github.com/itai-gendler"
   },
   "metadata": {
-    "description": "BusinessLens PDD: the git-tracked Product Model for coding agents."
+    "description": "pdd-kit PDD: the git-tracked Product Model for coding agents."
   },
   "plugins": [
     {
-      "name": "businesslens",
+      "name": "pdd-kit",
       "source": "./",
-      "description": "Product-Driven Development skills to map established behavior, decide intended behavior, and verify the .businesslens/ Product Model against code.",
+      "description": "Product-Driven Development skills to map established behavior, decide intended behavior, and verify the product-model/ Product Model against code.",
       "category": "engineering",
       "keywords": [
         "pdd",

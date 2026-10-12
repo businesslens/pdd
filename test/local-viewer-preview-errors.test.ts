@@ -42,9 +42,9 @@ function get(url: string, path: string): Promise<{ status: number, body: string 
 
 describe('local reference previews', () => {
   it('answers a failed preview as a generic server error without its raw text', async () => {
-    const viewerRoot = scratch('businesslens-viewer-')
+    const viewerRoot = scratch('pdd-kit-viewer-')
     writeFileSync(join(viewerRoot, 'index.html'), '<!doctype html><title>Local Product Model</title>')
-    const repository = scratch('businesslens-preview-errors-')
+    const repository = scratch('pdd-kit-preview-errors-')
     mkdirSync(join(repository, 'docs'))
     writeFileSync(join(repository, 'docs', 'notes.md'), '# Notes')
 
@@ -55,7 +55,7 @@ describe('local reference previews', () => {
     })
     viewers.push(viewer)
 
-    const response = await get(viewer.url, '/_businesslens/file/docs/notes.md')
+    const response = await get(viewer.url, '/_pdd-kit/file/docs/notes.md')
     expect(response.status).toBe(500)
     expect(JSON.parse(response.body)).toEqual({ message: 'This reference could not be rendered.' })
     expect(response.body).not.toContain('/Users/')

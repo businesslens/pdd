@@ -11,7 +11,7 @@ import { homedir } from 'node:os'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 
 export function developmentBinDirectory(env = process.env) {
-  return resolve(env.BUSINESSLENS_DEV_BIN_DIR || join(homedir(), '.local', 'bin'))
+  return resolve(env.PDD_KIT_DEV_BIN_DIR || join(homedir(), '.local', 'bin'))
 }
 
 function pathState(path) {
@@ -27,12 +27,12 @@ function symlinkTarget(link) {
   return resolve(dirname(link), readlinkSync(link))
 }
 
-function isBusinessLensLauncher(target) {
+function isPddKitLauncher(target) {
   if (basename(target) !== 'bl-dev.mjs') return false
   try {
     const packageRoot = resolve(dirname(target), '..')
     const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
-    return manifest.name === 'businesslens'
+    return manifest.name === 'pdd-kit'
   } catch {
     return false
   }
@@ -49,8 +49,8 @@ export function activateDevelopmentLink(root, env = process.env) {
   }
   if (existing) {
     const target = symlinkTarget(link)
-    if (!isBusinessLensLauncher(target)) {
-      throw new Error(`Refusing to replace ${link}: it is not a BusinessLens development link.`)
+    if (!isPddKitLauncher(target)) {
+      throw new Error(`Refusing to replace ${link}: it is not a pdd-kit development link.`)
     }
   }
 

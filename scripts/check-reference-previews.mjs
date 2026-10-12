@@ -10,13 +10,13 @@ import { setTimeout as delay } from 'node:timers/promises'
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const project = mkdtempSync(join(tmpdir(), 'blr-prose-browser-'))
-cpSync(join(repository, 'test/fixtures/fixture-shop'), project, { recursive: true, filter: path => !/\.businesslens\/(build|cache)(\/|$)/.test(path) })
+cpSync(join(repository, 'test/fixtures/fixture-shop'), project, { recursive: true, filter: path => !/\product-model\/(build|cache)(\/|$)/.test(path) })
 mkdirSync(join(project, 'docs'), { recursive: true })
 const markdown = '---\ntitle: Guide\nunsafe: <script>metadata</script>\n---\n# Reference guide\n\nA **formatted document** with [next steps](./next.md#next-steps), an [external link](https://example.com/guide), and a [later section](#later-section).\n\n| Resource | Meaning |\n|---|---|\n| Order | A confirmed purchase |\n\n```typescript [example.ts]\n// A comment\nconst message = "hello"\nexport function greet() { return message }\n```\n\n<script>window.previewExecuted = true</script>\n\n::u-button{onClick="window.previewExecuted = true"}\n\n![Local image](./diagram.svg)\n\n' + Array.from({ length: 24 }, (_, index) => 'Paragraph ' + index + '. The reader keeps your place while following related documents.\n\n').join('') + '## Later section\n\n[Continue](./next.md#next-steps)\n'
 writeFileSync(join(project, 'docs/guide.md'), markdown)
 writeFileSync(join(project, 'docs/next.md'), '# Next steps\n\n[Return](./guide.md)\n')
 writeFileSync(join(project, 'docs/diagram.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="80" viewBox="0 0 240 80"><rect width="240" height="80" fill="#a8b8a0"/></svg>')
-const order = join(project, '.businesslens/entities/order.md')
+const order = join(project, 'product-model/entities/order.md')
 writeFileSync(order, readFileSync(order, 'utf8').replace('---\n', '---\nreferences:\n  - kind: doc\n    role: context\n    target: docs/guide.md\n    title: Reference guide\n'))
 for (const args of [['init', '--quiet'], ['add', '.'], ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com', 'commit', '--quiet', '-m', 'fixture']]) {
   const result = spawnSync('git', args, { cwd: project, encoding: 'utf8' })

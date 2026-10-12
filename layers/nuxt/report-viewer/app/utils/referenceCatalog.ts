@@ -1,4 +1,4 @@
-import type { ReportReference } from 'businesslens/report'
+import type { ReportReference } from 'pdd-kit/report'
 import type { ReferenceGroup } from './reportWorkspace'
 import { isExternalReference } from './referenceNavigation'
 import { locationTree, type RepositoryTreeNode } from './repositoryTree'

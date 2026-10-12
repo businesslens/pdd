@@ -14,7 +14,7 @@ const temporaryDirectories: string[] = []
 
 let report: Record<string, unknown>
 let logo: Buffer
-const cover = readFileSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'))
+const cover = readFileSync(join(__dirname, '../blueprints/kanban-board/product-model/product/cover.webp'))
 
 function temporary(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix))
@@ -73,7 +73,7 @@ beforeAll(() => {
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
   report = projectPortableReport(buildProject(source).report) as unknown as Record<string, unknown>
-  logo = readFileSync(join(source, '.businesslens', 'product', 'logo.svg'))
+  logo = readFileSync(join(source, 'product-model', 'product', 'logo.svg'))
 })
 
 afterEach(() => {
@@ -109,27 +109,27 @@ describe('pull', () => {
     ])
     // No credential is read, sent, or required.
     expect(headers.authorization).toBeUndefined()
-    expect(headers['user-agent']).toMatch(/^businesslens\//)
-    expect(existsSync(join(target, '.businesslens/product/product.md'))).toBe(true)
+    expect(headers['user-agent']).toMatch(/^pdd-kit\//)
+    expect(existsSync(join(target, 'product-model/product/product.md'))).toBe(true)
     expect(existsSync(join(
       target,
-      '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
+      'product-model/interfaces/customer-web/experiences/storefront/screens/product-record.md'
     ))).toBe(true)
-    expect(readFileSync(join(target, '.businesslens/product/logo.svg'))).toEqual(logo)
-    expect(readFileSync(join(target, '.businesslens/product/cover.webp'))).toEqual(cover)
+    expect(readFileSync(join(target, 'product-model/product/logo.svg'))).toEqual(logo)
+    expect(readFileSync(join(target, 'product-model/product/cover.webp'))).toEqual(cover)
   })
 
   it('skips a missing or invalid cover, and asks for none without a logo', async () => {
     const missing = temporary('bl-pull-no-cover-')
     const fetchMissing = release({ 'fixture-shop.cover.webp': () => new Response('', { status: 404 }) })
     expect(await runPull(missing, 'fixture-shop', { force: false }, { fetch: fetchMissing, env: {} })).toBe(0)
-    expect(existsSync(join(missing, '.businesslens/product/logo.svg'))).toBe(true)
-    expect(existsSync(join(missing, '.businesslens/product/cover.webp'))).toBe(false)
+    expect(existsSync(join(missing, 'product-model/product/logo.svg'))).toBe(true)
+    expect(existsSync(join(missing, 'product-model/product/cover.webp'))).toBe(false)
 
     const invalid = temporary('bl-pull-bad-cover-')
     const fetchInvalid = release({ 'fixture-shop.cover.webp': () => new Response('<svg/>') })
     expect(await runPull(invalid, 'fixture-shop', { force: false }, { fetch: fetchInvalid, env: {} })).toBe(0)
-    expect(existsSync(join(invalid, '.businesslens/product/cover.webp'))).toBe(false)
+    expect(existsSync(join(invalid, 'product-model/product/cover.webp'))).toBe(false)
 
     const urls: string[] = []
     const noLogo = temporary('bl-pull-cover-without-logo-')
@@ -145,8 +145,8 @@ describe('pull', () => {
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
     expect(urls.some(url => url.endsWith('.svg'))).toBe(false)
-    expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
-    expect(existsSync(join(target, '.businesslens/product'))).toBe(false)
+    expect(existsSync(join(target, 'product-model/product.md'))).toBe(true)
+    expect(existsSync(join(target, 'product-model/product'))).toBe(false)
   })
 
   it('writes a model README telling an agent to build the product', async () => {
@@ -154,19 +154,19 @@ describe('pull', () => {
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch: release(), env: {} })).toBe(0)
 
-    const readme = readFileSync(join(target, '.businesslens', 'README.md'), 'utf8')
+    const readme = readFileSync(join(target, 'product-model', 'README.md'), 'utf8')
     expect(readme).toBe(MODEL_README)
     expect(readme).toContain('**To implement it**')
     expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
   })
 
-  it('pulls from the repository BUSINESSLENS_BLUEPRINT_REPOSITORY names', async () => {
+  it('pulls from the repository PDD_KIT_BLUEPRINT_REPOSITORY names', async () => {
     const target = temporary('bl-pull-fork-')
     const urls: string[] = []
 
     expect(await runPull(target, 'fixture-shop', { force: false }, {
       fetch: release({}, urls),
-      env: { BUSINESSLENS_BLUEPRINT_REPOSITORY: 'someone/fork' }
+      env: { PDD_KIT_BLUEPRINT_REPOSITORY: 'someone/fork' }
     })).toBe(0)
     expect(urls[0]).toBe('https://github.com/someone/fork/releases/download/blueprints-v19/index.json')
   })
@@ -178,7 +178,7 @@ describe('pull', () => {
 
     expect(await runPull(target, 'fixture-shop', { force: false }, {
       fetch,
-      env: { BUSINESSLENS_BLUEPRINT_REPOSITORY: 'https://example.com/x' }
+      env: { PDD_KIT_BLUEPRINT_REPOSITORY: 'https://example.com/x' }
     })).toBe(2)
     expect(fetch).not.toHaveBeenCalled()
   })
@@ -191,7 +191,7 @@ describe('pull', () => {
     expect(await runPull(target, 'not-published', { force: false }, { fetch: release(), env: {} })).toBe(1)
     expect(errors[0]).toContain('No Blueprint is named not-published')
     expect(errors[0]).toContain('blueprint list')
-    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+    expect(existsSync(join(target, 'product-model'))).toBe(false)
   })
 
   it('says when the repository publishes no Blueprints for this report version', async () => {
@@ -212,7 +212,7 @@ describe('pull', () => {
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(errors[0]).toBe('The Blueprint index lists Product Report version 11; this CLI reads version 19 only.')
-    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+    expect(existsSync(join(target, 'product-model'))).toBe(false)
   })
 
   it('refuses an index that does not have the expected shape', async () => {
@@ -231,7 +231,7 @@ describe('pull', () => {
     const fetch = release({ 'index.json': () => Response.json(indexFor({}, 'a'.repeat(64))) })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+    expect(existsSync(join(target, 'product-model'))).toBe(false)
   })
 
   it('names the schema version of a report it cannot read, in one sentence', async () => {
@@ -245,7 +245,7 @@ describe('pull', () => {
     })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(errors[0]).toBe('This is a Product Report of schema version 12.0.0; only 19.0.0 is accepted, and there is no compatibility reader. Export it again with a current businesslens.')
+    expect(errors[0]).toBe('This is a Product Report of schema version 12.0.0; only 19.0.0 is accepted, and there is no compatibility reader. Export it again with a current pdd-kit.')
   })
 
   it('refuses a report published for a different Blueprint', async () => {
@@ -258,7 +258,7 @@ describe('pull', () => {
     })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+    expect(existsSync(join(target, 'product-model'))).toBe(false)
   })
 
   it('refuses a download redirected away from HTTPS', async () => {
@@ -273,7 +273,7 @@ describe('pull', () => {
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(errors[0]).toContain('away from HTTPS')
-    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+    expect(existsSync(join(target, 'product-model'))).toBe(false)
   })
 
   it('refuses a body over the 8 MiB safety limit', async () => {
@@ -286,7 +286,7 @@ describe('pull', () => {
     })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+    expect(existsSync(join(target, 'product-model'))).toBe(false)
   })
 
   it('rejects a name that is not a canonical slug', async () => {

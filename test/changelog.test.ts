@@ -25,8 +25,8 @@ const unreleased = `# Changelog
 
 **Full Changelog**: [v0.23.1...v0.24.0][0.24.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.24.0...HEAD
-[0.24.0]: https://github.com/businesslens/pdd/compare/v0.23.1...v0.24.0
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.23.1...v0.24.0
 `
 
 describe('rollUnreleased', () => {
@@ -46,9 +46,9 @@ describe('rollUnreleased', () => {
 
 ### Added
 
-- Offer CLI updates once per release. ([#77](https://github.com/businesslens/pdd/pull/77)) ([0784f6a](https://github.com/businesslens/pdd/commit/${SHA}))
+- Offer CLI updates once per release. ([#77](https://github.com/itai-gendler/pdd-kit/pull/77)) ([0784f6a](https://github.com/itai-gendler/pdd-kit/commit/${SHA}))
 - Read every Variation under its name,
-  in every reading. ([0784f6a](https://github.com/businesslens/pdd/commit/${SHA}))
+  in every reading. ([0784f6a](https://github.com/itai-gendler/pdd-kit/commit/${SHA}))
 
 ### Contributors
 
@@ -66,9 +66,9 @@ describe('rollUnreleased', () => {
 
 **Full Changelog**: [v0.23.1...v0.24.0][0.24.0]
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.25.0...HEAD
-[0.25.0]: https://github.com/businesslens/pdd/compare/v0.24.0...v0.25.0
-[0.24.0]: https://github.com/businesslens/pdd/compare/v0.23.1...v0.24.0
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.24.0...v0.25.0
+[0.24.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.23.1...v0.24.0
 `)
     expect(changelogProblems(rolled)).toEqual([])
   })
@@ -102,7 +102,7 @@ describe('annotateEntries', () => {
     ], () => ({ pr: 71, sha: SHA }))
 
     expect(unknown).toEqual([])
-    expect(lines[1]).toBe(`- Earlier release. ([#71](https://github.com/businesslens/pdd/pull/71)) ([0784f6a](https://github.com/businesslens/pdd/commit/${SHA}))`)
+    expect(lines[1]).toBe(`- Earlier release. ([#71](https://github.com/itai-gendler/pdd-kit/pull/71)) ([0784f6a](https://github.com/itai-gendler/pdd-kit/commit/${SHA}))`)
     expect(lines[5]).toBe('- [@itai-gendler](https://github.com/itai-gendler)')
     expect(annotateEntries(lines, () => ({ sha: '1'.repeat(40) })).lines).toEqual(lines)
   })

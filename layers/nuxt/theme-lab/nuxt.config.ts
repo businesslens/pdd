@@ -5,7 +5,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'businesslens-nuxt-theme-lab'
+    name: 'pdd-kit-nuxt-theme-lab'
   },
   extends: [join(currentDir, '../theme')],
   css: [join(currentDir, './app/assets/theme-lab.css')],

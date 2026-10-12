@@ -8,13 +8,13 @@ order: 3
 
 # Start from your repository
 
-Use this door when you already have code and no `.businesslens/` you trust.
+Use this door when you already have code and no `product-model/` you trust.
 
-1. [Install the BusinessLens skills](./installation.md), then run the mapping
+1. [Install the pdd-kit skills](./installation.md), then run the mapping
    skill in your agent:
 
    ```text
-   /businesslens-map
+   /pdd-map
    ```
 
    It reads the repository without running any of it, asks what the code can't
@@ -28,15 +28,15 @@ Use this door when you already have code and no `.businesslens/` you trust.
 3. See what you got:
 
    ```bash
-   npx businesslens view
+   npx pdd-kit view
    ```
 
 4. Lint and commit:
 
    ```bash
-   npx businesslens lint
-   git add .businesslens
-   git commit -m "docs: add BusinessLens Product Model"
+   npx pdd-kit lint
+   git add product-model
+   git commit -m "docs: add pdd-kit Product Model"
    ```
 
 5. Once, ask your agent to check the whole product against the code.

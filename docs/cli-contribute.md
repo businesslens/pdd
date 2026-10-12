@@ -6,13 +6,13 @@ group: CLI
 order: 29
 ---
 
-# `businesslens blueprint contribute`
+# `pdd-kit blueprint contribute`
 
 Propose your Product Model as a
 [Blueprint](./from-a-blueprint.md#what-a-blueprint-is), by opening a pull request.
 
 ```bash
-npx businesslens blueprint contribute [--yes]
+npx pdd-kit blueprint contribute [--yes]
 ```
 
 ## Options
@@ -27,8 +27,8 @@ npx businesslens blueprint contribute [--yes]
 - A model with no lint errors.
 - In the Product's frontmatter: a category, at least one tag, at least one
   author, and an SPDX license.
-- A logo. Move a compact `.businesslens/product.md` to
-  `.businesslens/product/product.md` and add `logo.svg` beside it. See
+- A logo. Move a compact `product-model/product.md` to
+  `product-model/product/product.md` and add `logo.svg` beside it. See
   [Logo and publishing](./product.md#logo-and-publishing). An optional
   `cover.webp` beside it is carried into the pull request too.
 
@@ -47,14 +47,14 @@ Your Product id becomes the Blueprint's name, the one others pull.
 5. Forks the upstream into your account and syncs it with the upstream (or, if
    you own the upstream, clones it directly). A fork that cannot be synced
    stops the run.
-6. Writes `blueprints/<slug>/.businesslens/` on a `blueprint/<slug>` branch and
+6. Writes `blueprints/<slug>/product-model/` on a `blueprint/<slug>` branch and
    force-pushes that branch, which only this command uses.
 7. Opens the pull request, or updates the open one, and prints its URL. Run it
    again to revise; leave the fork in place until the pull request is merged.
 
 Your repository gains only the gitignored export files; the branch, commit and
 fork all live elsewhere. The upstream is `itai-gendler/pdd-kit` unless
-`BUSINESSLENS_BLUEPRINT_REPOSITORY` names another `owner/repo`.
+`PDD_KIT_BLUEPRINT_REPOSITORY` names another `owner/repo`.
 
 Merging publishes the Blueprint: within minutes it appears in
 [`blueprint list`](./cli-list.md) and can be pulled by name.

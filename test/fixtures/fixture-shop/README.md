@@ -1,11 +1,11 @@
 # Fixture Shop
 
-A tiny fake webshop used as the BusinessLens golden fixture.
+A tiny fake webshop used as the pdd-kit golden fixture.
 
 ## Variation examples
 
 Run `pnpm view:fixture` from the repository root and open **Variations** in
-the rail. Each set is one file in `.businesslens/variations/`; its alternatives
+the rail. Each set is one file in `product-model/variations/`; its alternatives
 are ordinary resources that carry no Variation keys.
 
 | Variation | Type | Alternatives | What it demonstrates |

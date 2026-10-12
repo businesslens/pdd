@@ -50,7 +50,7 @@ concluded**.
 The model is a structured way to define a product: a fixed set of resource types (entities,
 interfaces, capabilities, scenarios, business rules, variations) and how they connect. Technical
 aspects (architecture, design docs, ADRs) stay out of it, so you keep maintaining those however you
-like. [Read why your agent is guessing](https://businesslens.io/blog/your-agent-is-guessing).
+like. [Read why your agent is guessing](https://pdd-kit.dev/blog/your-agent-is-guessing).
 
 ### Why a structured format instead of free-form documentation?
 
@@ -108,14 +108,14 @@ can catch up after changes land.
 Currently a model change can only be reviewed as a Git diff. That is a gap being closed: every
 change to the model will be visualized in a diff mode in the report. In the flow we envision, that
 change is reviewed and approved first, before implementation even starts. [Follow the diff
-visualization issue](https://github.com/businesslens/pdd/issues/19).
+visualization issue](https://github.com/itai-gendler/pdd-kit/issues/19).
 
 ### Can I share the report without running it locally?
 
 Local only today, but one command opens the model of any PR without cloning:
 
 ```sh
-npx businesslens view <owner>/<repo> --pr <n>
+npx pdd-kit view <owner>/<repo> --pr <n>
 ```
 
 A hosted, shareable link is something we are considering, but we do not see it as a blocker.
@@ -132,7 +132,7 @@ They work at different altitudes and are meant to coexist. **PDD defines the pro
 change**. Spec-driven frameworks like OpenSpec and spec-kit own the change level: how one piece of
 work is designed, built, and split into tasks. PDD lets you choose whatever tool you want for
 implementation. It does not touch that phase. [Read how PDD and SDD fit
-together](https://businesslens.io/blog/pdd-and-spec-driven-development).
+together](https://pdd-kit.dev/blog/pdd-and-spec-driven-development).
 
 ### How is this different from DeepWiki or AI-generated docs?
 
@@ -161,17 +161,17 @@ No. A PRD and a Product Model are different artifacts with different jobs.
 A PRD can inform the Product Model, but it does not replace it. Attach it as a PRD Reference with
 the intent role when it shaped approved meaning, or the context role when it preserves supporting
 history. The Product Model remains the self-contained statement of what the product has been
-approved to do. [See how references work](https://businesslens.io/docs/references).
+approved to do. [See how references work](https://pdd-kit.dev/docs/references).
 
 ### Why doesn't the product model have a user story resource type?
 
 A user story can describe one ability, one acceptance case, or an entire multi-ability goal,
 depending on how a team sizes its backlog. It therefore has no single Product Model equivalent.
 
-BusinessLens maps its lasting meaning instead: the Entity that acts, a Capability and its Capability
+pdd-kit maps its lasting meaning instead: the Entity that acts, a Capability and its Capability
 Scenarios for one ability, or a Journey and its Journey Scenarios for a broader goal. The original
 Jira story can remain linked as a context Reference. [Link external work with
-references](https://businesslens.io/docs/references).
+references](https://pdd-kit.dev/docs/references).
 
 ### Isn't the Product Model just an ERD?
 
@@ -239,8 +239,8 @@ Three ways in, what each one leaves in your repository, and the projects support
 
 ### I already have a codebase — where do I start?
 
-Install the skills and run /businesslens-map. It reads the code without running it, asks what the
-code can’t settle, and writes .businesslens/ only after you approve. npx businesslens view then
+Install the skills and run /pdd-map. It reads the code without running it, asks what the
+code can’t settle, and writes product-model/ only after you approve. npx pdd-kit view then
 opens it as a report.
 
 Nothing is rewritten and no framework is imposed; the model is added beside the code. [Walk through
@@ -263,12 +263,12 @@ not an implementation.
 
 Every Blueprint has cleared the same bar: given the pulled model and the words “build this” and
 nothing else, an agent ships a working product. List them with
-`npx businesslens blueprint list`, or [browse them on
+`npx pdd-kit blueprint list`, or [browse them on
 GitHub](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints).
 
 ### What actually lands in my repository?
 
-A .businesslens/ directory of Markdown files — the Product and its Entities, the people and systems
+A product-model/ directory of Markdown files — the Product and its Entities, the people and systems
 that act on it among them, Interfaces, optional Experiences, Screens and Domains, Capabilities with
 local Scenarios, optional Journeys with end-to-end Scenarios, Business Rules, and Variations where
 one product choice has several supported answers. Plain text, reviewable in a pull request,
@@ -286,7 +286,7 @@ full or named current-state audits.
 You rarely name either. Ask your agent to implement a change and PDD will run it in phases: your
 agent implements each phase, and verify checks it before the next. Ask whether the code still
 matches the model whenever you want to be sure, for example before a release. [Read the verification
-loop](./skill-businesslens-verify.md).
+loop](./skill-pdd-verify.md).
 
 ### Is this meant for open-source projects or also closed-source commercial ones?
 
@@ -295,12 +295,12 @@ already in the repository, and they usually live in a single repo.
 
 Closed-source commercial projects benefit just as much, as long as the project is in a single
 repository. Multi-repository support is planned. [Follow the multi-repository support
-issue](https://github.com/businesslens/pdd/issues/17).
+issue](https://github.com/itai-gendler/pdd-kit/issues/17).
 
 ### My product spans multiple repositories — is that supported?
 
-Not yet. BusinessLens currently works with one repository at a time. [Follow the multi-repository
-support issue](https://github.com/businesslens/pdd/issues/17) for the design and implementation
+Not yet. pdd-kit currently works with one repository at a time. [Follow the multi-repository
+support issue](https://github.com/itai-gendler/pdd-kit/issues/17) for the design and implementation
 progress.
 
 <a name="trust-and-help"></a>
@@ -319,15 +319,15 @@ changes, it will not change what the MIT licensed framework already gives you.
 
 ### Does my code leave my machine?
 
-The BusinessLens CLI does not upload your code or Product Model. Linting, export, and expanding a
+The pdd-kit CLI does not upload your code or Product Model. Linting, export, and expanding a
 pulled model run locally. The map, ideate, and verify skills run inside the coding-agent harness you
 chose, so that harness’s data handling and permissions still apply.
 
 The CLI reaches the network only for explicit operations: listing and pulling download Blueprints
 from a GitHub Release, contributing uses your own authenticated GitHub CLI to open a public pull
 request, and running the package through npx contacts the registry. Everything the CLI does is
-auditable in the [public source](https://github.com/businesslens/pdd). What we collect is set out in the [privacy
-policy](https://businesslens.io/privacy).
+auditable in the [public source](https://github.com/itai-gendler/pdd-kit). What we collect is set out in the [privacy
+policy](https://pdd-kit.dev/privacy).
 
 ### Do I need an account?
 
@@ -338,27 +338,27 @@ Signing in exists for one reason: so you can keep favorites. Everything else wor
 
 ### How do I contribute a Blueprint?
 
-By pull request against [businesslens/pdd](https://github.com/businesslens/pdd). The CLI drives it,
+By pull request against [itai-gendler/pdd-kit](https://github.com/itai-gendler/pdd-kit). The CLI drives it,
 projecting away repository-local implementation paths so the contribution carries the product and
 nothing from your repository.
 
 The bar is an executable brief: small enough for an agent to build end to end, complete enough that
 nothing is missing, and generic rather than a model of a named product. The test is whether a coding
 agent that has never seen it can build the product from “build this” alone. [Read the contributing
-guide](https://github.com/businesslens/pdd/blob/main/CONTRIBUTING.md).
+guide](https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md).
 
 ### Where do I get help?
 
 Bugs, missing product concepts, and format questions belong in [GitHub
-issues](https://github.com/businesslens/pdd/issues). Security reports go through the [security
-policy](https://github.com/businesslens/pdd/blob/main/SECURITY.md) rather than a public issue.
+issues](https://github.com/itai-gendler/pdd-kit/issues). Security reports go through the [security
+policy](https://github.com/itai-gendler/pdd-kit/blob/main/SECURITY.md) rather than a public issue.
 
 For anything else, including office hours on a repository you know well, [contact
-us](https://businesslens.io/contact).
+us](https://pdd-kit.dev/contact).
 
 ## Still have a question?
 
 Bring us the product behind your software, or the repository you want mapped. We answer every message.
 
-- [Contact us](https://businesslens.io/contact)
-- [Read the docs](https://businesslens.io/docs)
+- [Contact us](https://pdd-kit.dev/contact)
+- [Read the docs](https://pdd-kit.dev/docs)

@@ -11,7 +11,7 @@ import {
 /* Genuine WebPs written by cwebp, img2webp and webpmux, so every positive case
    is a file a renderer decodes rather than a header shaped like one. */
 const fixture = (name: string) => new Uint8Array(readFileSync(join(__dirname, 'fixtures/covers', name)))
-const real = new Uint8Array(readFileSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp')))
+const real = new Uint8Array(readFileSync(join(__dirname, '../blueprints/kanban-board/product-model/product/cover.webp')))
 const lossy = fixture('lossy.webp')
 const lossless = fixture('lossless.webp')
 const withAlpha = fixture('extended-alpha.webp')

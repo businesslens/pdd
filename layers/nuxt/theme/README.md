@@ -1,18 +1,18 @@
-# BusinessLens theme
+# pdd-kit theme
 
-The stable BusinessLens visual foundation: the approved palette, type, brand
-identity, and icon family shared by every BusinessLens Nuxt surface.
+The stable pdd-kit visual foundation: the approved palette, type, brand
+identity, and icon family shared by every pdd-kit Nuxt surface.
 
 It is not a report layer. The Product Report extends it because the report is
-the canonical BusinessLens experience, but the theme is exported separately so
-any BusinessLens host — a landing page, a catalog, an internal tool — renders
+the canonical pdd-kit experience, but the theme is exported separately so
+any pdd-kit host — a landing page, a catalog, an internal tool — renders
 identical chrome without pulling in the renderer.
 
 Extend it from a Nuxt application:
 
 ```ts
 export default defineNuxtConfig({
-  extends: ['businesslens/nuxt/theme']
+  extends: ['pdd-kit/nuxt/theme']
 })
 ```
 
@@ -25,33 +25,33 @@ export default defineNuxtConfig({
   identity moves.
 - **Type**: Archivo and Inter variable faces plus IBM Plex Mono at 400 and 500,
   loaded through `@fontsource`, with `app/assets/theme.css` carrying the scale.
-- **`<BusinessLensBrand>`** — the approved mark and wordmark lockup. It
-  requests only the asset for the active color mode; painting both twins and
-  hiding one with CSS downloads two 111 KB wordmarks on every page.
-  `compactOnMobile` drops the wordmark on narrow viewports and keeps the mark
+- **`<PddKitBrand>`** — the approved mark beside the name, set as live text
+  in the heading face. It requests only the mark for the active color mode;
+  painting both twins and hiding one with CSS downloads both on every page.
+  `compactOnMobile` drops the name on narrow viewports and keeps the mark
   as the home link. `wordmarkHeight` scales the complete lockup proportionally
   for compact hosts, defaulting to 26 pixels. `markOnly` keeps just the mark
   when the host navigation is collapsed.
-- **`useBusinessLensThemeHead()`** — registers the browser and install icon
+- **`usePddKitThemeHead()`** — registers the browser and install icon
   family from `public/brand/icons`, including the manifest and Apple touch
   icon. Call it once in the host's root component.
 - **Nuxt UI defaults**: `size: 'sm'` and `color: 'primary'`.
 - **Dark mode is off.** The `darkMode` constant in `nuxt.config.ts` is `false`
   until dark mode reads as well as light
-  ([#70](https://github.com/businesslens/pdd/issues/70)). While it is false, the
+  ([#70](https://github.com/itai-gendler/pdd-kit/issues/70)). While it is false, the
   document carries `data-color-mode-forced="light"` and a global route
   middleware forces every page to light, so a stored dark preference never
   paints. Hosts hide their color-mode toggles behind
-  `useAppConfig().businessLens.darkMode`. The dark tokens, utilities and logo
+  `useAppConfig().pddKit.darkMode`. The dark tokens, utilities and logo
   twins stay in place for when it returns.
 - **Neutral badges** use Sand: a parchment fill and warm outline in light mode,
   with a subdued brown fill in dark mode. Outline, soft and subtle badges share
-  `--businesslens-badge-bg`; Product Report filter and resource-link chips use
+  `--pdd-kit-badge-bg`; Product Report filter and resource-link chips use
   the same token. Colored badges retain their semantic palettes.
 
 Nuxt, Vue, Nuxt UI, Tailwind, icons, and fonts are optional peer dependencies
-of the `businesslens` package; install the ones your host uses. Hosts retain
+of the `pdd-kit` package; install the ones your host uses. Hosts retain
 final authority over configuration and CSS.
 
 Backgrounds and their audition controls are not here. They live in the optional
-`businesslens/nuxt/theme-lab` layer until one is selected and promoted.
+`pdd-kit/nuxt/theme-lab` layer until one is selected and promoted.

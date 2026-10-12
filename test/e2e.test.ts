@@ -47,7 +47,7 @@ describe('end to end on a real git repo', () => {
       schemaVersion: '19.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
-      authors: [{ name: 'BusinessLens' }],
+      authors: [{ name: 'pdd-kit' }],
       license: 'MIT'
     })
     expect(parsed.counts).toEqual({
@@ -135,7 +135,7 @@ describe('end to end on a real git repo', () => {
     try {
       cpSync(FIXTURE, isolated, { recursive: true })
       writeFileSync(
-        join(isolated, '.businesslens/coverage.md'),
+        join(isolated, 'product-model/coverage.md'),
         `---
 scope: ""
 exclusions: []
@@ -169,7 +169,7 @@ limitations: []
   })
 
   it('build validates untracked authored product-model files without requiring publish provenance', () => {
-    const untracked = join(repo, '.businesslens/business-rules/uncommitted.md')
+    const untracked = join(repo, 'product-model/business-rules/uncommitted.md')
     mkdirSync(dirname(untracked), { recursive: true })
     writeFileSync(untracked, `---
 appliesTo:
@@ -190,7 +190,7 @@ A model resource that does not exist at HEAD.
   it('refuses to overwrite a generated-output symlink', () => {
     const external = mkdtempSync(join(tmpdir(), 'bl-external-'))
     const target = join(external, 'do-not-overwrite.json')
-    const output = join(repo, '.businesslens/build/report.json')
+    const output = join(repo, 'product-model/build/report.json')
     writeFileSync(target, 'keep me\n')
     rmSync(output, { force: true })
     symlinkSync(target, output)
@@ -206,10 +206,10 @@ A model resource that does not exist at HEAD.
 
   it('refuses to traverse a generated-output directory symlink', () => {
     const external = mkdtempSync(join(tmpdir(), 'bl-external-dir-'))
-    const buildDir = join(repo, '.businesslens/build')
+    const buildDir = join(repo, 'product-model/build')
     rmSync(buildDir, { recursive: true, force: true })
     symlinkSync(external, buildDir)
-    sh(repo, 'git', 'add', '--force', '.businesslens/build')
+    sh(repo, 'git', 'add', '--force', 'product-model/build')
     sh(repo, 'git', 'commit', '-m', 'track malicious generated-output symlink')
 
     try {

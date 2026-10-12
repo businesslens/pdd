@@ -67,7 +67,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify(record))
 if (args[0] === '--version') { console.log('gh version 2.0.0'); process.exit(0) }
 if (args[0] === 'auth') { process.exit(${options.authenticated === false ? 1 : 0}) }
 if (args[0] === 'api' && args[1] === 'user') { console.log('contributor'); process.exit(0) }
-if (args[0] === 'repo' && args[1] === 'view') { console.log(${options.ownsUpstream ? "'contributor'" : "'businesslens'"}); process.exit(0) }
+if (args[0] === 'repo' && args[1] === 'view') { console.log(${options.ownsUpstream ? "'contributor'" : "'pdd-kit'"}); process.exit(0) }
 if (args[0] === 'repo' && args[1] === 'clone') {
   const target = args[3]
   fs.mkdirSync(target, { recursive: true })
@@ -160,9 +160,9 @@ describe('contribute', { timeout: 30_000 }, () => {
 
     // The fixture deliberately carries code references — that is the leak being tested.
     cpSync(FIXTURE, model, { recursive: true })
-    cpSync(join(__dirname, '../blueprints/kanban-board/.businesslens/product/cover.webp'), join(model, '.businesslens/product/cover.webp'))
+    cpSync(join(__dirname, '../blueprints/kanban-board/product-model/product/cover.webp'), join(model, 'product-model/product/cover.webp'))
     initialize(model)
-    expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
+    expect(readFileSync(join(model, 'product-model/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('kind: code')
 
     fakeGh(bin, capture)
@@ -199,17 +199,17 @@ describe('contribute', { timeout: 30_000 }, () => {
 
     const files = recorded.prFiles ?? []
     expect(files.some(file => file === 'blueprints/fixture-shop/blueprint.yaml')).toBe(false)
-    expect(files.some(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
-    expect(files).toContain('blueprints/fixture-shop/.businesslens/product/logo.svg')
-    expect(files).toContain('blueprints/fixture-shop/.businesslens/product/cover.webp')
+    expect(files.some(file => file.startsWith('blueprints/fixture-shop/product-model/'))).toBe(true)
+    expect(files).toContain('blueprints/fixture-shop/product-model/product/logo.svg')
+    expect(files).toContain('blueprints/fixture-shop/product-model/product/cover.webp')
 
     // The point of the whole flow: the model in the pull request is regenerated
     // from a portable report, so no workspace reference survives into it.
     const contents = recorded.prContents ?? {}
-    expect(contents['blueprints/fixture-shop/.businesslens/README.md']).toBe(MODEL_README)
-    expect(contents['blueprints/fixture-shop/.businesslens/product/logo.svg']).toContain('<svg')
+    expect(contents['blueprints/fixture-shop/product-model/README.md']).toBe(MODEL_README)
+    expect(contents['blueprints/fixture-shop/product-model/product/logo.svg']).toContain('<svg')
     const modelFiles = Object.entries(contents)
-      .filter(([file]) => file.startsWith('blueprints/fixture-shop/.businesslens/'))
+      .filter(([file]) => file.startsWith('blueprints/fixture-shop/product-model/'))
     expect(modelFiles.length).toBeGreaterThan(0)
     for (const [file, body] of modelFiles) {
       expect(body, `${file} leaks a code reference`).not.toContain('kind: code')
@@ -218,14 +218,14 @@ describe('contribute', { timeout: 30_000 }, () => {
     }
 
     // Generated artifacts never travel.
-    expect(files.some(file => file.includes('/.businesslens/build/'))).toBe(false)
-    expect(files.some(file => file.includes('/.businesslens/cache/'))).toBe(false)
+    expect(files.some(file => file.includes('/product-model/build/'))).toBe(false)
+    expect(files.some(file => file.includes('/product-model/cache/'))).toBe(false)
 
     // There is no catalog-specific manifest: every Product-facing field comes
-    // from this canonical model, and every contributed file is BusinessLens-owned.
+    // from this canonical model, and every contributed file is pdd-kit-owned.
     expect(files
       .filter(file => file.startsWith('blueprints/fixture-shop/'))
-      .every(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
+      .every(file => file.startsWith('blueprints/fixture-shop/product-model/'))).toBe(true)
     expect(JSON.stringify(contents)).not.toContain('fixture-shop.git')
     expect(JSON.stringify(contents)).not.toContain('github.com/example')
   })
@@ -438,7 +438,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     fakeGh(bin, capture)
     fakeGitPush(bin)
 
-    const before = readdirSync(tmpdir()).filter(entry => entry.startsWith('businesslens-contribute-'))
+    const before = readdirSync(tmpdir()).filter(entry => entry.startsWith('pdd-kit-contribute-'))
 
     const previousPath = process.env.PATH
     process.env.PATH = `${bin}${delimiter}${previousPath || ''}`
@@ -453,7 +453,7 @@ describe('contribute', { timeout: 30_000 }, () => {
       delete process.env.CAPTURE_FILE
     }
 
-    const after = readdirSync(tmpdir()).filter(entry => entry.startsWith('businesslens-contribute-'))
+    const after = readdirSync(tmpdir()).filter(entry => entry.startsWith('pdd-kit-contribute-'))
     expect(after.length).toBe(before.length)
     expect(existsSync(join(model, 'blueprints'))).toBe(false)
   })

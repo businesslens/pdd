@@ -1,0 +1,29 @@
+---
+domain: model-authoring
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The product-model/ folder contract
+  - kind: doc
+    role: context
+    target: docs/interfaces.md
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#ReportScreenSchema
+---
+
+# Screen
+
+What an author writes when a view is worth naming on its own — and the type they
+most often over-author, one file per route, until someone reads the model back
+to them.
+
+## Information kept
+
+- **Exposure** — the Capabilities its own Steps use
+- **Presents** — the Entities it presents, with disclosed facts distinguished from collected inputs
+- **Container** — the place that holds it, its Interface or Experience, from its path
+- **Addresses** — where it answers
+
+- **Variation** — the Variation it is an alternative in, if any, and the condition that selects it

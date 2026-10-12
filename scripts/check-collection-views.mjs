@@ -7,7 +7,7 @@ import { selectCollectionDrawing, expectCollectionDrawing } from './report-view-
 
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI viewer URL.')
-const report = await fetch(`${origin}/_businesslens/report.json`).then(response => response.json())
+const report = await fetch(`${origin}/_pdd-kit/report.json`).then(response => response.json())
 const browser = await chromium.launch()
 const errors = []
 const screenshots = process.env.BLR_VIEW_SCREENSHOTS

@@ -134,7 +134,7 @@ function compose(variant, { size, fit, plate, gap = 0 }) {
       ? `<rect width="${size}" height="${size}" fill="${PAPER}"/>`
       : ''
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" role="img" aria-label="BusinessLens">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" role="img" aria-label="pdd-kit">
 ${[style, backdrop].filter(Boolean).join('\n')}
 <g transform="translate(${round(x)} ${round(y)}) scale(${round(scale, 6)})">
 ${elements.map(element => `  ${element}`).join('\n')}
@@ -145,8 +145,8 @@ ${elements.map(element => `  ${element}`).join('\n')}
 
 function manifest() {
   return `${JSON.stringify({
-    name: 'BusinessLens',
-    short_name: 'BusinessLens',
+    name: 'pdd-kit',
+    short_name: 'pdd-kit',
     description: 'Living, machine-readable Product Models for software teams and coding agents.',
     start_url: '/',
     display: 'standalone',
@@ -202,8 +202,8 @@ const app = compose(variant, { size: 512, fit: variant.container ? 1 : 0.7, plat
 const maskable = compose(variant, { size: 512, fit: variant.container ? 0.78 : 0.55, plate: 'square' })
 
 writeFileSync(resolve(ICONS, 'favicon.svg'), tab)
-writeFileSync(resolve(ICONS, 'businesslens-app-icon.svg'), app)
-writeFileSync(resolve(ICONS, 'businesslens-maskable-icon.svg'), maskable)
+writeFileSync(resolve(ICONS, 'pdd-kit-app-icon.svg'), app)
+writeFileSync(resolve(ICONS, 'pdd-kit-maskable-icon.svg'), maskable)
 writeFileSync(resolve(ICONS, 'icon-1024.png'), await raster(app, 1024))
 
 const images = []

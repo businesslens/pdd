@@ -6,13 +6,13 @@ group: CLI
 order: 24
 ---
 
-# `businesslens view`
+# `pdd-kit view`
 
 Open a Product Model as a read-only report in your browser, while you write it
 or to review someone else's branch or pull request.
 
 ```bash
-npx businesslens view [repository] [--branch <name> | --pr <number>] [--no-open] [--port <port>]
+npx pdd-kit view [repository] [--branch <name> | --pr <number>] [--no-open] [--port <port>]
 ```
 
 ## Options
@@ -29,11 +29,11 @@ npx businesslens view [repository] [--branch <name> | --pr <number>] [--no-open]
 
 1. Starts a server on `127.0.0.1` only, and opens the report.
 2. Compiles the model in memory. It writes nothing (no
-   `.businesslens/build/report.json`) and sends nothing to BusinessLens.
+   `product-model/build/report.json`) and sends nothing to pdd-kit.
 3. Keeps running until you press Ctrl+C.
 
 If the [GitHub CLI](https://cli.github.com) is signed in, the report asks GitHub
-through `gh` whether you have starred BusinessLens, and a star beside the GitHub
+through `gh` whether you have starred pdd-kit, and a star beside the GitHub
 link stars it when you click it, or unstars it when you click it again. Without
 `gh`, only the link shows.
 
@@ -63,10 +63,10 @@ Pass `owner/repo`, a `https://github.com/owner/repo` URL, or
 `git` must be installed.
 
 ```bash
-npx businesslens view acme/checkout                      # default branch
-npx businesslens view acme/checkout --branch release/2.4
-npx businesslens view acme/checkout --pr 12
-npx businesslens view https://github.com/acme/checkout/pull/12
+npx pdd-kit view acme/checkout                      # default branch
+npx pdd-kit view acme/checkout --branch release/2.4
+npx pdd-kit view acme/checkout --pr 12
+npx pdd-kit view https://github.com/acme/checkout/pull/12
 ```
 
 A `.../tree/<branch>` or `.../pull/<number>` URL already picks the revision; do

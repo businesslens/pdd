@@ -1,7 +1,7 @@
-# BusinessLens Product Report
+# pdd-kit Product Report
 
-The stable Product Report v19 renderer used by `businesslens view` and exported
-from the `businesslens` package. It projects the complete portable report into
+The stable Product Report v19 renderer used by `pdd-kit view` and exported
+from the `pdd-kit` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
 Screens are reached through Interfaces, with ownership shown inside their resource readings.
@@ -213,7 +213,7 @@ document or resource reading, including scroll and expansion. Close returns to
 the working view. The `f` query parameter carries the local preview URL, independent
 of the resource and its tab; refresh and browser Back/Forward preserve the reading.
 External HTTP(S) References show an external-link icon and open in a new tab.
-Code References use `/_businesslens/code?target=<encoded-target>#reference`.
+Code References use `/_pdd-kit/code?target=<encoded-target>#reference`.
 The local viewer returns structured preview data and renders source with Nuxt UI
 Prose components, Shiki syntax colors in both themes, line numbers, and highlights
 an authored line range or the first textual match for a symbol (trying its final
@@ -248,7 +248,7 @@ human Product Report.
 
 The report is the sole source of Product identity and content. The separate
 `logoSrc` prop resolves the Product's optional
-`.businesslens/product/logo.svg`; the shared `BusinessLensProductLogo`
+`product-model/product/logo.svg`; the shared `PddKitProductLogo`
 component falls back to a packaged neutral placeholder. Hosts own navigation
 and actions outside the report.
 
@@ -310,7 +310,7 @@ Extend the layer from a Nuxt application:
 
 ```ts
 export default defineNuxtConfig({
-  extends: ['businesslens/nuxt/report-viewer']
+  extends: ['pdd-kit/nuxt/report-viewer']
 })
 ```
 
@@ -318,10 +318,10 @@ Wrap the host in Nuxt UI's `UApp` (for its tooltip/overlay providers), then rend
 the canonical report inside a page:
 
 ```vue
-<BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
+<PddKitReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReport` from `businesslens/report`. There is
+`report` must be a `ProductReport` from `pdd-kit/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -329,7 +329,7 @@ give the report deep links, a working back button, and a refresh that lands
 where it left:
 
 ```vue
-<BusinessLensReportViewer
+<PddKitReportViewer
   v-model:section="section"
   v-model:resource="resource"
   v-model:tab="tab"
@@ -549,13 +549,13 @@ and allow panning, with an explicit Fit control for the complete graph.
 See [third-party notices](THIRD_PARTY.md).
 
 The Product Report needs a bounded viewport. By default it fills the browser
-height. A host with persistent chrome can set `--businesslens-report-chrome`
+height. A host with persistent chrome can set `--pdd-kit-report-chrome`
 to the chrome height. The bundled local viewer fills a bounded flex viewport,
 with only the optional theme lab bar above it.
 
-The report viewer extends the stable BusinessLens theme because the Product
-Report is the canonical BusinessLens report experience. The theme remains a
-separately exported layer for other BusinessLens Nuxt surfaces. Hosts retain
+The report viewer extends the stable pdd-kit theme because the Product
+Report is the canonical pdd-kit report experience. The theme remains a
+separately exported layer for other pdd-kit Nuxt surfaces. Hosts retain
 final authority over configuration and CSS.
 
 Nuxt, Vue, Nuxt UI, Comark Vue (`@comark/vue`), Tailwind, Vue Flow (`@vue-flow/core` and
@@ -629,7 +629,7 @@ without the prose that would bury it.
 A statement recorded at several paths is written in full under each of them,
 with its other locations listed as **also recorded at** — one claim about
 several places, printed where each place is read. Recognizable Product Model
-icons and the `.businesslens` mark still mark authored model paths.
+icons and the `product-model` mark still mark authored model paths.
 
 Search finds recorded paths, as a file finder would: it keeps the paths whose
 name, as written, contains what was typed, and opens every folder above them —

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReport } from 'businesslens/report'
+import type { ProductReport } from 'pdd-kit/report'
 
 /**
  * Where the problems open.

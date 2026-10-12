@@ -11,12 +11,12 @@ const directories: string[] = []
 
 afterEach(() => {
   for (const directory of directories.splice(0)) {
-    try { chmodSync(join(directory, '.businesslens', 'entities', 'cart.md'), 0o644) } catch { /* Not changed. */ }
+    try { chmodSync(join(directory, 'product-model', 'entities', 'cart.md'), 0o644) } catch { /* Not changed. */ }
     rmSync(directory, { recursive: true, force: true })
   }
 })
 
-/** The fixture at the root of its own repository, as `businesslens view` finds it. */
+/** The fixture at the root of its own repository, as `pdd-kit view` finds it. */
 function repository(): string {
   const root = mkdtempSync(join(tmpdir(), 'bl-viewer-build-'))
   directories.push(root)
@@ -26,7 +26,7 @@ function repository(): string {
   return root
 }
 
-const file = (root: string, path: string) => join(root, '.businesslens', path)
+const file = (root: string, path: string) => join(root, 'product-model', path)
 function edit(root: string, path: string, from: string, to: string) {
   const text = readFileSync(file(root, path), 'utf8')
   expect(text).toContain(from)
@@ -118,7 +118,7 @@ describe('model issues', () => {
   const at = (text: string) => modelIssue(text, 'error', root)
 
   it('splits the file from the message and keeps sentences whole', () => {
-    expect(at('/work/shop/.businesslens/entities/cart.md: missing H1 title')).toEqual({
+    expect(at('/work/shop/product-model/entities/cart.md: missing H1 title')).toEqual({
       severity: 'error', message: 'Missing H1 title', file: 'entities/cart.md', resource: 'entity:cart'
     })
     expect(at('config.yaml is missing')).toEqual({ severity: 'error', message: 'config.yaml is missing', file: 'config.yaml' })
@@ -129,7 +129,7 @@ describe('model issues', () => {
   })
 
   it('keeps a message that opens with a field name as written', () => {
-    expect(at('/work/shop/.businesslens/business-rules/x.md: appliesTo item 1: references missing entity "refund"').message)
+    expect(at('/work/shop/product-model/business-rules/x.md: appliesTo item 1: references missing entity "refund"').message)
       .toBe('appliesTo item 1: references missing entity "refund"')
   })
 
@@ -158,6 +158,6 @@ describe('model issues', () => {
       { severity: 'error', message: 'README.md is missing', file: 'README.md' },
       { severity: 'warning', message: 'No Step leaves it in "Refunded"', file: 'entities/order.md' }
     ])
-    expect(request).toBe('The BusinessLens Product Model in .businesslens/ has 2 errors that `businesslens lint` reports. Fix them so the model lints clean:\n\n- entities/cart.md (line 2): Frontmatter YAML failed to parse\n- README.md is missing\n')
+    expect(request).toBe('The pdd-kit Product Model in product-model/ has 2 errors that `pdd-kit lint` reports. Fix them so the model lints clean:\n\n- entities/cart.md (line 2): Frontmatter YAML failed to parse\n- README.md is missing\n')
   })
 })

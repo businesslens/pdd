@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReport } from 'businesslens/report'
+import type { ProductReport } from 'pdd-kit/report'
 
 const route = useRoute()
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
@@ -8,10 +8,10 @@ const report: ProductReport = {
   schemaVersion: '19.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
-  summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',
+  summary: 'Builds the public Nuxt layer from the packed pdd-kit artifact.',
   description: 'The canonical Product Report and stable theme resolve together.',
   category: 'developer-tool',
-  authors: [{ name: 'BusinessLens' }],
+  authors: [{ name: 'pdd-kit' }],
   license: 'MIT',
   intent: 'Catch missing files, invalid exports, and host-owned dependency mistakes before publication.',
   supportingSections: [],
@@ -20,7 +20,7 @@ const report: ProductReport = {
   tags: ['smoke-test'],
   languages: ['en'],
   generatedAt: '2026-08-09',
-  generator: { name: 'businesslens', version: '0.9.0' },
+  generator: { name: 'pdd-kit', version: '0.9.0' },
   counts: {
     interfaces: 1,
     experiences: 0,
@@ -102,6 +102,6 @@ if (route.query.matrices === '1') {
 
 <template>
   <div>
-    <BusinessLensReportViewer v-for="index in route.query.multi === '1' ? 2 : 1" :key="index" v-model:section="section" v-model:resource="resource" v-model:tab="tab" v-model:resource-tab="resourceTab" v-model:scenario-route="scenarioRoute" v-model:route-columns="routeColumns" v-model:topology="topology" v-model:coverage="coverage" :report="report" />
+    <PddKitReportViewer v-for="index in route.query.multi === '1' ? 2 : 1" :key="index" v-model:section="section" v-model:resource="resource" v-model:tab="tab" v-model:resource-tab="resourceTab" v-model:scenario-route="scenarioRoute" v-model:route-columns="routeColumns" v-model:topology="topology" v-model:coverage="coverage" :report="report" />
   </div>
 </template>

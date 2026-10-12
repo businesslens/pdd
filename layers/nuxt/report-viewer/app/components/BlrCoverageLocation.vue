@@ -82,10 +82,10 @@ function select() {
       </button>
       <span v-else class="size-4 shrink-0" />
       <img
-        v-if="node.directory && node.value.split('/').at(-1) === '.businesslens'"
+        v-if="node.directory && node.value.split('/').at(-1) === 'product-model'"
         :src="modelLogo"
         alt=""
-        title="BusinessLens Product Model"
+        title="pdd-kit Product Model"
         class="size-4 shrink-0 object-contain"
         data-model-folder-logo
       >

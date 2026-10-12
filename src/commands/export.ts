@@ -144,7 +144,7 @@ export function compileReport(
     tags: sorted(model.product.tags),
     languages: sorted(model.product.languages),
     generatedAt: today,
-    generator: { name: 'businesslens-cli', version: cliVersion() },
+    generator: { name: 'pdd-kit-cli', version: cliVersion() },
     counts: {
       interfaces: model.interfaces.length,
       experiences: model.experiences.length,
@@ -435,12 +435,12 @@ export function buildProject(cwd: string): BuildOutcome {
 
   const outputFile = writeGeneratedFile(
     resolved.modelRoot,
-    ['.businesslens', 'build', 'report.json'],
+    ['product-model', 'build', 'report.json'],
     `${JSON.stringify(report, null, 2)}\n`
   )
   writeGeneratedFile(
     resolved.modelRoot,
-    ['.businesslens', 'cache', 'build.json'],
+    ['product-model', 'cache', 'build.json'],
     `${JSON.stringify({ builtAt: new Date().toISOString(), schemaVersion: REPORT_SCHEMA_VERSION }, null, 2)}\n`
   )
   return { report, outputFile }

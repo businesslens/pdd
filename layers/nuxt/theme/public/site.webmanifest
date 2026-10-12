@@ -1,6 +1,6 @@
 {
-  "name": "BusinessLens",
-  "short_name": "BusinessLens",
+  "name": "pdd-kit",
+  "short_name": "pdd-kit",
   "description": "Living, machine-readable Product Models for software teams and coding agents.",
   "start_url": "/",
   "display": "standalone",

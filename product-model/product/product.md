@@ -1,0 +1,46 @@
+---
+id: pdd-kit
+summary: Keep intended product behavior in a reviewable model alongside the code.
+category: dev-tools
+tags: [product-model, coding-agents, developer-tools, specification]
+authors:
+  - name: pdd-kit
+    url: https://pdd-kit.dev
+license: MIT
+languages: [en]
+limitations:
+  - pdd-kit never implements product behavior. Building is left to whatever plan, spec, or coding flow the harness already provides.
+  - Structural linting is deterministic; deciding whether code and model agree is a separate semantic workflow that a person must approve.
+  - Analysis never executes the repository it is looking at, so any claim that depends on running the product is out of reach.
+  - The Blueprint catalog is a separate service. This product reads it anonymously and proposes changes to it by pull request; it does not operate it.
+references:
+  - kind: doc
+    role: context
+    target: https://github.com/itai-gendler/pdd-kit/blob/main/README.md
+    title: Repository README
+  - kind: spec
+    role: intent
+    target: https://github.com/itai-gendler/pdd-kit/blob/main/spec/format.md
+    title: Product Model format contract
+  - kind: spec
+    role: intent
+    target: https://github.com/itai-gendler/pdd-kit/blob/main/spec/report.md
+    title: Product Report contract
+---
+
+# pdd-kit
+
+pdd-kit supports Product-Driven Development for coding agents through a
+Git-tracked, plain-Markdown `product-model/` Product Model. It describes who a
+product serves, what they accomplish, the things it keeps and changes, and the
+rules governing behavior and permission. Agent skills author the model and
+check its agreement with implementation. The command-line tool installs those
+skills, checks the model's structure, opens a private local report, and moves
+models between repositories as portable Blueprints. The report presents which
+code the model accounts for without claiming agreement with implementation.
+
+## Intent
+
+Give teams and coding agents a durable, reviewable statement of intended
+behavior next to the code, so product decisions survive beyond tickets, chat,
+and individual memory.

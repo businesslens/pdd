@@ -120,11 +120,11 @@ function refspec(ref: GithubRef | undefined): string {
  *
  * A depth-one fetch of a single ref followed by a detached checkout: no history,
  * no tags, no other branches. Nothing from the repository runs — checkout does
- * not execute hooks, and BusinessLens never executes target code.
+ * not execute hooks, and pdd-kit never executes target code.
  */
 export function fetchGithubSnapshot(repository: GithubRepository, ref: GithubRef | undefined): GithubSnapshot {
   // git reports real paths, and the temp dir is behind a symlink on macOS.
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'businesslens-view-')))
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'pdd-kit-view-')))
   let disposed = false
   const dispose = () => {
     if (disposed) return

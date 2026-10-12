@@ -1,7 +1,7 @@
 /*
-  Shared BusinessLens presentation variants, still under evaluation.
+  Shared pdd-kit presentation variants, still under evaluation.
 
-  The stable palette, type, and identity come from businesslens/nuxt/theme.
+  The stable palette, type, and identity come from pdd-kit/nuxt/theme.
   This optional lab chooses only the page background. The light and dark treatments are
   selected independently via `<html data-bg-light="…" data-bg-dark="…">`,
   both set from cookies during SSR so switching never flashes the previous
@@ -23,9 +23,9 @@
 */
 
 :root {
-  --businesslens-theme-lab-row-height: 2.75rem;
-  --businesslens-theme-lab-height: 0px;
-  --businesslens-page-glows:
+  --pdd-kit-theme-lab-row-height: 2.75rem;
+  --pdd-kit-theme-lab-height: 0px;
+  --pdd-kit-page-glows:
     radial-gradient(
       circle at 18% 18%,
       color-mix(in srgb, var(--color-brass-500) 6%, transparent),
@@ -38,34 +38,34 @@
     );
 }
 
-:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="1"] {
-  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) + 1px);
+:root[data-pdd-kit-theme-lab="shown"][data-pdd-kit-theme-lab-rows="1"] {
+  --pdd-kit-theme-lab-height: calc(var(--pdd-kit-theme-lab-row-height) + 1px);
 }
 
-:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="2"] {
-  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 2 + 2px);
+:root[data-pdd-kit-theme-lab="shown"][data-pdd-kit-theme-lab-rows="2"] {
+  --pdd-kit-theme-lab-height: calc(var(--pdd-kit-theme-lab-row-height) * 2 + 2px);
 }
 
-:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="3"] {
-  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 3 + 3px);
+:root[data-pdd-kit-theme-lab="shown"][data-pdd-kit-theme-lab-rows="3"] {
+  --pdd-kit-theme-lab-height: calc(var(--pdd-kit-theme-lab-row-height) * 3 + 3px);
 }
 
-:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="4"] {
-  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 4 + 4px);
+:root[data-pdd-kit-theme-lab="shown"][data-pdd-kit-theme-lab-rows="4"] {
+  --pdd-kit-theme-lab-height: calc(var(--pdd-kit-theme-lab-row-height) * 4 + 4px);
 }
 
-:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="5"] {
-  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 5 + 5px);
+:root[data-pdd-kit-theme-lab="shown"][data-pdd-kit-theme-lab-rows="5"] {
+  --pdd-kit-theme-lab-height: calc(var(--pdd-kit-theme-lab-row-height) * 5 + 5px);
 }
 
-.businesslens-page-surface {
-  background: var(--businesslens-page-glows);
+product-model-page-surface {
+  background: var(--pdd-kit-page-glows);
 }
 
 /* ================================================================== *
  * LIGHT BACKGROUNDS
  *
- * The BusinessLens logo artwork sits on textured parchment (#e1d2b7); the
+ * The pdd-kit logo artwork sits on textured parchment (#e1d2b7); the
  * surviving variants walk it back toward white, keeping the warmth. Every
  * variant carries the same paper grain so the page reads as stock rather than
  * flat fill, and cards sit *lighter* than the page — paper laid on a desk —

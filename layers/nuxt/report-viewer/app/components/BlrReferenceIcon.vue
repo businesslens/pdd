@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ReportReference } from 'businesslens/report'
+import type { ReportReference } from 'pdd-kit/report'
 
 const props = defineProps<{ kind?: ReportReference['kind'] }>()
 

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.repository == 'businesslens/pdd' && startsWith(github.ref, 'refs/tags/v')
+    if: github.repository == 'itai-gendler/pdd-kit' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,7 +51,7 @@ jobs:
           pack_dir="$(mktemp -d)"
           package_version="$(node --print "require('./package.json').version")"
           pnpm pack --pack-destination "$pack_dir"
-          tarball="$pack_dir/businesslens-${package_version}.tgz"
+          tarball="$pack_dir/pdd-kit-${package_version}.tgz"
           test -f "$tarball"
           node scripts/check-package-size.mjs "$tarball"
           echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
@@ -63,10 +63,10 @@ jobs:
           mkdir -p "$smoke_root/project/.claude" "$smoke_root/project/.agents"
           cd "$smoke_root/project"
 
-          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --version
-          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --help \
+          npx --yes --package "${{ steps.pack.outputs.tarball }}" pdd-kit --version
+          npx --yes --package "${{ steps.pack.outputs.tarball }}" pdd-kit --help \
             | grep 'view \[options\]' >/dev/null
-          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens install \
+          npx --yes --package "${{ steps.pack.outputs.tarball }}" pdd-kit install \
             --providers claude,codex \
             --scope project \
             --yes
@@ -74,11 +74,11 @@ jobs:
           cli_only="$smoke_root/cli-only"
           mkdir -p "$cli_only"
           npm install --prefix "$cli_only" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
-          node "$cli_only/node_modules/businesslens/dist/cli.js" --version
+          node "$cli_only/node_modules/pdd-kit/dist/cli.js" --version
           (
             cd "$cli_only"
             node --input-type=module --eval \
-              "import { BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND } from 'businesslens/theme-lab/variants'; if (BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND !== 'l4') process.exit(1)"
+              "import { PDD_KIT_DEFAULT_LIGHT_BACKGROUND } from 'pdd-kit/theme-lab/variants'; if (PDD_KIT_DEFAULT_LIGHT_BACKGROUND !== 'l4') process.exit(1)"
           )
           for ui_dependency in \
             nuxt \
@@ -95,16 +95,16 @@ jobs:
           done
 
           for skills_root in .claude/skills .agents/skills; do
-            test -f "$skills_root/.businesslens-install.json"
+            test -f "$skills_root/.pdd-kit-install.json"
             for skill in \
-              businesslens-map \
-              businesslens-ideate \
-              businesslens-verify; do
+              pdd-map \
+              pdd-ideate \
+              pdd-verify; do
               test -f "$skills_root/$skill/SKILL.md"
             done
           done
 
-          test ! -e .businesslens
+          test ! -e product-model
           test ! -e AGENTS.md
           tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/dist/viewer/index.html$' >/dev/null
           tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/report-viewer/nuxt.config.ts$' >/dev/null
@@ -151,7 +151,7 @@ jobs:
           npm install --prefix "$view_runner" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
 
           view_log="$smoke_root/view.log"
-          node "$view_runner/node_modules/businesslens/dist/cli.js" \
+          node "$view_runner/node_modules/pdd-kit/dist/cli.js" \
             --cwd "$view_project" view --no-open >"$view_log" 2>&1 &
           viewer_pid=$!
           cleanup_viewer() {
@@ -165,16 +165,16 @@ jobs:
             sleep 0.2
           done
           test -n "$viewer_url"
-          curl --fail --silent "$viewer_url/_businesslens/health" | grep '"ok":true' >/dev/null
+          curl --fail --silent "$viewer_url/_pdd-kit/health" | grep '"ok":true' >/dev/null
           curl --fail --silent "$viewer_url/" | grep -i '<!DOCTYPE html>' >/dev/null
           curl --fail --silent "$viewer_url/brand/icons/favicon.svg" | grep '<svg' >/dev/null
-          curl --fail --silent "$viewer_url/_businesslens/report.json" \
+          curl --fail --silent "$viewer_url/_pdd-kit/report.json" \
             | grep '"id":"fixture-shop"' >/dev/null
-          curl --fail --silent "$viewer_url/_businesslens/logo.svg" \
+          curl --fail --silent "$viewer_url/_pdd-kit/logo.svg" \
             | grep '<svg' >/dev/null
           curl --fail --silent "$viewer_url/brand/icons/favicon.svg" \
             | grep '<svg' >/dev/null
-          test ! -e "$view_project/.businesslens/build/report.json"
+          test ! -e "$view_project/product-model/build/report.json"
           kill -TERM "$viewer_pid"
           wait "$viewer_pid"
           trap - EXIT
@@ -183,8 +183,8 @@ jobs:
         shell: bash
         run: |
           package_version="$(node --print "require('./package.json').version")"
-          if npm view "businesslens@${package_version}" version >/dev/null 2>&1; then
-            echo "businesslens@${package_version} is already published; skipping."
+          if npm view "pdd-kit@${package_version}" version >/dev/null 2>&1; then
+            echo "pdd-kit@${package_version} is already published; skipping."
             exit 0
           fi
           npm publish "${{ steps.pack.outputs.tarball }}"

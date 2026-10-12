@@ -23,14 +23,14 @@ try {
     const result = removeDevelopmentLink(root)
     console.log(result.removed
       ? `Removed ${result.link}.`
-      : `No BusinessLens development link exists at ${result.link}.`)
+      : `No pdd-kit development link exists at ${result.link}.`)
     process.exit(0)
   }
 
   const tsdown = join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'tsdown.cmd' : 'tsdown')
   if (!existsSync(tsdown)) fail('Dependencies are not installed. Run `pnpm install` first.')
 
-  console.log('Building BusinessLens and the local viewer before activation...')
+  console.log('Building pdd-kit and the local viewer before activation...')
   // Windows runs pnpm through its .cmd shim, which Node spawns only in a shell.
   const build = spawnSync('pnpm', ['build'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' })
   if (build.error) fail(build.error.message)
@@ -41,7 +41,7 @@ try {
   console.log(`Active development command: ${link}`)
   console.log(`PDD worktree: ${root}`)
   console.log(`Branch: ${branch.status === 0 ? branch.stdout.trim() || '(detached)' : '(unknown)'}`)
-  console.log('Watching BusinessLens package outputs. Press Ctrl+C to stop watching; the link remains active.')
+  console.log('Watching pdd-kit package outputs. Press Ctrl+C to stop watching; the link remains active.')
 
   // The initial full build owns cleanup. Preserve its packaged viewer while
   // tsdown refreshes the CLI bundle during development.

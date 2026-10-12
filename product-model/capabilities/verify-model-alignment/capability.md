@@ -1,0 +1,32 @@
+---
+domain: model-authoring
+availability: [{ place: agent-skills }]
+references:
+  - kind: doc
+    role: implementation
+    target: https://github.com/itai-gendler/pdd-kit/blob/main/skills/pdd-verify/SKILL.md
+    title: pdd-verify
+---
+
+# Verify model alignment
+
+Compares what the model says against what the repository currently does, for a
+requested scope — a branch, a named resource, or the whole current product — and
+then owns the resolution. Asked to implement, it treats everything the model
+describes and the code lacks as the plan and implements it in phases. Every contract is checked, including what a Step says
+it does to a thing and who a Rule says may do it. Each finding is classified by
+which side should change, findings that share one decision are grouped, and the
+Developer is asked the root question once. Approved model changes are written,
+implementation changes are made by the agent the Developer asked to implement,
+working the Developer's usual way, and every change is followed by a fresh
+inspection.
+
+## Intent
+
+One invocation should be enough. A person should not have to notice that a gap
+needs new product meaning and then go invoke a different workflow themselves,
+and should not have to name this workflow to implement: asking the agent to
+implement the model is enough.
+Current semantic findings are re-derived on every pass: a stored verdict
+would survive the code, runtime assumptions, and inspection method that produced
+it, and would imply a certainty the next commit has already ended.

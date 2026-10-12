@@ -104,7 +104,7 @@ describe('fetchGithubSnapshot', () => {
       expect(git(snapshot.root, 'rev-list', '--count', 'HEAD')).toBe('1')
       const resolved = resolveModelRoot(snapshot.root)
       expect(resolved.gitRoot).toBe(snapshot.root)
-      expect(existsSync(join(resolved.modelRoot, '.businesslens', 'product'))).toBe(true)
+      expect(existsSync(join(resolved.modelRoot, 'product-model', 'product'))).toBe(true)
     } finally {
       snapshot.dispose()
     }
@@ -142,5 +142,5 @@ describe('fetchGithubSnapshot', () => {
 })
 
 function readdirTmp(): string[] {
-  return readdirSync(tmpdir()).filter(entry => entry.startsWith('businesslens-view-'))
+  return readdirSync(tmpdir()).filter(entry => entry.startsWith('pdd-kit-view-'))
 }

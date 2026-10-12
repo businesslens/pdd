@@ -16,7 +16,7 @@ export interface ProductLogoFile {
 
 /** Read an optional Product logo without following links or accepting special files. */
 export function readProductLogo(modelRoot: string): ProductLogoFile | undefined {
-  const file = join(modelRoot, '.businesslens', 'product', PRODUCT_LOGO_FILENAME)
+  const file = join(modelRoot, 'product-model', 'product', PRODUCT_LOGO_FILENAME)
   if (!existsSync(file)) return undefined
 
   const stat = lstatSync(file)
@@ -40,7 +40,7 @@ export interface ProductCoverFile {
 
 /** Read an optional Product cover the same way: no links, no special files. */
 export function readProductCover(modelRoot: string): ProductCoverFile | undefined {
-  const file = join(modelRoot, '.businesslens', 'product', PRODUCT_COVER_FILENAME)
+  const file = join(modelRoot, 'product-model', 'product', PRODUCT_COVER_FILENAME)
   // lstat, not existsSync: existsSync follows a symlink, so a broken one would
   // read as no cover instead of being refused.
   let stat: ReturnType<typeof lstatSync>

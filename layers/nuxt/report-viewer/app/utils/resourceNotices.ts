@@ -8,4 +8,4 @@ export interface ReportResourceNotice {
   detail?: string
 }
 
-export const RESOURCE_NOTICES: InjectionKey<Ref<Record<string, ReportResourceNotice>>> = Symbol('businesslens:resource-notices')
+export const RESOURCE_NOTICES: InjectionKey<Ref<Record<string, ReportResourceNotice>>> = Symbol('pdd-kit:resource-notices')

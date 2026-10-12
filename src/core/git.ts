@@ -45,8 +45,8 @@ export function provenance(
   if (options.requireClean !== false && git(root, 'status', '--porcelain', '--untracked-files=no')) {
     throw new Error('Tracked files have uncommitted changes. Commit or stash them so the model matches the pinned revision.')
   }
-  if (options.requireClean !== false && git(root, 'status', '--porcelain', '--untracked-files=all', '--', '.businesslens')) {
-    throw new Error('The authored .businesslens/ Product Model has uncommitted or untracked files. Commit it so the reported model exists at the pinned revision.')
+  if (options.requireClean !== false && git(root, 'status', '--porcelain', '--untracked-files=all', '--', 'product-model')) {
+    throw new Error('The authored product-model/ Product Model has uncommitted or untracked files. Commit it so the reported model exists at the pinned revision.')
   }
   const repositoryUrl = normalizeRepositoryUrl(git(root, 'remote', 'get-url', 'origin'))
   let branch = git(root, 'rev-parse', '--abbrev-ref', 'HEAD')

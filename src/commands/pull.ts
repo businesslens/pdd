@@ -64,7 +64,7 @@ export async function runPull(
     const index = await fetchBlueprintIndex(fetch, repository)
     entry = index.blueprints.find(candidate => candidate.slug === blueprint)
     if (!entry) {
-      console.error(`No Blueprint is named ${blueprint}. Run \`businesslens blueprint list\` to see them.`)
+      console.error(`No Blueprint is named ${blueprint}. Run \`pdd-kit blueprint list\` to see them.`)
       return 1
     }
     const bytes = await fetchReleaseAsset(fetch, repository, entry.report, {

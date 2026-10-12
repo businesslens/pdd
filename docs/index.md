@@ -1,15 +1,15 @@
 ---
 title: Introduction
-description: BusinessLens brings Product-Driven Development to coding agents through a Git-tracked Product Model and an automatic verification loop.
+description: pdd-kit brings Product-Driven Development to coding agents through a Git-tracked Product Model and an automatic verification loop.
 section: open-source
 group: Get started
 order: 1
 ---
 
-# BusinessLens: Product-Driven Development for coding agents
+# pdd-kit: Product-Driven Development for coding agents
 
-BusinessLens is Product-Driven Development for coding agents. It keeps a
-durable Product contract in `.businesslens/`: what your product does, for whom,
+pdd-kit is Product-Driven Development for coding agents. It keeps a
+durable Product contract in `product-model/`: what your product does, for whom,
 where, and under which rules, including where it works more than one way
 ([Variations](./variations.md): feature flags, plan tiers, A/B tests, API
 versions). The [Model overview](./product-model.md) explains the folder in five
@@ -49,13 +49,13 @@ implement: your agent, your way, in phases
 ```
 ::
 
-Ideate and verify with BusinessLens. Your own agent implements, your way.
+Ideate and verify with pdd-kit. Your own agent implements, your way.
 
-- **Ideate** with [`/businesslens-ideate`](./skill-businesslens-ideate.md):
+- **Ideate** with [`/pdd-ideate`](./skill-pdd-ideate.md):
   Decide the next change and record it in the product model.
 - **Implement** with your agent, your way: In phases, with plan mode, an SDD
   tool, or freestyle.
-- **Verify** with [`/businesslens-verify`](./skill-businesslens-verify.md):
+- **Verify** with [`/pdd-verify`](./skill-pdd-verify.md):
   Check and improve the code and product model until they agree.
 
 You don't have to name a skill. Ask your agent for a change, such as "add
@@ -63,7 +63,7 @@ guest checkout to the product", and ideate decides it with you. Ask it to
 implement the change, and verify plans the work in phases: your agent
 implements each phase, and verify checks every part of it before the next
 starts. You can also
-[choose the pace](./skill-businesslens-verify.md#choose-the-pace): one part at
+[choose the pace](./skill-pdd-verify.md#choose-the-pace): one part at
 a time, or everything in one go without phases. Ask your agent to check the
 code against the model whenever you want to be sure, for example before a
 release.
@@ -77,7 +77,7 @@ back to you; it is never decided in code.
 At any point in the loop, open the model as a local report in your browser:
 
 ```bash
-npx businesslens view
+npx pdd-kit view
 ```
 
 ![The local report open on a Blueprint's overview page](./images/report-overview.webp)
@@ -85,15 +85,15 @@ npx businesslens view
 It updates as the files change, so you can keep it open while you ideate,
 review a change, or verify. See [`view`](./cli-view.md) for the options.
 
-## What BusinessLens never does
+## What pdd-kit never does
 
 - Run your code to check it: the skills read it, they never execute it. While
   implementing, your agent runs your tests the way it always does.
-- Write outside `.businesslens/`, or edit your AGENTS.md, CLAUDE.md or README.
+- Write outside `product-model/`, or edit your AGENTS.md, CLAUDE.md or README.
 - Commit for you.
 
 ## Next
 
 - [Installation](./installation.md): install the skills into your coding agent.
-- [Model overview](./product-model.md): the `.businesslens/` folder in five
+- [Model overview](./product-model.md): the `product-model/` folder in five
   minutes.

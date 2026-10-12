@@ -1,4 +1,0 @@
-interface:
-  display_name: "BusinessLens Map"
-  short_description: "Map the existing product from code"
-  default_prompt: "Use $businesslens-map to create or expand this repository’s BusinessLens Product Model from established behavior."

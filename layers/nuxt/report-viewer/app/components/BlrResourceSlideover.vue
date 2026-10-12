@@ -36,13 +36,13 @@ const heading = useTemplateRef('heading')
 const referenceHeading = useTemplateRef('referenceHeading')
 const referenceDetails = ref<string>()
 function referenceInfo(href: string) {
-  const url = new URL(href, 'http://businesslens.local')
-  const source = url.pathname === '/_businesslens/code'
+  const url = new URL(href, 'http://pdd-kit.local')
+  const source = url.pathname === '/_pdd-kit/code'
   const reference = props.workspace.references.find(item => {
-    const original = new URL(referenceHref(item.reference), 'http://businesslens.local')
+    const original = new URL(referenceHref(item.reference), 'http://pdd-kit.local')
     return source ? referenceHref(item.reference) === href : original.pathname === url.pathname
   })?.reference
-  let target = source ? url.searchParams.get('target') ?? '' : url.pathname.slice('/_businesslens/file/'.length)
+  let target = source ? url.searchParams.get('target') ?? '' : url.pathname.slice('/_pdd-kit/file/'.length)
   if (!source) { try { target = decodeURIComponent(target) } catch { /* Show malformed paths literally. */ } }
   const raw = url.searchParams.get('raw') === '1'
   if (raw) url.searchParams.delete('raw')

@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose an improvement to BusinessLens
+description: Propose an improvement to pdd-kit
 labels: [enhancement]
 body:
   - type: textarea

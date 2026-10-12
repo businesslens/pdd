@@ -20,10 +20,10 @@ afterEach(() => {
   }
 })
 
-describe.skipIf(process.platform === 'win32')('BusinessLens development link', () => {
+describe.skipIf(process.platform === 'win32')('pdd-kit development link', () => {
   it('activates the current worktree and exposes its root through bl', () => {
     const bin = temporary('bl-dev-bin-')
-    const env = { ...process.env, BUSINESSLENS_DEV_BIN_DIR: bin }
+    const env = { ...process.env, PDD_KIT_DEV_BIN_DIR: bin }
 
     const activated = activateDevelopmentLink(ROOT, env)
     expect(existsSync(activated.link)).toBe(true)
@@ -33,12 +33,12 @@ describe.skipIf(process.platform === 'win32')('BusinessLens development link', (
     expect(existsSync(activated.link)).toBe(false)
   })
 
-  it('atomically switches between BusinessLens worktrees', () => {
+  it('atomically switches between pdd-kit worktrees', () => {
     const bin = temporary('bl-dev-switch-bin-')
     const other = temporary('bl-dev-other-root-')
-    const env = { ...process.env, BUSINESSLENS_DEV_BIN_DIR: bin }
+    const env = { ...process.env, PDD_KIT_DEV_BIN_DIR: bin }
     mkdirSync(join(other, 'scripts'), { recursive: true })
-    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'businesslens' }))
+    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'pdd-kit' }))
     writeFileSync(join(other, 'scripts', 'bl-dev.mjs'), '#!/usr/bin/env node\n')
 
     activateDevelopmentLink(other, env)
@@ -48,7 +48,7 @@ describe.skipIf(process.platform === 'win32')('BusinessLens development link', (
 
   it('never overwrites an unrelated bl command', () => {
     const bin = temporary('bl-dev-collision-bin-')
-    const env = { ...process.env, BUSINESSLENS_DEV_BIN_DIR: bin }
+    const env = { ...process.env, PDD_KIT_DEV_BIN_DIR: bin }
     writeFileSync(join(bin, 'bl'), 'unrelated\n')
 
     expect(() => activateDevelopmentLink(ROOT, env)).toThrow(/not a symbolic link/)
@@ -57,9 +57,9 @@ describe.skipIf(process.platform === 'win32')('BusinessLens development link', (
   it('does not unlink another active worktree', () => {
     const bin = temporary('bl-dev-unlink-bin-')
     const other = temporary('bl-dev-unlink-root-')
-    const env = { ...process.env, BUSINESSLENS_DEV_BIN_DIR: bin }
+    const env = { ...process.env, PDD_KIT_DEV_BIN_DIR: bin }
     mkdirSync(join(other, 'scripts'), { recursive: true })
-    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'businesslens' }))
+    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'pdd-kit' }))
     writeFileSync(join(other, 'scripts', 'bl-dev.mjs'), '#!/usr/bin/env node\n')
     symlinkSync(join(other, 'scripts', 'bl-dev.mjs'), join(bin, 'bl'))
 

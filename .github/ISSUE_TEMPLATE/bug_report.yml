@@ -19,13 +19,13 @@ body:
   - type: input
     id: environment
     attributes:
-      label: BusinessLens version and harness
-      description: The businesslens version you ran and the AI harness (Claude Code, Codex, Cursor, ...)
+      label: pdd-kit version and harness
+      description: The pdd-kit version you ran and the AI harness (Claude Code, Codex, Cursor, ...)
     validations:
       required: true
   - type: textarea
     id: lint-output
     attributes:
       label: Lint output (optional)
-      description: Output of `npx businesslens lint` if relevant. Redact anything private.
+      description: Output of `npx pdd-kit lint` if relevant. Redact anything private.
       render: shell

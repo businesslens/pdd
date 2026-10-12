@@ -15,7 +15,7 @@ nothing.
 ## What a Blueprint is
 
 **A Blueprint is a reviewed Product Model for a common kind of product,
-published in the BusinessLens repository, that you pull instead of starting
+published in the pdd-kit repository, that you pull instead of starting
 blank.** It holds only
 product meaning: no code, no file paths, nothing tied to the repository it came
 from.
@@ -27,7 +27,7 @@ file you were given.
 
 ## Steps
 
-1. Find one with `npx businesslens blueprint list`, or browse
+1. Find one with `npx pdd-kit blueprint list`, or browse
    [`blueprints/`](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints)
    on GitHub. Create the project, [install the skills](./installation.md) into
    it, and pull the Blueprint by name:
@@ -35,27 +35,27 @@ file you were given.
    ```bash
    mkdir my-product && cd my-product
    git init
-   npx businesslens install
-   npx businesslens blueprint pull kanban-board
+   npx pdd-kit install
+   npx pdd-kit blueprint pull kanban-board
    ```
 
-   It writes only `.businesslens/`; nothing else in the repo changes.
+   It writes only `product-model/`; nothing else in the repo changes.
 
-2. Read the Product (`.businesslens/product/product.md`, or `product.md` when
+2. Read the Product (`product-model/product/product.md`, or `product.md` when
    the Blueprint has no logo), then skim the rest with:
 
    ```bash
-   npx businesslens view
+   npx pdd-kit view
    ```
 
 3. If you want something more or different, ask your agent for the change,
    such as "add guest checkout to the product", and approve it first.
 
 4. Ask your agent to implement it: "implement our PDD".
-   [Verify](./skill-businesslens-verify.md) plans the work in phases: your agent
+   [Verify](./skill-pdd-verify.md) plans the work in phases: your agent
    implements each phase your usual way, and verify checks it before the next.
    Say "in one go" to skip phases, or "one slice at a time" to go slower; see
-   [Choose the pace](./skill-businesslens-verify.md#choose-the-pace).
+   [Choose the pace](./skill-pdd-verify.md#choose-the-pace).
    Ask your agent to check the code against the model whenever you want to be
-   sure, or run `/businesslens-verify` by name.
+   sure, or run `/pdd-verify` by name.
 

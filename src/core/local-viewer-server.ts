@@ -12,16 +12,16 @@ import { localMarkdownPreview } from './local-markdown-preview.js'
 import { ghStarClient, type GithubStarClient, type GithubStarState } from './github-star.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
-const REPORT_PATH = '/_businesslens/report.json'
-const STATUS_PATH = '/_businesslens/status.json'
-const EVENTS_PATH = '/_businesslens/events'
-const HEALTH_PATH = '/_businesslens/health'
-const LOGO_PATH = '/_businesslens/logo.svg'
-const ASSET_PREFIX = '/_businesslens/file/'
-const CODE_PATH = '/_businesslens/code'
-const GITHUB_STAR_PATH = '/_businesslens/github-star'
+const REPORT_PATH = '/_pdd-kit/report.json'
+const STATUS_PATH = '/_pdd-kit/status.json'
+const EVENTS_PATH = '/_pdd-kit/events'
+const HEALTH_PATH = '/_pdd-kit/health'
+const LOGO_PATH = '/_pdd-kit/logo.svg'
+const ASSET_PREFIX = '/_pdd-kit/file/'
+const CODE_PATH = '/_pdd-kit/code'
+const GITHUB_STAR_PATH = '/_pdd-kit/github-star'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
-const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('businesslens/package.json'), '../layers/nuxt/theme/public/brand')
+const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('pdd-kit/package.json'), '../layers/nuxt/theme/public/brand')
 
 /** 25 MB. A product asset is a mockup or a capture, never a build output. */
 const MAX_ASSET_BYTES = 25 * 1024 * 1024
@@ -73,7 +73,7 @@ export interface LocalViewer {
   status: () => { ready: boolean, state: LocalViewerState, error?: string }
   /**
    * Attach a model after the server is up. A viewer started before
-   * `.businesslens/` exists waits with a message; binding gives it what to
+   * `product-model/` exists waits with a message; binding gives it what to
    * compile and watch, and the open page comes alive on the next event.
    */
   bind: (binding: LocalViewerBinding) => void
@@ -132,10 +132,10 @@ export interface LocalViewerOptions {
    *
    * Reference targets resolve repository-relative, and product assets live
    * beside the resource they describe, so the viewer serves from the repository
-   * rather than only from `.businesslens/`. Omit it and the mount is off.
+   * rather than only from `product-model/`. Omit it and the mount is off.
    */
   assetRoot?: string
-  /** Stars or unstars BusinessLens on the reader's behalf. Defaults to the reader's own `gh` sign-in. */
+  /** Stars or unstars pdd-kit on the reader's behalf. Defaults to the reader's own `gh` sign-in. */
   githubStar?: GithubStarClient
 }
 
@@ -217,7 +217,7 @@ class LocalReportStore {
         schedule(this.isLogoSource(filename))
       })
       this.watcher.on('error', (error) => {
-        const message = `File watching failed: ${error.message}. Restart businesslens view to follow edits again.`
+        const message = `File watching failed: ${error.message}. Restart pdd-kit view to follow edits again.`
         this.reject(message, [{ severity: 'error', message }])
       })
     }
@@ -425,17 +425,17 @@ function sameOrigin(request: IncomingMessage, port: number): boolean {
 }
 
 /**
- * Read, add or remove the reader's star on BusinessLens.
+ * Read, add or remove the reader's star on pdd-kit.
  *
  * GET reports the state; POST stars and DELETE unstars. Neither takes input,
- * so the route can never touch anything but BusinessLens.
+ * so the route can never touch anything but pdd-kit.
  */
 function githubStar(
   request: IncomingMessage, response: ServerResponse, client: GithubStarClient, port: number, head: boolean
 ): void {
   if (request.method === 'POST' || request.method === 'DELETE') {
     if (!sameOrigin(request, port)) {
-      json(response, 403, { message: 'Only the local report can star or unstar BusinessLens.' }, false)
+      json(response, 403, { message: 'Only the local report can star or unstar pdd-kit.' }, false)
       return
     }
     const starring = request.method === 'POST'
@@ -583,7 +583,7 @@ function requestHandler(
     }
     if (pathname === REPORT_PATH) {
       const snapshot = store.snapshot()
-      response.setHeader('x-businesslens-report-state', snapshot.state)
+      response.setHeader('x-pdd-kit-report-state', snapshot.state)
       if (!snapshot.report) json(response, 422, { message: snapshot.error }, head)
       else json(response, 200, snapshot.report, head)
       return

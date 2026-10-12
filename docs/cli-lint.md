@@ -6,13 +6,13 @@ group: CLI
 order: 23
 ---
 
-# `businesslens lint`
+# `pdd-kit lint`
 
 Check that the Product Model is structurally sound, after every edit and
 [in CI](#run-it-in-ci).
 
 ```bash
-npx businesslens lint [--json]
+npx pdd-kit lint [--json]
 ```
 
 ## Options
@@ -39,7 +39,7 @@ npx businesslens lint [--json]
 4. Prints each error and warning, then a one-line verdict.
 
 It only reads. A clean result means the model is well formed, not that it
-matches the code. Use [`businesslens-verify`](./skill-businesslens-verify.md)
+matches the code. Use [`pdd-verify`](./skill-pdd-verify.md)
 for that.
 
 ## JSON output
@@ -47,7 +47,7 @@ for that.
 ```json
 {
   "ok": false,
-  "errors": ["/repo/.businesslens/capabilities/place-order/capability.md: missing H1 title"],
+  "errors": ["/repo/product-model/capabilities/place-order/capability.md: missing H1 title"],
   "warnings": [],
   "counts": {
     "interfaces": 3, "experiences": 2, "screens": 1, "domains": 2, "entities": 6,
@@ -66,13 +66,13 @@ errors or no model is found, and 2 for an unknown option.
 
 ## Run it in CI
 
-Run lint on every pull request, not only when `.businesslens/` changes: a code
-rename can break a code Reference. Add `businesslens` as a devDependency at the
-version your skills were installed from (recorded in `.businesslens-install.json`
+Run lint on every pull request, not only when `product-model/` changes: a code
+rename can break a code Reference. Add `pdd-kit` as a devDependency at the
+version your skills were installed from (recorded in `.pdd-kit-install.json`
 beside the skills), so CI and your agent agree:
 
-```yaml [.github/workflows/businesslens.yml]
-name: BusinessLens
+```yaml [.github/workflows/pdd-kit.yml]
+name: pdd-kit
 on: pull_request
 
 jobs:
@@ -85,12 +85,12 @@ jobs:
           node-version: 22 # any version from 20.12
           cache: npm
       - run: npm ci
-      - run: npx businesslens lint
+      - run: npx pdd-kit lint
 ```
 
 Warnings never fail the job; errors do. A green lint checks structure only:
 whether the code does what the model says is
-[`businesslens-verify`](./skill-businesslens-verify.md)'s job.
+[`pdd-verify`](./skill-pdd-verify.md)'s job.
 
 ## Next
 

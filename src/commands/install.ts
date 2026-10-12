@@ -16,7 +16,7 @@ import {
   type ProviderId
 } from '../core/providers.js'
 import {
-  BUSINESSLENS_SKILLS,
+  PDD_KIT_SKILLS,
   assertInstallTargets,
   installSkillsToTarget
 } from '../core/skill-installation.js'
@@ -151,20 +151,20 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     assertInstallTargets(cwd, targets, { force: options.force })
 
     const progress = process.stdout.isTTY ? spinner() : undefined
-    progress?.start('Installing BusinessLens skills...')
+    progress?.start('Installing pdd-kit skills...')
     const results = providerIds.map(id => installSkillsToTarget(
       cwd,
       { provider: providerById(id), scope },
       cliVersion(),
       { force: options.force }
     ))
-    progress?.stop('BusinessLens skills installed.')
+    progress?.stop('pdd-kit skills installed.')
 
     const roots = results.map(result =>
       formatDisplayPath(dirname(result.skillsDir))
     )
-    console.log(`Installed BusinessLens into: ${roots.join(', ')} (${scope}).`)
-    console.log(`Installed skills: ${BUSINESSLENS_SKILLS.join(', ')}.`)
+    console.log(`Installed pdd-kit into: ${roots.join(', ')} (${scope}).`)
+    console.log(`Installed skills: ${PDD_KIT_SKILLS.join(', ')}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

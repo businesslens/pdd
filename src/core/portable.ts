@@ -1360,7 +1360,7 @@ export function validateProductReport(report: ProductReport): string[] {
   /*
    * Entity semantics, resolved exactly as Interface relations are. A report is
    * expanded straight into an authored folder, so an edge the folder rules
-   * reject must not survive the wire — it would produce a `.businesslens/`
+   * reject must not survive the wire — it would produce a `product-model/`
    * that fails `lint` the moment it lands.
    */
   const entityChanged = new Set<string>()
@@ -1918,7 +1918,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
     ? String((input as { schemaVersion: unknown }).schemaVersion)
     : undefined
   if (served !== undefined && served !== REPORT_SCHEMA_VERSION) {
-    return `This is a Product Report of schema version ${served}; only ${REPORT_SCHEMA_VERSION} is accepted, and there is no compatibility reader. Export it again with a current businesslens.`
+    return `This is a Product Report of schema version ${served}; only ${REPORT_SCHEMA_VERSION} is accepted, and there is no compatibility reader. Export it again with a current pdd-kit.`
   }
   const first = error.issues[0]
   const path = first?.path.length ? first.path.map(String).join('.') : 'the report'

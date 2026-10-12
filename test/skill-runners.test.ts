@@ -15,15 +15,15 @@ import { afterEach, describe, expect, it } from 'vitest'
 const LINT_RUNNERS = [
   {
     name: 'map',
-    file: join(__dirname, '..', 'skills', 'businesslens-map', 'scripts', 'run-businesslens.mjs')
+    file: join(__dirname, '..', 'skills', 'pdd-map', 'scripts', 'run-pdd-kit.mjs')
   },
   {
     name: 'ideate',
-    file: join(__dirname, '..', 'skills', 'businesslens-ideate', 'scripts', 'run-businesslens.mjs')
+    file: join(__dirname, '..', 'skills', 'pdd-ideate', 'scripts', 'run-pdd-kit.mjs')
   },
   {
     name: 'verify',
-    file: join(__dirname, '..', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs')
+    file: join(__dirname, '..', 'skills', 'pdd-verify', 'scripts', 'run-pdd-kit.mjs')
   },
 ]
 const temporaryDirectories: string[] = []
@@ -60,7 +60,7 @@ const fs = require('node:fs')
 fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   cwd: process.cwd(),
   args: process.argv.slice(2),
-  apiKey: process.env.BUSINESSLENS_API_KEY || null
+  apiKey: process.env.PDD_KIT_API_KEY || null
 }))
 `
     )
@@ -73,9 +73,9 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
-          BUSINESSLENS_DEV_BIN_DIR: temporary('bl-runner-no-dev-bin-'),
+          PDD_KIT_DEV_BIN_DIR: temporary('bl-runner-no-dev-bin-'),
           CAPTURE_FILE: capture,
-          BUSINESSLENS_API_KEY: 'must-not-reach-lint'
+          PDD_KIT_API_KEY: 'must-not-reach-lint'
         },
         stdio: 'pipe'
       }
@@ -83,14 +83,14 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
     expect(recorded.cwd).not.toBe(repo)
-    expect(recorded.cwd).toContain('businesslens-cli-')
+    expect(recorded.cwd).toContain('pdd-kit-cli-')
     expect(recorded.args).toEqual([
       'exec',
       '--yes',
       '--ignore-scripts',
-      '--package=businesslens@latest',
+      '--package=pdd-kit@latest',
       '--',
-      'businesslens',
+      'pdd-kit',
       '--cwd',
       realpathSync(repo),
       'lint',
@@ -100,7 +100,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   })
 
   it.each(LINT_RUNNERS)('$name pins the CLI to the version the skills were installed from', ({ name, file }) => {
-    // `businesslens@latest` would lint a model against whatever is published
+    // `pdd-kit@latest` would lint a model against whatever is published
     // rather than against the release these skills shipped with, reporting the
     // current format's frontmatter keys as unknown.
     const skills = temporary('bl-runner-pinned-skills-')
@@ -110,13 +110,13 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
     writeFileSync(
-      join(skills, '.businesslens-install.json'),
-      JSON.stringify({ schema: 1, package: 'businesslens', version: '9.9.9' })
+      join(skills, '.pdd-kit-install.json'),
+      JSON.stringify({ schema: 1, package: 'pdd-kit', version: '9.9.9' })
     )
-    const runnerDir = join(skills, `businesslens-${name}`, 'scripts')
+    const runnerDir = join(skills, `pdd-kit-${name}`, 'scripts')
     mkdirSync(runnerDir, { recursive: true })
     writeFileSync(
-      join(runnerDir, 'run-businesslens.mjs'),
+      join(runnerDir, 'run-pdd-kit.mjs'),
       readFileSync(file, 'utf8')
     )
 
@@ -133,12 +133,12 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync(
       process.execPath,
-      [join(runnerDir, 'run-businesslens.mjs'), '--root', repo, 'lint'],
+      [join(runnerDir, 'run-pdd-kit.mjs'), '--root', repo, 'lint'],
       {
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
-          BUSINESSLENS_DEV_BIN_DIR: temporary('bl-runner-pinned-no-dev-bin-'),
+          PDD_KIT_DEV_BIN_DIR: temporary('bl-runner-pinned-no-dev-bin-'),
           CAPTURE_FILE: capture
         },
         stdio: 'pipe'
@@ -146,7 +146,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     )
 
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
-    expect(recorded.args).toContain('--package=businesslens@9.9.9')
+    expect(recorded.args).toContain('--package=pdd-kit@9.9.9')
   })
 
   it.each(LINT_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
@@ -158,13 +158,13 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
     mkdirSync(join(developmentRoot, 'dist'), { recursive: true })
-    writeFileSync(join(developmentRoot, 'package.json'), JSON.stringify({ name: 'businesslens' }))
+    writeFileSync(join(developmentRoot, 'package.json'), JSON.stringify({ name: 'pdd-kit' }))
     writeFileSync(
       cli,
       `require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   cwd: process.cwd(),
   args: process.argv.slice(2),
-  apiKey: process.env.BUSINESSLENS_API_KEY || null
+  apiKey: process.env.PDD_KIT_API_KEY || null
 }))\n`
     )
     writeFileSync(
@@ -179,8 +179,8 @@ console.log(${JSON.stringify(cli)})
     execFileSync(process.execPath, [file, '--root', repo, 'lint', '--json'], {
       env: {
         ...process.env,
-        BUSINESSLENS_DEV_BIN_DIR: bin,
-        BUSINESSLENS_API_KEY: 'must-not-reach-lint',
+        PDD_KIT_DEV_BIN_DIR: bin,
+        PDD_KIT_API_KEY: 'must-not-reach-lint',
         CAPTURE_FILE: capture
       },
       stdio: 'pipe'
@@ -188,7 +188,7 @@ console.log(${JSON.stringify(cli)})
 
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
     expect(recorded.cwd).not.toBe(repo)
-    expect(recorded.cwd).toContain('businesslens-cli-')
+    expect(recorded.cwd).toContain('pdd-kit-cli-')
     expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'lint', '--json'])
     expect(recorded.apiKey).toBeNull()
   })

@@ -3,14 +3,14 @@ import { join } from 'node:path'
 import { repoRoot } from './git.js'
 
 export interface ModelRoot {
-  /** Directory containing `.businesslens/`. */
+  /** Directory containing `product-model/`. */
   modelRoot: string
   /** Enclosing Git repository, when there is one. Absent outside a repository. */
   gitRoot?: string
 }
 
 /**
- * Resolve the directory that owns the `.businesslens/` model.
+ * Resolve the directory that owns the `product-model/` model.
  *
  * The model is not always at the Git root. A repository may carry several — the
  * repository's Blueprints keep one per `blueprints/<slug>/` — so the command's
@@ -35,7 +35,7 @@ export function resolveModelRoot(cwd: string): ModelRoot {
   if (found) return found
 
   throw new Error(
-    'No .businesslens/ Product Model found here or at the repository root — use `businesslens-map` for established code or `businesslens-ideate` for a new product'
+    'No product-model/ Product Model found here or at the repository root — use `pdd-map` for established code or `pdd-ideate` for a new product'
   )
 }
 
@@ -45,10 +45,10 @@ export function resolveModelRoot(cwd: string): ModelRoot {
  * waiting for a model to be created.
  */
 export function findModelRoot(cwd: string, gitRoot: string | undefined): ModelRoot | undefined {
-  if (existsSync(join(cwd, '.businesslens'))) {
+  if (existsSync(join(cwd, 'product-model'))) {
     return gitRoot ? { modelRoot: cwd, gitRoot } : { modelRoot: cwd }
   }
-  if (gitRoot && existsSync(join(gitRoot, '.businesslens'))) {
+  if (gitRoot && existsSync(join(gitRoot, 'product-model'))) {
     return { modelRoot: gitRoot, gitRoot }
   }
   return undefined

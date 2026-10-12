@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process'
 
 /** The one repository the local report can star. It is fixed, never a request parameter. */
-export const BUSINESSLENS_REPOSITORY = 'businesslens/pdd'
+export const PDD_KIT_REPOSITORY = 'itai-gendler/pdd-kit'
 
 /** `unavailable`: no `gh`, signed out, or GitHub unreachable. The report then shows only the link. */
 export type GithubStarState = 'starred' | 'not-starred' | 'unavailable'
@@ -15,14 +15,14 @@ export interface GithubStarClient {
 }
 
 const GH_TIMEOUT_MS = 10_000
-const STARRED_PATH = `/user/starred/${BUSINESSLENS_REPOSITORY}`
+const STARRED_PATH = `/user/starred/${PDD_KIT_REPOSITORY}`
 
 interface GhResult { ok: boolean, notFound: boolean }
 
 /**
  * Run `gh api` against github.com, whatever host `gh` defaults to.
  *
- * The user's own `gh` sign-in does the work; BusinessLens never reads, stores
+ * The user's own `gh` sign-in does the work; pdd-kit never reads, stores
  * or sends the token.
  */
 function gh(args: string[]): Promise<GhResult> {

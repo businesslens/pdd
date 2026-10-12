@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ProductReport } from 'businesslens/report'
+import type { ProductReport } from 'pdd-kit/report'
 import type { LocalStatus } from '~/composables/useLocalProblems'
 
 const { data, error, refresh, status } = await useFetch<ProductReport>(
-  '/_businesslens/report.json',
+  '/_pdd-kit/report.json',
   { server: false, cache: 'no-store' }
 )
 
@@ -19,7 +19,7 @@ const live = useLocalLive()
 
 async function refreshLogo() {
   logoRevision += 1
-  const candidate = `/_businesslens/logo.svg?v=${logoRevision}`
+  const candidate = `/_pdd-kit/logo.svg?v=${logoRevision}`
   try {
     const response = await fetch(candidate, { method: 'HEAD', cache: 'no-store' })
     logoSrc.value = response.ok ? candidate : null
@@ -31,7 +31,7 @@ async function refreshLogo() {
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation()
 onMounted(() => {
   void refreshLogo()
-  events = new EventSource('/_businesslens/events')
+  events = new EventSource('/_pdd-kit/events')
   events.addEventListener('open', () => { live.value = { ...live.value, connected: true }; void refresh() })
   events.addEventListener('error', () => { live.value = { ...live.value, connected: false } })
   events.addEventListener('report', (event) => {
@@ -109,7 +109,7 @@ function onCrash(failure: unknown) {
     <template v-else-if="data">
       <LocalBuildOverlay v-if="crash" :crash="crash" />
       <NuxtErrorBoundary v-else @error="onCrash">
-        <BusinessLensReportViewer
+        <PddKitReportViewer
           v-model:section="section"
           v-model:resource="resource"
           v-model:tab="tab" v-model:resource-tab="resourceTab"
@@ -120,7 +120,7 @@ function onCrash(failure: unknown) {
           v-model:coverage="coverage"
           :logo-src="logoSrc"
           :resource-notices="resourceNotices"
-          class="businesslens-local-report min-h-0 flex-1"
+          class="pdd-kit-local-report min-h-0 flex-1"
         >
           <!-- Problems first, then the pulse: what to trust, then how fresh it is. -->
           <template #status>
@@ -129,7 +129,7 @@ function onCrash(failure: unknown) {
           </template>
           <template #sidebar-header="{ collapsed }"><LocalViewerBrand :collapsed="collapsed" /></template>
           <template #sidebar-footer="{ collapsed }"><LocalViewerTools :collapsed="collapsed" /></template>
-        </BusinessLensReportViewer>
+        </PddKitReportViewer>
       </NuxtErrorBoundary>
       <LocalProblemsDrawer v-model:open="drawerOpen" :report="data" @resource="openResource" />
     </template>

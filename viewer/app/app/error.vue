@@ -3,7 +3,7 @@ import type { NuxtError } from '#app'
 
 /* A failure outside the report's own boundary still gets the overlay, never a bare 500 page. */
 const props = defineProps<{ error: NuxtError }>()
-useBusinessLensThemeHead()
+usePddKitThemeHead()
 const message = computed(() => props.error.message || props.error.statusMessage || 'Unknown error')
 </script>
 

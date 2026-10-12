@@ -28,14 +28,14 @@ const REPOSITORY = /^[\w.-]+\/[\w.-]+$/
 /**
  * The repository Blueprints are pulled from and contributed to.
  *
- * `BUSINESSLENS_BLUEPRINT_REPOSITORY` overrides it for a fork, and applies to
+ * `PDD_KIT_BLUEPRINT_REPOSITORY` overrides it for a fork, and applies to
  * pull, list and contribute alike so the three cannot point at different places.
  */
 export function resolveBlueprintRepository(env: NodeJS.ProcessEnv = process.env): string {
-  const configured = env.BUSINESSLENS_BLUEPRINT_REPOSITORY?.trim()
+  const configured = env.PDD_KIT_BLUEPRINT_REPOSITORY?.trim()
   if (!configured) return DEFAULT_BLUEPRINT_REPOSITORY
   if (!REPOSITORY.test(configured)) {
-    throw new UsageError('BUSINESSLENS_BLUEPRINT_REPOSITORY must be an "owner/repo" pair.')
+    throw new UsageError('PDD_KIT_BLUEPRINT_REPOSITORY must be an "owner/repo" pair.')
   }
   return configured
 }
@@ -114,7 +114,7 @@ export async function fetchReleaseAsset(
     headers: {
       accept: request.accept,
       // Identify the CLI so a pull is distinguishable from a browser download.
-      'user-agent': `businesslens/${cliVersion()}`
+      'user-agent': `pdd-kit/${cliVersion()}`
     },
     redirect: 'follow',
     signal: AbortSignal.timeout(15_000)

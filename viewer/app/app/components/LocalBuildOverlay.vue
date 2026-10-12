@@ -25,7 +25,7 @@ const summary = computed(() => {
   const count = plural(errors.value.length, 'error')
   return `${files ? `${count} in ${plural(files, 'file')}` : count}. This page turns into the report by itself on the first save that fixes ${errors.value.length === 1 ? 'it' : 'them'}.`
 })
-const crashDetails = computed(() => props.crash ? `The BusinessLens local report crashed while drawing the Product Model in .businesslens/:\n\n${props.crash}\n` : null)
+const crashDetails = computed(() => props.crash ? `The pdd-kit local report crashed while drawing the Product Model in product-model/:\n\n${props.crash}\n` : null)
 const caret = (issue: LocalIssue) => `${' '.repeat(Math.max(0, (issue.column ?? 1) - 1))}^`
 </script>
 
@@ -33,7 +33,7 @@ const caret = (issue: LocalIssue) => `${' '.repeat(Math.max(0, (issue.column ?? 
   <div class="local-overlay" role="alert" aria-live="polite" data-local-overlay :data-crash="crash ? true : undefined">
     <div class="local-panel">
       <div class="local-meta">
-        <span>BusinessLens · local report</span>
+        <span>pdd-kit · local report</span>
         <span class="flex items-center gap-1.5">
           <UButton v-if="crash" size="sm" icon="i-lucide-rotate-cw" label="Reload" class="local-button" @click="() => reloadNuxtApp({ force: true })" />
           <UButton v-if="request || crashDetails" size="sm" icon="i-lucide-copy" :label="crash ? 'Copy details' : 'Copy for your agent'" class="local-button" @click="copyRequest(crash ? crashDetails : request)" />

@@ -40,7 +40,7 @@ describe('vocabulary lookup', () => {
 
   it('keeps term anchors and Scenario owners when docs links stay in the host', () => {
     for (const slug of ['product-model', 'capability-scenario-trigger', 'journey-scenario-trigger']) {
-      expect(termHref(slug, '/docs')).toBe(termHref(slug).replace('https://businesslens.io', ''))
+      expect(termHref(slug, '/docs')).toBe(termHref(slug).replace('https://pdd-kit.dev', ''))
       expect(termHref(slug, '/docs/')).toBe(termHref(slug, '/docs'))
     }
     expect(termHref('capability-scenario-trigger', '/docs')).toContain('/capabilities#')

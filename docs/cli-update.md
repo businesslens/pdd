@@ -1,19 +1,19 @@
 ---
 title: update
-description: Refresh only BusinessLens-managed skill installations in project or global scope.
+description: Refresh only pdd-kit-managed skill installations in project or global scope.
 section: open-source
 group: CLI
 order: 22
 ---
 
-# `businesslens update`
+# `pdd-kit update`
 
-Refresh installed BusinessLens skills to the version of the package you run,
+Refresh installed pdd-kit skills to the version of the package you run,
 after upgrading it. Upgrading the CLI itself is separate; see
 [Updating the CLI](./cli.md#updating-the-cli).
 
 ```bash
-npx businesslens update [--providers <list>] [--scope project|global] [--force]
+npx pdd-kit update [--providers <list>] [--scope project|global] [--force]
 ```
 
 ## Options
@@ -22,23 +22,23 @@ npx businesslens update [--providers <list>] [--scope project|global] [--force]
 | --- | --- |
 | `--providers <list>` | Look only in these harnesses: `claude,codex,cursor,gemini,github` |
 | `--scope project\|global` | Look only in one scope |
-| `--force` | Replace a colliding `businesslens-*` directory BusinessLens does not own inside a managed installation |
+| `--force` | Replace a colliding `pdd-*` directory pdd-kit does not own inside a managed installation |
 
 With no options it looks in every harness, in both scopes:
 
 ```bash
-npx businesslens update --providers claude,codex --scope project
+npx pdd-kit update --providers claude,codex --scope project
 ```
 
 ## What it does
 
-1. Finds every skills directory with a valid `.businesslens-install.json`
+1. Finds every skills directory with a valid `.pdd-kit-install.json`
    marker. Unmarked installations are never found or touched.
-2. Writes the current three skills into each, and removes any `businesslens-*`
+2. Writes the current three skills into each, and removes any `pdd-*`
    skill the marker recorded that this release no longer ships.
 3. Refreshes the marker, keeping its original install time.
 
-It never changes your `.businesslens/` Product Model.
+It never changes your `product-model/` Product Model.
 
 Exits 0 when at least one installation is updated, 1 when none is found or a
 collision stops it, and 2 for an unknown harness, scope or option.

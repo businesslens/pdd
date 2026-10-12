@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixture = resolve(root, 'test/fixtures/nuxt-layer-consumer')
-const work = mkdtempSync(join(tmpdir(), 'businesslens-nuxt-consumer-'))
+const work = mkdtempSync(join(tmpdir(), 'pdd-kit-nuxt-consumer-'))
 const quiet = ['--no-audit', '--no-fund', '--loglevel=error']
 const run = (args, cwd) => execFileSync('npm', args, { cwd, stdio: 'inherit' })
 

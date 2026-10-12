@@ -29,11 +29,11 @@ const REQUIRED = [
   'docs/cli.md', 'docs/cli-view.md', 'docs/faq.md',
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
   'layers/nuxt/report-viewer-lab/nuxt.config.ts',
-  'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
+  'layers/nuxt/report-viewer/app/components/PddKitReportViewer.vue',
   'layers/nuxt/theme/nuxt.config.ts', 'layers/nuxt/theme-lab/nuxt.config.ts',
-  'layers/nuxt/theme/app/components/BusinessLensBrand.vue',
-  'layers/nuxt/theme/app/composables/useBusinessLensThemeHead.ts',
-  'layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBar.vue',
+  'layers/nuxt/theme/app/components/PddKitBrand.vue',
+  'layers/nuxt/theme/app/composables/usePddKitThemeHead.ts',
+  'layers/nuxt/theme-lab/app/components/PddKitThemeLabBar.vue',
   'viewer/app/package.json',
   'viewer/app/app/pages/index.vue', 'src/core/local-viewer-server.ts',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
@@ -51,7 +51,7 @@ const reportContract = await readFile(resolve(root, 'src/core/portable.ts'), 'ut
 const reportViewerReadme = await readFile(resolve(root, 'layers/nuxt/report-viewer/README.md'), 'utf8')
 const nuxtConsumerFixture = await readFile(resolve(root, 'test/fixtures/nuxt-layer-consumer/app/pages/index.vue'), 'utf8')
 const reportViewerEntry = await readFile(
-  resolve(root, 'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue'), 'utf8'
+  resolve(root, 'layers/nuxt/report-viewer/app/components/PddKitReportViewer.vue'), 'utf8'
 )
 const reportViewerSections = await readFile(
   resolve(root, 'layers/nuxt/report-viewer/app/utils/pageSections.ts'), 'utf8'
@@ -60,9 +60,9 @@ const blueprintRelease = await readFile(resolve(root, 'src/core/blueprint-releas
 const reportSpec = await readFile(resolve(root, 'spec/report.md'), 'utf8')
 const pullDoc = await readFile(resolve(root, 'docs/cli-pull.md'), 'utf8')
 const expectedSkills = [
-  'businesslens-map',
-  'businesslens-ideate',
-  'businesslens-verify'
+  'pdd-map',
+  'pdd-ideate',
+  'pdd-verify'
 ]
 
 const reportVersion = reportContract.match(/REPORT_SCHEMA_VERSION = '([^']+)'/)?.[1]
@@ -119,9 +119,9 @@ if (!pageTabUnion) {
   }
 }
 
-if (pkg.name !== 'businesslens') errors.push(`package.json name must be businesslens, found ${pkg.name}`)
-if (pkg.repository?.url !== 'git+https://github.com/businesslens/pdd.git') {
-  errors.push('package.json repository must be git+https://github.com/businesslens/pdd.git')
+if (pkg.name !== 'pdd-kit') errors.push(`package.json name must be pdd-kit, found ${pkg.name}`)
+if (pkg.repository?.url !== 'git+https://github.com/itai-gendler/pdd-kit.git') {
+  errors.push('package.json repository must be git+https://github.com/itai-gendler/pdd-kit.git')
 }
 if (pkg.version !== plugin.version) {
   errors.push(`version mismatch: package.json ${pkg.version} vs plugin.json ${plugin.version}`)
@@ -150,18 +150,18 @@ if (localViewer.version !== pkg.version) {
   )
 }
 if (localViewer.private !== true) {
-  errors.push('viewer/app must remain private; its static output ships inside businesslens')
+  errors.push('viewer/app must remain private; its static output ships inside pdd-kit')
 }
-if (localViewer.dependencies?.['@businesslens/report-viewer']) {
-  errors.push('viewer/app must consume root-owned Layers, not @businesslens/report-viewer')
+if (localViewer.dependencies?.['@pdd-kit/report-viewer']) {
+  errors.push('viewer/app must consume root-owned Layers, not @pdd-kit/report-viewer')
 }
 if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.config.ts'
   || pkg.exports?.['./nuxt/theme'] !== './layers/nuxt/theme/nuxt.config.ts'
   || pkg.exports?.['./nuxt/theme-lab'] !== './layers/nuxt/theme-lab/nuxt.config.ts'
-  || pkg.exports?.['./theme-lab/variants']?.types !== './dist/businesslensThemeLabVariants.d.ts'
-  || pkg.exports?.['./theme-lab/variants']?.default !== './dist/businesslensThemeLabVariants.js'
+  || pkg.exports?.['./theme-lab/variants']?.types !== './dist/pddKitThemeLabVariants.d.ts'
+  || pkg.exports?.['./theme-lab/variants']?.default !== './dist/pddKitThemeLabVariants.js'
   || !pkg.exports?.['./logo']) {
-  errors.push('businesslens must export its logo contract, background variants, and Nuxt report-viewer/theme/theme-lab Layers')
+  errors.push('pdd-kit must export its logo contract, background variants, and Nuxt report-viewer/theme/theme-lab Layers')
 }
 if (pkg.exports?.['./nuxt/report-lab'] || pkg.exports?.['./report/view-model']) {
   errors.push('retired report-lab and lossy report view-model exports must stay removed')
@@ -196,13 +196,13 @@ const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
 if (!changelog.includes(`## [${pkg.version}]`)) {
   errors.push(`CHANGELOG.md is missing a [${pkg.version}] release heading`)
 }
-// businesslens.io renders this file as-is, one page per release. A heading
+// pdd-kit.dev renders this file as-is, one page per release. A heading
 // label without its link definition shows its brackets on GitHub and loses
 // them on the site; a release without its contributors and comparison has a
 // shorter page than the others.
 for (const problem of changelogProblems(changelog)) errors.push(`CHANGELOG.md ${problem}`)
-if (plugin.repository !== 'https://github.com/businesslens/pdd') {
-  errors.push('plugin.json repository must be https://github.com/businesslens/pdd')
+if (plugin.repository !== 'https://github.com/itai-gendler/pdd-kit') {
+  errors.push('plugin.json repository must be https://github.com/itai-gendler/pdd-kit')
 }
 if (!marketplace.plugins?.some(entry => entry.name === plugin.name)) {
   errors.push(`marketplace.json does not expose the "${plugin.name}" plugin`)
@@ -243,8 +243,8 @@ for (const skillPath of plugin.skills || []) {
   const name = match[1].match(/^name:\s*(.+)$/m)?.[1]?.trim()
   const dirName = dir.split('/').at(-1)
   if (name !== dirName) errors.push(`${skillFile} frontmatter name "${name}" must match directory "${dirName}"`)
-  if (!name?.startsWith('businesslens-')) {
-    errors.push(`${skillFile} name must start with "businesslens-"`)
+  if (!name?.startsWith('pdd-')) {
+    errors.push(`${skillFile} name must start with "pdd-"`)
   }
   if (!await exists(`${dir}/agents/openai.yaml`)) {
     errors.push(`${dir}/agents/openai.yaml is missing`)
@@ -254,7 +254,7 @@ for (const skillPath of plugin.skills || []) {
 // The model shape contract and isolated runner are duplicated because every
 // installed skill must remain self-contained. Keep those common copies exact;
 // workflow-specific format guidance may follow the shared contract.
-const canonicalFormatReference = 'skills/businesslens-map/references/format.md'
+const canonicalFormatReference = 'skills/pdd-map/references/format.md'
 const canonicalFormatSource = await readFile(resolve(root, canonicalFormatReference), 'utf8')
 const formatContractPattern = /^# Product Model format\n[\s\S]*?^`\.gitignore` contains `build\/` and `cache\/`\.$/m
 const canonicalFormatContract = canonicalFormatSource.match(formatContractPattern)?.[0]
@@ -307,10 +307,10 @@ if (!resourceTable) {
   }
 }
 
-const canonicalRunner = 'skills/businesslens-map/scripts/run-businesslens.mjs'
+const canonicalRunner = 'skills/pdd-map/scripts/run-pdd-kit.mjs'
 const canonicalRunnerSource = await readFile(resolve(root, canonicalRunner), 'utf8')
 for (const skill of expectedSkills) {
-  const runner = `skills/${skill}/scripts/run-businesslens.mjs`
+  const runner = `skills/${skill}/scripts/run-pdd-kit.mjs`
   const source = await readFile(resolve(root, runner), 'utf8')
   if (source !== canonicalRunnerSource) {
     errors.push(`${runner} must match the canonical isolated runner ${canonicalRunner}`)
@@ -340,7 +340,7 @@ if (!modelReadmeMatch) {
   for (const skill of expectedSkills) {
     const reference = `skills/${skill}/references/format.md`
     const source = await readFile(resolve(root, reference), 'utf8')
-    const fenced = source.match(/## Canonical `.businesslens\/README.md`[\s\S]*?```markdown\n([\s\S]*?)```/)
+    const fenced = source.match(/## Canonical `product-model\/README.md`[\s\S]*?```markdown\n([\s\S]*?)```/)
     if (!fenced || fenced[1] !== canonicalReadme) {
       errors.push(`${reference} must embed the canonical MODEL_README template exactly`)
     }

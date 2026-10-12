@@ -9,7 +9,7 @@ import { cliVersion, packageRoot } from '../version.js'
 /**
  * The CLI's own update prompt.
  *
- * This is about the `businesslens` package, never the skills `update` manages.
+ * This is about the `pdd-kit` package, never the skills `update` manages.
  * A command reads what an earlier background check found and asks at most once
  * per available version; the registry request itself runs in a detached
  * process, so no command waits on the network. Nothing is checked or asked in
@@ -18,7 +18,7 @@ import { cliVersion, packageRoot } from '../version.js'
  * belongs to that project's lockfile.
  */
 
-const PACKAGE = 'businesslens'
+const PACKAGE = 'pdd-kit'
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
 const CI_VARIABLES = [
@@ -91,9 +91,9 @@ function enabled(value: string | undefined): boolean {
   return normalized !== '' && normalized !== '0' && normalized !== 'false'
 }
 
-/** Whether the environment turns the update check off: CI, or `BUSINESSLENS_NO_UPDATE_CHECK`. */
+/** Whether the environment turns the update check off: CI, or `PDD_KIT_NO_UPDATE_CHECK`. */
 export function updateCheckSuppressed(env: NodeJS.ProcessEnv): boolean {
-  return enabled(env.BUSINESSLENS_NO_UPDATE_CHECK) || CI_VARIABLES.some(name => enabled(env[name]))
+  return enabled(env.PDD_KIT_NO_UPDATE_CHECK) || CI_VARIABLES.some(name => enabled(env[name]))
 }
 
 /** Where the update check keeps its state, including "Do not remind me again". */
@@ -104,7 +104,7 @@ export function updateStatePath(
 ): string {
   const configHome = env.XDG_CONFIG_HOME?.trim()
     || (platform === 'win32' ? env.APPDATA?.trim() || join(home, 'AppData', 'Roaming') : join(home, '.config'))
-  return join(configHome, 'businesslens', 'update-check.json')
+  return join(configHome, 'pdd-kit', 'update-check.json')
 }
 
 export function readUpdateState(path: string): UpdateState {
@@ -145,7 +145,7 @@ export function packageManagerFor(
   if (/\/yarn\/(?:data\/)?global\/node_modules\//i.test(path)) return 'yarn'
 
   // npm installs globally to <prefix>/lib/node_modules with its bin in
-  // <prefix>/bin, or to <prefix>/node_modules beside <prefix>/businesslens.cmd
+  // <prefix>/bin, or to <prefix>/node_modules beside <prefix>/pdd-kit.cmd
   // on Windows. Matching that shape covers a configured prefix as well.
   const modules = dirname(path)
   if (basename(modules) !== 'node_modules') return undefined
@@ -223,7 +223,7 @@ function startDetachedRefresh(): void {
 
 async function chooseInPrompt(current: string, latest: string, install: InstallCommand): Promise<UpdateChoice> {
   const choice = await select<UpdateChoice>({
-    message: `A newer BusinessLens CLI is available: ${current} → ${latest}`,
+    message: `A newer pdd-kit CLI is available: ${current} → ${latest}`,
     options: [
       { value: 'update', label: 'Update now', hint: formatCommand(install) },
       { value: 'later', label: 'Not now' },
@@ -303,12 +303,12 @@ export async function checkForCliUpdate(overrides: Partial<UpdateCheckOptions> =
   if (choice === 'later') return undefined
   if (choice === 'never') {
     writeUpdateState(options.statePath, { disabled: true })
-    options.log(`BusinessLens will not offer CLI updates again. Delete ${options.statePath} to turn the reminder back on.`)
+    options.log(`pdd-kit will not offer CLI updates again. Delete ${options.statePath} to turn the reminder back on.`)
     return undefined
   }
 
   if (options.runInstall(install)) {
-    options.log(`Updated the BusinessLens CLI to ${latest}. Run your command again to use it.`)
+    options.log(`Updated the pdd-kit CLI to ${latest}. Run your command again to use it.`)
     return 0
   }
   options.error(

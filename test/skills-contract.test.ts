@@ -22,42 +22,42 @@ function publicSkills(): string[] {
 describe('public workflow contract', () => {
   it('ships exactly map, ideate, and verify', () => {
     expect(publicSkills()).toEqual([
-      'businesslens-ideate',
-      'businesslens-map',
-      'businesslens-verify'
+      'pdd-ideate',
+      'pdd-map',
+      'pdd-verify'
     ])
   })
 
   it('keeps map out of recurring verification', () => {
-    const source = skill('businesslens-map')
+    const source = skill('pdd-map')
     expect(source).toContain('not recurring maintenance')
-    expect(source).toContain('recommend `businesslens-verify`')
+    expect(source).toContain('recommend `pdd-verify`')
     expect(source).toContain('never run its')
   })
 
   it('keeps ideation approval-gated and implementation-external', () => {
-    const source = skill('businesslens-ideate')
+    const source = skill('pdd-ideate')
     expect(source).toContain('Get explicit approval')
     expect(source).toContain('Do not implement from this skill')
   })
 
   it('hands an approved change to verify\'s implementation in the user\'s own words', () => {
-    const source = normalizedSkill('businesslens-ideate')
+    const source = normalizedSkill('pdd-ideate')
     expect(source).toContain('the user can say *implement it*')
     expect(source).toContain('implements the change in phases in the user\'s own way of working')
   })
 
   it('lets a user reach each workflow by asking, not by naming a skill', () => {
     const description = (name: string) => skill(name).match(/^description: (.*)$/m)![1]!
-    expect(description('businesslens-ideate')).toContain('“make a PDD change”')
-    expect(description('businesslens-ideate')).toContain('do not use to map established code, implement the model in code')
+    expect(description('pdd-ideate')).toContain('“make a PDD change”')
+    expect(description('pdd-ideate')).toContain('do not use to map established code, implement the model in code')
     // "Implement" is the loop's word; "build" is what users also say.
-    expect(description('businesslens-verify')).toContain('Use when asked to implement, build or develop the product')
-    expect(description('businesslens-verify')).toContain('“implement it” or “build it” after ideate')
+    expect(description('pdd-verify')).toContain('Use when asked to implement, build or develop the product')
+    expect(description('pdd-verify')).toContain('“implement it” or “build it” after ideate')
   })
 
   it('makes one verify invocation own resolution and reinspection', () => {
-    const source = normalizedSkill('businesslens-verify')
+    const source = normalizedSkill('pdd-verify')
     expect(source).toContain('must not have to invoke map or ideate manually')
     expect(source).toContain('After every mutation, discard the earlier findings and inspect again')
     expect(source).toContain('The builder is the agent the user asked to implement')
@@ -68,7 +68,7 @@ describe('public workflow contract', () => {
   })
 
   it('implements in phases with the requesting agent as the builder', () => {
-    const source = normalizedSkill('businesslens-verify')
+    const source = normalizedSkill('pdd-verify')
     expect(source).toContain('a request to implement (or build) from the model → implement mode')
     expect(source).toContain('In implement mode, the model-right findings are the plan')
     expect(source).toContain('slices not yet handed over are the plan, not findings')
@@ -87,31 +87,31 @@ describe('public workflow contract', () => {
     expect(source).toContain('never implement past the current phase')
     expect(source).toContain('Start the next phase only when every slice of this one is aligned or reported blocked')
     expect(source).toContain('never settles a product question in code')
-    // The write boundary binds BusinessLens's own phases; implementation, which
+    // The write boundary binds pdd-kit's own phases; implementation, which
     // writes the user's code, must not be forbidden by it.
-    expect(source).toContain('Never write outside `.businesslens/` in an analysis or model-resolution phase')
+    expect(source).toContain('Never write outside `product-model/` in an analysis or model-resolution phase')
     expect(source).toContain('Implementation (step 8) writes only the user\'s code')
     expect(source).toContain('stop with the complete handoff packet')
 
-    const rubric = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'verification-rubric.md'), 'utf8')
+    const rubric = readFileSync(join(SKILLS, 'pdd-verify', 'references', 'verification-rubric.md'), 'utf8')
     expect(rubric).toContain('## Slices and phases')
     expect(rubric).toContain('so two runs agree')
     expect(rubric).toContain('Checking stays per slice at every pace')
 
-    const handoff = readFileSync(join(SKILLS, 'businesslens-verify', 'references', 'build-handoff.md'), 'utf8')
-    expect(handoff).toContain('do not edit `.businesslens/`')
+    const handoff = readFileSync(join(SKILLS, 'pdd-verify', 'references', 'build-handoff.md'), 'utf8')
+    expect(handoff).toContain('do not edit `product-model/`')
     expect(handoff).toContain('never settle a product question in code')
   })
 
   it('keeps the complete verify classification and routing structure', () => {
-    const source = skill('businesslens-verify')
+    const source = skill('pdd-verify')
     const classifications = source.slice(
       source.indexOf('6. Classify each scoped item:'),
       source.indexOf('Group findings that share one authority decision')
     )
     const routes = source.slice(
       source.indexOf('7. Route each group'),
-      source.indexOf('8. A BusinessLens analysis phase')
+      source.indexOf('8. A pdd-kit analysis phase')
     )
 
     expect([...classifications.matchAll(/^\s*- \*\*([a-z-]+)\*\* —/gm)].map(match => match[1])).toEqual([
@@ -142,7 +142,7 @@ describe('public workflow contract', () => {
   it('forbids workflow writes to repository-owned instructions', () => {
     for (const name of publicSkills()) {
       const source = skill(name)
-      expect(source, name).toContain('Never write outside `.businesslens/`')
+      expect(source, name).toContain('Never write outside `product-model/`')
       expect(source, name).toContain('`AGENTS.md`, `CLAUDE.md`')
     }
   })

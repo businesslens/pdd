@@ -1,0 +1,41 @@
+---
+kind: validation
+routes:
+  terminal: Terminal
+steps:
+  - text: The Developer asks to contribute the current Product Model
+    kind: actor
+    actor: developer
+    entities:
+      - { entity: product-model, effect: reads, facts: [] }
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Product finds the model lacks something the catalog requires — a category, a tag, an author, a licence, a Capability, a logo, or Scenario coverage for a declared availability Context
+    kind: condition
+    entities:
+      - { entity: product-model, effect: reads, facts: [] }
+      - { entity: capability, effect: reads, facts: [] }
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Product reports the failed metadata checks or missing logo and opens nothing
+    kind: product
+    entities: []
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+---
+
+# Refuse a model missing public metadata
+
+## Trigger
+
+Contribution is requested for a model that would not be usable as a public
+Blueprint.
+
+## Outcome
+
+No pull request was opened, and the Developer knows which public requirements
+blocked this attempt. The logo is checked after the other publication metadata
+passes, so another attempt can reveal a missing logo.

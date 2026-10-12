@@ -62,7 +62,7 @@ const unreleased = changelogSections(markdown).find(section => section.label ===
 for (const entry of unreleased ? changelogEntries(unreleased.lines) : []) provenance(entry.text)
 
 const contributors = [...new Set([...commits].map(sha =>
-  execFileSync('gh', ['api', `repos/businesslens/pdd/commits/${sha}`, '--jq', '.author.login'], { encoding: 'utf8' }).trim()))]
+  execFileSync('gh', ['api', `repos/itai-gendler/pdd-kit/commits/${sha}`, '--jq', '.author.login'], { encoding: 'utf8' }).trim()))]
   .filter(login => login && !login.endsWith('[bot]'))
   .sort((a, b) => a.localeCompare(b))
 

@@ -2,7 +2,7 @@ import type { ReportResourceKind } from './reportWorkspace'
 import { ENTITY_KIND_META } from './reportWorkspace'
 
 /** Where the documentation lives. The vocabulary links out to the same pages. */
-export const DOCS_ORIGIN = 'https://businesslens.io/docs'
+export const DOCS_ORIGIN = 'https://pdd-kit.dev/docs'
 
 /* Child resources link to their owning documentation's relevant section. */
 const DOCS_SLUG: Record<ReportResourceKind, string> = {

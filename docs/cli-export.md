@@ -6,14 +6,14 @@ group: CLI
 order: 25
 ---
 
-# `businesslens blueprint export`
+# `pdd-kit blueprint export`
 
 Turn your Product Model into a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is)
 file, when you want to hand the model to another repository or inspect what
 would travel.
 
 ```bash
-npx businesslens blueprint export
+npx pdd-kit blueprint export
 ```
 
 ## Options
@@ -26,11 +26,11 @@ None.
    and lints it. Any lint error stops the run.
 2. Compiles it into a Product Report (version 16) and applies the
    [portable projection](#portable-export).
-3. Writes `.businesslens/build/report.json`, plus a small
-   `.businesslens/cache/build.json` stamp. Both are generated and gitignored, and
+3. Writes `product-model/build/report.json`, plus a small
+   `product-model/cache/build.json` stamp. Both are generated and gitignored, and
    replaced on every run.
 
-The report carries no logo or cover: `.businesslens/product/logo.svg` and
+The report carries no logo or cover: `product-model/product/logo.svg` and
 `cover.webp` stay behind.
 
 ## Portable export

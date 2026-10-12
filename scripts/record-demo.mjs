@@ -2,9 +2,9 @@
 /**
  * Record the README demo: a short looping GIF touring the local Product Report.
  *
- * BusinessLens is dogfooded, so the demo is this repository's own Product
+ * pdd-kit is dogfooded, so the demo is this repository's own Product
  * Model. It runs the same command the README offers a reader,
- * `npx businesslens view businesslens/pdd`, which fetches the default branch
+ * `npx pdd-kit view itai-gendler/pdd-kit`, which fetches the default branch
  * from GitHub; re-record after a model or report change has merged. It drives
  * one session through the report with Playwright at fixed pacing and records
  * it frame by frame. Playwright draws no pointer, so a visible one
@@ -29,7 +29,7 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const repository = 'businesslens/pdd'
+const repository = 'itai-gendler/pdd-kit'
 const size = { width: 1280, height: 720 }
 const fps = 10
 const budget = 5 * 1024 * 1024
@@ -188,14 +188,14 @@ try {
     await page.mouse.up()
   }
   const rail = name => page.locator('.blr-navitem', { hasText: name })
-  const sidebarToggle = page.locator('button[aria-controls^="businesslens-report-sidebar-"]')
+  const sidebarToggle = page.locator('button[aria-controls^="pdd-kit-report-sidebar-"]')
   /* The rail folds once, after the first collection opens, and stays folded:
      later collections are picked from its icons. */
   async function collapseSidebar() {
     if (await sidebarToggle.getAttribute('aria-expanded') === 'false') return
     await hold(150)
     await click(sidebarToggle, { ms: 400 })
-    await page.locator('button[aria-controls^="businesslens-report-sidebar-"][aria-expanded=false]').waitFor()
+    await page.locator('button[aria-controls^="pdd-kit-report-sidebar-"][aria-expanded=false]').waitFor()
     await hold(200)
   }
   /* Each collection opens on its List; the picker then draws the same set another way. */
@@ -216,7 +216,7 @@ try {
   // One command, private and local, that a reader can run as is.
   beat('Terminal')
   const terminal = page.locator('#demo-terminal pre')
-  const command = `npx businesslens view ${repository}`
+  const command = `npx pdd-kit view ${repository}`
   for (let typed = 0; typed <= command.length; typed += 1) {
     await terminal.evaluate((element, text) => {
       element.innerHTML = `<span class="prompt">~ $</span> ${text}<span class="caret"></span>`

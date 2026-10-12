@@ -1,5 +1,5 @@
 export interface DevelopmentLinkEnvironment extends NodeJS.ProcessEnv {
-  BUSINESSLENS_DEV_BIN_DIR?: string
+  PDD_KIT_DEV_BIN_DIR?: string
 }
 
 export function developmentBinDirectory(env?: DevelopmentLinkEnvironment): string

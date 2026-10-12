@@ -8,7 +8,7 @@ import { diagramBounds, diagramContext, diagramEdgeContext } from '../utils/diag
 const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, branches?: boolean, selected?: string | null }>()
 const emit = defineEmits<{ open: [key: string], inspect: [key: string, part?: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const id = useId()
-const viewerId = inject<string>('businesslens:viewer', '')
+const viewerId = inject<string>('pdd-kit:viewer', '')
 const shell = ref<HTMLElement>()
 const ready = ref(false)
 const active = ref<string | null>(null)
@@ -29,7 +29,7 @@ let centeringFrame: number | undefined
 let centering = false
 let centerRequest = 0
 const signature = computed(() => JSON.stringify([props.viewportKey, props.layout.nodes.map(node => [node.id, node.x, node.y, node.width, node.height])]))
-const storageKey = () => `businesslens:flow:${location.pathname}:${viewerId}:${props.viewportKey}`
+const storageKey = () => `pdd-kit:flow:${location.pathname}:${viewerId}:${props.viewportKey}`
 const context = computed(() => diagramContext({ ...props.layout, layout: props.tree ? 'tree' : undefined }, active.value)
   ?? diagramEdgeContext(props.layout, activeEdge.value))
 const nodes = computed<Node<DiagramNode & { dimmed: boolean, highlighted: boolean }>[]>(() => {

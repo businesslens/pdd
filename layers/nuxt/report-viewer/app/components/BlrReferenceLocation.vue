@@ -127,10 +127,10 @@ const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
       <UIcon v-if="site" name="i-lucide-globe" class="size-4 shrink-0 text-muted" />
       <UIcon v-else-if="repository" name="i-lucide-folder-git-2" class="size-4 shrink-0 text-muted" />
       <img
-        v-else-if="node.directory && node.value.split('/').at(-1) === '.businesslens'"
+        v-else-if="node.directory && node.value.split('/').at(-1) === 'product-model'"
         :src="modelLogo"
         alt=""
-        title="BusinessLens Product Model"
+        title="pdd-kit Product Model"
         class="size-4 shrink-0 object-contain"
       >
       <UIcon

@@ -38,7 +38,7 @@ describe('list', () => {
     expect(await runList({ fetch, env: {} })).toBe(0)
     expect(urls).toEqual(['https://github.com/itai-gendler/pdd-kit/releases/download/blueprints-v19/index.json'])
     expect(lines.slice(0, 2)).toEqual(['kanban-board   Kanban Board', 'url-shortener  URL Shortener'])
-    expect(lines.join('\n')).toContain('businesslens blueprint pull <name>')
+    expect(lines.join('\n')).toContain('pdd-kit blueprint pull <name>')
   })
 
   it('says so when nothing is published yet', async () => {
@@ -63,7 +63,7 @@ describe('list', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetch = vi.fn() as unknown as typeof globalThis.fetch
 
-    expect(await runList({ fetch, env: { BUSINESSLENS_BLUEPRINT_REPOSITORY: 'nope' } })).toBe(2)
+    expect(await runList({ fetch, env: { PDD_KIT_BLUEPRINT_REPOSITORY: 'nope' } })).toBe(2)
     expect(fetch).not.toHaveBeenCalled()
   })
 })

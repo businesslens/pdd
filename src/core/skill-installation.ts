@@ -14,18 +14,18 @@ import { fileURLToPath } from 'node:url'
 import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
 
-export const BUSINESSLENS_SKILLS = [
-  'businesslens-map',
-  'businesslens-ideate',
-  'businesslens-verify'
+export const PDD_KIT_SKILLS = [
+  'pdd-map',
+  'pdd-ideate',
+  'pdd-verify'
 ] as const
 
-export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]
+export type PddKitSkill = (typeof PDD_KIT_SKILLS)[number]
 
-const MANIFEST_FILE = '.businesslens-install.json'
+const MANIFEST_FILE = '.pdd-kit-install.json'
 export interface InstallationManifest {
   schema: 1
-  package: 'businesslens'
+  package: 'pdd-kit'
   version: string
   provider: string
   scope: InstallScope
@@ -59,7 +59,7 @@ export function bundledSkillsDir(): string | undefined {
     join(here, '../../skills'),
     join(here, '../../../skills')
   ]) {
-    if (BUSINESSLENS_SKILLS.every(name => existsSync(join(candidate, name, 'SKILL.md')))) {
+    if (PDD_KIT_SKILLS.every(name => existsSync(join(candidate, name, 'SKILL.md')))) {
       return candidate
     }
   }
@@ -95,7 +95,7 @@ function readManifest(skillsDir: string): InstallationManifest | undefined {
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as InstallationManifest
     if (
       parsed.schema === 1
-      && parsed.package === 'businesslens'
+      && parsed.package === 'pdd-kit'
       && typeof parsed.version === 'string'
       && Array.isArray(parsed.skills)
       && parsed.skills.every(isSkillDirectoryName)
@@ -111,17 +111,17 @@ function readManifest(skillsDir: string): InstallationManifest | undefined {
  * name without a valid marker is somebody else's — a fork, a hand-written
  * skill, an install by another tool — and the Product leaves it alone. The
  * earlier text heuristic (a SKILL.md that named the skill and mentioned
- * BusinessLens) was a guess, and guessing wrong costs someone work they cannot
+ * pdd-kit) was a guess, and guessing wrong costs someone work they cannot
  * recover, which is the Rule the model states.
  */
 function assertSafeTargets(skillsDir: string, existing: InstallationManifest | undefined, force: boolean): void {
-  for (const name of BUSINESSLENS_SKILLS) {
+  for (const name of PDD_KIT_SKILLS) {
     const target = join(skillsDir, name)
     if (!existsSync(target)) continue
     const owned = existing?.skills.includes(name) ?? false
     if (!owned && !force) {
       throw new Error(
-        `Refusing to overwrite ${target}: it is not marked as a BusinessLens-managed skill. Pass --force only if you own that directory.`
+        `Refusing to overwrite ${target}: it is not marked as a pdd-kit-managed skill. Pass --force only if you own that directory.`
       )
     }
   }
@@ -151,7 +151,7 @@ function writeManifest(skillsDir: string, manifest: InstallationManifest): void 
   renameSync(temporary, file)
 }
 
-function installSkill(sourceRoot: string, skillsDir: string, name: BusinessLensSkill): void {
+function installSkill(sourceRoot: string, skillsDir: string, name: PddKitSkill): void {
   const source = join(sourceRoot, name)
   const target = join(skillsDir, name)
   const temporary = join(skillsDir, `.${name}.${randomUUID()}.tmp`)
@@ -183,7 +183,7 @@ export function installSkillsToTarget(
 ): InstallResult {
   const sourceRoot = bundledSkillsDir()
   if (!sourceRoot) {
-    throw new Error('Bundled BusinessLens skills were not found. Reinstall the businesslens package.')
+    throw new Error('Bundled pdd-kit skills were not found. Reinstall the pdd-kit package.')
   }
 
   const skillsDir = providerSkillsDir(target.provider, target.scope, cwd, options.home)
@@ -197,12 +197,12 @@ export function installSkillsToTarget(
   // or one that does not resolve inside the skills directory, is removed by
   // nobody.
   const staleSkills = (existing?.skills ?? [])
-    .filter(previous => !BUSINESSLENS_SKILLS.includes(previous as BusinessLensSkill))
-    .filter(name => name.startsWith('businesslens-'))
+    .filter(previous => !PDD_KIT_SKILLS.includes(previous as PddKitSkill))
+    .filter(name => name.startsWith('pdd-'))
     .map(previous => ownedChildPath(skillsDir, previous))
     .filter((stale): stale is string => stale !== undefined && existsSync(stale))
 
-  for (const name of BUSINESSLENS_SKILLS) installSkill(sourceRoot, skillsDir, name)
+  for (const name of PDD_KIT_SKILLS) installSkill(sourceRoot, skillsDir, name)
   for (const stale of staleSkills) {
     if (existsSync(stale)) rmSync(stale, { recursive: true, force: true })
   }
@@ -210,11 +210,11 @@ export function installSkillsToTarget(
   const now = new Date().toISOString()
   writeManifest(skillsDir, {
     schema: 1,
-    package: 'businesslens',
+    package: 'pdd-kit',
     version,
     provider: target.provider.id,
     scope: target.scope,
-    skills: [...BUSINESSLENS_SKILLS],
+    skills: [...PDD_KIT_SKILLS],
     installedAt: existing?.installedAt ?? now,
     updatedAt: now
   })
@@ -245,7 +245,7 @@ export function findManagedInstallations(
 export function installedSkillNames(sourceRoot = bundledSkillsDir()): string[] {
   if (!sourceRoot) return []
   return readdirSync(sourceRoot, { withFileTypes: true })
-    .filter(entry => entry.isDirectory() && BUSINESSLENS_SKILLS.includes(entry.name as BusinessLensSkill))
+    .filter(entry => entry.isDirectory() && PDD_KIT_SKILLS.includes(entry.name as PddKitSkill))
     .map(entry => entry.name)
     .sort()
 }

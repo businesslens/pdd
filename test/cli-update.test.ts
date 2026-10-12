@@ -54,7 +54,7 @@ describe('version discovery', () => {
     const fetchImpl = registryResponse({ latest: '0.8.0', next: '0.9.0-beta.1' })
     expect(await fetchLatestVersion({}, fetchImpl)).toBe('0.8.0')
     expect(fetchImpl).toHaveBeenCalledWith(
-      'https://registry.npmjs.org/-/package/businesslens/dist-tags',
+      'https://registry.npmjs.org/-/package/pdd-kit/dist-tags',
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
   })
@@ -62,7 +62,7 @@ describe('version discovery', () => {
   it('uses the configured npm registry', async () => {
     const fetchImpl = registryResponse({ latest: '0.8.0' })
     await fetchLatestVersion({ npm_config_registry: 'https://npm.example.com/' }, fetchImpl)
-    expect(fetchImpl).toHaveBeenCalledWith('https://npm.example.com/-/package/businesslens/dist-tags', expect.anything())
+    expect(fetchImpl).toHaveBeenCalledWith('https://npm.example.com/-/package/pdd-kit/dist-tags', expect.anything())
   })
 
   it('finds nothing when the registry fails, answers oddly, or tags a prerelease latest', async () => {
@@ -80,10 +80,10 @@ describe('update state', () => {
   afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
 
   it('lives in the user configuration directory', () => {
-    expect(updateStatePath({}, 'darwin', '/home/a')).toBe('/home/a/.config/businesslens/update-check.json')
-    expect(updateStatePath({ XDG_CONFIG_HOME: '/xdg' }, 'linux', '/home/a')).toBe('/xdg/businesslens/update-check.json')
+    expect(updateStatePath({}, 'darwin', '/home/a')).toBe('/home/a/.config/pdd-kit/update-check.json')
+    expect(updateStatePath({ XDG_CONFIG_HOME: '/xdg' }, 'linux', '/home/a')).toBe('/xdg/pdd-kit/update-check.json')
     expect(updateStatePath({ APPDATA: 'C:/Users/a/AppData/Roaming' }, 'win32', 'C:/Users/a'))
-      .toBe(join('C:/Users/a/AppData/Roaming', 'businesslens', 'update-check.json'))
+      .toBe(join('C:/Users/a/AppData/Roaming', 'pdd-kit', 'update-check.json'))
   })
 
   it('merges writes and survives a missing or corrupt file', () => {
@@ -109,13 +109,13 @@ describe('update state', () => {
 })
 
 describe('suppression', () => {
-  it('is off by default and on in CI or with BUSINESSLENS_NO_UPDATE_CHECK', () => {
+  it('is off by default and on in CI or with PDD_KIT_NO_UPDATE_CHECK', () => {
     expect(updateCheckSuppressed({})).toBe(false)
     expect(updateCheckSuppressed({ CI: 'false' })).toBe(false)
-    expect(updateCheckSuppressed({ BUSINESSLENS_NO_UPDATE_CHECK: '0' })).toBe(false)
+    expect(updateCheckSuppressed({ PDD_KIT_NO_UPDATE_CHECK: '0' })).toBe(false)
     expect(updateCheckSuppressed({ CI: 'true' })).toBe(true)
     expect(updateCheckSuppressed({ GITHUB_ACTIONS: 'true' })).toBe(true)
-    expect(updateCheckSuppressed({ BUSINESSLENS_NO_UPDATE_CHECK: '1' })).toBe(true)
+    expect(updateCheckSuppressed({ PDD_KIT_NO_UPDATE_CHECK: '1' })).toBe(true)
   })
 })
 
@@ -123,34 +123,34 @@ describe('package manager detection', () => {
   const exists = (paths: string[]) => (path: string) => paths.includes(path.replace(/\\/g, '/'))
 
   it('finds global npm installations, including a configured prefix', () => {
-    expect(packageManagerFor('/usr/local/lib/node_modules/businesslens', 'darwin', exists(['/usr/local/bin/businesslens'])))
+    expect(packageManagerFor('/usr/local/lib/node_modules/pdd-kit', 'darwin', exists(['/usr/local/bin/pdd-kit'])))
       .toBe('npm')
-    expect(packageManagerFor('/home/a/.npm-global/lib/node_modules/businesslens', 'linux', exists(['/home/a/.npm-global/bin/businesslens'])))
+    expect(packageManagerFor('/home/a/.npm-global/lib/node_modules/pdd-kit', 'linux', exists(['/home/a/.npm-global/bin/pdd-kit'])))
       .toBe('npm')
-    expect(packageManagerFor('C:\\Users\\a\\AppData\\Roaming\\npm\\node_modules\\businesslens', 'win32', exists(['C:/Users/a/AppData/Roaming/npm/businesslens.cmd'])))
+    expect(packageManagerFor('C:\\Users\\a\\AppData\\Roaming\\npm\\node_modules\\pdd-kit', 'win32', exists(['C:/Users/a/AppData/Roaming/npm/pdd-kit.cmd'])))
       .toBe('npm')
   })
 
   it('finds global pnpm, Yarn and Bun installations', () => {
-    expect(packageManagerFor('/Users/a/Library/pnpm/global/5/.pnpm/businesslens@0.7.1/node_modules/businesslens', 'darwin', exists([])))
+    expect(packageManagerFor('/Users/a/Library/pnpm/global/5/.pnpm/pdd-kit@0.7.1/node_modules/pdd-kit', 'darwin', exists([])))
       .toBe('pnpm')
-    expect(packageManagerFor('/home/a/.config/yarn/global/node_modules/businesslens', 'linux', exists([]))).toBe('yarn')
-    expect(packageManagerFor('C:/Users/a/AppData/Local/Yarn/Data/global/node_modules/businesslens', 'win32', exists([]))).toBe('yarn')
-    expect(packageManagerFor('/home/a/.bun/install/global/node_modules/businesslens', 'linux', exists([]))).toBe('bun')
+    expect(packageManagerFor('/home/a/.config/yarn/global/node_modules/pdd-kit', 'linux', exists([]))).toBe('yarn')
+    expect(packageManagerFor('C:/Users/a/AppData/Local/Yarn/Data/global/node_modules/pdd-kit', 'win32', exists([]))).toBe('yarn')
+    expect(packageManagerFor('/home/a/.bun/install/global/node_modules/pdd-kit', 'linux', exists([]))).toBe('bun')
   })
 
   it('leaves npx runs, project dependencies and checkouts alone', () => {
-    expect(packageManagerFor('/home/a/.npm/_npx/0123456789abcdef/node_modules/businesslens', 'linux', exists([]))).toBeUndefined()
-    expect(packageManagerFor('/work/shop/node_modules/businesslens', 'linux', exists([]))).toBeUndefined()
-    expect(packageManagerFor('/work/lib/node_modules/businesslens', 'linux', exists([]))).toBeUndefined()
+    expect(packageManagerFor('/home/a/.npm/_npx/0123456789abcdef/node_modules/pdd-kit', 'linux', exists([]))).toBeUndefined()
+    expect(packageManagerFor('/work/shop/node_modules/pdd-kit', 'linux', exists([]))).toBeUndefined()
+    expect(packageManagerFor('/work/lib/node_modules/pdd-kit', 'linux', exists([]))).toBeUndefined()
     expect(packageManagerFor('/work/pdd', 'linux', exists([]))).toBeUndefined()
   })
 
   it('installs exactly the offered version with the owning package manager', () => {
-    expect(installCommand('npm', '0.8.0')).toEqual({ command: 'npm', args: ['install', '--global', 'businesslens@0.8.0'] })
-    expect(installCommand('pnpm', '0.8.0')).toEqual({ command: 'pnpm', args: ['add', '--global', 'businesslens@0.8.0'] })
-    expect(installCommand('yarn', '0.8.0')).toEqual({ command: 'yarn', args: ['global', 'add', 'businesslens@0.8.0'] })
-    expect(installCommand('bun', '0.8.0')).toEqual({ command: 'bun', args: ['add', '--global', 'businesslens@0.8.0'] })
+    expect(installCommand('npm', '0.8.0')).toEqual({ command: 'npm', args: ['install', '--global', 'pdd-kit@0.8.0'] })
+    expect(installCommand('pnpm', '0.8.0')).toEqual({ command: 'pnpm', args: ['add', '--global', 'pdd-kit@0.8.0'] })
+    expect(installCommand('yarn', '0.8.0')).toEqual({ command: 'yarn', args: ['global', 'add', 'pdd-kit@0.8.0'] })
+    expect(installCommand('bun', '0.8.0')).toEqual({ command: 'bun', args: ['add', '--global', 'pdd-kit@0.8.0'] })
   })
 })
 
@@ -206,7 +206,7 @@ describe('update prompt', () => {
     await run({ choose })
     expect(choose).toHaveBeenCalledWith('0.7.1', '0.8.0', {
       command: 'npm',
-      args: ['install', '--global', 'businesslens@0.8.0']
+      args: ['install', '--global', 'pdd-kit@0.8.0']
     })
   })
 
@@ -241,8 +241,8 @@ describe('update prompt', () => {
     known('0.8.0')
     choices = ['update']
     expect(await run()).toBe(0)
-    expect(installs).toEqual([{ command: 'npm', args: ['install', '--global', 'businesslens@0.8.0'] }])
-    expect(output.join('\n')).toContain('Updated the BusinessLens CLI to 0.8.0')
+    expect(installs).toEqual([{ command: 'npm', args: ['install', '--global', 'pdd-kit@0.8.0'] }])
+    expect(output.join('\n')).toContain('Updated the pdd-kit CLI to 0.8.0')
   })
 
   it('reports a failed update with the command to retry and continues with the installed version', async () => {
@@ -252,7 +252,7 @@ describe('update prompt', () => {
     expect(await run()).toBeUndefined()
     const message = output.join('\n')
     expect(message).toContain('continuing with 0.7.1')
-    expect(message).toContain('npm install --global businesslens@0.8.0')
+    expect(message).toContain('npm install --global pdd-kit@0.8.0')
     expect(await run()).toBeUndefined()
     expect(installs).toHaveLength(1)
   })
@@ -270,7 +270,7 @@ describe('update prompt', () => {
     for (const overrides of [
       { interactive: false },
       { env: { CI: '1' } },
-      { env: { BUSINESSLENS_NO_UPDATE_CHECK: '1' } },
+      { env: { PDD_KIT_NO_UPDATE_CHECK: '1' } },
       { packageManager: () => undefined }
     ] satisfies Partial<UpdateCheckOptions>[]) {
       expect(await run(overrides)).toBeUndefined()

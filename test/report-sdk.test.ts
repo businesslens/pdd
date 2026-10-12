@@ -518,7 +518,7 @@ describe('projectPortableReport', () => {
   /*
    * The report is expanded straight into an authored folder, so an Entity edge
    * the folder rules reject must not survive the wire — it would produce a
-   * `.businesslens/` that fails `lint` the moment it lands. None of these were
+   * `product-model/` that fails `lint` the moment it lands. None of these were
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
@@ -865,9 +865,9 @@ describe('a removal that goes with another, on the wire', () => {
     cpSync(FIXTURE, root, { recursive: true })
     /* A refund that holds its follow-ups, so two refunds removed in one Step
        have a declared direction: the follow-up goes with the refund. */
-    const refund = join(root, '.businesslens/entities/refund.md')
+    const refund = join(root, 'product-model/entities/refund.md')
     writeFileSync(refund, readFileSync(refund, 'utf8').replace('domain: ordering\n', 'domain: ordering\nrelations:\n  - entity: refund\n    verb: is followed by\n    cardinality: one-to-many\n'))
-    const file = join(root, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
+    const file = join(root, 'product-model/capabilities/place-order/scenarios/complete-checkout.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace(
       '      - { entity: cart, effect: removes }\n',
       '      - { entity: cart, effect: removes }\n      - { entity: refund, as: original, effect: removes, from: Requested }\n      - { entity: refund, as: follow-up, effect: removes, from: Requested, with: original }\n'

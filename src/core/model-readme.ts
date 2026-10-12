@@ -2,44 +2,44 @@ import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * The README written into every `.businesslens/` model created by canonical
+ * The README written into every `product-model/` model created by canonical
  * Product Report expansion — the one thing that tells an agent what the
  * directory is for when the model arrived from another repository.
  *
  * It used to be a managed block in the repository's root `AGENTS.md`. That
  * location was chosen for reach: speaking to an agent not running a
- * BusinessLens skill. But the block only ever survived for the greenfield case
- * (a model, no implementation), and in that case `.businesslens/` is the only
+ * pdd-kit skill. But the block only ever survived for the greenfield case
+ * (a model, no implementation), and in that case `product-model/` is the only
  * thing in the repository — an agent asked to build has nothing else to read.
  * The reach argument was weakest exactly where the block was load-bearing. See
- * adr/0004-write-nothing-outside-businesslens.md.
+ * adr/0004-write-nothing-outside-pdd-kit.md.
  *
  * Living inside the directory also kills the greenfield/brownfield variant
  * problem: a file describing the directory is correct in both states, where a
  * block making claims about the whole repository had to pick one.
  *
- * BusinessLens now writes nothing outside `.businesslens/`, without exception.
+ * pdd-kit now writes nothing outside `product-model/`, without exception.
  */
 export const MODEL_README = `# Product Model
 
 This directory is the **Product Model** of this repository, kept with
-BusinessLens for Product-Driven Development (PDD): who the product serves, where
+pdd-kit for Product-Driven Development (PDD): who the product serves, where
 they reach it, what it keeps, what it can do, and which rules must stay true. It
 is plain Markdown tracked in Git, and it is the source of truth for the intended
 product definition.
 
 ## If you are an agent working in this repository
 
-- **To implement it**, all of it or a part, use the \`businesslens-verify\`
+- **To implement it**, all of it or a part, use the \`pdd-verify\`
   skill. It works out what the model describes that the code does not do yet,
   has you implement it in phases in your usual way, and checks each part as it
   lands.
-- **To change what the product should do**, use \`businesslens-ideate\`. To
-  model established code the model does not cover, use \`businesslens-map\`.
-- If those skills are not installed, run \`npx businesslens install\`.
+- **To change what the product should do**, use \`pdd-ideate\`. To
+  model established code the model does not cover, use \`pdd-map\`.
+- If those skills are not installed, run \`npx pdd-kit install\`.
 - Do not edit this directory while implementing. If the model is ambiguous or
   seems wrong, stop and ask; never settle a product question in code.
-- Never edit \`cache/\`. Run \`npx businesslens lint\` for structural checks.
+- Never edit \`cache/\`. Run \`npx pdd-kit lint\` for structural checks.
 
 ## What the code must honor
 
@@ -71,16 +71,16 @@ with their Experiences and Screens, Domains, Capabilities and their Scenarios,
 Business Rules, Journeys and their Scenarios, and Variations. A resource is
 \`<id>.md\`, or \`<id>/<type>.md\` when it owns child resources or assets.
 
-Documentation: https://businesslens.io
+Documentation: https://pdd-kit.dev
 `
 
 /**
- * Write the model README, overwriting unconditionally. BusinessLens owns every
+ * Write the model README, overwriting unconditionally. pdd-kit owns every
  * file in this directory, and an unconditional write is what keeps open,
  * pull, and contribution expansion byte-identical.
  */
 export function writeModelReadme(root: string): string {
-  const file = join(root, '.businesslens', 'README.md')
+  const file = join(root, 'product-model', 'README.md')
   writeFileSync(file, MODEL_README, { encoding: 'utf8' })
   return file
 }

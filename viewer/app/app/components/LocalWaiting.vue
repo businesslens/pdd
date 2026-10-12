@@ -11,9 +11,9 @@ const watching = computed(() => props.message?.match(/appear when (.+?) is creat
       <UIcon name="i-lucide-file-text" class="size-8 text-dimmed" />
       <h2 class="text-lg font-semibold text-highlighted">No Product Model yet</h2>
       <p class="text-sm text-muted">
-        The report appears here by itself once <code class="font-mono">.businesslens/</code> is created.
-        Ask your agent to map this repository with <code class="font-mono">/businesslens-map</code>,
-        or describe a new product with <code class="font-mono">/businesslens-ideate</code>.
+        The report appears here by itself once <code class="font-mono">product-model/</code> is created.
+        Ask your agent to map this repository with <code class="font-mono">/pdd-map</code>,
+        or describe a new product with <code class="font-mono">/pdd-ideate</code>.
       </p>
       <p v-if="watching" class="text-xs text-dimmed [overflow-wrap:anywhere]">Watching for {{ watching }}</p>
     </div>

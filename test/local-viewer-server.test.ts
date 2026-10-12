@@ -60,7 +60,7 @@ function eventAfter(
     const outgoing = request({
       hostname: origin.hostname,
       port: origin.port,
-      path: '/_businesslens/events',
+      path: '/_pdd-kit/events',
       method: 'GET'
     }, (incoming) => {
       let body = ''
@@ -123,11 +123,11 @@ afterEach(async () => {
 })
 
 function staticViewer(): string {
-  const directory = mkdtempSync(join(tmpdir(), 'businesslens-viewer-'))
+  const directory = mkdtempSync(join(tmpdir(), 'pdd-kit-viewer-'))
   directories.push(directory)
   writeFileSync(join(directory, 'index.html'), '<!doctype html><title>Local Product Model</title>')
-  writeFileSync(join(directory, 'app.js'), 'globalThis.businesslens = true')
-  writeFileSync(join(directory, 'site.webmanifest'), '{"name":"BusinessLens"}')
+  writeFileSync(join(directory, 'app.js'), 'globalThisproduct-model = true')
+  writeFileSync(join(directory, 'site.webmanifest'), '{"name":"pdd-kit"}')
   return directory
 }
 
@@ -142,9 +142,9 @@ describe('local Product Report server', () => {
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
     viewers.push(viewer)
     for (const path of ['history', 'history/defaults', 'history/diff?base=head&target=working', 'state?state=head', 'review/file?base=head&target=working&path=README.md']) {
-      expect((await get(viewer.url, `/_businesslens/${path}`)).status).toBe(404)
+      expect((await get(viewer.url, `/_pdd-kit/${path}`)).status).toBe(404)
     }
-    expect((await get(viewer.url, '/_businesslens/report.json')).status).toBe(200)
+    expect((await get(viewer.url, '/_pdd-kit/report.json')).status).toBe(200)
   })
 
   it('serves the static application and caches the compiled report', async () => {
@@ -169,18 +169,18 @@ describe('local Product Report server', () => {
     expect(page.headers['cache-control']).toBe('no-store')
     expect(page.headers['content-security-policy']).toContain("default-src 'none'")
 
-    const first = await get(viewer.url, '/_businesslens/report.json')
-    const second = await get(viewer.url, '/_businesslens/report.json')
+    const first = await get(viewer.url, '/_pdd-kit/report.json')
+    const second = await get(viewer.url, '/_pdd-kit/report.json')
     expect(first.status).toBe(200)
     expect(JSON.parse(first.body)).toMatchObject({ id: 'fixture-shop' })
     expect(second.status).toBe(200)
     expect(compileCount).toBe(1)
 
-    const health = await get(viewer.url, '/_businesslens/health')
+    const health = await get(viewer.url, '/_pdd-kit/health')
     expect(health.status).toBe(200)
     expect(JSON.parse(health.body)).toEqual({ ok: true })
 
-    const productLogo = await get(viewer.url, '/_businesslens/logo.svg')
+    const productLogo = await get(viewer.url, '/_pdd-kit/logo.svg')
     expect(productLogo.status).toBe(200)
     expect(productLogo.headers['content-type']).toBe('image/svg+xml; charset=utf-8')
     expect(productLogo.headers['content-security-policy']).toContain("script-src 'none'")
@@ -205,7 +205,7 @@ describe('local Product Report server', () => {
   })
 
   it.each(['product.md', 'coverage.md'])('watches %s and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async (filename) => {
-    const model = mkdtempSync(join(tmpdir(), 'businesslens-model-'))
+    const model = mkdtempSync(join(tmpdir(), 'pdd-kit-model-'))
     directories.push(model)
     const product = join(model, filename)
     writeFileSync(product, 'First title')
@@ -226,7 +226,7 @@ describe('local Product Report server', () => {
         WATCH_TEST_TIMEOUT_MS - 500
       ),
       eventually(
-        () => get(viewer.url, '/_businesslens/report.json'),
+        () => get(viewer.url, '/_pdd-kit/report.json'),
         response => JSON.parse(response.body).title === 'Updated title',
         WATCH_TEST_TIMEOUT_MS - 500
       )
@@ -237,14 +237,14 @@ describe('local Product Report server', () => {
   })
 
   it('recovers when the retired Coverage file is removed and reports its return', { timeout: WATCH_TEST_TIMEOUT_MS * 2 }, async () => {
-    const root = mkdtempSync(join(tmpdir(), 'businesslens-retired-coverage-'))
+    const root = mkdtempSync(join(tmpdir(), 'pdd-kit-retired-coverage-'))
     directories.push(root)
     cpSync(FIXTURE, root, { recursive: true })
-    const legacy = join(root, '.businesslens', 'coverage.json')
+    const legacy = join(root, 'product-model', 'coverage.json')
     writeFileSync(legacy, '{}')
     const viewer = await startLocalViewer({
       viewerRoot: staticViewer(),
-      watchRoot: join(root, '.businesslens'),
+      watchRoot: join(root, 'product-model'),
       debounceMs: 10,
       compile: () => {
         const model = loadModel(root)
@@ -261,7 +261,7 @@ describe('local Product Report server', () => {
   })
 
   it('announces a valid logo edit even when the semantic report is unchanged', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
-    const model = mkdtempSync(join(tmpdir(), 'businesslens-logo-model-'))
+    const model = mkdtempSync(join(tmpdir(), 'pdd-kit-logo-model-'))
     directories.push(model)
     const logoFile = join(model, 'logo.svg')
     writeFileSync(logoFile, logo())
@@ -282,7 +282,7 @@ describe('local Product Report server', () => {
       WATCH_TEST_TIMEOUT_MS - 500
     )
     expect(await event).toContain('event: report')
-    expect((await get(viewer.url, '/_businesslens/logo.svg')).body).toContain('#b8965c')
+    expect((await get(viewer.url, '/_pdd-kit/logo.svg')).body).toContain('#b8965c')
   })
 
   it('keeps the last valid report while an edit has compile errors, then recovers', async () => {
@@ -298,9 +298,9 @@ describe('local Product Report server', () => {
 
     invalid = true
     viewer.refresh()
-    const stale = await get(viewer.url, '/_businesslens/report.json')
+    const stale = await get(viewer.url, '/_pdd-kit/report.json')
     expect(stale.status).toBe(200)
-    expect(stale.headers['x-businesslens-report-state']).toBe('stale')
+    expect(stale.headers['x-pdd-kit-report-state']).toBe('stale')
     expect(JSON.parse(stale.body).title).toBe('Fixture Shop')
 
     const recovery = eventAfter(viewer.url, 'report', () => {
@@ -308,7 +308,7 @@ describe('local Product Report server', () => {
       viewer.refresh()
     })
     expect(await recovery).toContain('event: report')
-    expect((await get(viewer.url, '/_businesslens/report.json')).headers['x-businesslens-report-state']).toBe('ready')
+    expect((await get(viewer.url, '/_pdd-kit/report.json')).headers['x-pdd-kit-report-state']).toBe('ready')
   })
 
   it('rejects non-loopback Host headers, traversal, and unsupported methods', async () => {
@@ -343,9 +343,9 @@ describe('local Product Report server', () => {
     }
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, githubStar })
     viewers.push(viewer)
-    const path = `${viewer.url}/_businesslens/github-star`
+    const path = `${viewer.url}/_pdd-kit/github-star`
 
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'not-starred' })
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/github-star')).body)).toEqual({ state: 'not-starred' })
 
     // Another page in the same browser cannot star on the reader's behalf.
     for (const headers of [{}, { origin: 'https://example.com' }, { origin: 'null' }] as Record<string, string>[]) {
@@ -361,7 +361,7 @@ describe('local Product Report server', () => {
     const accepted = await fetch(path, { method: 'POST', headers: { origin: viewer.url } })
     expect(accepted.status).toBe(200)
     expect(await accepted.json()).toEqual({ state: 'starred' })
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'starred' })
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/github-star')).body)).toEqual({ state: 'starred' })
 
     // Nor can it unstar.
     for (const headers of [{}, { origin: 'https://example.com' }, { origin: 'null' }] as Record<string, string>[]) {
@@ -377,7 +377,7 @@ describe('local Product Report server', () => {
     const removed = await fetch(path, { method: 'DELETE', headers: { origin: viewer.url } })
     expect(removed.status).toBe(200)
     expect(await removed.json()).toEqual({ state: 'not-starred' })
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'not-starred' })
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/github-star')).body)).toEqual({ state: 'not-starred' })
 
     const unsupported = await fetch(path, { method: 'PUT', headers: { origin: viewer.url } })
     expect(unsupported.status).toBe(405)
@@ -392,28 +392,28 @@ describe('local Product Report server', () => {
     }
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, githubStar })
     viewers.push(viewer)
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/github-star')).body)).toEqual({ state: 'unavailable' })
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/github-star')).body)).toEqual({ state: 'unavailable' })
   })
 
   it('drops the previous model on rebind, even when the new one does not compile', async () => {
-    const repository = mkdtempSync(join(tmpdir(), 'businesslens-rebind-'))
+    const repository = mkdtempSync(join(tmpdir(), 'pdd-kit-rebind-'))
     directories.push(repository)
     writeFileSync(join(repository, 'notes.md'), '# Notes')
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, assetRoot: repository })
     viewers.push(viewer)
-    expect((await get(viewer.url, '/_businesslens/report.json')).status).toBe(200)
-    expect((await get(viewer.url, '/_businesslens/file/notes.md')).status).toBe(200)
+    expect((await get(viewer.url, '/_pdd-kit/report.json')).status).toBe(200)
+    expect((await get(viewer.url, '/_pdd-kit/file/notes.md')).status).toBe(200)
 
     viewer.bind({ compile: () => { throw new Error('Lint failed: missing actor') } })
-    const rebound = await get(viewer.url, '/_businesslens/report.json')
+    const rebound = await get(viewer.url, '/_pdd-kit/report.json')
     expect(rebound.status).toBe(422)
     expect(JSON.parse(rebound.body)).toEqual({ message: 'Lint failed: missing actor' })
     // An omitted asset root is cleared, not inherited from the old binding.
-    expect((await get(viewer.url, '/_businesslens/file/notes.md')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/notes.md')).status).toBe(404)
   })
 
   it('serves repository assets from the mount, and refuses everything else', async () => {
-    const repository = mkdtempSync(join(tmpdir(), 'businesslens-repo-'))
+    const repository = mkdtempSync(join(tmpdir(), 'pdd-kit-repo-'))
     directories.push(repository)
     mkdirSync(join(repository, 'docs'), { recursive: true })
     writeFileSync(join(repository, 'docs', 'mockup.png'), Buffer.from('89504e470d0a1a0a', 'hex'))
@@ -428,30 +428,30 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    const png = await get(viewer.url, '/_businesslens/file/docs/mockup.png')
+    const png = await get(viewer.url, '/_pdd-kit/file/docs/mockup.png')
     expect(png.status).toBe(200)
     expect(png.headers['content-type']).toBe('image/png')
 
-    const markdown = await get(viewer.url, '/_businesslens/file/docs/notes.md')
+    const markdown = await get(viewer.url, '/_pdd-kit/file/docs/notes.md')
     expect(markdown.status).toBe(200)
     expect(markdown.headers['content-type']).toContain('application/json')
     expect(JSON.parse(markdown.body)).toMatchObject({ kind: 'markdown', document: { nodes: [['h1', { id: 'notes' }, 'Notes']] } })
-    expect((await get(viewer.url, '/_businesslens/file/docs/notes.md?raw=1')).body).toBe('# Notes')
+    expect((await get(viewer.url, '/_pdd-kit/file/docs/notes.md?raw=1')).body).toBe('# Notes')
 
     // Not on the allowlist: refused whether or not it exists, so the mount
     // cannot be used to probe for files.
-    expect((await get(viewer.url, '/_businesslens/file/secrets.env')).status).toBe(404)
-    expect((await get(viewer.url, '/_businesslens/file/app.ts')).status).toBe(404)
-    expect((await get(viewer.url, '/_businesslens/file/docs/absent.png')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/secrets.env')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/app.ts')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/docs/absent.png')).status).toBe(404)
 
     // Traversal, encoded traversal, and absolute paths stay inside the root.
-    expect((await get(viewer.url, '/_businesslens/file/../../etc/passwd')).status).toBe(404)
-    expect((await get(viewer.url, '/_businesslens/file/%2e%2e%2f%2e%2e%2fetc%2fpasswd')).status).toBe(404)
-    expect((await get(viewer.url, '/_businesslens/file//etc/passwd')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/../../etc/passwd')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/%2e%2e%2f%2e%2e%2fetc%2fpasswd')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file//etc/passwd')).status).toBe(404)
   })
 
   it('rejects an SVG asset that is not inert', async () => {
-    const repository = mkdtempSync(join(tmpdir(), 'businesslens-repo-'))
+    const repository = mkdtempSync(join(tmpdir(), 'pdd-kit-repo-'))
     directories.push(repository)
     writeFileSync(join(repository, 'safe.svg'), logo())
     writeFileSync(
@@ -466,30 +466,30 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    expect((await get(viewer.url, '/_businesslens/file/safe.svg')).status).toBe(200)
-    expect((await get(viewer.url, '/_businesslens/file/active.svg')).status).toBe(422)
+    expect((await get(viewer.url, '/_pdd-kit/file/safe.svg')).status).toBe(200)
+    expect((await get(viewer.url, '/_pdd-kit/file/active.svg')).status).toBe(422)
   })
 
   it('serves no repository asset when no asset root is configured', async () => {
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
     viewers.push(viewer)
-    expect((await get(viewer.url, '/_businesslens/file/package.json')).status).toBe(404)
+    expect((await get(viewer.url, '/_pdd-kit/file/package.json')).status).toBe(404)
   })
 
   it('starts with no model, says so, and comes alive when one is bound', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
     const viewer = await startLocalViewer({
       viewerRoot: staticViewer(),
-      waitingMessage: 'No Product Model yet. Waiting for .businesslens/ to be created.'
+      waitingMessage: 'No Product Model yet. Waiting for product-model/ to be created.'
     })
     viewers.push(viewer)
 
-    expect(viewer.status()).toEqual({ ready: false, state: 'waiting', error: 'No Product Model yet. Waiting for .businesslens/ to be created.' })
-    const waiting = await get(viewer.url, '/_businesslens/report.json')
+    expect(viewer.status()).toEqual({ ready: false, state: 'waiting', error: 'No Product Model yet. Waiting for product-model/ to be created.' })
+    const waiting = await get(viewer.url, '/_pdd-kit/report.json')
     expect(waiting.status).toBe(422)
-    expect(JSON.parse(waiting.body).message).toContain('Waiting for .businesslens/')
+    expect(JSON.parse(waiting.body).message).toContain('Waiting for product-model/')
     expect((await get(viewer.url)).status).toBe(200)
 
-    const model = mkdtempSync(join(tmpdir(), 'businesslens-late-model-'))
+    const model = mkdtempSync(join(tmpdir(), 'pdd-kit-late-model-'))
     directories.push(model)
     const product = join(model, 'product.md')
     writeFileSync(product, 'Bound title')
@@ -501,12 +501,12 @@ describe('local Product Report server', () => {
     })
     expect(bound).toContain('event: report')
     expect(viewer.status().ready).toBe(true)
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/report.json')).body).title).toBe('Bound title')
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/report.json')).body).title).toBe('Bound title')
 
     // The binding's watcher is live: a later save recompiles as usual.
     const edited = eventAfter(viewer.url, 'report', () => writeFileSync(product, 'Edited after binding'), WATCH_TEST_TIMEOUT_MS - 500)
     expect(await edited).toContain('event: report')
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/report.json')).body).title).toBe('Edited after binding')
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/report.json')).body).title).toBe('Edited after binding')
   })
 
   it('serves a report that builds with errors beside it, keeps it when the model stops building, and says so', async () => {
@@ -517,10 +517,10 @@ describe('local Product Report server', () => {
     const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: () => outcome })
     viewers.push(viewer)
 
-    const degraded = await get(viewer.url, '/_businesslens/report.json')
+    const degraded = await get(viewer.url, '/_pdd-kit/report.json')
     expect(degraded.status).toBe(200)
-    expect(degraded.headers['x-businesslens-report-state']).toBe('degraded')
-    const first = JSON.parse((await get(viewer.url, '/_businesslens/status.json')).body) as LocalViewerStatus
+    expect(degraded.headers['x-pdd-kit-report-state']).toBe('degraded')
+    const first = JSON.parse((await get(viewer.url, '/_pdd-kit/status.json')).body) as LocalViewerStatus
     expect(first).toMatchObject({ state: 'degraded', issues: outcome.issues })
     expect(first.builtAt).toEqual(expect.any(Number))
     expect(first.request).toContain('- README.md is missing')
@@ -531,10 +531,10 @@ describe('local Product Report server', () => {
       viewer.refresh()
     })
     expect(await status).toContain('"state":"stale"')
-    const stale = await get(viewer.url, '/_businesslens/report.json')
+    const stale = await get(viewer.url, '/_pdd-kit/report.json')
     expect(stale.status).toBe(200)
-    expect(stale.headers['x-businesslens-report-state']).toBe('stale')
-    const second = JSON.parse((await get(viewer.url, '/_businesslens/status.json')).body) as LocalViewerStatus
+    expect(stale.headers['x-pdd-kit-report-state']).toBe('stale')
+    const second = JSON.parse((await get(viewer.url, '/_pdd-kit/status.json')).body) as LocalViewerStatus
     expect(second).toMatchObject({ state: 'stale', issues: [broken], builtAt: first.builtAt })
   })
 
@@ -544,10 +544,10 @@ describe('local Product Report server', () => {
       compile: () => ({ issues: [{ severity: 'error', message: 'References missing domain "orderng"' }] })
     })
     viewers.push(viewer)
-    const response = await get(viewer.url, '/_businesslens/report.json')
+    const response = await get(viewer.url, '/_pdd-kit/report.json')
     expect(response.status).toBe(422)
-    expect(response.headers['x-businesslens-report-state']).toBe('blocked')
-    expect(JSON.parse((await get(viewer.url, '/_businesslens/status.json')).body)).toMatchObject({ state: 'blocked', builtAt: null })
+    expect(response.headers['x-pdd-kit-report-state']).toBe('blocked')
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/status.json')).body)).toMatchObject({ state: 'blocked', builtAt: null })
   })
 
   it('returns a safe compile error without stopping the viewer', async () => {
@@ -557,7 +557,7 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    const response = await get(viewer.url, '/_businesslens/report.json')
+    const response = await get(viewer.url, '/_pdd-kit/report.json')
     expect(response.status).toBe(422)
     expect(JSON.parse(response.body)).toEqual({ message: 'Lint failed: missing actor' })
     expect((await get(viewer.url)).status).toBe(200)

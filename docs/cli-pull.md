@@ -6,14 +6,14 @@ group: CLI
 order: 28
 ---
 
-# `businesslens blueprint pull`
+# `pdd-kit blueprint pull`
 
 Pull a published [Blueprint](./from-a-blueprint.md#what-a-blueprint-is) by name
-into `.businesslens/`, to start a product from a reviewed model.
+into `product-model/`, to start a product from a reviewed model.
 [`blueprint list`](./cli-list.md) shows the names.
 
 ```bash
-npx businesslens blueprint pull <name> [--force]
+npx pdd-kit blueprint pull <name> [--force]
 ```
 
 ## Options
@@ -21,9 +21,9 @@ npx businesslens blueprint pull <name> [--force]
 | Option | Meaning |
 | --- | --- |
 | `<name>` | The Blueprint's name: lowercase kebab-case, at most 80 characters |
-| `--force` | Move a non-empty `.businesslens/` aside to a backup first |
+| `--force` | Move a non-empty `product-model/` aside to a backup first |
 
-`--cwd` picks the directory that receives `.businesslens/`.
+`--cwd` picks the directory that receives `product-model/`.
 
 ## What it does
 
@@ -33,18 +33,18 @@ npx businesslens blueprint pull <name> [--force]
    Blueprint has them. A missing or invalid one is skipped, not an error, and a
    cover comes only with a logo.
 3. Expands it exactly as [`blueprint open`](./cli-open.md) does, with the logo
-   restored as `.businesslens/product/logo.svg` and the cover as
-   `.businesslens/product/cover.webp`.
+   restored as `product-model/product/logo.svg` and the cover as
+   `product-model/product/cover.webp`.
 
 ## Where Blueprints come from
 
 Every Blueprint lives in `blueprints/` of the
-[BusinessLens repository](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints).
+[pdd-kit repository](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints).
 Each merge rebuilds them into the `blueprints-v19` GitHub Release, so a newly
 merged Blueprint is pullable within minutes, without a CLI update. The `19` is
 the report version this CLI reads.
 
-To pull from a fork instead, set `BUSINESSLENS_BLUEPRINT_REPOSITORY` to its
+To pull from a fork instead, set `PDD_KIT_BLUEPRINT_REPOSITORY` to its
 `owner/repo`; the fork needs the same release, which its own copy of the
 Publish Blueprints workflow builds.
 

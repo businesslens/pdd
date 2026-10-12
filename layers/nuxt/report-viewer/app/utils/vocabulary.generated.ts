@@ -27,7 +27,7 @@ export interface VocabularyEntry {
 }
 
 export const VOCABULARY = {
-  "product-model": { term: "Product Model", searchNames: ["Product Model","Product Models"], definition: "The .businesslens/ folder: one product described in Markdown files, tracked in Git, and free to point at the repository's code.", page: "product-model", pageTitle: "Model overview", anchor: "the-shape-of-a-model", mentions: [] },
+  "product-model": { term: "Product Model", searchNames: ["Product Model","Product Models"], definition: "The product-model/ folder: one product described in Markdown files, tracked in Git, and free to point at the repository's code.", page: "product-model", pageTitle: "Model overview", anchor: "the-shape-of-a-model", mentions: [] },
   "intent": { term: "Intent", searchNames: ["Intent","Intents"], definition: "Why a resource exists and which outcome it protects, never a restatement of what it does.", page: "product-model", pageTitle: "Model overview", anchor: "authoring-conventions", mentions: [] },
   "coverage": { term: "Coverage", searchNames: ["Coverage","Coverages"], definition: "Which of the repository's code the model accounts for, what it leaves out as not product behavior, and known gaps.", page: "product-model", pageTitle: "Model overview", anchor: "coverage", mentions: [] },
   "resource-type": { term: "Resource type", searchNames: ["Resource type","Resource types"], definition: "A kind of resource, such as Entity or Capability, decided by where its file sits in the Product Model.", page: "product-model", pageTitle: "Model overview", anchor: "what-belongs-in-a-model", mentions: [[28, 34, "entity"], [38, 48, "capability"], [88, 101, "product-model"]] },

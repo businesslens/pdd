@@ -1,5 +1,5 @@
 /* Named readings share typography and spacing, not one forced graph shape. */
-.businesslens-report .blr-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
+product-model-report .blr-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
 .blr-topology-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; flex-shrink: 0; }
 .blr-topology-toolbar > [data-blr-filter-bar] { flex: 1 1 360px; min-width: 0; }
 .blr-matrix-legend { margin-inline-start: auto; }

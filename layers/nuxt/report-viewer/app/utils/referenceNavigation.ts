@@ -1,20 +1,20 @@
 import type { InjectionKey, Ref } from 'vue'
-import type { ReportReference } from 'businesslens/report'
+import type { ReportReference } from 'pdd-kit/report'
 
 export const isExternalReference = (target: string) => /^https?:\/\//i.test(target)
 
-export const referenceFileHref = (target: string) => `/_businesslens/file/${target.split('/').map(encodeURIComponent).join('/')}`
+export const referenceFileHref = (target: string) => `/_pdd-kit/file/${target.split('/').map(encodeURIComponent).join('/')}`
 export const referenceHref = (reference: ReportReference) => isExternalReference(reference.target)
   ? reference.target : reference.kind === 'code'
-    ? `/_businesslens/code?target=${encodeURIComponent(reference.target)}#reference` : referenceFileHref(reference.target)
+    ? `/_pdd-kit/code?target=${encodeURIComponent(reference.target)}#reference` : referenceFileHref(reference.target)
 
 /** Only the local viewer's inert reference endpoints may be loaded into a reading. */
 export function localReferenceHref(value: unknown): string | null {
-  if (typeof value !== 'string' || !value.startsWith('/_businesslens/')) return null
+  if (typeof value !== 'string' || !value.startsWith('/_pdd-kit/')) return null
   try {
-    const url = new URL(value, 'http://businesslens.local')
-    return url.origin === 'http://businesslens.local'
-      && (url.pathname === '/_businesslens/code' || url.pathname.startsWith('/_businesslens/file/'))
+    const url = new URL(value, 'http://pdd-kit.local')
+    return url.origin === 'http://pdd-kit.local'
+      && (url.pathname === '/_pdd-kit/code' || url.pathname.startsWith('/_pdd-kit/file/'))
       ? `${url.pathname}${url.search}${url.hash}` : null
   } catch { return null }
 }
@@ -33,4 +33,4 @@ export interface ReferenceNavigation {
   open: (href: string) => void
   back: () => void
 }
-export const referenceNavigationKey: InjectionKey<ReferenceNavigation> = Symbol('businesslens:reference-navigation')
+export const referenceNavigationKey: InjectionKey<ReferenceNavigation> = Symbol('pdd-kit:reference-navigation')

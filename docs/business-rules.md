@@ -269,5 +269,5 @@ Warnings:
   no permission Rule selects that change.
 
 A permission Rule that is an alternative in a Variation skips the Step and
-Screen checks; [`businesslens-verify`](./skill-businesslens-verify.md) checks it
+Screen checks; [`pdd-verify`](./skill-pdd-verify.md) checks it
 against the code.

@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { findModelRoot, resolveModelRoot } from '../src/core/model-root.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
-const BLUEPRINT = join(__dirname, '..', 'blueprints', 'content-feed-reader', '.businesslens')
+const BLUEPRINT = join(__dirname, '..', 'blueprints', 'content-feed-reader', 'product-model')
 const temporary: string[] = []
 
 function scratch(prefix: string): string {
@@ -31,23 +31,23 @@ afterEach(() => {
 
 describe('resolveModelRoot', () => {
   it('prefers a model in the working directory over one at the repository root', () => {
-    const repo = scratch('businesslens-model-root-nested-')
+    const repo = scratch('pdd-kit-model-root-nested-')
     git(repo, 'init', '--initial-branch=main')
-    cpSync(join(FIXTURE, '.businesslens'), join(repo, '.businesslens'), { recursive: true })
+    cpSync(join(FIXTURE, 'product-model'), join(repo, 'product-model'), { recursive: true })
 
     // The catalog keeps one model per blueprints/<slug>/, so the nearest model wins.
     const nested = join(repo, 'blueprints', 'content-feed-reader')
     mkdirSync(nested, { recursive: true })
-    cpSync(join(FIXTURE, '.businesslens'), join(nested, '.businesslens'), { recursive: true })
+    cpSync(join(FIXTURE, 'product-model'), join(nested, 'product-model'), { recursive: true })
 
     expect(resolveModelRoot(nested)).toEqual({ modelRoot: nested, gitRoot: repo })
     expect(resolveModelRoot(repo)).toEqual({ modelRoot: repo, gitRoot: repo })
   })
 
   it('falls back to the repository root when the working directory has no model', () => {
-    const repo = scratch('businesslens-model-root-fallback-')
+    const repo = scratch('pdd-kit-model-root-fallback-')
     git(repo, 'init', '--initial-branch=main')
-    cpSync(join(FIXTURE, '.businesslens'), join(repo, '.businesslens'), { recursive: true })
+    cpSync(join(FIXTURE, 'product-model'), join(repo, 'product-model'), { recursive: true })
     const deep = join(repo, 'src', 'commands')
     mkdirSync(deep, { recursive: true })
 
@@ -55,8 +55,8 @@ describe('resolveModelRoot', () => {
   })
 
   it('resolves a model that sits outside any repository, reporting no git root', () => {
-    const loose = scratch('businesslens-model-root-loose-')
-    cpSync(join(FIXTURE, '.businesslens'), join(loose, '.businesslens'), { recursive: true })
+    const loose = scratch('pdd-kit-model-root-loose-')
+    cpSync(join(FIXTURE, 'product-model'), join(loose, 'product-model'), { recursive: true })
 
     const resolved = resolveModelRoot(loose)
     expect(resolved.modelRoot).toBe(loose)
@@ -64,11 +64,11 @@ describe('resolveModelRoot', () => {
   })
 
   it('builds a Blueprint model outside a repository with an empty tracked set', () => {
-    const loose = scratch('businesslens-model-root-build-')
+    const loose = scratch('pdd-kit-model-root-build-')
     // A Blueprint carries no local references, so it can legitimately build
     // with nothing tracked. A model with code references still fails because
     // an empty tracked set makes their paths unresolvable.
-    cpSync(BLUEPRINT, join(loose, '.businesslens'), { recursive: true })
+    cpSync(BLUEPRINT, join(loose, 'product-model'), { recursive: true })
 
     const { report } = buildProject(loose)
     // A Blueprint is tied to no code, so its coverage is empty.
@@ -79,24 +79,24 @@ describe('resolveModelRoot', () => {
   })
 
   it('refuses to build a model carrying code references when nothing is tracked', () => {
-    const loose = scratch('businesslens-model-root-references-')
-    cpSync(join(FIXTURE, '.businesslens'), join(loose, '.businesslens'), { recursive: true })
+    const loose = scratch('pdd-kit-model-root-references-')
+    cpSync(join(FIXTURE, 'product-model'), join(loose, 'product-model'), { recursive: true })
 
     expect(() => buildProject(loose)).toThrow(/is not a tracked file/)
   })
 
   it('reports a missing model rather than a missing repository', () => {
-    const empty = scratch('businesslens-model-root-empty-')
-    expect(() => resolveModelRoot(empty)).toThrow(/No \.businesslens\/ Product Model found/)
+    const empty = scratch('pdd-kit-model-root-empty-')
+    expect(() => resolveModelRoot(empty)).toThrow(/No \product-model\/ Product Model found/)
   })
 
   it('finds the model against a known repository root, without asking Git again', () => {
-    const repo = scratch('businesslens-model-root-find-')
+    const repo = scratch('pdd-kit-model-root-find-')
     const deep = join(repo, 'src')
     mkdirSync(deep, { recursive: true })
     // Not a repository: only the root handed in can supply the fallback.
     expect(findModelRoot(deep, repo)).toBeUndefined()
-    cpSync(join(FIXTURE, '.businesslens'), join(repo, '.businesslens'), { recursive: true })
+    cpSync(join(FIXTURE, 'product-model'), join(repo, 'product-model'), { recursive: true })
     expect(findModelRoot(deep, repo)).toEqual({ modelRoot: repo, gitRoot: repo })
     expect(findModelRoot(deep, undefined)).toBeUndefined()
     expect(findModelRoot(repo, undefined)).toEqual({ modelRoot: repo })

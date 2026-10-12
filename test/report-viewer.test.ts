@@ -712,7 +712,7 @@ describe('stable Product Report', () => {
   })
 
   it('ships Product Report as the only report renderer', () => {
-    const renderer = source('app/components/BusinessLensReportViewer.vue')
+    const renderer = source('app/components/PddKitReportViewer.vue')
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
@@ -756,7 +756,7 @@ describe('stable Product Report', () => {
     expect(existsSync(join(VIEWER, 'app/components/BlrReportFooter.vue'))).toBe(false)
 
     for (const path of [
-      'app/components/BusinessLensReportViewer.vue',
+      'app/components/PddKitReportViewer.vue',
       'app/components/BlrReportShell.vue'
     ]) {
       expect(source(path), path).not.toMatch(/<footer|<\/footer>/)
@@ -1192,7 +1192,7 @@ describe('stable Product Report', () => {
     with extra steps.
   */
   it('exposes page, tab and Scenario route state for host URL persistence', () => {
-    const renderer = source('app/components/BusinessLensReportViewer.vue')
+    const renderer = source('app/components/PddKitReportViewer.vue')
     const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrResourcePage.vue')
 

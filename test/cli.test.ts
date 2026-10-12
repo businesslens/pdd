@@ -52,7 +52,7 @@ describe('cli help', () => {
       const result = cli(repo, process.env, ...args)
       expect(result.status, args.join(' ')).toBe(0)
       expect(result.stderr).toBe('')
-      expect(result.stdout).toContain('Usage: businesslens <command> [options]')
+      expect(result.stdout).toContain('Usage: pdd-kit <command> [options]')
       expect(result.stdout).toContain('install [options]')
       expect(result.stdout).toContain('update [options]')
       expect(result.stdout).toContain('lint [options]')
@@ -69,7 +69,7 @@ describe('cli help', () => {
       expect(result.stdout).not.toContain('--no-open')
       expect(result.stdout).not.toContain('Model selection')
       expect(result.stdout).not.toContain('Agent workflows')
-      expect(result.stdout).not.toContain('businesslens-map')
+      expect(result.stdout).not.toContain('pdd-map')
     }
   })
 
@@ -77,7 +77,7 @@ describe('cli help', () => {
     const result = cli(repo, process.env, 'view', '--help')
     expect(result.status).toBe(0)
     expect(result.stderr).toBe('')
-    expect(result.stdout).toContain('Usage: businesslens view [options] [repository]')
+    expect(result.stdout).toContain('Usage: pdd-kit view [options] [repository]')
     expect(result.stdout).toContain('--no-open')
     expect(result.stdout).toContain('--port <port>')
     expect(result.stdout).toContain('--branch <name>')
@@ -91,7 +91,7 @@ describe('cli help', () => {
   it('shows Blueprint subcommands separately from pull options', () => {
     const group = cli(repo, process.env, 'blueprint', '--help')
     expect(group.status).toBe(0)
-    expect(group.stdout).toContain('Usage: businesslens blueprint <command> [options]')
+    expect(group.stdout).toContain('Usage: pdd-kit blueprint <command> [options]')
     expect(group.stdout).toContain('export')
     expect(group.stdout).toContain('open [options] <report>')
     expect(group.stdout).toContain('list')
@@ -102,7 +102,7 @@ describe('cli help', () => {
 
     const pull = cli(repo, process.env, 'blueprint', 'pull', '--help')
     expect(pull.status).toBe(0)
-    expect(pull.stdout).toContain('Usage: businesslens blueprint pull [options] <name>')
+    expect(pull.stdout).toContain('Usage: pdd-kit blueprint pull [options] <name>')
     expect(pull.stdout).not.toContain('--catalog')
     expect(pull.stdout).toContain('--force')
     expect(pull.stdout).not.toContain('--no-open')
@@ -138,7 +138,7 @@ describe('cli dispatch', () => {
     const result = cli(repo, process.env, 'checkpoint', 'Old command')
     expect(result.status).toBe(2)
     expect(result.stderr).toContain('unknown command')
-    expect(existsSync(join(repo, '.businesslens/cache/checkpoints'))).toBe(false)
+    expect(existsSync(join(repo, 'product-model/cache/checkpoints'))).toBe(false)
   })
 
   it('accepts --cwd and -c before or after a command', () => {
@@ -157,8 +157,8 @@ describe('cli dispatch', () => {
   it('treats the current directory and an explicit --cwd . identically', () => {
     const nested = mkdtempSync(join(repo, 'nested-product-'))
     try {
-      cpSync(join(FIXTURE, '.businesslens'), join(nested, '.businesslens'), { recursive: true })
-      writeFileSync(join(nested, '.businesslens', 'config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
+      cpSync(join(FIXTURE, 'product-model'), join(nested, 'product-model'), { recursive: true })
+      writeFileSync(join(nested, 'product-model', 'config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
 
       for (const args of [['lint', '--json'], ['--cwd', '.', 'lint', '--json']]) {
         const result = cli(nested, process.env, ...args)
@@ -175,7 +175,7 @@ describe('cli dispatch', () => {
   it('exports the selected repository into report.json', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint', 'export')
     expect(result.status).toBe(0)
-    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
+    expect(existsSync(join(repo, 'product-model', 'build', 'report.json'))).toBe(true)
   })
 
   // Real CLI processes need room on busy CI runners.
@@ -203,7 +203,7 @@ describe('cli dispatch', () => {
   it('shows Blueprint help without running anything when the group is bare', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint')
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('Usage: businesslens blueprint <command> [options]')
+    expect(result.stdout).toContain('Usage: pdd-kit blueprint <command> [options]')
   }, 30_000)
 
   it('rejects unknown root and Blueprint commands with usage exit code', () => {
@@ -255,7 +255,7 @@ describe('cli dispatch', () => {
         const result = cli(empty, process.env, 'view', '--no-open', '--port', value)
         expect(result.status, value).toBe(2)
         expect(result.stderr, value).toContain('expected an integer from 1 to 65535')
-        expect(result.stderr, value).not.toContain('No .businesslens/')
+        expect(result.stderr, value).not.toContain('No product-model/')
       }
     } finally {
       rmSync(empty, { recursive: true, force: true })
@@ -300,9 +300,9 @@ describe('cli dispatch', () => {
   }, 30_000)
 
   it('does not accept retired commands or options as aliases', () => {
-    rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
+    rmSync(join(repo, 'product-model', 'build'), { recursive: true, force: true })
     expect(cli(ROOT, process.env, '--cwd', repo, 'export').status).toBe(2)
-    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(false)
+    expect(existsSync(join(repo, 'product-model', 'build', 'report.json'))).toBe(false)
 
     const login = cli(repo, process.env, 'login')
     expect(login.status).toBe(2)

@@ -11,7 +11,7 @@ export {
   type ProductCoverDimensions
 } from './cover.js'
 
-/** The one Product logo location understood by BusinessLens. */
+/** The one Product logo location understood by pdd-kit. */
 export const PRODUCT_LOGO_FILENAME = 'logo.svg'
 
 /** Keep contributed and downloaded logos small enough to inspect and serve safely. */

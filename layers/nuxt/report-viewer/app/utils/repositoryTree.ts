@@ -21,7 +21,7 @@ const CHILD_COLLECTIONS: Partial<Record<ReportResourceKind, Record<string, Repor
 /** Recognize authored model paths, including nested models. */
 export function repositoryModelKind(node: Pick<RepositoryTreeNode, 'value' | 'directory'>): ReportResourceKind | null {
   const parts = node.value.split('/')
-  const model = parts.lastIndexOf('.businesslens')
+  const model = parts.lastIndexOf('product-model')
   if (model < 0) return null
   const [collection, ...path] = parts.slice(model + 1)
   if (collection === 'product' && node.directory && !path.length) return 'product'

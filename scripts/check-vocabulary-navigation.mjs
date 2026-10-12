@@ -293,7 +293,7 @@ try {
     const kindDefinition = page.getByRole('dialog', { name: 'Kind — what Entity kind means', exact: true })
     await expect(kindDefinition).toContainText(definitionOf('entity-kind'))
     await expect(kindDefinition.getByRole('link', { name: 'Read more in docs', exact: true }))
-      .toHaveAttribute('href', 'https://businesslens.io/docs/entities#actors-an-entity-that-acts')
+      .toHaveAttribute('href', 'https://pdd-kit.dev/docs/entities#actors-an-entity-that-acts')
     await page.keyboard.press('Escape')
     await expect(entityKind).toBeFocused()
   }
@@ -302,7 +302,7 @@ try {
 
   // Both kinds of definition trigger keep a clear keyboard focus indicator in
   // either theme, and dismissing the popover restores focus to its trigger.
-  // Dark mode is off (businesslens/pdd#70); restore the dark pass when it returns.
+  // Dark mode is off (itai-gendler/pdd-kit#70); restore the dark pass when it returns.
   for (const colorScheme of ['light']) {
     await page.reload()
     const definitionName = 'Information kept — what Information kept means'

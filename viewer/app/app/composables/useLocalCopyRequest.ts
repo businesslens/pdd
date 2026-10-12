@@ -7,7 +7,7 @@ export function useLocalCopyRequest() {
       await navigator.clipboard.writeText(text)
       toast.add({ title: 'Copied', description: 'Paste it to your agent to get the model fixed.', icon: 'i-lucide-copy', color: 'success' })
     } catch {
-      toast.add({ title: 'Could not copy', description: 'Run businesslens lint and give its output to your agent instead.', icon: 'i-lucide-triangle-alert', color: 'error' })
+      toast.add({ title: 'Could not copy', description: 'Run pdd-kit lint and give its output to your agent instead.', icon: 'i-lucide-triangle-alert', color: 'error' })
     }
   }
 }

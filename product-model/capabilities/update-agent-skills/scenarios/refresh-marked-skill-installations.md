@@ -1,0 +1,50 @@
+---
+kind: primary
+routes:
+  terminal: Terminal
+steps:
+  - text: The Developer asks to update the pdd-kit skills
+    kind: actor
+    actor: developer
+    entities: []
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Product finds every installation carrying a valid pdd-kit marker, in the repository and in the personal configuration
+    kind: product
+    entities:
+      - { entity: skill-installation, effect: reads, facts: [Provider, Scope, Version, Skills, Installed at] }
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Product replaces the skills in each one and refreshes its marker while keeping the original installation date
+    kind: product
+    entities:
+      - { entity: skill-installation, effect: changes, facts: [Version, Skills] }
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Product names every installation it updated
+    kind: product
+    entities: []
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+---
+
+# Refresh marked skill installations
+
+## Trigger
+
+The Developer has a newer pdd-kit command and wants the installed skills to
+match it.
+
+## Outcome
+
+Every pdd-kit-marked installation holds the current skills. No unmarked
+directory was discovered, adopted, or changed unless the Developer passed
+`--force`, and no Product Model was touched.
+
+## Edge cases
+
+- Asking for only some harnesses, or only one scope, narrows the search without changing what counts as eligible.

@@ -16,10 +16,10 @@ function isMissing(error: unknown): boolean {
 function assertDirectory(path: string): void {
   const stat = lstatSync(path)
   if (stat.isSymbolicLink()) {
-    throw new Error(`Refusing to use a symbolic link for generated BusinessLens output: ${path}`)
+    throw new Error(`Refusing to use a symbolic link for generated pdd-kit output: ${path}`)
   }
   if (!stat.isDirectory()) {
-    throw new Error(`Generated BusinessLens output path is not a directory: ${path}`)
+    throw new Error(`Generated pdd-kit output path is not a directory: ${path}`)
   }
 }
 
@@ -33,14 +33,14 @@ export function generatedFilePath(repositoryRoot: string, ...segments: string[])
     segments.length < 2
     || segments.some(segment => !segment || segment === '.' || segment === '..' || segment.includes('/') || segment.includes('\\'))
   ) {
-    throw new Error('Generated BusinessLens output requires safe repository-relative path segments.')
+    throw new Error('Generated pdd-kit output requires safe repository-relative path segments.')
   }
 
   const root = realpathSync(resolve(repositoryRoot))
   const output = resolve(root, ...segments)
   const outputRelative = relative(root, output)
   if (!outputRelative || outputRelative === '..' || outputRelative.startsWith(`..${sep}`) || isAbsolute(outputRelative)) {
-    throw new Error('Generated BusinessLens output must stay inside the repository.')
+    throw new Error('Generated pdd-kit output must stay inside the repository.')
   }
 
   let current = root
@@ -60,16 +60,16 @@ export function generatedFilePath(repositoryRoot: string, ...segments: string[])
   }
 
   if (realpathSync(current) !== current) {
-    throw new Error(`Generated BusinessLens output resolves outside its expected directory: ${current}`)
+    throw new Error(`Generated pdd-kit output resolves outside its expected directory: ${current}`)
   }
 
   try {
     const stat = lstatSync(output)
     if (stat.isSymbolicLink()) {
-      throw new Error(`Refusing to overwrite a symbolic link with generated BusinessLens output: ${output}`)
+      throw new Error(`Refusing to overwrite a symbolic link with generated pdd-kit output: ${output}`)
     }
     if (!stat.isFile()) {
-      throw new Error(`Generated BusinessLens output path is not a regular file: ${output}`)
+      throw new Error(`Generated pdd-kit output path is not a regular file: ${output}`)
     }
   } catch (error) {
     if (!isMissing(error)) throw error
@@ -90,7 +90,7 @@ export function writeGeneratedFile(repositoryRoot: string, segments: string[], c
     )
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ELOOP') {
-      throw new Error(`Refusing to overwrite a symbolic link with generated BusinessLens output: ${output}`)
+      throw new Error(`Refusing to overwrite a symbolic link with generated pdd-kit output: ${output}`)
     }
     throw error
   }

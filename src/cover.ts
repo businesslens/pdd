@@ -1,4 +1,4 @@
-/** The one Product cover location understood by BusinessLens. */
+/** The one Product cover location understood by pdd-kit. */
 export const PRODUCT_COVER_FILENAME = 'cover.webp'
 
 /**

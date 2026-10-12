@@ -23,7 +23,7 @@ try {
     const row = page.getByRole('menuitem', { name: /Fixture Shop/ })
     const centers = await row.evaluate(element => [
       element,
-      element.querySelector('[data-businesslens-logo]'),
+      element.querySelector('[data-pdd-kit-logo]'),
       element.querySelector('[data-slot="itemLabel"]'),
       element.querySelector('[data-slot="itemTrailing"] .iconify')
     ].map(node => {
@@ -36,7 +36,7 @@ try {
   await expect(desktop).toHaveCSS('width', '288px')
   const product = rail.getByRole('button', { name: 'Choose product: Fixture Shop', exact: true })
   await expect(product).toContainText('Fixture Shop')
-  await expect(product.locator('[data-businesslens-logo]')).toBeVisible()
+  await expect(product.locator('[data-pdd-kit-logo]')).toBeVisible()
   await product.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('menuitem')).toHaveCount(1)
@@ -64,7 +64,7 @@ try {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading)
   await expectCollectionDrawing(page, 'graph')
   await expect(rail.locator('[data-logo-wordmark], [data-pdd-version]')).toHaveCount(0)
-  await expect(product.locator('[data-businesslens-logo]')).toHaveCSS('width', '17px')
+  await expect(product.locator('[data-pdd-kit-logo]')).toHaveCSS('width', '17px')
 
   const entities = rail.getByRole('button', { name: 'Entities', exact: true })
   await expect(entities).toHaveAttribute('aria-current', 'page')
@@ -95,13 +95,13 @@ try {
   await expect(page.getByRole('dialog', { name: 'Vocabulary', exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog', { name: 'Vocabulary', exact: true })).toHaveCount(0)
-  await expect(rail.getByRole('link', { name: 'Documentation', exact: true })).toHaveAttribute('href', 'https://businesslens.io/docs')
-  await expect(rail.getByRole('link', { name: 'BusinessLens on GitHub', exact: true })).toHaveAttribute('href', 'https://github.com/businesslens/pdd')
+  await expect(rail.getByRole('link', { name: 'Documentation', exact: true })).toHaveAttribute('href', 'https://pdd-kit.dev/docs')
+  await expect(rail.getByRole('link', { name: 'pdd-kit on GitHub', exact: true })).toHaveAttribute('href', 'https://github.com/itai-gendler/pdd-kit')
   await rail.getByRole('button', { name: 'Show theme lab', exact: true }).click()
-  await expect(page.locator('[data-businesslens-theme-lab-bar]')).toBeVisible()
+  await expect(page.locator('[data-pdd-kit-theme-lab-bar]')).toBeVisible()
   await expect(desktop).toHaveCSS('width', '64px')
   await rail.getByRole('button', { name: 'Hide theme lab', exact: true }).click()
-  // Dark mode is off (businesslens/pdd#70): no toggle, and the report stays light.
+  // Dark mode is off (itai-gendler/pdd-kit#70): no toggle, and the report stays light.
   await expect(rail.getByRole('button', { name: 'Toggle color mode', exact: true })).toHaveCount(0)
   await expect(page.locator('html')).not.toHaveClass(/dark/)
 
@@ -132,7 +132,7 @@ try {
   await page.setViewportSize({ width: 1024, height: 500 })
   await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).click()
   await rail.getByRole('button', { name: 'Show theme lab', exact: true }).click()
-  await expect(page.locator('[data-businesslens-theme-lab-bar]')).toBeVisible()
+  await expect(page.locator('[data-pdd-kit-theme-lab-bar]')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Expand sidebar', exact: true })).toBeInViewport()
   await rail.getByRole('button', { name: 'Hide theme lab', exact: true }).click()
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true)

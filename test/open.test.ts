@@ -121,34 +121,34 @@ describe('open report', () => {
       && reference.role !== 'implementation'
       && /^https?:\/\//.test(reference.target)
     )).toBe(true)
-    expect(readFileSync(join(target, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/capabilities/place-order/capability.md'), 'utf8'))
       .toContain('availability:')
-    expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/business-rules/payment-before-confirmation.md'), 'utf8'))
       .toContain('appliesTo:')
     expect(readFileSync(
-      join(target, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md'),
+      join(target, 'product-model/capabilities/place-order/scenarios/complete-checkout.md'),
       'utf8'
     )).toContain('## Decision points')
     expect(readFileSync(
-      join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
+      join(target, 'product-model/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
       'utf8'
     )).toContain('## Handoff note')
     expect(readFileSync(
-      join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
+      join(target, 'product-model/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
       'utf8'
     )).toContain('steps:')
     expect(readFileSync(
-      join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
+      join(target, 'product-model/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
       'utf8'
     )).not.toContain('## Steps')
-    expect(readFileSync(join(target, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('## Teaching note')
-    expect(readFileSync(join(target, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/capabilities/place-order/scenarios/complete-checkout.md'), 'utf8'))
       .toContain('## Recovery note')
-    expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/product.md'), 'utf8'))
       .toContain('## Teaching note')
     // A Screen comes back as relations only: the facts on screen travel by Entity.
-    expect(readFileSync(join(target, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/interfaces/customer-web/experiences/storefront/screens/product-record.md'), 'utf8'))
       .toMatch(/  - entity: catalog-product\n    shows:/)
   })
 
@@ -172,7 +172,7 @@ describe('open report', () => {
       const file = join(fresh, 'nested.json')
       writeFileSync(file, JSON.stringify(report))
       expect(await runOpen(fresh, file, false)).toBe(1)
-      expect(existsSync(join(fresh, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screens'))).toBe(false)
+      expect(existsSync(join(fresh, 'product-model/interfaces/customer-web/experiences/storefront/screens/product-record/screens'))).toBe(false)
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
@@ -196,7 +196,7 @@ describe('open report', () => {
       const imported = loadModel(fresh)
       expect(imported.coverage).toEqual({ scope: '', method: '', covered: [], exclusions: [], unmapped: [], limitations: [] })
       expect(buildProject(fresh).report.coverage).toEqual(imported.coverage)
-      const markdown = readFileSync(join(fresh, '.businesslens/coverage.md'), 'utf8')
+      const markdown = readFileSync(join(fresh, 'product-model/coverage.md'), 'utf8')
       expect(markdown.trim().endsWith('# Coverage')).toBe(true)
       expect(markdown).not.toMatch(/^rationale:/m)
     } finally {
@@ -258,9 +258,9 @@ describe('open report', () => {
       expect(imported.experiences).toEqual([])
       expect(imported.capabilities.flatMap(capability => capability.availability))
         .toEqual(expect.arrayContaining([{ place: 'customer-web' }, { place: 'customer-mobile' }]))
-      expect(readFileSync(join(fresh, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
+      expect(readFileSync(join(fresh, 'product-model/capabilities/place-order/capability.md'), 'utf8'))
         .not.toContain('::')
-      expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
+      expect(readFileSync(join(fresh, 'product-model/config.yaml'), 'utf8'))
         .toContain('schema: 11')
 
       const rebuilt = buildProject(fresh)
@@ -272,25 +272,25 @@ describe('open report', () => {
 
   it('writes the model README, because the model arrived from elsewhere', async () => {
     // A fresh repository: the suite's shared target already holds a model, and
-    // `open` refuses a non-empty `.businesslens/` without --force.
+    // `open` refuses a non-empty `product-model/` without --force.
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-readme-'))
     initialize(fresh)
     try {
       const original = buildProject(source)
       expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
 
-      const readme = readFileSync(join(fresh, '.businesslens', 'README.md'), 'utf8')
+      const readme = readFileSync(join(fresh, 'product-model', 'README.md'), 'utf8')
       expect(readme).toBe(MODEL_README)
-      expect(readme).toContain('use the `businesslens-verify`')
+      expect(readme).toContain('use the `pdd-verify`')
       expect(readme).toContain('Capability Scenarios are acceptance tests')
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
   })
 
-  it('writes nothing outside .businesslens/, including repository instructions', async () => {
+  it('writes nothing outside product-model/, including repository instructions', async () => {
     // The invariant in AGENTS.md "Installer standards" buys:
-    // BusinessLens owns one directory, so repository instructions are untouched.
+    // pdd-kit owns one directory, so repository instructions are untouched.
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-outside-'))
     initialize(fresh)
     try {
@@ -305,11 +305,11 @@ describe('open report', () => {
       expect(readFileSync(join(fresh, 'CLAUDE.md'), 'utf8')).toBe('# Claude rules\n\nPreserve this file.\n')
       expect(readFileSync(join(fresh, 'README.md'), 'utf8')).toBe('# Existing repository\n')
 
-      // `.businesslens/` and — because the second open passed --force — its
+      // `product-model/` and — because the second open passed --force — its
       // timestamped backup. Nothing the repository owns for its own purposes.
       const owned = new Set(['.git', 'AGENTS.md', 'CLAUDE.md', 'README.md'])
       const created = readdirSync(fresh).filter(entry => !owned.has(entry))
-      expect(created.every(entry => entry.startsWith('.businesslens'))).toBe(true)
+      expect(created.every(entry => entry.startsWith('product-model'))).toBe(true)
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
@@ -318,7 +318,7 @@ describe('open report', () => {
   it('writes empty Coverage and adds no claim in the author\'s voice', async () => {
     // Coverage records which of a repository's code the model accounts for, and
     // no code here has been mapped yet, so an opened model starts with none.
-    const opened = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
+    const opened = readFileSync(join(target, 'product-model/coverage.md'), 'utf8')
     expect(opened).not.toMatch(/^review:|^rationale:/m)
     expect(opened).toContain('\n# Coverage\n')
     expect(opened).not.toContain('Opened from a portable Product Report')
@@ -328,13 +328,13 @@ describe('open report', () => {
   it('expands to a fixed point so a re-opened model is byte-identical', async () => {
     // A catalog Blueprint's committed model is itself an expanded report, so
     // `pull` re-expands it and the result has to match what is committed.
-    const first = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
+    const first = readFileSync(join(target, 'product-model/coverage.md'), 'utf8')
 
-    const roundTrip = mkdtempSync(join(tmpdir(), 'businesslens-open-fixed-point-'))
+    const roundTrip = mkdtempSync(join(tmpdir(), 'pdd-kit-open-fixed-point-'))
     try {
       initialize(roundTrip)
       expect(await runOpen(roundTrip, buildProject(target).outputFile, false)).toBe(0)
-      const second = readFileSync(join(roundTrip, '.businesslens/coverage.md'), 'utf8')
+      const second = readFileSync(join(roundTrip, 'product-model/coverage.md'), 'utf8')
       expect(second).toEqual(first)
     } finally {
       rmSync(roundTrip, { recursive: true, force: true })
@@ -342,38 +342,38 @@ describe('open report', () => {
   })
 
   it('writes required classifications and omits absent optional fields', () => {
-    const product = readFileSync(join(target, '.businesslens/product.md'), 'utf8')
+    const product = readFileSync(join(target, 'product-model/product.md'), 'utf8')
     expect(product).toContain('summary: Browse a product catalog, buy products, and manage the resulting orders.')
     expect(product).toContain('category: commerce')
     expect(product).not.toContain('icon:')
     expect(product).not.toContain('accent:')
     expect(product).toContain('license: MIT')
 
-    const shopper = readFileSync(join(target, '.businesslens/entities/shopper.md'), 'utf8')
+    const shopper = readFileSync(join(target, 'product-model/entities/shopper.md'), 'utf8')
     expect(shopper).toMatch(/^---\nkind: person\nacts: external\nrelations:\n/)
     expect(shopper).toContain('- **Delivery address** — ')
-    const order = readFileSync(join(target, '.businesslens/entities/order.md'), 'utf8')
+    const order = readFileSync(join(target, 'product-model/entities/order.md'), 'utf8')
     expect(order).not.toContain('kind:')
     expect(order).not.toContain('transitions:')
 
-    expect(readFileSync(join(target, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/capabilities/place-order/capability.md'), 'utf8'))
       .toMatch(/^---\ndomain: ordering\navailability:/)
 
     // `permits: []` is a claim and survives; an absent `permits` stays absent.
-    expect(readFileSync(join(target, '.businesslens/business-rules/orders-are-never-deleted.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/business-rules/orders-are-never-deleted.md'), 'utf8'))
       .toContain('permits: []')
-    expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/business-rules/payment-before-confirmation.md'), 'utf8'))
       .not.toContain('permits')
-    expect(readFileSync(join(target, '.businesslens/business-rules/refunds-need-an-operator.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/business-rules/refunds-need-an-operator.md'), 'utf8'))
       .toContain('configuredBy: store-settings')
     // Every Step carries `entities`, `[]` included.
-    expect(readFileSync(join(target, '.businesslens/capabilities/settle-payment/scenarios/settle-a-refund.md'), 'utf8'))
+    expect(readFileSync(join(target, 'product-model/capabilities/settle-payment/scenarios/settle-a-refund.md'), 'utf8'))
       .toContain('entities: []')
   })
 
   it('refuses to overwrite a non-empty product model without force', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    const report = join(source, '.businesslens/build/report.json')
+    const report = join(source, 'product-model/build/report.json')
     expect(await runOpen(target, report, false)).toBe(1)
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('is not empty'))
     vi.restoreAllMocks()
@@ -390,7 +390,7 @@ describe('open report', () => {
 
     expect(await runOpen(rejectedTarget, file, false)).toBe(1)
     expect(console.error).toHaveBeenCalled()
-    expect(() => readFileSync(join(rejectedTarget, '.businesslens/product.md'))).toThrow()
+    expect(() => readFileSync(join(rejectedTarget, 'product-model/product.md'))).toThrow()
 
     vi.restoreAllMocks()
     rmSync(rejectedTarget, { recursive: true, force: true })
@@ -409,7 +409,7 @@ describe('open report', () => {
 
     expect(await runOpen(rejectedTarget, file, false)).toBe(1)
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('portable report still exposes reference'))
-    expect(() => readFileSync(join(rejectedTarget, '.businesslens/product.md'))).toThrow()
+    expect(() => readFileSync(join(rejectedTarget, 'product-model/product.md'))).toThrow()
 
     vi.restoreAllMocks()
     rmSync(rejectedTarget, { recursive: true, force: true })
@@ -427,7 +427,7 @@ describe('open report', () => {
 
       expect(await runOpen(legacyTarget, file, false)).toBe(1)
       expect(console.error).toHaveBeenCalled()
-      expect(() => readFileSync(join(legacyTarget, '.businesslens/product.md'))).toThrow()
+      expect(() => readFileSync(join(legacyTarget, 'product-model/product.md'))).toThrow()
     } finally {
       vi.restoreAllMocks()
       rmSync(legacyTarget, { recursive: true, force: true })
@@ -440,10 +440,10 @@ describe('open report', () => {
 
     expect(await runOpen(
       rejectedTarget,
-      'https://app.businesslens.io/api/v1/hub/blueprints/acme/fixture-shop/report.json',
+      'https://app.pdd-kit.dev/api/v1/hub/blueprints/acme/fixture-shop/report.json',
       false
     )).toBe(2)
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('businesslens blueprint pull'))
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('pdd-kit blueprint pull'))
 
     vi.restoreAllMocks()
     rmSync(rejectedTarget, { recursive: true, force: true })

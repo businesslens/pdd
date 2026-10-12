@@ -14,7 +14,7 @@ describe('private Product Report viewer lab', () => {
 
     expect(pkg.files).toContain('!layers/nuxt/report-viewer-lab')
     expect(pkg.exports['./nuxt/report-viewer-lab']).toBeUndefined()
-    expect(config).toContain("name: 'businesslens-nuxt-report-viewer-lab'")
+    expect(config).toContain("name: 'pdd-kit-nuxt-report-viewer-lab'")
     expect(config).toContain("join(currentDir, '../report-viewer')")
     expect(viewerConfig).toContain("resolve('../../layers/nuxt/report-viewer-lab')")
   })
@@ -78,7 +78,7 @@ describe('private Product Report viewer lab', () => {
     const app = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
     const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
 
-    expect(app).toMatch(/<BusinessLensThemeLabBar(?:\s|>)/)
+    expect(app).toMatch(/<PddKitThemeLabBar(?:\s|>)/)
     expect(app).not.toContain('BlrProductPickerLabRow')
     expect(app).not.toContain('useBlrProductPickerVariant')
     expect(app).not.toContain('BlrSidebarIconSizeLabRow')

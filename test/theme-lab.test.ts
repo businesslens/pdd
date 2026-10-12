@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
-  BUSINESSLENS_DARK_BACKGROUNDS,
-  BUSINESSLENS_DEFAULT_DARK_BACKGROUND,
-  BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND,
-  BUSINESSLENS_LIGHT_BACKGROUNDS
-} from '../layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.js'
+  PDD_KIT_DARK_BACKGROUNDS,
+  PDD_KIT_DEFAULT_DARK_BACKGROUND,
+  PDD_KIT_DEFAULT_LIGHT_BACKGROUND,
+  PDD_KIT_LIGHT_BACKGROUNDS
+} from '../layers/nuxt/theme-lab/app/utils/pddKitThemeLabVariants.js'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const layer = join(root, 'layers/nuxt/theme-lab')
@@ -21,24 +21,24 @@ const iconFiles = [
   'icon-192.png',
   'icon-512.png',
   'maskable-icon-512.png',
-  'businesslens-app-icon.svg',
-  'businesslens-maskable-icon.svg',
+  'pdd-kit-app-icon.svg',
+  'pdd-kit-maskable-icon.svg',
   'icon-1024.png'
 ]
 
-describe('shared BusinessLens theme lab', () => {
+describe('shared pdd-kit theme lab', () => {
   it('keeps only the undecided background selections', () => {
-    expect(BUSINESSLENS_LIGHT_BACKGROUNDS.find(item => item.id === BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND)?.name)
+    expect(PDD_KIT_LIGHT_BACKGROUNDS.find(item => item.id === PDD_KIT_DEFAULT_LIGHT_BACKGROUND)?.name)
       .toBe('Glow')
-    expect(BUSINESSLENS_DARK_BACKGROUNDS.find(item => item.id === BUSINESSLENS_DEFAULT_DARK_BACKGROUND)?.name)
+    expect(PDD_KIT_DARK_BACKGROUNDS.find(item => item.id === PDD_KIT_DEFAULT_DARK_BACKGROUND)?.name)
       .toBe('Espresso')
 
-    const variants = readFileSync(join(layer, 'app/utils/businesslensThemeLabVariants.ts'), 'utf8')
+    const variants = readFileSync(join(layer, 'app/utils/pddKitThemeLabVariants.ts'), 'utf8')
     expect(variants).not.toMatch(/mark|lockup|favicon|logo/i)
   })
 
   it('owns the approved identity and complete icon family in the stable theme', () => {
-    for (const file of ['mark.svg', 'mark-dark.svg', 'wordmark.svg', 'wordmark-dark.svg']) {
+    for (const file of ['mark.svg', 'mark-dark.svg']) {
       expect(existsSync(join(theme, 'public/brand/logo', file)), file).toBe(true)
     }
     for (const file of iconFiles) {
@@ -47,9 +47,9 @@ describe('shared BusinessLens theme lab', () => {
     expect(existsSync(join(theme, 'public/favicon.ico'))).toBe(true)
     expect(existsSync(join(theme, 'public/site.webmanifest'))).toBe(true)
 
-    const brand = readFileSync(join(theme, 'app/components/BusinessLensBrand.vue'), 'utf8')
+    const brand = readFileSync(join(theme, 'app/components/PddKitBrand.vue'), 'utf8')
     expect(brand).toContain("const BRAND_BASE = '/brand/logo'")
-    expect(brand).not.toMatch(/variant|useBusinessLensLogoVariant/i)
+    expect(brand).not.toMatch(/variant|usePddKitLogoVariant/i)
 
     const manifest = JSON.parse(readFileSync(join(theme, 'public/site.webmanifest'), 'utf8'))
     for (const icon of manifest.icons) {
@@ -60,15 +60,15 @@ describe('shared BusinessLens theme lab', () => {
 
   it('contains no logo, lockup, or favicon experiment implementation', () => {
     expect(existsSync(join(layer, 'public'))).toBe(false)
-    expect(existsSync(join(layer, 'app/components/BusinessLensBrand.vue'))).toBe(false)
-    expect(existsSync(join(layer, 'app/components/BusinessLensThemeLabLogoRow.vue'))).toBe(false)
-    expect(existsSync(join(layer, 'app/composables/useBusinessLensLogoVariant.ts'))).toBe(false)
-    expect(existsSync(join(layer, 'app/utils/businesslensThemeLabMarks.mjs'))).toBe(false)
+    expect(existsSync(join(layer, 'app/components/PddKitBrand.vue'))).toBe(false)
+    expect(existsSync(join(layer, 'app/components/PddKitThemeLabLogoRow.vue'))).toBe(false)
+    expect(existsSync(join(layer, 'app/composables/usePddKitLogoVariant.ts'))).toBe(false)
+    expect(existsSync(join(layer, 'app/utils/pddKitThemeLabMarks.mjs'))).toBe(false)
 
-    const head = readFileSync(join(layer, 'app/composables/useBusinessLensThemeLabHead.ts'), 'utf8')
-    const bar = readFileSync(join(layer, 'app/components/BusinessLensThemeLabBar.vue'), 'utf8')
+    const head = readFileSync(join(layer, 'app/composables/usePddKitThemeLabHead.ts'), 'utf8')
+    const bar = readFileSync(join(layer, 'app/components/PddKitThemeLabBar.vue'), 'utf8')
     expect(head).not.toMatch(/icon|manifest|mark/i)
-    expect(bar).not.toContain('BusinessLensThemeLabLogoRow')
+    expect(bar).not.toContain('PddKitThemeLabLogoRow')
     expect(bar).toContain('rowCount?: 1 | 2 | 3 | 4 | 5')
     expect(bar).toContain('rowCount: 1')
   })
@@ -87,17 +87,17 @@ describe('shared BusinessLens theme lab', () => {
     expect(reportLayer).toBeGreaterThan(-1)
     expect(themeLabLayer).toBeGreaterThan(reportLayer)
     expect(labConfig).toContain("join(currentDir, '../report-viewer')")
-    expect(localViewer).toContain('useBusinessLensThemeHead()')
-    expect(localViewer).toContain('useBusinessLensThemeLabHead()')
-    expect(readFileSync(join(root, 'viewer/app/app/components/LocalViewerBrand.vue'), 'utf8')).toContain('useBusinessLensThemeLab()')
-    expect(localViewer).toMatch(/<BusinessLensThemeLabBar(?:\s|>)/)
+    expect(localViewer).toContain('usePddKitThemeHead()')
+    expect(localViewer).toContain('usePddKitThemeLabHead()')
+    expect(readFileSync(join(root, 'viewer/app/app/components/LocalViewerBrand.vue'), 'utf8')).toContain('usePddKitThemeLab()')
+    expect(localViewer).toMatch(/<PddKitThemeLabBar(?:\s|>)/)
     expect(localViewer).not.toContain('<UHeader')
-    expect(localViewer).toContain('var(--businesslens-theme-lab-height)')
+    expect(localViewer).toContain('var(--pdd-kit-theme-lab-height)')
     expect(localViewer).toContain('class="flex h-dvh flex-col overflow-hidden"')
-    expect(localViewer).toContain('class="businesslens-page-surface min-h-0 flex-1 overflow-hidden"')
+    expect(localViewer).toContain('class="pdd-kit-page-surface min-h-0 flex-1 overflow-hidden"')
     expect(localViewer).not.toContain('<footer')
-    expect(localPage).toContain('class="businesslens-local-report min-h-0 flex-1"')
-    expect(localCss).toContain('.businesslens-report.businesslens-local-report')
+    expect(localPage).toContain('class="pdd-kit-local-report min-h-0 flex-1"')
+    expect(localCss).toContain('product-model-reportproduct-model-local-report')
   })
 
   it('keeps stable dark tokens and the flat Espresso audition distinct', () => {

@@ -630,7 +630,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       <BlrReportTools in-header @search="searchOpen = true" @vocabulary="openVocabulary" />
     </Teleport>
 
-    <UDashboardGroup storage-key="businesslens-report" unit="px" class="relative min-h-0 flex-1">
+    <UDashboardGroup storage-key="pdd-kit-report" unit="px" class="relative min-h-0 flex-1">
       <UDashboardSidebar
         :id="sidebarId"
         v-model:collapsed="sidebarCollapsed"
@@ -677,7 +677,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <UDashboardSidebarCollapse
               size="sm"
               :aria-expanded="!sidebarCollapsed"
-              :aria-controls="`businesslens-report-sidebar-${sidebarId}`"
+              :aria-controls="`pdd-kit-report-sidebar-${sidebarId}`"
             />
             <UButton
               icon="i-lucide-menu"

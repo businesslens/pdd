@@ -2,7 +2,7 @@
 /**
  * Open a nested model in the local Product Report, as its own repository.
  *
- * `businesslens view` resolves every code reference against `git ls-files` of
+ * `pdd-kit view` resolves every code reference against `git ls-files` of
  * the repository it finds by walking up. A model that sits inside this
  * repository — the golden lint fixture above all — therefore fails lint from
  * where it lives: its `src/services/orders.ts` is tracked here only as
@@ -41,7 +41,7 @@ function fail(message) {
 }
 
 if (!existsSync(cli)) fail('dist/cli.js is missing. Run `pnpm build:core` first.')
-if (!existsSync(join(source, '.businesslens'))) fail(`${source} holds no .businesslens/ directory.`)
+if (!existsSync(join(source, 'product-model'))) fail(`${source} holds no product-model/ directory.`)
 
 function git(cwd, ...gitArgs) {
   const result = spawnSync('git', gitArgs, { cwd, encoding: 'utf8' })
@@ -50,13 +50,13 @@ function git(cwd, ...gitArgs) {
 }
 
 /* The generated folders are not part of the fixture; the copy grows its own. */
-const skip = (path) => /(^|\/)\.businesslens\/(build|cache)(\/|$)/.test(relative(source, path))
+const skip = (path) => /(^|\/)\product-model\/(build|cache)(\/|$)/.test(relative(source, path))
 
 const copy = mkdtempSync(join(tmpdir(), 'bl-view-'))
 cpSync(source, copy, { recursive: true, filter: path => !skip(path) })
 git(copy, 'init', '--quiet', '--initial-branch=main')
-git(copy, 'config', 'user.email', 'view@businesslens.local')
-git(copy, 'config', 'user.name', 'businesslens view')
+git(copy, 'config', 'user.email', 'view@pdd-kit.local')
+git(copy, 'config', 'user.name', 'pdd-kit view')
 git(copy, 'add', '--all')
 git(copy, 'commit', '--quiet', '--message', 'fixture')
 console.log(`Viewing ${relative(root, source) || source} as its own repository at ${copy}`)

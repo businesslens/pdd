@@ -102,7 +102,7 @@ async function arrange() {
     if (cache.size > 8) cache.delete(cache.keys().next().value!)
     publish(placed)
     stopWorker()
-  } catch (error) { if (id !== requestId || !mounted) return; console.warn('[BusinessLens] Diagram could not start:', error); failed.value = true; pending.value = false; layout.value = null; stopWorker() }
+  } catch (error) { if (id !== requestId || !mounted) return; console.warn('[pdd-kit] Diagram could not start:', error); failed.value = true; pending.value = false; layout.value = null; stopWorker() }
 }
 
 const signature = computed(() => JSON.stringify([props.diagram, props.viewportKey]))

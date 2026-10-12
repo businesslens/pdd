@@ -10,5 +10,5 @@ export interface LocalLiveState {
 }
 
 export function useLocalLive() {
-  return useState<LocalLiveState>('businesslens-local-live', () => ({ connected: false, revision: 0, updatedAt: null }))
+  return useState<LocalLiveState>('pdd-kit-local-live', () => ({ connected: false, revision: 0, updatedAt: null }))
 }

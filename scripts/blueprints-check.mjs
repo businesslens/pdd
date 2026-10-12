@@ -2,7 +2,7 @@
 /**
  * Gate every Blueprint under `blueprints/` before it can reach the release.
  *
- * This deliberately does not trust `businesslens blueprint contribute`.
+ * This deliberately does not trust `pdd-kit blueprint contribute`.
  * Anyone can open a pull request by hand, so the checks that matter — above all
  * that no Blueprint carries workspace material out of the repository it was
  * authored in — are re-run here against what is actually on disk.
@@ -25,7 +25,7 @@ async function buildBlueprint(dir) {
   } catch (error) {
     throw new Error((error.stderr || error.stdout || error.message).trim())
   }
-  return JSON.parse(await readFile(join(dir, '.businesslens/build/report.json'), 'utf8'))
+  return JSON.parse(await readFile(join(dir, 'product-model/build/report.json'), 'utf8'))
 }
 const blueprintsDir = resolve(root, 'blueprints')
 const errors = []
@@ -78,31 +78,31 @@ function workspaceMaterial(report) {
 for (const slug of entries) {
   const dir = join(blueprintsDir, slug)
   const label = `blueprints/${slug}`
-  if (!existsSync(join(dir, '.businesslens'))) {
-    errors.push(`${label}: .businesslens/ is missing`)
+  if (!existsSync(join(dir, 'product-model'))) {
+    errors.push(`${label}: product-model/ is missing`)
     continue
   }
   // Coverage records which of a repository's code the model accounts for. A
   // Blueprint is tied to no code, so its authored coverage is empty.
-  const coverageFile = join(dir, '.businesslens', 'coverage.md')
+  const coverageFile = join(dir, 'product-model', 'coverage.md')
   if (existsSync(coverageFile)) {
     // Line endings are normalized as the model loader does, so CRLF cannot hide an entry.
     const frontmatter = (await readFile(coverageFile, 'utf8')).replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---/)?.[1]
-    if (frontmatter === undefined) errors.push(`${label}: .businesslens/coverage.md has no frontmatter`)
+    if (frontmatter === undefined) errors.push(`${label}: product-model/coverage.md has no frontmatter`)
     const coverage = frontmatter ? parseYaml(frontmatter) ?? {} : {}
     const recorded = ['covered', 'exclusions', 'unmapped', 'limitations'].filter(kind => coverage[kind]?.length)
     if (recorded.length || coverage.scope || coverage.method) {
-      errors.push(`${label}: .businesslens/coverage.md must be empty — a Blueprint is tied to no code, so it records no scope, method or ${recorded.join(', ') || 'entries'}`)
+      errors.push(`${label}: product-model/coverage.md must be empty — a Blueprint is tied to no code, so it records no scope, method or ${recorded.join(', ') || 'entries'}`)
     }
   }
 
-  const logoFile = join(dir, '.businesslens', 'product', 'logo.svg')
+  const logoFile = join(dir, 'product-model', 'product', 'logo.svg')
   if (!existsSync(logoFile)) {
-    errors.push(`${label}: .businesslens/product/logo.svg is required`)
+    errors.push(`${label}: product-model/product/logo.svg is required`)
   } else {
     const stat = await lstat(logoFile)
     if (stat.isSymbolicLink() || !stat.isFile()) {
-      errors.push(`${label}: .businesslens/product/logo.svg must be a regular file, not a symbolic link`)
+      errors.push(`${label}: product-model/product/logo.svg must be a regular file, not a symbolic link`)
     } else {
       for (const issue of validateProductLogo(await readFile(logoFile))) {
         errors.push(`${label}: ${issue}`)
@@ -111,13 +111,13 @@ for (const slug of entries) {
   }
 
   // A cover is optional; when present it is checked like the logo.
-  const coverFile = join(dir, '.businesslens', 'product', 'cover.webp')
+  const coverFile = join(dir, 'product-model', 'product', 'cover.webp')
   // lstat rather than existsSync, which follows links: a broken link is refused, not skipped.
   const coverStat = await lstat(coverFile).catch(error => (error.code === 'ENOENT' ? undefined : Promise.reject(error)))
   if (coverStat) {
     const stat = coverStat
     if (stat.isSymbolicLink() || !stat.isFile()) {
-      errors.push(`${label}: .businesslens/product/cover.webp must be a regular file, not a symbolic link`)
+      errors.push(`${label}: product-model/product/cover.webp must be a regular file, not a symbolic link`)
     } else {
       for (const issue of validateProductCover(await readFile(coverFile))) {
         errors.push(`${label}: ${issue}`)

@@ -138,7 +138,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     }
     const logo = readProductLogo(modelRoot)
     if (!logo) {
-      throw new Error('A public Blueprint requires .businesslens/product/logo.svg.')
+      throw new Error('A public Blueprint requires product-model/product/logo.svg.')
     }
 
     // A Blueprint has no separate identity. Its Product ID is the
@@ -148,8 +148,8 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     // Regenerate the model from the portable report rather than copying the
     // authored files. Workspace references survive a copy; only projection and
     // expansion strip them. It also makes the pull request byte-identical
-    // to what `businesslens blueprint pull <slug>` produces.
-    workspace = mkdtempSync(join(tmpdir(), 'businesslens-contribute-'))
+    // to what `pdd-kit blueprint pull <slug>` produces.
+    workspace = mkdtempSync(join(tmpdir(), 'pdd-kit-contribute-'))
     const regenerated = join(workspace, 'model')
     mkdirSync(regenerated, { recursive: true })
     const cover = readProductCover(modelRoot)
@@ -217,9 +217,9 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     const target = join(checkout, 'blueprints', slug)
     rmSync(target, { recursive: true, force: true })
     mkdirSync(target, { recursive: true })
-    cpSync(join(regenerated, '.businesslens'), join(target, '.businesslens'), { recursive: true })
-    rmSync(join(target, '.businesslens', 'build'), { recursive: true, force: true })
-    rmSync(join(target, '.businesslens', 'cache'), { recursive: true, force: true })
+    cpSync(join(regenerated, 'product-model'), join(target, 'product-model'), { recursive: true })
+    rmSync(join(target, 'product-model', 'build'), { recursive: true, force: true })
+    rmSync(join(target, 'product-model', 'cache'), { recursive: true, force: true })
 
     execFileSync('git', ['-C', checkout, 'add', '-A'], { stdio: 'pipe' })
     execFileSync('git', ['-C', checkout, 'commit', '-m', `feat: add the ${slug} Blueprint`], { stdio: 'pipe' })
@@ -265,7 +265,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
         'Everything in this pull request was regenerated from a portable Product Report,',
         'so it carries no implementation or repository-local references, no source paths,',
         'and no reference to the repository',
-        'it came from, and is byte-identical to what `businesslens blueprint pull` produces.'
+        'it came from, and is byte-identical to what `pdd-kit blueprint pull` produces.'
       ].join('\n')
     ], checkout)
 

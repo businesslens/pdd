@@ -166,7 +166,7 @@ Entity no step changes, no Screen presents, nothing names as an actor, no Rule
 reads through a condition's or threshold's `entityId` or a `configuredByEntityId`, and no
 Variation chooses by is invalid — a read step never counts. The report is
 expanded straight into an authored folder, so a report carrying an edge the
-folder rules reject would produce a `.businesslens/` that fails `lint`.
+folder rules reject would produce a `product-model/` that fails `lint`.
 
 Validation also rejects Step text naming an Entity title without declaring it
 in `entities`, using the folder rule's same title matching and exceptions:
@@ -304,7 +304,7 @@ target rules defined in [`format.md`](./format.md).
 ## Blueprint release
 
 Published Blueprints are files of one GitHub Release in the Blueprint
-repository, `itai-gendler/pdd-kit` unless `BUSINESSLENS_BLUEPRINT_REPOSITORY`
+repository, `itai-gendler/pdd-kit` unless `PDD_KIT_BLUEPRINT_REPOSITORY`
 names another `owner/repo`. Its tag carries the schema's **major alone** —
 `blueprints-v19` for `schemaVersion: "19.0.0"`. The major is the whole
 compatibility statement, because there is no compatibility reader: a CLI asks
@@ -317,7 +317,7 @@ chosen by major, and so a reader can refuse a stale report in one sentence;
 nothing else branches on it. No type, schema or export carries a version in its
 name — `ProductReport` and `ProductReportSchema` are the only names — and no
 migration or historical reader exists. `generator.version` records which
-BusinessLens release produced a report, for provenance only.
+pdd-kit release produced a report, for provenance only.
 
 Every push to `main` rebuilds every `blueprints/<slug>/` into the release, so a
 merged Blueprint is pullable without a CLI release. The release is a
@@ -338,7 +338,7 @@ redirected away from HTTPS. Integrity rests on the digest, not on the
 transport: GitHub serves release files through a redirect to its asset host,
 which is followed. A missing or invalid logo or cover is skipped, and a cover is
 fetched only with a logo. Every request carries
-`user-agent: businesslens/<cli-version>`.
+`user-agent: pdd-kit/<cli-version>`.
 
 ## Coverage
 
@@ -356,7 +356,7 @@ report proposed or published as a public Blueprint is first passed through one
 shared projection:
 
 ```ts
-import { projectPortableReport } from 'businesslens/report'
+import { projectPortableReport } from 'pdd-kit/report'
 
 serve(projectPortableReport(report))
 ```
@@ -407,15 +407,15 @@ source navigation is never transplanted into the receiving repository.
 The inverse command is:
 
 ```bash
-npx businesslens blueprint open ./report.json
+npx pdd-kit blueprint open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under
-`.businesslens/`. Leaf resources are written compactly as `<id>.md`; a resource
+`product-model/`. Leaf resources are written compactly as `<id>.md`; a resource
 is written as `<id>/<type>.md` only when report content gives it child resources.
 A Product pulled with a separate `logo.svg` similarly expands from `product.md`
 to `product/product.md`, with an optional `cover.webp` beside the logo.
-`npx businesslens blueprint pull <blueprint-slug>` anonymously retrieves that
+`npx pdd-kit blueprint pull <blueprint-slug>` anonymously retrieves that
 Blueprint from the [release](#blueprint-release) and invokes the same expansion
 path without saving a user-facing report download.
 
@@ -423,7 +423,7 @@ Both commands refuse a non-empty target by default. The semantic round-trip
 guarantee is:
 
 ```text
-report A → blueprint open → .businesslens/ → blueprint export → report B
+report A → blueprint open → product-model/ → blueprint export → report B
 ```
 
 After normalizing `generatedAt` and generator version, A and B describe the

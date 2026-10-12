@@ -163,13 +163,13 @@
   padding: 0.1875rem 0.5rem;
   border: 1px solid var(--ui-border-accented);
   border-radius: 9999px;
-  background: var(--businesslens-badge-bg);
+  background: var(--pdd-kit-badge-bg);
   font-size: 12px;
   line-height: 1.25rem;
 }
 
 .blr-chip:hover {
-  background: color-mix(in srgb, var(--ui-text-muted) 7%, var(--businesslens-badge-bg));
+  background: color-mix(in srgb, var(--ui-text-muted) 7%, var(--pdd-kit-badge-bg));
   border-color: color-mix(in srgb, var(--ui-text-muted) 45%, var(--ui-border-accented));
 }
 
@@ -243,7 +243,7 @@
   padding: 0.125rem 0.5rem;
   border: 1px solid var(--ui-border-accented);
   border-radius: 9999px;
-  background: var(--businesslens-badge-bg);
+  background: var(--pdd-kit-badge-bg);
   color: var(--ui-text);
   font-size: 12px;
   line-height: 1.25rem;
@@ -335,7 +335,7 @@
    inside the same slot; the sub-icon on a set's mark and the picker keep their
    own sizing. Scaled, so no row shifts. Scoped to the report and the overlays
    it portals out, so a host's own use of the glyph is left alone. */
-:is(.businesslens-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-picker] *) {
+:is(product-model-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-picker] *) {
   transform: scale(0.875);
 }
 

@@ -1,4 +1,4 @@
-import type { ProductReport } from 'businesslens/report'
+import type { ProductReport } from 'pdd-kit/report'
 
 /** One problem with the authored model, as the CLI serves it. */
 export interface LocalIssue {
@@ -29,7 +29,7 @@ export interface LocalStatus {
 
 /** The status the CLI last announced; `null` until the first one arrives. */
 export function useLocalProblems() {
-  return useState<LocalStatus | null>('businesslens-local-problems', () => null)
+  return useState<LocalStatus | null>('pdd-kit-local-problems', () => null)
 }
 
 /** Issues grouped under their file, in the order they were reported. */

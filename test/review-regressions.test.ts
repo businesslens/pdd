@@ -24,13 +24,13 @@ describe('merge review regressions', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'bl-place-collision-'))
     try {
       cpSync(fixture, cwd, { recursive: true })
-      const screen = join(cwd, '.businesslens/interfaces/customer-web/screens/storefront.md')
-      writeFileSync(screen, readFileSync(join(cwd, '.businesslens/interfaces/customer-web/screens/catalog.md'), 'utf8'))
+      const screen = join(cwd, 'product-model/interfaces/customer-web/screens/storefront.md')
+      writeFileSync(screen, readFileSync(join(cwd, 'product-model/interfaces/customer-web/screens/catalog.md'), 'utf8'))
       const issues = lintModel(loadModel(cwd), tracked).errors.filter(error => error.startsWith('place id'))
       expect(issues).toHaveLength(1)
       expect(issues[0]).toContain('customer-web::storefront')
       expect(issues[0]).toContain(screen)
-      expect(issues[0]).toContain('.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
+      expect(issues[0]).toContain('product-model/interfaces/customer-web/experiences/storefront/experience.md')
     } finally { rmSync(cwd, { recursive: true, force: true }) }
   })
 
@@ -49,7 +49,7 @@ describe('merge review regressions', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'bl-fact-order-'))
     try {
       cpSync(fixture, cwd, { recursive: true })
-      const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+      const scenario = join(cwd, 'product-model/capabilities/browse-catalog/scenarios/browse-catalog.md')
       writeFileSync(scenario, readFileSync(scenario, 'utf8').replaceAll('facts: [Name and description, Price, Stock remaining]', 'facts: [Stock remaining, Price, Name and description]'))
       const reordered = compileReport(loadModel(cwd), '2026-10-01')
       expect(JSON.stringify(reordered)).toBe(JSON.stringify(report()))
@@ -72,13 +72,13 @@ describe('merge review regressions', () => {
         const target = join(parent, existing ? 'existing' : 'empty')
         mkdirSync(target)
         if (existing) {
-          mkdirSync(join(target, '.businesslens'))
-          writeFileSync(join(target, '.businesslens/product.md'), '# Preserve this model\n')
+          mkdirSync(join(target, 'product-model'))
+          writeFileSync(join(target, 'product-model/product.md'), '# Preserve this model\n')
         }
         const before = readdirSync(target)
         expect(() => expandProductReport(target, input, force)).toThrow(/place id "customer-web::storefront"/)
         expect(readdirSync(target)).toEqual(before)
-        if (existing) expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8')).toBe('# Preserve this model\n')
+        if (existing) expect(readFileSync(join(target, 'product-model/product.md'), 'utf8')).toBe('# Preserve this model\n')
       }
       expect(readdirSync(parent).sort()).toEqual(['empty', 'existing'])
     } finally { rmSync(parent, { recursive: true, force: true }) }
@@ -90,8 +90,8 @@ describe('merge review regressions', () => {
     try {
       cpSync(fixture, cwd, { recursive: true })
       const content = '---\nentities:\n  - { entity: catalog-product, shows: [Name and description, Price, Stock remaining] }\n---\n\n# Shared catalog\n\nThe shared catalog detail.\n'
-      writeFileSync(join(cwd, '.businesslens/interfaces/customer-web/screens/shared-catalog.md'), content)
-      const scenarioFile = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+      writeFileSync(join(cwd, 'product-model/interfaces/customer-web/screens/shared-catalog.md'), content)
+      const scenarioFile = join(cwd, 'product-model/capabilities/browse-catalog/scenarios/browse-catalog.md')
       writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replaceAll('customer-web::storefront::product-record', 'customer-web::shared-catalog'))
       const model = loadModel(cwd)
       expect(lintModel(model, tracked).errors).toEqual([])
@@ -106,7 +106,7 @@ describe('merge review regressions', () => {
         expect(existsSync(imported.file)).toBe(true)
       }
 
-      const parent = join(cwd, '.businesslens/interfaces/customer-web/screens/shared-storefront')
+      const parent = join(cwd, 'product-model/interfaces/customer-web/screens/shared-storefront')
       mkdirSync(join(parent, 'screens'), { recursive: true })
       writeFileSync(join(parent, 'screen.md'), content.replace('Shared catalog', 'Shared storefront'))
       writeFileSync(join(parent, 'screens/reviews.md'), content.replace('Shared catalog', 'Reviews'))
@@ -209,7 +209,7 @@ describe('merge review regressions', () => {
   const variedShop = () => {
     const cwd = mkdtempSync(join(tmpdir(), 'bl-varied-shop-'))
     cpSync(fixture, cwd, { recursive: true })
-    const bl = join(cwd, '.businesslens')
+    const bl = join(cwd, 'product-model')
     const edit = (path: string, from: string, to: string) => {
       const file = join(bl, path)
       const text = readFileSync(file, 'utf8')

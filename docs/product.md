@@ -27,7 +27,7 @@ summary: Browse a product catalog, buy products, and manage the resulting orders
 category: commerce
 tags: [commerce, fixture]
 authors:
-  - name: BusinessLens
+  - name: pdd-kit
 license: MIT
 languages: [en, de]
 limitations: []
@@ -39,7 +39,7 @@ A tiny webshop where shoppers browse a catalog and buy products, and store admin
 
 ## Intent
 
-Exercise the complete BusinessLens report contract with a small deterministic product.
+Exercise the complete pdd-kit report contract with a small deterministic product.
 ```
 
 ## One Product or several?
@@ -49,9 +49,9 @@ A website, a mobile app, a CLI and a public API are usually
 separate Products for genuinely separate promises.
 
 Repository layout doesn't decide it: several packages may build one Product.
-Today a repository holds one Product Model in one `.businesslens/`; support for
+Today a repository holds one Product Model in one `product-model/`; support for
 several Products in one repository is planned
-([#46](https://github.com/businesslens/pdd/issues/46)).
+([#46](https://github.com/itai-gendler/pdd-kit/issues/46)).
 
 ## The file
 
@@ -86,7 +86,7 @@ never describes the Product; it records which code the model accounts for.
 A logo expands the Product into a folder:
 
 ```text
-.businesslens/product/
+product-model/product/
 ├── product.md
 ├── logo.svg
 └── cover.webp      # optional

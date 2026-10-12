@@ -5,7 +5,7 @@ import type { ReferencePreview } from '../../layers/nuxt/report-viewer/app/utils
 import { previewText } from './local-preview.js'
 import { highlightedCode } from './syntax-highlighting.js'
 
-const fileHref = (path: string) => '/_businesslens/file/' + path.split('/').map(encodeURIComponent).join('/')
+const fileHref = (path: string) => '/_pdd-kit/file/' + path.split('/').map(encodeURIComponent).join('/')
 const imageExtension = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i
 const assetExtension = /\.(?:avif|gif|jpe?g|md|pdf|png|svg|txt|webp)$/i
 

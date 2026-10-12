@@ -11,7 +11,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
  */
 export default defineNuxtConfig({
   $meta: {
-    name: 'businesslens-nuxt-report-viewer-lab'
+    name: 'pdd-kit-nuxt-report-viewer-lab'
   },
   extends: [join(currentDir, '../report-viewer')]
 })

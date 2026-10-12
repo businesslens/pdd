@@ -6,7 +6,7 @@ import { join } from 'node:path'
 
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running fixture-shop report URL.')
-const report = await fetch(new URL('/_businesslens/report.json', origin)).then(response => response.json())
+const report = await fetch(new URL('/_pdd-kit/report.json', origin)).then(response => response.json())
 const screenshots = process.env.BLR_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
@@ -175,11 +175,11 @@ try {
     resource.references[0].title = resource.references[0].target
     resource.references.push({ kind: 'visual', role: 'intent', title: 'Reference preview', target: 'reference-preview.svg' })
     resource.references.push(...Array.from({ length: 30 }, (_, index) => ({ kind: 'spec', role: 'context', title: `Supporting document ${index + 1}`, target: `https://example.com/references/${index + 1}` })))
-    await page.route('**/_businesslens/report.json', route => route.fulfill({ json: populated }))
-    await page.route('**/_businesslens/file/reference-preview.svg', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160"><rect width="320" height="160" fill="#bbb"/></svg>' }))
+    await page.route('**/_pdd-kit/report.json', route => route.fulfill({ json: populated }))
+    await page.route('**/_pdd-kit/file/reference-preview.svg', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160"><rect width="320" height="160" fill="#bbb"/></svg>' }))
     await page.goto(`${origin}/?e=entity:order&rt=references`)
     const specification = references.locator('[data-reference-target="spec/format.md"]')
-    expect(new URL(await specification.getByRole('link', { name: /^spec\/format\.md/ }).getAttribute('href'), origin).searchParams.get('f')).toBe('/_businesslens/file/spec/format.md')
+    expect(new URL(await specification.getByRole('link', { name: /^spec\/format\.md/ }).getAttribute('href'), origin).searchParams.get('f')).toBe('/_pdd-kit/file/spec/format.md')
     await expect(specification.locator('[data-reference-label]')).toHaveText('spec/format.md')
     await expect(specification.locator('[data-reference-title]')).toHaveText('Why an agent harness is an Entity that acts')
     await expect(specification.locator('[data-reference-location]')).toHaveCount(0)

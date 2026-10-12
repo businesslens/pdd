@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  // `report` is the published library entry consumed by BusinessLens Platform;
+  // `report` is the published library entry consumed by pdd-kit Platform;
   // it carries type declarations because it is a cross-repository contract.
   entry: {
     cli: 'src/cli.ts',
@@ -11,7 +11,7 @@ export default defineConfig({
     'report-digest': 'src/report-digest.ts',
     'report-selectors': 'src/report-selectors.ts',
     logo: 'src/logo.ts',
-    businesslensThemeLabVariants: 'layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts'
+    pddKitThemeLabVariants: 'layers/nuxt/theme-lab/app/utils/pddKitThemeLabVariants.ts'
   },
   format: 'esm',
   platform: 'node',

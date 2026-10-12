@@ -5,18 +5,18 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 
 // Dark mode is off until it reads as well as light. Its styles stay in place;
 // set this to true to restore the toggles and the visitor's own preference.
-// https://github.com/businesslens/pdd/issues/70
+// https://github.com/itai-gendler/pdd-kit/issues/70
 const darkMode = false
 
 export default defineNuxtConfig({
   $meta: {
-    name: 'businesslens-nuxt-theme'
+    name: 'pdd-kit-nuxt-theme'
   },
   // Forcing light in the document itself keeps a stored dark preference from
   // painting before the app starts, including in the client-only local viewer.
   // A global route middleware then holds every route to light.
   app: darkMode ? {} : { head: { htmlAttrs: { 'data-color-mode-forced': 'light' } } },
-  appConfig: { businessLens: { darkMode } },
+  appConfig: { pddKit: { darkMode } },
   modules: ['@nuxt/ui'],
   css: [
     '@fontsource-variable/archivo',

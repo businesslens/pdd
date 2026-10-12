@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   release:
-    if: github.repository == 'businesslens/pdd' && github.ref == 'refs/heads/main'
+    if: github.repository == 'itai-gendler/pdd-kit' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

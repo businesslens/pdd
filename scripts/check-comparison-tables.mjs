@@ -8,7 +8,7 @@ import { selectCollectionDrawing, expectCollectionDrawing } from './report-view-
 
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI report URL with mutation and Rule data.')
-const report = await fetch(`${origin}/_businesslens/report.json`).then(response => response.json())
+const report = await fetch(`${origin}/_pdd-kit/report.json`).then(response => response.json())
 /* Rows draw two or more alternatives of one set as that set's single row. */
 const setOfKey = new Map(report.model.variations.flatMap(set => set.alternatives.map(item =>
   [`${set.of === 'business-rule' ? 'rule' : set.of}:${item.resourceId}`, `variation:${set.id}`])))
@@ -236,7 +236,7 @@ try {
   }))
   const largePage = await browser.newPage({ viewport: { width: 1440, height: 900 } })
   observeErrors(largePage)
-  await largePage.route('**/_businesslens/report.json', route => route.fulfill({ json: large }))
+  await largePage.route('**/_pdd-kit/report.json', route => route.fulfill({ json: large }))
   await largePage.goto(`${origin}/?s=rule&t=matrix`)
   const matrix = largePage.locator('.blr-topology-matrix')
   const range = largePage.locator('.blr-matrix-range')

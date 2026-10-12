@@ -10,7 +10,7 @@ function resolvePackage(): { root: string, version: string } {
   for (const root of [join(here, '..'), join(here, '../..')]) {
     try {
       const parsed = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { name?: string, version?: string }
-      if (parsed.name === 'businesslens' && parsed.version) {
+      if (parsed.name === 'pdd-kit' && parsed.version) {
         cached = { root, version: parsed.version }
         return cached
       }

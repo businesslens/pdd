@@ -2,7 +2,7 @@
  * Categorical colour for the Product Report: one fixed slot order, two selected modes.
  *
  * The slots are the validated categorical order, re-stepped for nothing — they
- * are used as published. Both modes were re-validated against the BusinessLens
+ * are used as published. Both modes were re-validated against the pdd-kit
  * surfaces rather than the reference ones (`#f4ecdb` light, `#1b1713` dark):
  * every gate passes, with a light-mode contrast warning on the orange, aqua,
  * yellow and magenta slots. That warning obligates relief, so **colour is never

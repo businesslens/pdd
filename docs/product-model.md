@@ -1,13 +1,13 @@
 ---
 title: Model overview
-description: The Product Model in five minutes (what the .businesslens/ folder holds, what each resource type is for, and how to tell them apart).
+description: The Product Model in five minutes (what the product-model/ folder holds, what each resource type is for, and how to tell them apart).
 section: open-source
 group: Product Model
 order: 6
 terms:
   - term: Product Model
     anchor: the-shape-of-a-model
-    definition: "The .businesslens/ folder: one product described in Markdown files, tracked in Git, and free to point at the repository's code."
+    definition: "The product-model/ folder: one product described in Markdown files, tracked in Git, and free to point at the repository's code."
   - term: Intent
     anchor: authoring-conventions
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
@@ -21,10 +21,10 @@ terms:
 
 # The Product Model
 
-**A Product Model is a folder of Markdown files, `.businesslens/`, that says what
+**A Product Model is a folder of Markdown files, `product-model/`, that says what
 one product does today: for whom, where, with what, and under which rules.** It
 lives in your repository, changes in pull requests, and is checked by
-[`businesslens lint`](./cli-lint.md), which reports every rule a file breaks.
+[`pdd-kit lint`](./cli-lint.md), which reports every rule a file breaks.
 
 It describes the product, not the code: no files, frameworks or endpoints, only
 what a person using the product could confirm.
@@ -34,7 +34,7 @@ what a person using the product could confirm.
 Each file is one **resource**, and the folder it sits in decides its type.
 
 ```text
-.businesslens/
+product-model/
 ├── product.md              # the one Product
 ├── coverage.md             # which code the model accounts for
 ├── interfaces/             # where people and systems meet the Product
@@ -147,7 +147,7 @@ wrong.
 
 The model holds no timeline, priority, metrics, market case or risk: real
 product work, but not what the product does. The PRD's requirements section is
-the overlap, and [`businesslens-ideate`](./skill-businesslens-ideate.md) writes
+the overlap, and [`pdd-ideate`](./skill-pdd-ideate.md) writes
 it straight into the model. Attach the PRD itself as a `prd`
 [Reference](./references.md) with `role: intent`.
 
@@ -188,9 +188,9 @@ limitations: []
 
 Every field is required, and every entry names its code: a unique one-line
 `description` of the code area and its `paths`, usually folders.
-[`businesslens-map`](./skill-businesslens-map.md) writes coverage when it maps
+[`pdd-map`](./skill-pdd-map.md) writes coverage when it maps
 a repository. A model with no code yet — a Blueprint, or one you design first
-with [`businesslens-ideate`](./skill-businesslens-ideate.md) — has empty
+with [`pdd-ideate`](./skill-pdd-ideate.md) — has empty
 coverage until something maps its code. Known gaps never relax any other
 check.
 

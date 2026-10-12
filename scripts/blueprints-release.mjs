@@ -71,11 +71,11 @@ async function regularFile(file, label, optional) {
 const built = []
 for (const slug of slugs) {
   const dir = join(blueprintsDir, slug)
-  const productDir = join(dir, '.businesslens', 'product')
-  const logo = await regularFile(join(productDir, 'logo.svg'), `blueprints/${slug}: .businesslens/product/logo.svg`, false)
+  const productDir = join(dir, 'product-model', 'product')
+  const logo = await regularFile(join(productDir, 'logo.svg'), `blueprints/${slug}: product-model/product/logo.svg`, false)
   const logoIssues = validateProductLogo(logo)
   if (logoIssues.length) fail(`blueprints/${slug}: ${logoIssues.join('; ')}`)
-  const cover = await regularFile(join(productDir, 'cover.webp'), `blueprints/${slug}: .businesslens/product/cover.webp`, true)
+  const cover = await regularFile(join(productDir, 'cover.webp'), `blueprints/${slug}: product-model/product/cover.webp`, true)
   if (cover) {
     const coverIssues = validateProductCover(cover)
     if (coverIssues.length) fail(`blueprints/${slug}: ${coverIssues.join('; ')}`)
@@ -88,7 +88,7 @@ for (const slug of slugs) {
   // `export` already writes the portable profile; projecting again is idempotent
   // and keeps workspace material out of a public download whatever export did.
   const report = projectPortableReport(
-    JSON.parse(await readFile(join(dir, '.businesslens/build/report.json'), 'utf8'))
+    JSON.parse(await readFile(join(dir, 'product-model/build/report.json'), 'utf8'))
   )
   if (report.id !== slug) fail(`blueprints/${slug}: Product ID "${report.id}" does not match its directory`)
   built.push({ slug, report, logo, cover })
@@ -109,7 +109,7 @@ for (const { slug, report, logo, cover } of built) {
   }
   await writeFile(join(outDir, entry.report), `${JSON.stringify(report)}\n`)
   await writeFile(join(outDir, entry.logo), logo)
-  if (cover) await copyFile(join(blueprintsDir, slug, '.businesslens/product/cover.webp'), join(outDir, entry.cover))
+  if (cover) await copyFile(join(blueprintsDir, slug, 'product-model/product/cover.webp'), join(outDir, entry.cover))
   blueprints.push(entry)
 }
 await writeFile(

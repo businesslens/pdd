@@ -15,7 +15,7 @@ export interface ResourceNavigation {
   replace?: () => void
 }
 
-export const resourceNavigationKey: InjectionKey<ResourceNavigation> = Symbol('businesslens:resource-navigation')
+export const resourceNavigationKey: InjectionKey<ResourceNavigation> = Symbol('pdd-kit:resource-navigation')
 
 export interface ResourceOpenOptions {
   /** Switching between a Variation's alternatives keeps the same title, so it replaces the reading. */
@@ -23,7 +23,7 @@ export interface ResourceOpenOptions {
 }
 
 /** Open a resource at one of its readings — `lifecycle/<change>` included. The report shell provides it. */
-export const resourceOpenerKey: InjectionKey<(key: string, tab?: string, options?: ResourceOpenOptions) => void> = Symbol('businesslens:resource-opener')
+export const resourceOpenerKey: InjectionKey<(key: string, tab?: string, options?: ResourceOpenOptions) => void> = Symbol('pdd-kit:resource-opener')
 
 /**
  * A resource reading change that is a new place for Back. Letting go of a

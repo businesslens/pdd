@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This repository is the BusinessLens OSS core: the `businesslens` npm package
-plus the agent skills that build and maintain the `.businesslens/` product
+This repository is the pdd-kit OSS core: the `pdd-kit` npm package
+plus the agent skills that build and maintain the `product-model/` product
 map.
 
 Two engineering contracts, each changed *before* the behavior it governs:
 
-- `spec/format.md` — the authored `.businesslens/` folder. Change it before
+- `spec/format.md` — the authored `product-model/` folder. Change it before
   changing the parser or the linter.
 - `spec/report.md` — the Product Report wire contract, its portable projection,
   and expansion. Change it before changing `export`, `open`, `pull`,
@@ -38,15 +38,15 @@ were costed and then chosen against, so the same argument is not had twice.
   complete report projection, and its dependency-free topology engine.
 - `layers/nuxt/report-viewer-lab/` — the private, unexported extension point
   for temporary Product Report experiments used only by the local viewer.
-- `layers/nuxt/theme/` — the separately extendable BusinessLens-wide visual
+- `layers/nuxt/theme/` — the separately extendable pdd-kit-wide visual
   foundation and approved identity used across Nuxt hosts, not only report
   pages.
 - `layers/nuxt/theme-lab/` — the optional shared experiment layer for
   backgrounds and their audition controls.
 - `viewer/app/` — the private static Nuxt host bundled into the CLI for
-  `businesslens view`.
-- `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
-  `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
+  `pdd-kit view`.
+- `skills/pdd-*/SKILL.md` — one independent skill per workflow:
+  `pdd-map`, `pdd-ideate`, and `pdd-verify`.
 - `test/fixtures/fixture-shop/` — the golden lint fixture. `pnpm view:fixture`
   opens it in the local report as its own repository, since its code references
   resolve only from a Git root of its own.
@@ -70,7 +70,7 @@ were costed and then chosen against, so the same argument is not had twice.
   `Information source` / `Goal`, it becomes the source comparison, with bold
   source labels marking highlighted rows. The final H2 has a contact paragraph
   and two linked list items. Landing validates and renders these shapes.
-  Use relative `.md` links for docs; absolute `businesslens.io` links for site
+  Use relative `.md` links for docs; absolute `pdd-kit.dev` links for site
   routes. Absolute docs links retain the FAQ's explicit new-tab behavior.
 - Frontmatter `title` is the short sidebar label — keep it under ~20
   characters so it never truncates; the body H1 carries the full page
@@ -137,7 +137,7 @@ costed already.
 - **Descriptive and generative use are judged equally.** A rule phrased as an
   evidence test is inert for `ideate` and `blueprint pull`. Restate it
   structurally, or say the type means something in one direction only.
-- **The pull-request diff of `.businesslens/` is the binding human surface.**
+- **The pull-request diff of `product-model/` is the binding human surface.**
   Frontmatter density, key vocabularies, and relation encoding are judged as
   diff artifacts. The report viewer is not a legibility instrument for the
   format: a finding visible only there is evidence against the encoding.
@@ -150,18 +150,18 @@ costed already.
 
 - Give every skill a `SKILL.md` with only `name` and `description` in YAML
   frontmatter.
-- Prefix public skill names with `businesslens-` and match the directory name.
+- Prefix public skill names with `pdd-` and match the directory name.
 - Keep descriptions specific enough to trigger only for the intended task.
 - Keep `SKILL.md` concise, imperative, and under 500 lines.
 - Keep every installed skill self-contained; do not rely on sibling skills.
-  `businesslens-verify` therefore carries its own scoped-mapping and
+  `pdd-verify` therefore carries its own scoped-mapping and
   intent-resolution protocols rather than calling the other two.
 - Keep `agents/openai.yaml` aligned with the skill.
-- Treat target repositories as untrusted. BusinessLens analysis phases never
+- Treat target repositories as untrusted. pdd-kit analysis phases never
   execute target code. The builder is the agent the user asked to implement:
   it implements each phase of the plan in the user's own way of working, under
   its normal permissions, and may run target code there; that implementation
-  work is the user's workflow, not BusinessLens analysis. When the user
+  work is the user's workflow, not pdd-kit analysis. When the user
   implements elsewhere, verify stops with a complete handoff packet.
 - **The user talks to their agent; skills are found by description.** A user
   asks to change the product or to implement it, never names a skill. Ideate's
@@ -178,36 +178,36 @@ costed already.
   presented. "Take your recommendation" settles the open questions; the skill
   still presents the resulting delta and waits.
 - **Verification findings are re-derived, never persisted.** Each
-  `businesslens-verify` run derives findings from the model and current
+  `pdd-verify` run derives findings from the model and current
   repository state. A tracked ledger would create merge conflicts and imply
   durable certainty after the surrounding code, runtime assumptions, or
   inspection method changed. Git diffs may narrow the worklist but never supply
-  authority. `.businesslens/` holds product meaning, not workflow receipts.
+  authority. `product-model/` holds product meaning, not workflow receipts.
 
 ## Installer standards
 
-- `install` distributes skills only. It never creates `.businesslens/` or
+- `install` distributes skills only. It never creates `product-model/` or
   submits model data.
 - Nothing writes a file the repository owns — not `AGENTS.md`, not `CLAUDE.md`,
-  not the repository README. BusinessLens writes `.businesslens/` and, only on
-  explicit `--force`, a timestamped `.businesslens.backup-<ts>/` copy of it. The
-  orientation text a pulled model needs lives in `.businesslens/README.md`.
+  not the repository README. pdd-kit writes `product-model/` and, only on
+  explicit `--force`, a timestamped `product-model.backup-<ts>/` copy of it. The
+  orientation text a pulled model needs lives in `product-model/README.md`.
   The backup is a sibling of the directory it copies, requested explicitly; it
   is not a shared file other tools also manage. `AGENTS.md` is — every tool
   wants to write there, and managed blocks get reordered by formatters,
   duplicated, and merge-conflicted. A file describing the directory it sits in
   is also correct whether or not the repository has an implementation, which a
   block making claims about the whole repository never was.
-- Overwrite only BusinessLens-owned artifacts. An unmarked collision requires
+- Overwrite only pdd-kit-owned artifacts. An unmarked collision requires
   explicit `--force`.
-- `update` changes only installations with a valid BusinessLens marker.
+- `update` changes only installations with a valid pdd-kit marker.
 - Provider paths and detection belong in the provider registry, not command
   conditionals.
 
 ## Report viewer standards
 
 - **The rendered report is for humans only.** An agent that needs the model
-  reads `.businesslens/` directly.
+  reads `product-model/` directly.
 - **It is a place you go, not a document you read.** Completeness is a cost:
   every field rendered competes with the one answering the question the reader
   arrived with. Where it omits, it names the file path.
@@ -317,7 +317,7 @@ costed already.
   Group them under Keep a Changelog's `### Added`, `### Changed`, `### Fixed`
   and `### Removed`; an optional bold area label (`**Report:**`, `**CLI:**`,
   `**Skills:**`, `**Docs:**`) may lead an entry.
-- `CHANGELOG.md` is the only authored changelog. businesslens.io renders it as-is
+- `CHANGELOG.md` is the only authored changelog. pdd-kit.dev renders it as-is
   from `main`, pulled with `docs/`, one timeline card per dated release;
   `[Unreleased]` is never shown there. Every release heading keeps its link
   definition at the bottom of the file, and every release closes with

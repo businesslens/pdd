@@ -1,0 +1,41 @@
+---
+kind: conflict
+routes:
+  terminal: Terminal
+steps:
+  - text: The target directory already holds a Product Model
+    kind: condition
+    entities:
+      - { entity: product-model, effect: reads, facts: [] }
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Developer asks for a Blueprint to be opened there
+    kind: actor
+    actor: developer
+    entities:
+      - { entity: blueprint, effect: reads, facts: [] }
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+  - text: The Product stops and explains that it will either need an empty target or an explicit instruction to back up what is there
+    kind: product
+    entities: []
+    contexts:
+      terminal:
+        place: pdd-kit-cli
+---
+
+# Refuse a non-empty model directory
+
+## Trigger
+
+Opening would land on top of a model someone is already using.
+
+## Outcome
+
+The existing model is untouched and the Developer chooses what happens to it.
+
+## Edge cases
+
+- A `product-model` that is a symbolic link or not a directory is always refused, whatever else was asked for.

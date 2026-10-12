@@ -6,7 +6,7 @@ export function useBlrTopologyScroll(key: Ref<string>) {
   let restoring = false
   let restoration = 0
   const memory = new Map<string, string>()
-  const storageKey = (value: string) => `businesslens:topology:${location.pathname}:${value}`
+  const storageKey = (value: string) => `pdd-kit:topology:${location.pathname}:${value}`
   function save() {
     if (!mounted || restoring || !element.value || element.value.querySelector('[data-diagram-pending="true"]')) return
     const pane = element.value

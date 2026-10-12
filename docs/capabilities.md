@@ -137,7 +137,7 @@ a public Experience and shoppers in a signed-in one, name both.
 
 Every place listed needs a Capability Scenario that happens there. Availability
 is what the Product intends;
-[`businesslens-verify`](./skill-businesslens-verify.md) checks the code against it.
+[`pdd-verify`](./skill-pdd-verify.md) checks the code against it.
 
 ## Capability Scenarios
 

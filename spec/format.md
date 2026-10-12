@@ -1,4 +1,4 @@
-# The `.businesslens/` Format
+# The `product-model/` Format
 
 > **This is engineering documentation, not a docs-site page.** It is the
 > contract the parser, the linter, and the Blueprint release must agree on, and
@@ -13,13 +13,13 @@
 > is [`report.md`](./report.md). Shapes considered for either and chosen against
 > are in [`rejected.md`](./rejected.md).
 
-This document is the contract for the BusinessLens PDD folder: the git-tracked
+This document is the contract for the pdd-kit PDD folder: the git-tracked
 product model that lives inside a repository. Everything the public CLI lints is
-defined here. `businesslens lint` checks whether this folder is structurally
+defined here. `pdd-kit lint` checks whether this folder is structurally
 sound; it does not claim that the model and implementation agree.
 
 Planning uses the same files: approved intended behavior is written into the
-model before implementation. `businesslens-verify` performs the separate,
+model before implementation. `pdd-verify` performs the separate,
 semantic comparison with the implementation and owns any resolution loop,
 including implementation: what the model describes that the code does not do
 yet is a gap it closes in phases, through the agent the user asked to
@@ -33,16 +33,16 @@ Each step of the loop changes one side:
 
 | Step | May change | Never changes |
 | --- | --- | --- |
-| `businesslens-ideate` | product meaning, after approval | code |
-| implementation, by the agent the user asked to implement | code | `.businesslens/` |
-| `businesslens-verify` | neither by itself: it routes model changes through approval and code changes to the builder | anything without approval |
+| `pdd-ideate` | product meaning, after approval | code |
+| implementation, by the agent the user asked to implement | code | `product-model/` |
+| `pdd-verify` | neither by itself: it routes model changes through approval and code changes to the builder | anything without approval |
 
 A product question that arises while implementing goes back to approval; it is
 never settled in code.
 
 **The model holds current product meaning.** Do not persist alternatives
 considered, rejected approaches, explanations of why another option was not
-selected, or deliberation history anywhere in `.businesslens/`. This includes
+selected, or deliberation history anywhere in `product-model/`. This includes
 resource prose, supporting sections, limitations, README, and additional files.
 Keep discussion needed to reach a decision in the conversation; record the
 resulting approved behavior without replaying settled discussion on later runs.
@@ -56,7 +56,7 @@ lint does not determine whether prose contains deliberation history.
 
 | Term | Meaning |
 | --- | --- |
-| **Product Model** | `.businesslens/` — the git-tracked folder this document defines. May cite the repository's code. |
+| **Product Model** | `product-model/` — the git-tracked folder this document defines. May cite the repository's code. |
 | **Resource** | one authored file in a Product Model — `capabilities/lint-product-model/capability.md` is one. |
 | **Resource type** | a category of resource determined by its path. This document defines twelve: Product, Interface, Experience, Screen, Domain, Entity, Capability, Capability Scenario, Journey, Journey Scenario, Business Rule, and Variation. |
 | **Actor** | the role an Entity plays where it acts — a Step's `actor`, an Interface's, Experience's or Journey's `actors`, a Business Rule grant's `actors`. Not a resource type: an Entity that `acts` is an Actor in that position. |
@@ -137,7 +137,7 @@ Screen. Screens never nest: an expanded Screen holds assets, never `screens/`.
 A representative model can therefore look like this:
 
 ```
-.businesslens/
+product-model/
 ├── config.yaml              # tool config (committed)
 ├── taxonomies.yaml          # scenario kinds (committed)
 ├── coverage.md              # which code the model accounts for (committed)
@@ -263,10 +263,10 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   and `cache/`; those generated directories are never part of the committed
   model.
 
-- **`README.md` is the canonical orientation, owned by BusinessLens.** It is
-  for an agent that opens `.businesslens/` without a BusinessLens skill
-  running: it routes implementation to `businesslens-verify` and product
-  changes to `businesslens-ideate`, says how to install them, and states which
+- **`README.md` is the canonical orientation, owned by pdd-kit.** It is
+  for an agent that opens `product-model/` without a pdd-kit skill
+  running: it routes implementation to `pdd-verify` and product
+  changes to `pdd-ideate`, says how to install them, and states which
   parts of the model bind the code and which do not. It is not a second
   explanation of the format. Its text is `MODEL_README` in `src/core/model-readme.ts`, embedded
   verbatim in every skill's format reference.
@@ -379,7 +379,7 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
   `file` is relative to the expanded resource folder and cannot escape it.
   Metadata entries are unique and must name an existing asset. `title` is
   optional, and there is no other key. Unlisted assets remain valid so external
-  tools can write captures without editing BusinessLens frontmatter.
+  tools can write captures without editing pdd-kit frontmatter.
 - **H1 = title/name.** The first `# Heading` in the body is the resource's
   title (domains call it `name`) and is the file's only H1. Lead and
   section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
@@ -619,7 +619,7 @@ same resource, told apart by `title`.
 References connect the self-contained Product Model to material maintained
 outside it. A model may contain no references.
 The deterministic CLI does not copy, download, generate, execute, or assess
-referenced content. BusinessLens skills may follow curated References as leads,
+referenced content. pdd-kit skills may follow curated References as leads,
 but the artifact remains evidence to assess rather than proof to trust.
 
 ## Resource files
@@ -700,9 +700,9 @@ stated as product facts. [`coverage.md`](#coveragemd) says nothing about what
 the Product is or is not: it records which of the repository's code the model
 accounts for.
 
-The compact form is `.businesslens/product.md`. Adding a Product logo expands
-it to `.businesslens/product/product.md`, with the identity asset at
-`.businesslens/product/logo.svg`.
+The compact form is `product-model/product.md`. Adding a Product logo expands
+it to `product-model/product/product.md`, with the identity asset at
+`product-model/product/logo.svg`.
 
 The Product may have one visual identity asset, `logo.svg`.
 It is a self-contained, UTF-8 SVG with a `viewBox`, at most 256 KiB, and cannot

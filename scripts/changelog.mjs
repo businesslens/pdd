@@ -1,7 +1,7 @@
 // Pure CHANGELOG.md transformations shared by `changelog-release.mjs` and
 // `check-repo.mjs`. Nothing here reads git, GitHub or the file system.
 
-export const REPOSITORY = 'https://github.com/businesslens/pdd'
+export const REPOSITORY = 'https://github.com/itai-gendler/pdd-kit'
 
 const RELEASE_HEADING = /^## \[([^\]]+)\]/
 const DEFINITION = /^\[([^\]]+)\]: (\S+)$/

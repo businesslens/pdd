@@ -6,7 +6,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI report URL.')
-const report = await fetch(new URL('/_businesslens/report.json', origin)).then(response => response.json())
+const report = await fetch(new URL('/_pdd-kit/report.json', origin)).then(response => response.json())
 const browser = await chromium.launch()
 const errors = []
 const screenshots = process.env.BLR_NAV_SCREENSHOTS

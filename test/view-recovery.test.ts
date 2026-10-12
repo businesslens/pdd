@@ -39,9 +39,9 @@ async function start(cwd: string) {
 }
 
 async function state(url: string) {
-  const response = await fetch(`${url}/_businesslens/report.json`)
+  const response = await fetch(`${url}/_pdd-kit/report.json`)
   const body = await response.json() as { id?: string, message?: string }
-  return { status: response.status, state: response.headers.get('x-businesslens-report-state'), body }
+  return { status: response.status, state: response.headers.get('x-pdd-kit-report-state'), body }
 }
 
 async function ready(url: string) {
@@ -61,7 +61,7 @@ it('finds a model at a repository root initialized after view started in a subdi
   cpSync(FIXTURE, root, { recursive: true })
   git(root, 'add', '.')
   await ready(url)
-  const preview = await fetch(`${url}/_businesslens/code?target=src/services/catalog.ts%23CatalogService.list`)
+  const preview = await fetch(`${url}/_pdd-kit/code?target=src/services/catalog.ts%23CatalogService.list`)
   expect(preview.status).toBe(200)
   await preview.text()
 })

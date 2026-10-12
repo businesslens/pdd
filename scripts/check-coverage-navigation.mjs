@@ -7,7 +7,7 @@ import { join } from 'node:path'
 const expect = playwrightExpect.configure({ timeout: 30_000 })
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI report URL.')
-const report = await fetch(new URL('/_businesslens/report.json', origin)).then(response => response.json())
+const report = await fetch(new URL('/_pdd-kit/report.json', origin)).then(response => response.json())
 const screenshots = process.env.BLR_COVERAGE_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
@@ -35,10 +35,10 @@ try {
     let inventoryRequests = 0
     const comparisonRequests = []
     page.on('request', request => {
-      if (/\/_businesslens\/(history|review|state)(?:[/?]|$)/.test(request.url())) comparisonRequests.push(request.url())
+      if (/\/_pdd-kit\/(history|review|state)(?:[/?]|$)/.test(request.url())) comparisonRequests.push(request.url())
     })
-    await page.route('**/_businesslens/report.json', route => route.fulfill({ json: currentReport }))
-    await page.route('**/_businesslens/repository.json*', route => {
+    await page.route('**/_pdd-kit/report.json', route => route.fulfill({ json: currentReport }))
+    await page.route('**/_pdd-kit/repository.json*', route => {
       inventoryRequests++
       return route.fulfill({ status: 503, json: { message: 'No repository access.' } })
     })

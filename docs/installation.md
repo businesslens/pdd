@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install the BusinessLens skills into your coding agent at project or global scope.
+description: Install the pdd-kit skills into your coding agent at project or global scope.
 section: open-source
 group: Get started
 order: 2
@@ -8,32 +8,32 @@ order: 2
 
 # Installation
 
-BusinessLens is installed once per repository (or once per machine) with the
-`businesslens` CLI. It requires Node.js 20.12 or newer.
+pdd-kit is installed once per repository (or once per machine) with the
+`pdd-kit` CLI. It requires Node.js 20.12 or newer.
 
 ```bash
-npx businesslens install
+npx pdd-kit install
 ```
 
 The installer detects the coding agents you use (Claude Code, Codex, Cursor and
 others), lets you customize the
 selection, asks for project or global scope, and installs only the
-BusinessLens skills. It never creates `.businesslens/`; the skills do that.
+pdd-kit skills. It never creates `product-model/`; the skills do that.
 
 | Skill | What it does |
 | --- | --- |
-| [`businesslens-map`](./skill-businesslens-map.md) | Reads an existing repository and drafts its Product Model |
-| [`businesslens-ideate`](./skill-businesslens-ideate.md) | Turns an idea or a change into an approved model change |
-| [`businesslens-verify`](./skill-businesslens-verify.md) | Implements the model in phases, checks the code against it, and resolves what disagrees |
+| [`pdd-map`](./skill-pdd-map.md) | Reads an existing repository and drafts its Product Model |
+| [`pdd-ideate`](./skill-pdd-ideate.md) | Turns an idea or a change into an approved model change |
+| [`pdd-verify`](./skill-pdd-verify.md) | Implements the model in phases, checks the code against it, and resolves what disagrees |
 
 They run inside your coding agent, not in the terminal. Usually you just ask
 ("add guest checkout to the product", "implement it") and your agent picks the
 skill. To run one by name, use
-`/businesslens-map` in Claude Code and most agents, `$businesslens-map` in
+`/pdd-map` in Claude Code and most agents, `$pdd-map` in
 Codex. These pages show the `/` form.
 
-Check it worked: in your agent type `/businesslens-` and the three skills
-appear (Codex: `$businesslens-`).
+Check it worked: in your agent type `/pdd-kit-` and the three skills
+appear (Codex: `$pdd-kit-`).
 
 ## Supported agents
 
@@ -56,8 +56,8 @@ providers use their standard user directories.
   in every repository you open.
 
 For non-interactive installation, provider flags, and collision safety, see
-[`businesslens install`](./cli-install.md). To refresh an installation, see
-[`businesslens update`](./cli-update.md).
+[`pdd-kit install`](./cli-install.md). To refresh an installation, see
+[`pdd-kit update`](./cli-update.md).
 
 ## Claude Code plugin
 
@@ -65,8 +65,8 @@ Claude Code users can install the same three skills as a plugin instead, by
 adding this repository as a marketplace:
 
 ```text
-/plugin marketplace add businesslens/pdd
-/plugin install businesslens@businesslens
+/plugin marketplace add itai-gendler/pdd-kit
+/plugin install pdd-kit@pdd-kit
 ```
 
 The plugin and the CLI installer deliver the same skills; use one or the other,

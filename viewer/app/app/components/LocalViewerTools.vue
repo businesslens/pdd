@@ -13,7 +13,7 @@ defineProps<{ collapsed?: boolean }>()
  * in the sidebar moves when it arrives.
  */
 type StarState = 'starred' | 'not-starred' | 'unavailable'
-const STAR_PATH = '/_businesslens/github-star'
+const STAR_PATH = '/_pdd-kit/github-star'
 const star = ref<StarState>('unavailable')
 const toast = useToast()
 
@@ -44,7 +44,7 @@ async function toggleStar() {
   } catch {
     star.value = previous
     toast.add({
-      title: starring ? 'BusinessLens was not starred' : 'BusinessLens is still starred',
+      title: starring ? 'pdd-kit was not starred' : 'pdd-kit is still starred',
       description: starring
         ? 'GitHub did not accept the star. You can star it on GitHub instead.'
         : 'GitHub did not remove the star. You can unstar it on GitHub instead.',
@@ -64,7 +64,7 @@ async function toggleStar() {
         :label="collapsed ? undefined : 'Documentation'"
         :square="collapsed"
         aria-label="Documentation"
-        to="https://businesslens.io/docs"
+        to="https://pdd-kit.dev/docs"
         external
         target="_blank"
         rel="noopener noreferrer"
@@ -82,7 +82,7 @@ async function toggleStar() {
         <UButton
           :label="collapsed ? undefined : 'GitHub'"
           :square="collapsed"
-          to="https://github.com/businesslens/pdd"
+          to="https://github.com/itai-gendler/pdd-kit"
           external
           target="_blank"
           rel="noopener noreferrer"
@@ -93,7 +93,7 @@ async function toggleStar() {
           class="min-h-9 w-full min-w-0 flex-1 gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
           :class="collapsed ? 'justify-center' : 'justify-start'"
           :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
-          aria-label="BusinessLens on GitHub"
+          aria-label="pdd-kit on GitHub"
         />
       </UTooltip>
       <div class="h-9 shrink-0" :class="collapsed ? 'w-full' : 'w-9'" data-local-viewer-star-slot>
@@ -110,7 +110,7 @@ async function toggleStar() {
                 size="sm"
                 class="h-9 w-full justify-center"
                 :class="star === 'starred' ? 'text-primary' : 'text-muted hover:text-highlighted'"
-                aria-label="Star BusinessLens on GitHub"
+                aria-label="Star pdd-kit on GitHub"
                 :aria-pressed="star === 'starred'"
                 data-local-viewer-star
                 :data-state="star"

@@ -5,30 +5,30 @@ import { defineEventHandler, setHeader } from 'h3'
 
 const { version: pddVersion } = createRequire(import.meta.url)('../../package.json')
 
-// `businesslens view` serves these paths from the CLI. `nuxt dev` has no CLI in
+// `pdd-kit view` serves these paths from the CLI. `nuxt dev` has no CLI in
 // front of it, so dev-only handlers stand in with a catalog Blueprint — a model
 // rich enough to exercise every element kind the Product Report has to render. They are
 // dev handlers, so nothing here reaches the generated viewer.
 //
-// `BLR_DEV_MODEL` points them at another `.businesslens/` instead — this
+// `BLR_DEV_MODEL` points them at another `product-model/` instead — this
 // repository's own model is the one case the catalog Blueprint cannot stand in
 // for, because a rendering bug in a kind it happens not to use is invisible
 // until someone opens the model that does.
-const fixtureRoot = resolve(process.env.BLR_DEV_MODEL || '../../blueprints/content-feed-reader/.businesslens')
+const fixtureRoot = resolve(process.env.BLR_DEV_MODEL || '../../blueprints/content-feed-reader/product-model')
 
 // The dev star remembers its state until `nuxt dev` restarts.
 let devStarred = false
 
 const devHandlers = [
   {
-    route: '/_businesslens/report.json',
+    route: '/_pdd-kit/report.json',
     handler: defineEventHandler((event) => {
       setHeader(event, 'cache-control', 'no-store')
       return JSON.parse(readFileSync(resolve(fixtureRoot, 'build/report.json'), 'utf8'))
     })
   },
   {
-    route: '/_businesslens/logo.svg',
+    route: '/_pdd-kit/logo.svg',
     handler: defineEventHandler((event) => {
       setHeader(event, 'content-type', 'image/svg+xml')
       setHeader(event, 'cache-control', 'no-store')
@@ -39,16 +39,16 @@ const devHandlers = [
   {
     // The viewer opens a stream immediately; without this the dev console fills
     // with reconnect noise that hides real errors.
-    route: '/_businesslens/events',
+    route: '/_pdd-kit/events',
     handler: defineEventHandler((event) => {
       setHeader(event, 'content-type', 'text/event-stream')
       setHeader(event, 'cache-control', 'no-store')
-      return ': businesslens dev viewer\n\n'
+      return ': pdd-kit dev viewer\n\n'
     })
   },
   {
     // Shows the star button without touching GitHub; the CLI asks `gh`.
-    route: '/_businesslens/github-star',
+    route: '/_pdd-kit/github-star',
     handler: defineEventHandler((event) => {
       setHeader(event, 'cache-control', 'no-store')
       if (event.method === 'POST') devStarred = true
@@ -110,8 +110,8 @@ export default defineNuxtConfig({
   css: ['~/assets/local-viewer.css'],
   alias: {
     /* The narrower subpath first, so the broader one does not claim it as a prefix. */
-    'businesslens/report/selectors': resolve('../../src/report-selectors.ts'),
-    'businesslens/report': resolve('../../src/report.ts')
+    'pdd-kit/report/selectors': resolve('../../src/report-selectors.ts'),
+    'pdd-kit/report': resolve('../../src/report.ts')
   },
   nitro: { devHandlers },
   runtimeConfig: {

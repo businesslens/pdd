@@ -1,24 +1,24 @@
 <p align="center">
-  <a href="https://businesslens.io">
+  <a href="https://pdd-kit.dev">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
-      <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="BusinessLens logo" width="64">
+      <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="pdd-kit logo" width="64">
     </picture>
   </a>
 </p>
 
-<h1 align="center"><a href="https://businesslens.io">BusinessLens</a></h1>
+<h1 align="center"><a href="https://pdd-kit.dev">pdd-kit</a></h1>
 <p align="center"><strong>Product-Driven Development for coding agents (OSS)</strong></p>
 <p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/businesslens"><img src="https://img.shields.io/npm/v/businesslens" alt="npm version"></a>
-  <a href="https://github.com/businesslens/pdd/actions/workflows/check.yml"><img src="https://github.com/businesslens/pdd/actions/workflows/check.yml/badge.svg" alt="Check"></a>
+  <a href="https://www.npmjs.com/package/pdd-kit"><img src="https://img.shields.io/npm/v/pdd-kit" alt="npm version"></a>
+  <a href="https://github.com/itai-gendler/pdd-kit/actions/workflows/check.yml"><img src="https://github.com/itai-gendler/pdd-kit/actions/workflows/check.yml/badge.svg" alt="Check"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
 <p align="center">
-<code>npx businesslens install</code>
+<code>npx pdd-kit install</code>
 </p>
 
 <p align="center">
@@ -40,31 +40,31 @@
 Where is your **product model** today? Scattered across tickets, design docs,
 the wiki, chats, source code, tests and people: shared by none, checked by
 nothing. So your **AI agent guesses** what the product is
-([AI is writing code for products it doesn't understand](https://businesslens.io/blog/your-agent-is-guessing)).
+([AI is writing code for products it doesn't understand](https://pdd-kit.dev/blog/your-agent-is-guessing)).
 
 **Spec-driven development (SDD)** tools such as OpenSpec, spec-kit and Kiro
 describe **each change**, with the product mixed into its design, plan and
 tasks and spread across feature folders
-([SDD describes the change, not the product](https://businesslens.io/blog/pdd-and-spec-driven-development)).
+([SDD describes the change, not the product](https://pdd-kit.dev/blog/pdd-and-spec-driven-development)).
 
 **Product-Driven Development (PDD)** keeps the **product in one place**, apart
 from how it's built: a shared product model for agents and humans that is
 **git-tracked, reviewable and verifiable**
-([Introducing BusinessLens](https://businesslens.io/blog/introducing-businesslens)).
+([Introducing pdd-kit](https://pdd-kit.dev/blog/introducing-pdd-kit)).
 
 ## The Product Model
 
-`.businesslens/`, a [Product Model](https://businesslens.io/docs/product-model):
+`product-model/`, a [Product Model](https://pdd-kit.dev/docs/product-model):
 one definition of what the product does, as plain Markdown next to the code. It
 is made of:
 
-- **[Entities](https://businesslens.io/docs/entities):** what the product keeps, and who acts on it (Order, Customer, Payment provider).
-- **[Interfaces](https://businesslens.io/docs/interfaces):** how people and systems reach the product (Web app, Mobile app, Partner API).
-- **[Domains](https://businesslens.io/docs/domains):** the subject areas the product is split into (Ordering, Catalog, Billing).
-- **[Capabilities](https://businesslens.io/docs/capabilities):** what the product lets someone do (Check out, Cancel order, Refund).
-- **[Journeys](https://businesslens.io/docs/journeys):** one goal, carried across several capabilities (Browse and buy, Sign up, Reorder).
-- **[Business rules](https://businesslens.io/docs/business-rules):** what must always hold, and who may do what (Max 3 per order, Only managers refund, Total includes tax).
-- **[Variations](https://businesslens.io/docs/variations):** where the product works in more than one way (Feature flag, Plan tier, A/B test).
+- **[Entities](https://pdd-kit.dev/docs/entities):** what the product keeps, and who acts on it (Order, Customer, Payment provider).
+- **[Interfaces](https://pdd-kit.dev/docs/interfaces):** how people and systems reach the product (Web app, Mobile app, Partner API).
+- **[Domains](https://pdd-kit.dev/docs/domains):** the subject areas the product is split into (Ordering, Catalog, Billing).
+- **[Capabilities](https://pdd-kit.dev/docs/capabilities):** what the product lets someone do (Check out, Cancel order, Refund).
+- **[Journeys](https://pdd-kit.dev/docs/journeys):** one goal, carried across several capabilities (Browse and buy, Sign up, Reorder).
+- **[Business rules](https://pdd-kit.dev/docs/business-rules):** what must always hold, and who may do what (Max 3 per order, Only managers refund, Total includes tax).
+- **[Variations](https://pdd-kit.dev/docs/variations):** where the product works in more than one way (Feature flag, Plan tier, A/B test).
 
 ## Clear product model. Focused sources.
 
@@ -107,18 +107,18 @@ columns and cards, and an **AI agent proposes the next cards**. It is the
 model with no code behind it. Every answer below is read from the model.
 
 <p align="center">
-  <img src="./.github/readme/report/overview.jpg" alt="The Kanban Board Blueprint open in the BusinessLens report: the Product Overview with its description, intent and product details" width="800">
+  <img src="./.github/readme/report/overview.jpg" alt="The Kanban Board Blueprint open in the pdd-kit report: the Product Overview with its description, intent and product details" width="800">
 </p>
 
 <p align="center">
-<a href="https://businesslens.io/blueprints/kanban-board"><strong>View the Kanban Board Product Model live</strong></a>
+<a href="https://pdd-kit.dev/blueprints/kanban-board"><strong>View the Kanban Board Product Model live</strong></a>
 </p>
 
 Or open it on your machine:
 
 ```bash
-npx businesslens blueprint pull kanban-board
-npx businesslens view
+npx pdd-kit blueprint pull kanban-board
+npx pdd-kit view
 ```
 
 ### 1. Entities, and which capabilities change them
@@ -213,12 +213,12 @@ One shared definition of what the product does helps everyone who works on it:
 - **Product managers and docs writers** find product answers in one place,
   with optional references to the code and material behind them.
 - **Coding agents** read the scenarios and business rules before they change
-  anything, instead of guessing. The `businesslens-verify` skill checks the
+  anything, instead of guessing. The `pdd-verify` skill checks the
   code against the model.
 
-**Dogfooded:** BusinessLens is developed with BusinessLens. Its own Product Model
-lives in this repository's [`.businesslens/` folder](./.businesslens/); open it
-with `npx businesslens view businesslens/pdd`.
+**Dogfooded:** pdd-kit is developed with pdd-kit. Its own Product Model
+lives in this repository's [`product-model/` folder](./product-model/); open it
+with `npx pdd-kit view itai-gendler/pdd-kit`.
 
 ## Features
 
@@ -226,11 +226,11 @@ with `npx businesslens view businesslens/pdd`.
 
 * 📝 **Markdown-native:** every resource is a plain `.md` file in your repo, reviewed in pull requests
 
-* ✅ **Lint and verify:** `businesslens lint` checks the files; `businesslens-verify` checks the code against them
+* ✅ **Lint and verify:** `pdd-kit lint` checks the files; `pdd-verify` checks the code against them
 
 * 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
 
-* 🖥️ **Local report:** `businesslens view` opens the model in your browser and follows your edits
+* 🖥️ **Local report:** `pdd-kit view` opens the model in your browser and follows your edits
 
 * 📦 **Blueprints:** start from a reviewed model for a common product instead of a blank page
 
@@ -243,7 +243,7 @@ with `npx businesslens view businesslens/pdd`.
 ## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Get started
 
 ```bash
-npx businesslens install
+npx pdd-kit install
 ```
 
 This adds the skills to Claude Code, Codex, Cursor, Gemini CLI and GitHub
@@ -255,66 +255,66 @@ instead of `/`):
 Have code? Run the map skill:
 
 ```text
-/businesslens-map
+/pdd-map
 ```
 
 It reads the code without running it, asks what the code can't answer, and
-writes `.businesslens/` once you approve. Then open the report:
+writes `product-model/` once you approve. Then open the report:
 
 ```bash
-npx businesslens view
+npx pdd-kit view
 ```
 
-[From your repo](https://businesslens.io/docs/from-your-repo)
+[From your repo](https://pdd-kit.dev/docs/from-your-repo)
 
 ### Start from an idea
 
 No code yet? Describe the product you want:
 
 ```text
-/businesslens-ideate I want to build a booking app for dog walkers
+/pdd-ideate I want to build a booking app for dog walkers
 ```
 
 You pick from a few product shapes, then approve the model.
-[From an idea](https://businesslens.io/docs/from-an-idea)
+[From an idea](https://pdd-kit.dev/docs/from-an-idea)
 
 ### Start from a Blueprint
 
 A familiar kind of product? List the reviewed models and pull one:
 
 ```bash
-npx businesslens blueprint list
-npx businesslens blueprint pull <name>
+npx pdd-kit blueprint list
+npx pdd-kit blueprint pull <name>
 ```
 
 [Browse the Blueprints](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints) ·
-[From a Blueprint](https://businesslens.io/docs/from-a-blueprint)
+[From a Blueprint](https://pdd-kit.dev/docs/from-a-blueprint)
 
 ## The development loop
 
 <p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /businesslens-ideate, implement in phases with your own agent, verify each part with /businesslens-verify" width="600">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /pdd-ideate, implement in phases with your own agent, verify each part with /pdd-verify" width="600">
 </p>
 
-- **Ideate** (`/businesslens-ideate`): the agent records the change in the model
+- **Ideate** (`/pdd-ideate`): the agent records the change in the model
   first, and nothing is written until you approve it.
 - **Implement:** your agent builds it your way, in phases, with plan mode, an
   SDD tool, or freestyle.
-- **Verify** (`/businesslens-verify`): the agent checks the code against the
+- **Verify** (`/pdd-verify`): the agent checks the code against the
   model and fixes either one until they agree.
 
 ## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI
 
 `install`, `update`, `lint`, `view` and the `blueprint` commands. Every command
-and option: [CLI reference](https://businesslens.io/docs/cli), or
-`npx businesslens --help`.
+and option: [CLI reference](https://pdd-kit.dev/docs/cli), or
+`npx pdd-kit --help`.
 
 ## FAQ
 
-Read the [frequently asked questions](docs/faq.md) about adopting BusinessLens,
+Read the [frequently asked questions](docs/faq.md) about adopting pdd-kit,
 what the Product Model covers, and getting help.
 
 ## License
 
-BusinessLens is released under the **MIT License**: do anything, just give
+pdd-kit is released under the **MIT License**: do anything, just give
 credit. See [LICENSE](./LICENSE).

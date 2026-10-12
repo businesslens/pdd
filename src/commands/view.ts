@@ -54,7 +54,7 @@ function requestedRef(options: ViewOptions, embedded: GithubRef | undefined): Gi
 function resolveSource(cwd: string, options: ViewOptions): ViewSource {
   if (options.repository === undefined) {
     if (options.branch !== undefined || options.pr !== undefined) {
-      throw new UsageError('--branch and --pr apply to a GitHub repository. Pass one: businesslens view owner/repo --pr 12')
+      throw new UsageError('--branch and --pr apply to a GitHub repository. Pass one: pdd-kit view owner/repo --pr 12')
     }
     // Only a missing model is worth waiting for; a directory that does not
     // exist never gains one.
@@ -97,14 +97,14 @@ const GIT_RETRY_MS = 30_000
 function bindingFor(resolved: ModelRoot, live = true): LocalViewerBinding {
   return {
     compile: () => buildViewerReport(resolved),
-    watchRoot: live ? join(resolved.modelRoot, '.businesslens') : undefined,
+    watchRoot: live ? join(resolved.modelRoot, 'product-model') : undefined,
     gitIndexFile: live && resolved.gitRoot
       ? resolve(resolved.gitRoot, git(resolved.gitRoot, 'rev-parse', '--git-path', 'index'))
       : undefined,
-    logoFile: join(resolved.modelRoot, '.businesslens', 'product', 'logo.svg'),
+    logoFile: join(resolved.modelRoot, 'product-model', 'product', 'logo.svg'),
     // Reference targets resolve against the repository, not the model root —
     // the same base `lint` lists tracked files from — and implementation
-    // captures legitimately live outside `.businesslens/`. A model outside a
+    // captures legitimately live outside `product-model/`. A model outside a
     // repository has no repository-relative targets, so it gets no mount.
     assetRoot: resolved.gitRoot
   }
@@ -114,7 +114,7 @@ function bindingFor(resolved: ModelRoot, live = true): LocalViewerBinding {
  * Open the local report and keep it open.
  *
  * The report is a place to watch a model being built, so the viewer starts
- * whatever state the model is in. No `.businesslens/` yet: it serves a waiting
+ * whatever state the model is in. No `product-model/` yet: it serves a waiting
  * message and binds the model the moment the directory appears. A model that
  * does not lint still shows whenever the compiler accepts it, with its
  * problems beside it; one the compiler refuses shows the problems alone and
@@ -128,11 +128,11 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     const { resolved, snapshot, gitRoot } = source
     const initialReport = snapshot && resolved ? compileResolvedWorkspaceReport(resolved) : undefined
     const expected = [...new Set([cwd, gitRoot].filter((item): item is string => Boolean(item)))]
-      .map(directory => join(directory, '.businesslens'))
+      .map(directory => join(directory, 'product-model'))
     const viewer = await startLocalViewer({
       port: options.port,
       initialReport,
-      waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use businesslens-map for established code or businesslens-ideate for a new product.`,
+      waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use pdd-map for established code or pdd-ideate for a new product.`,
       ...(resolved ? bindingFor(resolved, !snapshot) : {})
     })
     console.log(`Viewing ${source.subject} at ${viewer.url}`)
@@ -141,7 +141,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     } else if (!viewer.status().ready) {
       console.log('The Product Model does not build yet; the report lists why and appears on the first save that fixes it.')
     } else if (viewer.status().state === 'degraded') {
-      console.log('The Product Model has lint errors; the report shows them beside the model. Run businesslens lint for the full list.')
+      console.log('The Product Model has lint errors; the report shows them beside the model. Run pdd-kit lint for the full list.')
     }
     console.log('Press Ctrl+C to stop.')
     if (options.open) openBrowser(viewer.url)
@@ -182,7 +182,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
             clearInterval(locating)
             locating = undefined
           }
-          console.log(`Found the Product Model at ${join(found.modelRoot, '.businesslens')}.`)
+          console.log(`Found the Product Model at ${join(found.modelRoot, 'product-model')}.`)
         } catch (error) {
           // The directory can vanish between finding and watching it; keep waiting.
           console.error(`Could not open the Product Model: ${(error as Error).message}`)

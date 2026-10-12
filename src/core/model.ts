@@ -434,7 +434,7 @@ export function allResources(model: PddModel): ResourceFile[] {
 
 const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many-to-many'])
 
-export const FOLDER = '.businesslens'
+export const FOLDER = 'product-model'
 
 /** The one folder-format version this release reads and writes. */
 export const FOLDER_SCHEMA = 11
@@ -1148,14 +1148,14 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 11 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 11 product-model/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
   const notices: string[] = []
   const findings: LoadFindings = { issues, notices }
   if (!existsSync(root)) {
-    issues.push(`${FOLDER}/ does not exist — use \`businesslens-map\` for established code or \`businesslens-ideate\` for a new product`)
+    issues.push(`${FOLDER}/ does not exist — use \`pdd-map\` for established code or \`pdd-ideate\` for a new product`)
   } else {
     if (!existsSync(join(root, 'README.md'))) issues.push('README.md is missing')
 

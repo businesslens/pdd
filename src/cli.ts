@@ -97,7 +97,7 @@ function commandsBeforeOptions(output: string): string {
 
 function createProgram(setExitCode: (code: number) => void): Command {
   const program = new Command()
-    .name('businesslens')
+    .name('pdd-kit')
     .description('Product-Driven Development for coding agents')
     .usage('<command> [options]')
     .option('-c, --cwd <path>', 'Run from another directory')
@@ -121,12 +121,12 @@ function createProgram(setExitCode: (code: number) => void): Command {
 
   program
     .command('install')
-    .summary('Install BusinessLens skills')
-    .description('Install BusinessLens skills for detected AI harnesses.')
+    .summary('Install pdd-kit skills')
+    .description('Install pdd-kit skills for detected AI harnesses.')
     .option('--providers <list>', 'Comma-separated providers: claude,codex,cursor,gemini,github')
     .option('--scope <scope>', 'Installation scope: project or global', scope)
     .option('--yes', 'Accept detected providers and default to project scope')
-    .option('--force', 'Replace an unmarked colliding BusinessLens skill directory')
+    .option('--force', 'Replace an unmarked colliding pdd-kit skill directory')
     .action(async (options: InstallCliOptions, command: Command) => {
       setExitCode(await runInstall(cwdFor(command), options))
     })
@@ -134,7 +134,7 @@ function createProgram(setExitCode: (code: number) => void): Command {
   program
     .command('update')
     .summary('Update managed skill installations')
-    .description('Update BusinessLens-managed skill installations.')
+    .description('Update pdd-kit-managed skill installations.')
     .option('--providers <list>', 'Limit discovery to: claude,codex,cursor,gemini,github')
     .option('--scope <scope>', 'Installation scope: project or global', scope)
     .option('--force', 'Replace an unmarked collision inside a managed installation')
@@ -145,7 +145,7 @@ function createProgram(setExitCode: (code: number) => void): Command {
   program
     .command('lint')
     .summary('Lint a Product Model')
-    .description('Lint the current .businesslens/ Product Model.')
+    .description('Lint the current product-model/ Product Model.')
     .option('--json', 'Write the lint result as JSON')
     .action((options: LintCliOptions, command: Command) => {
       setExitCode(runLint(cwdFor(command), Boolean(options.json)))
@@ -177,14 +177,14 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .helpCommand('help [command]', 'Show help for command')
     .argument('[command]')
     .action((unknown: string | undefined, _options: Record<string, never>, command: Command) => {
-      if (unknown) command.error(`error: unknown command '${unknown}' for 'businesslens blueprint'`)
+      if (unknown) command.error(`error: unknown command '${unknown}' for 'pdd-kit blueprint'`)
       command.outputHelp()
     })
 
   blueprint
     .command('export')
     .summary('Export a Blueprint')
-    .description('Compile .businesslens/ into a portable Product Report.')
+    .description('Compile product-model/ into a portable Product Report.')
     .action((_: Record<string, never>, command: Command) => {
       setExitCode(runExport(cwdFor(command)))
     })
@@ -192,8 +192,8 @@ function createProgram(setExitCode: (code: number) => void): Command {
   blueprint
     .command('open <report>')
     .summary('Open a local Blueprint')
-    .description('Expand a local Product Report into .businesslens/.')
-    .option('--force', 'Back up and replace a non-empty .businesslens/ directory')
+    .description('Expand a local Product Report into product-model/.')
+    .option('--force', 'Back up and replace a non-empty product-model/ directory')
     .action(async (report: string, options: ForceCliOptions, command: Command) => {
       setExitCode(await runOpen(cwdFor(command), report, Boolean(options.force)))
     })
@@ -209,8 +209,8 @@ function createProgram(setExitCode: (code: number) => void): Command {
   blueprint
     .command('pull <name>')
     .summary('Pull a published Blueprint')
-    .description('Pull a published Blueprint into .businesslens/.')
-    .option('--force', 'Back up and replace a non-empty .businesslens/ directory')
+    .description('Pull a published Blueprint into product-model/.')
+    .option('--force', 'Back up and replace a non-empty product-model/ directory')
     .action(async (name: string, options: ForceCliOptions, command: Command) => {
       setExitCode(await runPull(cwdFor(command), name, { force: Boolean(options.force) }))
     })
