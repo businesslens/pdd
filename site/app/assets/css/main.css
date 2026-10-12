@@ -1,0 +1,115 @@
+/* The stable palette, type and identity come from the pdd-kit theme layer.
+  The site adds its page background and host accents. */
+@import "../brand/tokens.css";
+
+/* The page background: warm paper with grain, light pooling at the top. Cards
+  sit lighter than the page, like paper laid on a desk. Each surface carries its
+  own text and border steps, checked for AA against `--ui-bg-accented`. */
+:root:not(.dark) {
+  --ui-bg: #f4ecdb;
+  --ui-bg-muted: #f8f2e5;
+  --ui-bg-elevated: #fcf8ef;
+  --ui-bg-accented: #e9ddc4;
+  --ui-border: #dbcfb4;
+  --ui-border-muted: #e5dac2;
+  --ui-border-accented: #c9b898;
+  --ui-text-dimmed: #695c48;
+  --ui-text-muted: #695c48;
+  --ui-primary: #80552b;
+}
+
+/* Grain rides on the body background rather than an overlay, which sections
+  that paint `bg-default` would cover or be covered by. */
+html:root:not(.dark) body {
+  background-image:
+    radial-gradient(ellipse 100% 62% at 50% 0%, #fefcf7 0%, rgba(254, 252, 247, 0) 72%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+/* The site is light only (`colorMode` in nuxt.config.ts); dark is flat espresso. */
+:root.dark {
+  --ui-bg: #1b1713;
+  --ui-bg-muted: #38312a;
+  --ui-bg-elevated: #38312a;
+  --ui-bg-accented: #514839;
+}
+
+html:root.dark body {
+  background-image: none;
+}
+
+/* One table treatment for authored Markdown, landing copy, and FAQ answers. */
+.content-table-frame {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-xl);
+  background: var(--ui-bg);
+}
+
+.content-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+  line-height: 1.5rem;
+  color: var(--ui-text);
+}
+
+.content-table > thead {
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-color-neutral-200);
+  color: var(--ui-color-neutral-950);
+}
+
+.content-table > tbody > tr {
+  background: color-mix(in oklab, var(--ui-bg-elevated) 40%, transparent);
+}
+
+.content-table > tbody > tr + tr {
+  border-top: 1px solid var(--ui-border);
+}
+
+/* Override the prose renderer's cell grid and corner rounding. The frame
+  owns the outline; rows have horizontal separators only. */
+.content-table > :is(thead, tbody) > tr > :is(th, td) {
+  border: 0;
+  border-radius: 0;
+  padding: 0.625rem 1rem;
+  vertical-align: middle;
+  line-height: 1.5rem;
+}
+
+.content-table > thead > tr > th {
+  padding-block: 0.5rem;
+  font-weight: 600;
+}
+
+.content-table > tbody > tr > :first-child {
+  font-weight: 600;
+  color: var(--ui-text-highlighted);
+}
+
+.content-table > tbody > tr > td:not(:first-child) {
+  color: var(--ui-text);
+}
+
+.content-table > tbody > tr[data-highlighted] {
+  background: color-mix(in oklab, var(--ui-primary) 8%, transparent);
+}
+
+.content-table > tbody > tr[data-highlighted] > :first-child {
+  color: var(--ui-primary);
+}
+
+/* Landing commands and non-shell coding-agent invocations share these token
+  hooks. Inline styles carry Brand Warm in light mode; dark stays fixed. */
+.dark [data-syntax-token="executable"] {
+  color: #ffcb6b !important;
+}
+
+.dark [data-syntax-token="arguments"] {
+  color: #c3e88d !important;
+}

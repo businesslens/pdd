@@ -1,0 +1,34 @@
+/*
+  Brand accent tokens the landing surfaces read.
+
+  These are decorative treatments — page glows and gradient text — that sit
+  outside the Nuxt UI semantic tokens. They derive
+  from the brass and terracotta ramps in the shared pdd-kit theme so the
+  accents move with the selected foundation rather than drifting from it.
+*/
+
+:root {
+  /* Deliberately NOT a Tailwind `--font-*` theme key. Nuxt Fonts treats every
+    `--font-*` entry in `@theme` as a family it should resolve through its
+    providers, and it fails to read metrics for "Archivo Variable" — the build
+    dies with "Unknown font format". `--font-sans` and `--font-mono` resolve
+    fine, so they stay in `@theme`; the heading face lives here instead. There
+    is no `font-heading` utility as a result, which is fine — nothing needs one,
+    since the shared theme's base rule applies it to every heading. The landing
+    alias remains public to its design documentation and local overrides. */
+  --brand-font-heading: var(--pdd-kit-font-heading);
+
+  --brand-glow-a: var(--color-brass-500);
+  --brand-glow-b: var(--color-terracotta-500);
+  --brand-gradient: linear-gradient(135deg, var(--color-brass-700), var(--color-brass-600) 50%, var(--color-brass-400));
+  --brand-shimmer: linear-gradient(
+    135deg,
+    var(--color-brass-700),
+    var(--color-brass-600),
+    var(--color-brass-500),
+    var(--color-brass-300),
+    var(--color-brass-500),
+    var(--color-brass-600),
+    var(--color-brass-700)
+  );
+}

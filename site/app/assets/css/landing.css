@@ -1,0 +1,197 @@
+.landing-page {
+  background: var(--pdd-kit-page-glows);
+}
+
+/*
+  The site header and mobile menu need room for lookup controls.
+  Keep the shared identity compact until sm, beyond its default 400px cutoff.
+*/
+@media (width < 40rem) {
+  .site-brand [data-logo-wordmark] {
+    display: none;
+  }
+}
+
+.landing-gradient-text,
+.landing-shimmer-text {
+  background: var(--brand-gradient);
+  background-clip: text;
+  color: transparent;
+}
+
+/* The Blueprints title's “already works.” — the one shimmering phrase left. */
+.landing-shimmer-text {
+  animation: landing-shimmer 10s ease-in-out infinite alternate;
+  background-image: var(--brand-shimmer);
+  background-size: 200% auto;
+}
+
+@keyframes landing-shimmer {
+  from { background-position: 0% center; }
+  to { background-position: 200% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-shimmer-text {
+    animation: none;
+  }
+}
+
+
+
+/*
+  Hero cover.
+
+  The hero shows one chart in two treatments, switched at `xl` (1280px):
+
+  - The wide left-to-right scrim, whose protected zone is a percentage of the
+    width. That only clears the copy while the copy is a small share of it — true
+    from `xl` up.
+  - Below `xl`, a flat wash plus a pool behind the centred type.
+
+  They cannot share one value. The copy keeps its pixel size while the viewport
+  changes, so its share of the width — and therefore how much cover it needs — is
+  completely different on each side of the switch.
+
+  Dark carries higher values throughout: the chart is bright parchment, so on a
+  near-black page it reads far louder at the same opacity than it does on cream.
+*/
+
+/*
+  The eyebrow is the only *small* text set over the chart, so WCAG asks 4.5:1 of
+  it where the headline only needs 3:1 — and it is the widest line, so it reaches
+  furthest into the falloff. `--ui-primary` (brass-700) measures just 5.55:1 on
+  bare cream, so any chart bleeding through drops it under 4.5. These steps
+  restore the headroom without leaving the brass family.
+*/
+.hero-eyebrow-art {
+  color: var(--color-brass-800);
+}
+
+.dark .hero-eyebrow-art {
+  color: var(--color-brass-200);
+}
+
+/*
+  The outlined ways in are small text over the same chart, so they take the
+  eyebrow's steps for the same reason: brass-700 on a transparent button measured
+  4.2:1 where the chart's hatching runs behind the label. The wash gives the
+  label a ground of its own without filling the button, which stays the primary
+  door's job.
+*/
+.hero-way-outline {
+  color: var(--color-brass-800);
+  background-color: color-mix(in oklab, var(--ui-bg) 85%, transparent);
+}
+
+.dark .hero-way-outline {
+  color: var(--color-brass-200);
+}
+
+/* Unlayered, so it would also beat a hover utility; the hover lives here too. */
+.group:hover .hero-way-outline {
+  background-color: color-mix(in oklab, var(--ui-primary) 10%, var(--ui-bg));
+}
+
+/*
+  Copy placement on very wide screens.
+
+  Up to 1920px the copy is centred in a fixed `max-w-7xl` container, which is the
+  placement that reads correctly on a 21" screen — it lands about 18% from the left
+  edge there. But a centred fixed container drifts rightward as the screen grows:
+  the same rule puts the copy a third of the way across a 3440px display.
+
+  Past 1920px it is offset from the viewport instead, so 18% holds at any width.
+  18vw is within 6px of the centred value at 1920, so nothing jumps at the switch.
+*/
+@media (min-width: 1920px) {
+  .hero-copy-shell {
+    margin-inline: 0;
+    max-width: none;
+    padding-inline-start: 18vw;
+  }
+}
+
+/* ---- Desktop treatment: left-to-right scrim, from `xl` up ---- */
+
+/*
+  The lightest cover the copy can take before contrast fails. The copy's glyphs end
+  near 47% of the width — the mid stop's own position — so there are only a few
+  percent of slack before the eyebrow drops under 4.5:1.
+*/
+.hero-scrim-wide {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--ui-bg) 95%, transparent) 16%,
+    color-mix(in srgb, var(--ui-bg) 86%, transparent) 46%,
+    transparent 78%
+  );
+}
+
+.dark .hero-scrim-wide {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--ui-bg) 96%, transparent) 16%,
+    color-mix(in srgb, var(--ui-bg) 88%, transparent) 46%,
+    transparent 80%
+  );
+}
+
+/* ---- Mobile treatment: flat wash plus pool, below `xl` ---- */
+
+/*
+  The pool, not the wash, is what keeps the type readable; the wash only sets how
+  present the chart is around it.
+*/
+.hero-veil-wash {
+  background-color: color-mix(in srgb, var(--ui-bg) 61%, transparent);
+}
+
+.dark .hero-veil-wash {
+  background-color: color-mix(in srgb, var(--ui-bg) 68%, transparent);
+}
+
+/*
+  The pool is flat-topped out to 52% of its radius before falling off, so the
+  eyebrow's ends do not land in the gradient. With a falloff starting near the
+  centre they measured ~3.4:1 — a real failure that axe does not catch, because
+  axe cannot evaluate text over a background image.
+
+  Its vertical extent was 62%, which covered the copy block when the hero ended
+  in two buttons. The plate row is taller and lifts the eyebrow above that reach,
+  so the extent is 74%.
+*/
+.hero-veil-core {
+  background-image: radial-gradient(
+    ellipse 76% 74% at 50% 50%,
+    color-mix(in srgb, var(--ui-bg) 76%, transparent) 52%,
+    transparent 94%
+  );
+}
+
+.dark .hero-veil-core {
+  background-image: radial-gradient(
+    ellipse 76% 74% at 50% 50%,
+    color-mix(in srgb, var(--ui-bg) 80%, transparent) 52%,
+    transparent 94%
+  );
+}
+
+/* `enterMotion` in `useLandingMotion.ts`: the first screen's entrance, run by
+ * the browser from the first paint so it never waits for hydration. */
+@keyframes landing-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.landing-enter {
+  animation: landing-enter 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) var(--landing-enter-delay, 0s) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-enter {
+    animation: none;
+  }
+}
