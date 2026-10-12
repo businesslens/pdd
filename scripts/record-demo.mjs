@@ -4,7 +4,7 @@
  *
  * pdd-kit is dogfooded, so the demo is this repository's own Product
  * Model. It runs the same command the README offers a reader,
- * `npx pdd-kit view itai-gendler/pdd-kit`, which fetches the default branch
+ * `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit`, which fetches the default branch
  * from GitHub; re-record after a model or report change has merged. It drives
  * one session through the report with Playwright at fixed pacing and records
  * it frame by frame. Playwright draws no pointer, so a visible one
@@ -216,7 +216,7 @@ try {
   // One command, private and local, that a reader can run as is.
   beat('Terminal')
   const terminal = page.locator('#demo-terminal pre')
-  const command = `npx pdd-kit view ${repository}`
+  const command = `npx @itai-gendler/pdd-kit view ${repository}`
   for (let typed = 0; typed <= command.length; typed += 1) {
     await terminal.evaluate((element, text) => {
       element.innerHTML = `<span class="prompt">~ $</span> ${text}<span class="caret"></span>`

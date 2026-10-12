@@ -119,7 +119,8 @@ if (!pageTabUnion) {
   }
 }
 
-if (pkg.name !== 'pdd-kit') errors.push(`package.json name must be pdd-kit, found ${pkg.name}`)
+if (pkg.name !== '@itai-gendler/pdd-kit') errors.push(`package.json name must be @itai-gendler/pdd-kit, found ${pkg.name}`)
+if (pkg.bin?.['pdd-kit'] !== 'dist/cli.js') errors.push('package.json must install the pdd-kit command')
 if (pkg.repository?.url !== 'git+https://github.com/itai-gendler/pdd-kit.git') {
   errors.push('package.json repository must be git+https://github.com/itai-gendler/pdd-kit.git')
 }

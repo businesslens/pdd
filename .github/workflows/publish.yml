@@ -51,7 +51,7 @@ jobs:
           pack_dir="$(mktemp -d)"
           package_version="$(node --print "require('./package.json').version")"
           pnpm pack --pack-destination "$pack_dir"
-          tarball="$pack_dir/pdd-kit-${package_version}.tgz"
+          tarball="$pack_dir/itai-gendler-pdd-kit-${package_version}.tgz"
           test -f "$tarball"
           node scripts/check-package-size.mjs "$tarball"
           echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
@@ -74,11 +74,11 @@ jobs:
           cli_only="$smoke_root/cli-only"
           mkdir -p "$cli_only"
           npm install --prefix "$cli_only" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
-          node "$cli_only/node_modules/pdd-kit/dist/cli.js" --version
+          node "$cli_only/node_modules/@itai-gendler/pdd-kit/dist/cli.js" --version
           (
             cd "$cli_only"
             node --input-type=module --eval \
-              "import { PDD_KIT_DEFAULT_LIGHT_BACKGROUND } from 'pdd-kit/theme-lab/variants'; if (PDD_KIT_DEFAULT_LIGHT_BACKGROUND !== 'l4') process.exit(1)"
+              "import { PDD_KIT_DEFAULT_LIGHT_BACKGROUND } from '@itai-gendler/pdd-kit/theme-lab/variants'; if (PDD_KIT_DEFAULT_LIGHT_BACKGROUND !== 'l4') process.exit(1)"
           )
           for ui_dependency in \
             nuxt \
@@ -151,7 +151,7 @@ jobs:
           npm install --prefix "$view_runner" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
 
           view_log="$smoke_root/view.log"
-          node "$view_runner/node_modules/pdd-kit/dist/cli.js" \
+          node "$view_runner/node_modules/@itai-gendler/pdd-kit/dist/cli.js" \
             --cwd "$view_project" view --no-open >"$view_log" 2>&1 &
           viewer_pid=$!
           cleanup_viewer() {
@@ -183,8 +183,8 @@ jobs:
         shell: bash
         run: |
           package_version="$(node --print "require('./package.json').version")"
-          if npm view "pdd-kit@${package_version}" version >/dev/null 2>&1; then
-            echo "pdd-kit@${package_version} is already published; skipping."
+          if npm view "@itai-gendler/pdd-kit@${package_version}" version >/dev/null 2>&1; then
+            echo "@itai-gendler/pdd-kit@${package_version} is already published; skipping."
             exit 0
           fi
           npm publish "${{ steps.pack.outputs.tarball }}"

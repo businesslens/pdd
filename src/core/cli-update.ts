@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { cancel, isCancel, select } from '@clack/prompts'
-import { cliVersion, packageRoot } from '../version.js'
+import { CLI_NAME, PACKAGE_NAME, cliVersion, packageRoot } from '../version.js'
 
 /**
  * The CLI's own update prompt.
@@ -18,7 +18,7 @@ import { cliVersion, packageRoot } from '../version.js'
  * belongs to that project's lockfile.
  */
 
-const PACKAGE = 'pdd-kit'
+const PACKAGE = PACKAGE_NAME
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
 const CI_VARIABLES = [
@@ -139,22 +139,22 @@ export function packageManagerFor(
   exists: (path: string) => boolean = existsSync
 ): PackageManager | undefined {
   const path = root.replace(/\\/g, '/')
-  if (basename(path) !== PACKAGE || path.includes('/_npx/')) return undefined
+  if (!path.endsWith(`/${PACKAGE}`) || path.includes('/_npx/')) return undefined
   if (/\/pnpm\/global\//i.test(path)) return 'pnpm'
   if (/\/\.bun\/install\/global\/node_modules\//i.test(path)) return 'bun'
   if (/\/yarn\/(?:data\/)?global\/node_modules\//i.test(path)) return 'yarn'
 
-  // npm installs globally to <prefix>/lib/node_modules with its bin in
-  // <prefix>/bin, or to <prefix>/node_modules beside <prefix>/pdd-kit.cmd
+  // npm installs globally to <prefix>/lib/node_modules/<scope>/<name> with its
+  // bin in <prefix>/bin, or to <prefix>/node_modules beside <prefix>/pdd-kit.cmd
   // on Windows. Matching that shape covers a configured prefix as well.
-  const modules = dirname(path)
+  const modules = path.slice(0, -PACKAGE.length - 1)
   if (basename(modules) !== 'node_modules') return undefined
   if (platform === 'win32') {
-    return exists(join(dirname(modules), `${PACKAGE}.cmd`)) ? 'npm' : undefined
+    return exists(join(dirname(modules), `${CLI_NAME}.cmd`)) ? 'npm' : undefined
   }
   const lib = dirname(modules)
   if (basename(lib) !== 'lib') return undefined
-  return exists(join(dirname(lib), 'bin', PACKAGE)) ? 'npm' : undefined
+  return exists(join(dirname(lib), 'bin', CLI_NAME)) ? 'npm' : undefined
 }
 
 export function installCommand(manager: PackageManager, version: string): InstallCommand {
@@ -182,7 +182,7 @@ export async function fetchLatestVersion(
   fetchImpl: typeof fetch = fetch
 ): Promise<string | undefined> {
   try {
-    const response = await fetchImpl(`${registry(env)}/-/package/${PACKAGE}/dist-tags`, {
+    const response = await fetchImpl(`${registry(env)}/-/package/${PACKAGE.replace('/', '%2F')}/dist-tags`, {
       headers: { accept: 'application/json' },
       signal: AbortSignal.timeout(10_000)
     })

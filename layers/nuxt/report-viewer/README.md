@@ -310,7 +310,7 @@ Extend the layer from a Nuxt application:
 
 ```ts
 export default defineNuxtConfig({
-  extends: ['pdd-kit/nuxt/report-viewer']
+  extends: ['@itai-gendler/pdd-kit/nuxt/report-viewer']
 })
 ```
 

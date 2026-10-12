@@ -12,7 +12,7 @@ Extend it from a Nuxt application:
 
 ```ts
 export default defineNuxtConfig({
-  extends: ['pdd-kit/nuxt/theme']
+  extends: ['@itai-gendler/pdd-kit/nuxt/theme']
 })
 ```
 

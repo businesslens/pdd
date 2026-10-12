@@ -13,6 +13,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
+import { PACKAGE_NAME } from '../version.js'
 
 export const PDD_KIT_SKILLS = [
   'pdd-map',
@@ -25,7 +26,7 @@ export type PddKitSkill = (typeof PDD_KIT_SKILLS)[number]
 const MANIFEST_FILE = '.pdd-kit-install.json'
 export interface InstallationManifest {
   schema: 1
-  package: 'pdd-kit'
+  package: typeof PACKAGE_NAME
   version: string
   provider: string
   scope: InstallScope
@@ -95,7 +96,7 @@ function readManifest(skillsDir: string): InstallationManifest | undefined {
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as InstallationManifest
     if (
       parsed.schema === 1
-      && parsed.package === 'pdd-kit'
+      && parsed.package === PACKAGE_NAME
       && typeof parsed.version === 'string'
       && Array.isArray(parsed.skills)
       && parsed.skills.every(isSkillDirectoryName)
@@ -210,7 +211,7 @@ export function installSkillsToTarget(
   const now = new Date().toISOString()
   writeManifest(skillsDir, {
     schema: 1,
-    package: 'pdd-kit',
+    package: PACKAGE_NAME,
     version,
     provider: target.provider.id,
     scope: target.scope,

@@ -88,7 +88,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       'exec',
       '--yes',
       '--ignore-scripts',
-      '--package=pdd-kit@latest',
+      '--package=@itai-gendler/pdd-kit@latest',
       '--',
       'pdd-kit',
       '--cwd',
@@ -100,7 +100,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   })
 
   it.each(LINT_RUNNERS)('$name pins the CLI to the version the skills were installed from', ({ name, file }) => {
-    // `pdd-kit@latest` would lint a model against whatever is published
+    // `@itai-gendler/pdd-kit@latest` would lint a model against whatever is published
     // rather than against the release these skills shipped with, reporting the
     // current format's frontmatter keys as unknown.
     const skills = temporary('bl-runner-pinned-skills-')
@@ -111,7 +111,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
     writeFileSync(
       join(skills, '.pdd-kit-install.json'),
-      JSON.stringify({ schema: 1, package: 'pdd-kit', version: '9.9.9' })
+      JSON.stringify({ schema: 1, package: '@itai-gendler/pdd-kit', version: '9.9.9' })
     )
     const runnerDir = join(skills, `pdd-kit-${name}`, 'scripts')
     mkdirSync(runnerDir, { recursive: true })
@@ -146,7 +146,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     )
 
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
-    expect(recorded.args).toContain('--package=pdd-kit@9.9.9')
+    expect(recorded.args).toContain('--package=@itai-gendler/pdd-kit@9.9.9')
   })
 
   it.each(LINT_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
@@ -158,7 +158,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
     mkdirSync(join(developmentRoot, 'dist'), { recursive: true })
-    writeFileSync(join(developmentRoot, 'package.json'), JSON.stringify({ name: 'pdd-kit' }))
+    writeFileSync(join(developmentRoot, 'package.json'), JSON.stringify({ name: '@itai-gendler/pdd-kit' }))
     writeFileSync(
       cli,
       `require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({

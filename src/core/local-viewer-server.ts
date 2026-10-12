@@ -21,7 +21,7 @@ const ASSET_PREFIX = '/_pdd-kit/file/'
 const CODE_PATH = '/_pdd-kit/code'
 const GITHUB_STAR_PATH = '/_pdd-kit/github-star'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
-const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('pdd-kit/package.json'), '../layers/nuxt/theme/public/brand')
+const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('@itai-gendler/pdd-kit/package.json'), '../layers/nuxt/theme/public/brand')
 
 /** 25 MB. A product asset is a mockup or a capture, never a build output. */
 const MAX_ASSET_BYTES = 25 * 1024 * 1024

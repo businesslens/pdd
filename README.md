@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-<code>npx pdd-kit install</code>
+<code>npx @itai-gendler/pdd-kit install</code>
 </p>
 
 <p align="center">
@@ -117,8 +117,8 @@ model with no code behind it. Every answer below is read from the model.
 Or open it on your machine:
 
 ```bash
-npx pdd-kit blueprint pull kanban-board
-npx pdd-kit view
+npx @itai-gendler/pdd-kit blueprint pull kanban-board
+npx @itai-gendler/pdd-kit view
 ```
 
 ### 1. Entities, and which capabilities change them
@@ -218,7 +218,7 @@ One shared definition of what the product does helps everyone who works on it:
 
 **Dogfooded:** pdd-kit is developed with pdd-kit. Its own Product Model
 lives in this repository's [`product-model/` folder](./product-model/); open it
-with `npx pdd-kit view itai-gendler/pdd-kit`.
+with `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit`.
 
 ## Features
 
@@ -243,7 +243,7 @@ with `npx pdd-kit view itai-gendler/pdd-kit`.
 ## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Get started
 
 ```bash
-npx pdd-kit install
+npx @itai-gendler/pdd-kit install
 ```
 
 This adds the skills to Claude Code, Codex, Cursor, Gemini CLI and GitHub
@@ -262,7 +262,7 @@ It reads the code without running it, asks what the code can't answer, and
 writes `product-model/` once you approve. Then open the report:
 
 ```bash
-npx pdd-kit view
+npx @itai-gendler/pdd-kit view
 ```
 
 [From your repo](https://pdd-kit.dev/docs/from-your-repo)
@@ -283,8 +283,8 @@ You pick from a few product shapes, then approve the model.
 A familiar kind of product? List the reviewed models and pull one:
 
 ```bash
-npx pdd-kit blueprint list
-npx pdd-kit blueprint pull <name>
+npx @itai-gendler/pdd-kit blueprint list
+npx @itai-gendler/pdd-kit blueprint pull <name>
 ```
 
 [Browse the Blueprints](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints) ·
@@ -307,7 +307,7 @@ npx pdd-kit blueprint pull <name>
 
 `install`, `update`, `lint`, `view` and the `blueprint` commands. Every command
 and option: [CLI reference](https://pdd-kit.dev/docs/cli), or
-`npx pdd-kit --help`.
+`npx @itai-gendler/pdd-kit --help`.
 
 ## FAQ
 

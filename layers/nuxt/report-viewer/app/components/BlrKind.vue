@@ -5,7 +5,7 @@
  * Nine kinds is past what hue alone can separate, so this component never emits
  * a bare colour swatch — the label is part of the mark.
  */
-import type { ReportInterface } from 'pdd-kit/report'
+import type { ReportInterface } from '@itai-gendler/pdd-kit/report'
 import type { ActingSide, EntityFacet, ReportResourceKind } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
