@@ -45,7 +45,6 @@
     "hast-util-to-html": "^9.0.5",
     "motion-v": "^2.3.0",
     "nuxt": "4.4.8",
-    "posthog-js": "^1.412.0",
     "tailwindcss": "^4.3.0",
     "vue": "^3.5.35"
   },

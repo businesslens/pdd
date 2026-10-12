@@ -97,8 +97,6 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
             :command="pullCommand(blueprint.slug)"
             copy-label="Copy the pull command"
             copied-label="Copied"
-            data-ph-no-autocapture
-            @copied="captureBlueprintPullCommandCopied(blueprint.slug)"
           />
           <p class="mt-4 text-sm text-muted">
             Then hand the directory to a coding agent, or refine the Product Model with

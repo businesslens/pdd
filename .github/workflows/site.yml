@@ -86,7 +86,7 @@ jobs:
           retention-days: 7
 
   # A pull request from this repository deploys the tested build to its own
-  # Cloudflare Pages preview URL, without analytics. Forks have no credentials.
+  # Cloudflare Pages preview URL. Forks have no credentials.
   preview:
     needs: site
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -124,31 +124,23 @@ jobs:
           BRANCH: ${{ github.head_ref }}
           COMMIT: ${{ github.event.pull_request.head.sha }}
 
-  # main deploys pdd-kit.dev. It generates again with the PostHog key, which the
-  # tested build leaves out so test runs never send analytics.
+  # main deploys the tested build to pdd-kit.dev.
   production:
     needs: site
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     environment:
       name: production
       url: https://pdd-kit.dev
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v5
         with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v6
+          name: site
+          path: site/.output/public
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm generate
-        env:
-          NUXT_PUBLIC_POSTHOG_KEY: ${{ vars.NUXT_PUBLIC_POSTHOG_KEY }}
-          NUXT_PUBLIC_POSTHOG_HOST: ${{ vars.NUXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
       - name: Deploy to Cloudflare Pages
         working-directory: .
         run: |

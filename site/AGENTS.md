@@ -39,7 +39,6 @@ adds what is specific to `site/`.
   generated site), `tests/support/`.
 - `docs/` — [architecture](./docs/architecture.md) (build, routes, catalog,
   hosting, product constraints), [brand and UI](./docs/brand.md),
-  [analytics](./docs/analytics.md),
   [engineering standards](./docs/engineering-standards.md), and `adr/`.
 
 ## Frontend
@@ -49,11 +48,10 @@ adds what is specific to `site/`.
   (`../layers/nuxt/theme`); site styles in `app/assets/css`. See
   [`docs/brand.md`](./docs/brand.md) before changing colors, typography, home
   page copy or marketing voice.
-- Anything that varies per visitor (the analytics consent, the header's GitHub
-  star count) runs in the browser after hydration; the generated HTML is the
-  same for everyone.
-- Analytics is PostHog, consent-gated, configured at build time with
-  `NUXT_PUBLIC_POSTHOG_KEY`. It never identifies a person.
+- Anything that varies per visitor (the header's GitHub star count) runs in
+  the browser after hydration; the generated HTML is the same for everyone.
+- The site has no analytics and no consent notice. Do not add tracking without
+  a new ADR.
 
 ## Verification
 

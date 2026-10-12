@@ -33,25 +33,6 @@ const current = computed(() => hero.actions[selected.value] ?? hero.actions[0]!)
 function reveal(index: number) {
   selected.value = index
   open.value = true
-
-  const action = hero.actions[index]
-  if (action) {
-    captureHomepageCtaClicked({
-      cta: action.id,
-      destination: action.to,
-      interaction: 'open_steps',
-      placement: 'hero'
-    })
-  }
-}
-
-function captureContinuation() {
-  captureHomepageCtaClicked({
-    cta: current.value.id,
-    destination: current.value.to,
-    interaction: 'navigate',
-    placement: 'hero_overlay'
-  })
 }
 
 const BLOCK = { left: '', center: 'mx-auto', responsive: 'mx-auto xl:mx-0' } as const
@@ -76,7 +57,6 @@ const OVERLAY_UI = { description: 'sr-only', content: 'sm:max-w-xl' }
       :copy-label="hero.commandCopyLabel"
       :copied-label="hero.commandCopiedLabel"
       class="mb-3 backdrop-blur"
-      @copied="captureHomepageInstallCommandCopied"
     />
 
     <!-- The plates carry an explicit focus ring. Closing an overlay with Escape
@@ -152,7 +132,6 @@ const OVERLAY_UI = { description: 'sr-only', content: 'sm:max-w-xl' }
           block
           size="lg"
           trailing-icon="i-lucide-arrow-right"
-          @click="captureContinuation"
         />
       </template>
     </UModal>

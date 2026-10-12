@@ -45,22 +45,15 @@ page (`faq.html`, served at `/faq`), the RSS feeds, the sitemap, and each
 Blueprint's report, logo and cover under `/_blueprints`. Nothing runs per
 request, so any static host can serve it.
 
-Analytics is configured at build time. Set `NUXT_PUBLIC_POSTHOG_KEY` (and
-`NUXT_PUBLIC_POSTHOG_HOST` for a non-EU project) when generating a deployed
-build; without it the PostHog client never loads.
-
 ## Deploy
 
 The site is served by Cloudflare Pages (project `pdd-kit`, production branch
-`main`). `.github/workflows/site.yml` deploys it once every check passes:
-
-- A pull request from this repository deploys the tested build to a preview
-  URL, linked from the pull request. Previews have no analytics.
-- `main` generates again with the PostHog key and deploys to pdd-kit.dev.
+`main`). `.github/workflows/site.yml` deploys the tested build once every check
+passes: a pull request from this repository to a preview URL linked from the
+pull request, and `main` to pdd-kit.dev.
 
 It needs the repository secrets `CLOUDFLARE_API_TOKEN` (an account token with
-Cloudflare Pages: Edit) and `CLOUDFLARE_ACCOUNT_ID`, and the repository variable
-`NUXT_PUBLIC_POSTHOG_KEY`. Response headers, including the policy that stops a
+Cloudflare Pages: Edit) and `CLOUDFLARE_ACCOUNT_ID`. Response headers, including the policy that stops a
 contributed Blueprint logo from running scripts, are in `public/_headers`.
 
 ## Verification
@@ -83,6 +76,5 @@ Further reading:
   product constraints.
 - [Brand and UI](./docs/brand.md): colour, type, assets, home page and shared UI
   rules.
-- [Analytics](./docs/analytics.md) and
-  [engineering standards](./docs/engineering-standards.md).
+- [Engineering standards](./docs/engineering-standards.md).
 - [ADR-0001](./docs/adr/0001-a-static-site.md) records why the site is static.

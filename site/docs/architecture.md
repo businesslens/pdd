@@ -20,7 +20,7 @@ A future change must not quietly reverse these:
 - **The site and the CLI show the same Blueprints.** Both are built from the
   repository's `blueprints/` by one release script.
 - **Every visitor gets the same page.** No per-viewer content in the generated
-  HTML; consent and the GitHub star count run in the browser after hydration.
+  HTML; the GitHub star count runs in the browser after hydration.
 - **Workspace material never reaches the catalog.** The portable report carries
   no implementation References, code References, repository-relative targets or
   source areas.
@@ -74,10 +74,9 @@ request. A new noun needs a `CONTEXT.md` entry first.
 - The two feeds use the deterministic renderer in `server/utils/rssXml.ts`.
 - The header's version badge is the root `package.json` version, read at build
   time.
-- In the browser, two optional things happen: the GitHub star count is fetched
-  from `api.github.com` (the badge renders without a count on failure), and
-  PostHog loads only in builds generated with a key. See
-  [analytics](./analytics.md).
+- In the browser, one optional thing happens: the GitHub star count is fetched
+  from `api.github.com` (the badge renders without a count on failure). There
+  is no analytics.
 
 ## Content contract
 
@@ -161,9 +160,8 @@ Plus `/sitemap.xml`, `/404.html`, and the build internals `/_data/**` and
 ## Hosting
 
 - Cloudflare Pages serves `.output/public`. `.github/workflows/site.yml` runs
-  the checks, deploys a pull request from this repository to a preview URL
-  (no analytics), and on `main` generates again with the PostHog key and
-  deploys to pdd-kit.dev.
+  the checks, then deploys the tested build: a pull request from this
+  repository to a preview URL, and `main` to pdd-kit.dev.
 - `public/_headers` sets response headers: security headers on every path, a
   year's immutable cache on content-hashed `/_nuxt/*`, and a no-script,
   sandboxed policy on `/_blueprints/*` so a contributed logo or cover opened

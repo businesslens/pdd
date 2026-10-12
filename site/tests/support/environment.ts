@@ -20,13 +20,7 @@ export function applyTestServerEnvironment(): TestServerEnvironment {
 
   const port = resolveTestPort()
   const appURL = `http://127.0.0.1:${port}`
-  const env: Record<string, string> = {
-    ...definedEnvironmentVariables(),
-    // Keep browser suites deterministic and prevent local PostHog credentials
-    // from sending test traffic or opening the consent notice in unrelated UI
-    // assertions. Analytics behavior is covered by isolated integration tests.
-    NUXT_PUBLIC_POSTHOG_KEY: ''
-  }
+  const env = definedEnvironmentVariables()
 
   Object.assign(process.env, env)
 

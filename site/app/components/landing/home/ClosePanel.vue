@@ -21,15 +21,6 @@ import { Motion } from 'motion-v'
  */
 const { close } = homeContent
 const { scrollMotion } = useLandingMotion()
-
-function captureClosingCta() {
-  captureHomepageCtaClicked({
-    cta: 'get-started',
-    destination: close.action.to,
-    interaction: 'scroll',
-    placement: 'closing'
-  })
-}
 </script>
 
 <template>
@@ -52,7 +43,6 @@ function captureClosingCta() {
         size="lg"
         trailing-icon="i-lucide-arrow-up"
         class="mt-8"
-        @click="captureClosingCta"
       />
     </div>
   </Motion>
