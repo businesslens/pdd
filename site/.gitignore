@@ -1,0 +1,26 @@
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nuxt-typecheck
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs and test output
+logs
+*.log
+playwright-report
+test-results
+.vitest
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env

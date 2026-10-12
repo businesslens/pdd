@@ -13,6 +13,7 @@ export default defineConfig({
     testTimeout: 30_000,
     // Claude worktrees are separate repositories and may intentionally carry
     // uncommitted experiments. Do not discover their tests from the parent.
-    exclude: [...configDefaults.exclude, '.claude/worktrees/**']
+    // The site has its own Vitest and Playwright suites; see site/README.md.
+    exclude: [...configDefaults.exclude, '.claude/worktrees/**', 'site/**']
   }
 })

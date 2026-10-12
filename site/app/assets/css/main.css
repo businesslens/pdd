@@ -1,0 +1,77 @@
+/* Stable foundation and shared presentation experiments come from the
+  pdd-kit theme/theme-lab layers. Landing keeps only its host accents. */
+@import "../brand/tokens.css";
+
+/* One table treatment for authored Markdown, landing copy, and FAQ answers. */
+.content-table-frame {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-xl);
+  background: var(--ui-bg);
+}
+
+.content-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+  line-height: 1.5rem;
+  color: var(--ui-text);
+}
+
+.content-table > thead {
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-color-neutral-200);
+  color: var(--ui-color-neutral-950);
+}
+
+.content-table > tbody > tr {
+  background: color-mix(in oklab, var(--ui-bg-elevated) 40%, transparent);
+}
+
+.content-table > tbody > tr + tr {
+  border-top: 1px solid var(--ui-border);
+}
+
+/* Override the prose renderer's cell grid and corner rounding. The frame
+  owns the outline; rows have horizontal separators only. */
+.content-table > :is(thead, tbody) > tr > :is(th, td) {
+  border: 0;
+  border-radius: 0;
+  padding: 0.625rem 1rem;
+  vertical-align: middle;
+  line-height: 1.5rem;
+}
+
+.content-table > thead > tr > th {
+  padding-block: 0.5rem;
+  font-weight: 600;
+}
+
+.content-table > tbody > tr > :first-child {
+  font-weight: 600;
+  color: var(--ui-text-highlighted);
+}
+
+.content-table > tbody > tr > td:not(:first-child) {
+  color: var(--ui-text);
+}
+
+.content-table > tbody > tr[data-highlighted] {
+  background: color-mix(in oklab, var(--ui-primary) 8%, transparent);
+}
+
+.content-table > tbody > tr[data-highlighted] > :first-child {
+  color: var(--ui-primary);
+}
+
+/* Landing commands and non-shell coding-agent invocations share these token
+  hooks. Inline styles carry Brand Warm in light mode; dark stays fixed. */
+.dark [data-syntax-token="executable"] {
+  color: #ffcb6b !important;
+}
+
+.dark [data-syntax-token="arguments"] {
+  color: #c3e88d !important;
+}

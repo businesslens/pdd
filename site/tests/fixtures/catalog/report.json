@@ -1,0 +1,1492 @@
+{
+  "authors": [
+    {
+      "name": "pdd-kit"
+    }
+  ],
+  "category": "productivity",
+  "counts": {
+    "businessRules": 4,
+    "capabilities": 4,
+    "capabilityScenarios": 7,
+    "domains": 2,
+    "entities": 4,
+    "experiences": 2,
+    "interfaces": 1,
+    "journeyScenarios": 3,
+    "journeys": 3,
+    "screens": 0,
+    "variations": 0
+  },
+  "coverage": {
+    "covered": [],
+    "exclusions": [],
+    "limitations": [],
+    "method": "",
+    "scope": "",
+    "unmapped": []
+  },
+  "description": "A deliberately small team task board: capture a task, decide who holds it, and close it. Authored as a test fixture, not pulled from the catalog.",
+  "generatedAt": "2026-01-15",
+  "generator": {
+    "name": "pdd-kit-fixture",
+    "version": "1.0.0"
+  },
+  "id": "example-task-tracker",
+  "intent": "",
+  "languages": [],
+  "license": "MIT",
+  "limitations": [
+    "This is a test fixture. It exists so the catalog can be rendered and photographed without a pdd checkout.",
+    "Every Journey and Scenario is a Product specification, not a claim about a built implementation."
+  ],
+  "model": {
+    "businessRules": [
+      {
+        "appliesTo": [
+          {
+            "contexts": [],
+            "id": "task-capture",
+            "type": "capability"
+          },
+          {
+            "contexts": [],
+            "id": "task-assignment",
+            "type": "capability"
+          },
+          {
+            "contexts": [],
+            "id": "capture-a-task",
+            "type": "journey"
+          },
+          {
+            "contexts": [],
+            "id": "take-on-and-finish",
+            "type": "journey"
+          }
+        ],
+        "id": "a-task-always-has-an-owner",
+        "intent": "Make the board a record of who is doing what, not a pile of unclaimed intentions.",
+        "permits": null,
+        "rationale": "An unowned task is one nobody has decided about. Defaulting ownership to whoever captured it means the board is a list of commitments rather than a wish list, and reassignment is an explicit act.",
+        "references": [],
+        "statement": "Every task has exactly one owner from the moment it is captured, and never has none.",
+        "supportingSections": [],
+        "title": "A task always has an owner"
+      },
+      {
+        "appliesTo": [
+          {
+            "contexts": [],
+            "effect": "changes",
+            "entityId": "task",
+            "facts": [],
+            "from": "In progress",
+            "to": "Closed",
+            "type": "entity"
+          }
+        ],
+        "id": "a-task-is-closed-by-its-owner",
+        "intent": "",
+        "permits": [
+          {
+            "actorIds": [],
+            "configuredByEntityId": null,
+            "related": [
+              {
+                "entityId": "member",
+                "verb": "owns"
+              }
+            ],
+            "self": false,
+            "unattended": false,
+            "when": []
+          }
+        ],
+        "rationale": "Closing should be cheap so the board stays honest about what is done, and the one person who knows whether the work is done is the one holding it.",
+        "references": [],
+        "statement": "A task is closed by the member who owns it, and by nobody else.",
+        "supportingSections": [],
+        "title": "A task is closed by its owner"
+      },
+      {
+        "appliesTo": [
+          {
+            "contexts": [],
+            "effect": "changes",
+            "entityId": "task",
+            "facts": [],
+            "from": "Closed",
+            "to": "Open",
+            "type": "entity"
+          }
+        ],
+        "id": "closing-is-reversible-only-by-a-lead",
+        "intent": "",
+        "permits": [
+          {
+            "actorIds": [
+              "team-lead"
+            ],
+            "configuredByEntityId": null,
+            "related": [],
+            "self": false,
+            "unattended": false,
+            "when": []
+          }
+        ],
+        "rationale": "Closing should be cheap so the board stays honest about what is done. Reopening is a statement that the team was wrong, which is a lead's call — otherwise a closed task can bounce indefinitely between two people who disagree.",
+        "references": [],
+        "statement": "Only a team lead may reopen a closed task.",
+        "supportingSections": [],
+        "title": "Closing is reversible, but only by a team lead"
+      },
+      {
+        "appliesTo": [
+          {
+            "contexts": [],
+            "effect": "changes",
+            "entityId": "task",
+            "facts": [
+              "Owner"
+            ],
+            "from": null,
+            "to": null,
+            "type": "entity"
+          }
+        ],
+        "id": "only-a-lead-assigns-to-someone-else",
+        "intent": "",
+        "permits": [
+          {
+            "actorIds": [
+              "team-lead"
+            ],
+            "configuredByEntityId": null,
+            "related": [],
+            "self": false,
+            "unattended": false,
+            "when": []
+          },
+          {
+            "actorIds": [
+              "member"
+            ],
+            "configuredByEntityId": null,
+            "related": [],
+            "self": false,
+            "unattended": false,
+            "when": [
+              {
+                "entityId": null,
+                "fact": "Owner",
+                "operator": "absent",
+                "state": null,
+                "value": true
+              }
+            ]
+          }
+        ],
+        "rationale": "Taking work on is a personal decision and should stay frictionless. Handing work to someone else is a scheduling decision, and a board where anyone can do that to anyone stops being trustworthy.",
+        "references": [],
+        "statement": "A member may take a task that nobody holds. Assigning a task to a different person requires the team lead role.",
+        "supportingSections": [],
+        "title": "Only a team lead assigns work to another person"
+      }
+    ],
+    "capabilities": [
+      {
+        "availability": [
+          {
+            "placeId": "web::account-access"
+          }
+        ],
+        "description": "Establishes who is working, and keeps one team's tasks separate from every other team's.",
+        "domainId": "accounts",
+        "id": "account-access",
+        "intent": "The account exists to belong to a team, not to build a profile. It carries a display name because an assignment has to be attributable to someone, and nothing more.",
+        "references": [],
+        "supportingSections": [],
+        "title": "Account access"
+      },
+      {
+        "availability": [
+          {
+            "placeId": "web::board"
+          }
+        ],
+        "description": "Deciding who holds a task, and moving it through open, in progress, and closed.",
+        "domainId": "tasks",
+        "id": "task-assignment",
+        "intent": "",
+        "references": [],
+        "supportingSections": [],
+        "title": "Task assignment"
+      },
+      {
+        "availability": [
+          {
+            "placeId": "web::board"
+          }
+        ],
+        "description": "Getting a task out of someone's head and onto the board in one step.",
+        "domainId": "tasks",
+        "id": "task-capture",
+        "intent": "Capture has to be cheaper than remembering, or it does not happen. A title is the only required field.",
+        "references": [],
+        "supportingSections": [],
+        "title": "Task capture"
+      },
+      {
+        "availability": [
+          {
+            "placeId": "web::board"
+          }
+        ],
+        "description": "Closes a task when the work is done, and reopens one that was closed too early.",
+        "domainId": "tasks",
+        "id": "task-completion",
+        "intent": "Closing is a statement that the work is done, so it is reversible only deliberately and only by a lead.",
+        "references": [],
+        "supportingSections": [],
+        "title": "Task completion"
+      }
+    ],
+    "capabilityScenarios": [
+      {
+        "actorIds": [
+          "visitor"
+        ],
+        "capabilityId": "account-access",
+        "decisionPoints": [],
+        "edgeCases": [
+          "An invitation to a team that no longer exists is refused without naming it"
+        ],
+        "id": "a-visitor-signs-in-to-their-team",
+        "intent": "",
+        "kindId": "primary",
+        "outcome": "The visitor is a member of exactly one team, and no other team's board is reachable.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "visitor",
+            "capabilityId": "account-access",
+            "contexts": [
+              {
+                "placeId": "web::account-access",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [],
+            "kind": "actor",
+            "text": "The visitor identifies themselves",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "account-access",
+            "contexts": [
+              {
+                "placeId": "web::account-access",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [],
+            "kind": "product",
+            "text": "The Product establishes a session bound to one team",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "account-access",
+            "contexts": [
+              {
+                "placeId": "web::account-access",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "Only that team's tasks become readable",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A visitor signs in to their team",
+        "trigger": "A visitor with an invitation opens the sign-in surface."
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityId": "task-capture",
+        "decisionPoints": [],
+        "edgeCases": [
+          "A title of only whitespace is refused, because it names nothing"
+        ],
+        "id": "a-task-is-captured-with-only-a-title",
+        "intent": "",
+        "kindId": "primary",
+        "outcome": "The task exists and is attributable, having cost one field to record.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The member submits the task title",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "creates",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": "Open",
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The task is created and appears on the board immediately",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              },
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "member",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "It is owned by the member who captured it and its state is open",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A task is captured with only a title",
+        "trigger": "A member types a title and submits, filling in nothing else."
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityId": "task-capture",
+        "decisionPoints": [],
+        "edgeCases": [],
+        "id": "an-empty-title-is-refused",
+        "intent": "",
+        "kindId": "validation",
+        "outcome": "No untitled task is created, so the board never carries a row nobody can identify.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [],
+            "kind": "actor",
+            "text": "The member submits an empty title",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The submission is refused and the field explains that a task needs a title",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [],
+            "kind": "condition",
+            "text": "Nothing is written to the board",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "An empty title is refused",
+        "trigger": "A member submits the capture field with nothing in it."
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityId": "task-assignment",
+        "decisionPoints": [],
+        "edgeCases": [],
+        "id": "a-member-takes-an-unassigned-task",
+        "intent": "",
+        "kindId": "primary",
+        "outcome": "The task has one owner, and the team can see who it is.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The member takes the unassigned task",
+            "unattended": false
+          },
+          {
+            "actorId": "member",
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "Open",
+                "to": "In progress",
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The task is assigned to that member and moves to in progress",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The board shows the new owner to everyone on the team",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A member takes an unassigned task",
+        "trigger": "A member chooses to take on a task nobody holds."
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityId": "task-assignment",
+        "decisionPoints": [],
+        "edgeCases": [
+          "Assigning a task to yourself is always allowed, and is how taking one on works"
+        ],
+        "id": "a-member-cannot-assign-to-someone-else",
+        "intent": "",
+        "kindId": "permission",
+        "outcome": "Work is not silently pushed onto someone who did not choose it.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The member tries to assign a task to someone else",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The assignment is refused and the task keeps the owner it had",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "member",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              },
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "team-lead",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The member is told that only a team lead assigns work to others",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A member cannot assign work to someone else",
+        "trigger": "A member who is not a team lead tries to assign a task to another member."
+      },
+      {
+        "actorIds": [
+          "team-lead"
+        ],
+        "capabilityId": "task-completion",
+        "decisionPoints": [],
+        "edgeCases": [],
+        "id": "a-lead-reopens-a-closed-task",
+        "intent": "",
+        "kindId": "primary",
+        "outcome": "The task is live again without anyone having to retype it.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "team-lead",
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "Closed",
+                "to": "Open",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The team lead reopens the closed task",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The task returns to open and keeps the owner it had when it was closed",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The board shows it again alongside the other open work",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A team lead reopens a closed task",
+        "trigger": "A team lead reopens a task that was closed."
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityId": "task-completion",
+        "decisionPoints": [],
+        "edgeCases": [
+          "The recorded closer is the first one, because that is when the task stopped being open"
+        ],
+        "id": "two-members-close-the-same-task",
+        "intent": "",
+        "kindId": "conflict",
+        "outcome": "Closing is idempotent, so a race produces agreement rather than an error neither member caused.",
+        "references": [],
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "In progress",
+                "to": "Closed",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The first member closes the task",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [],
+            "kind": "product",
+            "text": "The first close is recorded and the second changes nothing",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              },
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "member",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "Both members see the same closed task",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "Two members close the same task at once",
+        "trigger": "Two members close the same task before either sees the other's change."
+      }
+    ],
+    "domains": [
+      {
+        "boundary": "Owns who a member is, the team they belong to, and the session that proves it. It does not own what a team is working on, who holds a task, or what closing one means.",
+        "colorSlot": 1,
+        "description": "Identity and the boundary around one team. Establishes who is working and keeps one team's tasks separate from every other team's.",
+        "id": "accounts",
+        "intent": "",
+        "name": "Accounts",
+        "references": [],
+        "supportingSections": []
+      },
+      {
+        "boundary": "Owns what has been captured, who holds it, the state it is in, and what closing it means. It does not own membership, sign-in, or the roles a permission check reads.",
+        "colorSlot": 2,
+        "description": "The work itself: what has been captured, who holds it, what state it is in, and what closing it means.",
+        "id": "tasks",
+        "intent": "",
+        "name": "Tasks",
+        "references": [],
+        "supportingSections": []
+      }
+    ],
+    "entities": [
+      {
+        "acts": "external",
+        "singleton": false,
+        "description": "Someone who belongs to a team and works its tasks. A member captures tasks, takes them on, and closes them, and can see everything the team can see.",
+        "id": "member",
+        "informationKept": [],
+        "intent": "",
+        "kind": "person",
+        "references": [],
+        "relations": [
+          {
+            "cardinality": "one-to-many",
+            "entityId": "task",
+            "verb": "owns"
+          }
+        ],
+        "states": [],
+        "supportingSections": [],
+        "title": "Member"
+      },
+      {
+        "acts": null,
+        "singleton": false,
+        "description": "One piece of work the team has agreed to do, from the moment someone captures it until it is closed. It is the only thing the board keeps.",
+        "domainId": "tasks",
+        "id": "task",
+        "informationKept": [
+          {
+            "description": "what the work is, as whoever captured it wrote it",
+            "name": "Title"
+          },
+          {
+            "description": "the member who holds it",
+            "name": "Owner"
+          }
+        ],
+        "intent": "",
+        "kind": null,
+        "references": [],
+        "relations": [],
+        "states": [
+          {
+            "content": "Captured and waiting for someone to take it on.",
+            "name": "Open"
+          },
+          {
+            "content": "Taken on by its owner and being worked.",
+            "name": "In progress"
+          },
+          {
+            "content": "Its work is done, as far as the team is concerned.",
+            "name": "Closed"
+          }
+        ],
+        "supportingSections": [],
+        "title": "Task"
+      },
+      {
+        "acts": "external",
+        "singleton": false,
+        "description": "A member who also decides what the team is working on. The only actor who can assign a task to someone other than themselves, or reopen one that was closed.",
+        "id": "team-lead",
+        "informationKept": [],
+        "intent": "",
+        "kind": "person",
+        "references": [],
+        "relations": [],
+        "states": [],
+        "supportingSections": [],
+        "title": "Team lead"
+      },
+      {
+        "acts": "external",
+        "singleton": false,
+        "description": "Someone with no session. A visitor can reach the sign-in surface and nothing else; no task is readable without a session.",
+        "id": "visitor",
+        "informationKept": [],
+        "intent": "",
+        "kind": "person",
+        "references": [],
+        "relations": [],
+        "states": [],
+        "supportingSections": [],
+        "title": "Visitor"
+      }
+    ],
+    "experiences": [
+      {
+        "accessMode": "public",
+        "actorIds": [
+          "member",
+          "visitor"
+        ],
+        "description": "Where a visitor becomes a member and a returning member resumes their team.",
+        "entryPoints": [
+          {
+            "path": "/signin",
+            "type": "web"
+          }
+        ],
+        "id": "web::account-access",
+        "intent": "",
+        "interfaceIds": [
+          "web"
+        ],
+        "references": [],
+        "supportingSections": [],
+        "title": "Account access"
+      },
+      {
+        "accessMode": "authenticated",
+        "actorIds": [
+          "member",
+          "team-lead"
+        ],
+        "description": "The single working surface: everything the team has open, and everything it closed this week.",
+        "entryPoints": [
+          {
+            "path": "/board",
+            "type": "web"
+          }
+        ],
+        "id": "web::board",
+        "intent": "",
+        "interfaceIds": [
+          "web"
+        ],
+        "references": [],
+        "supportingSections": [],
+        "title": "Task board"
+      }
+    ],
+    "interfaces": [
+      {
+        "actorIds": [
+          "member",
+          "team-lead",
+          "visitor"
+        ],
+        "description": "The browser Interface through which visitors and team members access the Product.",
+        "entryPoints": [
+          {
+            "path": "/",
+            "type": "web"
+          }
+        ],
+        "id": "web",
+        "intent": "",
+        "languages": [],
+        "references": [],
+        "supportingSections": [],
+        "title": "Web application",
+        "type": "web"
+      }
+    ],
+    "journeyScenarios": [
+      {
+        "actorIds": [
+          "member"
+        ],
+        "decisionPoints": [],
+        "edgeCases": [],
+        "id": "a-task-is-captured-and-owned",
+        "intent": "",
+        "journeyId": "capture-a-task",
+        "kindId": "primary",
+        "outcome": "The Journey goal is achieved: the task is on the board and someone holds it.",
+        "references": [],
+        "result": "achieved",
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-capture",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "creates",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": "Open",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The member captures the task with a title",
+            "unattended": false
+          },
+          {
+            "actorId": "member",
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The Product records the member as its owner",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The task appears on the board, open and attributable",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A task is captured and owned",
+        "trigger": "Something comes up that the team must not lose."
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "decisionPoints": [],
+        "edgeCases": [
+          "A task another member already took is no longer offered"
+        ],
+        "id": "a-member-takes-and-closes-a-task",
+        "intent": "",
+        "journeyId": "take-on-and-finish",
+        "kindId": "primary",
+        "outcome": "The Journey goal is achieved: the task is closed and attributable to whoever did it.",
+        "references": [],
+        "result": "achieved",
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "member",
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "Open",
+                "to": "In progress",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The member takes the task on",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The Product records them as its owner",
+            "unattended": false
+          },
+          {
+            "actorId": "member",
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "In progress",
+                "to": "Closed",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The member closes it when the work is done",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A member takes and closes a task",
+        "trigger": "A member finds a task on the board that nobody holds."
+      },
+      {
+        "actorIds": [
+          "team-lead"
+        ],
+        "decisionPoints": [],
+        "edgeCases": [],
+        "id": "a-lead-reopens-and-reassigns",
+        "intent": "",
+        "journeyId": "reopen-a-closed-task",
+        "kindId": "primary",
+        "outcome": "The Journey goal is achieved: the work is open again and someone holds it.",
+        "references": [],
+        "result": "achieved",
+        "routes": [
+          {
+            "id": "primary",
+            "name": "Primary"
+          }
+        ],
+        "steps": [
+          {
+            "actorId": "team-lead",
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "Closed",
+                "to": "Open",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The team lead reopens the task",
+            "unattended": false
+          },
+          {
+            "actorId": null,
+            "capabilityId": "task-completion",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "reads",
+                "entityId": "task",
+                "facts": [],
+                "from": null,
+                "to": null,
+                "with": null
+              }
+            ],
+            "kind": "product",
+            "text": "The Product returns it to the open board",
+            "unattended": false
+          },
+          {
+            "actorId": "team-lead",
+            "capabilityId": "task-assignment",
+            "contexts": [
+              {
+                "placeId": "web::board",
+                "routeId": "primary"
+              }
+            ],
+            "entities": [
+              {
+                "as": null,
+                "effect": "changes",
+                "entityId": "task",
+                "facts": [],
+                "from": "Open",
+                "to": "In progress",
+                "with": null
+              }
+            ],
+            "kind": "actor",
+            "text": "The team lead reassigns the reopened task",
+            "unattended": false
+          }
+        ],
+        "supportingSections": [],
+        "title": "A lead reopens and reassigns",
+        "trigger": "A team lead finds that closed work is not actually finished."
+      }
+    ],
+    "journeys": [
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityIds": [
+          "task-assignment",
+          "task-capture"
+        ],
+        "domainIds": [
+          "tasks"
+        ],
+        "failureOnlyCapabilityIds": [],
+        "goal": "A member wants something raised mid-conversation to land on the board before it is forgotten.",
+        "id": "capture-a-task",
+        "intent": "",
+        "references": [],
+        "successCriterion": "The task is on the board with exactly one owner.",
+        "supportingSections": [],
+        "title": "Capture a task"
+      },
+      {
+        "actorIds": [
+          "member"
+        ],
+        "capabilityIds": [
+          "task-assignment",
+          "task-completion"
+        ],
+        "domainIds": [
+          "tasks"
+        ],
+        "failureOnlyCapabilityIds": [],
+        "goal": "A member wants to pick up work nobody holds and see it through to closed.",
+        "id": "take-on-and-finish",
+        "intent": "",
+        "references": [],
+        "successCriterion": "The task is owned by the member who did the work, and its state is closed.",
+        "supportingSections": [],
+        "title": "Take on and finish"
+      },
+      {
+        "actorIds": [
+          "team-lead"
+        ],
+        "capabilityIds": [
+          "task-assignment",
+          "task-completion"
+        ],
+        "domainIds": [
+          "tasks"
+        ],
+        "failureOnlyCapabilityIds": [],
+        "goal": "A team lead wants work that was closed too early back in front of the team.",
+        "id": "reopen-a-closed-task",
+        "intent": "",
+        "references": [],
+        "successCriterion": "The task is open again and held by whoever will finish it.",
+        "supportingSections": [],
+        "title": "Reopen a closed task"
+      }
+    ],
+    "screens": [],
+    "taxonomies": {
+      "scenarioKinds": [
+        {
+          "colorSlot": 2,
+          "description": "The path the product is for.",
+          "id": "primary",
+          "name": "Primary"
+        },
+        {
+          "colorSlot": 3,
+          "description": "Input the product refuses, and how it says so.",
+          "id": "validation",
+          "name": "Validation"
+        },
+        {
+          "colorSlot": 4,
+          "description": "Two valid intentions collide and the product must resolve them predictably.",
+          "id": "conflict",
+          "name": "Conflict"
+        },
+        {
+          "colorSlot": 1,
+          "description": "An actor attempts something their role does not allow.",
+          "id": "permission",
+          "name": "Permission"
+        }
+      ]
+    },
+    "variations": []
+  },
+  "referenceProfile": "portable",
+  "references": [],
+  "schemaVersion": "19.0.0",
+  "summary": "Capture a task, decide who holds it, and close it with a deliberately small team board.",
+  "supportingSections": [],
+  "tags": [
+    "example",
+    "fixture",
+    "tasks",
+    "teams"
+  ],
+  "title": "Example Task Tracker"
+}

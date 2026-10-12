@@ -1,0 +1,18 @@
+{
+  "extends": "./.nuxt/tsconfig.server.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": [
+    ".nuxt/nuxt.d.ts",
+    ".nuxt/types/nitro-imports.d.ts",
+    "drizzle.config.ts",
+    "playwright.config.ts",
+    "playwright.screenshots.config.ts",
+    "scripts/**/*.{ts,mts,cts}",
+    "tests/**/*.ts",
+    "vitest.config.ts"
+  ]
+}

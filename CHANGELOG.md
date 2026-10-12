@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs:** pdd-kit.dev, with the docs, the FAQ, the changelog and every Blueprint, is built from this repository, and the FAQ links to its Blueprints again.
+
 ## [0.34.1] - 2026-10-12
 
 ### Fixed
