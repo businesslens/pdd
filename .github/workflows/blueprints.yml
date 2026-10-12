@@ -1,0 +1,63 @@
+name: Publish Blueprints
+
+# Every push to main rebuilds blueprints/ into the rolling Blueprint release,
+# so a merged Blueprint can be pulled within minutes and without a CLI release.
+# Reports depend on the exporter as well as on blueprints/, so this runs on
+# every push rather than on a path filter.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Uploads replace assets in place; two runs must never interleave.
+concurrency:
+  group: blueprints-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      # Installs the exact pnpm pinned by package.json's packageManager.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:core
+      - name: Build the release files
+        run: pnpm blueprints:release "$RUNNER_TEMP/blueprints"
+      - name: Upload to the Blueprint release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dir="$RUNNER_TEMP/blueprints"
+          major="$(jq -r .reportVersion "$dir/index.json")"
+          tag="blueprints-v$major"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            # A prerelease, because GitHub would otherwise mark the only release
+            # in the repository Latest; CLI versions are tags, not releases.
+            gh release create "$tag" \
+              --target "$GITHUB_SHA" \
+              --title "Blueprints (Product Report v$major)" \
+              --notes "Every Blueprint in blueprints/, rebuilt on each push to main. Read by \`blueprint list\` and \`blueprint pull\`." \
+              --prerelease \
+              --latest=false
+          fi
+          # Reports and images first, the index last, so the index never names
+          # a file that is not there yet.
+          find "$dir" -type f ! -name index.json -print0 | xargs -0 gh release upload "$tag" --clobber
+          gh release upload "$tag" "$dir/index.json" --clobber
+          # Drop files of Blueprints that are no longer in blueprints/.
+          gh release view "$tag" --json assets --jq '.assets[].name' | while read -r name; do
+            if [[ ! -f "$dir/$name" ]]; then
+              gh release delete-asset "$tag" "$name" --yes
+            fi
+          done

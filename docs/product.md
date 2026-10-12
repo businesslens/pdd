@@ -63,7 +63,7 @@ Product's name and the paragraph under it the description. An optional
 | --- | --- |
 | `id` | The Product's id, in kebab-case; it may differ from the repository name. Required |
 | `summary` | One line, for listings |
-| `category`, `tags` | What kind of product it is, for the Blueprint catalog |
+| `category`, `tags` | What kind of product it is, for Blueprint listings |
 | `authors` | Who made it: each a `name` and an optional `url` |
 | `license` | One SPDX identifier, such as `MIT` |
 | `languages` | The languages the Interfaces are delivered in; an [Interface](./interfaces.md#the-file) may narrow it |
@@ -95,7 +95,7 @@ A logo expands the Product into a folder:
 A model without a logo stays compact, as `product.md`. To publish the model as
 a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is), it needs a `category`,
 at least one tag, at least one author, a `license`, and `logo.svg`. An optional
-`cover.webp` is the illustration the catalog shows on its card.
+`cover.webp` is the illustration a Blueprint listing shows on its card.
 
 ## How it connects
 

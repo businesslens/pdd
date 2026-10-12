@@ -5,6 +5,7 @@ import { runContribute } from './commands/contribute.js'
 import { runExport } from './commands/export.js'
 import { runInstall } from './commands/install.js'
 import { runLint } from './commands/lint.js'
+import { runList } from './commands/list.js'
 import { runOpen } from './commands/open.js'
 import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
@@ -38,10 +39,6 @@ interface ViewCliOptions {
 
 interface ForceCliOptions {
   force?: boolean
-}
-
-interface PullCliOptions extends ForceCliOptions {
-  catalog?: string
 }
 
 interface ContributeCliOptions {
@@ -174,7 +171,7 @@ function createProgram(setExitCode: (code: number) => void): Command {
   const blueprint = program
     .command('blueprint')
     .summary('Move Product Models between repositories')
-    .description('Export, open, pull, or contribute portable Product Model Blueprints.')
+    .description('Export, open, list, pull, or contribute portable Product Model Blueprints.')
     .usage('<command> [options]')
     .helpOption('-h, --help', 'Show help for command')
     .helpCommand('help [command]', 'Show help for command')
@@ -202,22 +199,26 @@ function createProgram(setExitCode: (code: number) => void): Command {
     })
 
   blueprint
+    .command('list')
+    .summary('List published Blueprints')
+    .description('List the Blueprints that blueprint pull can fetch.')
+    .action(async () => {
+      setExitCode(await runList())
+    })
+
+  blueprint
     .command('pull <name>')
-    .summary('Pull a catalog Blueprint')
-    .description('Pull a Blueprint from a catalog into .businesslens/.')
-    .option('--catalog <origin>', 'Catalog origin (default: BUSINESSLENS_CATALOG_URL or https://businesslens.io)')
+    .summary('Pull a published Blueprint')
+    .description('Pull a published Blueprint into .businesslens/.')
     .option('--force', 'Back up and replace a non-empty .businesslens/ directory')
-    .action(async (name: string, options: PullCliOptions, command: Command) => {
-      setExitCode(await runPull(cwdFor(command), name, {
-        catalog: options.catalog,
-        force: Boolean(options.force)
-      }))
+    .action(async (name: string, options: ForceCliOptions, command: Command) => {
+      setExitCode(await runPull(cwdFor(command), name, { force: Boolean(options.force) }))
     })
 
   blueprint
     .command('contribute')
     .summary('Contribute a Blueprint')
-    .description('Propose the current Product Model for the Blueprint catalog.')
+    .description('Propose the current Product Model as a Blueprint, by pull request.')
     .option('--yes', 'Skip the confirmation prompt')
     .action(async (options: ContributeCliOptions, command: Command) => {
       setExitCode(await runContribute(cwdFor(command), { yes: Boolean(options.yes) }))

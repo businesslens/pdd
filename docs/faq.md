@@ -262,8 +262,9 @@ straight to a coding agent, and you choose the stack. A Blueprint carries the pr
 not an implementation.
 
 Every Blueprint has cleared the same bar: given the pulled model and the words “build this” and
-nothing else, an agent ships a working product. [Browse the
-catalog](https://businesslens.io/blueprints).
+nothing else, an agent ships a working product. List them with
+`npx businesslens blueprint list`, or [browse them on
+GitHub](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints).
 
 ### What actually lands in my repository?
 
@@ -322,15 +323,15 @@ The BusinessLens CLI does not upload your code or Product Model. Linting, export
 pulled model run locally. The map, ideate, and verify skills run inside the coding-agent harness you
 chose, so that harness’s data handling and permissions still apply.
 
-The CLI reaches the network only for explicit operations: pulling requests a Product Report from the
-catalog, contributing uses your own authenticated GitHub CLI to open a public pull request, and
-running the package through npx contacts the registry. Everything the CLI does is auditable in the
-[public source](https://github.com/businesslens/pdd). What we collect is set out in the [privacy
+The CLI reaches the network only for explicit operations: listing and pulling download Blueprints
+from a GitHub Release, contributing uses your own authenticated GitHub CLI to open a public pull
+request, and running the package through npx contacts the registry. Everything the CLI does is
+auditable in the [public source](https://github.com/businesslens/pdd). What we collect is set out in the [privacy
 policy](https://businesslens.io/privacy).
 
 ### Do I need an account?
 
-No. Browsing the catalog and pulling a Blueprint are anonymous — no account, sign-in, or credential
+No. Listing and pulling Blueprints are anonymous — no account, sign-in, or credential
 is involved at any point.
 
 Signing in exists for one reason: so you can keep favorites. Everything else works signed out.

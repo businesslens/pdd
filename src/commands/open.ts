@@ -31,7 +31,7 @@ const MAX_REPORT_BYTES = 8 * 1024 * 1024
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
     throw new UsageError(
-      '`open` accepts local Product Report files. Use `businesslens blueprint pull <blueprint>` for catalog Blueprints.'
+      '`open` accepts local Product Report files. Use `businesslens blueprint pull <blueprint>` for a published Blueprint.'
     )
   }
   const file = isAbsolute(source) ? source : resolve(process.cwd(), source)

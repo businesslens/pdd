@@ -1,27 +1,17 @@
+import {
+  fetchBlueprintIndex,
+  fetchReleaseAsset,
+  resolveBlueprintRepository
+} from '../core/blueprint-release.js'
 import { parseCanonicalName } from '../core/canonical-name.js'
-import { resolveCatalogUrl } from '../core/catalog-url.js'
-import { REPORT_SCHEMA_VERSION } from '../core/portable.js'
 import { reportDigest } from '../core/report-digest.js'
-import { cliVersion } from '../version.js'
 import { expandProductReport } from './open.js'
 import { UsageError } from '../core/usage-error.js'
 import { MAX_PRODUCT_COVER_BYTES, MAX_PRODUCT_LOGO_BYTES, validateProductCover, validateProductLogo } from '../logo.js'
 
-const REPORT_MEDIA_TYPE = 'application/vnd.businesslens.report+json'
-/* The only accepted report version is the schema's own major; the catalog is
-   asked for it by name and refused when it answers with another. */
-const REPORT_MAJOR = REPORT_SCHEMA_VERSION.split('.')[0]!
-
-/** The `version` parameter of a report media type, or null when the header carries none. */
-function reportVersionOf(contentType: string): string | null {
-  const match = /;\s*version\s*=\s*"?(\d+)"?/i.exec(contentType)
-  return match?.[1] ?? null
-}
-
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
 export interface PullOptions {
-  catalog?: string
   force: boolean
 }
 
@@ -30,108 +20,21 @@ export interface PullDependencies {
   env: NodeJS.ProcessEnv
 }
 
-async function readLimitedBytes(response: Response, limit: number, message: string): Promise<Uint8Array> {
-  if (!response.body) return new Uint8Array()
-  const reader = response.body.getReader()
-  const chunks: Uint8Array[] = []
-  let total = 0
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    total += value.byteLength
-    if (total > limit) {
-      await reader.cancel()
-      throw new Error(message)
-    }
-    chunks.push(value)
-  }
-  const bytes = new Uint8Array(total)
-  let offset = 0
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-  return bytes
-}
-
-function catalogError(status: number, body: string): string {
-  let detail = ''
-  try {
-    const payload = JSON.parse(body) as Record<string, unknown>
-    detail = typeof payload.message === 'string'
-      ? payload.message
-      : typeof payload.statusMessage === 'string'
-        ? payload.statusMessage
-        : ''
-  } catch {
-    // Do not surface arbitrary HTML or proxy bodies.
-  }
-  const friendly: Record<number, string> = {
-    404: 'No such Blueprint in the catalog.',
-    410: 'That Blueprint has been withdrawn from the catalog.',
-    503: 'The catalog is temporarily unavailable. Try again shortly.'
-  }
-  const base = friendly[status] || `Blueprint pull failed with status ${status}.`
-  return detail && !base.includes(detail) ? `${base} ${detail}` : base
-}
-
-async function fetchOptionalLogo(
+/** A logo or cover is optional: one that is missing, unreadable or invalid is skipped. */
+async function fetchOptionalImage(
   fetch: typeof globalThis.fetch,
-  catalog: string,
-  blueprint: string
+  repository: string,
+  file: string | null,
+  image: { accept: string, limit: number, validate: (bytes: Uint8Array) => string[] }
 ): Promise<Uint8Array | undefined> {
+  if (!file) return undefined
   try {
-    const response = await fetch(
-      `${catalog}/api/v1/blueprints/${blueprint}/logo.svg`,
-      {
-        headers: {
-          accept: 'image/svg+xml',
-          'user-agent': `businesslens/${cliVersion()}`
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(15_000)
-      }
-    )
-    if (!response.ok || (response.status >= 300 && response.status < 400)) return undefined
-    const length = Number(response.headers.get('content-length') || 0)
-    if (length > MAX_PRODUCT_LOGO_BYTES) return undefined
-    const logo = await readLimitedBytes(
-      response,
-      MAX_PRODUCT_LOGO_BYTES,
-      'The Product logo exceeds the 256 KiB safety limit.'
-    )
-    return validateProductLogo(logo).length ? undefined : logo
-  } catch {
-    return undefined
-  }
-}
-
-async function fetchOptionalCover(
-  fetch: typeof globalThis.fetch,
-  catalog: string,
-  blueprint: string
-): Promise<Uint8Array | undefined> {
-  try {
-    const response = await fetch(
-      `${catalog}/api/v1/blueprints/${blueprint}/cover.webp`,
-      {
-        headers: {
-          accept: 'image/webp',
-          'user-agent': `businesslens/${cliVersion()}`
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(15_000)
-      }
-    )
-    if (!response.ok || (response.status >= 300 && response.status < 400)) return undefined
-    const length = Number(response.headers.get('content-length') || 0)
-    if (length > MAX_PRODUCT_COVER_BYTES) return undefined
-    const cover = await readLimitedBytes(
-      response,
-      MAX_PRODUCT_COVER_BYTES,
-      'The Product cover exceeds the 1 MiB safety limit.'
-    )
-    return validateProductCover(cover).length ? undefined : cover
+    const bytes = await fetchReleaseAsset(fetch, repository, file, {
+      accept: image.accept,
+      limit: image.limit,
+      tooLarge: 'The image exceeds its safety limit.'
+    })
+    return bytes && !image.validate(bytes).length ? bytes : undefined
   } catch {
     return undefined
   }
@@ -143,101 +46,69 @@ export async function runPull(
   options: PullOptions,
   dependencies: Partial<PullDependencies> = {}
 ): Promise<number> {
-  let parsedName: string
-  let catalog: string
+  let blueprint: string
+  let repository: string
   try {
-    parsedName = parseCanonicalName(name)
-    catalog = resolveCatalogUrl(options.catalog, dependencies.env ?? process.env)
+    blueprint = parseCanonicalName(name)
+    repository = resolveBlueprintRepository(dependencies.env ?? process.env)
   } catch (error) {
     console.error((error as Error).message)
     return error instanceof UsageError ? 2 : 1
   }
 
-  const blueprint = encodeURIComponent(parsedName)
-  const url = `${catalog}/api/v1/blueprints/${blueprint}/report.json`
   const fetch = dependencies.fetch ?? globalThis.fetch
 
-  let response: Response
-  let body: string
+  let report: unknown
+  let entry
   try {
-    response = await fetch(url, {
-      headers: {
-        accept: `${REPORT_MEDIA_TYPE}; version=${REPORT_MAJOR}, application/json`,
-        // Identify the CLI so catalog pulls are distinguishable from browser
-        // fetches. Without it every pull is indistinguishable from a page view.
-        'user-agent': `businesslens/${cliVersion()}`
-      },
-      redirect: 'manual',
-      signal: AbortSignal.timeout(15_000)
+    const index = await fetchBlueprintIndex(fetch, repository)
+    entry = index.blueprints.find(candidate => candidate.slug === blueprint)
+    if (!entry) {
+      console.error(`No Blueprint is named ${blueprint}. Run \`businesslens blueprint list\` to see them.`)
+      return 1
+    }
+    const bytes = await fetchReleaseAsset(fetch, repository, entry.report, {
+      accept: 'application/json',
+      limit: MAX_REPORT_BYTES,
+      tooLarge: 'The Blueprint report exceeds the 8 MiB safety limit.'
     })
-    if (response.status >= 300 && response.status < 400) {
-      throw new Error('Refusing a redirected Blueprint report response.')
+    if (!bytes) throw new Error(`The ${blueprint} report is listed but not published. Try again shortly.`)
+    try {
+      report = JSON.parse(new TextDecoder().decode(bytes))
+    } catch {
+      throw new Error('The published Blueprint report is not valid JSON.')
     }
-    const length = Number(response.headers.get('content-length') || 0)
-    if (length > MAX_REPORT_BYTES) {
-      throw new Error('The Blueprint report exceeds the 8 MiB safety limit.')
-    }
-    body = new TextDecoder().decode(await readLimitedBytes(
-      response,
-      MAX_REPORT_BYTES,
-      'The Blueprint report exceeds the 8 MiB safety limit.'
-    ))
   } catch (error) {
     console.error((error as Error).message)
     return 1
   }
 
-  if (!response.ok) {
-    console.error(catalogError(response.status, body))
+  if (reportDigest(report) !== entry.digest) {
+    console.error('The Blueprint report does not match the digest in the Blueprint index.')
+    return 1
+  }
+  if ((report as { id?: unknown } | null)?.id !== blueprint) {
+    console.error('The published report is for a different Blueprint.')
     return 1
   }
 
-  const contentType = response.headers.get('content-type') || ''
-  if (
-    !contentType.includes(REPORT_MEDIA_TYPE)
-    && !contentType.includes('application/json')
-  ) {
-    console.error('The catalog returned an unexpected Blueprint report content type.')
-    return 1
-  }
-  const servedVersion = reportVersionOf(contentType)
-  if (servedVersion !== null && servedVersion !== REPORT_MAJOR) {
-    console.error(
-      `The catalog serves Product Report version ${servedVersion}; this CLI reads version ${REPORT_MAJOR} only. Update businesslens, or ask the catalog for a current report.`
-    )
-    return 1
-  }
-
-  const expectedDigest = response.headers.get('x-businesslens-report-digest')
-  const returnedName = response.headers.get('x-businesslens-blueprint')
-  if (!expectedDigest || !/^[a-f0-9]{64}$/i.test(expectedDigest)) {
-    console.error('The catalog did not provide a valid Blueprint report digest.')
-    return 1
-  }
-  if (returnedName !== parsedName) {
-    console.error('The catalog returned a report for a different Blueprint.')
-    return 1
-  }
-
-  let report: unknown
-  try {
-    report = JSON.parse(body)
-  } catch {
-    console.error('The catalog returned invalid Blueprint report JSON.')
-    return 1
-  }
-  if (reportDigest(report) !== expectedDigest.toLowerCase()) {
-    console.error('The Blueprint report digest does not match the catalog response.')
-    return 1
-  }
-
-  const logo = await fetchOptionalLogo(fetch, catalog, blueprint)
+  const logo = await fetchOptionalImage(fetch, repository, entry.logo, {
+    accept: 'image/svg+xml',
+    limit: MAX_PRODUCT_LOGO_BYTES,
+    validate: validateProductLogo
+  })
   // A cover lives beside the logo in `product/`, so it is fetched only with one.
-  const cover = logo ? await fetchOptionalCover(fetch, catalog, blueprint) : undefined
+  const cover = logo
+    ? await fetchOptionalImage(fetch, repository, entry.cover, {
+      accept: 'image/webp',
+      limit: MAX_PRODUCT_COVER_BYTES,
+      validate: validateProductCover
+    })
+    : undefined
 
   try {
     const opened = expandProductReport(cwd, report, options.force, logo ? { logo, ...(cover ? { cover } : {}) } : {})
-    console.log(`Pulled ${parsedName} into ${opened.root}.`)
+    console.log(`Pulled ${blueprint} into ${opened.root}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

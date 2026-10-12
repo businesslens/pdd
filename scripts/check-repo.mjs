@@ -56,7 +56,7 @@ const reportViewerEntry = await readFile(
 const reportViewerSections = await readFile(
   resolve(root, 'layers/nuxt/report-viewer/app/utils/pageSections.ts'), 'utf8'
 )
-const pullCommand = await readFile(resolve(root, 'src/commands/pull.ts'), 'utf8')
+const blueprintRelease = await readFile(resolve(root, 'src/core/blueprint-release.ts'), 'utf8')
 const reportSpec = await readFile(resolve(root, 'spec/report.md'), 'utf8')
 const pullDoc = await readFile(resolve(root, 'docs/cli-pull.md'), 'utf8')
 const expectedSkills = [
@@ -83,17 +83,17 @@ if (!reportVersion || !reportMajor) {
     errors.push(`packed Nuxt consumer must exercise Product Report v${reportMajor} as ProductReport`)
   }
   /*
-   * The version travels in the report media type, and the two registers a
-   * catalog operator reads are the wire contract and the pull page. A hard-coded
+   * The version travels in the Blueprint release tag, and the two registers a
+   * fork maintainer reads are the wire contract and the pull page. A hard-coded
    * major went stale in the CLI once already; pin the prose to the same source.
    */
-  const negotiated = `version=${reportMajor}`
-  if (!pullCommand.includes('version=${REPORT_MAJOR}') || /version=\d/.test(pullCommand)) {
-    errors.push('blueprint pull must derive the accepted report version, never hard-code it')
+  const releaseTag = `blueprints-v${reportMajor}`
+  if (!blueprintRelease.includes('`blueprints-v${REPORT_MAJOR}`') || /blueprints-v\d/.test(blueprintRelease)) {
+    errors.push('the Blueprint release tag must derive the report version, never hard-code it')
   }
   for (const [label, source] of [['spec/report.md', reportSpec], ['docs/cli-pull.md', pullDoc]]) {
-    if (!source.includes(negotiated)) {
-      errors.push(`${label} must document the catalog media type parameter ${negotiated}`)
+    if (!source.includes(releaseTag)) {
+      errors.push(`${label} must document the Blueprint release tag ${releaseTag}`)
     }
   }
 }

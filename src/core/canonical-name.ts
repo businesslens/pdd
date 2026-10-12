@@ -6,10 +6,10 @@ export const CANONICAL_NAME_MAX_LENGTH = 80
 export class CanonicalNameError extends UsageError {}
 
 /**
- * A Blueprint's canonical name — its catalog slug.
+ * A Blueprint's canonical name — the name `blueprint pull` takes.
  *
- * Shared by `pull` and `contribute` so the name a contributor proposes is
- * validated by exactly the rule the catalog will enforce.
+ * Shared by `pull` and `contribute`, so a contributor cannot propose a name
+ * nobody could pull.
  */
 export function parseCanonicalName(value: string): string {
   if (!CANONICAL_NAME.test(value) || value.length > CANONICAL_NAME_MAX_LENGTH) {

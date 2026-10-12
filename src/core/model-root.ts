@@ -13,7 +13,7 @@ export interface ModelRoot {
  * Resolve the directory that owns the `.businesslens/` model.
  *
  * The model is not always at the Git root. A repository may carry several — the
- * Blueprint catalog keeps one per `blueprints/<slug>/` — so the command's
+ * repository's Blueprints keep one per `blueprints/<slug>/` — so the command's
  * working directory wins over the repository root, and a model may exist with
  * no repository at all. `--cwd` changes that working directory; explicitly
  * passing `--cwd .` is therefore identical to omitting it.

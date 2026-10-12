@@ -25,7 +25,7 @@ self-contained, and none of them writes code: when you ask to implement, verify
 has your own agent implement the work in phases, your usual way, and checks
 each part. See the [development loop](./index.md#the-development-loop).
 
-Catalog contribution is a deterministic CLI workflow:
+Blueprint contribution is a deterministic CLI workflow:
 
 ```bash
 npx businesslens blueprint contribute

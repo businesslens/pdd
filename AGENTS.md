@@ -12,7 +12,7 @@ Two engineering contracts, each changed *before* the behavior it governs:
   changing the parser or the linter.
 - `spec/report.md` — the Product Report wire contract, its portable projection,
   and expansion. Change it before changing `export`, `open`, `pull`,
-  `contribute`, or anything the catalog server agrees with.
+  `list`, `contribute`, or the Blueprint release build.
 
 Neither is a docs-site page. The user-facing explanation of the same resource
 types lives in the Product Model group under `docs/`, and the two registers must
@@ -24,7 +24,7 @@ were costed and then chosen against, so the same argument is not had twice.
 ## Layout
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
-  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
+  and the `blueprint` namespace (`export`, `open`, `list`, `pull`, `contribute`).
   Only documented commands and options are accepted. Removed spellings use
   normal usage errors; there are no hidden migration commands or scope aliases.
   Before launch, publication or installation alone does not require historical
@@ -33,7 +33,7 @@ were costed and then chosen against, so the same argument is not had twice.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git context, portable schema, and
-  catalog/contribution support.
+  Blueprint release and contribution support.
 - `layers/nuxt/report-viewer/` — the stable Nuxt Product Report, its
   complete report projection, and its dependency-free topology engine.
 - `layers/nuxt/report-viewer-lab/` — the private, unexported extension point
@@ -53,7 +53,7 @@ were costed and then chosen against, so the same argument is not had twice.
 
 ## Documentation structure
 
-- `docs/` stays flat; the landing repository pulls it on push and builds
+- `docs/` stays flat; the landing repository pulls it at a pinned revision and builds
   the docs site navigation from frontmatter.
 - Regular docs declare `title`, `description`, `section`, `group`, and
   `order` (enforced by `scripts/check-repo.mjs`). `section` is

@@ -103,7 +103,7 @@ They fill the gaps by guessing, and the guesses ship.
 To show what a Product Model answers, here is one for a **kanban board**: a
 conceptual product where a small team plans its work on shared boards of
 columns and cards, and an **AI agent proposes the next cards**. It is the
-[Kanban Board](https://businesslens.io/blueprints/kanban-board) Blueprint, a
+[Kanban Board](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints/kanban-board) Blueprint, a
 model with no code behind it. Every answer below is read from the model.
 
 <p align="center">
@@ -280,13 +280,14 @@ You pick from a few product shapes, then approve the model.
 
 ### Start from a Blueprint
 
-A familiar kind of product? Pull a reviewed model:
+A familiar kind of product? List the reviewed models and pull one:
 
 ```bash
+npx businesslens blueprint list
 npx businesslens blueprint pull <name>
 ```
 
-[Browse the catalog](https://businesslens.io/blueprints) ·
+[Browse the Blueprints](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints) ·
 [From a Blueprint](https://businesslens.io/docs/from-a-blueprint)
 
 ## The development loop

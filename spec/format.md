@@ -1,7 +1,7 @@
 # The `.businesslens/` Format
 
 > **This is engineering documentation, not a docs-site page.** It is the
-> contract the parser, the linter, and the catalog server must agree on, and
+> contract the parser, the linter, and the Blueprint release must agree on, and
 > it changes *before* their behavior does.
 >
 > The user-facing explanation of the same resource types lives in the Product
@@ -63,7 +63,7 @@ lint does not determine whether prose contains deliberation history.
 | **Product Report** | the portable serialization of a Product Model. One format, two profiles. |
 | — *workspace* | `referenceProfile: workspace`. Repository-relative references and entry points intact, as optional navigation. For a full product instance inside the boundary that owns the code. |
 | — *portable* | `referenceProfile: portable`. No `kind: code`, no repository-relative targets or entry points. Required whenever a report crosses an ownership boundary. |
-| **Blueprint** | a portable Product Report. Publishing it in a catalog is a separate step. |
+| **Blueprint** | a portable Product Report. Publishing it — merging it into `blueprints/` of the Blueprint repository — is a separate step. |
 
 **Redaction is a property a report has, never a category it belongs to.** A
 report carrying repository navigation is still a Product Report; it is simply
@@ -145,7 +145,7 @@ A representative model can therefore look like this:
 ├── product/                 # expanded Product alternative
 │   ├── product.md
 │   ├── logo.svg             # optional locally; required for a public Blueprint
-│   └── cover.webp           # optional catalog cover
+│   └── cover.webp           # optional listing cover
 │
 │   ── Interface → Experience → Screen: where Actors meet the Product ──
 ├── interfaces/<interface-id>/
@@ -2565,9 +2565,8 @@ one achieved Journey Scenario. Coverage, References and silence never establish
 file-level completeness or implementation alignment.
 
 A model may describe planned, implemented or mixed behavior, contain zero
-References, and be exported with known gaps. Proposing it as a catalog
-Blueprint is a separate, explicit action; public listing remains an
-administrator decision.
+References, and be exported with known gaps. Proposing it as a Blueprint is a
+separate, explicit action; merging that proposal is the maintainer's decision.
 
 ## Serialization
 

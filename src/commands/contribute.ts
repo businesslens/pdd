@@ -3,6 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { resolveBlueprintRepository } from '../core/blueprint-release.js'
 import { parseCanonicalName } from '../core/canonical-name.js'
 import { lsFiles } from '../core/git.js'
 import { loadModel } from '../core/model.js'
@@ -13,22 +14,6 @@ import { expandProductReport } from './open.js'
 import { lintModel } from './lint.js'
 import { UsageError } from '../core/usage-error.js'
 import { readProductCover, readProductLogo } from '../core/logo-file.js'
-
-/**
- * Where contributions go.
- *
- * Overridable for the same reason the catalog origin is: anyone running their
- * own catalog needs their own Blueprint repository behind it, and the two have
- * to be able to point at the same deployment.
- */
-function upstreamRepository(env: NodeJS.ProcessEnv = process.env): string {
-  const configured = env.BUSINESSLENS_CONTRIBUTE_UPSTREAM?.trim()
-  if (!configured) return 'businesslens/pdd'
-  if (!/^[\w.-]+\/[\w.-]+$/.test(configured)) {
-    throw new Error('BUSINESSLENS_CONTRIBUTE_UPSTREAM must be an "owner/repo" pair.')
-  }
-  return configured
-}
 
 export interface ContributeOptions {
   yes: boolean
@@ -122,7 +107,7 @@ async function cloneWithRetry(repo: string, destination: string): Promise<void> 
 export async function runContribute(cwd: string, options: ContributeOptions): Promise<number> {
   let workspace: string | undefined
   try {
-    const UPSTREAM = upstreamRepository()
+    const UPSTREAM = resolveBlueprintRepository()
     requireGh()
 
     const { modelRoot, gitRoot } = resolveModelRoot(cwd)
@@ -156,7 +141,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
       throw new Error('A public Blueprint requires .businesslens/product/logo.svg.')
     }
 
-    // A Blueprint has no catalog-specific identity. Its Product ID is the
+    // A Blueprint has no separate identity. Its Product ID is the
     // route, directory, contribution branch, and pull name everywhere.
     const slug = parseCanonicalName(portable.id)
 

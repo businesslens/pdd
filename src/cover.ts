@@ -135,7 +135,7 @@ export function productCoverDimensions(bytes: Uint8Array): ProductCoverDimension
 /**
  * Validate a Product cover: a well-formed still WebP, 16:9, 1200 to 4096 pixels
  * wide and at most 2304 high, and at most 1 MiB. It is presentation for
- * catalogs, read only as an image and never as product meaning, so the contract
+ * Blueprint listings, read only as an image and never as product meaning, so the contract
  * checks the container a renderer reads and nothing the illustration says.
  */
 export function validateProductCover(input: Uint8Array): string[] {

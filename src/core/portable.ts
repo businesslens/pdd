@@ -1232,7 +1232,7 @@ export function validateProductReport(report: ProductReport): string[] {
     } else if (scenario.result === 'achieved' && journey) {
       /* As lint counts it: the Product carries one Journey Actor across, so only
          Steps that Actor performs or is attributed count, per Actor. A report
-         lint would refuse is refused here too, so a catalog never accepts what
+         lint would refuse is refused here too, so a release never publishes what
          `open` and `pull` then reject. */
       const carried = new Map<string, Set<string>>()
       for (const step of scenario.steps) {
@@ -1925,7 +1925,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
   return `This is not a valid Product Report: at ${path}, ${first?.message ?? 'the shape is wrong'}.`
 }
 
-/** Additional publication policy for a Product Report entering the public Blueprint catalog. */
+/** Additional publication policy for a Product Report published as a public Blueprint. */
 export function validateBlueprintReport(report: ProductReport): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')

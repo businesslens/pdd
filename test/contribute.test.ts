@@ -101,7 +101,7 @@ if (args[0] === 'pr' && args[1] === 'create') {
     blueprintDir.map(file => [path.relative(process.cwd(), file), fs.readFileSync(file, 'utf8')])
   )
   fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify(record))
-  console.log('https://github.com/businesslens/pdd/pull/1')
+  console.log('https://github.com/itai-gendler/pdd-kit/pull/1')
   process.exit(0)
 }
 process.exit(0)
@@ -293,7 +293,7 @@ describe('contribute', { timeout: 30_000 }, () => {
       recorded.calls.findIndex(call => call[0] === first && call[1] === second)
 
     const sync = recorded.calls.find(call => call[0] === 'repo' && call[1] === 'sync')
-    expect(sync).toEqual(['repo', 'sync', 'contributor/pdd', '--source', 'businesslens/pdd', '--branch', 'main', '--force'])
+    expect(sync).toEqual(['repo', 'sync', 'contributor/pdd-kit', '--source', 'itai-gendler/pdd-kit', '--branch', 'main', '--force'])
 
     // Order is the whole point: syncing after the clone would fix nothing.
     expect(index('repo', 'fork')).toBeLessThan(index('repo', 'sync'))
@@ -311,7 +311,7 @@ describe('contribute', { timeout: 30_000 }, () => {
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
-    fakeGh(bin, capture, { existingPr: 'https://github.com/businesslens/pdd/pull/7' })
+    fakeGh(bin, capture, { existingPr: 'https://github.com/itai-gendler/pdd-kit/pull/7' })
     fakeGitPush(bin)
 
     const previousPath = process.env.PATH
@@ -337,7 +337,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(recorded.calls.find(call => call[0] === 'pr' && call[1] === 'list'))
       .toContain('contributor:blueprint/fixture-shop')
 
-    expect(logs.join('\n')).toContain('Updated https://github.com/businesslens/pdd/pull/7')
+    expect(logs.join('\n')).toContain('Updated https://github.com/itai-gendler/pdd-kit/pull/7')
     expect(recorded.calls.some(call => call[0] === 'pr' && call[1] === 'create')).toBe(false)
   })
 
@@ -366,7 +366,7 @@ describe('contribute', { timeout: 30_000 }, () => {
       delete process.env.CAPTURE_FILE
     }
 
-    expect(errors.join('\n')).toContain('Could not bring contributor/pdd up to date')
+    expect(errors.join('\n')).toContain('Could not bring contributor/pdd-kit up to date')
     const recorded = JSON.parse(readFileSync(capture, 'utf8')) as { calls: string[][] }
     expect(recorded.calls.some(call => call[0] === 'pr' && call[1] === 'create')).toBe(false)
   })

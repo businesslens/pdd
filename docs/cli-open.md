@@ -9,7 +9,7 @@ order: 26
 # `businesslens blueprint open`
 
 Expand a [Blueprint](./from-a-blueprint.md#what-a-blueprint-is) file you were
-given into a `.businesslens/` Product Model. For a catalog Blueprint, use
+given into a `.businesslens/` Product Model. For a published Blueprint, use
 [`blueprint pull`](./cli-pull.md) instead.
 
 ```bash

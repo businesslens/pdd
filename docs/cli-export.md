@@ -54,4 +54,4 @@ lint, and 2 for an unknown option.
 
 - [`blueprint open`](./cli-open.md) expands the file into a Product Model
   elsewhere.
-- [`blueprint contribute`](./cli-contribute.md) proposes it for the catalog.
+- [`blueprint contribute`](./cli-contribute.md) proposes it as a Blueprint.

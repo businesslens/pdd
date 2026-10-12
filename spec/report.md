@@ -1,8 +1,8 @@
 # The Product Report
 
 > **This is engineering documentation, not a docs-site page.** It is the wire
-> contract shared by `blueprint export`, `open`, `pull`, `contribute`, and the
-> catalog server, and it changes *before* their behavior does.
+> contract shared by `blueprint export`, `open`, `list`, `pull`, `contribute`,
+> and the Blueprint release, and it changes *before* their behavior does.
 >
 > The authored folder this report serializes is defined in
 > [`format.md`](./format.md), which also carries the **Terms** — Product Model,
@@ -276,7 +276,7 @@ Compilation produces a `workspace` reference profile. As written by
 removes every `kind: code` reference, every `role: implementation` reference,
 every repository-relative reference, every repository-relative entry point,
 and every Coverage entry. It also contains no repository URL, branch, commit,
-catalog listing state, pricing, or entitlement data. A report that has been
+listing state, pricing, or entitlement data. A report that has been
 through `export` is a Blueprint.
 
 A co-located Product Model asset compiles into a repository-relative workspace
@@ -301,44 +301,44 @@ references use `kind: code|prd|spec|proposal|doc|adr|visual|research` and `role:
 intent|implementation|context` and remain subject to the same strict shape and
 target rules defined in [`format.md`](./format.md).
 
-## Media type and version negotiation
+## Blueprint release
 
-A report served over HTTP is `application/vnd.businesslens.report+json`, and its
-version travels in the media type's `version` parameter as the schema's **major
-alone** — `version=19` for `schemaVersion: "19.0.0"`. The major is the whole
-compatibility statement, because there is no compatibility reader: a report of
-another major is refused rather than migrated, and a minor or patch never
-changes what a reader must understand.
+Published Blueprints are files of one GitHub Release in the Blueprint
+repository, `itai-gendler/pdd-kit` unless `BUSINESSLENS_BLUEPRINT_REPOSITORY`
+names another `owner/repo`. Its tag carries the schema's **major alone** —
+`blueprints-v19` for `schemaVersion: "19.0.0"`. The major is the whole
+compatibility statement, because there is no compatibility reader: a CLI asks
+only for its own major's release, a minor or patch never changes what a reader
+must understand, and when the major changes a new release starts while the old
+one stops changing, so an older CLI keeps pulling what it can read.
 
-The report itself is current-only. `schemaVersion` exists so the catalog
-boundary can negotiate, and so a reader can refuse a stale report in one
-sentence; nothing else branches on it. No type, schema or export carries a
-version in its name — `ProductReport` and `ProductReportSchema` are the only
-names — and no migration or historical reader exists. `generator.version`
-records which BusinessLens release produced a report, for provenance only.
+The report itself is current-only. `schemaVersion` exists so the release can be
+chosen by major, and so a reader can refuse a stale report in one sentence;
+nothing else branches on it. No type, schema or export carries a version in its
+name — `ProductReport` and `ProductReportSchema` are the only names — and no
+migration or historical reader exists. `generator.version` records which
+BusinessLens release produced a report, for provenance only.
 
-`blueprint pull` asks for exactly the version it reads:
+Every push to `main` rebuilds every `blueprints/<slug>/` into the release, so a
+merged Blueprint is pullable without a CLI release. The release is a
+prerelease, so it is never the repository's Latest release. Its files:
 
-```text
-accept: application/vnd.businesslens.report+json; version=19, application/json
-```
+| File | Content |
+| --- | --- |
+| `index.json` | `reportVersion` (the major), `commit`, and one entry per Blueprint: `slug`, `title`, `summary`, `report`, `digest` (SHA-256 hex of the canonical report JSON), `logo`, `cover` (file names, `cover` optional) |
+| `<slug>.json` | The portable report |
+| `<slug>.logo.svg` | The Product logo |
+| `<slug>.cover.webp` | The Product cover, when the Blueprint has one |
 
-`application/json` is the fallback for a catalog that does not negotiate media
-types at all, which is why the response is also accepted with that content type.
-
-A catalog answers with either content type. When it answers with the report
-media type it **must** carry the `version` parameter of the report it is
-serving; a response whose `version` differs from the one asked for is refused
-before its body is parsed, in one sentence naming both versions. A response
-carrying no `version` parameter is read, and a report whose `schemaVersion` then
-names another version is refused by validation instead — also one sentence, and
-also without a Zod issue dump. Stating the version in the header is what moves
-that refusal ahead of the download rather than after it.
-
-Both requests also carry `user-agent: businesslens/<cli-version>`, so a catalog
-operator can tell a CLI pull from a page view. The two response headers a report
-must carry, the logo endpoint, and the status codes are documented for catalog
-operators in [`docs/cli-pull.md`](../docs/cli-pull.md#catalog-contract).
+`blueprint list` prints the index. `blueprint pull <slug>` reads the index, then
+the report it names, and refuses — writing nothing — an index of another major,
+an unknown slug, a report whose canonical digest differs from the index, a
+report whose `id` is not the slug, a report over 8 MiB, and any download
+redirected away from HTTPS. Integrity rests on the digest, not on the
+transport: GitHub serves release files through a redirect to its asset host,
+which is followed. A missing or invalid logo or cover is skipped, and a cover is
+fetched only with a logo. Every request carries
+`user-agent: businesslens/<cli-version>`.
 
 ## Coverage
 
@@ -352,8 +352,8 @@ carries none, and expansion writes empty coverage.
 
 Several report fields name the origin repository rather than the product. That
 navigation is useful inside its repository but must not be published. Every
-report proposed or served as a public catalog Blueprint is first passed through
-one shared projection:
+report proposed or published as a public Blueprint is first passed through one
+shared projection:
 
 ```ts
 import { projectPortableReport } from 'businesslens/report'
@@ -388,9 +388,10 @@ excludes, where it could not establish behavior — and none of that is true of
 the receiving repository, whose code has not been mapped. A pulled model
 therefore starts with empty coverage, like any model decided before its code.
 
-The projection is idempotent and does not mutate its input. Because both the
-framework and the catalog apply this same exported function, contributors and
-the server cannot disagree about what a delivered report exposes.
+The projection is idempotent and does not mutate its input. Because both
+contribution and the release build apply this same exported function,
+contributors and the release cannot disagree about what a delivered report
+exposes.
 `validateProductReport` rejects a report that declares `referenceProfile:
 portable` while still carrying a code reference, implementation reference,
 repository-relative reference, or any Coverage entry; since Coverage with no
@@ -413,9 +414,10 @@ npx businesslens blueprint open ./report.json
 `.businesslens/`. Leaf resources are written compactly as `<id>.md`; a resource
 is written as `<id>/<type>.md` only when report content gives it child resources.
 A Product pulled with a separate `logo.svg` similarly expands from `product.md`
-to `product/product.md`, with an optional `cover.webp` beside the logo. `npx businesslens blueprint pull <blueprint-slug>` anonymously
-retrieves the current public Blueprint for that catalog slug and invokes the
-same expansion path without saving a user-facing report download.
+to `product/product.md`, with an optional `cover.webp` beside the logo.
+`npx businesslens blueprint pull <blueprint-slug>` anonymously retrieves that
+Blueprint from the [release](#blueprint-release) and invokes the same expansion
+path without saving a user-facing report download.
 
 Both commands refuse a non-empty target by default. The semantic round-trip
 guarantee is:

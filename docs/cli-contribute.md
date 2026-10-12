@@ -1,14 +1,14 @@
 ---
 title: blueprint contribute
-description: Open a pull request proposing your Product Model as a catalog Blueprint.
+description: Open a pull request proposing your Product Model as a Blueprint.
 section: open-source
 group: CLI
-order: 28
+order: 29
 ---
 
 # `businesslens blueprint contribute`
 
-Propose your Product Model for the catalog as a
+Propose your Product Model as a
 [Blueprint](./from-a-blueprint.md#what-a-blueprint-is), by opening a pull request.
 
 ```bash
@@ -32,7 +32,7 @@ npx businesslens blueprint contribute [--yes]
   [Logo and publishing](./product.md#logo-and-publishing). An optional
   `cover.webp` beside it is carried into the pull request too.
 
-Your Product id becomes the Blueprint's catalog slug, and the name others pull.
+Your Product id becomes the Blueprint's name, the one others pull.
 
 ## What it does
 
@@ -53,11 +53,11 @@ Your Product id becomes the Blueprint's catalog slug, and the name others pull.
    again to revise; leave the fork in place until the pull request is merged.
 
 Your repository gains only the gitignored export files; the branch, commit and
-fork all live elsewhere. The upstream is `businesslens/pdd` unless
-`BUSINESSLENS_CONTRIBUTE_UPSTREAM` names another `owner/repo`.
+fork all live elsewhere. The upstream is `itai-gendler/pdd-kit` unless
+`BUSINESSLENS_BLUEPRINT_REPOSITORY` names another `owner/repo`.
 
-Merging approves the Blueprint. A maintainer then publishes it to the catalog;
-listing it is a separate decision.
+Merging publishes the Blueprint: within minutes it appears in
+[`blueprint list`](./cli-list.md) and can be pulled by name.
 
 Exits 0 when the pull request is opened or updated, 1 when a check fails, you
 decline, or GitHub refuses, and 2 without a terminal and without `--yes`.

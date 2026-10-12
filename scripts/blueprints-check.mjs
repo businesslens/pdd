@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Gate every Blueprint under `blueprints/` before it can reach the catalog.
+ * Gate every Blueprint under `blueprints/` before it can reach the release.
  *
  * This deliberately does not trust `businesslens blueprint contribute`.
  * Anyone can open a pull request by hand, so the checks that matter — above all

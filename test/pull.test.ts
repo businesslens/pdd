@@ -30,23 +30,42 @@ function initialize(cwd: string): void {
   execFileSync('git', ['commit', '-m', 'fixture'], { cwd, stdio: 'pipe' })
 }
 
-function reportResponse(canonicalName = 'fixture-shop'): Response {
-  return new Response(JSON.stringify(report), {
-    status: 200,
-    headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=19',
-      'x-businesslens-blueprint': canonicalName,
-      'x-businesslens-report-digest': reportDigest(report)
-    }
-  })
+const RELEASE = 'https://github.com/itai-gendler/pdd-kit/releases/download/blueprints-v19/'
+
+function indexFor(overrides: Record<string, unknown> = {}, digest = reportDigest(report)) {
+  return {
+    reportVersion: '19',
+    commit: 'a'.repeat(40),
+    blueprints: [{
+      slug: 'fixture-shop',
+      title: 'Fixture Shop',
+      summary: 'A fixture.',
+      report: 'fixture-shop.json',
+      digest,
+      logo: 'fixture-shop.logo.svg',
+      cover: 'fixture-shop.cover.webp',
+      ...overrides
+    }]
+  }
 }
 
-function logoResponse(): Response {
-  return new Response(logo, { status: 200, headers: { 'content-type': 'image/svg+xml' } })
-}
-
-function coverResponse(): Response {
-  return new Response(cover, { status: 200, headers: { 'content-type': 'image/webp' } })
+/** A fake release: file name → response factory. Unknown files answer 404. */
+function release(
+  files: Record<string, () => Response> = {},
+  urls: string[] = []
+): typeof globalThis.fetch {
+  const defaults: Record<string, () => Response> = {
+    'index.json': () => Response.json(indexFor()),
+    'fixture-shop.json': () => new Response(JSON.stringify(report)),
+    'fixture-shop.logo.svg': () => new Response(logo),
+    'fixture-shop.cover.webp': () => new Response(cover)
+  }
+  return vi.fn(async (url: string) => {
+    urls.push(String(url))
+    const file = decodeURIComponent(String(url).split('/').pop()!)
+    const answer = { ...defaults, ...files }[file]
+    return answer ? answer() : new Response('Not Found', { status: 404 })
+  }) as unknown as typeof globalThis.fetch
 }
 
 beforeAll(() => {
@@ -70,92 +89,70 @@ afterAll(() => {
 })
 
 describe('pull', () => {
-  it('pulls anonymously from the default catalog and expands the model', async () => {
+  it('pulls anonymously from the Blueprint release and expands the model', async () => {
     const target = temporary('bl-pull-target-')
-    let requested: { url: string, init: RequestInit } | undefined
     const urls: string[] = []
-    const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      urls.push(String(url))
-      if (String(url).endsWith('/logo.svg')) return logoResponse()
-      if (String(url).endsWith('/cover.webp')) return coverResponse()
-      requested = { url: String(url), init }
-      return reportResponse()
+    let headers: Record<string, string> = {}
+    const fetch = release({}, urls)
+    const wrapped = vi.fn(async (url: string, init: RequestInit) => {
+      if (String(url).endsWith('/fixture-shop.json')) headers = init.headers as Record<string, string>
+      return fetch(url, init)
     }) as unknown as typeof globalThis.fetch
 
-    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch: wrapped, env: {} })).toBe(0)
 
-    expect(requested?.url).toBe('https://businesslens.io/api/v1/blueprints/fixture-shop/report.json')
-    expect(urls).toContain(
-      'https://businesslens.io/api/v1/blueprints/fixture-shop/logo.svg'
-    )
+    expect(urls).toEqual([
+      `${RELEASE}index.json`,
+      `${RELEASE}fixture-shop.json`,
+      `${RELEASE}fixture-shop.logo.svg`,
+      `${RELEASE}fixture-shop.cover.webp`
+    ])
     // No credential is read, sent, or required.
-    expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=19')
+    expect(headers.authorization).toBeUndefined()
+    expect(headers['user-agent']).toMatch(/^businesslens\//)
     expect(existsSync(join(target, '.businesslens/product/product.md'))).toBe(true)
     expect(existsSync(join(
       target,
       '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
     ))).toBe(true)
     expect(readFileSync(join(target, '.businesslens/product/logo.svg'))).toEqual(logo)
-    expect(urls).toContain('https://businesslens.io/api/v1/blueprints/fixture-shop/cover.webp')
     expect(readFileSync(join(target, '.businesslens/product/cover.webp'))).toEqual(cover)
   })
 
   it('skips a missing or invalid cover, and asks for none without a logo', async () => {
     const missing = temporary('bl-pull-no-cover-')
-    const fetchMissing = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
-      ? logoResponse()
-      : String(url).endsWith('/cover.webp') ? new Response('', { status: 404 }) : reportResponse()) as unknown as typeof globalThis.fetch
+    const fetchMissing = release({ 'fixture-shop.cover.webp': () => new Response('', { status: 404 }) })
     expect(await runPull(missing, 'fixture-shop', { force: false }, { fetch: fetchMissing, env: {} })).toBe(0)
     expect(existsSync(join(missing, '.businesslens/product/logo.svg'))).toBe(true)
     expect(existsSync(join(missing, '.businesslens/product/cover.webp'))).toBe(false)
 
     const invalid = temporary('bl-pull-bad-cover-')
-    const fetchInvalid = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
-      ? logoResponse()
-      : String(url).endsWith('/cover.webp') ? new Response('<svg/>', { status: 200 }) : reportResponse()) as unknown as typeof globalThis.fetch
+    const fetchInvalid = release({ 'fixture-shop.cover.webp': () => new Response('<svg/>') })
     expect(await runPull(invalid, 'fixture-shop', { force: false }, { fetch: fetchInvalid, env: {} })).toBe(0)
     expect(existsSync(join(invalid, '.businesslens/product/cover.webp'))).toBe(false)
 
     const urls: string[] = []
     const noLogo = temporary('bl-pull-cover-without-logo-')
-    const fetchNoLogo = vi.fn(async (url: string) => {
-      urls.push(String(url))
-      return String(url).endsWith('/logo.svg') ? new Response('', { status: 404 }) : reportResponse()
-    }) as unknown as typeof globalThis.fetch
+    const fetchNoLogo = release({ 'fixture-shop.logo.svg': () => new Response('', { status: 404 }) }, urls)
     expect(await runPull(noLogo, 'fixture-shop', { force: false }, { fetch: fetchNoLogo, env: {} })).toBe(0)
-    expect(urls.some(url => url.endsWith('/cover.webp'))).toBe(false)
+    expect(urls.some(url => url.endsWith('.cover.webp'))).toBe(false)
   })
 
-  it('does not require the optional GitHub logo', async () => {
+  it('does not require a logo', async () => {
     const target = temporary('bl-pull-no-logo-')
-    const fetch = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
-      ? new Response('', { status: 404 })
-      : reportResponse()) as unknown as typeof globalThis.fetch
+    const urls: string[] = []
+    const fetch = release({ 'index.json': () => Response.json(indexFor({ logo: null, cover: null })) }, urls)
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
-    expect(existsSync(join(target, '.businesslens/product/logo.svg'))).toBe(false)
+    expect(urls.some(url => url.endsWith('.svg'))).toBe(false)
     expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
     expect(existsSync(join(target, '.businesslens/product'))).toBe(false)
   })
 
-  it('identifies itself so catalog pulls are distinguishable from page views', async () => {
-    const target = temporary('bl-pull-agent-')
-    let headers: Record<string, string> = {}
-    const fetch = vi.fn(async (_url: string, init: RequestInit) => {
-      headers = init.headers as Record<string, string>
-      return String(_url).endsWith('/logo.svg') ? logoResponse() : reportResponse()
-    }) as unknown as typeof globalThis.fetch
-
-    await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })
-    expect(headers['user-agent']).toMatch(/^businesslens\//)
-  })
-
   it('writes a model README telling an agent to build the product', async () => {
     const target = temporary('bl-pull-readme-')
-    const fetch = vi.fn(async (url: string) => String(url).endsWith('/logo.svg') ? logoResponse() : reportResponse()) as unknown as typeof globalThis.fetch
 
-    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch: release(), env: {} })).toBe(0)
 
     const readme = readFileSync(join(target, '.businesslens', 'README.md'), 'utf8')
     expect(readme).toBe(MODEL_README)
@@ -163,122 +160,77 @@ describe('pull', () => {
     expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
   })
 
-  it('accepts an arbitrary catalog origin, because no credential is sent', async () => {
-    const target = temporary('bl-pull-origin-')
+  it('pulls from the repository BUSINESSLENS_BLUEPRINT_REPOSITORY names', async () => {
+    const target = temporary('bl-pull-fork-')
     const urls: string[] = []
-    const fetch = vi.fn(async (requestUrl: string) => {
-      const url = String(requestUrl)
-      urls.push(url)
-      if (url.endsWith('/logo.svg')) return logoResponse()
-      return reportResponse()
-    }) as unknown as typeof globalThis.fetch
 
-    expect(await runPull(
-      target,
-      'fixture-shop',
-      { force: false, catalog: 'https://catalog.example.com' },
-      { fetch, env: {} }
-    )).toBe(0)
-    expect(urls).toEqual([
-      'https://catalog.example.com/api/v1/blueprints/fixture-shop/report.json',
-      'https://catalog.example.com/api/v1/blueprints/fixture-shop/logo.svg',
-      'https://catalog.example.com/api/v1/blueprints/fixture-shop/cover.webp'
-    ])
+    expect(await runPull(target, 'fixture-shop', { force: false }, {
+      fetch: release({}, urls),
+      env: { BUSINESSLENS_BLUEPRINT_REPOSITORY: 'someone/fork' }
+    })).toBe(0)
+    expect(urls[0]).toBe('https://github.com/someone/fork/releases/download/blueprints-v19/index.json')
   })
 
-  it('prefers --catalog over BUSINESSLENS_CATALOG_URL', async () => {
-    const target = temporary('bl-pull-precedence-')
-    let reportUrl = ''
-    const fetch = vi.fn(async (requestUrl: string) => {
-      const url = String(requestUrl)
-      if (url.endsWith('/logo.svg')) return logoResponse()
-      reportUrl = url
-      return reportResponse()
-    }) as unknown as typeof globalThis.fetch
-
-    await runPull(
-      target,
-      'fixture-shop',
-      { force: false, catalog: 'http://localhost:3200' },
-      { fetch, env: { BUSINESSLENS_CATALOG_URL: 'https://env.example.com' } }
-    )
-    expect(reportUrl.startsWith('http://localhost:3200/')).toBe(true)
-  })
-
-  it('refuses a plaintext catalog that is not loopback', async () => {
-    const target = temporary('bl-pull-plaintext-')
+  it('refuses a repository that is not an owner/repo pair', async () => {
+    const target = temporary('bl-pull-bad-repo-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetch = vi.fn() as unknown as typeof globalThis.fetch
 
-    expect(await runPull(
-      target,
-      'fixture-shop',
-      { force: false, catalog: 'http://catalog.example.com' },
-      { fetch, env: {} }
-    )).toBe(2)
+    expect(await runPull(target, 'fixture-shop', { force: false }, {
+      fetch,
+      env: { BUSINESSLENS_BLUEPRINT_REPOSITORY: 'https://example.com/x' }
+    })).toBe(2)
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  it('reports a database outage as a temporary catalog problem', async () => {
-    const target = temporary('bl-pull-503-')
-    const errors: string[] = []
-    vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
-    const fetch = vi.fn(async () => new Response('{}', { status: 503 })) as unknown as typeof globalThis.fetch
-
-    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(errors.join('\n')).toContain('temporarily unavailable')
-  })
-
-  it('reports a withdrawn Blueprint distinctly from an unknown one', async () => {
-    const gone = temporary('bl-pull-410-')
-    const missing = temporary('bl-pull-404-')
+  it('names an unknown Blueprint and points at list', async () => {
+    const target = temporary('bl-pull-unknown-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
 
-    await runPull(gone, 'fixture-shop', { force: false }, {
-      fetch: vi.fn(async () => new Response('{}', { status: 410 })) as unknown as typeof globalThis.fetch,
-      env: {}
-    })
-    await runPull(missing, 'fixture-shop', { force: false }, {
-      fetch: vi.fn(async () => new Response('{}', { status: 404 })) as unknown as typeof globalThis.fetch,
-      env: {}
-    })
-
-    expect(errors[0]).toContain('withdrawn')
-    expect(errors[1]).toContain('No such Blueprint')
-  })
-
-  it('refuses a report whose digest does not match the catalog header', async () => {
-    const target = temporary('bl-pull-digest-')
-    vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
-      status: 200,
-      headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=19',
-        'x-businesslens-blueprint': 'fixture-shop',
-        'x-businesslens-report-digest': 'a'.repeat(64)
-      }
-    })) as unknown as typeof globalThis.fetch
-
-    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
+    expect(await runPull(target, 'not-published', { force: false }, { fetch: release(), env: {} })).toBe(1)
+    expect(errors[0]).toContain('No Blueprint is named not-published')
+    expect(errors[0]).toContain('blueprint list')
     expect(existsSync(join(target, '.businesslens'))).toBe(false)
   })
 
-  it('asks the catalog for the schema\'s own report version and refuses another', async () => {
-    const target = temporary('bl-pull-version-')
+  it('says when the repository publishes no Blueprints for this report version', async () => {
+    const target = temporary('bl-pull-no-release-')
     const errors: string[] = []
-    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
-    const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
-      status: 200,
-      headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=11',
-        'x-businesslens-blueprint': 'fixture-shop',
-        'x-businesslens-report-digest': reportDigest(report)
-      }
-    })) as unknown as typeof globalThis.fetch
+    vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
+    const fetch = release({ 'index.json': () => new Response('Not Found', { status: 404 }) })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
-    expect(errors[0]).toContain('The catalog serves Product Report version 11; this CLI reads version 19 only')
+    expect(errors[0]).toBe('itai-gendler/pdd-kit publishes no Blueprints for Product Report version 19.')
+  })
+
+  it('refuses an index for another report version, in one sentence', async () => {
+    const target = temporary('bl-pull-index-version-')
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+    const fetch = release({ 'index.json': () => Response.json({ ...indexFor(), reportVersion: '11' }) })
+
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
+    expect(errors[0]).toBe('The Blueprint index lists Product Report version 11; this CLI reads version 19 only.')
+    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+  })
+
+  it('refuses an index that does not have the expected shape', async () => {
+    const target = temporary('bl-pull-bad-index-')
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+    const fetch = release({ 'index.json': () => Response.json(indexFor({ report: '../escape.json' })) })
+
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
+    expect(errors[0]).toBe('The Blueprint index does not have the expected shape.')
+  })
+
+  it('refuses a report whose digest does not match the index', async () => {
+    const target = temporary('bl-pull-digest-')
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const fetch = release({ 'index.json': () => Response.json(indexFor({}, 'a'.repeat(64))) })
+
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(existsSync(join(target, '.businesslens'))).toBe(false)
   })
 
@@ -287,54 +239,51 @@ describe('pull', () => {
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
     const stale = { ...report, schemaVersion: '12.0.0' }
-    const fetch = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
-      ? logoResponse()
-      : new Response(JSON.stringify(stale), {
-        status: 200,
-        headers: {
-          'content-type': 'application/vnd.businesslens.report+json; version=19',
-          'x-businesslens-blueprint': 'fixture-shop',
-          'x-businesslens-report-digest': reportDigest(stale)
-        }
-      })) as unknown as typeof globalThis.fetch
+    const fetch = release({
+      'index.json': () => Response.json(indexFor({}, reportDigest(stale))),
+      'fixture-shop.json': () => new Response(JSON.stringify(stale))
+    })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(errors[0]).toBe('This is a Product Report of schema version 12.0.0; only 19.0.0 is accepted, and there is no compatibility reader. Export it again with a current businesslens.')
   })
 
-  it('refuses a report served for a different Blueprint', async () => {
+  it('refuses a report published for a different Blueprint', async () => {
     const target = temporary('bl-pull-mismatch-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    const fetch = vi.fn(async () => reportResponse('something-else')) as unknown as typeof globalThis.fetch
+    const other = { ...report, id: 'something-else' }
+    const fetch = release({
+      'index.json': () => Response.json(indexFor({}, reportDigest(other))),
+      'fixture-shop.json': () => new Response(JSON.stringify(other))
+    })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(existsSync(join(target, '.businesslens'))).toBe(false)
   })
 
-  it('refuses a redirected response', async () => {
+  it('refuses a download redirected away from HTTPS', async () => {
     const target = temporary('bl-pull-redirect-')
-    vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    const fetch = vi.fn(async () => new Response('', {
-      status: 302,
-      headers: { location: 'https://elsewhere.example.com/report.json' }
-    })) as unknown as typeof globalThis.fetch
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+    const fetch = vi.fn(async () => {
+      const response = Response.json(indexFor())
+      Object.defineProperty(response, 'url', { value: 'http://elsewhere.example.com/index.json' })
+      return response
+    }) as unknown as typeof globalThis.fetch
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
+    expect(errors[0]).toContain('away from HTTPS')
     expect(existsSync(join(target, '.businesslens'))).toBe(false)
   })
 
   it('refuses a body over the 8 MiB safety limit', async () => {
     const target = temporary('bl-pull-oversized-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
-      status: 200,
-      headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=19',
-        'content-length': String(9 * 1024 * 1024),
-        'x-businesslens-blueprint': 'fixture-shop',
-        'x-businesslens-report-digest': reportDigest(report)
-      }
-    })) as unknown as typeof globalThis.fetch
+    const fetch = release({
+      'fixture-shop.json': () => new Response(JSON.stringify(report), {
+        headers: { 'content-length': String(9 * 1024 * 1024) }
+      })
+    })
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(existsSync(join(target, '.businesslens'))).toBe(false)

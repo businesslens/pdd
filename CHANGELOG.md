@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CLI:** `blueprint list` shows every published Blueprint by the name `blueprint pull` takes.
+
 ### Changed
+
+- **CLI:** Blueprints are published from the repository itself: a merged Blueprint can be pulled within minutes, without a CLI update and without a catalog server.
+
+- **CLI:** `blueprint contribute` opens its pull request on the new BusinessLens repository, and merging it publishes the Blueprint.
 
 - **Docs:** The FAQ is now available directly in the repository and supplies the website’s dedicated FAQ page.
 
@@ -16,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docs:** The README explains Product-Driven Development with the questions the Product Model answers, shown on the Kanban Board Blueprint.
 
 - **Docs:** The README opens with a short map of its sections and shows where the Product Model fits beside docs, design, code and people.
+
+### Removed
+
+- **CLI:** `blueprint pull --catalog`, `BUSINESSLENS_CATALOG_URL` and `BUSINESSLENS_CONTRIBUTE_UPSTREAM`. `BUSINESSLENS_BLUEPRINT_REPOSITORY` now points `list`, `pull` and `contribute` at a fork.
 
 ## [0.33.0] - 2026-10-08
 

@@ -22,7 +22,8 @@ npx businesslens <command> [options]
 | [`view`](./cli-view.md) | View a Product Model locally, from your checkout or from GitHub |
 | [`blueprint export`](./cli-export.md) | Export a Blueprint |
 | [`blueprint open`](./cli-open.md) | Open a local Blueprint |
-| [`blueprint pull`](./cli-pull.md) | Pull a catalog Blueprint |
+| [`blueprint list`](./cli-list.md) | List published Blueprints |
+| [`blueprint pull`](./cli-pull.md) | Pull a published Blueprint |
 | [`blueprint contribute`](./cli-contribute.md) | Contribute a Blueprint |
 | `help [command]` | Show help for a command |
 
@@ -75,8 +76,7 @@ used for harness detection and project-scoped skills.
 
 | Variable | Used by | Meaning |
 | --- | --- | --- |
-| `BUSINESSLENS_CATALOG_URL` | `blueprint pull` | Catalog origin when `--catalog` is not given; defaults to `https://businesslens.io` |
-| `BUSINESSLENS_CONTRIBUTE_UPSTREAM` | `blueprint contribute` | `owner/repo` the pull request targets; defaults to `businesslens/pdd` |
+| `BUSINESSLENS_BLUEPRINT_REPOSITORY` | `blueprint list`, `pull`, `contribute` | `owner/repo` Blueprints are pulled from and contributed to; defaults to `itai-gendler/pdd-kit` |
 | `BUSINESSLENS_NO_UPDATE_CHECK` | every command | Set to `1` to turn off the CLI update check and prompt |
 
 Exit codes: `0` success, `1` the command failed or was refused, `2` invalid

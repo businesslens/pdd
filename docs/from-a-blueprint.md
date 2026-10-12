@@ -14,27 +14,29 @@ nothing.
 
 ## What a Blueprint is
 
-**A Blueprint is a reviewed Product Model for a common kind of product, shared
-through a catalog, that you pull instead of starting blank.** It holds only
+**A Blueprint is a reviewed Product Model for a common kind of product,
+published in the BusinessLens repository, that you pull instead of starting
+blank.** It holds only
 product meaning: no code, no file paths, nothing tied to the repository it came
 from.
 
 Its life in one line: someone [exports](./cli-export.md) a model and
-[contributes](./cli-contribute.md) it, it is reviewed into the catalog, and you
-[pull](./cli-pull.md) it by name, or [open](./cli-open.md) a Blueprint file you
-were given.
+[contributes](./cli-contribute.md) it, merging its pull request publishes it,
+and you [pull](./cli-pull.md) it by name, or [open](./cli-open.md) a Blueprint
+file you were given.
 
 ## Steps
 
-1. Browse [businesslens.io/blueprints](https://businesslens.io/blueprints),
-   create the project, [install the skills](./installation.md) into it, and
-   pull the Blueprint by name:
+1. Find one with `npx businesslens blueprint list`, or browse
+   [`blueprints/`](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints)
+   on GitHub. Create the project, [install the skills](./installation.md) into
+   it, and pull the Blueprint by name:
 
    ```bash
    mkdir my-product && cd my-product
    git init
    npx businesslens install
-   npx businesslens blueprint pull your-blueprint-slug
+   npx businesslens blueprint pull kanban-board
    ```
 
    It writes only `.businesslens/`; nothing else in the repo changes.

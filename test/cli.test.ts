@@ -94,6 +94,7 @@ describe('cli help', () => {
     expect(group.stdout).toContain('Usage: businesslens blueprint <command> [options]')
     expect(group.stdout).toContain('export')
     expect(group.stdout).toContain('open [options] <report>')
+    expect(group.stdout).toContain('list')
     expect(group.stdout).toContain('pull [options] <name>')
     expect(group.stdout).toContain('contribute [options]')
     expect(group.stdout).not.toContain('--catalog')
@@ -102,7 +103,7 @@ describe('cli help', () => {
     const pull = cli(repo, process.env, 'blueprint', 'pull', '--help')
     expect(pull.status).toBe(0)
     expect(pull.stdout).toContain('Usage: businesslens blueprint pull [options] <name>')
-    expect(pull.stdout).toContain('--catalog <origin>')
+    expect(pull.stdout).not.toContain('--catalog')
     expect(pull.stdout).toContain('--force')
     expect(pull.stdout).not.toContain('--no-open')
     expect(pull.stdout).not.toContain('--providers')
@@ -222,6 +223,8 @@ describe('cli dispatch', () => {
       ['view', '--providers', 'codex'],
       ['blueprint', 'export', '--force'],
       ['blueprint', 'contribute', '--catalog', 'https://example.com'],
+      ['blueprint', 'pull', 'kanban-board', '--catalog', 'https://example.com'],
+      ['blueprint', 'list', '--force'],
       ['blueprint', 'contribute', '--slug', 'other-name']
     ]
     for (const args of cases) {
@@ -311,8 +314,8 @@ describe('cli dispatch', () => {
     expect(cwdResult.status).toBe(0)
     expect(cwdResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
 
-    const catalogResult = cli(repo, process.env, 'blueprint', 'pull', '--catalog', 'pull', '--version')
-    expect(catalogResult.status).toBe(0)
-    expect(catalogResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
+    const pullResult = cli(repo, process.env, 'blueprint', 'pull', 'pull', '--version')
+    expect(pullResult.status).toBe(0)
+    expect(pullResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
   })
 })
