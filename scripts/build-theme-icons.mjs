@@ -1,4 +1,5 @@
-/** Build the favicon/install-icon family from the approved stable mark. */
+/** Build the favicon/install-icon family from the approved stable mark. The browser tab
+ *  uses its own heavier cut (`tab.svg`), since the mark's hairlines fall below a pixel at 16px. */
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
@@ -14,6 +15,7 @@ const PAGE = '#f4ecdb'
 const RADIUS = 0.165
 const ELEMENT = /<(?:rect|circle|ellipse|path|polygon)\b[^>]*\/>/g
 const FILL = /\bfill="([^"]*)"/
+const STROKE = /\bstroke="([^"]*)"/
 /** Air added between the letters of a tab icon, as a share of the mark height. The
  *  ligature spacing that reads well at logo size closes into one blob at 16px. */
 const TAB_GAP = 0.05
@@ -115,11 +117,14 @@ function compose(variant, { size, fit, plate, gap = 0 }) {
   const y = size / 2 - scale * (box.y + box.height / 2)
   const swaps = []
   const elements = variant.elements.map((element, index) => {
-    const light = element.match(FILL)?.[1]
-    const dark = variant.darkElements[index].match(FILL)?.[1]
+    const swap = [['fill', FILL], ['stroke', STROKE]].flatMap(([property, pattern]) => {
+      const light = element.match(pattern)?.[1]
+      const dark = variant.darkElements[index].match(pattern)?.[1]
+      return light && dark && light !== dark.trim() ? [`${property}:${dark}`] : []
+    })
     let drawable = element
-    if (light && dark && light !== dark.trim()) {
-      swaps.push(`.d${index}{fill:${dark}}`)
+    if (swap.length) {
+      swaps.push(`.d${index}{${swap.join(';')}}`)
       drawable = element.replace(/^<(\w+)/, `<$1 class="d${index}"`)
     }
     const shift = shifts.get(index) ?? 0
@@ -192,11 +197,12 @@ async function raster(markup, size) {
 
 mkdirSync(ICONS, { recursive: true })
 const variant = readVariant('mark')
-const tab = compose(variant, {
+const tabVariant = readVariant('tab')
+const tab = compose(tabVariant, {
   size: 64,
-  fit: variant.container ? 1 : 0.94,
+  fit: 1,
   plate: null,
-  gap: TAB_GAP * variant.box.height
+  gap: TAB_GAP * tabVariant.box.height
 })
 const app = compose(variant, { size: 512, fit: variant.container ? 1 : 0.7, plate: 'round' })
 const maskable = compose(variant, { size: 512, fit: variant.container ? 0.78 : 0.55, plate: 'square' })
@@ -223,7 +229,7 @@ await browser.close()
 copyFileSync(resolve(ICONS, 'favicon.ico'), resolve(THEME, 'public/favicon.ico'))
 writeFileSync(resolve(THEME, 'public/site.webmanifest'), manifest())
 
-const columns = letters(variant.elements).length
+const columns = letters(tabVariant.elements).length
 console.log(
   `approved mark icons generated; tab ${columns > 1 ? `spreads ${columns} letters` : 'is one shape, unspread'}`
 )

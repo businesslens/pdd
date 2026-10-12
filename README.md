@@ -1,13 +1,12 @@
 <p align="center">
   <a href="https://pdd-kit.dev">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/mark-dark.svg">
-      <img src="./layers/nuxt/theme/public/brand/logo/mark.svg" alt="pdd-kit logo" width="64">
+      <source media="(prefers-color-scheme: dark)" srcset="./layers/nuxt/theme/public/brand/logo/lockup-dark.svg">
+      <img src="./layers/nuxt/theme/public/brand/logo/lockup.svg" alt="pdd-kit" height="72">
     </picture>
   </a>
 </p>
 
-<h1 align="center"><a href="https://pdd-kit.dev">pdd-kit</a></h1>
 <p align="center"><strong>Product-Driven Development for coding agents (OSS)</strong></p>
 <p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 

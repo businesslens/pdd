@@ -38,7 +38,7 @@ describe('shared pdd-kit theme lab', () => {
   })
 
   it('owns the approved identity and complete icon family in the stable theme', () => {
-    for (const file of ['mark.svg', 'mark-dark.svg']) {
+    for (const file of ['mark.svg', 'mark-dark.svg', 'tab.svg', 'tab-dark.svg', 'wordmark.svg', 'wordmark-dark.svg', 'lockup.svg', 'lockup-dark.svg']) {
       expect(existsSync(join(theme, 'public/brand/logo', file)), file).toBe(true)
     }
     for (const file of iconFiles) {
