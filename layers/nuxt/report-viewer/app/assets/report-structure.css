@@ -1,5 +1,5 @@
 /* Host-neutral structure for the shared Product Report renderer. */
-product-model-report {
+.pdd-kit-report {
   height: calc(100dvh - var(--pdd-kit-report-chrome, 0px));
   min-height: 0;
   overflow: hidden;

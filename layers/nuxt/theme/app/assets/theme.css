@@ -102,7 +102,7 @@
 }
 
 /* Approved Sand treatment for neutral labels on every pdd-kit surface. */
-product-model-neutral-badge {
+.pdd-kit-neutral-badge {
   background: var(--pdd-kit-badge-bg);
   --tw-ring-color: var(--ui-border-accented);
 }
@@ -148,7 +148,7 @@ product-model-neutral-badge {
   }
 }
 
-product-model-page-surface {
+.pdd-kit-page-surface {
   background-image: var(--pdd-kit-page-glows);
 }
 
