@@ -54,7 +54,8 @@ export default defineNuxtConfig({
   // built package to compile.
   alias: {
     '@itai-gendler/pdd-kit/report/selectors': resolve(repoRoot, 'src/report-selectors.ts'),
-    '@itai-gendler/pdd-kit/report': resolve(repoRoot, 'src/report.ts')
+    '@itai-gendler/pdd-kit/report': resolve(repoRoot, 'src/report.ts'),
+    '@itai-gendler/pdd-kit/theme-lab/variants': resolve(repoRoot, 'layers/nuxt/theme-lab/app/utils/pddKitThemeLabVariants.ts')
   },
   modules: [
     '@nuxt/eslint',

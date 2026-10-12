@@ -17,8 +17,11 @@ const outDir = fileURLToPath(new URL('../.data/blueprints', import.meta.url))
 
 const run = (command, args) => execFileSync(command, args, { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] })
 
-// The release build drives the CLI, so the CLI has to be built first.
-if (!existsSync(new URL('dist/cli.js', `file://${repoRoot}`))) run('pnpm', ['build:core'])
+// The release build drives the CLI, and the report-parity test serves a model
+// with `pdd-kit view`, so build the CLI and its viewer first when either is
+// missing (a fresh checkout, as in CI).
+const built = ['dist/cli.js', 'dist/viewer/index.html'].every(path => existsSync(new URL(path, `file://${repoRoot}`)))
+if (!built) run('pnpm', ['build'])
 
 rmSync(outDir, { recursive: true, force: true })
 run(process.execPath, ['scripts/blueprints-release.mjs', outDir])
