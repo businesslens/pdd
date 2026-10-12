@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.1] - 2026-10-12
+
 ### Fixed
 
-- **Report:** Graphs show again in `pdd-kit view` and in Nuxt hosts of the report viewer; in 0.34.0 they were drawn with no height.
+- **Report:** Graphs show again in `pdd-kit view` and in Nuxt hosts of the report viewer; in 0.34.0 they were drawn with no height. ([#119](https://github.com/itai-gendler/pdd-kit/pull/119)) ([bd51001](https://github.com/itai-gendler/pdd-kit/commit/bd51001897840b05656d1dc5b52a568264ae058c))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.34.0...v0.34.1][0.34.1]
 
 ## [0.34.0] - 2026-10-12
 
@@ -1225,7 +1233,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.1...HEAD
+[0.34.1]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.31.0...v0.32.0
