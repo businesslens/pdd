@@ -53,7 +53,7 @@ describe('skill installation', () => {
       const manifest = JSON.parse(readFileSync(join(skillsDir, '.pdd-kit-install.json'), 'utf8'))
       expect(manifest).toMatchObject({
         schema: 1,
-        package: 'pdd-kit',
+        package: '@itai-gendler/pdd-kit',
         scope: 'project',
         skills: [...PDD_KIT_SKILLS]
       })
@@ -142,7 +142,7 @@ describe('skill installation', () => {
     writeFileSync(join(claimed, 'SKILL.md'), '---\nname: pdd-map\n---\nSomebody else.\n')
     writeFileSync(join(skillsDir, '.pdd-kit-install.json'), JSON.stringify({
       schema: 1,
-      package: 'pdd-kit',
+      package: '@itai-gendler/pdd-kit',
       version: '0.5.0',
       provider: 'codex',
       scope: 'project',
@@ -179,7 +179,7 @@ describe('skill installation', () => {
     writeFileSync(join(notOurs, 'SKILL.md'), '---\nname: my-notes\n---\nMine.\n')
     writeFileSync(join(skillsDir, '.pdd-kit-install.json'), JSON.stringify({
       schema: 1,
-      package: 'pdd-kit',
+      package: '@itai-gendler/pdd-kit',
       version: '0.5.0',
       provider: 'codex',
       scope: 'project',
@@ -223,7 +223,7 @@ describe('skill installation', () => {
     }
     writeFileSync(join(skillsDir, '.pdd-kit-install.json'), JSON.stringify({
       schema: 1,
-      package: 'pdd-kit',
+      package: '@itai-gendler/pdd-kit',
       version: '0.12.0',
       provider: 'codex',
       scope: 'project',

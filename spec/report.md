@@ -356,7 +356,7 @@ report proposed or published as a public Blueprint is first passed through one
 shared projection:
 
 ```ts
-import { projectPortableReport } from 'pdd-kit/report'
+import { projectPortableReport } from '@itai-gendler/pdd-kit/report'
 
 serve(projectPortableReport(report))
 ```
@@ -407,7 +407,7 @@ source navigation is never transplanted into the receiving repository.
 The inverse command is:
 
 ```bash
-npx pdd-kit blueprint open ./report.json
+npx @itai-gendler/pdd-kit blueprint open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under
@@ -415,7 +415,7 @@ npx pdd-kit blueprint open ./report.json
 is written as `<id>/<type>.md` only when report content gives it child resources.
 A Product pulled with a separate `logo.svg` similarly expands from `product.md`
 to `product/product.md`, with an optional `cover.webp` beside the logo.
-`npx pdd-kit blueprint pull <blueprint-slug>` anonymously retrieves that
+`npx @itai-gendler/pdd-kit blueprint pull <blueprint-slug>` anonymously retrieves that
 Blueprint from the [release](#blueprint-release) and invokes the same expansion
 path without saving a user-facing report download.
 

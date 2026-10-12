@@ -110,8 +110,8 @@ export default defineNuxtConfig({
   css: ['~/assets/local-viewer.css'],
   alias: {
     /* The narrower subpath first, so the broader one does not claim it as a prefix. */
-    'pdd-kit/report/selectors': resolve('../../src/report-selectors.ts'),
-    'pdd-kit/report': resolve('../../src/report.ts')
+    '@itai-gendler/pdd-kit/report/selectors': resolve('../../src/report-selectors.ts'),
+    '@itai-gendler/pdd-kit/report': resolve('../../src/report.ts')
   },
   nitro: { devHandlers },
   runtimeConfig: {

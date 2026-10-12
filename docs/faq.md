@@ -115,7 +115,7 @@ visualization issue](https://github.com/itai-gendler/pdd-kit/issues/19).
 Local only today, but one command opens the model of any PR without cloning:
 
 ```sh
-npx pdd-kit view <owner>/<repo> --pr <n>
+npx @itai-gendler/pdd-kit view <owner>/<repo> --pr <n>
 ```
 
 A hosted, shareable link is something we are considering, but we do not see it as a blocker.
@@ -240,7 +240,7 @@ Three ways in, what each one leaves in your repository, and the projects support
 ### I already have a codebase — where do I start?
 
 Install the skills and run /pdd-map. It reads the code without running it, asks what the
-code can’t settle, and writes product-model/ only after you approve. npx pdd-kit view then
+code can’t settle, and writes product-model/ only after you approve. npx @itai-gendler/pdd-kit view then
 opens it as a report.
 
 Nothing is rewritten and no framework is imposed; the model is added beside the code. [Walk through
@@ -263,7 +263,7 @@ not an implementation.
 
 Every Blueprint has cleared the same bar: given the pulled model and the words “build this” and
 nothing else, an agent ships a working product. List them with
-`npx pdd-kit blueprint list`, or [browse them on
+`npx @itai-gendler/pdd-kit blueprint list`, or [browse them on
 GitHub](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints).
 
 ### What actually lands in my repository?

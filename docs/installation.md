@@ -12,7 +12,7 @@ pdd-kit is installed once per repository (or once per machine) with the
 `pdd-kit` CLI. It requires Node.js 20.12 or newer.
 
 ```bash
-npx pdd-kit install
+npx @itai-gendler/pdd-kit install
 ```
 
 The installer detects the coding agents you use (Claude Code, Codex, Cursor and

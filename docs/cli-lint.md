@@ -12,7 +12,7 @@ Check that the Product Model is structurally sound, after every edit and
 [in CI](#run-it-in-ci).
 
 ```bash
-npx pdd-kit lint [--json]
+npx @itai-gendler/pdd-kit lint [--json]
 ```
 
 ## Options
@@ -85,7 +85,7 @@ jobs:
           node-version: 22 # any version from 20.12
           cache: npm
       - run: npm ci
-      - run: npx pdd-kit lint
+      - run: npx @itai-gendler/pdd-kit lint
 ```
 
 Warnings never fail the job; errors do. A green lint checks structure only:

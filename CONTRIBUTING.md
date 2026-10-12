@@ -51,7 +51,7 @@ development launcher; without it they retain their release-pinned npm runner.
 ## Demo GIF
 
 `.github/demo.gif` tours this repository's own Product Model in the local
-report, opened with `npx pdd-kit view itai-gendler/pdd-kit` as the README
+report, opened with `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit` as the README
 invites readers to. That command reads the default branch on GitHub, so
 re-record after a model or report change has merged:
 `pnpm build && pnpm demo:record`. It needs Git access to GitHub,

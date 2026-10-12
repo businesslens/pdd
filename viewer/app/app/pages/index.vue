@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReport } from 'pdd-kit/report'
+import type { ProductReport } from '@itai-gendler/pdd-kit/report'
 import type { LocalStatus } from '~/composables/useLocalProblems'
 
 const { data, error, refresh, status } = await useFetch<ProductReport>(

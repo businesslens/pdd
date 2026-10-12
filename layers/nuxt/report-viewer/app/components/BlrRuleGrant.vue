@@ -7,7 +7,7 @@
  * condition: a State as its badge, a fact as its Entity's chip, the fact, the
  * operator and the value. Keys within a grant hold together.
  */
-import type { ReportGrant } from 'pdd-kit/report'
+import type { ReportGrant } from '@itai-gendler/pdd-kit/report'
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
 

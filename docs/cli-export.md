@@ -13,7 +13,7 @@ file, when you want to hand the model to another repository or inspect what
 would travel.
 
 ```bash
-npx pdd-kit blueprint export
+npx @itai-gendler/pdd-kit blueprint export
 ```
 
 ## Options

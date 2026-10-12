@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- BusinessLens is now **pdd-kit**: install and run it with `npx pdd-kit`. The Product Model lives in `product-model/` instead of `.businesslens/` (rename the directory to keep yours), the skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx pdd-kit install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
+- BusinessLens is now **pdd-kit**: install and run it with `npx @itai-gendler/pdd-kit`. The Product Model lives in `product-model/` instead of `.businesslens/` (rename the directory to keep yours), the skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx @itai-gendler/pdd-kit install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
 
 - **CLI:** Blueprints are published from the repository itself: a merged Blueprint can be pulled within minutes, without a CLI update and without a catalog server. ([e685cd0](https://github.com/itai-gendler/pdd-kit/commit/e685cd03990b9eb8201f9d3ff4104c54913a25ea))
 

@@ -5,10 +5,13 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 
+/** The npm package that installs the `pdd-kit` command. */
+const PACKAGE = '@itai-gendler/pdd-kit'
+
 /**
  * Pin the CLI to the version these skills were installed from.
  *
- * `pdd-kit@latest` is wrong here: the skills and the CLI are one release,
+ * `@itai-gendler/pdd-kit@latest` is wrong here: the skills and the CLI are one release,
  * and a skill installed from version X must lint with version X. Resolving
  * `latest` at run time means a model authored against a newer format gets
  * linted by an older published CLI, which reports the new frontmatter keys as
@@ -18,13 +21,13 @@ function installedPackageSpec() {
   try {
     const manifestFile = new URL('../../.pdd-kit-install.json', import.meta.url)
     const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
-    if (manifest?.package === 'pdd-kit' && typeof manifest.version === 'string') {
-      return `pdd-kit@${manifest.version}`
+    if (manifest?.package === PACKAGE && typeof manifest.version === 'string') {
+      return `${PACKAGE}@${manifest.version}`
     }
   } catch {
     // Not installed through `pdd-kit install`; fall back below.
   }
-  return 'pdd-kit@latest'
+  return `${PACKAGE}@latest`
 }
 
 /**
@@ -45,7 +48,7 @@ function activeDevelopmentCli(runnerRoot, env) {
     if (!isAbsolute(cli) || !statSync(cli).isFile()) return undefined
     const packageRoot = dirname(dirname(cli))
     const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
-    return manifest?.name === 'pdd-kit' ? cli : undefined
+    return manifest?.name === PACKAGE ? cli : undefined
   } catch {
     return undefined
   }
