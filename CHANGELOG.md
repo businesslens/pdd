@@ -7,29 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-10-12
+
 ### Added
 
-- **CLI:** `blueprint list` shows every published Blueprint by the name `blueprint pull` takes.
+- **CLI:** `blueprint list` shows every published Blueprint by the name `blueprint pull` takes. ([e685cd0](https://github.com/itai-gendler/pdd-kit/commit/e685cd03990b9eb8201f9d3ff4104c54913a25ea))
 
 ### Changed
 
-- BusinessLens is now **pdd-kit**: install and run it with `npx pdd-kit`. The Product Model lives in `product-model/` instead of `.businesslens/` (rename the directory to keep yours), the skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx pdd-kit install` again), and environment variables start with `PDD_KIT_`.
+- BusinessLens is now **pdd-kit**: install and run it with `npx pdd-kit`. The Product Model lives in `product-model/` instead of `.businesslens/` (rename the directory to keep yours), the skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx pdd-kit install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
 
-- **CLI:** Blueprints are published from the repository itself: a merged Blueprint can be pulled within minutes, without a CLI update and without a catalog server.
+- **CLI:** Blueprints are published from the repository itself: a merged Blueprint can be pulled within minutes, without a CLI update and without a catalog server. ([e685cd0](https://github.com/itai-gendler/pdd-kit/commit/e685cd03990b9eb8201f9d3ff4104c54913a25ea))
 
-- **CLI:** `blueprint contribute` opens its pull request on the new pdd-kit repository, and merging it publishes the Blueprint.
+- **CLI:** `blueprint contribute` opens its pull request on the new pdd-kit repository, and merging it publishes the Blueprint. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
 
-- **Docs:** The FAQ is now available directly in the repository and supplies the website’s dedicated FAQ page.
+- **Docs:** The FAQ is now available directly in the repository and supplies the website’s dedicated FAQ page. ([#114](https://github.com/itai-gendler/pdd-kit/pull/114)) ([0f9fb9d](https://github.com/itai-gendler/pdd-kit/commit/0f9fb9d8976bd605c56f47e312a60f855a1d4d58))
 
-- **Docs:** The FAQ leads with why a Product Model, then adopting it, with every comparison — SDD and AI-generated docs among them — under What it is and isn't.
+- **Docs:** The FAQ leads with why a Product Model, then adopting it, with every comparison — SDD and AI-generated docs among them — under What it is and isn't. ([#115](https://github.com/itai-gendler/pdd-kit/pull/115)) ([e9e6e97](https://github.com/itai-gendler/pdd-kit/commit/e9e6e971639f81092611b9c2125d18a158e043d1))
 
-- **Docs:** The README explains Product-Driven Development with the questions the Product Model answers, shown on the Kanban Board Blueprint.
+- **Docs:** The README explains Product-Driven Development with the questions the Product Model answers, shown on the Kanban Board Blueprint. ([#110](https://github.com/itai-gendler/pdd-kit/pull/110)) ([bcb2e69](https://github.com/itai-gendler/pdd-kit/commit/bcb2e693aefd48226a9b3b11729e5fe2a1ddd4a3))
 
-- **Docs:** The README opens with a short map of its sections and shows where the Product Model fits beside docs, design, code and people.
+- **Docs:** The README opens with a short map of its sections and shows where the Product Model fits beside docs, design, code and people. ([#116](https://github.com/itai-gendler/pdd-kit/pull/116)) ([b15e4b1](https://github.com/itai-gendler/pdd-kit/commit/b15e4b1c22c9030e136ea9c23e025b8865935f7c))
 
 ### Removed
 
-- **CLI:** `blueprint pull --catalog`, `PDD_KIT_CATALOG_URL` and `PDD_KIT_CONTRIBUTE_UPSTREAM`. `PDD_KIT_BLUEPRINT_REPOSITORY` now points `list`, `pull` and `contribute` at a fork.
+- **CLI:** `blueprint pull --catalog`, `BUSINESSLENS_CATALOG_URL` and `BUSINESSLENS_CONTRIBUTE_UPSTREAM`. `PDD_KIT_BLUEPRINT_REPOSITORY` now points `list`, `pull` and `contribute` at a fork. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.33.0...v0.34.0][0.34.0]
 
 ## [0.33.0] - 2026-10-08
 
@@ -1213,7 +1221,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.33.0...HEAD
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.0...HEAD
+[0.34.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.30.0...v0.31.0
