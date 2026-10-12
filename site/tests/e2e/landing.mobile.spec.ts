@@ -27,6 +27,30 @@ test('the footer does not overflow supported phone widths', async ({ page }) => 
 })
 
 /**
+ * The install command is the hero's offer, so it reads as one line on every
+ * phone. From 360px it fits outright; narrower, it scrolls sideways instead of
+ * breaking, resting at its end.
+ */
+test('the hero install command stays on one line on phones', async ({ page }) => {
+  await page.goto('/')
+  const command = page.getByRole('button', { name: homeContent.hero.commandCopyLabel }).locator('xpath=../code')
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 800 })
+    const fit = await command.evaluate(element => ({ scroll: element.scrollWidth, client: element.clientWidth }))
+    expect(fit.scroll, `the command is cut off at ${width}px`).toBeLessThanOrEqual(fit.client)
+  }
+  for (const width of [320, 360, 390, 430]) {
+    await page.setViewportSize({ width, height: 800 })
+    const lines = await command.evaluate((element) => {
+      const content = element.firstElementChild!
+      return content.getClientRects().length === 1
+        && content.getBoundingClientRect().height <= parseFloat(getComputedStyle(element).lineHeight) * 1.5
+    })
+    expect(lines, `the command wraps at ${width}px`).toBe(true)
+  }
+})
+
+/**
  * Nothing on the page may push the document sideways.
  *
  * Checked twice, because either alone is a weak test. `HomeLayout` wraps the
