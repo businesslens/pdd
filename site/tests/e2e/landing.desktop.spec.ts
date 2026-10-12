@@ -62,14 +62,15 @@ test('keeps the approved identity fixed', async ({ page }) => {
   // Nothing sits above the header, so it pins itself to the top.
   expect(await page.evaluate(() => Number.parseFloat(getComputedStyle(document.querySelector('header')!).top))).toBe(0)
 
-  // The lockup is the mark plus the name as live text in the heading face.
+  // The lockup is the mark plus the PDD-KIT wordmark.
   const home = header.getByRole('link', { name: 'pdd-kit home' })
-  const name = home.locator('[data-logo-wordmark]').getByText('pdd-kit', { exact: true })
+  const name = home.locator('[data-logo-wordmark] img[src$="/brand/logo/wordmark.svg"]')
   const mark = home.locator('img[src$="/brand/logo/mark.svg"]')
   await expect(name).toBeVisible()
-  await expect(name).toHaveCSS('font-size', '26px')
+  await expect(name).toHaveAttribute('alt', 'pdd-kit')
+  await expect(name).toHaveCSS('height', '26px')
   await expect(mark).toHaveCSS('height', '34px')
-  await expect(home.locator('img')).toHaveCount(1)
+  await expect(home.locator('img')).toHaveCount(2)
 
   const favicon = page.locator('link[rel="icon"][type="image/svg+xml"]')
   await expect(favicon).toHaveAttribute('href', '/brand/icons/favicon.svg')

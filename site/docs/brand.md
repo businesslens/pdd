@@ -61,7 +61,10 @@ Variable" with `Unknown font format`, breaking `pnpm generate`. There is no
 
 ## Assets and icons
 
-- The mark (`/brand/logo/mark.svg`, with a `-dark` twin), favicon family
+- The mark (`/brand/logo/mark.svg`), the PDD-KIT wordmark
+  (`/brand/logo/wordmark.svg`), the README lockup (`/brand/logo/lockup.svg`)
+  and the heavier browser-tab cut (`/brand/logo/tab.svg`), each with a `-dark`
+  twin, the favicon family
   (`/brand/icons/`, `/favicon.ico`) and `/site.webmanifest` live in the theme
   Layer; Nuxt copies them into the build. The site keeps no local logo copies.
   Regenerate the icon family from the repository root with `pnpm theme:icons`.
