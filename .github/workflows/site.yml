@@ -1,0 +1,153 @@
+name: Site
+
+# The pdd-kit.dev site is generated from this repository: its own pages in
+# site/, plus docs/, CHANGELOG.md, blueprints/ and the report viewer and theme
+# Layers. Any of those can change what it renders.
+on:
+  pull_request:
+    paths:
+      - site/**
+      - docs/**
+      - blueprints/**
+      - layers/**
+      - src/**
+      - CHANGELOG.md
+      - scripts/blueprints-release.mjs
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/site.yml
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - docs/**
+      - blueprints/**
+      - layers/**
+      - src/**
+      - CHANGELOG.md
+      - scripts/blueprints-release.mjs
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: site
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Blueprint cards and the feed date each Blueprint from its Git history.
+          fetch-depth: 0
+      # Installs the exact pnpm pinned by package.json's packageManager.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm editorconfig
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm knip
+      - run: pnpm test:integration
+      - run: pnpm generate
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      - run: pnpm test:e2e
+        env:
+          CI: true
+      - name: Upload the generated site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/.output/public
+          retention-days: 7
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: site/playwright-report
+          retention-days: 7
+
+  # A pull request from this repository deploys the tested build to its own
+  # Cloudflare Pages preview URL. Forks have no credentials.
+  preview:
+    needs: site
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: site
+          path: site/.output/public
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - id: deploy
+        name: Deploy to Cloudflare Pages
+        working-directory: .
+        shell: bash
+        run: |
+          # Dependabot pull requests get no secrets; production still requires them.
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN is not set; skipping the preview deploy."
+            exit 0
+          fi
+          npx --yes wrangler@4.149.0 pages deploy site/.output/public \
+            --project-name=pdd-kit \
+            --branch="$BRANCH" \
+            --commit-hash="$COMMIT" | tee deploy.log
+          echo "url=$(grep -o 'https://[^ ]*pages\.dev' deploy.log | tail -1)" >> "$GITHUB_OUTPUT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BRANCH: ${{ github.head_ref }}
+          COMMIT: ${{ github.event.pull_request.head.sha }}
+
+  # main deploys the tested build to pdd-kit.dev.
+  production:
+    needs: site
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://pdd-kit.dev
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: site
+          path: site/.output/public
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Deploy to Cloudflare Pages
+        working-directory: .
+        run: |
+          npx --yes wrangler@4.149.0 pages deploy site/.output/public \
+            --project-name=pdd-kit \
+            --branch=main \
+            --commit-hash="$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

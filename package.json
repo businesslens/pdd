@@ -1,6 +1,6 @@
 {
   "name": "@itai-gendler/pdd-kit",
-  "version": "0.34.0",
+  "version": "0.34.1",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in product-model/, verified against implementation.",
   "type": "module",
   "license": "MIT",

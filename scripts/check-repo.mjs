@@ -142,9 +142,11 @@ if (await exists('package-lock.json') || await exists('npm-shrinkwrap.json')) {
 if (pkg.workspaces || pkg.overrides) {
   errors.push('package.json must not declare npm workspaces or overrides; pnpm-workspace.yaml owns them')
 }
-if (JSON.stringify(workspace?.packages) !== JSON.stringify(['viewer/app'])) {
-  errors.push('pnpm-workspace.yaml packages must include only the private viewer app, not a public viewer package')
+if (JSON.stringify(workspace?.packages) !== JSON.stringify(['viewer/app', 'site'])) {
+  errors.push('pnpm-workspace.yaml packages must be exactly the private viewer app and the private site')
 }
+const sitePackage = JSON.parse(await readFile(resolve(root, 'site/package.json'), 'utf8'))
+if (sitePackage.private !== true) errors.push('site/package.json must stay private: the site is never published')
 if (localViewer.version !== pkg.version) {
   errors.push(
     `viewer version mismatch: root ${pkg.version}, local ${localViewer.version}`

@@ -262,9 +262,8 @@ straight to a coding agent, and you choose the stack. A Blueprint carries the pr
 not an implementation.
 
 Every Blueprint has cleared the same bar: given the pulled model and the words “build this” and
-nothing else, an agent ships a working product. List them with
-`npx @itai-gendler/pdd-kit blueprint list`, or [browse them on
-GitHub](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints).
+nothing else, an agent ships a working product. [Browse the
+Blueprints](https://pdd-kit.dev/blueprints).
 
 ### What actually lands in my repository?
 
@@ -332,9 +331,7 @@ policy](https://pdd-kit.dev/privacy).
 ### Do I need an account?
 
 No. Listing and pulling Blueprints are anonymous — no account, sign-in, or credential
-is involved at any point.
-
-Signing in exists for one reason: so you can keep favorites. Everything else works signed out.
+is involved at any point, and the site has no accounts at all.
 
 ### How do I contribute a Blueprint?
 
@@ -353,12 +350,9 @@ Bugs, missing product concepts, and format questions belong in [GitHub
 issues](https://github.com/itai-gendler/pdd-kit/issues). Security reports go through the [security
 policy](https://github.com/itai-gendler/pdd-kit/blob/main/SECURITY.md) rather than a public issue.
 
-For anything else, including office hours on a repository you know well, [contact
-us](https://pdd-kit.dev/contact).
-
 ## Still have a question?
 
-Bring us the product behind your software, or the repository you want mapped. We answer every message.
+Ask it in a GitHub issue, or start with the docs.
 
-- [Contact us](https://pdd-kit.dev/contact)
+- [Open an issue](https://github.com/itai-gendler/pdd-kit/issues)
 - [Read the docs](https://pdd-kit.dev/docs)

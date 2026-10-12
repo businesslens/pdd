@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "content.config.ts",
+    "app/components/content/DevelopmentLoop.vue",
+    "app/components/content/ProseA.vue",
+    "app/components/content/ProsePre.vue"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "project": [
+    "*.{js,mjs,cjs,ts,mts,cts}",
+    "app/**/*.{ts,vue}",
+    "server/**/*.ts",
+    "shared/**/*.ts",
+    "scripts/**/*.{mjs,ts}",
+    "tests/**/*.ts"
+  ],
+  "ignoreDependencies": [
+    "@iconify-json/logos",
+    "@iconify-json/simple-icons",
+    "h3",
+    "tsx"
+  ]
+}

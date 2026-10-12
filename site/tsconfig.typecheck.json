@@ -1,0 +1,9 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./.nuxt-typecheck/tsconfig.app.json" },
+    { "path": "./.nuxt-typecheck/tsconfig.server.json" },
+    { "path": "./.nuxt-typecheck/tsconfig.shared.json" },
+    { "path": "./.nuxt-typecheck/tsconfig.node.json" }
+  ]
+}

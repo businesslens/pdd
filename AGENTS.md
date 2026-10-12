@@ -50,11 +50,15 @@ were costed and then chosen against, so the same argument is not had twice.
 - `test/fixtures/fixture-shop/` — the golden lint fixture. `pnpm view:fixture`
   opens it in the local report as its own repository, since its code references
   resolve only from a Git root of its own.
+- `site/` — the pdd-kit.dev site, a static Nuxt app and the `pdd-kit-site`
+  workspace member. It renders `docs/`, `CHANGELOG.md` and `blueprints/` from
+  this checkout and has its own guide, `site/AGENTS.md`, and checks
+  (`.github/workflows/site.yml`). It is not part of the npm package.
 
 ## Documentation structure
 
-- `docs/` stays flat; the landing repository pulls it at a pinned revision and builds
-  the docs site navigation from frontmatter.
+- `docs/` stays flat; the site in `site/` renders it and builds the docs
+  navigation from frontmatter.
 - Regular docs declare `title`, `description`, `section`, `group`, and
   `order` (enforced by `scripts/check-repo.mjs`). `section` is
   `open-source`; `group` is the sidebar cluster; `order` is globally unique and
@@ -317,8 +321,8 @@ costed already.
   Group them under Keep a Changelog's `### Added`, `### Changed`, `### Fixed`
   and `### Removed`; an optional bold area label (`**Report:**`, `**CLI:**`,
   `**Skills:**`, `**Docs:**`) may lead an entry.
-- `CHANGELOG.md` is the only authored changelog. pdd-kit.dev renders it as-is
-  from `main`, pulled with `docs/`, one timeline card per dated release;
+- `CHANGELOG.md` is the only authored changelog. The site renders it as-is,
+  one timeline card per dated release;
   `[Unreleased]` is never shown there. Every release heading keeps its link
   definition at the bottom of the file, and every release closes with
   `### Contributors` and a `**Full Changelog**` line (enforced by
