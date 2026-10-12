@@ -17,7 +17,7 @@ import {
 
 /**
  * The catalog listing: the hero, then search, the result row, and the grid,
- * set close beneath it. One layout at every size — see ADR-0019.
+ * set close beneath it. One layout at every size — see ADR-0003.
  *
  * The category sidebar is the one part that depends on the catalog: it appears
  * from `lg` only when there is more than one category to choose between, and

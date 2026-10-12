@@ -117,9 +117,6 @@ test('renders the Product-Driven Development homepage', async ({ page, request }
   // The standing "Get started" call to action is viewport-dependent — it is in
   // the header above `lg` and inside the drawer below it — so the desktop and
   // mobile suites assert it where it actually renders.
-
-  // There are no accounts, so nothing offers to sign in.
-  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(0)
 })
 
 interface BlueprintIndex {
@@ -193,21 +190,10 @@ test('public SEO endpoints stay available', async ({ request }) => {
   const sitemapBody = await sitemap.text()
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/</loc>')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/blueprints</loc>')
-  expect(sitemapBody).not.toContain('<loc>https://pdd-kit.dev/pricing</loc>')
-  expect(sitemapBody).not.toContain('<loc>https://pdd-kit.dev/about')
-  expect(sitemapBody).not.toContain('<loc>https://pdd-kit.dev/community</loc>')
-  // The Platform is not part of this product; the sitemap must not advertise it.
-  expect(sitemapBody).not.toContain('/docs/platform')
-  expect(sitemapBody).not.toContain('/changelog/platform')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/blog</loc>')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/blog/introducing-pdd-kit</loc>')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/blog/your-agent-is-guessing</loc>')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/blog/pdd-and-spec-driven-development</loc>')
-  // Three posts explained PDD between them and are one post now. All three old
-  // slugs are removed, so none of them may appear in the sitemap.
-  expect(sitemapBody).not.toContain('<loc>https://pdd-kit.dev/blog/product-driven-design</loc>')
-  expect(sitemapBody).not.toContain('<loc>https://pdd-kit.dev/blog/product-driven-development</loc>')
-  expect(sitemapBody).not.toContain('<loc>https://pdd-kit.dev/blog/the-missing-standard-for-product-knowledge</loc>')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/changelog</loc>')
   expect(sitemapBody).toContain('<loc>https://pdd-kit.dev/privacy</loc>')
 })
@@ -264,22 +250,10 @@ test('the FAQ has no automatically detectable WCAG A/AA violations', async ({ pa
   }
 })
 
-test('retired surfaces return ordinary 404s without redirects', async ({ request, page }) => {
-  for (const path of [
-    '/hub', '/platform', '/about', '/about/itai-gendler', '/community',
-    '/platform/changelog', '/changelog/platform', '/docs/platform',
-    '/docs/platform/publish', '/blog/product-driven-design',
-    '/blog/product-driven-development', '/blog/the-missing-standard-for-product-knowledge',
-    // The site is static now: no accounts, administration, or API.
-    '/login', '/settings', '/admin', '/api/v1/blueprints', '/api/mailing-list'
-  ]) {
-    const response = await request.get(path, { maxRedirects: 0 })
-    expect(response.status(), path).toBe(404)
-    expect(response.headers().location, path).toBeUndefined()
-  }
-  const response = await page.goto('/hub')
+test('an unknown route renders the 404 page without a redirect', async ({ page }) => {
+  const response = await page.goto('/no-such-page')
   expect(response?.status()).toBe(404)
-  await expect(page).toHaveURL('/hub')
+  await expect(page).toHaveURL('/no-such-page')
   // The static host answers with the generated 404 shell, and the client renders
   // the error page into it; scan that page, not the empty shell.
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()

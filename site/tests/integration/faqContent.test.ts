@@ -11,9 +11,9 @@ function document(answer: MinimarkNode[]): { value: MinimarkNode[] } {
     ['h3', {}, 'Where do I start?'],
     ...answer,
     ['h2', {}, 'Still have a question?'],
-    ['p', {}, 'Contact us.'],
+    ['p', {}, 'Ask in an issue.'],
     ['ul', {},
-      ['li', {}, ['a', { href: 'https://pdd-kit.dev/contact' }, 'Contact us']],
+      ['li', {}, ['a', { href: 'https://pdd-kit.dev/blueprints' }, 'Browse Blueprints']],
       ['li', {}, ['a', { href: 'https://pdd-kit.dev/docs' }, 'Read the docs']]]
   ] }
 }
@@ -41,7 +41,7 @@ describe('FAQ Markdown projection', () => {
       [{ text: 'Help', to: 'https://github.com/itai-gendler/pdd-kit/issues', external: true }],
       [{ text: 'Introduction', to: '/docs' }]
     ])
-    expect(faq.cta.primary).toEqual({ label: 'Contact us', to: '/contact' })
+    expect(faq.cta.primary).toEqual({ label: 'Browse Blueprints', to: '/blueprints' })
     expect(faq.cta.secondary.to).toBe('/docs')
   })
 

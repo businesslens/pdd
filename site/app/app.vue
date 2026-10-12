@@ -1,11 +1,12 @@
 <script setup lang="ts">
 usePddKitThemeHead()
-usePddKitThemeLabHead()
 
 useHead({
   meta: [
     { charset: 'utf-8' },
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    // The page background (`--ui-bg` in assets/css/main.css).
+    { name: 'theme-color', content: '#f4ecdb' }
   ]
 })
 

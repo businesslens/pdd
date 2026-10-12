@@ -31,9 +31,9 @@ const invitations = [
   {
     icon: 'i-lucide-sparkles',
     title: 'Can\'t find what you need?',
-    body: 'Request a Blueprint and we\'ll build it for you.',
+    body: 'Ask for it in a GitHub issue.',
     label: 'Request a Blueprint',
-    to: '/contact'
+    to: 'https://github.com/itai-gendler/pdd-kit/issues'
   },
   {
     icon: 'i-lucide-git-pull-request-arrow',

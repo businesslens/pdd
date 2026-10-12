@@ -459,11 +459,11 @@ const phaseMarks = computed(() => phases.map((name, index) => {
   One face and one size for both lines, so the centre reads as a single signature
   rather than as a caption with a mark under it. That is also what keeps PDD from
   looking like a mark of its own: set identically to the name above it, it is
-  plainly the second line of a two-line label. ADR-0007 rules out giving PDD a
+  plainly the second line of a two-line label. ADR-0002 rules out giving PDD a
   wordmark, and equal weight is the treatment that respects it.
 
   **Mono, and small.** The brand has three faces and no fourth
-  (`docs/design/foundation/brand-guidelines.md`); of the three, mono is the only
+  (`docs/brand.md`); of the three, mono is the only
   one not already spoken around this figure — the phase names are the heading
   face and the notes are the body face — so it is what makes the centre read as
   stamped on the instrument rather than as one more heading. Wide tracking and a

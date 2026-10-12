@@ -15,7 +15,7 @@ import { BLUEPRINT_STAT_LABELS } from '~/utils/blueprints'
  * assistive technology, which already hears the title as the link.
  *
  * The artwork is the Blueprint's engraved cover when it has one, in the house
- * style of the blog covers (ADR-0021), and the badge is the shelf it sits on;
+ * style of the blog covers (ADR-0003), and the badge is the shelf it sits on;
  * the cover already identifies the product, so the logo would only repeat it. A
  * Blueprint without a cover falls back to its logo, large, on the category's
  * tint. Either way the card draws no picture of the product's

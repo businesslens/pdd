@@ -13,7 +13,7 @@ import type { StateItem } from '~/utils/homeContent'
  *
  * The two sections are no longer the same height as each other. They were, and
  * that was the point of the card for four rounds; the plate band deliberately
- * gave it up. See `docs/design/experiences/marketing.md`.
+ * gave it up. See `docs/brand.md`.
  *
  * It carries no tone. It used to, back when this card was also the outcome card
  * and the Product Model's resource types showed their nesting here as an edge rule.
@@ -74,8 +74,7 @@ const INK_MARKS = new Set(['i-logos-github-icon', 'i-logos-linear-icon'])
       so covering makes the paper reach the card's edges. The plates are drawn
       on 16:9 sheets, which is the ratio cut here, so nothing is cropped at all.
       A different ratio would crop, and the amount has to be measured against
-      the tallest drawing before it is chosen — see
-      `docs/design/experiences/marketing.md`.
+      the tallest drawing before it is chosen — see `docs/brand.md`.
 
       The parchment is left alone in dark mode, exactly as the hero's plates
       are — inverting an engraving makes ink of the paper and paper of the ink. -->
@@ -99,7 +98,7 @@ const INK_MARKS = new Set(['i-logos-github-icon', 'i-logos-linear-icon'])
 
       Empty rather than borrowed: standing another type's plate in here would say
       the two are the same thing, which is what the plate set exists to deny. See
-      `docs/adr/0015-eight-resource-types-and-acting-is-a-facet-of-entity.md`. -->
+      `docs/adr/0002-the-home-page.md`. -->
     <div
       v-else-if="item.to && !item.logos"
       aria-hidden="true"

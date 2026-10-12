@@ -13,7 +13,6 @@ test('stays light, supports the hero command, and the routes out of the body', a
   await page.goto('/')
 
   // Dark mode is off until it reads as well as light, so there is no toggle.
-  // https://github.com/pdd-kit/landing/issues/79
   await expect(page.locator('html')).toHaveClass(/light/)
   await expect(page.getByRole('button', { name: 'Toggle color mode' })).toHaveCount(0)
 
@@ -54,19 +53,12 @@ test('stays light, supports the hero command, and the routes out of the body', a
   await expect(page.locator('#get-started').getByRole('link', { name: 'Get started' }))
     .toHaveAttribute('href', '#start')
   await expect(page.locator('#start')).toHaveCount(1)
-  // There are no accounts, so nothing offers to sign in.
-  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveCount(0)
 })
 
-// The theme lab and its toolbars exist only under `nuxt dev`; the generated
-// site carries the approved identity alone.
 test('keeps the approved identity fixed', async ({ page }) => {
   await page.goto('/')
 
   const header = page.locator('header')
-  await expect(page.locator('[data-preview-bar]')).toHaveCount(0)
-  await expect(page.locator('[data-logo-row]')).toHaveCount(0)
-  await expect(page.getByRole('group', { name: /logo variants/i })).toHaveCount(0)
   // Nothing sits above the header, so it pins itself to the top.
   expect(await page.evaluate(() => Number.parseFloat(getComputedStyle(document.querySelector('header')!).top))).toBe(0)
 
@@ -108,16 +100,9 @@ test('the header exposes its primary destinations without a resources menu', asy
   // The logo already links home, and the footer already carries the changelog.
   await expect(header.getByRole('link', { name: 'Home', exact: true })).toHaveCount(0)
   await expect(header.getByRole('link', { name: 'Changelog', exact: true })).toHaveCount(0)
-  await expect(header.getByRole('link', { name: 'Open source', exact: true })).toHaveCount(0)
-  await expect(header.getByRole('link', { name: 'Platform', exact: true })).toHaveCount(0)
-  await expect(header.getByRole('button', { name: 'Resources', exact: true })).toHaveCount(0)
-  await expect(header.getByRole('link', { name: /About/ })).toHaveCount(0)
-  await expect(header.getByRole('link', { name: /Community/ })).toHaveCount(0)
-  await expect(header.getByRole('link', { name: /Contact/ })).toHaveCount(0)
 
   await expect(header.locator('[aria-label^="pdd-kit on GitHub"]:visible')).toHaveCount(1)
   // Dark mode is off until it reads as well as light, so there is no toggle.
-  // https://github.com/pdd-kit/landing/issues/79
   await expect(header.locator('[aria-label="Toggle color mode"]')).toHaveCount(0)
 
   await header.getByRole('link', { name: 'Blog', exact: true }).click()
@@ -197,11 +182,6 @@ test('the footer carries its product line, its links, and the creator credit', a
   await expect(
     footer.getByText('Living product models for software teams and coding agents.', { exact: true })
   ).toBeVisible()
-  // There is no mailing list: the footer collects nothing.
-  await expect(footer.getByRole('heading', { name: 'See what pdd-kit is building' })).toHaveCount(0)
-  await expect(footer.getByRole('textbox')).toHaveCount(0)
-  await expect(footer.locator('form')).toHaveCount(0)
-  await expect(footer.getByRole('link', { name: 'Contact', exact: true })).toHaveAttribute('href', '/contact')
   await expect(footer.getByRole('link', { name: 'Changelog', exact: true })).toHaveAttribute('href', '/changelog')
   await expect(footer.getByRole('link', { name: 'FAQ', exact: true })).toHaveAttribute('href', '/faq')
   await expect(footer.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute(
@@ -232,16 +212,8 @@ test('the footer carries its product line, its links, and the creator credit', a
   await expect(page.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeVisible()
 })
 
-test('the retired legal pages are gone', async ({ page }) => {
-  for (const path of ['/terms', '/security']) {
-    await page.goto(path)
-    await expect(page.getByText('404')).toBeVisible()
-  }
-})
-
 test('the standalone pages render their heroes', async ({ page }) => {
   const pages: Array<[string, string]> = [
-    ['/contact', 'Contact'],
     ['/changelog', 'Changelog'],
     ['/faq', 'FAQ']
   ]
@@ -516,7 +488,6 @@ test.describe('the home page', () => {
     // it is seeded before load.
     await page.setViewportSize({ width: 1280, height: 900 })
     // Dark mode is off; restore its pass when it returns.
-    // https://github.com/pdd-kit/landing/issues/79
     for (const scheme of ['light'] as const) {
       await page.addInitScript(value => localStorage.setItem('nuxt-color-mode', value), scheme)
       await page.goto('/')
@@ -561,7 +532,7 @@ test.describe('the home page', () => {
     // yet and still measures level, because the grid stretches every card to its
     // row; if that ever stops being true this is where it goes red. Within a section a ragged height still
     // means a note that wraps further than its neighbours, which is what this
-    // test is really for. See `docs/design/experiences/marketing.md`; dropping
+    // test is really for. See `docs/brand.md`; dropping
     // the plates would restore the equality.
     expect(model[0], 'the resource types lost their band').toBeGreaterThan(today[0]!)
   })

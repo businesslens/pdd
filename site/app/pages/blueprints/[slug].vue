@@ -78,7 +78,7 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
       :sidebar-vocabulary="false"
       :style="{
         '--pdd-kit-report-chrome':
-          'calc(var(--ui-header-height) + var(--pdd-kit-theme-lab-height, 0px))'
+          'var(--ui-header-height)'
       }"
     >
       <template #primary-action>

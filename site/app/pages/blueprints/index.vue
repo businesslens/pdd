@@ -19,7 +19,7 @@ useHead({
 
 // Generated with the site from the repository's blueprints/, so the list is in
 // the page itself. Cards wear their engraved cover, or the Product logo when
-// there is none (ADR-0021).
+// there is none (ADR-0003).
 const { data, error } = await useFetch('/_data/blueprints.json')
 const blueprints = computed(() => data.value?.blueprints ?? [])
 
@@ -30,7 +30,7 @@ const { search, category, clear } = useCatalogFilters()
 <template>
   <div class="landing-page overflow-hidden">
     <!-- The catalog is the one page that earns the whole viewport: with fifteen
-      Blueprints the grid fills it, and only the gutters are kept (ADR-0019). -->
+      Blueprints the grid fills it, and only the gutters are kept (ADR-0003). -->
     <UPageSection :ui="{ container: 'max-w-none pt-10 pb-16 sm:pt-12 lg:pt-14 sm:pb-20' }">
       <template v-if="error">
         <CatalogHero />

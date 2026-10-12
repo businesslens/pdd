@@ -6,10 +6,6 @@ import { pddKitSyntaxHighlightTheme } from './config/syntaxHighlightTheme'
 import { readFaqContent } from './shared/faq-content'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
-// The theme lab is a local design tool, not a production feature. Visual tests
-// opt into it explicitly, and `useThemeLabEnabled` adds a second loopback-host
-// check so the switchers cannot be exposed on a deployed origin by accident.
-const themeLabConfigured = isDevelopment || process.env.PDD_KIT_THEME_LAB === '1'
 const isolatedBuildDir = process.env.PDD_KIT_NUXT_BUILD_DIR
 
 // The site lives in the pdd-kit repository. Its docs, FAQ, changelog and
@@ -46,22 +42,20 @@ export default defineNuxtConfig({
     head: { htmlAttrs: { lang: 'en' } }
   },
   extends: [
-    '@itai-gendler/pdd-kit/nuxt/report-viewer',
-    '@itai-gendler/pdd-kit/nuxt/theme-lab'
+    '@itai-gendler/pdd-kit/nuxt/report-viewer'
   ],
   // The report viewer imports the report contract by its package name. Point it
   // at this repository's source, as the local viewer does, so the site needs no
   // built package to compile.
   alias: {
     '@itai-gendler/pdd-kit/report/selectors': resolve(repoRoot, 'src/report-selectors.ts'),
-    '@itai-gendler/pdd-kit/report': resolve(repoRoot, 'src/report.ts'),
-    '@itai-gendler/pdd-kit/theme-lab/variants': resolve(repoRoot, 'layers/nuxt/theme-lab/app/utils/pddKitThemeLabVariants.ts')
+    '@itai-gendler/pdd-kit/report': resolve(repoRoot, 'src/report.ts')
   },
   modules: [
     '@nuxt/eslint',
     '@vueuse/nuxt',
-    // The shared theme-lab Layer extends the stable identity/theme and
-    // registers @nuxt/ui before this project module.
+    // The report viewer Layer extends the pdd-kit theme and registers
+    // @nuxt/ui before this project module.
     '@nuxt/content',
     // Nuxt strips `onServerPrefetch` from the client bundle by default. Vue
     // treats a component with that hook as an async boundary when numbering
@@ -153,7 +147,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       pddVersion,
-      themeLabConfigured,
       // The site is generated, so these are read once, at build time:
       // NUXT_PUBLIC_POSTHOG_KEY turns analytics on for that build.
       posthogKey: '',

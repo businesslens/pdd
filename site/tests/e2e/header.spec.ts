@@ -11,8 +11,7 @@ test('the header and mobile menu fit phone widths', async ({ page }) => {
   await expectHeaderFits(page)
 })
 
-test('search and Vocabulary are available across the site and ignore retired header choices', async ({ page, context, baseURL }) => {
-  await context.addCookies([{ name: 'bl-header', value: 'toolbar', url: baseURL! }])
+test('search and Vocabulary are available across the site', async ({ page }) => {
   for (const path of ['/', '/blog', '/faq', '/docs/entities']) {
     await page.goto(path)
     const header = page.locator('[data-site-header]')
@@ -25,10 +24,6 @@ test('search and Vocabulary are available across the site and ignore retired hea
     await panel.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(trigger).toBeFocused()
   }
-  // The generated site has no customization toolbars to show.
-  await expect(page.locator('[data-site-header]').getByRole('button', { name: /customization toolbars/i })).toHaveCount(0)
-  await expect(page.locator('[data-preview-bar]')).toHaveCount(0)
-  await expect(page.getByRole('group', { name: 'Header variants' })).toHaveCount(0)
 })
 
 test('desktop navigation stays centered when entering docs without overlapping the tools', async ({ page, isMobile }) => {

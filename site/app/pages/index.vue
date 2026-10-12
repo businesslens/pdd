@@ -32,7 +32,7 @@ if (import.meta.prerender) {
 
 // The social card keeps the earlier headline on purpose: it is still an endorsed
 // claim, and a card carries the hook rather than mirroring the h1. See
-// docs/adr/0007-pdd-names-the-practice.md.
+// docs/adr/0002-the-home-page.md.
 useSiteSeo({
   title: 'pdd-kit | Product-Driven Development for coding agents',
   socialTitle: 'Product-Driven Development for coding agents',

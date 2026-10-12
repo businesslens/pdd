@@ -25,12 +25,12 @@ import SectionHead from '~/components/landing/home/SectionHead.vue'
  * phase has none of ours, and one shared treatment would flatten that into
  * three commands. The dashed chip is a handoff, not a gap: its text is set at
  * full reading contrast so the phase never looks disabled, and the section
- * description says in words what the border only suggests (issue #23).
+ * description says in words what the border only suggests.
  *
  * **Below `md` the ring shrinks rather than disappearing.** Removing it and
  * leaving three headings was the old answer, and it threw away the section's
  * whole argument: the order survived, the direction and the return to Ideate did
- * not, so a reader met a list of three things rather than a loop (issue #22).
+ * not, so a reader met a list of three things rather than a loop.
  *
  * The phone gets a compass instead — the ring at the smallest size its centre
  * plate allows, naming its own three stations, with the phases listed under it

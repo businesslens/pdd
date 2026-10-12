@@ -90,12 +90,9 @@ test('mobile navigation opens and reaches the Blueprint catalog', async ({ page 
   // The logo already links home, and the footer already carries the changelog.
   await expect(drawer.getByRole('link', { name: 'Home', exact: true })).toHaveCount(0)
   await expect(drawer.getByRole('link', { name: 'Changelog', exact: true })).toHaveCount(0)
-  await expect(drawer.getByRole('button', { name: 'Resources', exact: true })).toHaveCount(0)
-  await expect(drawer.getByRole('link', { name: 'Contact', exact: true })).toHaveCount(0)
   await expect(drawer.locator('[data-mobile-menu-utilities]')).toBeVisible()
   await expect(drawer.locator('[data-mobile-menu-utilities]').getByRole('link', { name: /^pdd-kit on GitHub/ })).toBeVisible()
   // Dark mode is off, so the drawer has no toggle.
-  // https://github.com/pdd-kit/landing/issues/79
   await expect(drawer.getByRole('button', { name: 'Toggle color mode' })).toHaveCount(0)
   await drawer.getByRole('link', { name: 'Blueprints', exact: true }).click()
 
@@ -114,9 +111,6 @@ test('mobile docs menu exposes the docs navigation', async ({ page }) => {
 
   await expect(page.getByRole('dialog').locator('[data-slot="body"]').getByRole('button', { name: 'Search' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Model overview', exact: true })).toBeVisible()
-
-  // Retired hosted-Platform instructions are absent from the one docs tree.
-  await expect(page.getByRole('link', { name: 'Publish Product Reports', exact: true })).toHaveCount(0)
 
   await page.getByRole('dialog').locator('a[href="/docs/cli"]').click()
 

@@ -5,7 +5,6 @@ const STATIC_PATHS = [
   '/blueprints',
   '/blog',
   '/changelog',
-  '/contact',
   '/faq',
   '/privacy'
 ]

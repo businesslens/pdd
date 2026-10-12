@@ -21,7 +21,7 @@ const state = computed(() => {
     return {
       icon: 'i-lucide-package-open',
       title: 'No Blueprints yet.',
-      description: 'The catalog is being curated. Request the one you need, or contribute a Product Model you already have.'
+      description: 'Ask for the one you need in a GitHub issue, or contribute a Product Model you already have.'
     }
   }
   return {
@@ -53,7 +53,7 @@ const state = computed(() => {
         />
       </template>
       <template v-else>
-        <UButton label="Request a Blueprint" to="/contact" />
+        <UButton label="Request a Blueprint" to="https://github.com/itai-gendler/pdd-kit/issues" />
         <UButton
           label="Submit a Blueprint"
           to="/docs/cli-contribute"

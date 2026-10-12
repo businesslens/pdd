@@ -33,7 +33,7 @@ import SectionHead from '~/components/landing/home/SectionHead.vue'
  * **None of that survives below `lg`, and the `.cmp-*` rules are what replaces
  * it.** Stacked, the gutter stops being a column and the two headings go with
  * it, leaving a reader to tell the problem from the answer by a shadow and by
- * which card came first — issue #22. So the row becomes one bordered object
+ * which card came first. So the row becomes one bordered object
  * with the subject on a band across its head and both claims named in words
  * inside it: the same argument the gutter makes at `lg`, made by a border
  * instead of a column. The subject belongs to neither claim, which is why it

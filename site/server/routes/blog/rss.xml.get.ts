@@ -4,11 +4,9 @@ import { buildBlogFeed } from '../../utils/rss'
 /**
  * The blog feed, at the URL readers will store: `/blog/rss.xml`.
  *
- * A native Nitro handler rather than an oRPC procedure. Nothing here is an
- * application API — there is no contract to share with a client, no schema worth
- * publishing in the OpenAPI document, and the response is XML. It reads Nuxt
- * Content and nothing else, so it answers with no database, no session, and no
- * Resend credentials, which is what lets the container smoke test assert it.
+ * A Nitro route that `nuxt generate` prerenders to a static file. It reads Nuxt
+ * Content and nothing else, so the deployed feed is plain XML with no server
+ * behind it.
  */
 export default defineEventHandler(async (event) => {
   const posts = await queryCollection(event, 'blog').all()

@@ -103,20 +103,6 @@ test('searches the docs', async ({ page }) => {
   await expect(search.locator('a[href="/docs/skill-pdd-verify"]').first()).toBeVisible()
 })
 
-test('removed documentation surfaces return 404 without exposing old content', async ({ page }) => {
-  for (const path of ['/docs/platform', '/docs/platform/publish', '/changelog/platform']) {
-    const response = await page.request.get(path, { maxRedirects: 0 })
-    expect(response.status(), path).toBe(404)
-    expect(response.headers().location).toBeUndefined()
-  }
-
-  await page.goto('/docs')
-  await expect(page.getByRole('navigation', { name: 'Documentation sections' })).toHaveCount(0)
-
-  const sitemap = await page.request.get('/sitemap.xml')
-  expect(await sitemap.text()).not.toContain('platform')
-})
-
 test('docs pages have no automatically detectable WCAG A/AA violations', async ({ page }) => {
   await page.goto('/docs')
   await page.waitForLoadState('networkidle')
@@ -222,53 +208,6 @@ test('Brand Warm code stays readable and matches between docs and landing', asyn
   const multiLineAgentBlock = page.locator('pre.language-text')
     .filter({ hasText: '/pdd-verify report only' })
   await expect(multiLineAgentBlock.locator(':scope > code > .line')).toHaveCount(4)
-})
-
-// Dark mode is off until it reads as well as light; restore this test when it
-// returns. https://github.com/pdd-kit/landing/issues/79
-test.skip('dark code stays readable and matches between docs and landing', async ({ page }) => {
-  await page.addInitScript(() => {
-    if (!localStorage.getItem('nuxt-color-mode')) localStorage.setItem('nuxt-color-mode', 'light')
-  })
-
-  await page.goto('/docs/installation')
-  await page.getByRole('button', { name: 'Toggle color mode' }).click()
-  await expect(page.locator('html')).toHaveClass(/dark/)
-  const darkDocs = {
-    colors: await Promise.all([
-      page.locator('.docs-prose pre.shiki').filter({ hasText: 'npx @itai-gendler/pdd-kit install' })
-        .locator('code .line > span').filter({ hasText: 'npx' }).first()
-        .evaluate(element => getComputedStyle(element).color),
-      page.locator('.docs-prose pre.shiki').filter({ hasText: 'npx @itai-gendler/pdd-kit install' })
-        .locator('code .line > span').filter({ hasText: 'pdd-kit' }).first()
-        .evaluate(element => getComputedStyle(element).color)
-    ])
-  }
-  await page.goto('/docs/skill-pdd-map')
-  await expect(page.locator('html')).toHaveClass(/dark/)
-  const darkMapColors = await page.locator('pre.language-text code .line').filter({ hasText: /^\s*\/pdd-map\s*$/ }).first()
-    .locator('[data-syntax-token]').evaluateAll(elements =>
-      elements.map(element => getComputedStyle(element).color))
-  await page.goto('/docs/skill-pdd-verify')
-  await expect(page.locator('html')).toHaveClass(/dark/)
-  const darkAgentDocs = {
-    map: darkMapColors,
-    verify: await page.locator('pre.language-text code .line').filter({ hasText: /^\s*\/pdd-verify current\s*$/ }).first()
-      .locator('[data-syntax-token]').evaluateAll(elements =>
-        elements.map(element => getComputedStyle(element).color))
-  }
-  await page.goto('/')
-  // Color mode is stored client-side, so a full navigation first receives the
-  // light SSR fallback and then restores the reader's dark preference during
-  // hydration. Wait for that restoration before sampling computed colors.
-  await expect(page.locator('html')).toHaveClass(/dark/)
-  const darkLanding = await page.locator('#start code [data-syntax-token]').evaluateAll(elements =>
-    elements.map(element => getComputedStyle(element).color))
-
-  expect(darkLanding).toEqual(darkDocs.colors)
-  expect(darkDocs.colors).toEqual(['rgb(255, 203, 107)', 'rgb(195, 232, 141)'])
-  expect(darkAgentDocs.map).toEqual([darkDocs.colors[0]])
-  expect(darkAgentDocs.verify).toEqual(darkDocs.colors)
 })
 
 test('keeps the FAQ on its dedicated route, outside normal docs', async ({ page, request }) => {

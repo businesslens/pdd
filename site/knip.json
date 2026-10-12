@@ -4,8 +4,7 @@
     "content.config.ts",
     "app/components/content/DevelopmentLoop.vue",
     "app/components/content/ProseA.vue",
-    "app/components/content/ProsePre.vue",
-    "app/composables/usePddKitBackgroundVariant.ts"
+    "app/components/content/ProsePre.vue"
   ],
   "ignoreExportsUsedInFile": true,
   "project": [

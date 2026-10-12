@@ -1,20 +1,9 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const {
-  enabled: themeLabEnabled,
-  visible: previewBarVisible,
-  toggle: togglePreviewBar
-} = usePddKitThemeLab()
-
-const previewBarLabel = computed(() =>
-  previewBarVisible.value ? 'Hide customization toolbars' : 'Show customization toolbars'
-)
-
 const route = useRoute()
 // No `Home` — the logo already links there. No `Changelog` — it is in the footer,
-// and duplicating it cost a slot the FAQ needed more. See
-// docs/design/experiences/marketing.md.
+// and duplicating it cost a slot the FAQ needed more. See docs/brand.md.
 const items = computed<NavigationMenuItem[]>(() => [
   { label: 'Blueprints', to: '/blueprints' },
   { label: 'Docs', to: '/docs' },
@@ -25,7 +14,6 @@ const { isDocsPath } = useDocsTools()
 // Equal outside columns keep navigation centered independently of utilities.
 // At the smallest desktop width, shorten the utility group to fit its column.
 const headerUi = {
-  root: 'top-(--pdd-kit-theme-lab-height)',
   container: 'lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]',
   left: 'shrink-0 lg:flex-none',
   right: 'shrink-0 gap-0.5 lg:flex-none'
@@ -95,19 +83,6 @@ const githubStars = computed(() => {
     <template #right>
       <LazyLandingDocsHeaderSearch />
       <LazyLandingDocsHeaderVocabulary />
-      <!-- Lets the site be checked as a visitor sees it, without the brand
-        switcher bars. Leaves the header when the bars go, so it stays the way
-        back. -->
-      <UTooltip v-if="themeLabEnabled" :text="previewBarLabel">
-        <UButton
-          icon="i-lucide-sliders-horizontal"
-          color="neutral"
-          :variant="previewBarVisible ? 'soft' : 'ghost'"
-          :aria-label="previewBarLabel"
-          :aria-pressed="previewBarVisible"
-          @click="togglePreviewBar"
-        />
-      </UTooltip>
       <UButton
         v-if="githubStars"
         to="https://github.com/itai-gendler/pdd-kit"

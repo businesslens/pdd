@@ -5,7 +5,7 @@ import { catalogOf, openCatalogWith } from '../support/catalog'
 import { waitForHydration } from '../support/hydration'
 
 /**
- * The catalog index: one layout at every size — see ADR-0019. The listing is
+ * The catalog index: one layout at every size — see ADR-0003. The listing is
  * generated with the site from the repository's fifteen Blueprints, so search,
  * category and URL filters run against that real catalog. The states it can
  * never be in on its own — one Blueprint, none, or a listing that failed to
@@ -183,7 +183,7 @@ test('an empty catalog says so and offers the two ways to fill it', async ({ pag
   await expect(page.locator('[data-catalog-state="empty"]')).toBeVisible()
   const empty = page.locator('[data-catalog-empty]')
   await expect(empty).toContainText('No Blueprints yet.')
-  await expect(empty.getByRole('link', { name: 'Request a Blueprint' })).toHaveAttribute('href', '/contact')
+  await expect(empty.getByRole('link', { name: 'Request a Blueprint' })).toHaveAttribute('href', 'https://github.com/itai-gendler/pdd-kit/issues')
   await expect(empty.getByRole('link', { name: 'Submit a Blueprint' })).toHaveAttribute('href', '/docs/cli-contribute')
   await expect(search(page)).toHaveCount(0)
   await expect(cardLinks(page)).toHaveCount(0)

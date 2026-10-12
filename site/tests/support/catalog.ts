@@ -37,12 +37,11 @@ export function catalogOf(count: number): BlueprintCard[] {
 /**
  * Open `/blueprints` through client navigation with the listing answered here.
  *
- * The generated page carries its listing in its prerendered payload. When that
- * payload cannot be loaded, the page fetches `/_data/blueprints.json` itself —
- * a file the generated site does not ship — so that request is the one place a
- * test can answer the listing, and a 404 there is exactly what a reader would
- * get. Client navigation, because a full load renders the listing inlined in
- * the HTML.
+ * The generated page carries its listing in its prerendered payload. With that
+ * payload blocked, client navigation falls back to fetching the prerendered
+ * `/_data/blueprints.json`, so that request is the one place a test can answer
+ * the listing — with cards, an empty shelf, or a failure status. Client
+ * navigation, because a full load renders the listing inlined in the HTML.
  */
 export async function openCatalogWith(
   page: Page,

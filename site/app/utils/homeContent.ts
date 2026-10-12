@@ -15,18 +15,18 @@
  * The three ways in are hero buttons rather than a section, and the PDD/SDD
  * comparison lives in `/faq`, `content/blog/pdd-and-spec-driven-development.md`
  * rather than here — a page this size cannot afford to
- * argue against a neighbouring category. See
- * `docs/design/experiences/marketing.md`.
+ * argue against a neighbouring category. See `docs/brand.md`.
  *
  * The two sections are the distilled form of
  * `content/blog/your-agent-is-guessing.md`, whose title is this hero's h1. The
  * two must agree: the post is where the argument is made at length, this is
  * where it is made quickly.
  *
- * **Documentation links must exist on `itai-gendler/pdd-kit`'s `main` branch.** The
- * docs collection resolves there in production, so linking a page that only
- * exists on the release branch ships a 404. Public Product Model definitions
- * live on their owning resource type pages; there is no standalone terminology page.
+ * **Documentation links must resolve to a page in the repository's `docs/`.**
+ * The docs collection is built from the same checkout as this page, so a link
+ * to a page that does not exist there ships a 404. Public Product Model
+ * definitions live on their owning resource type pages; there is no standalone
+ * terminology page.
  */
 
 export interface HomeLink {
@@ -182,7 +182,7 @@ export interface StateItem {
    * drawn rather than borrowed.
    *
    * **Views of one kingdom**, in the same copperplate hand as the hero's
-   * three ways in — see `docs/design/experiences/marketing.md`. Each plate is
+   * three ways in — see `docs/brand.md`. Each plate is
    * drawn on a 16:9 sheet, which is the ratio the card's band cuts, so
    * `object-cover` crops nothing.
    */
@@ -388,7 +388,7 @@ export interface HomeLoop {
    *
    * Together they name the practice and whose implementation of it this is — the
    * wheel is a diagram of PDD, and without the centre it is a diagram of nothing
-   * in particular. Not a wordmark: ADR-0007 rules out giving PDD its own mark,
+   * in particular. Not a wordmark: ADR-0002 rules out giving PDD its own mark,
    * and equal weight with the name above it is what keeps this a two-line label
    * rather than one.
    *
@@ -430,8 +430,7 @@ const loop: HomeLoop = {
   /**
    * The ownership boundary, said in words. The wheel is signed pdd-kit/PDD
    * all the way round, so the dashed chip alone left a reader free to assume
-   * the middle phase came with a tool of ours as well (issue #23). Since pdd#91
-   * the reader's own agent implements when asked and verify checks each part, so
+   * the middle phase came with a tool of ours as well. The reader's own agent implements when asked and verify checks each part, so
    * the sentence names who writes the code rather than a workflow.
    */
   description: 'Ideate and verify with pdd-kit. Your own agent implements, your way.',
@@ -455,7 +454,7 @@ const loop: HomeLoop = {
    * does not depend on reading a dashed border.
    *
    * **These three notes are the loop's copy everywhere.** The `/docs` wheel
-   * renders this object unchanged, and `pdd/docs/index.md` repeats the same
+   * renders this object unchanged, and the repository's `docs/index.md` repeats the same
    * three notes word for word under it; change them in both places at once.
    */
   phases: [
@@ -1020,10 +1019,9 @@ const missingPiece: HomeMissingPiece = {
  * twice, on one page. One link back to where the doors already are says the same
  * thing and adds nothing to the page.
  *
- * The headline is one of the four in `docs/messaging-system.md#headline-library`
- * — the strongest line the project has, and the one that reads best cold. It
- * names no problem and no audience, which is why it works here and not at the
- * top of the page.
+ * The headline is the project's strongest line and reads best cold. It names
+ * no problem and no audience, which is why it works here and not at the top of
+ * the page.
  */
 const close: HomeClose = {
   title: 'AI agents and humans need a living product model.',

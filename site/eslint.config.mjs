@@ -14,7 +14,7 @@ export default withNuxt(
       'vue/no-multiple-template-root': 'off',
       'vue/max-attributes-per-line': ['error', { singleline: 3 }],
       '@stylistic/max-statements-per-line': 'off',
-      // Rechecked during the Platform parity audit on 2026-08-08. Enabling the
+      // Rechecked on 2026-08-08. Enabling the
       // rule still crashes @nuxt/eslint-plugin 1.16 on this valid `watch` key.
       'nuxt/nuxt-config-keys-order': 'off'
     }
@@ -28,8 +28,8 @@ export default withNuxt(
           group: ['#server/**', '~/server/**', '~~/server/**', '../**/server/**'],
           message: 'App code must consume client-safe contracts from shared/, never server implementations.'
         }, {
-          group: ['drizzle-orm', 'drizzle-orm/**', 'h3', 'postgres'],
-          message: 'Database and request-runtime packages are server-only.'
+          group: ['h3', 'h3/**', 'nitropack', 'nitropack/**'],
+          message: 'Request-runtime packages are server-only.'
         }]
       }]
     }
@@ -61,8 +61,8 @@ export default withNuxt(
         patterns: [{
           group: [
             '#app/**', '#server/**', '~/app/**', '~/server/**', '~~/app/**',
-            '~~/server/**', '../**/app/**', '../**/server/**', 'drizzle-orm',
-            'drizzle-orm/**', 'h3', 'nitropack', 'nitropack/**', 'postgres'
+            '~~/server/**', '../**/app/**', '../**/server/**', 'h3',
+            'nitropack', 'nitropack/**'
           ],
           message: 'Shared contracts must remain safe for both browser and server bundles.'
         }]

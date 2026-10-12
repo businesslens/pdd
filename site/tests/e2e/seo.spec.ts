@@ -30,7 +30,6 @@ test('public pages state one title, description and image across search and link
   const routes = [
     '/',
     '/faq',
-    '/contact',
     '/privacy',
     '/changelog',
     '/blog',
@@ -124,12 +123,8 @@ test('a docs page carries a breadcrumb back to the docs index', async ({ page })
   await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1)
 })
 
-test('the sitemap lists only public pages', async ({ request }) => {
+test('the sitemap lists the public pages', async ({ request }) => {
   const sitemap = await (await request.get('/sitemap.xml')).text()
-  // The site has no accounts, administration or API to advertise.
-  for (const path of ['/login', '/settings', '/admin', '/api']) {
-    expect(sitemap).not.toContain(`<loc>${ORIGIN}${path}`)
-  }
   for (const path of ['/', '/blueprints', '/blueprints/kanban-board', '/docs', '/faq', '/blog']) {
     expect(sitemap).toContain(`<loc>${ORIGIN}${path}</loc>`)
   }

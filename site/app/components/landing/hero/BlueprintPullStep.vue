@@ -22,7 +22,7 @@ import { BRAND_WARM_COMMAND_TOKEN_COLORS } from '~/utils/syntaxTheme'
  * slug is (`CommandBlock`'s `nowrap`).
  *
  * Each row wears the Blueprint's own Product logo, as the record page's switcher
- * does, so a Blueprint looks the same here as there (ADR-0020); the category's
+ * does, so a Blueprint looks the same here as there (ADR-0003); the category's
  * label below the title says which shelf it sits on. A logo that fails to load
  * falls back to the category's icon in its tint. The slug is left out: the
  * command above already shows it.

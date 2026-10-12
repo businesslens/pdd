@@ -1,10 +1,8 @@
 <script setup lang="ts">
-// The compact row keeps only links that have no better home. The updates form
-// above it is shared by every public page through the default layout.
+// The compact row keeps only links that have no better home.
 const links = [
   { label: 'Changelog', to: '/changelog' },
   { label: 'FAQ', to: '/faq' },
-  { label: 'Contact', to: '/contact' },
   { label: 'Privacy', to: '/privacy' },
   { label: 'GitHub', to: 'https://github.com/itai-gendler/pdd-kit', external: true }
 ]

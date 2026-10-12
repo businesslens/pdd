@@ -305,10 +305,10 @@ describe('the home page argument', () => {
    * entry would render into no cell at all, so the count is checked rather than
    * left to whoever adds one.
    *
-   * These are the same three the PDD documentation runs on — `pdd/docs/index.md`
-   * and ADR-0008 both name them — and resolution is deliberately not among
-   * them. Nobody walks to it; verify does it, which is why it lives in verify's
-   * note rather than in a station of its own.
+   * These are the same three the PDD documentation runs on — the repository's
+   * `docs/index.md` and ADR-0002 both name them — and resolution is
+   * deliberately not among them. Nobody walks to it; verify does it, which is
+   * why it lives in verify's note rather than in a station of its own.
    */
   it('runs the loop on the three phases the wheel is built for', () => {
     expect(loop.phases.map(phase => phase.id))
@@ -368,7 +368,7 @@ describe('the home page argument', () => {
    * The border is not the only signal. The section description says in words
    * that implementation happens in the reader's own workflow, and the chip
    * names that workflow rather than a tool, so the boundary survives without
-   * colour, animation or hover (issue #23).
+   * colour, animation or hover.
    */
   it('names a skill for the two phases that have one, and not for implement', () => {
     const runners = Object.fromEntries(loop.phases.map(phase => [phase.id, phase.runner]))
@@ -392,7 +392,7 @@ describe('the home page argument', () => {
   /**
    * The centre of the ring names the practice and whose implementation of it
    * this is. Without both, the wheel is a diagram of nothing in particular —
-   * and PDD alone would be a wordmark, which ADR-0007 rules out.
+   * and PDD alone would be a wordmark, which ADR-0002 rules out.
    */
   it('signs the wheel with the practice and the product', () => {
     expect(loop.centerLabel).toBe('pdd-kit')

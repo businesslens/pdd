@@ -350,12 +350,9 @@ Bugs, missing product concepts, and format questions belong in [GitHub
 issues](https://github.com/itai-gendler/pdd-kit/issues). Security reports go through the [security
 policy](https://github.com/itai-gendler/pdd-kit/blob/main/SECURITY.md) rather than a public issue.
 
-For anything else, including office hours on a repository you know well, [contact
-us](https://pdd-kit.dev/contact).
-
 ## Still have a question?
 
-Bring us the product behind your software, or the repository you want mapped. We answer every message.
+Ask it in a GitHub issue, or start with the docs.
 
-- [Contact us](https://pdd-kit.dev/contact)
+- [Open an issue](https://github.com/itai-gendler/pdd-kit/issues)
 - [Read the docs](https://pdd-kit.dev/docs)

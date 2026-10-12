@@ -148,9 +148,6 @@ importers:
       vue:
         specifier: ^3.5.35
         version: 3.5.40(typescript@5.9.3)
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.12.1

@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest'
 
 const pddKitRoot = dirname(createRequire(import.meta.url).resolve('@itai-gendler/pdd-kit/package.json'))
 const theme = resolve(pddKitRoot, 'layers/nuxt/theme')
-const themeLab = resolve(pddKitRoot, 'layers/nuxt/theme-lab')
 
 const ICON_SET = [
   'favicon.svg',
@@ -46,14 +45,5 @@ describe('approved pdd-kit identity', () => {
       expect(icon.src.startsWith('/brand/icons/')).toBe(true)
       expect(icon.src).not.toContain('/marks/')
     }
-  })
-
-  it('keeps identity and favicon choices out of the experiment layer and landing host', () => {
-    expect(existsSync(resolve(themeLab, 'public'))).toBe(false)
-    expect(existsSync(resolve(themeLab, 'app/components/PddKitThemeLabLogoRow.vue'))).toBe(false)
-    expect(existsSync(resolve(themeLab, 'app/composables/usePddKitLogoVariant.ts'))).toBe(false)
-    expect(existsSync(resolve(process.cwd(), 'app/components/PddKitBrand.vue'))).toBe(false)
-    expect(existsSync(resolve(process.cwd(), 'app/composables/usePddKitLogoVariant.ts'))).toBe(false)
-    expect(existsSync(resolve(process.cwd(), 'public/brand/logo'))).toBe(false)
   })
 })

@@ -11,10 +11,3 @@ insert_final_newline = true
 
 [*.md]
 trim_trailing_whitespace = false
-
-[drizzle/*.sql]
-indent_style = tab
-insert_final_newline = false
-
-[drizzle/meta/*.json]
-insert_final_newline = false

@@ -21,7 +21,7 @@ import type { ComparisonSide } from '~/utils/homeContent'
  *
  * **Elevation is a `lg` signal only.** Below that the headings are gone and the
  * two cards stack, where a shadow separating a card from the one above it says
- * nothing about which is which — the complaint in issue #22. `LedgerComparison`
+ * nothing about which is which. `LedgerComparison`
  * renders a worded label beside each half there and restyles this shell through
  * `.cmp-card`, which is the only reason that class exists.
  */

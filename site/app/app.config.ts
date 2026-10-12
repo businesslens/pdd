@@ -29,7 +29,7 @@ export default defineAppConfig({
          *
          * Nuxt UI ships `whitespace-pre-wrap wrap-break-word` on prose `<pre>`,
          * which is reasonable for code and destructive for anything whose
-         * meaning is in its column positions. `pdd/docs/index.md` draws the
+         * meaning is in its column positions. The repository's `docs/index.md` draws the
          * verify loop as an ASCII figure, and at phone widths every line of it
          * wrapped — the arrows landed under the wrong boxes and the diagram
          * became unreadable.

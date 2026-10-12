@@ -174,8 +174,7 @@ test('a record page renders the report, its pull command, its logo and its sourc
   )
 })
 
-test('the pull command copies exactly what it shows', async ({ page, context, browserName }) => {
-  test.skip(browserName !== 'chromium', 'Clipboard permissions are a Chromium feature.')
+test('the pull command copies exactly what it shows', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.goto(`/blueprints/${slug}`)
   await expectReportHydrated(page)
@@ -297,7 +296,6 @@ test('a record view keeps the site footer below the report', async ({ page }) =>
 })
 
 // Dark mode is off; restore its pass when it returns.
-// https://github.com/pdd-kit/landing/issues/79
 for (const colorMode of ['light'] as const) {
   test(`the record page has no automatically detectable WCAG A/AA violations in ${colorMode} mode`, async ({ page }) => {
     await page.addInitScript((mode) => {

@@ -21,7 +21,7 @@ export interface AnswerComparison {
  *
  * Only "Does the Product Model replace my UI/UX design?" carries one. Its lists
  * are the same five pairs the PDD README and docs Introduction print, so the
- * three cannot say different things — see `pdd/docs/index.md`.
+ * three cannot say different things — see the repository's `docs/index.md`.
  */
 export interface AnswerBoundary {
   lead: string

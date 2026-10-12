@@ -5,7 +5,7 @@ import { blueprintCategoryMeta } from './blueprintCategories'
 /**
  * Pure helpers for the catalog index: what search and category leave in the
  * listing, how the result row counts it, and how the URL spells
- * the filters. See `docs/adr/0019-the-catalog-index-has-one-layout.md`.
+ * the filters. See `docs/adr/0003-the-catalog-index.md`.
  */
 
 export interface CatalogFilters {
