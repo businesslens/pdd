@@ -3,9 +3,8 @@
 pdd-kit publishes an open format for describing what a product does, a CLI and skills for
 authoring software from it, and a public catalog of curated examples at `pdd-kit.dev`.
 
-The project was called **BusinessLens** until 2026-10; that name, its `.businesslens/`
-directory and its separate landing repository are history. The site lives in `site/` of
-`itai-gendler/pdd-kit` (see [ADR-0022](./docs/adr/0022-a-static-site-in-the-pdd-kit-repository.md)).
+The site lives in `site/` of `itai-gendler/pdd-kit` (see
+[ADR-0001](./docs/adr/0001-a-static-site.md)).
 
 The public-facing resource type language lives in the Product model group under the
 repository's `docs/`. This file is the internal vocabulary; the two must agree.
@@ -18,7 +17,7 @@ current implementation against it. PDD is the practice; **pdd-kit** is the open-
 implementation of it — the format, the CLI, and the skills; a **Product Model** is what it
 produces. Public copy
 names PDD before it names pdd-kit. See
-[ADR-0007](./docs/adr/0007-pdd-names-the-practice.md).
+[ADR-0002](./docs/adr/0002-the-home-page.md).
 _Avoid_: Product-Driven Design, the pdd-kit methodology, PDD as the name of the format
 
 **Product Model**:
@@ -48,8 +47,7 @@ _Avoid_: Hub, Platform, Explore
 **Ideate**:
 Deciding what the product should do, and writing that decision into the model. One conversation
 that converges: it proposes candidate directions, a person chooses, and it writes only what was
-approved. It **absorbed the separate plan step** — there is no longer a verb between deciding and
-writing.
+approved.
 _Avoid_: brainstorm, explore, plan
 
 **Implement**:
@@ -92,7 +90,7 @@ Three doors, named below in prose everywhere — `/faq`, the docs, this file —
 meets a door twice under two names counts it as two products. The home page renders them as verbs
 (*Map existing repo*, *Start from an idea*, *Start from a Blueprint*) because there they are buttons;
 that is the only sanctioned variation. See
-[ADR-0008](./docs/adr/0008-two-home-page-doors-leave-the-site.md).
+[ADR-0002](./docs/adr/0002-the-home-page.md).
 
 **From your repo**:
 You have code and no shared model. `pdd-map` reads established behavior without running

@@ -12,7 +12,7 @@ funnels:
 - `homepage_cta_clicked` records the CTA, destination, interaction, and its
   placement in the hero, hero overlay, or closing panel.
 - `homepage_install_command_copied` records a successful copy of the homepage
-  install command.
+  install command, with the command and its `hero` placement.
 - `blueprint_pull_command_copied`, with the Blueprint slug, measures pull intent.
 
 The site has no server, so it cannot see an actual pull: `pdd-kit blueprint pull`
@@ -54,8 +54,8 @@ preference has been saved. PostHog's own consent state is the source of truth:
   `cookieless_mode: 'on_reject'`. Events have no persistent browser identifier.
 
 The consent preference itself is retained by PostHog so the notice does not
-appear on every page. Visitors can change the preference under **Analytics
-choices** on `/privacy`.
+appear on every page. Visitors can change the preference under **Your choices**
+on `/privacy`.
 
 The PostHog project must have **Cookieless server hash mode** enabled or PostHog
 will discard events from visitors who choose cookieless analytics. The server
@@ -67,7 +67,7 @@ it supports daily aggregate analysis but not cross-day visitor journeys.
 Use stable campaign parameters on every published link:
 
 ```text
-https://pdd-kit.dev/blog/your-agent-is-guessing?utm_source=linkedin&utm_medium=organic_social&utm_campaign=prelaunch&utm_content=agent_guessing_01
+https://pdd-kit.dev/blog/your-agent-is-guessing?utm_source=linkedin&utm_medium=organic_social&utm_campaign=<initiative>&utm_content=agent_guessing_01
 ```
 
 Use source for the platform, medium for the distribution type, campaign for the

@@ -29,9 +29,9 @@ pnpm dev
 
 `pnpm dev` first runs `pnpm blueprints`, which builds every Blueprint into
 `.data/blueprints` with the same release script CI uses to publish them, then
-starts Nuxt on `NUXT_PORT` (3200 by default). Edits under `../docs` and to
-`../CHANGELOG.md` hot-reload. Run `pnpm blueprints` again after changing a
-Blueprint.
+starts Nuxt on its default port, 3000 (`NUXT_PORT` or `PORT` overrides it).
+Edits under `../docs` and to `../CHANGELOG.md` hot-reload. Run
+`pnpm blueprints` again after changing a Blueprint.
 
 ## Build
 
@@ -77,8 +77,12 @@ pnpm test:e2e     # generates, then runs Playwright against the static files
 `.github/workflows/site.yml` runs the same steps on every change to the site or
 to what it renders, and uploads the generated site as an artifact.
 
-The repository's runtime, dependency and quality-gate policy for the site is in
-[`docs/engineering-standards.md`](./docs/engineering-standards.md); its design
-documentation starts at [`docs/design/README.md`](./docs/design/README.md), and
-[ADR-0022](./docs/adr/0022-a-static-site-in-the-pdd-kit-repository.md) records
-why it is static.
+Further reading:
+
+- [Architecture](./docs/architecture.md): build, routes, catalog, hosting and
+  product constraints.
+- [Brand and UI](./docs/brand.md): colour, type, assets, home page and shared UI
+  rules.
+- [Analytics](./docs/analytics.md) and
+  [engineering standards](./docs/engineering-standards.md).
+- [ADR-0001](./docs/adr/0001-a-static-site.md) records why the site is static.
