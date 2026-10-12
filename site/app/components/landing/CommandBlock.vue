@@ -50,10 +50,6 @@ const { command, prompt = '$', size = 'md', align = 'start', copyable = true, no
   copiedLabel?: string
 }>()
 
-const emit = defineEmits<{
-  copied: [command: string]
-}>()
-
 const { copied, copy } = useCopyText()
 const commandText = useTemplateRef<HTMLElement>('commandText')
 const copyFailed = ref(false)
@@ -61,7 +57,6 @@ const copyFailed = ref(false)
 async function copyCommand() {
   if (await copy(command)) {
     copyFailed.value = false
-    emit('copied', command)
     return
   }
   // The clipboard was refused: select the command so the reader's own copy

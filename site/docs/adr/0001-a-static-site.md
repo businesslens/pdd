@@ -19,8 +19,9 @@ a request-time decision; or wondering why the site lives in this repository.
   listing flag or withdrawal.
 - **Docs, FAQ and changelog are read from the checkout**, not fetched, so a
   change and the page that shows it land in one pull request.
-- **Analytics is configured at build time** (`NUXT_PUBLIC_POSTHOG_KEY`) and
-  stays consent-gated. There is no identity to attach to it.
+- **No analytics.** The site loads no tracker and sets no tracking cookie, so
+  it needs no consent notice. The report viewer keeps display choices in the
+  browser, which identify no one.
 - **Hosting.** Cloudflare Pages serves the output, deployed from GitHub Actions
   after the checks pass, with a preview URL per pull request. Response headers
   live in `public/_headers`.

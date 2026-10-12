@@ -20,7 +20,6 @@ useSiteSeoDefaults()
 <template>
   <UApp>
     <NuxtLoadingIndicator />
-    <AnalyticsConsent />
 
     <NuxtLayout>
       <NuxtPage />

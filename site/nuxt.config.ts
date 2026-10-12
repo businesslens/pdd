@@ -146,11 +146,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      pddVersion,
-      // The site is generated, so these are read once, at build time:
-      // NUXT_PUBLIC_POSTHOG_KEY turns analytics on for that build.
-      posthogKey: '',
-      posthogHost: 'https://eu.i.posthog.com'
+      pddVersion
     }
   },
   // Every page is generated. The crawler follows links from `/`, which reaches

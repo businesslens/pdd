@@ -139,8 +139,8 @@ See [ADR-0002](./adr/0002-the-home-page.md) for the hero, doors and collections.
   and old entries keep the vocabulary of their release.
 - **404** is `app/error.vue` inside the site shell, generated as `404.html`, the
   same page for every unmatched path.
-- **Privacy** leads with the reader's question; its **Your choices** section
-  holds the analytics controls.
+- **Privacy** leads with the reader's question and says plainly that nothing
+  tracks them.
 - **Nuxt UI v4 first.** Reach for a Nuxt UI component before hand-rolling one.
 - **Accessibility.** Every Playwright page suite runs an axe WCAG 2.0/2.1 A/AA
   scan; new pages must be violation-free.
