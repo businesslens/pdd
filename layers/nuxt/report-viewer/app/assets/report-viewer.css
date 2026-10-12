@@ -335,7 +335,7 @@
    inside the same slot; the sub-icon on a set's mark and the picker keep their
    own sizing. Scaled, so no row shifts. Scoped to the report and the overlays
    it portals out, so a host's own use of the glyph is left alone. */
-:is(product-model-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-picker] *) {
+:is(.pdd-kit-report, .blr-resource-slideover, .blr-search-palette) .i-lucide\:split:not(.blr-variation-mark__badge *, [data-variation-picker] *) {
   transform: scale(0.875);
 }
 

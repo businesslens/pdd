@@ -58,7 +58,7 @@
   --pdd-kit-theme-lab-height: calc(var(--pdd-kit-theme-lab-row-height) * 5 + 5px);
 }
 
-product-model-page-surface {
+.pdd-kit-page-surface {
   background: var(--pdd-kit-page-glows);
 }
 

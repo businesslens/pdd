@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Report:** Graphs show again in `pdd-kit view` and in Nuxt hosts of the report viewer; in 0.34.0 they were drawn with no height.
+
 ## [0.34.0] - 2026-10-12
 
 ### Added

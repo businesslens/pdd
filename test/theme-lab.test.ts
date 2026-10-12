@@ -97,7 +97,24 @@ describe('shared pdd-kit theme lab', () => {
     expect(localViewer).toContain('class="pdd-kit-page-surface min-h-0 flex-1 overflow-hidden"')
     expect(localViewer).not.toContain('<footer')
     expect(localPage).toContain('class="pdd-kit-local-report min-h-0 flex-1"')
-    expect(localCss).toContain('product-model-reportproduct-model-local-report')
+    expect(localCss).toContain('.pdd-kit-report.pdd-kit-local-report')
+  })
+
+  it('styles the pdd-kit classes the components use, as class selectors', () => {
+    // The rename once turned `.businesslens-report` into the element selector
+    // `product-model-report`, which matches nothing: graphs lost their height.
+    const css = [
+      'layers/nuxt/report-viewer/app/assets/report-structure.css',
+      'layers/nuxt/report-viewer/app/assets/report-topology.css',
+      'layers/nuxt/report-viewer/app/assets/report-viewer.css',
+      'layers/nuxt/theme/app/assets/theme.css',
+      'layers/nuxt/theme-lab/app/assets/theme-lab.css',
+      'viewer/app/app/assets/local-viewer.css'
+    ].map(file => readFileSync(join(root, file), 'utf8')).join('\n')
+    expect(css).not.toMatch(/(^|[\s,(])product-model-[a-z-]+\s*[{,)]/m)
+    for (const selector of ['.pdd-kit-report {', '.pdd-kit-report .blr-product-topology', '.pdd-kit-neutral-badge {', '.pdd-kit-page-surface {']) {
+      expect(css).toContain(selector)
+    }
   })
 
   it('keeps stable dark tokens and the flat Espresso audition distinct', () => {
