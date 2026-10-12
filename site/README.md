@@ -49,6 +49,20 @@ Analytics is configured at build time. Set `NUXT_PUBLIC_POSTHOG_KEY` (and
 `NUXT_PUBLIC_POSTHOG_HOST` for a non-EU project) when generating a deployed
 build; without it the PostHog client never loads.
 
+## Deploy
+
+The site is served by Cloudflare Pages (project `pdd-kit`, production branch
+`main`). `.github/workflows/site.yml` deploys it once every check passes:
+
+- A pull request from this repository deploys the tested build to a preview
+  URL, linked from the pull request. Previews have no analytics.
+- `main` generates again with the PostHog key and deploys to pdd-kit.dev.
+
+It needs the repository secrets `CLOUDFLARE_API_TOKEN` (an account token with
+Cloudflare Pages: Edit) and `CLOUDFLARE_ACCOUNT_ID`, and the repository variable
+`NUXT_PUBLIC_POSTHOG_KEY`. Response headers, including the policy that stops a
+contributed Blueprint logo from running scripts, are in `public/_headers`.
+
 ## Verification
 
 ```bash

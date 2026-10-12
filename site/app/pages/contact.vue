@@ -13,8 +13,8 @@ const channels = [
     icon: 'i-lucide-mail',
     title: 'Email us',
     description: 'Questions about the emerging standard, the open framework, the Blueprint catalog, or anything else — we read every message.',
-    to: 'mailto:contact@pdd-kit.dev',
-    linkLabel: 'contact@pdd-kit.dev'
+    to: 'mailto:itai.gendler@gmail.com',
+    linkLabel: 'itai.gendler@gmail.com'
   },
   {
     icon: 'i-simple-icons-github',

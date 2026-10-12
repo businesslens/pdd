@@ -26,6 +26,10 @@ BusinessLens is now **pdd-kit**. The site moved from its own repository into
   change and the page that shows it land in one pull request.
 - **Analytics is configured at build time** (`NUXT_PUBLIC_POSTHOG_KEY`), keeping
   its consent gate. There is no identity to attach to it.
+- **Cloudflare Pages serves it**, deployed from GitHub Actions after the checks
+  pass, with a preview URL per pull request. Response headers live in
+  `public/_headers`.
+- **No domain email.** The contact address is the maintainer's own.
 
 ## Why
 

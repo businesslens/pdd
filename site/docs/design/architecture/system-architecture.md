@@ -84,6 +84,13 @@ every link and the sitemap use, where a directory index would be redirected to
 `/faq/`. CI (`.github/workflows/site.yml`) uploads the generated directory as a
 build artifact; the Playwright suites run against it served statically.
 
+Cloudflare Pages serves it. After the checks pass, a pull request from this
+repository deploys the tested build to a preview URL, and `main` generates again
+with the PostHog key and deploys to pdd-kit.dev. `public/_headers` sets the
+response headers: security headers on every path, a year's cache on the
+content-hashed `/_nuxt/*`, and a no-script policy on `/_blueprints/*` so a
+contributed logo opened directly cannot run.
+
 ## Related
 
 - [Routing and naming](./routing-and-naming.md)

@@ -32,7 +32,7 @@ useSiteSeo({
             <li>If you allow analytics cookies, PostHog uses first-party browser storage and an anonymous browser identifier to connect activity between visits and may record a replay of visible site interactions. Values typed into any field are masked.</li>
           </ul>
         </li>
-        <li><strong>Hosting logs</strong> — the host serving these pages keeps the request logs it needs to deliver them and to protect against abuse.</li>
+        <li><strong>Hosting logs</strong> — Cloudflare serves these pages and keeps the request logs it needs to deliver them and to protect against abuse, under its own privacy policy.</li>
         <li><strong>GitHub</strong> — the star count in the header is fetched by your browser from GitHub, and Blueprints are downloaded from GitHub Releases. GitHub handles those requests under its own privacy statement.</li>
       </ul>
       <p>
@@ -50,7 +50,7 @@ useSiteSeo({
     <section>
       <h2>Your choices</h2>
       <p>
-        You can change your analytics preference at any time below. You can also ask about the analytics we hold for your browser by emailing <a href="mailto:contact@pdd-kit.dev">contact@pdd-kit.dev</a>. Nothing on this site requires you to sign in or subscribe.
+        You can change your analytics preference at any time below. You can also ask about the analytics we hold for your browser by emailing <a href="mailto:itai.gendler@gmail.com">itai.gendler@gmail.com</a>. Nothing on this site requires you to sign in or subscribe.
       </p>
       <AnalyticsConsentSettings />
     </section>

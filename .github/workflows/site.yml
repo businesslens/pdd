@@ -84,3 +84,78 @@ jobs:
           name: playwright-report
           path: site/playwright-report
           retention-days: 7
+
+  # A pull request from this repository deploys the tested build to its own
+  # Cloudflare Pages preview URL, without analytics. Forks have no credentials.
+  preview:
+    needs: site
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: site
+          path: site/.output/public
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - id: deploy
+        name: Deploy to Cloudflare Pages
+        working-directory: .
+        shell: bash
+        run: |
+          # Dependabot pull requests get no secrets; production still requires them.
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN is not set; skipping the preview deploy."
+            exit 0
+          fi
+          npx --yes wrangler@4.149.0 pages deploy site/.output/public \
+            --project-name=pdd-kit \
+            --branch="$BRANCH" \
+            --commit-hash="$COMMIT" | tee deploy.log
+          echo "url=$(grep -o 'https://[^ ]*pages\.dev' deploy.log | tail -1)" >> "$GITHUB_OUTPUT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BRANCH: ${{ github.head_ref }}
+          COMMIT: ${{ github.event.pull_request.head.sha }}
+
+  # main deploys pdd-kit.dev. It generates again with the PostHog key, which the
+  # tested build leaves out so test runs never send analytics.
+  production:
+    needs: site
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://pdd-kit.dev
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm generate
+        env:
+          NUXT_PUBLIC_POSTHOG_KEY: ${{ vars.NUXT_PUBLIC_POSTHOG_KEY }}
+          NUXT_PUBLIC_POSTHOG_HOST: ${{ vars.NUXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
+      - name: Deploy to Cloudflare Pages
+        working-directory: .
+        run: |
+          npx --yes wrangler@4.149.0 pages deploy site/.output/public \
+            --project-name=pdd-kit \
+            --branch=main \
+            --commit-hash="$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
