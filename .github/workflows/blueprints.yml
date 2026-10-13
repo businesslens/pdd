@@ -1,12 +1,22 @@
 name: Publish Blueprints
 
-# Every push to main rebuilds blueprints/ into the rolling Blueprint release,
-# so a merged Blueprint can be pulled within minutes and without a CLI release.
-# Reports depend on the exporter as well as on blueprints/, so this runs on
-# every push rather than on a path filter.
+# A push to main that can change a Blueprint's release files rebuilds
+# blueprints/ into the rolling Blueprint release, so a merged Blueprint can be
+# pulled within minutes and without a CLI release. Reports depend on the
+# exporter (src/), the release script and the package and its dependencies as
+# well as on blueprints/, so all of those are in the filter; a change to
+# anything else leaves the release as it is.
 on:
   push:
     branches: [main]
+    paths:
+      - blueprints/**
+      - src/**
+      - scripts/blueprints-release.mjs
+      - tsdown.config.ts
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/blueprints.yml
   workflow_dispatch:
 
 permissions:

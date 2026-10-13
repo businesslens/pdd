@@ -48,9 +48,10 @@ request, so any static host can serve it.
 ## Deploy
 
 The site is served by Cloudflare Pages (project `pdd-kit`, production branch
-`main`). `.github/workflows/site.yml` deploys the tested build once every check
-passes: a pull request from this repository to a preview URL linked from the
-pull request, and `main` to pdd-kit.dev.
+`main`). `.github/workflows/site.yml` builds the site once and deploys that
+build: a pull request from this repository to a preview URL linked from the pull
+request as soon as the build and static checks pass, while the e2e tests still
+run, and `main` to pdd-kit.dev only once the e2e tests pass too.
 
 It needs the repository secrets `CLOUDFLARE_API_TOKEN` (an account token with
 Cloudflare Pages: Edit) and `CLOUDFLARE_ACCOUNT_ID`. Response headers, including the policy that stops a
@@ -68,7 +69,10 @@ pnpm test:e2e     # generates, then runs Playwright against the static files
 ```
 
 `.github/workflows/site.yml` runs the same steps on every change to the site or
-to what it renders, and uploads the generated site as an artifact.
+to what it renders: a `build` job for the static checks and the generated site,
+then an `e2e` job in Playwright's container image, four tests at a time. Its
+`site` job is the check branch protection requires; it passes when the change
+cannot affect the site.
 
 Further reading:
 

@@ -1,36 +1,18 @@
 name: Site
 
 # The pdd-kit.dev site is generated from this repository: its own pages in
-# site/, plus docs/, CHANGELOG.md, blueprints/ and the report viewer and theme
-# Layers. Any of those can change what it renders.
+# site/, plus docs/, CHANGELOG.md, blueprints/, the report viewer and theme
+# Layers, and the CLI and viewer the report-parity test runs.
+#
+# Branch protection requires the `site` check, and a workflow skipped by a
+# path filter never reports one, which would leave every unrelated pull
+# request waiting forever. So the workflow always runs, `changes` decides
+# whether the change can affect the site, and `site` passes when nothing
+# that ran failed.
 on:
   pull_request:
-    paths:
-      - site/**
-      - docs/**
-      - blueprints/**
-      - layers/**
-      - src/**
-      - CHANGELOG.md
-      - scripts/blueprints-release.mjs
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - .github/workflows/site.yml
   push:
     branches: [main]
-    paths:
-      - site/**
-      - docs/**
-      - blueprints/**
-      - layers/**
-      - src/**
-      - CHANGELOG.md
-      - scripts/blueprints-release.mjs
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - .github/workflows/site.yml
   workflow_dispatch:
 
 permissions:
@@ -45,9 +27,43 @@ defaults:
     working-directory: site
 
 jobs:
-  site:
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
+    outputs:
+      site: ${{ steps.filter.outputs.site }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: filter
+        name: Decide whether the site is affected
+        working-directory: .
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # A manual run, a first push, or a base Git cannot find builds everything.
+          if [ "$EVENT" = workflow_dispatch ] || [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          paths='^(site/|docs/|blueprints/|layers/|src/|viewer/|CHANGELOG\.md$|scripts/blueprints-release\.mjs$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|\.github/workflows/site\.yml$)'
+          if git diff --name-only "$BASE...$GITHUB_SHA" | grep -q -E "$paths"; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing the site renders changed; skipping the build and tests."
+          fi
+
+  # Static checks and the build. Its output is what the e2e job tests and
+  # what both deploy jobs publish, so nothing is built twice.
+  build:
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
@@ -66,17 +82,51 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm knip
       - run: pnpm test:integration
+      # Also builds the CLI and its viewer into dist/, which the Blueprint
+      # build and the report-parity test run.
       - run: pnpm generate
-      - run: pnpm exec playwright install --with-deps chromium webkit
-      - run: pnpm test:e2e
-        env:
-          CI: true
       - name: Upload the generated site
         uses: actions/upload-artifact@v4
         with:
           name: site
           path: site/.output/public
           retention-days: 7
+      - name: Upload the CLI build
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli
+          path: dist
+          retention-days: 1
+
+  # End-to-end tests against the built site, in Playwright's own image so no
+  # browser is downloaded. Keep the image tag equal to @playwright/test.
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v5
+        with:
+          name: site
+          path: site/.output/public
+      - uses: actions/download-artifact@v5
+        with:
+          name: cli
+          path: dist
+      - run: pnpm test:e2e
+        env:
+          CI: true
       - name: Upload the Playwright report
         if: failure()
         uses: actions/upload-artifact@v4
@@ -85,10 +135,12 @@ jobs:
           path: site/playwright-report
           retention-days: 7
 
-  # A pull request from this repository deploys the tested build to its own
-  # Cloudflare Pages preview URL. Forks have no credentials.
+  # A pull request from this repository deploys its build to its own
+  # Cloudflare Pages preview URL as soon as the build passes, while the e2e
+  # tests still run: a preview helps most when something is wrong. Forks have
+  # no credentials.
   preview:
-    needs: site
+    needs: build
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -108,7 +160,8 @@ jobs:
         working-directory: .
         shell: bash
         run: |
-          # Dependabot pull requests get no secrets; production still requires them.
+          # A pull request without access to secrets skips the preview;
+          # production still requires them.
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo "::warning::CLOUDFLARE_API_TOKEN is not set; skipping the preview deploy."
             exit 0
@@ -124,9 +177,9 @@ jobs:
           BRANCH: ${{ github.head_ref }}
           COMMIT: ${{ github.event.pull_request.head.sha }}
 
-  # main deploys the tested build to pdd-kit.dev.
+  # main deploys to pdd-kit.dev only once the build and the e2e tests pass.
   production:
-    needs: site
+    needs: [build, e2e]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -151,3 +204,23 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  # The check branch protection requires. Skipped jobs pass; anything that
+  # ran and did not succeed fails it.
+  site:
+    needs: [changes, build, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every site job that ran to pass
+        working-directory: .
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "A site job did not pass: $RESULTS"; exit 1 ;;
+            esac
+          done

@@ -34,10 +34,17 @@ Run from `site/`:
 
 ## Quality gates
 
-`.github/workflows/site.yml` runs these in order on every pull request and push
-to `main` that touches the site or anything it renders (`docs/`,
-`CHANGELOG.md`, `blueprints/`, `layers/`, `src/`), then uploads the generated
-site as a build artifact.
+`.github/workflows/site.yml` runs these on every pull request and push to
+`main` that touches the site or anything it renders (`docs/`, `CHANGELOG.md`,
+`blueprints/`, `layers/`, `src/`, `viewer/`): the `build` job runs everything
+up to `pnpm generate` and uploads the generated site and the CLI build, and the
+`e2e` job runs Playwright against them in the Playwright container image, with
+four workers. Keep that image's tag equal to `@playwright/test`; Renovate
+updates both in one pull request. The required `site` check passes when the
+change cannot affect the site.
+
+The same gates run locally before each commit through Lefthook
+(`lefthook.yml`), each only when a staged file can affect it.
 
 | Command | CI | Contract |
 | --- | --- | --- |
