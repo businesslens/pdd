@@ -40,7 +40,7 @@ useSeoMeta({
 })
 
 // Preserve the catalog's public section key while sharing all report reading state.
-const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: 'tab' })
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useReportNavigation({ sectionKey: 'tab' })
 </script>
 
 <template>

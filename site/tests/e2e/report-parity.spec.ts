@@ -71,7 +71,7 @@ test('the site and the local viewer render one Product Report contract', async (
 
     const report = await landingReport.json()
     const hosts = [[page, `/blueprints/${slug}`, 'tab'], [ossPage, ossURL, 's']] as const
-    const rail = (target: Page, name: string) => target.locator('.blr-navitem').filter({ hasText: name })
+    const rail = (target: Page, name: string) => target.locator('.report-navitem').filter({ hasText: name })
     // A collection's view is chosen from preview cards behind one trigger; the
     // chooser records the current drawing on itself.
     const drawGraph = async (target: Page) => {
@@ -90,8 +90,8 @@ test('the site and the local viewer render one Product Report contract', async (
         await expect(drawing(target)).toHaveAttribute('data-current-drawing', 'graph')
         await expect(target.locator('[data-flow-ready=true]')).toBeVisible({ timeout: 15_000 })
       }
-      await expect.poll(async () => page.locator('.blr-product-topology').innerText())
-        .toEqual(await ossPage.locator('.blr-product-topology').innerText())
+      await expect.poll(async () => page.locator('.report-product-topology').innerText())
+        .toEqual(await ossPage.locator('.report-product-topology').innerText())
       await page.reload()
       await expect(drawing(page)).toHaveAttribute('data-current-drawing', 'graph')
     }
@@ -133,7 +133,7 @@ test('the site and the local viewer render one Product Report contract', async (
     if (entity) {
       for (const [target, base, sectionKey] of hosts) {
         // The composed machine has actually drawn, not merely reserved a box:
-        // `blr-diagram-plane` has not existed since the diagram engine was
+        // `report-diagram-plane` has not existed since the diagram engine was
         // rewritten, and an absent element is trivially not visible.
         await target.goto(`${base}?${sectionKey}=entity&e=${encodeURIComponent(`entity:${entity.id}`)}&rt=lifecycle`)
         await expect(target.locator('[data-flow-ready=true]')).toBeVisible({ timeout: 15_000 })
@@ -174,7 +174,7 @@ async function reportContract(page: Page) {
     const content = normalize((center as HTMLElement | null)?.innerText)
     const statusText = normalize(status?.innerText)
     return {
-      navigation: Array.from(root.querySelectorAll('.blr-navitem'))
+      navigation: Array.from(root.querySelectorAll('.report-navitem'))
         .map(element => normalize(element.textContent)),
       content: statusText ? content.replace(statusText, '[report status]') : content
     }

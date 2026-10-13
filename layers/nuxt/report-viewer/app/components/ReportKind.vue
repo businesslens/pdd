@@ -1,0 +1,96 @@
+<script setup lang="ts">
+/**
+ * Resource-kind marker: colour, silhouette-free but always icon + label.
+ *
+ * Nine kinds is past what hue alone can separate, so this component never emits
+ * a bare colour swatch — the label is part of the mark.
+ */
+import type { ReportInterface } from '@itai-gendler/pdd-kit/report'
+import type { ActingSide, EntityFacet, ReportResourceKind } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import { slotColor } from '../utils/reportPalette'
+
+const props = withDefaults(defineProps<{
+  kind: ReportResourceKind
+  count?: number | null
+  size?: 'xs' | 'sm'
+  /** A concrete Interface can retain its kind and disclose its authored type. */
+  interfaceType?: ReportInterface['type'] | null
+  /** An Entity instance, or an Entity set, is drawn by its facet; a kind heading passes none. */
+  facet?: EntityFacet | null
+  acts?: ActingSide | null
+  /** Suppress the text label only where a nearby label already names the kind. */
+  labelled?: boolean
+  /** False where the surface names the kind: a sub-marked kind drops its glyph. */
+  withKind?: boolean
+  /** A Variation set: drawn as the kind it varies, badged. */
+  memberKind?: ReportResourceKind | null
+}>(), {
+  count: null,
+  size: 'sm',
+  interfaceType: null,
+  facet: null,
+  acts: null,
+  labelled: true,
+  withKind: true,
+  memberKind: null
+})
+
+const colorMode = useColorMode()
+const mounted = ref(false)
+onMounted(() => {
+  mounted.value = true
+})
+
+const meta = computed(() => ENTITY_KIND_META[props.kind])
+/* A sub-mark explains itself — "Web Interface", "External person that acts on
+   the Product" — so the wrapper must not stack a plainer tooltip beneath it. */
+const subMarked = computed(() => (props.kind === 'entity' && props.facet !== null)
+  || (props.kind === 'interface' && props.interfaceType !== null)
+  || (props.kind === 'variation' && props.memberKind !== null))
+const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMode.value === 'dark'))
+</script>
+
+<template>
+  <span
+    class="report-kind inline-flex items-center gap-1.5 text-xs whitespace-nowrap"
+    :data-size="size"
+    :title="subMarked ? undefined : meta.label"
+  >
+    <ReportVariationMark
+      v-if="kind === 'variation' && memberKind"
+      :kind="memberKind"
+      :facet="facet"
+      :size="size"
+    />
+    <ReportEntityMark
+      v-else-if="kind === 'entity' && facet"
+      :facet="facet"
+      :acts="acts"
+      :size="size"
+    />
+    <ReportInterfaceType
+      v-else-if="kind === 'interface' && interfaceType"
+      :type="interfaceType"
+      :with-kind="withKind"
+      :size="size"
+    />
+    <UIcon v-else :name="meta.icon" class="report-kind__icon shrink-0" :style="{ color }" />
+    <span v-if="labelled" class="text-toned">{{ count === null ? meta.label : meta.plural }}</span>
+    <span v-if="count !== null" class="font-mono text-toned tabular-nums">{{ count }}</span>
+  </span>
+</template>
+
+<style scoped>
+.report-kind__icon {
+  width: var(--report-resource-mark-regular);
+  height: var(--report-resource-mark-regular);
+  flex: 0 0 var(--report-resource-mark-regular);
+}
+
+.report-kind[data-size='xs'] > .report-kind__icon {
+  width: var(--report-resource-mark-dense);
+  height: var(--report-resource-mark-dense);
+  flex-basis: var(--report-resource-mark-dense);
+}
+</style>

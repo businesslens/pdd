@@ -1,236 +1,236 @@
 /* Named readings share typography and spacing, not one forced graph shape. */
-.pdd-kit-report .blr-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
-.blr-topology-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; flex-shrink: 0; }
-.blr-topology-toolbar > [data-blr-filter-bar] { flex: 1 1 360px; min-width: 0; }
-.blr-matrix-legend { margin-inline-start: auto; }
-.blr-matrix-legend-popover { display: flex; flex-direction: column; width: 360px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
-.blr-matrix-legend-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--ui-border); }
-.blr-matrix-legend-heading h3 { font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
-.blr-matrix-legend-entries { display: grid; gap: 14px; min-height: 0; overflow-y: auto; padding: 14px; }
-.blr-matrix-legend-entries li { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: start; gap: 12px; }
-.blr-matrix-legend-entries .blr-matrix-legend-badge { justify-self: start; white-space: nowrap; line-height: calc(20 / 14); }
-.blr-matrix-legend-entries p { font-size: 13px; line-height: 1.5; color: var(--ui-text-muted); overflow-wrap: anywhere; }
-.blr-matrix-legend-badge { display: inline-flex; align-items: center; }
-.blr-topology-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--ui-border); flex-shrink: 0; }
+.pdd-kit-report .report-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
+.report-topology-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; flex-shrink: 0; }
+.report-topology-toolbar > [data-report-filter-bar] { flex: 1 1 360px; min-width: 0; }
+.report-matrix-legend { margin-inline-start: auto; }
+.report-matrix-legend-popover { display: flex; flex-direction: column; width: 360px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.report-matrix-legend-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--ui-border); }
+.report-matrix-legend-heading h3 { font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
+.report-matrix-legend-entries { display: grid; gap: 14px; min-height: 0; overflow-y: auto; padding: 14px; }
+.report-matrix-legend-entries li { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: start; gap: 12px; }
+.report-matrix-legend-entries .report-matrix-legend-badge { justify-self: start; white-space: nowrap; line-height: calc(20 / 14); }
+.report-matrix-legend-entries p { font-size: 13px; line-height: 1.5; color: var(--ui-text-muted); overflow-wrap: anywhere; }
+.report-matrix-legend-badge { display: inline-flex; align-items: center; }
+.report-topology-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--ui-border); flex-shrink: 0; }
 /* A filter row costs nothing when the surface has nothing to narrow. */
-[data-blr-filter-row]:has(> [data-blr-filter-slot]:empty) { display: none; }
-.blr-topology-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.blr-topology-title-row > button { margin-inline-start: auto; }
-.blr-topology-header select, .blr-topology-filters input[type='search'], .blr-topology-filters select { max-width: 100%; min-width: 0; padding: 8px 30px 8px 10px; border: 1px solid var(--ui-border-accented); border-radius: 8px; background: var(--ui-bg); color: var(--ui-text-highlighted); font-size: 14px; }
-.blr-topology-view-picker select { font-weight: 600; }
-.blr-topology-diagram-type { font-family: var(--font-mono); font-size: 12px; color: var(--ui-text-muted); }
-.blr-topology-question { margin-top: 10px; font-size: 14px; color: var(--ui-text); line-height: 1.5; }
-.blr-topology-about { margin-top: 5px; font-size: 12px; color: var(--ui-text-muted); max-width: 80ch; }
-.blr-topology-about summary, .blr-topology-contexts summary, .blr-topology-references summary { cursor: pointer; }
-.blr-topology-about p { padding: 8px 0 2px; line-height: 1.6; }
-.blr-topology-reading { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 20px; min-height: 0; min-width: 0; scroll-padding: 20px; }
-.blr-topology-branch { min-width: 0; }
-.blr-topology-group { border: 1px solid var(--ui-border); border-top: 3px solid var(--blr-group-color, var(--ui-border-accented)); border-radius: 10px; background: var(--ui-bg); padding: 14px; }
-.blr-topology-branch-heading { display: flex; align-items: start; gap: 10px; }
-.blr-topology-branch-heading h3 { font-weight: 600; font-size: 14px; line-height: 1.5; }
-.blr-topology-link { display: inline-flex; align-items: start; gap: 7px; min-width: 0; max-width: 100%; text-align: start; font-size: 14px; line-height: 1.5; color: var(--ui-text-highlighted); border-radius: 4px; cursor: pointer; }
-.blr-topology-link > span:last-child { overflow-wrap: anywhere; }
-.blr-topology-link > :first-child { flex-shrink: 0; margin-top: 2px; }
-.blr-topology-link:hover { color: var(--ui-primary); text-decoration: underline; text-underline-offset: 3px; }
-.blr-topology-link:focus-visible, .blr-topology-toggle:focus-visible, .blr-product-topology select:focus-visible, .blr-product-topology summary:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
-.blr-topology-branch-heading > .blr-topology-link { font-weight: 600; flex: 1; }
-.blr-topology-toggle { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 28px; min-width: 30px; padding: 2px 5px; margin-inline-start: auto; border-radius: 5px; font-size: 12px; color: var(--ui-text-muted); cursor: pointer; background: var(--ui-bg-elevated); }
-.blr-topology-children { display: grid; gap: 14px; margin-top: 14px; padding-inline-start: 12px; border-inline-start: 1px solid var(--ui-border-accented); }
-.blr-topology-children > .blr-topology-branch { position: relative; }
-.blr-topology-children > .blr-topology-branch::before { content: ''; position: absolute; top: 11px; inset-inline-start: -12px; width: 7px; border-top: 1px solid var(--ui-border-accented); }
-.blr-topology-note, .blr-topology-scope { font-size: 12px; color: var(--ui-text-muted); line-height: 1.5; margin-top: 6px; }
-.blr-topology-scope { margin: 0 0 16px; font-size: 14px; }
-.blr-topology-references { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 8px; color: var(--ui-text-muted); font-size: 12px; align-items: start; }
-.blr-topology-references .blr-topology-link { font-size: 12px; }
-.blr-topology-references details[open] { display: grid; gap: 6px; }
-.blr-topology-contexts { font-size: 12px; color: var(--ui-text-muted); margin-top: 6px; }
-.blr-topology-contexts li { margin-top: 5px; overflow-wrap: anywhere; }
-.blr-topology-access { margin-bottom: 24px; }
-.blr-topology-section-title { font-size: 12px; font-family: var(--font-mono); color: var(--ui-text-muted); margin-bottom: 12px; }
-.blr-topology-filters { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; padding-top: 12px; }
-.blr-topology-filters fieldset { display: flex; flex-wrap: wrap; gap: 8px 14px; width: 100%; }
-.blr-topology-filters legend { margin-bottom: 6px; color: var(--ui-text-muted); }
-.blr-topology-filters label { display: flex; align-items: center; gap: 6px; }
-.blr-topology-empty { padding: 24px 0; font-size: 14px; color: var(--ui-text-muted); }
-.blr-topology-neighbourhood { margin-top: 24px; }
-.blr-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
-.blr-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
-@property --blr-matrix-offset { syntax: '<length>'; inherits: true; initial-value: 0px; }
-.blr-topology-matrix { position: relative; transition: none; }
-.blr-topology-matrix[data-column-motion='true'] { transition: --blr-matrix-offset 180ms ease-out; }
-@media (prefers-reduced-motion: reduce) { .blr-topology-matrix[data-column-motion='true'] { transition: none; } }
-.blr-matrix-navigation { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding-bottom: 8px; }
-.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-navigation { display: flex; justify-content: center; }
-.blr-matrix-range { font-size: 13px; font-weight: 600; color: var(--ui-text); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+[data-report-filter-row]:has(> [data-report-filter-slot]:empty) { display: none; }
+.report-topology-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.report-topology-title-row > button { margin-inline-start: auto; }
+.report-topology-header select, .report-topology-filters input[type='search'], .report-topology-filters select { max-width: 100%; min-width: 0; padding: 8px 30px 8px 10px; border: 1px solid var(--ui-border-accented); border-radius: 8px; background: var(--ui-bg); color: var(--ui-text-highlighted); font-size: 14px; }
+.report-topology-view-picker select { font-weight: 600; }
+.report-topology-diagram-type { font-family: var(--font-mono); font-size: 12px; color: var(--ui-text-muted); }
+.report-topology-question { margin-top: 10px; font-size: 14px; color: var(--ui-text); line-height: 1.5; }
+.report-topology-about { margin-top: 5px; font-size: 12px; color: var(--ui-text-muted); max-width: 80ch; }
+.report-topology-about summary, .report-topology-contexts summary, .report-topology-references summary { cursor: pointer; }
+.report-topology-about p { padding: 8px 0 2px; line-height: 1.6; }
+.report-topology-reading { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 20px; min-height: 0; min-width: 0; scroll-padding: 20px; }
+.report-topology-branch { min-width: 0; }
+.report-topology-group { border: 1px solid var(--ui-border); border-top: 3px solid var(--report-group-color, var(--ui-border-accented)); border-radius: 10px; background: var(--ui-bg); padding: 14px; }
+.report-topology-branch-heading { display: flex; align-items: start; gap: 10px; }
+.report-topology-branch-heading h3 { font-weight: 600; font-size: 14px; line-height: 1.5; }
+.report-topology-link { display: inline-flex; align-items: start; gap: 7px; min-width: 0; max-width: 100%; text-align: start; font-size: 14px; line-height: 1.5; color: var(--ui-text-highlighted); border-radius: 4px; cursor: pointer; }
+.report-topology-link > span:last-child { overflow-wrap: anywhere; }
+.report-topology-link > :first-child { flex-shrink: 0; margin-top: 2px; }
+.report-topology-link:hover { color: var(--ui-primary); text-decoration: underline; text-underline-offset: 3px; }
+.report-topology-link:focus-visible, .report-topology-toggle:focus-visible, .report-product-topology select:focus-visible, .report-product-topology summary:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+.report-topology-branch-heading > .report-topology-link { font-weight: 600; flex: 1; }
+.report-topology-toggle { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 28px; min-width: 30px; padding: 2px 5px; margin-inline-start: auto; border-radius: 5px; font-size: 12px; color: var(--ui-text-muted); cursor: pointer; background: var(--ui-bg-elevated); }
+.report-topology-children { display: grid; gap: 14px; margin-top: 14px; padding-inline-start: 12px; border-inline-start: 1px solid var(--ui-border-accented); }
+.report-topology-children > .report-topology-branch { position: relative; }
+.report-topology-children > .report-topology-branch::before { content: ''; position: absolute; top: 11px; inset-inline-start: -12px; width: 7px; border-top: 1px solid var(--ui-border-accented); }
+.report-topology-note, .report-topology-scope { font-size: 12px; color: var(--ui-text-muted); line-height: 1.5; margin-top: 6px; }
+.report-topology-scope { margin: 0 0 16px; font-size: 14px; }
+.report-topology-references { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 8px; color: var(--ui-text-muted); font-size: 12px; align-items: start; }
+.report-topology-references .report-topology-link { font-size: 12px; }
+.report-topology-references details[open] { display: grid; gap: 6px; }
+.report-topology-contexts { font-size: 12px; color: var(--ui-text-muted); margin-top: 6px; }
+.report-topology-contexts li { margin-top: 5px; overflow-wrap: anywhere; }
+.report-topology-access { margin-bottom: 24px; }
+.report-topology-section-title { font-size: 12px; font-family: var(--font-mono); color: var(--ui-text-muted); margin-bottom: 12px; }
+.report-topology-filters { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; padding-top: 12px; }
+.report-topology-filters fieldset { display: flex; flex-wrap: wrap; gap: 8px 14px; width: 100%; }
+.report-topology-filters legend { margin-bottom: 6px; color: var(--ui-text-muted); }
+.report-topology-filters label { display: flex; align-items: center; gap: 6px; }
+.report-topology-empty { padding: 24px 0; font-size: 14px; color: var(--ui-text-muted); }
+.report-topology-neighbourhood { margin-top: 24px; }
+.report-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
+.report-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
+@property --report-matrix-offset { syntax: '<length>'; inherits: true; initial-value: 0px; }
+.report-topology-matrix { position: relative; transition: none; }
+.report-topology-matrix[data-column-motion='true'] { transition: --report-matrix-offset 180ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .report-topology-matrix[data-column-motion='true'] { transition: none; } }
+.report-matrix-navigation { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding-bottom: 8px; }
+.report-topology-matrix[data-edge-handles='true'] .report-matrix-navigation { display: flex; justify-content: center; }
+.report-matrix-range { font-size: 13px; font-weight: 600; color: var(--ui-text); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* Fade disabled icons and outlines while keeping the fill opaque over the divider. */
-.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button { background: var(--ui-bg); color: var(--ui-text-dimmed); }
-.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled:is(:hover, :active) { background: var(--ui-bg-elevated); }
-.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:disabled { color: color-mix(in srgb, var(--ui-text-dimmed) 40%, transparent); --tw-ring-color: color-mix(in srgb, var(--ui-border-accented) 40%, transparent); opacity: 1; }
-.blr-matrix-edge-handles { position: absolute; top: 0; inset-inline: 0; height: 0; z-index: 5; pointer-events: none; }
-.blr-matrix-edge-handles > button { position: absolute; top: var(--blr-matrix-handle-top, 200px); transform: translateY(-50%); height: 64px; width: 28px; padding: 0; justify-content: center; border-radius: 999px; pointer-events: auto; }
-.blr-matrix-left-handle { inset-inline-start: calc(196px + 1px - 14px); }
-.blr-matrix-right-handle { inset-inline-end: -14px; }
+.report-topology-matrix :is(.report-matrix-navigation, .report-matrix-edge-handles) > button { background: var(--ui-bg); color: var(--ui-text-dimmed); }
+.report-topology-matrix :is(.report-matrix-navigation, .report-matrix-edge-handles) > button:enabled:is(:hover, :active) { background: var(--ui-bg-elevated); }
+.report-topology-matrix :is(.report-matrix-navigation, .report-matrix-edge-handles) > button:disabled { color: color-mix(in srgb, var(--ui-text-dimmed) 40%, transparent); --tw-ring-color: color-mix(in srgb, var(--ui-border-accented) 40%, transparent); opacity: 1; }
+.report-matrix-edge-handles { position: absolute; top: 0; inset-inline: 0; height: 0; z-index: 5; pointer-events: none; }
+.report-matrix-edge-handles > button { position: absolute; top: var(--report-matrix-handle-top, 200px); transform: translateY(-50%); height: 64px; width: 28px; padding: 0; justify-content: center; border-radius: 999px; pointer-events: auto; }
+.report-matrix-left-handle { inset-inline-start: calc(196px + 1px - 14px); }
+.report-matrix-right-handle { inset-inline-end: -14px; }
 /* Clip sideways without another scrolling container. Only the visible body
    columns and their neighbours are mounted; the fixed subject stays in place. */
-.blr-matrix-viewport { overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
-.blr-matrix-viewport:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
-.blr-topology-matrix table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: var(--blr-matrix-table-width); transform: translateX(calc(-1 * var(--blr-matrix-offset))); font-size: 14px; }
-.blr-topology-matrix th, .blr-topology-matrix td { min-width: 0; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
+.report-matrix-viewport { overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
+.report-matrix-viewport:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+.report-topology-matrix table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: var(--report-matrix-table-width); transform: translateX(calc(-1 * var(--report-matrix-offset))); font-size: 14px; }
+.report-topology-matrix th, .report-topology-matrix td { min-width: 0; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
 /* The inherited animated offset clips columns before they reach the translucent corner. */
-.blr-matrix-column { clip-path: inset(0 0 0 max(0px, calc(var(--blr-matrix-offset) - var(--blr-matrix-column-index) * var(--blr-matrix-column-width)))); }
-.blr-topology-matrix td.blr-matrix-spacer { padding: 0; border: 0; visibility: hidden; }
-.blr-topology-matrix tbody th, .blr-topology-matrix td { background: var(--ui-bg); }
-.blr-topology-matrix th { font-weight: 600; }
+.report-matrix-column { clip-path: inset(0 0 0 max(0px, calc(var(--report-matrix-offset) - var(--report-matrix-column-index) * var(--report-matrix-column-width)))); }
+.report-topology-matrix td.report-matrix-spacer { padding: 0; border: 0; visibility: hidden; }
+.report-topology-matrix tbody th, .report-topology-matrix td { background: var(--ui-bg); }
+.report-topology-matrix th { font-weight: 600; }
 /* Keep the subject column the same width even when few comparison columns fill the table. */
-.blr-topology-matrix th:first-child { width: 196px; min-width: 196px; max-width: 196px; transform: translateX(var(--blr-matrix-offset)); }
+.report-topology-matrix th:first-child { width: 196px; min-width: 196px; max-width: 196px; transform: translateX(var(--report-matrix-offset)); }
 /* Headers use the same bg-elevated/20 class as collection parents. */
-.blr-topology-matrix thead th { position: sticky; top: var(--blr-matrix-navigation-height, 0px); z-index: 2; border-top: 0; }
-.blr-topology-matrix thead th:first-child { left: 0; z-index: 3; }
-.blr-topology-matrix th.blr-matrix-corner { padding: 0; }
-.blr-matrix-corner-space { display: block; height: 98px; }
-.blr-matrix-corner-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.blr-matrix-corner-line line { stroke: var(--ui-border-accented); stroke-width: 1; }
-.blr-matrix-axis-column, .blr-matrix-axis-row { position: absolute; font-size: 14px; line-height: 22px; font-weight: 700; color: var(--ui-text-highlighted); white-space: nowrap; }
-.blr-matrix-axis-column { top: 16%; right: 10%; }
-.blr-matrix-axis-row { bottom: 16%; left: 10%; }
-.blr-topology-matrix tbody th { position: relative; z-index: 1; }
-.blr-matrix-kind { display: block; color: var(--ui-text-muted); font-weight: 400; font-size: 12px; margin-bottom: 6px; }
-.blr-matrix-effects { display: flex; flex-wrap: wrap; gap: 5px; }
-.blr-matrix-effects > .blr-matrix-badge, .blr-matrix-legend-badge { border-width: 1px; border-style: solid; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
-.blr-matrix-badge { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text); cursor: pointer; }
-.blr-matrix-badge:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
-.blr-matrix-badge > .iconify { width: 12px; height: 12px; }
-.blr-matrix-tone {
-  --blr-badge-ink: var(--ui-color-neutral-700);
-  --blr-badge-tint: var(--blr-badge-ink);
-  --blr-badge-border-strength: 30%;
-  --blr-badge-fill: 10%;
-  --blr-badge-fill-active: 16%;
-  color: var(--blr-badge-ink);
-  background: color-mix(in srgb, var(--blr-badge-tint) var(--blr-badge-fill), var(--ui-bg));
-  border-color: color-mix(in srgb, var(--blr-badge-ink) var(--blr-badge-border-strength), var(--ui-bg));
+.report-topology-matrix thead th { position: sticky; top: var(--report-matrix-navigation-height, 0px); z-index: 2; border-top: 0; }
+.report-topology-matrix thead th:first-child { left: 0; z-index: 3; }
+.report-topology-matrix th.report-matrix-corner { padding: 0; }
+.report-matrix-corner-space { display: block; height: 98px; }
+.report-matrix-corner-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.report-matrix-corner-line line { stroke: var(--ui-border-accented); stroke-width: 1; }
+.report-matrix-axis-column, .report-matrix-axis-row { position: absolute; font-size: 14px; line-height: 22px; font-weight: 700; color: var(--ui-text-highlighted); white-space: nowrap; }
+.report-matrix-axis-column { top: 16%; right: 10%; }
+.report-matrix-axis-row { bottom: 16%; left: 10%; }
+.report-topology-matrix tbody th { position: relative; z-index: 1; }
+.report-matrix-kind { display: block; color: var(--ui-text-muted); font-weight: 400; font-size: 12px; margin-bottom: 6px; }
+.report-matrix-effects { display: flex; flex-wrap: wrap; gap: 5px; }
+.report-matrix-effects > .report-matrix-badge, .report-matrix-legend-badge { border-width: 1px; border-style: solid; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+.report-matrix-badge { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text); cursor: pointer; }
+.report-matrix-badge:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+.report-matrix-badge > .iconify { width: 12px; height: 12px; }
+.report-matrix-tone {
+  --report-badge-ink: var(--ui-color-neutral-700);
+  --report-badge-tint: var(--report-badge-ink);
+  --report-badge-border-strength: 30%;
+  --report-badge-fill: 10%;
+  --report-badge-fill-active: 16%;
+  color: var(--report-badge-ink);
+  background: color-mix(in srgb, var(--report-badge-tint) var(--report-badge-fill), var(--ui-bg));
+  border-color: color-mix(in srgb, var(--report-badge-ink) var(--report-badge-border-strength), var(--ui-bg));
 }
-.blr-matrix-tone[data-tone='changes'] {
-  --blr-badge-ink: var(--color-yellow-800);
-  --blr-badge-tint: var(--color-yellow-400);
-  --blr-badge-border-strength: 40%;
+.report-matrix-tone[data-tone='changes'] {
+  --report-badge-ink: var(--color-yellow-800);
+  --report-badge-tint: var(--color-yellow-400);
+  --report-badge-border-strength: 40%;
 }
-.blr-matrix-tone[data-tone='info'] {
-  --blr-badge-ink: var(--color-blue-800);
-  --blr-badge-tint: var(--color-blue-500);
+.report-matrix-tone[data-tone='info'] {
+  --report-badge-ink: var(--color-blue-800);
+  --report-badge-tint: var(--color-blue-500);
 }
-.blr-matrix-tone[data-tone='violet'] {
-  --blr-badge-ink: var(--color-violet-800);
-  --blr-badge-tint: var(--color-violet-500);
+.report-matrix-tone[data-tone='violet'] {
+  --report-badge-ink: var(--color-violet-800);
+  --report-badge-tint: var(--color-violet-500);
 }
-.blr-matrix-tone[data-tone='creates'] {
-  --blr-badge-ink: var(--ui-color-success-800);
-  --blr-badge-tint: var(--blr-badge-ink);
-  --blr-badge-border-strength: 30%;
-  --blr-badge-fill: 8%;
-  --blr-badge-fill-active: 14%;
+.report-matrix-tone[data-tone='creates'] {
+  --report-badge-ink: var(--ui-color-success-800);
+  --report-badge-tint: var(--report-badge-ink);
+  --report-badge-border-strength: 30%;
+  --report-badge-fill: 8%;
+  --report-badge-fill-active: 14%;
 }
-.blr-matrix-tone[data-tone='removes'] {
-  --blr-badge-ink: #805234;
-  --blr-badge-background: #efe0d1;
-  --blr-badge-outline: #c4a58c;
-  background: var(--blr-badge-background);
-  border-color: var(--blr-badge-outline);
+.report-matrix-tone[data-tone='removes'] {
+  --report-badge-ink: #805234;
+  --report-badge-background: #efe0d1;
+  --report-badge-outline: #c4a58c;
+  background: var(--report-badge-background);
+  border-color: var(--report-badge-outline);
 }
-.dark .blr-matrix-tone {
-  --blr-badge-ink: var(--ui-color-neutral-300);
-  --blr-badge-tint: var(--blr-badge-ink);
+.dark .report-matrix-tone {
+  --report-badge-ink: var(--ui-color-neutral-300);
+  --report-badge-tint: var(--report-badge-ink);
 }
-.dark .blr-matrix-tone[data-tone='changes'] { --blr-badge-ink: var(--color-yellow-300); }
-.dark .blr-matrix-tone[data-tone='info'] { --blr-badge-ink: var(--color-blue-300); }
-.dark .blr-matrix-tone[data-tone='violet'] { --blr-badge-ink: var(--color-violet-300); }
-.dark .blr-matrix-tone[data-tone='creates'] { --blr-badge-ink: var(--ui-color-success-300); }
-.dark .blr-matrix-tone[data-tone='removes'] {
-  --blr-badge-ink: #e6b0a6;
-  --blr-badge-background: #342424;
-  --blr-badge-outline: #76514b;
+.dark .report-matrix-tone[data-tone='changes'] { --report-badge-ink: var(--color-yellow-300); }
+.dark .report-matrix-tone[data-tone='info'] { --report-badge-ink: var(--color-blue-300); }
+.dark .report-matrix-tone[data-tone='violet'] { --report-badge-ink: var(--color-violet-300); }
+.dark .report-matrix-tone[data-tone='creates'] { --report-badge-ink: var(--ui-color-success-300); }
+.dark .report-matrix-tone[data-tone='removes'] {
+  --report-badge-ink: #e6b0a6;
+  --report-badge-background: #342424;
+  --report-badge-outline: #76514b;
 }
-.blr-matrix-effects > .blr-matrix-badge:is(:hover, [data-state='open']) {
-  background: color-mix(in srgb, var(--blr-badge-tint) var(--blr-badge-fill-active), var(--ui-bg));
-  border-color: color-mix(in srgb, var(--blr-badge-ink) 60%, var(--ui-bg));
+.report-matrix-effects > .report-matrix-badge:is(:hover, [data-state='open']) {
+  background: color-mix(in srgb, var(--report-badge-tint) var(--report-badge-fill-active), var(--ui-bg));
+  border-color: color-mix(in srgb, var(--report-badge-ink) 60%, var(--ui-bg));
 }
-.blr-matrix-effects > .blr-matrix-badge[data-tone='removes']:is(:hover, [data-state='open']) {
-  background: color-mix(in srgb, var(--blr-badge-ink) 6%, var(--blr-badge-background));
-  border-color: color-mix(in srgb, var(--blr-badge-ink) 25%, var(--blr-badge-outline));
+.report-matrix-effects > .report-matrix-badge[data-tone='removes']:is(:hover, [data-state='open']) {
+  background: color-mix(in srgb, var(--report-badge-ink) 6%, var(--report-badge-background));
+  border-color: color-mix(in srgb, var(--report-badge-ink) 25%, var(--report-badge-outline));
 }
-.blr-matrix-popover { --blr-context-font: 12px; display: flex; flex-direction: column; width: 340px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
-.blr-matrix-popover-heading { display: flex; flex-shrink: 0; align-items: start; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--ui-border); }
-.blr-matrix-popover-resource { display: flex; align-items: start; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
-.blr-matrix-popover-resource > .blr-kind { flex-shrink: 0; margin-top: 2px; }
-.blr-matrix-popover-resource > span:last-child { min-width: 0; overflow-wrap: anywhere; }
-.blr-matrix-popover-subject { margin-bottom: 10px; }
-.blr-matrix-popover :is(p, strong) { overflow-wrap: anywhere; }
-.blr-matrix-popover-body { max-height: 360px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.blr-matrix-popover-section { padding: 16px; font-size: 13px; }
-.blr-matrix-popover-section + .blr-matrix-popover-section { border-top: 1px solid var(--ui-border); }
-.blr-matrix-popover-state { color: var(--ui-text); margin-bottom: 12px; }
-.blr-matrix-popover-state strong { font-weight: 600; }
-.blr-matrix-popover-caption { font-size: 12px; color: var(--ui-text-muted); margin-bottom: 8px; }
-.blr-matrix-popover-links { display: grid; gap: 8px; }
-.blr-matrix-popover-section .blr-topology-link { font-size: 13px; }
-.blr-matrix-popover-resource > .blr-topology-link { font-size: 14px; font-weight: 600; }
-.blr-matrix-popover-heading .blr-topology-link { align-items: start; }
-.blr-matrix-attachment-facts { margin-bottom: 12px; }
+.report-matrix-popover { --report-context-font: 12px; display: flex; flex-direction: column; width: 340px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.report-matrix-popover-heading { display: flex; flex-shrink: 0; align-items: start; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--ui-border); }
+.report-matrix-popover-resource { display: flex; align-items: start; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
+.report-matrix-popover-resource > .report-kind { flex-shrink: 0; margin-top: 2px; }
+.report-matrix-popover-resource > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.report-matrix-popover-subject { margin-bottom: 10px; }
+.report-matrix-popover :is(p, strong) { overflow-wrap: anywhere; }
+.report-matrix-popover-body { max-height: 360px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.report-matrix-popover-section { padding: 16px; font-size: 13px; }
+.report-matrix-popover-section + .report-matrix-popover-section { border-top: 1px solid var(--ui-border); }
+.report-matrix-popover-state { color: var(--ui-text); margin-bottom: 12px; }
+.report-matrix-popover-state strong { font-weight: 600; }
+.report-matrix-popover-caption { font-size: 12px; color: var(--ui-text-muted); margin-bottom: 8px; }
+.report-matrix-popover-links { display: grid; gap: 8px; }
+.report-matrix-popover-section .report-topology-link { font-size: 13px; }
+.report-matrix-popover-resource > .report-topology-link { font-size: 14px; font-weight: 600; }
+.report-matrix-popover-heading .report-topology-link { align-items: start; }
+.report-matrix-attachment-facts { margin-bottom: 12px; }
 @media (max-width: 640px) {
-  .blr-topology-header { padding: 12px; }
-  .blr-topology-reading { padding: 12px; }
+  .report-topology-header { padding: 12px; }
+  .report-topology-reading { padding: 12px; }
   /* Leave room for half of the 28px handle without horizontal page overflow. */
-  .blr-topology-reading:has(.blr-topology-matrix) { padding-inline-end: 14px; }
-  .blr-topology-title-row { gap: 8px; }
-  .blr-topology-matrix th, .blr-topology-matrix td { padding: 10px; }
-  .blr-topology-toggle { min-height: 36px; min-width: 36px; }
-  .blr-topology-link { min-height: 24px; }
+  .report-topology-reading:has(.report-topology-matrix) { padding-inline-end: 14px; }
+  .report-topology-title-row { gap: 8px; }
+  .report-topology-matrix th, .report-topology-matrix td { padding: 10px; }
+  .report-topology-toggle { min-height: 36px; min-width: 36px; }
+  .report-topology-link { min-height: 24px; }
 }
 
-.blr-topology-reading--graph { padding: 0; overflow: hidden; }
-.blr-topology-reading--graph > .blr-diagram { min-height: 0; }
+.report-topology-reading--graph { padding: 0; overflow: hidden; }
+.report-topology-reading--graph > .report-diagram { min-height: 0; }
 
 /* Keep handles clear of row labels, resource links, and cell content. */
-.blr-topology-matrix[data-edge-handles='true'] tbody th { padding-inline-end: 20px; }
-.blr-topology-matrix[data-edge-handles='true'] :is(thead th:not(.blr-matrix-corner), td) { padding-inline: 20px; }
+.report-topology-matrix[data-edge-handles='true'] tbody th { padding-inline-end: 20px; }
+.report-topology-matrix[data-edge-handles='true'] :is(thead th:not(.report-matrix-corner), td) { padding-inline: 20px; }
 
 /* Variations in a matrix. A Variation's alternatives sit side by side under one
    band naming the set once — a one-line row above its rows, one strip across its
    columns' tops — the collection lists' group header in small, tinted a step
    darker than the cells — even one alternative alone, as in the trees. A cell
    held only under some alternatives is dashed and says which first. */
-.blr-topology-matrix { --blr-matrix-band: color-mix(in oklab, var(--ui-border) 55%, var(--ui-bg)); }
-.blr-topology-matrix tr.blr-matrix-band > * { padding-block: 6px; background: var(--blr-matrix-band); border-bottom: 1px solid var(--ui-border); }
-.blr-topology-matrix tr.blr-matrix-band > td { border-inline-end: 0; }
+.report-topology-matrix { --report-matrix-band: color-mix(in oklab, var(--ui-border) 55%, var(--ui-bg)); }
+.report-topology-matrix tr.report-matrix-band > * { padding-block: 6px; background: var(--report-matrix-band); border-bottom: 1px solid var(--ui-border); }
+.report-topology-matrix tr.report-matrix-band > td { border-inline-end: 0; }
 /* The line runs from the pinned first column across the band, over the cell beside it. */
-.blr-topology-matrix tr.blr-matrix-band > th { vertical-align: middle; white-space: nowrap; overflow: visible; }
-.blr-matrix-band-link { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; font-size: 12px; font-weight: 600; color: var(--ui-text-highlighted); }
-.blr-matrix-band-link:hover > .blr-matrix-band-name { text-decoration: underline; }
-.blr-matrix-band-link > .iconify { width: 12px; height: 12px; flex-shrink: 0; }
+.report-topology-matrix tr.report-matrix-band > th { vertical-align: middle; white-space: nowrap; overflow: visible; }
+.report-matrix-band-link { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; font-size: 12px; font-weight: 600; color: var(--ui-text-highlighted); }
+.report-matrix-band-link:hover > .report-matrix-band-name { text-decoration: underline; }
+.report-matrix-band-link > .iconify { width: 12px; height: 12px; flex-shrink: 0; }
 /* The Variation reads at its rows' own size, with its full set mark; its alternatives a step smaller beneath it. */
-.blr-matrix-band-link.blr-matrix-band-title { gap: 8px; font-size: 14px; }
-.blr-topology-matrix :is(tr.blr-matrix-in-set > th, thead th.blr-matrix-banded) .blr-topology-link { font-size: 13px; font-weight: 500; }
-.blr-matrix-band-meta { margin-inline-start: 4px; font-size: 11px; font-weight: 400; color: var(--ui-text-muted); white-space: nowrap; }
-.blr-matrix-band-go { color: var(--ui-text-muted); }
-.blr-topology-matrix tr.blr-matrix-in-set > th { padding-inline-start: 28px; }
-.blr-topology-matrix thead th.blr-matrix-banded { padding-top: 0; }
+.report-matrix-band-link.report-matrix-band-title { gap: 8px; font-size: 14px; }
+.report-topology-matrix :is(tr.report-matrix-in-set > th, thead th.report-matrix-banded) .report-topology-link { font-size: 13px; font-weight: 500; }
+.report-matrix-band-meta { margin-inline-start: 4px; font-size: 11px; font-weight: 400; color: var(--ui-text-muted); white-space: nowrap; }
+.report-matrix-band-go { color: var(--ui-text-muted); }
+.report-topology-matrix tr.report-matrix-in-set > th { padding-inline-start: 28px; }
+.report-topology-matrix thead th.report-matrix-banded { padding-top: 0; }
 /* Each strip reaches over its own divider, so the band reads as one. */
-.blr-matrix-colband { display: flex; align-items: center; height: 30px; margin: 0 -15px 10px -14px; padding: 0 14px; background: var(--blr-matrix-band); border-bottom: 1px solid var(--ui-border); overflow: hidden; white-space: nowrap; }
-.blr-matrix-colband.is-last { margin-inline-end: -14px; }
-.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-colband { margin-inline: -20px -21px; padding-inline: 20px; }
-.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-colband.is-last { margin-inline-end: -20px; }
-.blr-matrix-band-line { display: inline-flex; align-items: baseline; gap: 4px; min-width: 0; }
-.blr-matrix-band-line .blr-matrix-band-meta { margin: 0; }
+.report-matrix-colband { display: flex; align-items: center; height: 30px; margin: 0 -15px 10px -14px; padding: 0 14px; background: var(--report-matrix-band); border-bottom: 1px solid var(--ui-border); overflow: hidden; white-space: nowrap; }
+.report-matrix-colband.is-last { margin-inline-end: -14px; }
+.report-topology-matrix[data-edge-handles='true'] .report-matrix-colband { margin-inline: -20px -21px; padding-inline: 20px; }
+.report-topology-matrix[data-edge-handles='true'] .report-matrix-colband.is-last { margin-inline-end: -20px; }
+.report-matrix-band-line { display: inline-flex; align-items: baseline; gap: 4px; min-width: 0; }
+.report-matrix-band-line .report-matrix-band-meta { margin: 0; }
 /* The labelled strip lets its name run across the band, over its neighbours' strips. */
-.blr-topology-matrix thead th.blr-matrix-band-labelled { z-index: 3; clip-path: inset(0 calc((1 - var(--blr-band-span, 1)) * var(--blr-matrix-column-width)) 0 max(0px, calc(var(--blr-matrix-offset) - var(--blr-matrix-column-index) * var(--blr-matrix-column-width)))); }
-.blr-matrix-band-labelled > .blr-matrix-colband { overflow: visible; }
-.blr-matrix-band-labelled .blr-matrix-band-line { flex-shrink: 0; }
-.blr-matrix-versioned { display: inline-flex; align-items: baseline; gap: 6px; }
-.blr-matrix-version { flex-shrink: 0; white-space: nowrap; font-family: var(--font-mono); font-size: 11px; color: var(--ui-text-muted); }
-.blr-matrix-effects > .blr-matrix-badge[data-conditional] { border-style: dashed; }
-.blr-matrix-popover-condition { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--ui-text-highlighted); }
+.report-topology-matrix thead th.report-matrix-band-labelled { z-index: 3; clip-path: inset(0 calc((1 - var(--report-band-span, 1)) * var(--report-matrix-column-width)) 0 max(0px, calc(var(--report-matrix-offset) - var(--report-matrix-column-index) * var(--report-matrix-column-width)))); }
+.report-matrix-band-labelled > .report-matrix-colband { overflow: visible; }
+.report-matrix-band-labelled .report-matrix-band-line { flex-shrink: 0; }
+.report-matrix-versioned { display: inline-flex; align-items: baseline; gap: 6px; }
+.report-matrix-version { flex-shrink: 0; white-space: nowrap; font-family: var(--font-mono); font-size: 11px; color: var(--ui-text-muted); }
+.report-matrix-effects > .report-matrix-badge[data-conditional] { border-style: dashed; }
+.report-matrix-popover-condition { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--ui-text-highlighted); }
 /* Said first in the details, at the sections' own inset; a per-change line sits inside its section already. */
-.blr-matrix-popover-body > .blr-matrix-popover-condition { margin: 0; padding: 12px 16px 0; }
-.blr-matrix-popover-condition > .iconify { width: 12px; height: 12px; flex-shrink: 0; }
-.blr-matrix-route-set { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 4px; font-size: 11px; color: var(--ui-text-muted); }
-.blr-matrix-route-set > .iconify { width: 10px; height: 10px; }
+.report-matrix-popover-body > .report-matrix-popover-condition { margin: 0; padding: 12px 16px 0; }
+.report-matrix-popover-condition > .iconify { width: 12px; height: 12px; flex-shrink: 0; }
+.report-matrix-route-set { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 4px; font-size: 11px; color: var(--ui-text-muted); }
+.report-matrix-route-set > .iconify { width: 10px; height: 10px; }

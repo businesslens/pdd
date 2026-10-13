@@ -357,10 +357,10 @@ Every one is optional; bind the ones the host wants in its URL. A Scenario key
 opens its parent's reading at Scenarios with that Scenario's card open, its own
 References on the card, while the section stays on the originating working view.
 
-The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
+The layer auto-imports `useReportNavigation()` for hosts that use Vue Router.
 It returns these eight models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
 key `cp` for Coverage, and `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
-`useBlrReportNavigation({ sectionKey: 'tab' })` for the catalog's section URLs.
+`useReportNavigation({ sectionKey: 'tab' })` for the catalog's section URLs.
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
 Navigation pushes history; reading filters and expansion replace the current entry.
 `rt` selects the resource tab independently of the working view's `t`. For example,
@@ -377,7 +377,7 @@ expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and
 recompilation without entering the Product Model; removed facet IDs are pruned.
 Two preferences are cookies, so a server-rendered host paints them right on the
-first load: `blr-tooltips` (whether term tooltips are drawn) and `blr-columns`
+first load: `report-tooltips` (whether term tooltips are drawn) and `report-columns`
 (how many columns each collection's Rows use, keyed by collection, one to
 four; rows start at one, tree cards at three). Nothing else is kept, because
 nothing else is configurable: the reading and its grouping are decided by the
@@ -511,7 +511,7 @@ Backgrounds follow the item's role, independently of which levels are visible:
 | --- | --- | --- |
 | Group | Domain groups in Entities and Capabilities | Translucent `bg-elevated/20` |
 | Resource | Entity, Capability, Journey and Scenario cards | Solid `bg-default` |
-| Detail | Steps inside a Scenario | Opaque `--blr-bg-detail`: 80% resource background, 20% elevated tone |
+| Detail | Steps inside a Scenario | Opaque `--report-bg-detail`: 80% resource background, 20% elevated tone |
 
 Scenarios therefore starts at the resource level and expands to detail-level
 Steps. Its summary keeps the soft hover. Step cards and their number markers
@@ -665,7 +665,7 @@ position, direct links and keyboard dismissal.
 `node scripts/check-resource-references.mjs <url>` covers reference ownership,
 counts, previews, browser history and scrolling tabs on desktop and narrow screens.
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
-filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
+filters and named-view exits. Set `PDD_KIT_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.
 `node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
 access, tooltips, saved state, utilities and the independent mobile drawer.
@@ -692,7 +692,7 @@ collection has Rows only: a set has no derivation of its own to draw.
 
 **A set reads as the type it varies.** Its mark is the member type's mark with
 the variation sub-icon in the corner the viewer badges an Interface's type or an
-Entity's facet with (`BlrVariationMark`, through `BlrKind`'s `memberKind`). On
+Entity's facet with (`ReportVariationMark`, through `ReportKind`'s `memberKind`). On
 an Interface set the sub-icon takes the type's corner; each alternative keeps
 its own type where it is read. The reading's subtitle names it the same way,
 with its subtype and, where all its alternatives sit in one place, that place
@@ -702,7 +702,7 @@ and its Domains: `Capability Scenario variation · Experiment in Checkout`
 **The set is the title; the picker names the alternative.** Wherever an
 alternative is a title — a reading header, a row, a tree node, a Scenario card —
 the title names its Variation (`titledBy`) and the picker beside it
-(`BlrVariationPicker`) names the alternative being read: its title, or a
+(`ReportVariationPicker`) names the alternative being read: its title, or a
 Version's label (`v2`). On a set's own title the picker counts the alternatives
 (`2 alternatives`). There are no position numbers: alternatives are a set.
 Pressing the picker opens a switcher. Its first row is the set — the variation
@@ -744,11 +744,11 @@ first by title; switching in place follows an address that names the set,
 without a history entry. The Scenarios tab still counts every Scenario.
 
 **Readings.** A Variation's Overview carries its purpose and **How one is
-chosen** (`BlrVariationSelection`): the Entities and facts it chooses by, any
+chosen** (`ReportVariationSelection`): the Entities and facts it chooses by, any
 assignment, Takes effect and Stability. Its Alternatives tab reads each
 alternative in its own words with its label and Selected when, and where each
 sits when owners differ. An alternative's Overview carries **How this one is
-chosen** (`BlrVariationChoice`): what chooses and its own condition, with a link
+chosen** (`ReportVariationChoice`): what chooses and its own condition, with a link
 to the set for timing and stability. There is no Variations tab on an
 alternative. Connections reads a set's Alternatives and what it chooses by
 (`chooses by setting: …`), and an alternative's `alternative in` its set —
@@ -817,7 +817,7 @@ the rail draws. Choosing a page closes the palette and opens it as the rail
 does, so the address and Back behave the same.
 
 Check it against the Fixture Shop with `node scripts/check-variations.mjs
-<viewer-url>`; set `BLR_VARIATION_SCREENSHOTS` to save captures. It covers the
+<viewer-url>`; set `PDD_KIT_VARIATION_SCREENSHOTS` to save captures. It covers the
 collection and its owner lines, set rows in a list and a tab, the switcher by
 keyboard, set-first titles, switching in a header without a Back step, the set's
 readings, the Scenario card and a Scenario address, Escape, the tree, the

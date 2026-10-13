@@ -8,7 +8,7 @@ references:
     title: Loopback report server
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrReportShell.vue
+    target: layers/nuxt/report-viewer/app/components/ReportShell.vue
     title: Report shell
 ---
 

@@ -24,83 +24,83 @@ describe('private Product Report viewer lab', () => {
 
     expect(readme).toContain('There are no active report experiments in this layer.')
     expect(readme).toContain('The **Variation mark** audition is decided')
-    for (const file of ['utils/variationMarkLab.ts', 'composables/useBlrVariationMarkLab.ts', 'components/BlrVariationMarkLabRow.vue', 'assets/variation-mark-lab.css']) {
+    for (const file of ['utils/variationMarkLab.ts', 'composables/useReportVariationMarkLab.ts', 'components/ReportVariationMarkLabRow.vue', 'assets/variation-mark-lab.css']) {
       expect(existsSync(join(lab, 'app', file))).toBe(false)
     }
 
     expect(readme).toContain('The **Resource heading** audition is decided')
-    for (const file of ['components/BlrResourceHeading.vue', 'components/BlrHeadingDomains.vue', 'components/BlrHeadingLabRow.vue', 'composables/useBlrHeadingLab.ts', 'utils/headingLab.ts']) {
+    for (const file of ['components/ReportResourceHeading.vue', 'components/ReportHeadingDomains.vue', 'components/ReportHeadingLabRow.vue', 'composables/useReportHeadingLab.ts', 'utils/headingLab.ts']) {
       expect(existsSync(join(lab, 'app', file))).toBe(false)
     }
     expect(readme).toContain('The **Entity effect** audition is decided')
-    for (const file of ['components/BlrStepEntity.vue', 'components/BlrEffectPhrasingLabRow.vue', 'composables/useBlrEffectPhrasingLab.ts', 'utils/effectPhrasingLab.ts']) {
+    for (const file of ['components/ReportStepEntity.vue', 'components/ReportEffectPhrasingLabRow.vue', 'composables/useReportEffectPhrasingLab.ts', 'utils/effectPhrasingLab.ts']) {
       expect(existsSync(join(lab, 'app', file))).toBe(false)
     }
     expect(readme).toContain('The **View controls** audition is decided')
-    for (const file of ['components/BlrCollectionControls.vue', 'components/BlrDrawingPreview.vue', 'components/BlrDrawingRowTools.vue', 'components/BlrDrawingControlsLabRow.vue', 'composables/useBlrDrawingControlsLab.ts', 'utils/drawingControlsLab.ts', 'assets/drawing-controls-lab.css']) {
+    for (const file of ['components/ReportCollectionControls.vue', 'components/ReportDrawingPreview.vue', 'components/ReportDrawingRowTools.vue', 'components/ReportDrawingControlsLabRow.vue', 'composables/useReportDrawingControlsLab.ts', 'utils/drawingControlsLab.ts', 'assets/drawing-controls-lab.css']) {
       expect(existsSync(join(lab, 'app', file))).toBe(false)
     }
     expect(readme).toContain('The **Table navigation** audition is decided')
     expect(readme).toContain('The **Mutation popover** audition is decided')
     expect(readme).toContain('The **Context sizing** audition is decided')
     expect(readme).toContain('The **Comparison legend** audition is decided')
-    for (const name of ['BlrMatrixLegend', 'BlrMatrixLegendLabRow']) {
+    for (const name of ['ReportMatrixLegend', 'ReportMatrixLegendLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
-    expect(existsSync(join(lab, 'app/composables/useBlrMatrixLegendLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportMatrixLegendLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/matrix-legend-lab.css'))).toBe(false)
-    for (const name of ['BlrContextPlace', 'BlrContextLabRow', 'BlrContextLabDock']) {
+    for (const name of ['ReportContextPlace', 'ReportContextLabRow', 'ReportContextLabDock']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
-    expect(existsSync(join(lab, 'app/composables/useBlrContextLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportContextLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/context-lab.css'))).toBe(false)
-    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow', 'BlrTopologyMatrix', 'BlrMatrixNavigationLabRow', 'BlrMatrixHandleLabRow', 'BlrMutationBadge', 'BlrMutationPopoverLabRow', 'BlrSidebarIconSizeLabRow', 'BlrProductPickerLabRow']) {
+    for (const name of ['ReportScenarioStep', 'ReportStepGuidedReading', 'ReportStepReading', 'ReportStepEffectReading', 'ReportStepCardLabRow', 'ReportMatrixCornerLabRow', 'ReportControlSizeLabRow', 'ReportTopologyMatrix', 'ReportMatrixNavigationLabRow', 'ReportMatrixHandleLabRow', 'ReportMutationBadge', 'ReportMutationPopoverLabRow', 'ReportSidebarIconSizeLabRow', 'ReportProductPickerLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
-    expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
-    expect(existsSync(join(lab, 'app/composables/useBlrMatrixNavigationLab.ts'))).toBe(false)
-    expect(existsSync(join(lab, 'app/composables/useBlrMatrixCornerLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportStepCardLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportMatrixNavigationLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportMatrixCornerLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/matrix-corner-lab.css'))).toBe(false)
-    expect(existsSync(join(lab, 'app/composables/useBlrControlSizeLab.ts'))).toBe(false)
-    expect(existsSync(join(lab, 'app/composables/useBlrSidebarIconSizeLab.ts'))).toBe(false)
-    expect(existsSync(join(lab, 'app/composables/useBlrProductPickerVariant.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportControlSizeLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportSidebarIconSizeLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportProductPickerVariant.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/sidebar-icon-size.css'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/product-picker-lab.css'))).toBe(false)
     expect(existsSync(join(lab, 'app/plugins/control-size.ts'))).toBe(false)
-    expect(existsSync(join(lab, 'app/composables/useBlrMutationPopoverLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useReportMutationPopoverLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/mutation-popover-lab.css'))).toBe(false)
-    expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue'))).toBe(true)
-    expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
+    expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/ReportScenarioStep.vue'))).toBe(true)
+    expect(existsSync(join(lab, 'app/components/ReportResourcePage.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
   })
 
   it('keeps decided experiments out of the host and the stable report viewer', () => {
     const app = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
-    const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
+    const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/ReportTopologyMatrix.vue'), 'utf8')
 
     expect(app).toMatch(/<PddKitThemeLabBar(?:\s|>)/)
-    expect(app).not.toContain('BlrProductPickerLabRow')
-    expect(app).not.toContain('useBlrProductPickerVariant')
-    expect(app).not.toContain('BlrSidebarIconSizeLabRow')
-    expect(app).not.toContain('useBlrSidebarIconSizeLab')
-    expect(app).not.toContain('BlrMatrixLegendLabRow')
-    expect(app).not.toContain('BlrContextLab')
-    expect(app).not.toContain('BlrMutationPopoverLabRow')
-    expect(app).not.toContain('useBlrMatrixNavigationLab')
-    expect(app).not.toContain('BlrMatrixNavigationLabRow')
-    expect(app).not.toContain('BlrMatrixHandleLabRow')
-    expect(stable).not.toContain('useBlrMatrixNavigationLab')
-    expect(app).not.toContain('BlrMatrixCornerLabRow')
-    expect(app).not.toContain('useBlrMatrixCornerLab()')
-    expect(stable).not.toContain('useBlrMatrixCornerLab')
+    expect(app).not.toContain('ReportProductPickerLabRow')
+    expect(app).not.toContain('useReportProductPickerVariant')
+    expect(app).not.toContain('ReportSidebarIconSizeLabRow')
+    expect(app).not.toContain('useReportSidebarIconSizeLab')
+    expect(app).not.toContain('ReportMatrixLegendLabRow')
+    expect(app).not.toContain('ReportContextLab')
+    expect(app).not.toContain('ReportMutationPopoverLabRow')
+    expect(app).not.toContain('useReportMatrixNavigationLab')
+    expect(app).not.toContain('ReportMatrixNavigationLabRow')
+    expect(app).not.toContain('ReportMatrixHandleLabRow')
+    expect(stable).not.toContain('useReportMatrixNavigationLab')
+    expect(app).not.toContain('ReportMatrixCornerLabRow')
+    expect(app).not.toContain('useReportMatrixCornerLab()')
+    expect(stable).not.toContain('useReportMatrixCornerLab')
     expect(stable).not.toContain('data-navigation-variant')
     expect(stable).not.toContain('data-left-handle-placement')
-    expect(app).not.toContain('BlrControlSizeLabRow')
-    expect(app).not.toContain('BlrStepCardLabRow')
-    expect(app).not.toContain('BlrDrawingControlsLabRow')
-    expect(app).not.toContain('BlrEffectPhrasingLabRow')
-    expect(app).not.toContain('BlrHeadingLabRow')
-    expect(app).not.toContain('BlrVariationMarkLabRow')
+    expect(app).not.toContain('ReportControlSizeLabRow')
+    expect(app).not.toContain('ReportStepCardLabRow')
+    expect(app).not.toContain('ReportDrawingControlsLabRow')
+    expect(app).not.toContain('ReportEffectPhrasingLabRow')
+    expect(app).not.toContain('ReportHeadingLabRow')
+    expect(app).not.toContain('ReportVariationMarkLabRow')
     expect(app).not.toContain(':row-count="2"')
   })
 })

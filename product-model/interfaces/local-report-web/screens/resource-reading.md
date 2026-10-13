@@ -18,10 +18,10 @@ entryPoints:
 references:
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrResourcePage.vue
+    target: layers/nuxt/report-viewer/app/components/ReportResourcePage.vue
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrVariationAlternatives.vue
+    target: layers/nuxt/report-viewer/app/components/ReportVariationAlternatives.vue
 ---
 
 # Resource reading

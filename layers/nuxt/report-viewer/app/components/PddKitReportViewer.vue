@@ -94,7 +94,7 @@ onMounted(() => { mounted = true; synchronizeLocation() })
 
 <template>
   <article data-pdd-kit-report-viewer class="pdd-kit-report">
-    <BlrReportShell
+    <ReportShell
       :section="location.section"
       :resource="location.resource"
       :tab="location.tab"
@@ -132,6 +132,6 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       <template v-if="$slots.status" #status>
         <slot name="status" />
       </template>
-    </BlrReportShell>
+    </ReportShell>
   </article>
 </template>

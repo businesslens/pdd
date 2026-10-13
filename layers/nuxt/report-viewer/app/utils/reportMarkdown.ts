@@ -44,7 +44,7 @@ export function renderInline(value: string): string {
       const url = safeHref(href.replaceAll('&amp;', '&'))
       return url
         ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`
-        : `${text} <span class="blr-prose-target">${href}</span>`
+        : `${text} <span class="report-prose-target">${href}</span>`
     })
 }
 

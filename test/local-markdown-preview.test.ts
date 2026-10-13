@@ -17,7 +17,7 @@ afterEach(async () => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 function setup(source: string) {
-  const root = mkdtempSync(join(tmpdir(), 'blr-markdown-preview-'))
+  const root = mkdtempSync(join(tmpdir(), 'report-markdown-preview-'))
   directories.push(root)
   mkdirSync(join(root, 'docs'))
   writeFileSync(join(root, 'docs/guide.md'), source)

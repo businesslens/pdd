@@ -278,7 +278,7 @@ test('a record view keeps the site footer below the report', async ({ page }) =>
 
   const initial = await page.evaluate(() => {
     const scroller = document.scrollingElement!
-    const panes = [...document.querySelectorAll<HTMLElement>('.blr-pane')]
+    const panes = [...document.querySelectorAll<HTMLElement>('.report-pane')]
     return {
       clientHeight: scroller.clientHeight,
       scrollHeight: scroller.scrollHeight,

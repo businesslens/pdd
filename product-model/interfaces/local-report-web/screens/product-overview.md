@@ -7,7 +7,7 @@ entryPoints:
 references:
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrOverview.vue
+    target: layers/nuxt/report-viewer/app/components/ReportOverview.vue
 ---
 
 # Product overview

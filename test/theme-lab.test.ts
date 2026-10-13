@@ -112,7 +112,7 @@ describe('shared pdd-kit theme lab', () => {
       'viewer/app/app/assets/local-viewer.css'
     ].map(file => readFileSync(join(root, file), 'utf8')).join('\n')
     expect(css).not.toMatch(/(^|[\s,(])product-model-[a-z-]+\s*[{,)]/m)
-    for (const selector of ['.pdd-kit-report {', '.pdd-kit-report .blr-product-topology', '.pdd-kit-neutral-badge {', '.pdd-kit-page-surface {']) {
+    for (const selector of ['.pdd-kit-report {', '.pdd-kit-report .report-product-topology', '.pdd-kit-neutral-badge {', '.pdd-kit-page-surface {']) {
       expect(css).toContain(selector)
     }
   })

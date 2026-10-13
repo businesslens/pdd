@@ -3,14 +3,14 @@
  *
  * Run against `pnpm view:fixture --no-open --port 43213` after building:
  *   node scripts/check-variations.mjs [viewer-url]
- * Set BLR_VARIATION_SCREENSHOTS to a directory to save captures.
+ * Set PDD_KIT_VARIATION_SCREENSHOTS to a directory to save captures.
  */
 import { chromium, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 const origin = process.argv[2] || 'http://127.0.0.1:43213'
-const output = process.env.BLR_VARIATION_SCREENSHOTS
+const output = process.env.PDD_KIT_VARIATION_SCREENSHOTS
 if (output) await mkdir(output, { recursive: true })
 const browser = await chromium.launch({ headless: true })
 const errors = []
@@ -33,7 +33,7 @@ try {
     const { context, tab } = await page('?s=variation')
     await expect(tab.getByRole('button', { name: 'Variations', exact: true })).toHaveAttribute('data-current', 'true')
     await expect(tab.locator('[data-group-header]')).toHaveCount(9)
-    await expect(tab.locator('.blr-resource-row')).toHaveCount(10)
+    await expect(tab.locator('.report-resource-row')).toHaveCount(10)
     await expect(tab.locator('[data-variation-owner]')).toHaveText(['Checkout', 'Payment settlement', 'Browse and buy'])
     await expect(tab.locator('[data-variation-picked]').first()).toHaveText('2 alternatives')
     await expect(tab.locator('[data-variation-chooser]').filter({ hasText: 'Discriminator' })).toHaveCount(1)
@@ -43,8 +43,8 @@ try {
 
   { // A list: the refund pair is one row; picking an alternative opens it under the set's title.
     const { context, tab } = await page('?s=rule')
-    await expect(tab.locator('.blr-resource-row[data-resource-key="variation:refund-review"]')).toHaveCount(1)
-    await expect(tab.locator('.blr-resource-row[data-resource-key="rule:refund-review-standard"]')).toHaveCount(0)
+    await expect(tab.locator('.report-resource-row[data-resource-key="variation:refund-review"]')).toHaveCount(1)
+    await expect(tab.locator('.report-resource-row[data-resource-key="rule:refund-review-standard"]')).toHaveCount(0)
     await expect(tab.getByRole('heading', { level: 1 })).toContainText('14')
     const picker = tab.getByRole('button', { name: 'Refund review: 2 alternatives' })
     await picker.focus()
@@ -142,8 +142,8 @@ try {
   { // A tab: Refund's Business Rules read the pair as their set.
     const { context, tab } = await page('?s=entity&e=entity:refund&rt=rules')
     const dialog = tab.locator('[role=dialog]').filter({ has: tab.locator('[data-resource-title]') })
-    await expect(dialog.locator('[data-attached-rules] .blr-resource-row[data-resource-key="variation:refund-review"]')).toHaveCount(1)
-    await expect(dialog.locator('[data-attached-rules] .blr-resource-row[data-resource-key="rule:refund-review-strict"]')).toHaveCount(0)
+    await expect(dialog.locator('[data-attached-rules] .report-resource-row[data-resource-key="variation:refund-review"]')).toHaveCount(1)
+    await expect(dialog.locator('[data-attached-rules] .report-resource-row[data-resource-key="rule:refund-review-strict"]')).toHaveCount(0)
     await capture(tab, 'entity-rules')
     await context.close()
   }
@@ -202,19 +202,19 @@ try {
     await capture(tab, 'graph-reach')
     // A Variation's lines to its alternatives are dashed, and say "alternatives" once where they fork.
     await tab.goto(`${origin}/?s=journey&t=graph`)
-    await expect(tab.locator('.vue-flow .blr-flow-edge-label').filter({ hasText: /^alternatives$/ })).toHaveCount(1)
-    await expect(tab.locator('.vue-flow path.blr-flow-route[stroke-dasharray="8 4"]')).toHaveCount(2)
+    await expect(tab.locator('.vue-flow .report-flow-edge-label').filter({ hasText: /^alternatives$/ })).toHaveCount(1)
+    await expect(tab.locator('.vue-flow path.report-flow-route[stroke-dasharray="8 4"]')).toHaveCount(2)
     await capture(tab, 'graph-journeys')
     // A focus that hides some alternatives says how many are shown.
     await tab.goto(`${origin}/?s=interface&t=graph&tf=screen:customer-mobile::storefront::order-status`)
-    await expect(tab.locator('.vue-flow .blr-flow-edge-label').filter({ hasText: /^1 of 2 alternatives$/ })).toHaveCount(1)
+    await expect(tab.locator('.vue-flow .report-flow-edge-label').filter({ hasText: /^1 of 2 alternatives$/ })).toHaveCount(1)
     // Search keeps the matched name, marks a Variation with its set mark, and names an alternative's Variation.
     await tab.goto(`${origin}/?s=rule`)
-    await expect(tab.locator('.blr-resource-row').first()).toBeVisible()
+    await expect(tab.locator('.report-resource-row').first()).toBeVisible()
     await tab.keyboard.press('Meta+k')
     await tab.keyboard.type('refund review')
     await expect(tab.locator('[data-search-variation]').filter({ hasText: 'Refund review' })).toHaveCount(2)
-    await expect(tab.locator('.blr-search-palette [data-variation-mark]').first()).toBeVisible()
+    await expect(tab.locator('.report-search-palette [data-variation-mark]').first()).toBeVisible()
     await capture(tab, 'search')
     await tab.keyboard.press('Escape')
     await tab.goto(`${origin}/?s=entity&t=graph`)
@@ -222,11 +222,11 @@ try {
     await capture(tab, 'graph-entities')
     await tab.goto(`${origin}/?s=entity&e=entity:order&rt=lifecycle`)
     const dialog = tab.locator('[role=dialog]').filter({ has: tab.locator('[data-resource-title]') })
-    await expect(dialog.locator('.blr-flow-node[data-conditional]')).toContainText('Cancellation requested')
-    await expect(dialog.locator('.blr-flow-node[data-conditional]')).toContainText('Only under Cancellation request')
+    await expect(dialog.locator('.report-flow-node[data-conditional]')).toContainText('Cancellation requested')
+    await expect(dialog.locator('.report-flow-node[data-conditional]')).toContainText('Only under Cancellation request')
     await capture(tab, 'lifecycle')
     await tab.goto(`${origin}/?s=capability&t=matrix`)
-    await expect(tab.locator('.blr-matrix-badge[data-conditional]')).toHaveCount(3)
+    await expect(tab.locator('.report-matrix-badge[data-conditional]')).toHaveCount(3)
     // One band names the Variation once, and its two alternatives follow it.
     await expect(tab.locator('tbody tr[data-variation-band="variation:cancellation-handling"]')).toHaveCount(1)
     await expect(tab.locator('tbody tr[data-variation-band="variation:cancellation-handling"]')).toContainText('Configuration · 2 alternatives')
@@ -234,8 +234,8 @@ try {
     const band = rows.indexOf('band')
     expect(rows.slice(band + 1, band + 3)).toEqual(['variation:cancellation-handling', 'variation:cancellation-handling'])
     await expect(tab.locator('thead [data-variation-band="variation:payment-webhook-contract"]')).toHaveCount(2)
-    await expect(tab.locator('thead [data-variation-band="variation:payment-webhook-contract"] .blr-matrix-band-link')).toHaveCount(1)
-    await tab.locator('.blr-matrix-badge[data-conditional]').first().click()
+    await expect(tab.locator('thead [data-variation-band="variation:payment-webhook-contract"] .report-matrix-band-link')).toHaveCount(1)
+    await tab.locator('.report-matrix-badge[data-conditional]').first().click()
     await expect(tab.locator('[data-matrix-condition]')).toContainText('Only under Mobile storefront: Shopping')
     await capture(tab, 'matrix-delivery')
     await tab.keyboard.press('Escape')
@@ -247,7 +247,7 @@ try {
     await expect(tab.locator('tbody tr[data-variation-band="variation:refund-review"]')).toHaveCount(1)
     await capture(tab, 'matrix-rules')
     await tab.goto(`${origin}/?s=entity&t=matrix`)
-    await expect(tab.locator('[data-cell="entity:shopper->capability:place-order"] .blr-matrix-badge[data-conditional]')).toHaveCount(1)
+    await expect(tab.locator('[data-cell="entity:shopper->capability:place-order"] .report-matrix-badge[data-conditional]')).toHaveCount(1)
     await capture(tab, 'matrix-changes')
     await context.close()
   }

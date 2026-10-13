@@ -31,7 +31,7 @@ export interface PageTab {
   blocks: PageBlockId[]
 }
 
-/* Whether BlrResourceBody would render anything. */
+/* Whether ReportResourceBody would render anything. */
 export function hasAuthoredBody(resource: AnyResourceView): boolean {
   if (isScenarioKind(resource.kind)) return true
   if (resource.kind === 'screen' || resource.kind === 'entity' || resource.kind === 'journey') return true

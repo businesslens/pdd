@@ -17,7 +17,7 @@ export type ColumnChoice = typeof COLUMN_CHOICES[number]
 type Preference = Partial<Record<ReportResourceKind, number>>
 
 export function useColumns() {
-  const preference = useCookie<Preference>('blr-columns', {
+  const preference = useCookie<Preference>('report-columns', {
     default: () => ({}),
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',

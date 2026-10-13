@@ -44,7 +44,7 @@ export async function highlightedCode(source: string, language: string, options:
     const content: Node[] = tokens?.[index]?.map(token => ['span', { style: token.htmlStyle ?? {} }, token.content] as ElementNode) ?? [line]
     if (options.sourceFile) {
       if (number === (options.first ?? 1)) content.unshift(['span', { id: 'reference' }])
-      content.unshift(['a', { class: 'blr-line-number', href: '#L' + number, 'aria-label': 'Line ' + number }, String(number)])
+      content.unshift(['a', { class: 'report-line-number', href: '#L' + number, 'aria-label': 'Line ' + number }, String(number)])
     }
     return ['span', {
       class: 'line' + (highlighted ? ' highlight' : ''),
@@ -52,7 +52,7 @@ export async function highlightedCode(source: string, language: string, options:
     }, ...content, ...(index < lines.length - 1 ? ['\n'] : [])]
   })
   return ['pre', {
-    class: 'shiki' + (options.sourceFile ? ' blr-source-code' : ''),
+    class: 'shiki' + (options.sourceFile ? ' report-source-code' : ''),
     language, code: source,
     ...(options.filename ? { filename: options.filename } : {})
   }, ['code', {}, ...children]]

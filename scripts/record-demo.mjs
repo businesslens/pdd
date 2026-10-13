@@ -137,7 +137,7 @@ try {
   /* Interfaces read as one tree per row; the drawing's own default is three. */
   await context.addCookies([
     { name: 'bl-bg-light', value: 'l4', url: server.url },
-    { name: 'blr-columns', value: encodeURIComponent(JSON.stringify({ interface: 1 })), url: server.url }
+    { name: 'report-columns', value: encodeURIComponent(JSON.stringify({ interface: 1 })), url: server.url }
   ])
   await context.addInitScript(installPointer)
   const page = await context.newPage()
@@ -187,7 +187,7 @@ try {
     await hold(60)
     await page.mouse.up()
   }
-  const rail = name => page.locator('.blr-navitem', { hasText: name })
+  const rail = name => page.locator('.report-navitem', { hasText: name })
   const sidebarToggle = page.locator('button[aria-controls^="pdd-kit-report-sidebar-"]')
   /* The rail folds once, after the first collection opens, and stays folded:
      later collections are picked from its icons. */
@@ -211,7 +211,7 @@ try {
     await click(page.getByRole('button', { name: `Draw as ${drawing}`, exact: true }), { dx: 0.3 })
     await page.locator('[data-drawing-switch]').and(page.locator(`[data-current-drawing=${drawing}]`)).waitFor()
   }
-  const expand = id => click(page.locator(`.vue-flow__node[data-id="${id}"] .blr-flow-node__count`), { ms: 450 })
+  const expand = id => click(page.locator(`.vue-flow__node[data-id="${id}"] .report-flow-node__count`), { ms: 450 })
 
   // One command, private and local, that a reader can run as is.
   beat('Terminal')

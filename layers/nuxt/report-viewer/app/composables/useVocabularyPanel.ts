@@ -9,7 +9,7 @@ import type { VocabularySlug } from '../utils/vocabulary.generated'
  * each one carry a concern it has nothing to do with, so the panel's state is
  * shared instead and the shell simply renders it.
  */
-export function useVocabularyPanel(stateKey = 'blr-vocabulary') {
+export function useVocabularyPanel(stateKey = 'report-vocabulary') {
   const open = useState(`${stateKey}-open`, () => false)
   const lookup = useState<{ slug: VocabularySlug } | null>(`${stateKey}-lookup`, () => null)
   // Store the trigger's id, not a DOM node, so shared Nuxt state stays serializable.

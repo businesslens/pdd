@@ -23,7 +23,7 @@ header. Under the title, one short line names the type and the nearest place
 containing the resource, with that place's own mark — `Screen in [Screen] Add
 source` — and the Domains as marks, the first opening its Domain and the rest
 behind a count. The full containing path is the nearest place's tooltip. The
-stable `BlrResourceContext` draws it inside `BlrResourceHeading`; the two-line
+stable `ReportResourceContext` draws it inside `ReportResourceHeading`; the two-line
 path, eyebrow, path title and type chip alternatives, the row, cookie
 composable, variant list and shadows have been removed.
 
@@ -31,7 +31,7 @@ The **Entity effect** audition is decided: Entity first is the stable phrasing.
 The Entity chip comes first, then a plain verb, then each State as a badge —
 `[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]`,
 `[Collection] read`; an ending reads `[Item] in [Unread]`. It lives in the
-stable `BlrStepEntity` and `BlrEntityEffect`, so a Step's Entity effects, a
+stable `ReportStepEntity` and `ReportEntityEffect`, so a Step's Entity effects, a
 Scenario's Ends with, Changes made here, Leaves behind and a Capability's What
 it changes all say it the same way. The alternatives, row, cookie composable,
 variant list and shadow have been removed.
@@ -54,7 +54,7 @@ and model References keep their home in the Product Overview's own References
 reading. Four category cards filter whole statements, including unlocated ones.
 Its marks, its search and its summary panel have since been refined in the
 stable report; the report layer README describes them as they are. The
-alternatives, the selector, the cookie composable and the `BlrCoverage` shadow
+alternatives, the selector, the cookie composable and the `ReportCoverage` shadow
 have been removed.
 
 The **View controls** audition is decided: option 4's dropdown with preview
@@ -131,7 +131,7 @@ audition is decided: page controls, filters and graph buttons use Nuxt UI's
 `sm` size (28px) at every viewport width. The optional theme lab retains its own sizing.
 The size selector, cookie composable and global override have been removed.
 
-The **Scenario Step card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.
+The **Scenario Step card** audition is decided: Guided flow is now the stable `ReportScenarioStep`.
 It labels Action or Condition, Who, Entity effects, Where and Capability, and
 reads each Entity effect as a phrase. The alternative drawings, their cookie
 composable and the Step card selector have been removed.

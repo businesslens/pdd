@@ -13,7 +13,7 @@
  * watches them disappear.
  */
 export function useTooltips() {
-  const preference = useCookie<'on' | 'off'>('blr-tooltips', {
+  const preference = useCookie<'on' | 'off'>('report-tooltips', {
     default: () => 'on',
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',
