@@ -11,13 +11,13 @@
 <p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@itai-gendler/pdd-kit"><img src="https://img.shields.io/npm/v/@itai-gendler/pdd-kit" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/pdd-toolkit"><img src="https://img.shields.io/npm/v/pdd-toolkit" alt="npm version"></a>
   <a href="https://github.com/itai-gendler/pdd-kit/actions/workflows/check.yml"><img src="https://github.com/itai-gendler/pdd-kit/actions/workflows/check.yml/badge.svg" alt="Check"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
 <p align="center">
-<code>npx @itai-gendler/pdd-kit install</code>
+<code>npx pdd-toolkit install</code>
 </p>
 
 <p align="center">
@@ -116,8 +116,8 @@ model with no code behind it. Every answer below is read from the model.
 Or open it on your machine:
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint pull kanban-board
-npx @itai-gendler/pdd-kit view
+npx pdd-toolkit blueprint pull kanban-board
+npx pdd-toolkit view
 ```
 
 ### 1. Entities, and which capabilities change them
@@ -217,7 +217,7 @@ One shared definition of what the product does helps everyone who works on it:
 
 **Dogfooded:** pdd-kit is developed with pdd-kit. Its own Product Model
 lives in this repository's [`product-model/` folder](./product-model/); open it
-with `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit`.
+with `npx pdd-toolkit view itai-gendler/pdd-kit`.
 
 ## Features
 
@@ -242,7 +242,7 @@ with `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit`.
 ## <img src="./.github/readme/rocket.svg" alt="" width="28" height="28" align="top"> Get started
 
 ```bash
-npx @itai-gendler/pdd-kit install
+npx pdd-toolkit install
 ```
 
 This adds the skills to Claude Code, Codex, Cursor, Gemini CLI and GitHub
@@ -261,7 +261,7 @@ It reads the code without running it, asks what the code can't answer, and
 writes `product-model/` once you approve. Then open the report:
 
 ```bash
-npx @itai-gendler/pdd-kit view
+npx pdd-toolkit view
 ```
 
 [From your repo](https://pdd-kit.dev/docs/from-your-repo)
@@ -282,8 +282,8 @@ You pick from a few product shapes, then approve the model.
 A familiar kind of product? List the reviewed models and pull one:
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint list
-npx @itai-gendler/pdd-kit blueprint pull <name>
+npx pdd-toolkit blueprint list
+npx pdd-toolkit blueprint pull <name>
 ```
 
 [Browse the Blueprints](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints) ·
@@ -306,7 +306,7 @@ npx @itai-gendler/pdd-kit blueprint pull <name>
 
 `install`, `update`, `lint`, `view` and the `blueprint` commands. Every command
 and option: [CLI reference](https://pdd-kit.dev/docs/cli), or
-`npx @itai-gendler/pdd-kit --help`.
+`npx pdd-toolkit --help`.
 
 ## FAQ
 

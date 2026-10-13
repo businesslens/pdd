@@ -4,8 +4,8 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
-      "@itai-gendler/pdd-kit/report/selectors": ["./src/report-selectors.ts"],
-      "@itai-gendler/pdd-kit/report": ["./src/report.ts"]
+      "pdd-toolkit/report/selectors": ["./src/report-selectors.ts"],
+      "pdd-toolkit/report": ["./src/report.ts"]
     },
     "lib": ["ES2022"],
     "types": ["node"],

@@ -28,7 +28,7 @@ each part. See the [development loop](./index.md#the-development-loop).
 Blueprint contribution is a deterministic CLI workflow:
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint contribute
+npx pdd-toolkit blueprint contribute
 ```
 
 Claude Code uses `/pdd-map`; Codex commonly uses `$pdd-map`.

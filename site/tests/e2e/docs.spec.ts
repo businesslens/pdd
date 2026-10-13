@@ -135,7 +135,7 @@ test('Brand Warm code stays readable and matches between docs and landing', asyn
 
   const docsTokenColors = async () => {
     await page.goto('/docs/installation')
-    const block = page.locator('.docs-prose pre.shiki').filter({ hasText: 'npx @itai-gendler/pdd-kit install' })
+    const block = page.locator('.docs-prose pre.shiki').filter({ hasText: 'npx pdd-toolkit install' })
     await expect(block).toBeVisible()
 
     return {
@@ -143,7 +143,7 @@ test('Brand Warm code stays readable and matches between docs and landing', asyn
       colors: await Promise.all([
         block.locator('code .line > span').filter({ hasText: 'npx' }).first()
           .evaluate(element => getComputedStyle(element).color),
-        block.locator('code .line > span').filter({ hasText: 'pdd-kit' }).first()
+        block.locator('code .line > span').filter({ hasText: 'pdd-toolkit' }).first()
           .evaluate(element => getComputedStyle(element).color)
       ]),
       allColors: await block.locator('code .line > span').evaluateAll(elements =>

@@ -13,7 +13,7 @@ after upgrading it. Upgrading the CLI itself is separate; see
 [Updating the CLI](./cli.md#updating-the-cli).
 
 ```bash
-npx @itai-gendler/pdd-kit update [--providers <list>] [--scope project|global] [--force]
+npx pdd-toolkit update [--providers <list>] [--scope project|global] [--force]
 ```
 
 ## Options
@@ -27,7 +27,7 @@ npx @itai-gendler/pdd-kit update [--providers <list>] [--scope project|global] [
 With no options it looks in every harness, in both scopes:
 
 ```bash
-npx @itai-gendler/pdd-kit update --providers claude,codex --scope project
+npx pdd-toolkit update --providers claude,codex --scope project
 ```
 
 ## What it does

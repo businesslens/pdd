@@ -1,4 +1,4 @@
-import type { ProductReport } from '@itai-gendler/pdd-kit/report'
+import type { ProductReport } from 'pdd-toolkit/report'
 import type { BlueprintCard, BlueprintRecord } from '../../shared/blueprints'
 
 interface IndexEntry {

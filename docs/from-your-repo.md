@@ -28,13 +28,13 @@ Use this door when you already have code and no `product-model/` you trust.
 3. See what you got:
 
    ```bash
-   npx @itai-gendler/pdd-kit view
+   npx pdd-toolkit view
    ```
 
 4. Lint and commit:
 
    ```bash
-   npx @itai-gendler/pdd-kit lint
+   npx pdd-toolkit lint
    git add product-model
    git commit -m "docs: add pdd-kit Product Model"
    ```

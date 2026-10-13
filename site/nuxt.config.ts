@@ -42,14 +42,14 @@ export default defineNuxtConfig({
     head: { htmlAttrs: { lang: 'en' } }
   },
   extends: [
-    '@itai-gendler/pdd-kit/nuxt/report-viewer'
+    'pdd-toolkit/nuxt/report-viewer'
   ],
   // The report viewer imports the report contract by its package name. Point it
   // at this repository's source, as the local viewer does, so the site needs no
   // built package to compile.
   alias: {
-    '@itai-gendler/pdd-kit/report/selectors': resolve(repoRoot, 'src/report-selectors.ts'),
-    '@itai-gendler/pdd-kit/report': resolve(repoRoot, 'src/report.ts')
+    'pdd-toolkit/report/selectors': resolve(repoRoot, 'src/report-selectors.ts'),
+    'pdd-toolkit/report': resolve(repoRoot, 'src/report.ts')
   },
   modules: [
     '@nuxt/eslint',

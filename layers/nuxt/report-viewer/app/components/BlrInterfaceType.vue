@@ -9,7 +9,7 @@
  * whole slot on the type instead. That is what `BlrEntityMark` does with a
  * facet, for the same reason.
  */
-import type { ReportInterface } from '@itai-gendler/pdd-kit/report'
+import type { ReportInterface } from 'pdd-toolkit/report'
 import { INTERFACE_TYPE_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 

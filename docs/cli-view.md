@@ -12,7 +12,7 @@ Open a Product Model as a read-only report in your browser, while you write it
 or to review someone else's branch or pull request.
 
 ```bash
-npx @itai-gendler/pdd-kit view [repository] [--branch <name> | --pr <number>] [--no-open] [--port <port>]
+npx pdd-toolkit view [repository] [--branch <name> | --pr <number>] [--no-open] [--port <port>]
 ```
 
 ## Options
@@ -63,10 +63,10 @@ Pass `owner/repo`, a `https://github.com/owner/repo` URL, or
 `git` must be installed.
 
 ```bash
-npx @itai-gendler/pdd-kit view acme/checkout                      # default branch
-npx @itai-gendler/pdd-kit view acme/checkout --branch release/2.4
-npx @itai-gendler/pdd-kit view acme/checkout --pr 12
-npx @itai-gendler/pdd-kit view https://github.com/acme/checkout/pull/12
+npx pdd-toolkit view acme/checkout                      # default branch
+npx pdd-toolkit view acme/checkout --branch release/2.4
+npx pdd-toolkit view acme/checkout --pr 12
+npx pdd-toolkit view https://github.com/acme/checkout/pull/12
 ```
 
 A `.../tree/<branch>` or `.../pull/<number>` URL already picks the revision; do

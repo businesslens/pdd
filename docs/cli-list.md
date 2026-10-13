@@ -12,7 +12,7 @@ List every published [Blueprint](./from-a-blueprint.md#what-a-blueprint-is) by
 the name [`blueprint pull`](./cli-pull.md) takes.
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint list
+npx pdd-toolkit blueprint list
 ```
 
 It takes no options. The list is read from the same release `pull` downloads

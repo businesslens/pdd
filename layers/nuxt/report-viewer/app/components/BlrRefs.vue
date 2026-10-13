@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TreeItem } from '@nuxt/ui'
-import type { ReportReference } from '@itai-gendler/pdd-kit/report'
+import type { ReportReference } from 'pdd-toolkit/report'
 import { referenceNavigationKey, referenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
 import { REFERENCE_KIND_LABEL as KIND_LABEL } from '../utils/referenceCatalog'
 

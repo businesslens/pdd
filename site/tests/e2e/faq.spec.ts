@@ -86,7 +86,7 @@ test('keeps the source comparison, boundary lists and commands readable', async 
     await expect(list.getByRole('listitem')).toHaveCount(5)
   }
   await page.getByRole('button', { name: 'Can I share the report without running it locally?', exact: true }).click()
-  await expect(page.getByText('npx @itai-gendler/pdd-kit view <owner>/<repo> --pr <n>', { exact: true })).toBeVisible()
+  await expect(page.getByText('npx pdd-toolkit view <owner>/<repo> --pr <n>', { exact: true })).toBeVisible()
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([])
 })
 
