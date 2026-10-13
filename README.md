@@ -8,7 +8,11 @@
 </p>
 
 <p align="center"><strong>Product-Driven Development for coding agents (OSS)</strong></p>
-<p align="center">The definition of your product already exists, just unstructured, incomplete and scattered across docs, code, tickets, chats and people. Every coding agent reconstructs it from scratch, and differently each time. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
+<p align="center">
+The definition of your product already exists, just unstructured, incomplete and scattered across docs, code, tickets, chats and people.<br>
+Every coding agent reconstructs it from scratch, and differently each time.<br>
+PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.
+</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@itai-gendler/pdd-kit"><img src="https://img.shields.io/npm/v/@itai-gendler/pdd-kit" alt="npm version"></a>
