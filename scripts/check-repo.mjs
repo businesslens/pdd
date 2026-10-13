@@ -458,8 +458,10 @@ for (const file of ['README.md', ...docFiles.map(name => `docs/${name}`)]) {
 // The project once had another name, and its initials prefixed the report
 // viewer. Neither belongs in the repository any more, history included. The
 // patterns are assembled from pieces so this file does not match them itself.
-const retiredNames = [['business', 'lens'].join('[ _-]?'), ['\\bb', 'lr'].join('')]
-const retired = spawnSync('git', ['grep', '-I', '-n', '-i', '-E', retiredNames.join('|')], { cwd: root, encoding: 'utf8' })
+// The lockfile is skipped: its integrity hashes are random base64. Word
+// boundaries are spelled out because `\b` means nothing to macOS's git grep.
+const retiredNames = [['business', 'lens'].join('[ _-]?'), ['(^|[^a-z0-9])b', 'lr'].join('')]
+const retired = spawnSync('git', ['grep', '-I', '-n', '-i', '-E', retiredNames.join('|'), '--', '.', ':!pnpm-lock.yaml'], { cwd: root, encoding: 'utf8' })
 if (retired.status === 0) {
   for (const line of retired.stdout.trim().split('\n')) {
     errors.push(`${line.split(':').slice(0, 2).join(':')} uses the retired product name`)
