@@ -34,3 +34,5 @@ export function rollUnreleased(markdown: string, options: {
 }): string
 
 export function releaseFooter(label: string, url: string, contributors: string[]): string[]
+
+export function releaseNotes(markdown: string, version: string): string

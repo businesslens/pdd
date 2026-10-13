@@ -52,8 +52,8 @@ jobs:
           major="$(jq -r .reportVersion "$dir/index.json")"
           tag="blueprints-v$major"
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            # A prerelease, because GitHub would otherwise mark the only release
-            # in the repository Latest; CLI versions are tags, not releases.
+            # A prerelease, so it is never marked Latest: that belongs to the
+            # newest CLI version, which the Publish workflow releases.
             gh release create "$tag" \
               --target "$GITHUB_SHA" \
               --title "Blueprints (Product Report v$major)" \
