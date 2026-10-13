@@ -63,6 +63,11 @@
       "allowedVersions": "<2"
     },
     {
+      "description": "Nuxt 4.5 drops the query from a prerendered page's address once it hydrates, so a Blueprint report on pdd-kit.dev loses its reading on refresh, Back and shared links (nuxt/nuxt#34651). Nuxt stays on 4.4 until that is fixed upstream; the advisories that 4.5.1 fixes need a running Nuxt server, and every host we ship is static.",
+      "matchPackageNames": ["nuxt"],
+      "allowedVersions": "<4.5"
+    },
+    {
       "description": "Workflows name a Node major and take its latest release; pinning the patch only adds churn, and a new major is a deliberate change.",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["node"],
