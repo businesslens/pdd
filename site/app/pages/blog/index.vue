@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { BlogPostSummary } from '~/utils/blogFeatured'
+import type { ButtonProps } from '@nuxt/ui'
 import { Motion } from 'motion-v'
 import PlateLayout from '~/components/landing/blog/PlateLayout.vue'
 import { splitFeatured } from '~/utils/blogFeatured'
@@ -31,6 +32,14 @@ const { data: posts } = await useAsyncData('blog-posts', () =>
  * cannot disagree about which post leads.
  */
 const split = computed(() => splitFeatured((posts.value ?? []) as BlogPostSummary[]))
+
+// In script rather than inline: @vue/language-core 3.3.12+ reads the `//` of a
+// URL inside a multi-line template expression as a comment and fails the
+// typecheck (vuejs/language-tools#6240).
+const ctaLinks: ButtonProps[] = [
+  { label: 'Star on GitHub', to: 'https://github.com/itai-gendler/pdd-kit', external: true, target: '_blank', icon: 'i-simple-icons-github', color: 'neutral', variant: 'outline', size: 'lg' },
+  { label: 'Read the docs', to: '/docs', trailingIcon: 'i-lucide-arrow-right', size: 'lg' }
+]
 </script>
 
 <template>
@@ -91,10 +100,7 @@ const split = computed(() => splitFeatured((posts.value ?? []) as BlogPostSummar
       variant="naked"
       title="Try it on your own product."
       description="Star the repository to follow the project, or map your own product and open an issue wherever the model falls short."
-      :links="[
-        { label: 'Star on GitHub', to: 'https://github.com/itai-gendler/pdd-kit', external: true, target: '_blank', icon: 'i-simple-icons-github', color: 'neutral', variant: 'outline', size: 'lg' },
-        { label: 'Read the docs', to: '/docs', trailingIcon: 'i-lucide-arrow-right', size: 'lg' }
-      ]"
+      :links="ctaLinks"
       :ui="{
         root: 'relative',
         container: 'max-w-3xl text-center py-16 sm:py-20 lg:py-20',

@@ -9,10 +9,3 @@ allowBuilds:
   lefthook: true
   unrs-resolver: false
   vue-demi: true
-
-overrides:
-  rolldown: 1.2.13
-  # The site's Nuxt Content resolves vue-component-meta ^3.3.7 to its newest
-  # release, which pins a @vue/language-core still inside pnpm's release-age
-  # window. Drop this once 3.3.13 has aged in.
-  vue-component-meta: 3.3.13
