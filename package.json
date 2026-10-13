@@ -24,7 +24,7 @@
   "bugs": {
     "url": "https://github.com/itai-gendler/pdd-kit/issues"
   },
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@12.11.2",
   "publishConfig": {
     "access": "public"
   },
