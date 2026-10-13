@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docs:** The README opens with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time. pdd-kit.dev's "Where is your product model today?" says the same.
 
+- **Docs:** A diagram of the development pipeline today and with Product-Driven Development opens pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
+
 ### Fixed
 
 - `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`.

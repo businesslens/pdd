@@ -69,6 +69,21 @@ const { scrollMotion, staggerMotion } = useLandingMotion()
       />
     </div>
 
+    <!-- The whole argument in one drawing before the rows take it apart. Held
+      to a column's width: the diagram is taller than it is wide, and at the
+      section's full measure it would push the first row off the screen. -->
+    <div class="px-6 pt-6 sm:px-8 sm:pt-8">
+      <img
+        :src="comparison.image"
+        :alt="comparison.imageAlt"
+        class="mx-auto w-full max-w-2xl rounded-xl border border-default"
+        width="1440"
+        height="1540"
+        loading="lazy"
+        decoding="async"
+      >
+    </div>
+
     <div class="p-6 sm:p-8">
       <div class="hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:grid">
         <!-- Both neutral. They were terracotta and green, which put the colour

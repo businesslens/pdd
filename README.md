@@ -101,6 +101,10 @@ They fill the gaps by guessing, and the guesses ship.
 4. **Drift is easy to spot.** The model stays a clear reference as behavior changes.
 5. **Decisions travel with the code.** Model and code changes are reviewed in one pull request.
 
+<p align="center">
+  <img src="./.github/readme/today-and-pdd.webp" alt="Today, every stage of plan, code, review, deploy and operate reconstructs intent from tickets, PRDs, docs, tests, code, chats and people. With Product-Driven Development, those sources feed one defined, versioned, agreed product model, and every stage reads from it, with human approval at plan and review." width="720">
+</p>
+
 ## Example: the Product Model of a kanban board
 
 To show what a Product Model answers, here is one for a **kanban board**: a
