@@ -20,7 +20,7 @@
 const { label, mark, phases = [] } = defineProps<{
   /** The first line inside the ring. Uppercased by CSS, so store it cased. */
   label: string
-  /** The second, set identically — the two are one signature, not a pairing. */
+  /** The second, set identically — the two are one label, not a pairing. */
   mark: string
   /**
    * The station names, clockwise from twelve o'clock — the same order and the
@@ -456,11 +456,9 @@ const phaseMarks = computed(() => phases.map((name, index) => {
 }
 
 /*
-  One face and one size for both lines, so the centre reads as a single signature
-  rather than as a caption with a mark under it. That is also what keeps PDD from
-  looking like a mark of its own: set identically to the name above it, it is
-  plainly the second line of a two-line label. ADR-0002 rules out giving PDD a
-  wordmark, and equal weight is the treatment that respects it.
+  One face and one size for both lines, so the centre reads as a single label
+  rather than as a caption with a mark under it: set identically, the second
+  line is plainly the rest of the first.
 
   **Mono, and small.** The brand has three faces and no fourth
   (`docs/brand.md`); of the three, mono is the only

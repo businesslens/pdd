@@ -1,16 +1,16 @@
 {
   "name": "pdd-kit",
   "version": "0.35.0",
-  "description": "Product-Driven Development for coding agents: build and maintain a git-tracked Product Model in product-model/.",
+  "description": "Product-Driven Development for coding agents: map, change, implement and verify a git-tracked Product Model in product-model/.",
   "author": {
     "name": "Itai Gendler",
     "url": "https://github.com/itai-gendler"
   },
-  "homepage": "https://github.com/itai-gendler/pdd-kit",
+  "homepage": "https://pdd-kit.dev",
   "repository": "https://github.com/itai-gendler/pdd-kit",
   "keywords": [
     "pdd",
-    "product-driven-design",
+    "product-driven-development",
     "product-model",
     "repository-analysis",
     "verification"

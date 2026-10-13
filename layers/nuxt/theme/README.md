@@ -62,4 +62,4 @@ of the `pdd-kit` package; install the ones your host uses. Hosts retain
 final authority over configuration and CSS.
 
 Backgrounds and their audition controls are not here. They live in the optional
-`pdd-kit/nuxt/theme-lab` layer until one is selected and promoted.
+`pdd-toolkit/nuxt/theme-lab` layer until one is selected and promoted.

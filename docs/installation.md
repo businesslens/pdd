@@ -9,7 +9,9 @@ order: 2
 # Installation
 
 pdd-kit is installed once per repository (or once per machine) with the
-`pdd-kit` CLI. It requires Node.js 20.12 or newer.
+`pdd-kit` CLI. Its npm package is named `pdd-toolkit` and installs the
+`pdd-kit` command, so run it with `npx pdd-toolkit …`, or install the package
+globally and run `pdd-kit …`. It requires Node.js 20.12 or newer.
 
 ```bash
 npx pdd-toolkit install
@@ -32,21 +34,20 @@ skill. To run one by name, use
 `/pdd-map` in Claude Code and most agents, `$pdd-map` in
 Codex. These pages show the `/` form.
 
-Check it worked: in your agent type `/pdd-kit-` and the three skills
-appear (Codex: `$pdd-kit-`).
+Check it worked: in your agent type `/pdd-` and the three skills
+appear (Codex: `$pdd-`).
 
 ## Supported agents
 
-| Provider | Project skills directory |
-| --- | --- |
-| Claude Code | `.claude/skills/` |
-| Codex | `.agents/skills/` |
-| Cursor | `.cursor/skills/` |
-| Gemini CLI | `.gemini/skills/` |
-| GitHub Copilot | `.github/skills/` |
+| Provider | Project skills directory | Global skills directory |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex | `.agents/skills/` | `~/.agents/skills/` |
+| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| GitHub Copilot | `.github/skills/` | `~/.copilot/skills/` |
 
-Global installs respect `CLAUDE_CONFIG_DIR` and `CODEX_HOME`; other
-providers use their standard user directories.
+Claude Code's global directory follows `CLAUDE_CONFIG_DIR` when it is set.
 
 ## Project or global
 
@@ -70,7 +71,9 @@ adding this repository as a marketplace:
 ```
 
 The plugin and the CLI installer deliver the same skills; use one or the other,
-not both.
+not both. Claude Code namespaces plugin skills by the plugin's name, so with
+the plugin you run them as `/pdd-kit:pdd-map`, `/pdd-kit:pdd-ideate` and
+`/pdd-kit:pdd-verify`.
 
 Next:
 

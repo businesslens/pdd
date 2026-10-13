@@ -52,8 +52,9 @@ adds what is specific to `site/`.
   page copy or marketing voice.
 - Anything that varies per visitor (the header's GitHub star count) runs in
   the browser after hydration; the generated HTML is the same for everyone.
-- The site has no analytics and no consent notice. Do not add tracking without
-  a new ADR.
+- The only analytics is Cloudflare Web Analytics (cookie-free page views,
+  enabled on the Pages project; see ADR-0001), and there is no consent notice.
+  Do not add other tracking without a new ADR.
 
 ## Verification
 

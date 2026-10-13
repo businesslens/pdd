@@ -11,6 +11,7 @@ import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
 import { ghStarClient, type GithubStarClient, type GithubStarState } from './github-star.js'
 import { viewerPreferencesRoute } from './viewer-preferences.js'
+import { cliCommand } from './invocation.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
 const REPORT_PATH = '/_pdd-kit/report.json'
@@ -224,7 +225,7 @@ class LocalReportStore {
         schedule(this.isLogoSource(filename))
       })
       this.watcher.on('error', (error) => {
-        const message = `File watching failed: ${error.message}. Restart pdd-kit view to follow edits again.`
+        const message = `File watching failed: ${error.message}. Restart ${cliCommand('view')} to follow edits again.`
         this.reject(message, [{ severity: 'error', message }])
       })
     }

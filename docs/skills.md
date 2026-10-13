@@ -1,6 +1,6 @@
 ---
 title: Skills overview
-description: Three self-contained skills cover adoption, intended product change, and automatic verification-to-resolution.
+description: Three self-contained skills cover adoption, intended product change, and verification with approved resolution.
 section: open-source
 group: Skills
 order: 16

@@ -9,8 +9,10 @@ import {
 } from '../core/providers.js'
 import {
   findManagedInstallations,
+  findUnmanagedInstallations,
   installSkillsToTarget
 } from '../core/skill-installation.js'
+import { cliCommand } from '../core/invocation.js'
 import { cliVersion } from '../version.js'
 import { UsageError } from '../core/usage-error.js'
 
@@ -31,9 +33,17 @@ export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promi
   try {
     const requested = parseProviderIds(options.providers)
     const providers = requested ? requested.map(providerById) : PROVIDERS
-    const installations = findManagedInstallations(cwd, providers, resolveScopes(options))
+    const scopes = resolveScopes(options)
+    const installations = findManagedInstallations(cwd, providers, scopes)
+    // Installations update cannot refresh are named, never migrated.
+    const unmanaged = findUnmanagedInstallations(cwd, providers, scopes, path => formatDisplayPath(path))
     if (installations.length === 0) {
-      console.error('No managed pdd-kit skill installation found. Run `pdd-kit install` first.')
+      if (unmanaged.length === 0) {
+        console.error(`No managed pdd-kit skill installation found. Run \`${cliCommand('install')}\` first.`)
+      } else {
+        console.error('No managed pdd-kit skill installation found.')
+        for (const item of unmanaged) console.error(`- ${item.message}`)
+      }
       return 1
     }
 
@@ -48,6 +58,7 @@ export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promi
     progress?.stop('pdd-kit skills updated.')
 
     console.log(`Updated pdd-kit in: ${results.map(result => formatDisplayPath(dirname(result.skillsDir))).join(', ')}.`)
+    for (const item of unmanaged) console.log(`Note: ${item.message}`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

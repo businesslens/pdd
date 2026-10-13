@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { collapseShortcutReferences } from './config/markdownReferences'
 import { pddKitSyntaxHighlightTheme } from './config/syntaxHighlightTheme'
 import { readFaqContent } from './shared/faq-content'
+import { NOT_FOUND_TITLE } from './shared/utils/site'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 const isolatedBuildDir = process.env.PDD_KIT_NUXT_BUILD_DIR
@@ -71,6 +72,21 @@ export default defineNuxtConfig({
     }
   ],
   devtools: { enabled: isDevelopment },
+  // Every icon ships in the client bundle, so no page asks api.iconify.design
+  // for one at runtime. A static site has no `/api/_nuxt_icon` endpoint, and
+  // the prerenderer cannot reach it either, so an icon left out would render
+  // empty on the server and then be fetched from Iconify in the browser.
+  // `scan` collects the names written in each Layer's `app/` and the blog;
+  // the report viewer Layer lists its own. `provider: 'none'` keeps a missed
+  // icon blank instead of calling out.
+  icon: {
+    provider: 'none',
+    clientBundle: {
+      scan: {
+        globInclude: ['app/**/*.{vue,ts}', 'content/**/*.md']
+      }
+    }
+  },
   css: [
     '~/assets/css/main.css'
   ],
@@ -153,6 +169,18 @@ export default defineNuxtConfig({
   // every doc, post and Blueprint; the feeds and sitemap are named because no
   // page links them as HTML.
   nitro: {
+    hooks: {
+      // `404.html` is a client-only shell, rendered before any page runs, so no
+      // head tag from `app/error.vue` reaches it. A static host serves it for
+      // every unknown URL, and without this it has no title at all.
+      'prerender:generate'(route) {
+        if (route.route !== '/404.html' || !route.contents) return
+        route.contents = route.contents.replace(
+          '</head>',
+          `<title>${NOT_FOUND_TITLE}</title><meta name="robots" content="noindex"></head>`
+        )
+      }
+    },
     serverAssets: [{ baseName: 'blueprints', dir: blueprintsDir }],
     publicAssets: [
       ...docsImageAssets,
