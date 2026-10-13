@@ -175,15 +175,12 @@ test('an article carries its byline, reading time, share row, and heading rail',
   await expect(toc.getByRole('link', { name: 'What you get' })).toHaveAttribute('href', '#what-you-get')
 })
 
-test('the footer carries its license line, its links, and the creator credit', async ({ page }) => {
+test('the footer carries its license, its links, and the creator credit', async ({ page }) => {
   await page.goto('/')
   const footer = page.locator('footer')
 
-  // An open-source project credits its maintainer and contributors, not a company.
-  await expect(footer.getByText(
-    `MIT licensed · © ${new Date().getFullYear()} Itai Gendler and contributors`,
-    { exact: true }
-  )).toBeVisible()
+  // The license sits beside the mark; there is no company copyright line.
+  await expect(footer.getByText('©')).toHaveCount(0)
   await expect(footer.getByRole('link', { name: 'MIT licensed', exact: true })).toHaveAttribute(
     'href',
     'https://github.com/itai-gendler/pdd-kit/blob/main/LICENSE'

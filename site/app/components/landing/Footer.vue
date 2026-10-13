@@ -9,8 +9,8 @@ const links = [
   { label: 'Issues', to: 'https://github.com/itai-gendler/pdd-kit/issues', external: true }
 ]
 
-// An open-source project, credited to its maintainer and contributors rather
-// than to a company.
+// The license sits beside the mark: the one thing the footer says about the
+// project itself. The credit to its maintainer stays at the far end.
 const license = 'https://github.com/itai-gendler/pdd-kit/blob/main/LICENSE'
 
 // Two personal accounts, not the project's. The `GitHub` link in the row above
@@ -23,8 +23,6 @@ const creator = {
     { icon: 'i-simple-icons-linkedin', to: 'https://www.linkedin.com/in/itaig/', network: 'LinkedIn' }
   ]
 }
-
-const year = new Date().getFullYear()
 </script>
 
 <template>
@@ -44,19 +42,19 @@ const year = new Date().getFullYear()
         <div
           class="flex flex-col items-center gap-5 py-4 text-center lg:flex-row lg:justify-between lg:gap-6 lg:text-left"
         >
-          <div class="flex flex-col items-center gap-2 lg:items-start">
+          <div class="flex items-center gap-3">
             <NuxtLink to="/" class="flex items-center" aria-label="pdd-kit home">
               <PddKitBrand />
             </NuxtLink>
-            <p class="max-w-sm text-sm leading-5 text-dimmed">
-              <NuxtLink
-                :to="license"
-                external
-                target="_blank"
-                rel="noopener noreferrer"
-                class="underline underline-offset-2 transition-colors hover:text-highlighted"
-              >MIT licensed</NuxtLink> · © {{ year }} Itai Gendler and contributors
-            </p>
+            <NuxtLink
+              :to="license"
+              external
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-dimmed underline underline-offset-2 transition-colors hover:text-highlighted"
+            >
+              MIT licensed
+            </NuxtLink>
           </div>
 
           <nav aria-label="Footer">

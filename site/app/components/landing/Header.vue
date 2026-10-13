@@ -5,9 +5,9 @@ const route = useRoute()
 // No `Home` — the logo already links there. No `Changelog` — it is in the footer,
 // and duplicating it cost a slot the FAQ needed more. See docs/brand.md.
 const items = computed<NavigationMenuItem[]>(() => [
-  { label: 'Blueprints', to: '/blueprints' },
   { label: 'Docs', to: '/docs' },
   { label: 'Blog', to: '/blog' },
+  { label: 'Blueprints', to: '/blueprints' },
   { label: 'FAQ', to: '/faq', active: route.path === '/faq' }
 ])
 const { isDocsPath } = useDocsTools()
