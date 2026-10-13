@@ -8,9 +8,9 @@ order: 5
 
 # Start from a Blueprint
 
-Use this door when your product is a familiar kind (a webshop, a booking app, a
-help desk) and you would rather adapt a reviewed model than write one from
-nothing.
+Use this door when your product is a familiar kind (a kanban board, a habit
+tracker, a URL shortener) and you would rather adapt a reviewed model than
+write one from nothing.
 
 ## What a Blueprint is
 
@@ -49,9 +49,9 @@ file you were given.
    ```
 
 3. If you want something more or different, ask your agent for the change,
-   such as "add guest checkout to the product", and approve it first.
+   such as "add due dates to cards", and approve it first.
 
-4. Ask your agent to implement it: "implement our PDD".
+4. Ask your agent to implement it: "implement the Product Model".
    [Verify](./skill-pdd-verify.md) plans the work in phases: your agent
    implements each phase your usual way, and verify checks it before the next.
    Say "in one go" to skip phases, or "one slice at a time" to go slower; see

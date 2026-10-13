@@ -75,8 +75,9 @@ request. A new noun needs a `CONTEXT.md` entry first.
 - The header's version badge is the root `package.json` version, read at build
   time.
 - In the browser, one optional thing happens: the GitHub star count is fetched
-  from `api.github.com` (the badge renders without a count on failure). There
-  is no analytics.
+  from `api.github.com` (the badge renders without a count on failure).
+  Cloudflare Pages adds its Web Analytics beacon, which records cookie-free
+  page views; there is no other analytics.
 
 ## Content contract
 

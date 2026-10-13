@@ -15,7 +15,7 @@ useSiteSeo({
     <section>
       <h2>The short version</h2>
       <p>
-        This site is a set of static pages: there are no accounts, no sign-in, no mailing list and no analytics. Nothing tracks you, so there is nothing to consent to. Pulling a Blueprint downloads files from GitHub, not from this site. No data is sold.
+        This site is a set of static pages: there are no accounts, no sign-in and no mailing list. Cloudflare, which hosts it, keeps basic page-view statistics without cookies. Pulling a Blueprint downloads files from GitHub, not from this site. No data is sold.
       </p>
     </section>
 
@@ -26,7 +26,7 @@ useSiteSeo({
         <li><strong>GitHub</strong> — the star count in the header is fetched by your browser from GitHub, and Blueprints are downloaded from GitHub Releases. GitHub handles those requests under its own privacy statement.</li>
       </ul>
       <p>
-        Model authoring, validation, export, and opening a local report happen in your repository. Listing and pulling Blueprints download files from GitHub Releases, while contributing uses your authenticated GitHub CLI to open a public pull request. Running the package through <code>npx</code> may also contact the package registry.
+        Model authoring, validation, export, and opening a local report happen in your repository. Listing and pulling Blueprints download files from GitHub Releases, while contributing uses your authenticated GitHub CLI to open a public pull request. Viewing a GitHub repository with <code>npx pdd-toolkit view owner/repo</code> downloads it from GitHub. Running the package through <code>npx</code> may also contact the package registry, and an installed CLI checks npm for a newer version at most once a day; set <code>PDD_KIT_NO_UPDATE_CHECK=1</code> to turn that off.
       </p>
     </section>
 
@@ -48,7 +48,7 @@ useSiteSeo({
     <section>
       <h2>How long it is kept</h2>
       <p>
-        Hosting logs are kept as long as Cloudflare needs them for delivery and security. Nothing else is kept.
+        Hosting logs and page-view statistics are kept by Cloudflare under its own retention policy. Nothing else is kept.
       </p>
     </section>
 

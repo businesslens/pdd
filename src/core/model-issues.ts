@@ -174,7 +174,7 @@ export function issuesAsRequest(issues: ModelIssue[]): string {
     return `- ${where}${issue.message}`
   })
   const what = errors.length
-    ? `${errors.length} ${errors.length === 1 ? 'error' : 'errors'} that \`pdd-kit lint\` reports`
-    : `${listed.length} ${listed.length === 1 ? 'warning' : 'warnings'} from \`pdd-kit lint\``
+    ? `${errors.length} ${errors.length === 1 ? 'error' : 'errors'} that \`npx pdd-toolkit lint\` reports`
+    : `${listed.length} ${listed.length === 1 ? 'warning' : 'warnings'} from \`npx pdd-toolkit lint\``
   return `The pdd-kit Product Model in product-model/ has ${what}. Fix them so the model lints clean:\n\n${lines.join('\n')}\n`
 }

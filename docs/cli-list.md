@@ -22,7 +22,7 @@ from, so a Blueprint appears here within minutes of being merged.
 kanban-board   Kanban Board
 url-shortener  URL Shortener
 
-Pull one with: pdd-kit blueprint pull <name>
+Pull one with: npx pdd-toolkit blueprint pull <name>
 ```
 
 Exits 0 when the list is printed, 1 when the release or the network refuses it,

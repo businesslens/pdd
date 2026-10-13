@@ -8,6 +8,7 @@ import { reportDigest } from '../core/report-digest.js'
 import { expandProductReport } from './open.js'
 import { UsageError } from '../core/usage-error.js'
 import { MAX_PRODUCT_COVER_BYTES, MAX_PRODUCT_LOGO_BYTES, validateProductCover, validateProductLogo } from '../logo.js'
+import { cliCommand } from '../core/invocation.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
@@ -64,7 +65,7 @@ export async function runPull(
     const index = await fetchBlueprintIndex(fetch, repository)
     entry = index.blueprints.find(candidate => candidate.slug === blueprint)
     if (!entry) {
-      console.error(`No Blueprint is named ${blueprint}. Run \`pdd-kit blueprint list\` to see them.`)
+      console.error(`No Blueprint is named ${blueprint}. Run \`${cliCommand('blueprint list')}\` to see them.`)
       return 1
     }
     const bytes = await fetchReleaseAsset(fetch, repository, entry.report, {

@@ -60,7 +60,8 @@ Merging publishes the Blueprint: within minutes it appears in
 [`blueprint list`](./cli-list.md) and can be pulled by name.
 
 Exits 0 when the pull request is opened or updated, 1 when a check fails, you
-decline, or GitHub refuses, and 2 without a terminal and without `--yes`.
+decline, or GitHub refuses, and 2 without a terminal and without `--yes`, or
+for an invalid `PDD_KIT_BLUEPRINT_REPOSITORY`.
 
 ## Next
 

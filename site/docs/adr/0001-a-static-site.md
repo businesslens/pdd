@@ -19,9 +19,12 @@ a request-time decision; or wondering why the site lives in this repository.
   listing flag or withdrawal.
 - **Docs, FAQ and changelog are read from the checkout**, not fetched, so a
   change and the page that shows it land in one pull request.
-- **No analytics.** The site loads no tracker and sets no tracking cookie, so
-  it needs no consent notice. The report viewer keeps display choices in the
-  browser, which identify no one.
+- **Cookie-free page-view statistics only.** Cloudflare Web Analytics, enabled
+  on the Cloudflare Pages project rather than in this code, records basic
+  page-view statistics without cookies (the maintainer's call, 2026-10-13). The
+  site loads no other tracker and sets no cookie, so it needs no consent
+  notice. The report viewer keeps display choices in the browser, which
+  identify no one.
 - **Hosting.** Cloudflare Pages serves the output, deployed from GitHub Actions
   after the checks pass, with a preview URL per pull request. Response headers
   live in `public/_headers`.
@@ -30,7 +33,7 @@ a request-time decision; or wondering why the site lives in this repository.
 ## Why
 
 A format whose home is a signed-in catalog reads as a vendor; a format with an
-open repository and a static site reads as a standard. One maintainer also
+open repository and a static site reads as an open-source project. One maintainer also
 cannot keep a database, auth provider, mail provider and server healthy
 alongside the format itself.
 

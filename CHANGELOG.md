@@ -7,27 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-10-13
+
 ### Changed
 
-- **Report:** **Breaking.** The report viewer's components, composables, CSS classes, custom properties and data attributes now share the `Report` prefix, such as `ReportShell`, `useReportNavigation`, `.report-*` and `data-report-*`. Nuxt hosts that use them by name need the new names.
+- **Report:** **Breaking.** The report viewer's components, composables, CSS classes, custom properties and data attributes now share the `Report` prefix, such as `ReportShell`, `useReportNavigation`, `.report-*` and `data-report-*`. Nuxt hosts that use them by name need the new names. ([#125](https://github.com/itai-gendler/pdd-kit/pull/125)) ([18497ba](https://github.com/itai-gendler/pdd-kit/commit/18497ba99931c2150be44d670cf2ffccb866a9e1))
 
-- **Report:** Display preferences (columns per collection, term tooltips, the expanded resource panel and the collapsed sidebar) are kept in the browser's local storage, and the report sets no cookies. `pdd-kit view` remembers your columns, tooltips and panel choice across runs in a file in your configuration folder.
+- **Report:** Display preferences (columns per collection, term tooltips, the expanded resource panel and the collapsed sidebar) are kept in the browser's local storage, and the report sets no cookies. `pdd-kit view` remembers your columns, tooltips and panel choice across runs in a file in your configuration folder. ([#125](https://github.com/itai-gendler/pdd-kit/pull/125)) ([18497ba](https://github.com/itai-gendler/pdd-kit/commit/18497ba99931c2150be44d670cf2ffccb866a9e1))
 
-- **Skills:** In a pdd-kit development checkout, the skills run the `pdd-kit-dev` launcher; they no longer run a generically named program from `~/.local/bin`.
+- **Skills:** In a pdd-kit development checkout, the skills run the `pdd-kit-dev` launcher; they no longer run a generically named program from `~/.local/bin`. ([#125](https://github.com/itai-gendler/pdd-kit/pull/125)) ([18497ba](https://github.com/itai-gendler/pdd-kit/commit/18497ba99931c2150be44d670cf2ffccb866a9e1))
 
-- **Docs:** pdd-kit.dev reads as an open-source project: the footer names the MIT license and links to contributing and issues, and the site sets no cookies.
+- **Docs:** pdd-kit.dev reads as an open-source project: the footer names the MIT license and links to contributing and issues, and the site sets no cookies. ([#125](https://github.com/itai-gendler/pdd-kit/pull/125)) ([18497ba](https://github.com/itai-gendler/pdd-kit/commit/18497ba99931c2150be44d670cf2ffccb866a9e1))
 
-- **Docs:** The README opens with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time. pdd-kit.dev's "Where is your product model today?" says the same.
+- **Docs:** The README opens with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time. pdd-kit.dev's "Where is your product model today?" says the same. ([#125](https://github.com/itai-gendler/pdd-kit/pull/125)) ([18497ba](https://github.com/itai-gendler/pdd-kit/commit/18497ba99931c2150be44d670cf2ffccb866a9e1))
+
+- **CLI:** Codex global skills install to `~/.agents/skills`, where Codex looks for them; `update` names any left in the old `~/.codex/skills`. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **CLI:** Hints show `npx pdd-toolkit …` when pdd-kit runs through npx, so the suggested command works as printed. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Skills:** Installed as a Claude Code plugin, the skills lint with the pdd-kit release they came with instead of the latest one published. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Skills:** Asking your agent to implement or build a feature in a repository with a Product Model starts `pdd-verify`, and the format reference covers more of what `lint` checks. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Docs:** The README, the docs and the FAQ explain that the npm package is `pdd-toolkit` and the command it installs is `pdd-kit`, and the verification loop is described as approval-gated everywhere. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Docs:** A guide to contributing a Blueprint, and a `git init` step when starting from an idea. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Docs:** pdd-kit.dev's home page and link previews state the problem in the README's words, and Blueprint pages get their own link preview with title, summary and cover. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Docs:** The privacy page says pdd-kit.dev counts page views with Cloudflare Web Analytics, without cookies, and lists when the CLI contacts npm and GitHub. The site no longer loads icons from a third-party service. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
 
 ### Fixed
 
-- `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`.
+- `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`. ([#125](https://github.com/itai-gendler/pdd-kit/pull/125)) ([18497ba](https://github.com/itai-gendler/pdd-kit/commit/18497ba99931c2150be44d670cf2ffccb866a9e1))
+
+- **CLI:** `install` and `update` explain a damaged install marker, naming the file and the command to fix it. A missing report file or `--cwd` folder gets a plain message. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Skills:** Linting explains when npm is missing, and works on Windows. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Docs:** The installation check, the export report version and the example Blueprints in the docs are correct again, and running lint in CI is described as optional. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+- **Docs:** The committed Blueprint READMEs tell agents to run `npx pdd-toolkit`, like pulled ones. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.35.0...v0.36.0][0.36.0]
 
 ## [0.35.0] - 2026-10-13
 
 ### Changed
 
-- **CLI:** The npm package is now `pdd-toolkit`: run it with `npx pdd-toolkit`. The command it installs is still `pdd-kit`. Skills installed from the old package are not updated in place; run `npx pdd-toolkit install --force` once to replace them. ([#127](https://github.com/itai-gendler/pdd-kit/pull/127)) ([42233c3](https://github.com/itai-gendler/pdd-kit/commit/42233c3ffad9eacc3ea4760b111ba09a521dacb4))
+- **CLI:** The npm package is now `pdd-toolkit`: run it with `npx pdd-toolkit`. The command it installs is still `pdd-kit`. ([#127](https://github.com/itai-gendler/pdd-kit/pull/127)) ([42233c3](https://github.com/itai-gendler/pdd-kit/commit/42233c3ffad9eacc3ea4760b111ba09a521dacb4))
 
 - pdd-kit has a new logo, an engraved compass rose beside a PDD-KIT wordmark, in the report, the README and the browser and app icons. ([#123](https://github.com/itai-gendler/pdd-kit/pull/123)) ([a00b2be](https://github.com/itai-gendler/pdd-kit/commit/a00b2beae654ea021dbc73f936dd44cefd7a1389))
 
@@ -59,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- pdd-kit now installs from npm as `@itai-gendler/pdd-kit` (run it with `npx @itai-gendler/pdd-kit`), and the Product Model lives in `product-model/`. The skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx @itai-gendler/pdd-kit install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
+- pdd-kit is the new name, and the Product Model lives in `product-model/`. The skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
 
 - **CLI:** Blueprints are published from the repository itself: a merged Blueprint can be pulled within minutes, without a CLI update and without a catalog server. ([e685cd0](https://github.com/itai-gendler/pdd-kit/commit/e685cd03990b9eb8201f9d3ff4104c54913a25ea))
 
@@ -822,7 +854,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reference. The reference may be terser than the contract; it may not omit a
   name, because an agent cannot author a key it was never told about. It found
   the three missing Product keys above on its first run. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
-- A README for the `@itai-gendler/pdd-kit/nuxt/theme` layer, which shipped as a public
+- A README for the `pdd-toolkit/nuxt/theme` layer, which shipped as a public
   export with no documentation of its palette roles, type scale,
   `<PddKitBrand>` lockup, or icon-family composable. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - **Folder schema 5 — a breaking change with no compatibility reader.** An
@@ -879,7 +911,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   triggered by a Reader-initiated refresh on the Source list Screen — a trigger
   the model previously never stated. Its catch-up failure variation no longer
   contradicts itself about whether the backlog was unchanged or caught up. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
-- **Breaking.** `@itai-gendler/pdd-kit/nuxt/report-viewer` accepts the canonical
+- **Breaking.** `pdd-toolkit/nuxt/report-viewer` accepts the canonical
   `ProductReportV10` directly and owns the complete Product Report projection
   and topology engine. The lossy report view-model export and
   the former whole-report audition layer are removed. The private,
@@ -887,8 +919,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   experiments, while `theme-lab` continues to own background auditions. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - **Breaking.** Logo, lockup, and favicon selection are no longer theme-lab
   experiments. The approved mark, wordmark, brand renderer, favicon, and
-  install-icon family now live at canonical paths in `@itai-gendler/pdd-kit/nuxt/theme`;
-  `@itai-gendler/pdd-kit/theme-lab/variants` exposes background choices only. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
+  install-icon family now live at canonical paths in `pdd-toolkit/nuxt/theme`;
+  `pdd-toolkit/theme-lab/variants` exposes background choices only. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - The Product Report keeps entity identity collision-safe across collections,
   preserves focus across live recompiles, separates Capability and Journey
   Scenario readings, shows Screen-to-Journey derivation provenance, renders
@@ -949,7 +981,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blocking `site.webmanifest`. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - The Product Report light and dark page surfaces are part of the shared theme
   again. The warm base, top glow, and paper grain moved from the optional
-  theme-lab audition layer into `@itai-gendler/pdd-kit/nuxt/theme`, where the promoted
+  theme-lab audition layer into `pdd-toolkit/nuxt/theme`, where the promoted
   Product Report and the bundled local viewer inherit them without depending on a
   lab layer. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - Journey composition no longer implies a Screen is reached from a Step that
@@ -994,7 +1026,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Compile the public `@itai-gendler/pdd-kit/theme-lab/variants` subpath into `dist` so
+- Compile the public `pdd-toolkit/theme-lab/variants` subpath into `dist` so
   plain Node consumers such as Playwright can import it from `node_modules`
   without relying on unsupported TypeScript stripping. ([5cf8b56](https://github.com/itai-gendler/pdd-kit/commit/5cf8b56c69028b474fe20b609072e73ab224f344))
 
@@ -1012,7 +1044,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recompiles automatically after debounced source edits, streams revisions to
   open browsers, retains the last valid report during lint errors, writes no
   generated report, and opens no network listener beyond `127.0.0.1`. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- Root `@itai-gendler/pdd-kit` exports for the pure Product Report view-model projection,
+- Root `pdd-toolkit` exports for the pure Product Report view-model projection,
   the shared Nuxt report renderer, and a sibling pdd-kit-wide theme Layer,
   so hosts share UI without a second public npm package. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - An opt-in shared Nuxt theme-lab Layer for auditioning the same backgrounds,
@@ -1157,10 +1189,10 @@ pull-request contribution flow described below.
   `user-agent: pdd-kit/<version>` to the catalog. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
 - **Features** and **business rules** are first-class product-model entities
   with their own directories, IDs, relationships, and validation rules. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- A `@itai-gendler/pdd-kit/report` library entry point exporting the Product Report
+- A `pdd-toolkit/report` library entry point exporting the Product Report
   schema, its cross-entity validator, and the canonical digest. It depends only
   on `zod` and never loads the CLI. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `redactSourceEvidence` in the `@itai-gendler/pdd-kit/report` contract strips every
+- `redactSourceEvidence` in the `pdd-toolkit/report` contract strips every
   repository reference from a report before it leaves its owning workspace —
   `codeRefs`, repository `entryPoints`, repository-relative `links`, and
   `coverage.sourceAreas`. Product-facing routes and HTTP(S) URLs are kept.
@@ -1262,7 +1294,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.36.0...HEAD
+[0.36.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.33.0...v0.34.0

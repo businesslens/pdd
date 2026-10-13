@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { existsSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { Command, CommanderError, Help, InvalidArgumentError } from 'commander'
 import { runContribute } from './commands/contribute.js'
@@ -11,6 +12,7 @@ import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
 import { runView } from './commands/view.js'
 import { checkForCliUpdate } from './core/cli-update.js'
+import { UsageError } from './core/usage-error.js'
 import { cliVersion } from './version.js'
 
 interface InstallCliOptions {
@@ -54,7 +56,19 @@ class StopInvocation extends Error {
 
 function cwdFor(command: Command): string {
   const { cwd } = command.optsWithGlobals() as { cwd?: string }
-  return resolve(process.cwd(), cwd || '.')
+  const directory = resolve(process.cwd(), cwd || '.')
+  if (cwd !== undefined && !isDirectory(directory)) {
+    throw new UsageError(`${directory} ${existsSync(directory) ? 'is not a directory' : 'does not exist'}. Pass an existing directory to --cwd.`)
+  }
+  return directory
+}
+
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory()
+  } catch {
+    return false
+  }
 }
 
 function scope(value: string): 'project' | 'global' {
@@ -245,7 +259,7 @@ async function main(argv = process.argv): Promise<number> {
       return error.exitCode === 0 || error.code === 'commander.help' ? 0 : 2
     }
     console.error(`error: ${(error as Error).message}`)
-    return 1
+    return error instanceof UsageError ? 2 : 1
   }
 }
 

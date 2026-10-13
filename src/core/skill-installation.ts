@@ -9,11 +9,13 @@ import {
   rmSync,
   writeFileSync
 } from 'node:fs'
+import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
 import { PACKAGE_NAME } from '../version.js'
+import { cliCommand } from './invocation.js'
 
 export const PDD_KIT_SKILLS = [
   'pdd-map',
@@ -89,22 +91,56 @@ function ownedChildPath(skillsDir: string, name: string): string | undefined {
   return target
 }
 
-function readManifest(skillsDir: string): InstallationManifest | undefined {
+/** What a skills directory's pdd-kit marker says about who installed it. */
+export type SkillsDirMarker =
+  | { kind: 'none' }
+  | { kind: 'managed', manifest: InstallationManifest }
+  /**
+   * Well formed, but written by another package. Named so the reader knows; it
+   * grants no ownership, and a reinstall over it takes an explicit `--force`.
+   */
+  | { kind: 'other-package', file: string, packageName: string, skills: string[] }
+  /** Present, but not JSON, or not a shape any pdd-kit release wrote. */
+  | { kind: 'invalid', file: string, reason: 'not valid JSON' | 'not a pdd-kit installation marker' }
+
+function isMarkerShape(parsed: unknown): parsed is InstallationManifest {
+  const candidate = parsed as Partial<InstallationManifest> | null
+  return Boolean(candidate)
+    && typeof candidate === 'object'
+    && candidate!.schema === 1
+    && typeof candidate!.version === 'string'
+    && Array.isArray(candidate!.skills)
+    && candidate!.skills.every(isSkillDirectoryName)
+}
+
+export function inspectSkillsDir(skillsDir: string): SkillsDirMarker {
   const file = join(skillsDir, MANIFEST_FILE)
-  if (!existsSync(file)) return undefined
+  if (!existsSync(file)) return { kind: 'none' }
+  let parsed: unknown
   try {
-    const parsed = JSON.parse(readFileSync(file, 'utf8')) as InstallationManifest
-    if (
-      parsed.schema === 1
-      && parsed.package === PACKAGE_NAME
-      && typeof parsed.version === 'string'
-      && Array.isArray(parsed.skills)
-      && parsed.skills.every(isSkillDirectoryName)
-    ) return parsed
+    parsed = JSON.parse(readFileSync(file, 'utf8'))
   } catch {
     // Invalid markers never grant overwrite permission.
+    return { kind: 'invalid', file, reason: 'not valid JSON' }
   }
-  return undefined
+  if (isMarkerShape(parsed)) {
+    const packageName: unknown = parsed.package
+    if (packageName === PACKAGE_NAME) return { kind: 'managed', manifest: parsed }
+    if (typeof packageName === 'string' && /^(?:@[a-z0-9._~-]+\/)?[a-z0-9._~-]+$/.test(packageName)) {
+      return { kind: 'other-package', file, packageName, skills: parsed.skills }
+    }
+  }
+  return { kind: 'invalid', file, reason: 'not a pdd-kit installation marker' }
+}
+
+function readManifest(skillsDir: string): InstallationManifest | undefined {
+  const marker = inspectSkillsDir(skillsDir)
+  return marker.kind === 'managed' ? marker.manifest : undefined
+}
+
+/** The command that reinstalls one harness and scope, for a hint. */
+function reinstallCommand(target: InstallTarget, force: boolean): string {
+  return cliCommand(`install --providers ${target.provider.id} --scope ${target.scope}${force ? ' --force' : ''}`)
 }
 
 /*
@@ -115,16 +151,28 @@ function readManifest(skillsDir: string): InstallationManifest | undefined {
  * pdd-kit) was a guess, and guessing wrong costs someone work they cannot
  * recover, which is the Rule the model states.
  */
-function assertSafeTargets(skillsDir: string, existing: InstallationManifest | undefined, force: boolean): void {
+function assertSafeTargets(skillsDir: string, marker: SkillsDirMarker, target: InstallTarget, force: boolean): void {
+  if (force) return
+  const existing = marker.kind === 'managed' ? marker.manifest : undefined
   for (const name of PDD_KIT_SKILLS) {
-    const target = join(skillsDir, name)
-    if (!existsSync(target)) continue
-    const owned = existing?.skills.includes(name) ?? false
-    if (!owned && !force) {
+    const directory = join(skillsDir, name)
+    if (!existsSync(directory)) continue
+    if (existing?.skills.includes(name)) continue
+    if (marker.kind === 'other-package') {
       throw new Error(
-        `Refusing to overwrite ${target}: it is not marked as a pdd-kit-managed skill. Pass --force only if you own that directory.`
+        `Refusing to overwrite ${directory}: it was installed by another package, ${marker.packageName}, which this version does not manage. `
+        + `Run \`${reinstallCommand(target, true)}\` once to replace it.`
       )
     }
+    if (marker.kind === 'invalid') {
+      throw new Error(
+        `Refusing to overwrite ${directory}: its marker ${marker.file} is ${marker.reason}, so it is not marked as a pdd-kit-managed skill. `
+        + 'Pass --force only if you own that directory.'
+      )
+    }
+    throw new Error(
+      `Refusing to overwrite ${directory}: it is not marked as a pdd-kit-managed skill. Pass --force only if you own that directory.`
+    )
   }
 }
 
@@ -141,7 +189,7 @@ export function assertInstallTargets(
   for (const target of targets) {
     const skillsDir = providerSkillsDir(target.provider, target.scope, cwd, options.home)
     if (!existsSync(skillsDir)) continue
-    assertSafeTargets(skillsDir, readManifest(skillsDir), Boolean(options.force))
+    assertSafeTargets(skillsDir, inspectSkillsDir(skillsDir), target, Boolean(options.force))
   }
 }
 
@@ -189,8 +237,9 @@ export function installSkillsToTarget(
 
   const skillsDir = providerSkillsDir(target.provider, target.scope, cwd, options.home)
   mkdirSync(skillsDir, { recursive: true })
-  const existing = readManifest(skillsDir)
-  assertSafeTargets(skillsDir, existing, Boolean(options.force))
+  const marker = inspectSkillsDir(skillsDir)
+  assertSafeTargets(skillsDir, marker, target, Boolean(options.force))
+  const existing = marker.kind === 'managed' ? marker.manifest : undefined
 
   // A skill the manifest recorded that this version no longer ships is ours to
   // remove; the manifest is the only proof of that. The proof extends to the
@@ -249,4 +298,70 @@ export function installedSkillNames(sourceRoot = bundledSkillsDir()): string[] {
     .filter(entry => entry.isDirectory() && PDD_KIT_SKILLS.includes(entry.name as PddKitSkill))
     .map(entry => entry.name)
     .sort()
+}
+
+/** A skills directory `update` cannot refresh, and what the reader can do about it. */
+export interface UnmanagedInstallation {
+  provider: Provider
+  scope: InstallScope
+  skillsDir: string
+  message: string
+}
+
+function unmanagedMessage(
+  skillsDir: string,
+  target: InstallTarget,
+  marker: SkillsDirMarker,
+  display: (path: string) => string
+): string | undefined {
+  const where = display(skillsDir)
+  if (marker.kind === 'other-package') {
+    return `${where} has pdd-kit skills installed by another package, ${marker.packageName}, which this version does not manage. `
+      + `Run \`${reinstallCommand(target, true)}\` once to replace them.`
+  }
+  if (marker.kind === 'invalid') {
+    return `${display(marker.file)} is ${marker.reason}, so pdd-kit cannot tell which skills it installed in ${where}. `
+      + `If you own that directory, run \`${reinstallCommand(target, true)}\` to reinstall them.`
+  }
+  return undefined
+}
+
+/**
+ * Skills directories with a marker `update` will not act on: one another
+ * package wrote, one that cannot be read, or a managed install in a location its harness no longer reads. Found only
+ * to be named; nothing here is migrated.
+ */
+export function findUnmanagedInstallations(
+  cwd: string,
+  providers: Provider[],
+  scopes: InstallScope[],
+  display: (path: string) => string,
+  home = homedir()
+): UnmanagedInstallation[] {
+  const found: UnmanagedInstallation[] = []
+  const seen = new Set<string>()
+  for (const scope of scopes) {
+    for (const provider of providers) {
+      const target = { provider, scope }
+      const skillsDir = providerSkillsDir(provider, scope, cwd, home)
+      if (!seen.has(skillsDir)) {
+        seen.add(skillsDir)
+        const message = unmanagedMessage(skillsDir, target, inspectSkillsDir(skillsDir), display)
+        if (message) found.push({ provider, scope, skillsDir, message })
+      }
+      if (scope !== 'global') continue
+      for (const retired of provider.retiredGlobalSkillsDirs?.(home) ?? []) {
+        if (seen.has(retired) || retired === skillsDir) continue
+        seen.add(retired)
+        const marker = inspectSkillsDir(retired)
+        const recorded = marker.kind === 'managed' ? marker.manifest.skills : marker.kind === 'other-package' ? marker.skills : undefined
+        const message = recorded
+          ? `${display(retired)} holds pdd-kit skills where ${provider.name} no longer looks for them; it now reads ${display(skillsDir)}. `
+            + `Run \`${reinstallCommand(target, false)}\`, then delete ${[...recorded, MANIFEST_FILE].join(', ')} from ${display(retired)}.`
+          : undefined
+        if (message) found.push({ provider, scope, skillsDir: retired, message })
+      }
+    }
+  }
+  return found
 }

@@ -10,8 +10,17 @@ order: 4
 
 Use this door when there is no code yet, or none worth describing.
 
-1. [Install the pdd-kit skills](./installation.md), then describe the
-   product you want to your agent:
+1. Create a folder for the product as a Git repository (the skills check the
+   model only inside one) and [install the pdd-kit skills](./installation.md)
+   into it:
+
+   ```bash
+   mkdir dog-walking && cd dog-walking
+   git init
+   npx pdd-toolkit install
+   ```
+
+   Then describe the product you want to your agent:
 
    ```text
    I want to build a booking app for dog walkers
@@ -31,7 +40,8 @@ Use this door when there is no code yet, or none worth describing.
    npx pdd-toolkit lint
    ```
 
-4. Ask your agent to implement it: "implement it", or "implement our PDD".
+4. Ask your agent to implement it: "implement it", or "implement the Product
+   Model".
    [Verify](./skill-pdd-verify.md) plans the work in phases, your
    agent implements each phase your usual way (plan mode, an SDD tool, or
    freestyle), and verify checks it before the next. Say "in one go" to skip

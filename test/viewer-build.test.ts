@@ -158,6 +158,6 @@ describe('model issues', () => {
       { severity: 'error', message: 'README.md is missing', file: 'README.md' },
       { severity: 'warning', message: 'No Step leaves it in "Refunded"', file: 'entities/order.md' }
     ])
-    expect(request).toBe('The pdd-kit Product Model in product-model/ has 2 errors that `pdd-kit lint` reports. Fix them so the model lints clean:\n\n- entities/cart.md (line 2): Frontmatter YAML failed to parse\n- README.md is missing\n')
+    expect(request).toBe('The pdd-kit Product Model in product-model/ has 2 errors that `npx pdd-toolkit lint` reports. Fix them so the model lints clean:\n\n- entities/cart.md (line 2): Frontmatter YAML failed to parse\n- README.md is missing\n')
   })
 })
