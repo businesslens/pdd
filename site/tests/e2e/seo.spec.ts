@@ -179,7 +179,7 @@ test.describe('client-side navigation', () => {
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `${ORIGIN}/faq`)
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'website')
     await expect(page.locator('meta[property="og:image"]'))
-      .toHaveAttribute('content', `${ORIGIN}/product-model-open-graph.png`)
+      .toHaveAttribute('content', `${ORIGIN}/pdd-kit-social-card.png`)
     await expect(page.locator('meta[property^="article:"]')).toHaveCount(0)
     const types = (await structuredData(page)).map(node => node['@type'])
     expect(types.sort()).toEqual(['SoftwareSourceCode', 'WebSite'])

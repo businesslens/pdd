@@ -27,7 +27,7 @@ test('renders the Product-Driven Development homepage', async ({ page, request }
     .toHaveAttribute('href', '/site.webmanifest')
   await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', 'https://pdd-kit.dev/')
   await expect(page.locator('meta[property="og:image"]'))
-    .toHaveAttribute('content', 'https://pdd-kit.dev/product-model-open-graph.png')
+    .toHaveAttribute('content', 'https://pdd-kit.dev/pdd-kit-social-card.png')
   await expect(page.locator('meta[name="description"]'))
     .toHaveAttribute('content', /^[^—–]*product model[^—–]*$/)
   const bodyText = await page.locator('body').innerText()
@@ -92,7 +92,7 @@ test('renders the Product-Driven Development homepage', async ({ page, request }
   const [desktopAsset, mobileAsset, socialAsset] = await Promise.all([
     request.get('/brand/heroes/product-model-wide.webp'),
     request.get('/brand/heroes/product-model-mobile.webp'),
-    request.get('/product-model-open-graph.png')
+    request.get('/pdd-kit-social-card.png')
   ])
   expect(desktopAsset.ok()).toBe(true)
   expect(desktopAsset.headers()['content-type']).toBe('image/webp')

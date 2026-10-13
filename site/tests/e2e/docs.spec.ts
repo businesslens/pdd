@@ -46,9 +46,9 @@ test.describe('docs link previews', () => {
       expect(response?.ok()).toBe(true)
 
       await expect(page.locator('meta[property="og:image"]'))
-        .toHaveAttribute('content', 'https://pdd-kit.dev/product-model-open-graph.png')
+        .toHaveAttribute('content', 'https://pdd-kit.dev/pdd-kit-social-card.png')
       await expect(page.locator('meta[name="twitter:image"]'))
-        .toHaveAttribute('content', 'https://pdd-kit.dev/product-model-open-graph.png')
+        .toHaveAttribute('content', 'https://pdd-kit.dev/pdd-kit-social-card.png')
 
       if (path === '/') continue
 

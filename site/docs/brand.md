@@ -72,7 +72,8 @@ Variable" with `Unknown font format`, breaking `pnpm generate`. There is no
   the light drawing, and install icons sit on an opaque paper plate.
 - Site artwork lives in `public/brand/` (hero, door plates, resource-type
   plates, the missing-piece illustration). The social card is
-  `public/product-model-open-graph.png`.
+  `public/pdd-kit-social-card.png`; a redrawn card takes a new file name, since
+  link previews cache the image by URL.
 
 ## Voice
 

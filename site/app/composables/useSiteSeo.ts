@@ -12,8 +12,8 @@ import type { MaybeRefOrGetter } from 'vue'
  */
 
 const DEFAULT_IMAGE = {
-  src: '/product-model-open-graph.png',
-  alt: 'pdd-kit — "AI agents need a Product Model", beside an illustrated map with the product at its centre and the parts of its model ringed around it.'
+  src: '/pdd-kit-social-card.png',
+  alt: 'pdd-kit — "Product-Driven Development for coding agents", beside an illustrated map with the product at its centre and the parts of its model ringed around it.'
 }
 
 const DEFAULT_TITLE = 'pdd-kit'
