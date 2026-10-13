@@ -43,6 +43,18 @@
       "enabled": false
     },
     {
+      "description": "@types/node describes the oldest Node the code must run on, its engines floor, never the newest release or the Node CI installs. Its major is raised by hand along with that floor.",
+      "matchPackageNames": ["@types/node"],
+      "matchFileNames": ["package.json"],
+      "allowedVersions": "<21"
+    },
+    {
+      "description": "The site's engines floor is Node 22, so its @types/node stays on 22 for the same reason.",
+      "matchPackageNames": ["@types/node"],
+      "matchFileNames": ["site/package.json"],
+      "allowedVersions": "<23"
+    },
+    {
       "description": "Workflows name a Node major and take its latest release; pinning the patch only adds churn, and a new major is a deliberate change.",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["node"],
