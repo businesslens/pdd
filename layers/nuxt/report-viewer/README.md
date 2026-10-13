@@ -321,7 +321,7 @@ the canonical report inside a page:
 <PddKitReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReport` from `pdd-kit/report`. There is
+`report` must be a `ProductReport` from `pdd-toolkit/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and

@@ -17,3 +17,10 @@
  * auto-import transform.
  */
 export const SITE_ORIGIN = 'https://pdd-kit.dev'
+
+/**
+ * The not-found page's document title. `app/error.vue` sets it in the browser,
+ * and `nuxt.config.ts` writes it into the generated `404.html`, which Nuxt emits
+ * as an empty shell with no head of its own.
+ */
+export const NOT_FOUND_TITLE = 'Page not found · pdd-kit'

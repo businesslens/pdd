@@ -67,9 +67,11 @@ errors or no model is found, and 2 for an unknown option.
 ## Run it in CI
 
 Run lint on every pull request, not only when `product-model/` changes: a code
-rename can break a code Reference. Add `pdd-kit` as a devDependency at the
-version your skills were installed from (recorded in `.pdd-kit-install.json`
-beside the skills), so CI and your agent agree:
+rename can break a code Reference. Add the `pdd-toolkit` package as a
+devDependency at the version your skills were installed from (recorded in
+`.pdd-kit-install.json` beside the skills), so CI and your agent agree. It
+installs the `pdd-kit` command, so a `package.json` script can call
+`pdd-kit lint` directly:
 
 ```yaml [.github/workflows/pdd-kit.yml]
 name: pdd-kit

@@ -17,6 +17,17 @@ export default defineAppConfig({
       slots: { root: 'min-h-0' }
     },
     prose: {
+      /**
+       * Code-block file icons from collections the site bundles. Nuxt UI's
+       * defaults name `vscode-icons`, which is not installed, so these would
+       * otherwise be fetched from Iconify in the browser.
+       */
+      codeIcon: {
+        md: 'i-simple-icons-markdown',
+        yml: 'i-simple-icons-yaml',
+        yaml: 'i-simple-icons-yaml',
+        json: 'i-simple-icons-json'
+      },
       table: {
         slots: {
           root: 'content-table-frame rounded-xl',

@@ -1,14 +1,16 @@
 ---
 name: pdd-verify
-description: Implement a product-model/ Product Model (PDD) in code, in phases by default, or check that code and model agree, resolving every gap until the requested scope is aligned or explicitly blocked. Use when asked to implement, build or develop the product or any part of it from the Product Model, the PDD or a pulled Blueprint, including “implement it” or “build it” after ideate; and after implementation, refactors, suspected drift, before release, for a branch-scoped change, or for a named/full current-state audit. Use “report only” when no writes or code changes are allowed.
+description: Implement a product-model/ Product Model (PDD) in code, in phases by default, or check that code and model agree, resolving every gap until the requested scope is aligned or explicitly blocked. Use when asked to implement, build or develop the product or any part of it in a repository that has a product-model/ folder, even when the request names only a feature (“implement guest checkout”, “build the invite flow”); when asked to build from the Product Model, the PDD or a pulled Blueprint, including “implement it” or “build it” after ideate; and after implementation, refactors, suspected drift, before release, for a branch-scoped change, or for a named/full current-state audit. Use “report only” when no writes or code changes are allowed.
 ---
 
 # Implement and verify alignment
 
 Own one invocation from inspection through resolution. The user must not have to
-invoke map or ideate manually after a finding. Use child agents for bounded
-phases when the harness supports them; otherwise run the same protocols as
-internal phase transitions without losing context.
+invoke map or ideate manually after a finding. Child agents may run the
+bounded analysis phases — lint, inspection, classification — when the harness
+supports them; otherwise run the same protocols as internal phase transitions
+without losing context. Implementing is not such a phase: you are the builder
+unless the user asks for a subagent (step 8).
 
 Implementing is resolution from a larger gap: what the model describes that
 the code does not do yet is model-right, and implementation closes it in

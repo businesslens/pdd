@@ -1,12 +1,21 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 
 /** The npm package that installs the `pdd-kit` command. */
 const PACKAGE = 'pdd-toolkit'
+
+/** Read `file` as JSON, or `undefined` when it is absent or unreadable. */
+function readJson(file) {
+  try {
+    return JSON.parse(readFileSync(file, 'utf8'))
+  } catch {
+    return undefined
+  }
+}
 
 /**
  * Pin the CLI to the version these skills were installed from.
@@ -16,19 +25,44 @@ const PACKAGE = 'pdd-toolkit'
  * `latest` at run time means a model authored against a newer format gets
  * linted by an older published CLI, which reports the new frontmatter keys as
  * unknown — a confusing failure with no obvious cause.
+ *
+ * `pdd-kit install` writes `.pdd-kit-install.json` beside the skill folders.
+ * A Claude plugin installs the whole package instead, so the skill folder sits
+ * at `<package>/skills/<name>/` and the package's own manifest names the
+ * release.
  */
 function installedPackageSpec() {
-  try {
-    const manifestFile = new URL('../../.pdd-kit-install.json', import.meta.url)
-    const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
-    if (manifest?.package === PACKAGE && typeof manifest.version === 'string') {
-      return `${PACKAGE}@${manifest.version}`
-    }
-  } catch {
-    // Not installed through `pdd-kit install`; fall back below.
+  const installation = readJson(new URL('../../.pdd-kit-install.json', import.meta.url))
+  if (installation?.package === PACKAGE && typeof installation.version === 'string') {
+    return `${PACKAGE}@${installation.version}`
+  }
+  const packageRoot = readJson(new URL('../../../package.json', import.meta.url))
+  if (packageRoot?.name === PACKAGE && typeof packageRoot.version === 'string') {
+    return `${PACKAGE}@${packageRoot.version}`
   }
   return `${PACKAGE}@latest`
 }
+
+/**
+ * Run npm without a shell. Windows ships npm as a `.cmd` shim that Node
+ * refuses to start without one, so run the npm bundled beside Node directly,
+ * and fall back to the shim through `cmd.exe` with every argument quoted.
+ */
+function npmInvocation(npmArgs) {
+  if (process.platform !== 'win32') return { file: 'npm', args: npmArgs, shell: false }
+  const bundled = join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
+  if (existsSync(bundled)) {
+    return { file: process.execPath, args: [bundled, ...npmArgs], shell: false }
+  }
+  return {
+    file: 'npm.cmd',
+    args: npmArgs.map(arg => `"${arg.replaceAll('"', '""')}"`),
+    shell: true
+  }
+}
+
+const NPM_MISSING = 'npm was not found on PATH. Install Node.js with npm ' +
+  '(https://nodejs.org), or put npm on PATH, then run the lint again.'
 
 /**
  * Maintainers can explicitly activate one local PDD worktree through
@@ -86,7 +120,6 @@ try {
 
 const runnerRoot = mkdtempSync(join(tmpdir(), 'pdd-kit-cli-'))
 const env = { ...process.env }
-delete env.PDD_KIT_API_KEY
 
 try {
   const developmentCli = activeDevelopmentCli(runnerRoot, env)
@@ -97,28 +130,32 @@ try {
       stdio: 'inherit'
     })
   } else {
-    execFileSync(
-      'npm',
-      [
-        'exec',
-        '--yes',
-        '--ignore-scripts',
-        `--package=${installedPackageSpec()}`,
-        '--',
-        'pdd-kit',
-        '--cwd',
-        root,
-        ...commandArgs
-      ],
-      {
-        cwd: runnerRoot,
-        env,
-        stdio: 'inherit'
-      }
-    )
+    const npm = npmInvocation([
+      'exec',
+      '--yes',
+      '--ignore-scripts',
+      `--package=${installedPackageSpec()}`,
+      '--',
+      'pdd-kit',
+      '--cwd',
+      root,
+      ...commandArgs
+    ])
+    execFileSync(npm.file, npm.args, {
+      cwd: runnerRoot,
+      env,
+      shell: npm.shell,
+      stdio: 'inherit'
+    })
   }
 } catch (error) {
-  process.exitCode = typeof error.status === 'number' ? error.status : 1
+  // cmd.exe reports an unknown command as exit status 9009.
+  if (error?.code === 'ENOENT' || (process.platform === 'win32' && error?.status === 9009)) {
+    process.stderr.write(`${NPM_MISSING}\n`)
+    process.exitCode = 127
+  } else {
+    process.exitCode = typeof error.status === 'number' ? error.status : 1
+  }
 } finally {
   rmSync(runnerRoot, { recursive: true, force: true })
 }

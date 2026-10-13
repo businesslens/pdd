@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { runInstall } from '../src/commands/install.js'
 import { runUpdate } from '../src/commands/update.js'
 import { providerById } from '../src/core/providers.js'
-import { assertInstallTargets } from '../src/core/skill-installation.js'
+import { assertInstallTargets, findUnmanagedInstallations } from '../src/core/skill-installation.js'
 import {
   PDD_KIT_SKILLS,
   installSkillsToTarget
@@ -86,8 +86,10 @@ describe('skill installation', () => {
       { home }
     )
 
-    expect(result.skillsDir).toBe(join(home, '.codex', 'skills'))
+    // Codex reads user skills from ~/.agents/skills, not $CODEX_HOME/skills.
+    expect(result.skillsDir).toBe(join(home, '.agents', 'skills'))
     expect(existsSync(join(result.skillsDir, 'pdd-map', 'SKILL.md'))).toBe(true)
+    expect(existsSync(join(home, '.codex', 'skills'))).toBe(false)
     expect(existsSync(join(project, '.agents'))).toBe(false)
   })
 
@@ -273,5 +275,105 @@ describe('skill installation', () => {
     expect(manifest.installedAt).toBe(originalManifest.installedAt)
     expect(manifest.updatedAt).toBeDefined()
     expect(manifest.skills).toEqual([...PDD_KIT_SKILLS])
+  })
+})
+
+describe('installations this version does not manage', () => {
+  function plantInstallation(skillsDir: string, marker: string): void {
+    for (const skill of PDD_KIT_SKILLS) {
+      mkdirSync(join(skillsDir, skill), { recursive: true })
+      writeFileSync(join(skillsDir, skill, 'SKILL.md'), `---\nname: ${skill}\n---\nOld.\n`)
+    }
+    writeFileSync(join(skillsDir, '.pdd-kit-install.json'), marker)
+  }
+
+  function otherPackageMarker(packageName: string): string {
+    return JSON.stringify({
+      schema: 1,
+      package: packageName,
+      version: '0.34.0',
+      provider: 'claude',
+      scope: 'project',
+      skills: [...PDD_KIT_SKILLS],
+      installedAt: '2026-01-01T00:00:00.000Z'
+    })
+  }
+
+  it('names the other package and the one command that replaces its install', async () => {
+    const project = temporary('pdd-kit-previous-package-')
+    const skillsDir = join(project, '.claude', 'skills')
+    plantInstallation(skillsDir, otherPackageMarker('@itai-gendler/pdd-kit'))
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    expect(await runUpdate(project, { scope: 'project' })).toBe(1)
+    expect(errors.join('\n')).toContain('installed by another package, @itai-gendler/pdd-kit,')
+    expect(errors.join('\n')).toContain('`pdd-kit install --providers claude --scope project --force` once')
+    expect(errors.join('\n')).not.toContain('Run `pdd-kit install` first')
+
+    expect(() => installSkillsToTarget(
+      project,
+      { provider: providerById('claude'), scope: 'project' },
+      '9.9.9'
+    )).toThrow(/installed by another package, @itai-gendler\/pdd-kit,.*`pdd-kit install --providers claude --scope project --force` once/)
+    // Nothing migrates on its own: the old skills are untouched until --force.
+    expect(readFileSync(join(skillsDir, 'pdd-map', 'SKILL.md'), 'utf8')).toContain('Old.')
+
+    expect(await runInstall(project, { providers: 'claude', scope: 'project', yes: true, force: true })).toBe(0)
+    expect(JSON.parse(readFileSync(join(skillsDir, '.pdd-kit-install.json'), 'utf8')).package).toBe('pdd-toolkit')
+    expect(await runUpdate(project, { scope: 'project' })).toBe(0)
+  })
+
+  it('reports a marker that is not valid JSON by its file, not as a missing installation', async () => {
+    const project = temporary('pdd-kit-corrupt-marker-')
+    const skillsDir = join(project, '.claude', 'skills')
+    const marker = join(skillsDir, '.pdd-kit-install.json')
+    plantInstallation(skillsDir, '{ "schema": 1,')
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+
+    expect(await runUpdate(project, { scope: 'project' })).toBe(1)
+    expect(errors.join('\n')).toContain(`${marker} is not valid JSON`)
+    expect(errors.join('\n')).toContain('`pdd-kit install --providers claude --scope project --force`')
+
+    expect(() => installSkillsToTarget(
+      project,
+      { provider: providerById('claude'), scope: 'project' },
+      '9.9.9'
+    )).toThrow(`its marker ${marker} is not valid JSON`)
+  })
+
+  it('still says nothing is installed when there is nothing to name', async () => {
+    const project = temporary('pdd-kit-nothing-')
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+
+    expect(await runUpdate(project, { scope: 'project' })).toBe(1)
+    expect(errors).toEqual(['No managed pdd-kit skill installation found. Run `pdd-kit install` first.'])
+  })
+
+  it('names a Codex global install left at the location Codex no longer reads', () => {
+    vi.stubEnv('CODEX_HOME', undefined)
+    const project = temporary('pdd-kit-retired-codex-project-')
+    const home = temporary('pdd-kit-retired-codex-home-')
+    const retired = join(home, '.codex', 'skills')
+    plantInstallation(retired, JSON.stringify({
+      schema: 1,
+      package: 'pdd-toolkit',
+      version: '0.35.0',
+      provider: 'codex',
+      scope: 'global',
+      skills: [...PDD_KIT_SKILLS],
+      installedAt: '2026-01-01T00:00:00.000Z'
+    }))
+
+    const found = findUnmanagedInstallations(project, [providerById('codex')], ['global'], path => path, home)
+    expect(found).toHaveLength(1)
+    expect(found[0]!.skillsDir).toBe(retired)
+    expect(found[0]!.message).toContain(`it now reads ${join(home, '.agents', 'skills')}`)
+    expect(found[0]!.message).toContain('`pdd-kit install --providers codex --scope global`')
+    expect(found[0]!.message).toContain('delete pdd-map, pdd-ideate, pdd-verify, .pdd-kit-install.json')
+    expect(existsSync(join(retired, 'pdd-map', 'SKILL.md'))).toBe(true)
   })
 })

@@ -9,10 +9,10 @@ The repository is a pnpm workspace: the package itself plus the private local
 viewer in `viewer/app`. `package.json` pins the pnpm version in
 `packageManager`; with Corepack (`corepack enable`) or pnpm 9.7 or later, that
 exact version runs. It needs Node.js 22.13 or later, newer than the published
-package's own floor: consumers still install `pdd-kit` on Node.js 20.12
+package's own floor: consumers still install `pdd-toolkit` on Node.js 20.12
 or later, with any package manager.
 
-Activate the current PDD worktree as the machine-wide development CLI and keep
+Activate the current pdd-kit worktree as the machine-wide development CLI and keep
 all published package outputs current:
 
 ```bash
@@ -50,3 +50,29 @@ npm runner.
    `pnpm remove` and commit the updated `pnpm-lock.yaml`; CI installs with
    `--frozen-lockfile` and fails when it drifts.
 6. Do not add secrets, customer data, or private repository URLs.
+
+## Contributing a Blueprint
+
+A Blueprint is a Product Model of a common kind of product that anyone can pull
+instead of starting blank. You propose one from your own repository with the
+CLI, which opens the pull request for you:
+
+```bash
+npx pdd-toolkit blueprint contribute
+```
+
+It needs the [GitHub CLI](https://cli.github.com) signed in, a model with no
+lint errors, a category, tags, authors and an SPDX license in the Product's
+frontmatter, and a `logo.svg` beside `product-model/product/product.md`. The
+command regenerates the model from its portable export, so the pull request
+carries only product meaning: no code References, local paths or Coverage.
+Every step is described in
+[`pdd-kit blueprint contribute`](./docs/cli-contribute.md).
+
+A good Blueprint is a complete brief: small enough for an agent to build end to
+end, complete enough that nothing is missing, and generic rather than a model
+of a named product. Merging the pull request publishes it: within minutes it
+appears in `blueprint list` and on
+[pdd-kit.dev/blueprints](https://pdd-kit.dev/blueprints), and
+`npx pdd-toolkit blueprint pull <slug>` in an empty folder gives you exactly
+what others will get.

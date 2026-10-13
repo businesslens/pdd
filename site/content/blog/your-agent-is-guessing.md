@@ -89,7 +89,7 @@ With that definition, people can understand the current product without
 archaeology, and agents can build from explicit decisions instead of inventing
 the missing ones.
 
-Over the past few weeks, I have been working on an open standard for product
+Over the past few weeks, I have been working on an open format for product
 definitions and an open-source implementation of it. Both are out now as
 [pdd-kit](/blog/introducing-pdd-kit): [start with the docs](/docs), or install
 it with `npx pdd-toolkit install`.

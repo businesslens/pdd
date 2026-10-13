@@ -13,6 +13,12 @@ export interface Provider {
   projectSkillsDir: string
   globalHarnessDirs: (home: string) => string[]
   globalSkillsDir: (home: string) => string
+  /**
+   * Global skills directories the harness used to read and pdd-kit once
+   * installed into. Nothing is written or updated there; `update` only names
+   * an installation it finds, so the reader can move it.
+   */
+  retiredGlobalSkillsDirs?: (home: string) => string[]
 }
 
 const envHome = (name: string, fallback: string): string =>
@@ -33,7 +39,10 @@ export const PROVIDERS: Provider[] = [
     projectRoot: '.agents',
     projectSkillsDir: join('.agents', 'skills'),
     globalHarnessDirs: home => [envHome('CODEX_HOME', join(home, '.codex'))],
-    globalSkillsDir: home => join(envHome('CODEX_HOME', join(home, '.codex')), 'skills')
+    // Codex reads user skills from ~/.agents/skills; $CODEX_HOME/skills is its
+    // retired location, still read for now and not deduplicated against it.
+    globalSkillsDir: home => join(home, '.agents', 'skills'),
+    retiredGlobalSkillsDirs: home => [join(envHome('CODEX_HOME', join(home, '.codex')), 'skills')]
   },
   {
     id: 'cursor',

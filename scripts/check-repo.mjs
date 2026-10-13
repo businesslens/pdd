@@ -349,6 +349,19 @@ if (!modelReadmeMatch) {
       errors.push(`${reference} must embed the canonical MODEL_README template exactly`)
     }
   }
+  // Every committed model — this repository's own, each Blueprint, the golden
+  // fixture — is what a pull or an open writes, so its README is the template.
+  const modelReadmes = spawnSync('git', ['ls-files', '-z', '--', 'product-model/README.md', '**/product-model/README.md'], { cwd: root, encoding: 'utf8' })
+  if (modelReadmes.status !== 0) {
+    errors.push(`could not list the tracked model READMEs: ${modelReadmes.stderr.trim()}`)
+  } else {
+    for (const file of modelReadmes.stdout.split('\0').filter(Boolean)) {
+      const source = await readFile(resolve(root, file), 'utf8').catch(() => null)
+      if (source !== null && source !== canonicalReadme) {
+        errors.push(`${file} must equal the canonical MODEL_README template in src/core/model-readme.ts exactly`)
+      }
+    }
+  }
 }
 
 // Docs frontmatter contract, consumed by the site's (`site/`) docs nav:
@@ -468,6 +481,20 @@ if (retired.status === 0) {
   }
 } else if (retired.status !== 1) {
   errors.push(`could not search for the retired product name: ${retired.stderr.trim()}`)
+}
+
+// npm refused the name `pdd-kit`, so the package is `pdd-toolkit` and only its
+// command is `pdd-kit`: `npx` with the command's name, or with the old scoped
+// package, fetches nothing that exists. CHANGELOG.md keeps its history as written.
+// The patterns are assembled from pieces so this file does not match them itself.
+const brokenInvocations = [`${'np'}x pdd-${'kit'}([^a-z0-9-]|$)`, `${'np'}x @itai-${'gendler'}/`]
+const broken = spawnSync('git', ['grep', '-I', '-n', '-E', brokenInvocations.join('|'), '--', '.', ':!CHANGELOG.md', ':!pnpm-lock.yaml'], { cwd: root, encoding: 'utf8' })
+if (broken.status === 0) {
+  for (const line of broken.stdout.trim().split('\n')) {
+    errors.push(`${line.split(':').slice(0, 2).join(':')} runs a package that does not exist; use \`npx pdd-toolkit\``)
+  }
+} else if (broken.status !== 1) {
+  errors.push(`could not search for stale npx invocations: ${broken.stderr.trim()}`)
 }
 
 if (errors.length) {

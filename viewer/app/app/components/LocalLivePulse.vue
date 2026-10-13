@@ -22,7 +22,7 @@ const ago = computed(() => {
 })
 const title = computed(() => live.value.connected
   ? (ago.value ? `Live · the report changed ${ago.value}` : 'Live · watching the model for edits')
-  : 'Not connected · restart pdd-kit view')
+  : 'Not connected · restart the local viewer')
 </script>
 
 <template>

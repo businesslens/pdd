@@ -95,8 +95,8 @@ When the CLI is installed globally with npm, pnpm, Yarn or Bun, a command run
 in a terminal may offer a newer stable release before it starts:
 
 ```text
-◆  A newer pdd-kit CLI is available: 0.23.1 → 0.24.0
-│  ● Update now (npm install --global pdd-toolkit@0.24.0)
+◆  A newer pdd-kit CLI is available: 0.35.0 → 0.36.0
+│  ● Update now (npm install --global pdd-toolkit@0.36.0)
 │  ○ Not now
 │  ○ Do not remind me again
 ```

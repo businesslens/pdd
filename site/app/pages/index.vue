@@ -20,23 +20,17 @@ if (import.meta.prerender) {
 }
 
 /**
- * One argument, five arrangements of it. The body is two sections that mirror
- * each other — Today, and With a Product Model — each read left to right, and
- * `HomeLayout` picks which arrangement renders them from the preview bar's Story
- * row.
+ * The home page is `HomeLayout`: the hero, then the sections in the order
+ * `docs/brand.md` sets. Its copy lives in `utils/homeContent.ts` rather than in
+ * any template, so the words stay reviewable on their own.
  *
- * The copy lives in `utils/homeContent.ts` rather than in any template. That
- * separation is what makes the comparison honest — no arrangement can win by
- * quietly rewording — and it outlives it: the words stay reviewable on their own.
+ * The description is the hero's subhead, word for word; the social card carries
+ * the h1. See docs/adr/0002-the-home-page.md.
  */
-
-// The social card keeps the earlier headline on purpose: it is still an endorsed
-// claim, and a card carries the hook rather than mirroring the h1. See
-// docs/adr/0002-the-home-page.md.
 useSiteSeo({
   title: 'pdd-kit | Product-Driven Development for coding agents',
   socialTitle: 'Product-Driven Development for coding agents',
-  description: 'Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.'
+  description: 'Every coding agent reconstructs your product\'s definition from scratch, and differently each time. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.'
 })
 </script>
 

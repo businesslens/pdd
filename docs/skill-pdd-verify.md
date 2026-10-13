@@ -26,8 +26,8 @@ With no scope, it checks what changed on the current branch.
 
 ## Implement from the model
 
-Ask your agent to implement, for example "implement our PDD", "implement it"
-after ideate, or "implement saving an item". "Build" works too. You don't name
+Ask your agent to implement, for example "implement the Product Model",
+"implement it" after ideate, or "implement saving an item". "Build" works too. You don't name
 the skill.
 
 1. **A plan.** Everything the model describes that the code doesn't do yet is

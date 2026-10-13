@@ -19,9 +19,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docs:** The README opens with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time. pdd-kit.dev's "Where is your product model today?" says the same.
 
+- **CLI:** Codex global skills install to `~/.agents/skills`, where Codex looks for them; `update` names any left in the old `~/.codex/skills`.
+
+- **CLI:** Hints show `npx pdd-toolkit …` when pdd-kit runs through npx, so the suggested command works as printed.
+
+- **Skills:** Installed as a Claude Code plugin, the skills lint with the pdd-kit release they came with instead of the latest one published.
+
+- **Skills:** Asking your agent to implement or build a feature in a repository with a Product Model starts `pdd-verify`, and the format reference covers more of what `lint` checks.
+
+- **Docs:** The README, the docs and the FAQ explain that the npm package is `pdd-toolkit` and the command it installs is `pdd-kit`, and the verification loop is described as approval-gated everywhere.
+
+- **Docs:** A guide to contributing a Blueprint, and a `git init` step when starting from an idea.
+
+- **Docs:** pdd-kit.dev's home page and link previews state the problem in the README's words, and Blueprint pages get their own link preview with title, summary and cover.
+
+- **Docs:** The privacy page says pdd-kit.dev counts page views with Cloudflare Web Analytics, without cookies, and lists when the CLI contacts npm and GitHub. The site no longer loads icons from a third-party service.
+
 ### Fixed
 
 - `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`.
+
+- **CLI:** `install` and `update` explain skills installed by the old `@itai-gendler/pdd-kit` package, or a damaged install marker, with the command to fix it. A missing report file or `--cwd` folder gets a plain message.
+
+- **Skills:** Linting explains when npm is missing, and works on Windows.
+
+- **Docs:** The installation check, the CI devDependency, the export report version and the example Blueprints in the docs are correct again.
+
+- **Docs:** The committed Blueprint READMEs tell agents to run `npx pdd-toolkit`, like pulled ones.
 
 ## [0.35.0] - 2026-10-13
 

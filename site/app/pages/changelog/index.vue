@@ -7,7 +7,7 @@ const { enterMotion } = useLandingMotion()
 
 useSiteSeo({
   title: 'Changelog · pdd-kit',
-  description: 'New releases of the pdd-kit open-source framework for Product-Driven Development and machine-readable product knowledge.'
+  description: 'Every release of pdd-kit, the open-source implementation of Product-Driven Development: its format, CLI, agent skills and site.'
 })
 
 // `CHANGELOG.md` in itai-gendler/pdd-kit is the only authored copy. Each `##`
@@ -108,8 +108,8 @@ const versions = computed<ContentTocLink[]>(() => releases.value.map(release => 
 
       <UPageCTA
         variant="naked"
-        title="Follow the standard as it takes shape."
-        description="Every tagged framework release is documented on GitHub, including changes to the product model and its supporting workflows."
+        title="Follow the next release."
+        description="Every release is tagged on GitHub. Watch the repository to hear about the next one, or open an issue to tell me what it should change."
         :links="[
           { label: 'Releases on GitHub', to: 'https://github.com/itai-gendler/pdd-kit/releases', external: true, target: '_blank', icon: 'i-simple-icons-github', color: 'neutral', variant: 'outline', size: 'lg' },
           { label: 'Read the docs', to: '/docs', trailingIcon: 'i-lucide-arrow-right', size: 'lg' }

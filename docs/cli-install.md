@@ -19,7 +19,7 @@ npx pdd-toolkit install [--providers <list>] [--scope project|global] [--yes] [-
 
 | Option | Meaning |
 | --- | --- |
-| `--providers <list>` | Comma-separated harnesses: `claude,codex,cursor,gemini,github` |
+| `--providers <list>` | Comma-separated harnesses: `claude,codex,cursor,gemini,github`. Also accepted: `claude-code` for `claude`, `agents` for `codex`, and `copilot` for `github` |
 | `--scope project\|global` | Install into the current project or your user configuration |
 | `--yes` | Take the defaults for anything not given: detected harnesses (Claude Code and Codex when none are detected) and project scope |
 | `--force` | Replace a colliding `pdd-*` skill directory that pdd-kit does not own |
@@ -52,6 +52,12 @@ It installs skills only: no `product-model/`, no hooks, no account.
 **The marker is the only proof of ownership.** A `pdd-*` directory the
 marker does not list is someone else's, so it stops the run unless you pass
 `--force`.
+
+**A marker written by another package is not pdd-kit's.** Skills installed by
+the old `@itai-gendler/pdd-kit` package carry that package's name in their
+marker, so `install` refuses them and prints the command to replace them once
+with `--force`. A marker that is not valid JSON is refused the same way, naming
+the file.
 
 **A refusal changes nothing.** Every harness is checked before any is written,
 and the message names the directory that blocked the run.

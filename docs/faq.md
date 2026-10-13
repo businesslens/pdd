@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Where to start from an existing repo, an idea, or a Blueprint — and what Product-Driven Development costs, sends, and replaces.
+description: Why a Product Model, how Product-Driven Development fits your workflow, and where to start from an existing repo, an idea, or a Blueprint.
 ---
 
 # FAQ
@@ -77,9 +77,10 @@ What changes in your workflow and your reviews — and what does not.
 
 ### Why add yet another tool to my stack?
 
-PDD is not a standard tool you add to your workflow. It is a format, and the tooling around it just
-helps maintain it. The product definition **already exists**, scattered across docs, code, tickets,
-and people. PDD gives it a structured home so the rest of your tools can do their jobs better.
+PDD is not another tool in your workflow. It is a practice built around one format, the Product
+Model, and the tooling around it just helps maintain it. The product definition **already exists**,
+scattered across docs, code, tickets, and people. The Product Model gives it a structured home so
+the rest of your tools can do their jobs better.
 
 Contributors who do not use agents work exactly as they do today. **Updating the model is the same
 kind of work** as updating docs or tests when behavior changes, not a new kind. You control when in
@@ -89,8 +90,8 @@ update the model before initiating new work as a best practice.
 ### Doesn't this lock me into a new development lifecycle?
 
 No. **PDD does not touch how you implement**. You keep your current workflow, your coding agent,
-your planning tools. What PDD adds is a structured format for the product definition you already
-have, informally scattered across docs, code, tickets, and people. You are not adopting a new
+your planning tools. What PDD adds is a structured home, the Product Model, for the product
+definition you already have, informally scattered across docs, code, tickets, and people. You are not adopting a new
 paradigm; you are giving a home to decisions that today live nowhere in particular.
 
 ### Doesn't keeping the model current add work to every PR?
@@ -105,7 +106,7 @@ can catch up after changes land.
 ### How do reviewers see a model change?
 
 Currently a model change can only be reviewed as a Git diff. That is a gap being closed: every
-change to the model will be visualized in a diff mode in the report. In the flow we envision, that
+change to the model will be visualized in a diff mode in the report. In the flow I envision, that
 change is reviewed and approved first, before implementation even starts. [Follow the diff
 visualization issue](https://github.com/itai-gendler/pdd-kit/issues/19).
 
@@ -124,12 +125,12 @@ Share that command alongside the pull request.
 
 ## What it is and isn't
 
-How the Product Model relates to SDD frameworks, AI-generated docs, PRDs, user stories, ERDs, and design.
+How the Product Model relates to SDD tools, AI-generated docs, PRDs, user stories, ERDs, and design.
 
 ### How is this different from SDD?
 
 They work at different altitudes and are meant to coexist. **PDD defines the product, not the
-change**. Spec-driven frameworks like OpenSpec and spec-kit own the change level: how one piece of
+change**. Spec-driven tools like OpenSpec and spec-kit own the change level: how one piece of
 work is designed, built, and split into tasks. PDD lets you choose whatever tool you want for
 implementation. It does not touch that phase. [Read how PDD and SDD fit
 together](https://pdd-kit.dev/blog/pdd-and-spec-driven-development).
@@ -235,13 +236,23 @@ References. [Read where the model stops](./interfaces.md#is-this-a-design-spec).
 
 ## Getting started
 
-Three ways in, what each one leaves in your repository, and the projects supported today.
+Three ways in, what each one leaves in your repository, the package to install, and the projects supported today.
 
 ### I already have a codebase — where do I start?
 
-Install the skills and run /pdd-map. It reads the code without running it, asks what the
-code can’t settle, and writes product-model/ only after you approve. npx pdd-toolkit view then
-opens it as a report.
+Install the skills:
+
+```sh
+npx pdd-toolkit install
+```
+
+Then ask your agent to map the product, or run /pdd-map. It reads the code without running it,
+asks what the code can’t settle, and writes product-model/ only after you approve. Open it as a
+report:
+
+```sh
+npx pdd-toolkit view
+```
 
 Nothing is rewritten and no framework is imposed; the model is added beside the code. [Walk through
 mapping an existing product](./from-your-repo.md).
@@ -261,9 +272,8 @@ Pull a Blueprint. It expands into an empty directory as a complete Product Model
 straight to a coding agent, and you choose the stack. A Blueprint carries the product definition,
 not an implementation.
 
-Every Blueprint has cleared the same bar: given the pulled model and the words “build this” and
-nothing else, an agent ships a working product. [Browse the
-Blueprints](https://pdd-kit.dev/blueprints).
+Blueprints are community-contributed Product Models of common products. Each one is reviewed
+before it is merged and lints without errors. [Browse the Blueprints](https://pdd-kit.dev/blueprints).
 
 ### What actually lands in my repository?
 
@@ -276,13 +286,30 @@ versioned with the code it describes.
 No database, no service, and no lock-in: delete the directory and your repository is exactly as it
 was. [Read about the Product Model](./product-model.md).
 
+### Why is the npm package called pdd-toolkit?
+
+Because npm would not accept pdd-kit: it refuses a new package name that is too close to one that
+already exists. The package is published as **pdd-toolkit**, and the command it installs is still
+**pdd-kit**. Run it without installing anything:
+
+```sh
+npx pdd-toolkit install
+```
+
+Or install it once and use the command it adds:
+
+```sh
+npm install --global pdd-toolkit
+pdd-kit install
+```
+
 ### When do I use map, and when do I use verify?
 
 Map is for adoption, a deliberately untrusted area, or expanding model coverage. It is not a daily
 command. Verify is for normal product changes, refactors, suspected drift, pre-release checks, and
 full or named current-state audits.
 
-You rarely name either. Ask your agent to implement a change and PDD will run it in phases: your
+You rarely name either. Ask your agent to implement a change and verify plans it in phases: your
 agent implements each phase, and verify checks it before the next. Ask whether the code still
 matches the model whenever you want to be sure, for example before a release. [Read the verification
 loop](./skill-pdd-verify.md).
@@ -320,10 +347,9 @@ By pull request against [itai-gendler/pdd-kit](https://github.com/itai-gendler/p
 projecting away repository-local implementation paths so the contribution carries the product and
 nothing from your repository.
 
-The bar is an executable brief: small enough for an agent to build end to end, complete enough that
-nothing is missing, and generic rather than a model of a named product. The test is whether a coding
-agent that has never seen it can build the product from “build this” alone. [Read the contributing
-guide](https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md).
+The bar is a complete brief: small enough for an agent to build end to end, complete enough that
+nothing is missing, and generic rather than a model of a named product. [Read the contributing
+guide](https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md#contributing-a-blueprint).
 
 ### Where do I get help?
 

@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: pdd-kit brings Product-Driven Development to coding agents through a Git-tracked Product Model and an automatic verification loop.
+description: pdd-kit brings Product-Driven Development to coding agents through a git-tracked Product Model and a verification loop that resolves gaps only with your approval.
 section: open-source
 group: Get started
 order: 1
@@ -8,15 +8,15 @@ order: 1
 
 # Product-Driven Development for coding agents
 
-pdd-kit is Product-Driven Development for coding agents. It keeps a
-durable Product contract in `product-model/`: what your product does, for whom,
+pdd-kit is Product-Driven Development for coding agents. It keeps one
+definition of your product in `product-model/`: what your product does, for whom,
 where, and under which rules, including where it works more than one way
 ([Variations](./variations.md): feature flags, plan tiers, A/B tests, API
 versions). The [Model overview](./product-model.md) explains the folder in five
 minutes.
 
 The Product Model says what the product is intended to do. It does not prescribe
-the stack or replace your plan mode, SDD framework, coding agent, or tests.
+the stack or replace your plan mode, SDD tool, coding agent, or tests.
 
 ## What the model covers, and what it doesn't
 
@@ -56,7 +56,8 @@ Ideate and verify with pdd-kit. Your own agent implements, your way.
 - **Implement** with your agent, your way: In phases, with plan mode, an SDD
   tool, or freestyle.
 - **Verify** with [`/pdd-verify`](./skill-pdd-verify.md):
-  Check and improve the code and product model until they agree.
+  Check the code against the product model and, with your approval, fix
+  either one until they agree.
 
 You don't have to name a skill. Ask your agent for a change, such as "add
 guest checkout to the product", and ideate decides it with you. Ask it to

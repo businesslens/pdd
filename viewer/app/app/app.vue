@@ -8,7 +8,7 @@ useHead({
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { name: 'description', content: 'Explore a local pdd-kit Product Model and its capabilities, value paths, delivery by Interface, scenarios, and rules.' },
+    { name: 'description', content: 'Explore a local pdd-kit Product Model: its Capabilities, Journeys, Interfaces, Scenarios, and Business Rules. Product-Driven Development for coding agents.' },
     { name: 'robots', content: 'noindex, nofollow' }
   ]
 })

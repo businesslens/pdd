@@ -121,13 +121,13 @@ Read before authoring:
    and Coverage as the format reference shapes it.
 10. Run the bundled linter outside the untrusted target:
 
-   ```bash
-   node <pdd-map-skill-dir>/scripts/run-pdd-kit.mjs \
-     --root "$PWD" lint --json
-   ```
+    ```bash
+    node <pdd-map-skill-dir>/scripts/run-pdd-kit.mjs \
+      --root "$PWD" lint --json
+    ```
 
-   Fix every error and assess every warning. A green lint result proves
-   structure only, not semantic alignment.
+    Fix every error and assess every warning. A green lint result proves
+    structure only, not semantic alignment.
 11. Report the approved files written, resource counts, inspected areas, unmapped
     areas, limitations, useful References added, and lint result. Recommend
     `pdd-verify` for a semantic current-state audit.

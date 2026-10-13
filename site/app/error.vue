@@ -14,17 +14,22 @@ const { error } = defineProps<{ error: NuxtError }>()
 const route = useRoute()
 const notFound = computed(() => error.statusCode === 404)
 const title = computed(() => notFound.value ? 'Page not found' : 'Something went wrong')
+const documentTitle = computed(() => notFound.value ? NOT_FOUND_TITLE : `${title.value} · pdd-kit`)
 
-useSeoMeta({
-  title: () => `${title.value} · pdd-kit`,
-  robots: 'noindex'
+useSiteSeo({
+  title: documentTitle,
+  description: () => notFound.value
+    ? 'Nothing lives at this address on pdd-kit.dev.'
+    : 'This page could not be loaded.'
 })
+useSeoMeta({ robots: 'noindex' })
 
 // A static host answers an unknown URL with the generated 404.html shell. Nuxt
 // starts there already in the error state and never writes head tags to the
 // document, so set the title, which the tab and screen readers need, directly.
+// The shell itself carries the same title from `nuxt.config.ts`.
 onMounted(() => {
-  document.title = `${title.value} · pdd-kit`
+  document.title = documentTitle.value
 })
 
 const links = [

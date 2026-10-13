@@ -434,6 +434,18 @@ describe('open report', () => {
     }
   })
 
+  it('names a missing report file instead of printing the system error', async () => {
+    const missingTarget = mkdtempSync(join(tmpdir(), 'pdd-kit-open-missing-'))
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    const missing = join(missingTarget, 'nope.json')
+    expect(await runOpen(missingTarget, missing, false)).toBe(1)
+    expect(console.error).toHaveBeenCalledWith(`No report file at ${missing}.`)
+
+    vi.restoreAllMocks()
+    rmSync(missingTarget, { recursive: true, force: true })
+  })
+
   it('directs a remote report URL to pull instead of accepting it', async () => {
     const rejectedTarget = mkdtempSync(join(tmpdir(), 'pdd-kit-open-remote-'))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)

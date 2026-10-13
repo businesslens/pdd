@@ -19,11 +19,15 @@ sub-brand.
 >
 > Product-Driven Development **for coding agents**
 >
-> Your AI agent is guessing what the product is. PDD gives agents and humans a
-> shared product model that is git-tracked, reviewable, and verifiable.
+> Every coding agent reconstructs your product's definition from scratch, and
+> differently each time. PDD gives agents and humans a shared product model
+> that is git-tracked, reviewable, and verifiable.
 
 The eyebrow is `Open source`; the title accent is `for coding agents`. The
-problem opens the subhead rather than the headline.
+problem opens the subhead rather than the headline, in the README's words; the
+README's first sentence, that the definition already exists but is scattered,
+belongs to *Where is your product model today?* and is not repeated here. The
+home page's meta description is the subhead.
 
 **Three doors, as hero buttons.** *Map existing repo* (`/pdd-map`), *Start from
 an idea* (`/pdd-ideate`) and *Start from a Blueprint*

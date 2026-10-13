@@ -390,13 +390,12 @@ describe('the home page argument', () => {
   })
 
   /**
-   * The centre of the ring names the practice and whose implementation of it
-   * this is. Without both, the wheel is a diagram of nothing in particular —
-   * and PDD alone would be a wordmark, which ADR-0002 rules out.
+   * The centre of the ring names what every phase turns on. Set in uppercase
+   * mono, *pdd-kit / PDD* read PDD-KIT, PDD: a name repeating itself.
    */
-  it('signs the wheel with the practice and the product', () => {
-    expect(loop.centerLabel).toBe('pdd-kit')
-    expect(loop.centerMark).toBe('PDD')
+  it('centres the wheel on the Product Model', () => {
+    expect(loop.centerLabel).toBe('Product')
+    expect(loop.centerMark).toBe('Model')
   })
 
   /**
