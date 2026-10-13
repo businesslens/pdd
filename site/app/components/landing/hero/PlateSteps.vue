@@ -57,6 +57,7 @@ const OVERLAY_UI = { description: 'sr-only', content: 'sm:max-w-xl' }
       :copy-label="hero.commandCopyLabel"
       :copied-label="hero.commandCopiedLabel"
       class="mb-3 backdrop-blur"
+      nowrap
     />
 
     <!-- The plates carry an explicit focus ring. Closing an overlay with Escape

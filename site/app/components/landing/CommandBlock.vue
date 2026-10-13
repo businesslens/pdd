@@ -42,8 +42,8 @@ const { command, prompt = '$', size = 'md', align = 'start', copyable = true, no
   /**
    * Keep the command on one line and scroll it sideways instead of wrapping,
    * resting at its end. For a command whose last word is the part that matters
-   * (the Blueprint slug), so a narrow screen shows that word rather than a line
-   * break in the middle of the command.
+   * (the Blueprint slug, the install command's `install`), so a narrow screen
+   * shows that word rather than a line break in the middle of the command.
    */
   nowrap?: boolean
   copyLabel?: string
@@ -69,7 +69,9 @@ async function copyCommand() {
 
 const SIZES = {
   sm: { block: 'gap-2 rounded-lg px-2.5 py-1.5', text: 'text-xs' },
-  md: { block: 'gap-3 rounded-xl px-4 py-3', text: 'text-sm' }
+  // A phone steps the offer down a size: at `text-sm` the hero's install
+  // command needs 277px and a 375px phone leaves it 253px, so it broke in two.
+  md: { block: 'gap-2 rounded-xl px-3 py-3 sm:gap-3 sm:px-4', text: 'text-xs sm:text-sm' }
 } as const
 
 const ALIGNS = { start: 'text-start', center: 'text-center' } as const
