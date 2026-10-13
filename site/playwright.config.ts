@@ -39,7 +39,7 @@ export default defineConfig({
     url: environment.appURL
   }],
   // The site is static, so tests share nothing but the file server and run
-  // side by side. CI splits the suite across three runners (`--shard`) with
+  // side by side. CI splits the suite across four runners (`--shard`) with
   // two browsers each, since four on one four-core runner starve each other;
   // locally, Playwright's default.
   workers: process.env.CI ? 2 : undefined,

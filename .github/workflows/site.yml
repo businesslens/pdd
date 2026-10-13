@@ -129,7 +129,7 @@ jobs:
           retention-days: 1
 
   # End-to-end tests against the built site, in Playwright's own image so no
-  # browser is downloaded, split across three runners. Keep the image tag
+  # browser is downloaded, split across four runners. Keep the image tag
   # equal to @playwright/test.
   e2e:
     needs: build
@@ -138,7 +138,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
       options: --user 1001
@@ -159,7 +159,7 @@ jobs:
         with:
           name: cli
           path: dist
-      - run: pnpm test:e2e --shard=${{ matrix.shard }}/3
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/4
         env:
           CI: true
       - name: Upload the Playwright report

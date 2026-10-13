@@ -71,7 +71,7 @@ pnpm test:e2e     # generates, then runs Playwright against the static files
 `.github/workflows/site.yml` runs the same steps on every change to the site or
 to what it renders: a `static` job for the checks, beside a `build` job for
 the generated site, then an `e2e` job in Playwright's container image, split
-across three runners. Its
+across four runners. Its
 `site` job is the check branch protection requires; it passes when the change
 cannot affect the site.
 

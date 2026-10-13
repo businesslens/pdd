@@ -40,7 +40,7 @@ Run from `site/`:
 up to `pnpm test:integration`; beside it, the `build` job runs `pnpm generate`,
 reusing a cached CLI build (`dist/`) when none of its sources changed, and
 uploads the generated site and the CLI build; the `e2e` job runs Playwright
-against them in the Playwright container image, split across three runners
+against them in the Playwright container image, split across four runners
 with two workers each and scheduled test by test. Keep that image's tag equal to `@playwright/test`; Renovate
 updates both in one pull request. The required `site` check passes when the
 change cannot affect the site.
