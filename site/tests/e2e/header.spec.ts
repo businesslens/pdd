@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { expectHeaderFits } from '../support/header'
+import { expectHeaderFits, gotoWithTools } from '../support/header'
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -13,9 +13,7 @@ test('the header and mobile menu fit phone widths', async ({ page }) => {
 
 test('search and Vocabulary are available across the site', async ({ page }) => {
   for (const path of ['/', '/blog', '/faq', '/docs/entities']) {
-    await page.goto(path)
-    // The buttons are server-rendered; the dialogs they open arrive after.
-    await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
+    await gotoWithTools(page, path)
     const header = page.locator('[data-site-header]')
     await expect(header.getByRole('button', { name: 'Search documentation' })).toBeVisible()
     const trigger = header.getByRole('button', { name: 'Vocabulary', exact: true })
@@ -93,12 +91,9 @@ test('header and Vocabulary fit narrow screens and pass WCAG A/AA checks', async
 })
 
 test('site tools work alongside report search and Vocabulary', async ({ page, isMobile }) => {
-  await page.goto('/')
+  await gotoWithTools(page, '/')
   const header = page.locator('[data-site-header]')
   const search = page.getByRole('dialog')
-  // The tool dialogs are client-only and arrive after the header that opens
-  // them; on a busy machine a click before then does nothing.
-  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
   await header.getByRole('button', { name: 'Search documentation' }).click()
   await expect(search).toBeVisible()
   await page.keyboard.press('Escape')
@@ -110,10 +105,8 @@ test('site tools work alongside report search and Vocabulary', async ({ page, is
   await expect(page).toHaveURL(/\/docs\/skill-pdd-verify$/)
   await expect(search).not.toBeVisible()
 
-  await page.goto('/blueprints/kanban-board')
-  // A Blueprint page hydrates a whole report, so the client-only tool dialogs
-  // arrive after the header that opens them. Wait for them rather than racing.
-  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
+  // A Blueprint page hydrates a whole report, so its tools arrive late.
+  await gotoWithTools(page, '/blueprints/kanban-board')
   await header.getByRole('button', { name: 'Vocabulary', exact: true }).click()
   const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await expect(panel).toHaveCount(1)

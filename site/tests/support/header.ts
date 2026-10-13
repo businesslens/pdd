@@ -1,6 +1,16 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 
 /**
+ * Opens `path` and waits for the header's tools. Search and Vocabulary are
+ * server-rendered buttons whose dialogs are client-only and arrive later, so a
+ * click before then does nothing; on a busy CI runner that is often.
+ */
+export async function gotoWithTools(page: Page, path: string) {
+  await page.goto(path)
+  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
+}
+
+/**
  * The site has one header: there are no accounts, so what every reader sees is
  * the brand, the PDD version badge, the lookup tools, and the GitHub link. Check
  * that it and the mobile menu's own header fit every phone width.

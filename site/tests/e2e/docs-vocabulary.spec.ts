@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
+import { gotoWithTools } from '../support/header'
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -35,7 +36,7 @@ test('opens the current docs group and preserves the reading when dismissed', as
 })
 
 test('follows linked definitions, returns to the search, and reads docs in this tab', async ({ page, context }) => {
-  await page.goto('/docs/entities')
+  await gotoWithTools(page, '/docs/entities')
   const trigger = page.locator('header').getByRole('button', { name: 'Vocabulary', exact: true })
   await trigger.click()
   const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
@@ -66,7 +67,7 @@ test('follows linked definitions, returns to the search, and reads docs in this 
 })
 
 test('handles a same-page heading and falls back to Product on pages without terms', async ({ page }) => {
-  await page.goto('/docs/entities')
+  await gotoWithTools(page, '/docs/entities')
   const trigger = page.locator('header').getByRole('button', { name: 'Vocabulary', exact: true })
   const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await trigger.click()
@@ -84,7 +85,7 @@ test('handles a same-page heading and falls back to Product on pages without ter
   await readMore.click()
   await expect(panel).not.toBeVisible()
 
-  await page.goto('/docs/cli-lint')
+  await gotoWithTools(page, '/docs/cli-lint')
   await trigger.click()
   await expect(panel.locator('[data-term="product"]')).toHaveAttribute('aria-expanded', 'true')
   await expect(panel.locator('[data-vocabulary-page^="cli-"]')).toHaveCount(0)
@@ -96,9 +97,7 @@ test('handles a same-page heading and falls back to Product on pages without ter
 
 test('fits narrow screens and has no automatically detectable WCAG A/AA violations', async ({ page, isMobile }) => {
   if (isMobile) await page.setViewportSize({ width: 320, height: 740 })
-  await page.goto('/docs/interfaces')
-  // The Vocabulary dialog is client-only and arrives after the header button.
-  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
+  await gotoWithTools(page, '/docs/interfaces')
   await page.locator('header').getByRole('button', { name: 'Vocabulary', exact: true }).click()
   const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await expect(panel).toBeVisible()

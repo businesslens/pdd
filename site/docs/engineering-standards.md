@@ -38,8 +38,8 @@ Run from `site/`:
 `main` that touches the site or anything it renders (`docs/`, `CHANGELOG.md`,
 `blueprints/`, `layers/`, `src/`, `viewer/`): the `build` job runs everything
 up to `pnpm generate` and uploads the generated site and the CLI build, and the
-`e2e` job runs Playwright against them in the Playwright container image, with
-four workers. Keep that image's tag equal to `@playwright/test`; Renovate
+`e2e` job runs Playwright against them in the Playwright container image,
+split across three runners with two workers each. Keep that image's tag equal to `@playwright/test`; Renovate
 updates both in one pull request. The required `site` check passes when the
 change cannot affect the site.
 

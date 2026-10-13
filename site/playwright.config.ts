@@ -37,8 +37,10 @@ export default defineConfig({
     url: environment.appURL
   }],
   // The site is static, so tests share nothing but the file server and run
-  // side by side: four on CI's four-core runners, Playwright's default locally.
-  workers: process.env.CI ? 4 : undefined,
+  // side by side. CI splits the suite across three runners (`--shard`) with
+  // two browsers each, since four on one four-core runner starve each other;
+  // locally, Playwright's default.
+  workers: process.env.CI ? 2 : undefined,
   projects: [{
     name: 'desktop-chromium',
     testMatch: ['**/faq.spec.ts', '**/landing.spec.ts', '**/landing.desktop.spec.ts', '**/header.spec.ts', '**/blueprints.spec.ts', '**/catalog-index.spec.ts', '**/blueprint-feed.spec.ts', '**/blog-feed.spec.ts', '**/docs.spec.ts', '**/docs-vocabulary.spec.ts', '**/seo.spec.ts', '**/changelog.spec.ts', '**/report-parity.spec.ts', '**/production-theme.spec.ts'],
