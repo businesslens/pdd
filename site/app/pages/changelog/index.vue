@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ContentTocLink } from '@nuxt/ui'
+import type { ButtonProps, ContentTocLink } from '@nuxt/ui'
 import { Motion } from 'motion-v'
 import ChangelogSectionHeading from '~/components/landing/ChangelogSectionHeading.vue'
 
@@ -32,6 +32,14 @@ const versions = computed<ContentTocLink[]>(() => releases.value.map(release => 
   depth: 2,
   text: release.title
 })))
+
+// In script rather than inline: @vue/language-core 3.3.12+ reads the `//` of a
+// URL inside a multi-line template expression as a comment and fails the
+// typecheck (vuejs/language-tools#6240).
+const ctaLinks: ButtonProps[] = [
+  { label: 'Releases on GitHub', to: 'https://github.com/itai-gendler/pdd-kit/releases', external: true, target: '_blank', icon: 'i-simple-icons-github', color: 'neutral', variant: 'outline', size: 'lg' },
+  { label: 'Read the docs', to: '/docs', trailingIcon: 'i-lucide-arrow-right', size: 'lg' }
+]
 </script>
 
 <template>
@@ -110,10 +118,7 @@ const versions = computed<ContentTocLink[]>(() => releases.value.map(release => 
         variant="naked"
         title="Follow the next release."
         description="Every release is tagged on GitHub. Watch the repository to hear about the next one, or open an issue to tell me what it should change."
-        :links="[
-          { label: 'Releases on GitHub', to: 'https://github.com/itai-gendler/pdd-kit/releases', external: true, target: '_blank', icon: 'i-simple-icons-github', color: 'neutral', variant: 'outline', size: 'lg' },
-          { label: 'Read the docs', to: '/docs', trailingIcon: 'i-lucide-arrow-right', size: 'lg' }
-        ]"
+        :links="ctaLinks"
         :ui="{
           root: 'relative',
           container: 'max-w-3xl text-center py-16 sm:py-20 lg:py-20',

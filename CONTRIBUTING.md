@@ -8,9 +8,10 @@ stays reusable, self-contained, and well-scoped.
 The repository is a pnpm workspace: the package itself plus the private local
 viewer in `viewer/app`. `package.json` pins the pnpm version in
 `packageManager`; with Corepack (`corepack enable`) or pnpm 9.7 or later, that
-exact version runs. It needs Node.js 22.13 or later, newer than the published
-package's own floor: consumers still install `pdd-toolkit` on Node.js 22.12
-or later, with any package manager.
+exact version runs. It needs Node.js 24.14 or later, which the site's
+EditorConfig check (also a pre-commit hook) requires; that is newer than the
+published package's own floor: consumers still install `pdd-toolkit` on
+Node.js 22.12 or later, with any package manager.
 
 Activate the current pdd-kit worktree as the machine-wide development CLI and keep
 all published package outputs current:
