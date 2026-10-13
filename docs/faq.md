@@ -44,7 +44,7 @@ if something is not in the model, nobody decided it.
 It can, and they help. But user docs hold the user subset, and even internal docs are free-form:
 each written its own way, with no common structure, **mixing product decisions with design and
 implementation**. The rest stays in the code, or worse, **is not defined anywhere at all**. Every
-agent reconstructs it from scratch, possibly differently each time, **with nobody reviewing what it
+agent reconstructs it from scratch, differently each time, **with nobody reviewing what it
 concluded**.
 
 The model is a structured way to define a product: a fixed set of resource types (entities,

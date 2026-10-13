@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docs:** pdd-kit.dev reads as an open-source project: the footer names the MIT license and links to contributing and issues, and the site sets no cookies.
 
+- **Docs:** The README opens with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time. pdd-kit.dev's "Where is your product model today?" says the same.
+
 ### Fixed
 
 - `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`.

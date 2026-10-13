@@ -660,12 +660,15 @@ const today: HomeSection = {
    */
   title: 'Where is your product model today?',
   /**
-   * The description carries no count either, and for the same reason. It names
-   * where the pieces sit — information sources, systems, and people — rather
-   * than how many places they sit in, so growing the list below does not date
-   * the sentence above it.
+   * The description carries no count either, and for the same reason. It says
+   * what is wrong with the definition — unstructured, incomplete, scattered —
+   * and names kinds of places rather than how many, so growing the list below
+   * does not date the sentence above it. The hero already says what that costs
+   * an agent (it guesses), so this sentence stops at the state. It answers the
+   * title, so it opens on "It" (the product model) and stays inside the length
+   * cap.
    */
-  description: 'Scattered across your information sources, systems, and people, shared by none, checked by nothing.',
+  description: 'It already exists, just unstructured, incomplete and scattered across docs, code, tickets, chats and people.',
   columns: 4,
   /**
    * Each place is shown in the products it is actually kept in. A reader

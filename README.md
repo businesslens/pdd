@@ -8,7 +8,11 @@
 </p>
 
 <p align="center"><strong>Product-Driven Development for coding agents (OSS)</strong></p>
-<p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
+<p align="center">
+The definition of your product already exists, just unstructured, incomplete and scattered across docs, code, tickets, chats and people.<br>
+Every coding agent reconstructs it from scratch, and differently each time.<br>
+PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.
+</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/pdd-toolkit"><img src="https://img.shields.io/npm/v/pdd-toolkit" alt="npm version"></a>
@@ -36,9 +40,9 @@
 
 ## The problem
 
-Where is your **product model** today? Scattered across tickets, design docs,
-the wiki, chats, source code, tests and people: shared by none, checked by
-nothing. So your **AI agent guesses** what the product is
+The definition of your product already exists, just **unstructured, incomplete
+and scattered** across docs, code, tickets, chats and people. Every **coding
+agent reconstructs it** from scratch, and **differently each time**
 ([AI is writing code for products it doesn't understand](https://pdd-kit.dev/blog/your-agent-is-guessing)).
 
 **Spec-driven development (SDD)** tools such as OpenSpec, spec-kit and Kiro
