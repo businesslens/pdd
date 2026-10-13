@@ -33,7 +33,7 @@ jobs:
     outputs:
       site: ${{ steps.filter.outputs.site }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: filter
@@ -65,10 +65,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       # Installs the exact pnpm pinned by package.json's packageManager.
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -88,12 +88,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # Blueprint cards and the feed date each Blueprint from its Git history.
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -109,20 +109,20 @@ jobs:
         run: |
           sum="$(git ls-files -s src layers viewer/app tsdown.config.ts tsconfig.json scripts/copy-viewer.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml | sha256sum | cut -c1-40)"
           echo "key=cli-dist-${{ runner.os }}-node24-$sum" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: dist
           key: ${{ steps.cli-key.outputs.key }}
       # Builds dist/ when the cache missed, then the Blueprints and the site.
       - run: pnpm generate
       - name: Upload the generated site
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: site/.output/public
           retention-days: 7
       - name: Upload the CLI build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cli
           path: dist
@@ -143,19 +143,19 @@ jobs:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: site/.output/public
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: cli
           path: dist
@@ -164,7 +164,7 @@ jobs:
           CI: true
       - name: Upload the Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.shard }}
           path: site/playwright-report
@@ -183,11 +183,11 @@ jobs:
       name: preview
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: site/.output/public
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - id: deploy
@@ -223,11 +223,11 @@ jobs:
       name: production
       url: https://pdd-kit.dev
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: site/.output/public
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Deploy to Cloudflare Pages
