@@ -570,7 +570,7 @@ const hero = {
    * It has to state the value before the reader knows what a Product Model is.
    */
   description:
-    'Every coding agent reconstructs your product from scratch, and differently each time. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.',
+    'Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.',
   /**
    * The three ways in, as buttons rather than a section. Labels are verbs because
    * they are actions; two of the three continue in the documentation, which the
@@ -664,8 +664,9 @@ const today: HomeSection = {
    * what is wrong with the definition — unstructured, incomplete, scattered —
    * and names kinds of places rather than how many, so growing the list below
    * does not date the sentence above it. The hero already says what that costs
-   * an agent, so this sentence stops at the state. It answers the title, so it
-   * opens on "It" (the product model) and stays inside the length cap.
+   * an agent (it guesses), so this sentence stops at the state. It answers the
+   * title, so it opens on "It" (the product model) and stays inside the length
+   * cap.
    */
   description: 'It already exists, just unstructured, incomplete and scattered across docs, code, tickets, chats and people.',
   columns: 4,
