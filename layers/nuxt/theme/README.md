@@ -35,6 +35,11 @@ export default defineNuxtConfig({
 - **`usePddKitThemeHead()`** — registers the browser and install icon
   family from `public/brand/icons`, including the manifest and Apple touch
   icon. Call it once in the host's root component.
+- **`usePddKitStoredPreference(key, fallback, parse)`** — a reader preference
+  kept in local storage and shared by every caller on the page. pdd-kit sets no
+  cookies: a prerendered page hydrates with `fallback` and applies the stored
+  value once hydration finishes, while a client-only host reads it before the
+  first paint. `parse` rejects stored values it does not recognize.
 - **Nuxt UI defaults**: `size: 'sm'` and `color: 'primary'`.
 - **Dark mode is off.** The `darkMode` constant in `nuxt.config.ts` is `false`
   until dark mode reads as well as light

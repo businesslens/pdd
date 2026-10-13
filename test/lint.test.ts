@@ -17,7 +17,7 @@ const TRACKED = [
 
 let dir: string | undefined
 function fixtureCopy(): string {
-  dir = mkdtempSync(join(tmpdir(), 'bl-lint-'))
+  dir = mkdtempSync(join(tmpdir(), 'pdd-kit-lint-'))
   cpSync(FIXTURE, dir, { recursive: true })
   return dir
 }
@@ -79,12 +79,12 @@ Lead.
 }
 
 /** Drop the mobile catalog preview and its Variation, for tests that reshape customer-mobile. */
-function withoutCatalogPreview(bl: string) {
-  unlinkSync(join(bl, 'variations/mobile-storefront.md'))
-  unlinkSync(join(bl, 'interfaces/customer-mobile/experiences/catalog-preview.md'))
-  const capability = join(bl, 'capabilities/browse-catalog/capability.md')
+function withoutCatalogPreview(productModel: string) {
+  unlinkSync(join(productModel, 'variations/mobile-storefront.md'))
+  unlinkSync(join(productModel, 'interfaces/customer-mobile/experiences/catalog-preview.md'))
+  const capability = join(productModel, 'capabilities/browse-catalog/capability.md')
   writeFileSync(capability, readFileSync(capability, 'utf8').replace(', { place: customer-mobile::catalog-preview }', ''))
-  const scenario = join(bl, 'capabilities/browse-catalog/scenarios/browse-catalog.md')
+  const scenario = join(productModel, 'capabilities/browse-catalog/scenarios/browse-catalog.md')
   writeFileSync(scenario, readFileSync(scenario, 'utf8')
     .replace('  preview: Mobile catalog preview\n', '')
     .replaceAll('      preview:\n        place: customer-mobile::catalog-preview\n', ''))
@@ -454,8 +454,8 @@ Lead.
 
   it('allows Products with no Domains and no Screens', () => {
     const cwd = fixtureCopy()
-    const bl = join(cwd, 'product-model')
-    rmSync(join(bl, 'domains'), { recursive: true })
+    const productModel = join(cwd, 'product-model')
+    rmSync(join(productModel, 'domains'), { recursive: true })
     const walk = (directory: string, edit: (file: string) => void) => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         const full = join(directory, entry.name)
@@ -464,7 +464,7 @@ Lead.
       }
     }
     // Stripping a lone `domain:` leaves an empty frontmatter block, which is not a shape.
-    walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, '').replace(/^---\n---\n\n?/, '')))
+    walk(productModel, file => writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, '').replace(/^---\n---\n\n?/, '')))
 
     // Every Screen goes, so every Context names its container instead, and the
     // one Rule scoped to a Screen loses its scope.
@@ -474,34 +474,34 @@ Lead.
       'interfaces/customer-mobile/experiences/storefront/screens',
       'interfaces/admin-web/screens'
     ]) {
-      rmSync(join(bl, relative), { recursive: true })
+      rmSync(join(productModel, relative), { recursive: true })
     }
     for (const interfaceId of ['customer-web', 'customer-mobile']) {
       compactResource(
-        join(bl, `interfaces/${interfaceId}/experiences/storefront/experience.md`),
-        join(bl, `interfaces/${interfaceId}/experiences/storefront.md`)
+        join(productModel, `interfaces/${interfaceId}/experiences/storefront/experience.md`),
+        join(productModel, `interfaces/${interfaceId}/experiences/storefront.md`)
       )
     }
-    compactResource(join(bl, 'interfaces/admin-web/interface.md'), join(bl, 'interfaces/admin-web.md'))
-    walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8')
+    compactResource(join(productModel, 'interfaces/admin-web/interface.md'), join(productModel, 'interfaces/admin-web.md'))
+    walk(productModel, file => writeFileSync(file, readFileSync(file, 'utf8')
       .replaceAll('customer-web::catalog', 'customer-web::storefront')
       .replace(/::product-record(?:-without-stock)?/g, '')
       .replaceAll('::order-status', '')
       .replaceAll('admin-web::order-detail', 'admin-web')))
     // The experiment's routes differ only by Screen; without Screens the
     // existing browse Scenario already covers their single remaining place.
-    unlinkSync(join(bl, 'capabilities/browse-catalog/scenarios/read-a-product-without-its-stock.md'))
+    unlinkSync(join(productModel, 'capabilities/browse-catalog/scenarios/read-a-product-without-its-stock.md'))
     // The stock disclosure experiment varies Screens, which no longer exist,
     // and the checkout route through its second Screen collapses onto web.
-    unlinkSync(join(bl, 'variations/stock-disclosure.md'))
+    unlinkSync(join(productModel, 'variations/stock-disclosure.md'))
     for (const name of ['complete-checkout', 'complete-checkout-without-review']) {
-      const file = join(bl, `capabilities/place-order/scenarios/${name}.md`)
+      const file = join(productModel, `capabilities/place-order/scenarios/${name}.md`)
       writeFileSync(file, readFileSync(file, 'utf8')
         .replace('  web-without-stock: Web without stock\n', '')
         .replace(/ {6}web-without-stock:\n {8}place: [^\n]*\n/g, ''))
     }
     /* With no Screen anywhere, a governed fact is checkable only where a Step cites it. */
-    const status = join(bl, 'capabilities/track-order/scenarios/check-an-order-and-its-refund.md')
+    const status = join(productModel, 'capabilities/track-order/scenarios/check-an-order-and-its-refund.md')
     writeFileSync(status, readFileSync(status, 'utf8').replace(
       '- { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
       '- { entity: order, effect: reads, facts: [Total charged] }'
@@ -509,7 +509,7 @@ Lead.
       '- { entity: refund, effect: reads, facts: [Amount, Reason] }',
       '- { entity: refund, effect: reads, facts: [Amount] }'
     ))
-    const console = join(bl, 'capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
+    const console = join(productModel, 'capabilities/refund-order/scenarios/refund-a-confirmed-order.md')
     writeFileSync(console, readFileSync(console, 'utf8').replace(
       '- { entity: order, effect: reads, facts: [Items ordered, Total charged] }',
       '- { entity: order, effect: reads, facts: [Margin] }'
@@ -523,17 +523,17 @@ Lead.
 
   it('allows direct Interface availability when the Product has no Experiences', () => {
     const cwd = fixtureCopy()
-    const bl = join(cwd, 'product-model')
+    const productModel = join(cwd, 'product-model')
 
     // Promote every Experience-contained Screen up to its Interface and drop the
     // Experiences, leaving each Interface undivided.
-    withoutCatalogPreview(bl)
+    withoutCatalogPreview(productModel)
     for (const interfaceId of ['customer-web', 'customer-mobile']) {
-      const from = join(bl, 'interfaces', interfaceId, 'experiences', 'storefront', 'screens')
-      cpSync(from, join(bl, 'interfaces', interfaceId, 'screens'), { recursive: true })
+      const from = join(productModel, 'interfaces', interfaceId, 'experiences', 'storefront', 'screens')
+      cpSync(from, join(productModel, 'interfaces', interfaceId, 'screens'), { recursive: true })
     }
     for (const interfaceId of ['customer-web', 'customer-mobile', 'admin-web']) {
-      rmSync(join(bl, 'interfaces', interfaceId, 'experiences'), { recursive: true, force: true })
+      rmSync(join(productModel, 'interfaces', interfaceId, 'experiences'), { recursive: true, force: true })
     }
     // Every availability Context loses its Experience segment.
     const scrub = (file: string) => writeFileSync(file, readFileSync(file, 'utf8')
@@ -547,7 +547,7 @@ Lead.
         else if (entry.name.endsWith('.md')) scrub(full)
       }
     }
-    walk(bl)
+    walk(productModel)
 
     const result = run(cwd)
     expect(result.errors).toEqual([])
@@ -1441,8 +1441,8 @@ The person behind every role they hold.
     // As authored, customer-web's single storefront Experience is justified by
     // customer-mobile's counterpart. Rename the mobile one and web stands alone,
     // while mobile stays justified by the Mobile storefront Variation.
-    const bl = join(cwd, 'product-model')
-    renameSync(join(bl, 'interfaces/customer-mobile/experiences/storefront'), join(bl, 'interfaces/customer-mobile/experiences/shop'))
+    const productModel = join(cwd, 'product-model')
+    renameSync(join(productModel, 'interfaces/customer-mobile/experiences/storefront'), join(productModel, 'interfaces/customer-mobile/experiences/shop'))
     const walk = (directory: string) => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         const full = join(directory, entry.name)
@@ -1452,19 +1452,19 @@ The person behind every role they hold.
         }
       }
     }
-    walk(bl)
+    walk(productModel)
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart or Variation; use direct Interface availability')
     expect(errors).not.toContain('interfaces/customer-mobile/interface.md: holds Experiences')
-    withoutCatalogPreview(bl)
-    rmSync(join(bl, 'variations/mobile-storefront.md'), { force: true })
+    withoutCatalogPreview(productModel)
+    rmSync(join(productModel, 'variations/mobile-storefront.md'), { force: true })
     expect(run(cwd).errors.join('\n')).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
   })
 
   it('reads a word the model declares as a thing, not as a verb, in id vocabulary checks', () => {
     const cwd = fixtureCopy()
-    const bl = join(cwd, 'product-model')
-    const entity = (id: string, title: string) => writeResource(join(bl, `entities/${id}.md`), `---
+    const productModel = join(cwd, 'product-model')
+    const entity = (id: string, title: string) => writeResource(join(productModel, `entities/${id}.md`), `---
 ---
 
 # ${title}
@@ -1485,17 +1485,17 @@ Lead.
     // A declared noun spanning segments: `refund-request` is the thing approved.
     entity('approve-refund-request', 'Approve refund request')
     // The spec's own counter-example: `order` is a thing, so the id carries no verb.
-    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/order-management'), { recursive: true })
+    cpSync(join(productModel, 'capabilities/refund-order'), join(productModel, 'capabilities/order-management'), { recursive: true })
     // The noun half is matched against things, never against a Screen's name:
     // `record` ends the `product-record` Screen but names no Entity.
-    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/browse-record'), { recursive: true })
+    cpSync(join(productModel, 'capabilities/refund-order'), join(productModel, 'capabilities/browse-record'), { recursive: true })
     // `product` ends the `catalog-product` Entity, so the declared name is suggested.
-    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/price-product'), { recursive: true })
+    cpSync(join(productModel, 'capabilities/refund-order'), join(productModel, 'capabilities/price-product'), { recursive: true })
     // Scenarios are behavioural ids too.
-    cpSync(join(bl, 'capabilities/refund-order/scenarios/refund-a-confirmed-order.md'), join(bl, 'capabilities/refund-order/scenarios/refund-processing.md'))
+    cpSync(join(productModel, 'capabilities/refund-order/scenarios/refund-a-confirmed-order.md'), join(productModel, 'capabilities/refund-order/scenarios/refund-processing.md'))
     // A declared thing ending in -ment is the object, not a nominalisation, even after a verb the list lacks.
     entity('document', 'Document')
-    cpSync(join(bl, 'capabilities/refund-order'), join(bl, 'capabilities/duplicate-document'), { recursive: true })
+    cpSync(join(productModel, 'capabilities/refund-order'), join(productModel, 'capabilities/duplicate-document'), { recursive: true })
 
     const warnings = run(cwd).warnings.join('\n')
     expect(warnings).not.toContain('"order-line" opens with a verb')

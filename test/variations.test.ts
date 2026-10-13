@@ -18,7 +18,7 @@ const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
 const model = () => loadModel(ROOT)
 const report = () => compileReport(model(), '2026-09-27')
-const temporary = () => { const dir = mkdtempSync(join(tmpdir(), 'bl-variations-')); dirs.push(dir); return dir }
+const temporary = () => { const dir = mkdtempSync(join(tmpdir(), 'pdd-kit-variations-')); dirs.push(dir); return dir }
 const LIBRARY_FACT = { entity: 'reader', fact: 'Library assignment' }
 
 /** Selection fields for one subtype, with every field outside it cleared. */

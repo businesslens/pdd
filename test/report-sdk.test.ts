@@ -118,7 +118,7 @@ describe('projectPortableReport', () => {
   ]
 
   beforeAll(() => {
-    repo = mkdtempSync(join(tmpdir(), 'bl-portable-'))
+    repo = mkdtempSync(join(tmpdir(), 'pdd-kit-portable-'))
     cpSync(FIXTURE, repo, { recursive: true })
     const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, stdio: 'pipe' })
     git('init', '--initial-branch=main')
@@ -861,7 +861,7 @@ describe('a removal that goes with another, on the wire', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let root: string
   beforeAll(() => {
-    root = mkdtempSync(join(tmpdir(), 'bl-with-'))
+    root = mkdtempSync(join(tmpdir(), 'pdd-kit-with-'))
     cpSync(FIXTURE, root, { recursive: true })
     /* A refund that holds its follow-ups, so two refunds removed in one Step
        have a declared direction: the follow-up goes with the refund. */
@@ -903,7 +903,7 @@ describe('a removal that goes with another, on the wire', () => {
 
   it('round-trips through open: the folder names the same record the report resolved', () => {
     const report = compileReport(loadModel(root), '2026-01-01')
-    const target = mkdtempSync(join(tmpdir(), 'bl-with-open-'))
+    const target = mkdtempSync(join(tmpdir(), 'pdd-kit-with-open-'))
     try {
       expandProductReport(target, report, false)
       const again = compileReport(loadModel(target), '2026-01-01')

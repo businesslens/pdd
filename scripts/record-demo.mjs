@@ -130,15 +130,18 @@ function showTerminal() {
 
 const server = await serve()
 const browser = await chromium.launch()
-const work = mkdtempSync(join(tmpdir(), 'bl-demo-'))
+const work = mkdtempSync(join(tmpdir(), 'pdd-kit-demo-'))
 try {
   const context = await browser.newContext({ viewport: size, deviceScaleFactor: 1 })
   /* The default light background, pinned so a changed default cannot slip into the GIF unnoticed. */
   /* Interfaces read as one tree per row; the drawing's own default is three. */
-  await context.addCookies([
-    { name: 'bl-bg-light', value: 'l4', url: server.url },
-    { name: 'report-columns', value: encodeURIComponent(JSON.stringify({ interface: 1 })), url: server.url }
-  ])
+  /* Seeded once: an init script runs on every navigation and must not undo the tour. */
+  await context.addInitScript(() => {
+    try {
+      if (localStorage.getItem('pdd-kit:bg-light') === null) localStorage.setItem('pdd-kit:bg-light', JSON.stringify('l4'))
+      if (localStorage.getItem('pdd-kit:columns') === null) localStorage.setItem('pdd-kit:columns', JSON.stringify({ interface: 1 }))
+    } catch { /* A blank document has no storage. */ }
+  })
   await context.addInitScript(installPointer)
   const page = await context.newPage()
   page.setDefaultTimeout(15_000)

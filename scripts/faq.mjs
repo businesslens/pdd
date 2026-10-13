@@ -1,7 +1,7 @@
 import { parseMarkdown } from 'comark'
 
 // FAQ is a standalone site page, authored as GitHub-readable Markdown.
-// Validate its outline here; landing validates the detailed rendering shapes.
+// Validate its outline here; the site (`site/`) validates the detailed rendering shapes.
 export async function faqProblems(source) {
   const errors = []
   const { nodes } = await parseMarkdown(source, { autoUnwrap: false })

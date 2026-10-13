@@ -32,7 +32,7 @@ let repo: string
 beforeAll(() => {
   // dist/ is built once in test/global-setup.ts. Building here raced with the
   // other suites that spawn from it.
-  repo = mkdtempSync(join(tmpdir(), 'bl-cli-'))
+  repo = mkdtempSync(join(tmpdir(), 'pdd-kit-cli-'))
   cpSync(FIXTURE, repo, { recursive: true })
   sh(repo, 'git', 'init', '--initial-branch=main')
   sh(repo, 'git', 'config', 'user.email', 'fixture@example.com')
@@ -249,7 +249,7 @@ describe('cli dispatch', () => {
   })
 
   it('rejects invalid viewer ports as usage errors before loading the model', () => {
-    const empty = mkdtempSync(join(tmpdir(), 'bl-view-port-'))
+    const empty = mkdtempSync(join(tmpdir(), 'pdd-kit-view-port-'))
     try {
       for (const value of ['0', '65536', '1.5', 'nope']) {
         const result = cli(empty, process.env, 'view', '--no-open', '--port', value)
@@ -263,7 +263,7 @@ describe('cli dispatch', () => {
   })
 
   it('refuses a viewer --cwd that is not a directory instead of waiting for a model there', () => {
-    const empty = mkdtempSync(join(tmpdir(), 'bl-view-cwd-'))
+    const empty = mkdtempSync(join(tmpdir(), 'pdd-kit-view-cwd-'))
     try {
       const file = join(empty, 'notes.txt')
       writeFileSync(file, 'not a directory\n')

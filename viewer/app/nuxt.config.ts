@@ -61,9 +61,9 @@ const devHandlers = [
 export default defineNuxtConfig({
   extends: [
     // The report layer supplies the stable Product Report and approved identity;
-    // the shared lab keeps this host on the same background audition flow as
-    // the landing application. Keep the composition here so report-viewer
-    // stays neutral for consumers that want only the approved theme.
+    // the shared theme lab adds the background audition controls to this host
+    // only. Keep the composition here so report-viewer stays neutral for
+    // consumers, such as the site, that want only the approved theme.
     // `report-viewer-lab` extends `report-viewer` and remains the private hook
     // for future Product Report auditions.
     resolve('../../layers/nuxt/report-viewer-lab'),

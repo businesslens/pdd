@@ -15,7 +15,7 @@ it is the split glyph in the report ink, drawn at 14px inside the usual 16px
 slot so it sits level with the other marks. A Variation modifies a type rather
 than being a subject area, so it takes no hue of its own; its ink matches the
 sub-icon on a set's mark. The teal slot, the ink-at-16px and the two fork
-alternatives, the row, cookie composable, variant list and lab stylesheet have
+alternatives, the row, preference composable, variant list and lab stylesheet have
 been removed.
 
 The **Resource heading** audition is decided: Nearest place is the stable
@@ -24,7 +24,7 @@ containing the resource, with that place's own mark — `Screen in [Screen] Add
 source` — and the Domains as marks, the first opening its Domain and the rest
 behind a count. The full containing path is the nearest place's tooltip. The
 stable `ReportResourceContext` draws it inside `ReportResourceHeading`; the two-line
-path, eyebrow, path title and type chip alternatives, the row, cookie
+path, eyebrow, path title and type chip alternatives, the row, preference
 composable, variant list and shadows have been removed.
 
 The **Entity effect** audition is decided: Entity first is the stable phrasing.
@@ -33,7 +33,7 @@ The Entity chip comes first, then a plain verb, then each State as a badge —
 `[Collection] read`; an ending reads `[Item] in [Unread]`. It lives in the
 stable `ReportStepEntity` and `ReportEntityEffect`, so a Step's Entity effects, a
 Scenario's Ends with, Changes made here, Leaves behind and a Capability's What
-it changes all say it the same way. The alternatives, row, cookie composable,
+it changes all say it the same way. The alternatives, row, preference composable,
 variant list and shadow have been removed.
 
 The **Coverage icons** audition is decided: Signals is the stable Coverage mark.
@@ -43,7 +43,7 @@ and a warning triangle for Limitations — on its card, beside each path (faded
 inside a closed folder) and on statement chips. The approved hues stay in their
 families at clearer saturations, as report tokens rather than semantic shades.
 A palette and a dot-drawing audition preceded it; their alternatives, the icon
-sets, selector row, cookie composable and host slot have been removed.
+sets, selector row, preference composable and host slot have been removed.
 
 The **Coverage** audition is decided: Locations is the stable Coverage
 reading. Every authored statement is written under the path it names and read
@@ -54,7 +54,7 @@ and model References keep their home in the Product Overview's own References
 reading. Four category cards filter whole statements, including unlocated ones.
 Its marks, its search and its summary panel have since been refined in the
 stable report; the report layer README describes them as they are. The
-alternatives, the selector, the cookie composable and the `ReportCoverage` shadow
+alternatives, the selector, the preference composable and the `ReportCoverage` shadow
 have been removed.
 
 The **View controls** audition is decided: option 4's dropdown with preview
@@ -69,7 +69,7 @@ The **Badges** audition is decided: Sand is the stable treatment for neutral
 badges in the shared theme and filter and resource-link chips in the report.
 Light mode uses a parchment fill and warm outline; dark mode uses a subdued
 brown fill. Colored badges retain their semantic palettes. The alternatives,
-selector, cookie composable, local app-config hook and experimental stylesheet
+selector, preference composable, local app-config hook and experimental stylesheet
 have been removed. The background audition remains independently owned by
 `theme-lab`.
 
@@ -77,12 +77,12 @@ The **Product picker** audition is decided: Hairline is the stable treatment,
 with a faint outline, transparent background and a quiet hover highlight.
 Collapsed navigation keeps a 32px trigger and 17px logo. The dropdown centers
 the logo, Product name and selected checkmark in each row. This now lives in
-the shared picker for local and catalog hosts; the variant selector, cookie
+the shared picker for local and catalog hosts; the variant selector, preference
 composable and experimental stylesheet have been removed.
 
 The **Collapsed icons** audition is decided: collapsed navigation and utility
 icons use 17px glyphs. The selected size now lives in the
-stable menu components. The size selector, cookie composable and override have
+stable menu components. The size selector, preference composable and override have
 been removed; expanded and mobile menus retain their existing glyph sizes.
 Navigation and reference rows now use 36px targets for more breathing room;
 brand controls and the collapsed Product picker retain 32px targets.
@@ -91,49 +91,49 @@ The **Comparison legend** audition is decided: Explained is the stable Legend
 popover on Compare delivery, What changes what and Rule attachments. Its button
 lives beside these views' filters; each colored badge has a short meaning.
 Entries cover every possible badge for the view, regardless of filters. The
-shadow, alternatives, selector, cookie composable and experiment stylesheet have
+shadow, alternatives, selector, preference composable and experiment stylesheet have
 been removed. The background audition remains independently owned by `theme-lab`.
 
 The **Context sizing** audition is decided: Roomier is the stable Context
 renderer, at 13 px in resource drilldowns and 12 px in the three comparison
 views' popovers. Icons scale with the text; the chosen border, spacing, path
 and resource navigation are preserved. The shadow, alternate sizes, selector,
-modal dock, cookie composable and experiment stylesheet have been removed.
+modal dock, preference composable and experiment stylesheet have been removed.
 The background audition remains independently owned by `theme-lab`.
 
 The **Mutation badges** audition is decided: What changes what now uses soft
 green creates, gold changes with a clearer border, and Terracotta removals in
 light mode or Muted red in dark mode. The chosen styles live in the stable
 report, including hover, open and focus states. The alternate palettes, preview,
-selector, cookie composable and experiment stylesheet have been removed.
+selector, preference composable and experiment stylesheet have been removed.
 
 The **Mutation popover** audition is decided: Capability first is now the
 stable reading in What changes what. The header names the Capability with its
 icon; the body names the Entity with its icon, then shows each effect's state
 details and matching Scenarios. The shadow component, alternatives, selector,
-cookie composable and experiment styles have been removed.
+preference composable and experiment styles have been removed.
 
 The **Table navigation** audition is decided: Edge handles with Divider middle
 now live in `report-viewer` across all three comparison views. Subtle handles sit
 on the subject divider and the table’s right edge, centered on the visible rows;
 narrow readings use compact header arrows. Controls move one column at a time,
 with page scrolling, sticky headers, and expanded details preserved. The shadow
-component, alternative placements, selectors, and experiment cookies have been
+component, alternative placements, selectors, and experiment preferences have been
 removed. The background audition remains independently owned by `theme-lab`.
 
 The **Table corner**
 audition is decided: Inset at 14 px is the stable diagonal header across
 Compare delivery, What changes what, and Rule attachments. The alternatives,
-cookie composable, and Table corner selector have been removed.
+preference composable, and Table corner selector have been removed.
 
 The **Control size**
 audition is decided: page controls, filters and graph buttons use Nuxt UI's
 `sm` size (28px) at every viewport width. The optional theme lab retains its own sizing.
-The size selector, cookie composable and global override have been removed.
+The size selector, preference composable and global override have been removed.
 
 The **Scenario Step card** audition is decided: Guided flow is now the stable `ReportScenarioStep`.
 It labels Action or Condition, Who, Entity effects, Where and Capability, and
-reads each Entity effect as a phrase. The alternative drawings, their cookie
+reads each Entity effect as a phrase. The alternative drawings, their preference
 composable and the Step card selector have been removed.
 
 Earlier experiments are decided: the selected Overview/Scenarios page and
@@ -144,6 +144,7 @@ and the reading-aligned one is now the only one; the background audition remains
 independently owned by `theme-lab`.
 
 A future report experiment belongs here when it needs to shadow a stable
-component or add a local-only control. Once decided, promote the selected
-behavior into `report-viewer` and remove the experiment implementation from
-this layer.
+component or add a local-only control. Keep its selection in local storage
+through the theme layer's `usePddKitStoredPreference`, never in a cookie. Once
+decided, promote the selected behavior into `report-viewer` and remove the
+experiment implementation from this layer.

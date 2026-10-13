@@ -24,8 +24,10 @@ const cases = [
 try {
   for (const width of [1440, 640, 390, 320]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' })
-    // An old experiment preference must never restore a retired control.
-    await context.addCookies([{ name: 'bl-preview-bar', value: 'shown', url: origin }, { name: 'report-drawing-controls-lab', value: 'action', url: origin }])
+    // Run with the theme lab bar open; the retired drawing-controls lab must stay gone.
+    await context.addInitScript(() => {
+      try { localStorage.setItem('pdd-kit:preview-bar', JSON.stringify('shown')) } catch { /* A blank document has no storage. */ }
+    })
     await context.addInitScript(({ id, key }) => {
       const storageKey = `pdd-kit:collections:/:${id}`
       if (!sessionStorage.getItem(storageKey)) sessionStorage.setItem(storageKey, JSON.stringify({ selections: { entity: [key] } }))

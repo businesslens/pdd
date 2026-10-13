@@ -36,7 +36,7 @@ describe('Blueprint release script', () => {
   })
 
   it('refuses a non-empty output directory before building anything', () => {
-    const out = mkdtempSync(join(tmpdir(), 'bl-release-'))
+    const out = mkdtempSync(join(tmpdir(), 'pdd-kit-release-'))
     temporaryDirectories.push(out)
     mkdirSync(join(out, 'old'))
     writeFileSync(join(out, 'old', 'stale.json'), '{}')

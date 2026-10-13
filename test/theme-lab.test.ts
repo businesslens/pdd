@@ -73,7 +73,7 @@ describe('shared pdd-kit theme lab', () => {
     expect(bar).toContain('rowCount: 1')
   })
 
-  it('keeps the local viewer on the shared landing-page background flow', () => {
+  it('keeps the local viewer on the shared theme lab background flow', () => {
     const config = readFileSync(join(root, 'viewer/app/nuxt.config.ts'), 'utf8')
     const localViewer = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
     const localPage = readFileSync(join(root, 'viewer/app/app/pages/index.vue'), 'utf8')
@@ -101,8 +101,8 @@ describe('shared pdd-kit theme lab', () => {
   })
 
   it('styles the pdd-kit classes the components use, as class selectors', () => {
-    // The rename once turned `.businesslens-report` into the element selector
-    // `product-model-report`, which matches nothing: graphs lost their height.
+    // A rename once turned the report's class selector into the element
+    // selector `product-model-report`, which matches nothing: graphs lost their height.
     const css = [
       'layers/nuxt/report-viewer/app/assets/report-structure.css',
       'layers/nuxt/report-viewer/app/assets/report-topology.css',

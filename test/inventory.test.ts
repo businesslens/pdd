@@ -25,7 +25,7 @@ afterEach(() => {
 
 describe('repository inventory', () => {
   it('uses tracked files only and remains read-only', () => {
-    const repository = mkdtempSync(join(tmpdir(), 'bl-inventory-'))
+    const repository = mkdtempSync(join(tmpdir(), 'pdd-kit-inventory-'))
     temporaryDirectories.push(repository)
     mkdirSync(join(repository, 'src', 'routes'), { recursive: true })
     mkdirSync(join(repository, 'docs'), { recursive: true })

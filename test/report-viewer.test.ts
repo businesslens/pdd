@@ -938,17 +938,28 @@ describe('stable Product Report', () => {
   })
 
   /*
-    A host may render the report on the server, so the preference has to be known
-    before the first paint. Local storage would draw the tooltips and take them
-    away on every page load for the one reader who asked for them gone.
+    No host renders the report per request, so a cookie would buy no first
+    paint. The preference lives in local storage, shared by every term on the
+    page; a prerendered page hydrates with the default and applies the stored
+    choice only after hydration, or it would hydrate against different markup.
   */
-  it('keeps the tooltip preference in a cookie that outlives a refresh', () => {
+  it('keeps the tooltip preference in local storage, applied after hydration', () => {
     const tooltips = source('app/composables/useTooltips.ts')
+    const preference = source('../theme/app/composables/usePddKitStoredPreference.ts')
 
-    expect(tooltips).toContain("useCookie<'on' | 'off'>('report-tooltips'")
-    expect(tooltips).toContain('maxAge: 60 * 60 * 24 * 365')
-    expect(tooltips).not.toContain('localStorage')
-    expect(tooltips).not.toContain('useState')
+    expect(tooltips).toContain("usePddKitStoredPreference<'on' | 'off'>(\n    'pdd-kit:tooltips'")
+    expect(tooltips).not.toContain('useCookie')
+    expect(preference).toContain('localStorage.getItem(key)')
+    expect(preference).toContain("nuxtApp.hooks.hookOnce('app:suspense:resolve', restore)")
+  })
+
+  it('sets no cookies for reader preferences', () => {
+    for (const file of [
+      'app/composables/useColumns.ts',
+      'app/composables/useTooltips.ts',
+      'app/components/ReportResourceSlideover.vue'
+    ]) expect(source(file)).not.toContain('useCookie')
+    expect(source('app/components/ReportShell.vue')).toContain('<UDashboardGroup storage="local"')
   })
 
   /*

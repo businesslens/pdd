@@ -298,7 +298,7 @@ Documentation and GitHub stay in the sidebar footer. There is no
 separate host navbar; the theme lab bar appears above the report only when
 opened. Desktop navigation uses Nuxt UI's
 `DashboardSidebar` and `DashboardSidebarCollapse`, expanding to 288px or
-collapsing to a 64px icon rail. The choice is saved in a cookie. Navigation and
+collapsing to a 64px icon rail. The choice is saved in local storage. Navigation and
 utility icons keep accessible labels and tooltips; the mobile drawer always
 shows the full menu. Collapsing keeps the current reading and its state.
 Collapsed navigation and utility icons use 17px glyphs. Navigation, Search and
@@ -376,10 +376,15 @@ Collection facets, collapsed groups,
 expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and
 recompilation without entering the Product Model; removed facet IDs are pruned.
-Two preferences are cookies, so a server-rendered host paints them right on the
-first load: `report-tooltips` (whether term tooltips are drawn) and `report-columns`
-(how many columns each collection's Rows use, keyed by collection, one to
-four; rows start at one, tree cards at three). Nothing else is kept, because
+Reader preferences live in local storage and set no cookies:
+`pdd-kit:tooltips` (whether term tooltips are drawn), `pdd-kit:columns` (how
+many columns each collection's Rows use, keyed by collection, one to four; rows
+start at one, tree cards at three), `pdd-kit:resource-expanded` (whether the
+resource slideover fills the window) and the sidebar's collapsed rail. No host
+renders the report per request, so a prerendered page draws the defaults and
+applies the stored choices once hydration finishes; the client-only local
+viewer reads them before its first paint. Without storage, as in some private
+windows, a choice lasts as long as the page. Nothing else is kept, because
 nothing else is configurable: the reading and its grouping are decided by the
 report rather than auditioned on every visit.
 

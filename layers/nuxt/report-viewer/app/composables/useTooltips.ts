@@ -7,18 +7,16 @@
  * how the preference is undone, and how a word is looked up once the tooltips
  * are gone — so nothing here can strand a reader in a report they cannot read.
  *
- * A cookie rather than local storage, because a host may render the report on
- * the server. The answer has to be known before the first paint, or a reader
- * who turned the tooltips off is shown them again on every page load and
- * watches them disappear.
+ * The choice is kept in this browser's local storage. No host renders the
+ * report per request: the local viewer reads it before its first paint, and a
+ * prerendered page applies it as soon as hydration finishes.
  */
 export function useTooltips() {
-  const preference = useCookie<'on' | 'off'>('report-tooltips', {
-    default: () => 'on',
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: 'lax',
-    path: '/'
-  })
+  const preference = usePddKitStoredPreference<'on' | 'off'>(
+    'pdd-kit:tooltips',
+    () => 'on',
+    stored => stored === 'on' || stored === 'off' ? stored : undefined
+  )
 
   /* Writable: the panel's switch and the tooltip's own exit are one state. */
   const shown = computed({

@@ -18,7 +18,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView], referenceBack: [], referenceOpen: [href: string] }>()
 const tab = defineModel<string>('tab', { default: 'overview' })
-const expanded = useCookie<boolean>('report-resource-expanded', { default: () => false, sameSite: 'lax' })
+const expanded = usePddKitStoredPreference<boolean>('pdd-kit:resource-expanded', () => false, stored => typeof stored === 'boolean' ? stored : undefined)
 const expandLabel = computed(() => expanded.value ? 'Restore resource size' : 'Expand resource')
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })

@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('skill installation', () => {
   it('installs only the namespaced skills into every selected project harness', async () => {
-    const project = temporary('bl-install-')
+    const project = temporary('pdd-kit-install-')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     expect(await runInstall(project, {
@@ -76,8 +76,8 @@ describe('skill installation', () => {
   it('uses provider-specific global destinations', () => {
     // Exercise the default location without inheriting a real harness home.
     vi.stubEnv('CODEX_HOME', undefined)
-    const project = temporary('bl-global-project-')
-    const home = temporary('bl-global-home-')
+    const project = temporary('pdd-kit-global-project-')
+    const home = temporary('pdd-kit-global-home-')
 
     const result = installSkillsToTarget(
       project,
@@ -92,7 +92,7 @@ describe('skill installation', () => {
   })
 
   it('refuses an unowned collision unless force is explicit', () => {
-    const project = temporary('bl-collision-')
+    const project = temporary('pdd-kit-collision-')
     const collision = join(project, '.claude', 'skills', 'pdd-map')
     mkdirSync(collision, { recursive: true })
     writeFileSync(join(collision, 'SKILL.md'), '---\nname: pdd-map\n---\nUnrelated.\n')
@@ -115,7 +115,7 @@ describe('skill installation', () => {
   it('refuses an unmarked directory even when its SKILL.md mentions pdd-kit', () => {
     // A fork that kept the skill's name and the word pdd-kit is still
     // somebody else's: only the install manifest proves ownership.
-    const project = temporary('bl-fork-')
+    const project = temporary('pdd-kit-fork-')
     const fork = join(project, '.claude', 'skills', 'pdd-map')
     mkdirSync(fork, { recursive: true })
     writeFileSync(join(fork, 'SKILL.md'), '---\nname: pdd-map\ndescription: MY OWN FORK of the pdd-kit mapping skill\n---\nMY CUSTOM EDIT.\n')
@@ -132,7 +132,7 @@ describe('skill installation', () => {
     // The manifest is read out of the target repository, which is untrusted. A
     // recorded name reaches a recursive remove, so a name that escapes the
     // skills directory invalidates the marker instead of being followed.
-    const project = temporary('bl-hostile-manifest-')
+    const project = temporary('pdd-kit-hostile-manifest-')
     const skillsDir = join(project, '.agents', 'skills')
     const victim = join(project, 'victim')
     const claimed = join(skillsDir, 'pdd-map')
@@ -172,7 +172,7 @@ describe('skill installation', () => {
   it('leaves a recorded name this Product could never have written', () => {
     // A well-formed marker still only proves ownership of names pdd-kit
     // ships or once shipped; anything else in the list is somebody's own work.
-    const project = temporary('bl-stale-name-')
+    const project = temporary('pdd-kit-stale-name-')
     const skillsDir = join(project, '.agents', 'skills')
     const notOurs = join(skillsDir, 'my-notes')
     mkdirSync(notOurs, { recursive: true })
@@ -196,7 +196,7 @@ describe('skill installation', () => {
   })
 
   it('checks every harness target before writing any', () => {
-    const project = temporary('bl-check-first-')
+    const project = temporary('pdd-kit-check-first-')
     const collision = join(project, '.agents', 'skills', 'pdd-map')
     mkdirSync(collision, { recursive: true })
     writeFileSync(join(collision, 'SKILL.md'), '---\nname: pdd-map\n---\nUnrelated.\n')
@@ -212,7 +212,7 @@ describe('skill installation', () => {
   })
 
   it('removes stale owned namespaced skills and leaves unowned files alone', () => {
-    const project = temporary('bl-owned-skills-')
+    const project = temporary('pdd-kit-owned-skills-')
     const skillsDir = join(project, '.agents', 'skills')
     const stale = join(skillsDir, 'pdd-kit-example')
     const lookalike = join(skillsDir, 'pdd-kit-unowned')
@@ -244,7 +244,7 @@ describe('skill installation', () => {
   })
 
   it('updates managed skills without changing product files', async () => {
-    const project = temporary('bl-update-')
+    const project = temporary('pdd-kit-update-')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     installSkillsToTarget(
       project,

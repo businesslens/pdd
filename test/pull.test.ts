@@ -69,7 +69,7 @@ function release(
 }
 
 beforeAll(() => {
-  const source = temporary('bl-pull-source-')
+  const source = temporary('pdd-kit-pull-source-')
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
   report = projectPortableReport(buildProject(source).report) as unknown as Record<string, unknown>
@@ -90,7 +90,7 @@ afterAll(() => {
 
 describe('pull', () => {
   it('pulls anonymously from the Blueprint release and expands the model', async () => {
-    const target = temporary('bl-pull-target-')
+    const target = temporary('pdd-kit-pull-target-')
     const urls: string[] = []
     let headers: Record<string, string> = {}
     const fetch = release({}, urls)
@@ -120,26 +120,26 @@ describe('pull', () => {
   })
 
   it('skips a missing or invalid cover, and asks for none without a logo', async () => {
-    const missing = temporary('bl-pull-no-cover-')
+    const missing = temporary('pdd-kit-pull-no-cover-')
     const fetchMissing = release({ 'fixture-shop.cover.webp': () => new Response('', { status: 404 }) })
     expect(await runPull(missing, 'fixture-shop', { force: false }, { fetch: fetchMissing, env: {} })).toBe(0)
     expect(existsSync(join(missing, 'product-model/product/logo.svg'))).toBe(true)
     expect(existsSync(join(missing, 'product-model/product/cover.webp'))).toBe(false)
 
-    const invalid = temporary('bl-pull-bad-cover-')
+    const invalid = temporary('pdd-kit-pull-bad-cover-')
     const fetchInvalid = release({ 'fixture-shop.cover.webp': () => new Response('<svg/>') })
     expect(await runPull(invalid, 'fixture-shop', { force: false }, { fetch: fetchInvalid, env: {} })).toBe(0)
     expect(existsSync(join(invalid, 'product-model/product/cover.webp'))).toBe(false)
 
     const urls: string[] = []
-    const noLogo = temporary('bl-pull-cover-without-logo-')
+    const noLogo = temporary('pdd-kit-pull-cover-without-logo-')
     const fetchNoLogo = release({ 'fixture-shop.logo.svg': () => new Response('', { status: 404 }) }, urls)
     expect(await runPull(noLogo, 'fixture-shop', { force: false }, { fetch: fetchNoLogo, env: {} })).toBe(0)
     expect(urls.some(url => url.endsWith('.cover.webp'))).toBe(false)
   })
 
   it('does not require a logo', async () => {
-    const target = temporary('bl-pull-no-logo-')
+    const target = temporary('pdd-kit-pull-no-logo-')
     const urls: string[] = []
     const fetch = release({ 'index.json': () => Response.json(indexFor({ logo: null, cover: null })) }, urls)
 
@@ -150,7 +150,7 @@ describe('pull', () => {
   })
 
   it('writes a model README telling an agent to build the product', async () => {
-    const target = temporary('bl-pull-readme-')
+    const target = temporary('pdd-kit-pull-readme-')
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch: release(), env: {} })).toBe(0)
 
@@ -161,7 +161,7 @@ describe('pull', () => {
   })
 
   it('pulls from the repository PDD_KIT_BLUEPRINT_REPOSITORY names', async () => {
-    const target = temporary('bl-pull-fork-')
+    const target = temporary('pdd-kit-pull-fork-')
     const urls: string[] = []
 
     expect(await runPull(target, 'fixture-shop', { force: false }, {
@@ -172,7 +172,7 @@ describe('pull', () => {
   })
 
   it('refuses a repository that is not an owner/repo pair', async () => {
-    const target = temporary('bl-pull-bad-repo-')
+    const target = temporary('pdd-kit-pull-bad-repo-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetch = vi.fn() as unknown as typeof globalThis.fetch
 
@@ -184,7 +184,7 @@ describe('pull', () => {
   })
 
   it('names an unknown Blueprint and points at list', async () => {
-    const target = temporary('bl-pull-unknown-')
+    const target = temporary('pdd-kit-pull-unknown-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
 
@@ -195,7 +195,7 @@ describe('pull', () => {
   })
 
   it('says when the repository publishes no Blueprints for this report version', async () => {
-    const target = temporary('bl-pull-no-release-')
+    const target = temporary('pdd-kit-pull-no-release-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
     const fetch = release({ 'index.json': () => new Response('Not Found', { status: 404 }) })
@@ -205,7 +205,7 @@ describe('pull', () => {
   })
 
   it('refuses an index for another report version, in one sentence', async () => {
-    const target = temporary('bl-pull-index-version-')
+    const target = temporary('pdd-kit-pull-index-version-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
     const fetch = release({ 'index.json': () => Response.json({ ...indexFor(), reportVersion: '11' }) })
@@ -216,7 +216,7 @@ describe('pull', () => {
   })
 
   it('refuses an index that does not have the expected shape', async () => {
-    const target = temporary('bl-pull-bad-index-')
+    const target = temporary('pdd-kit-pull-bad-index-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
     const fetch = release({ 'index.json': () => Response.json(indexFor({ report: '../escape.json' })) })
@@ -226,7 +226,7 @@ describe('pull', () => {
   })
 
   it('refuses a report whose digest does not match the index', async () => {
-    const target = temporary('bl-pull-digest-')
+    const target = temporary('pdd-kit-pull-digest-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetch = release({ 'index.json': () => Response.json(indexFor({}, 'a'.repeat(64))) })
 
@@ -235,7 +235,7 @@ describe('pull', () => {
   })
 
   it('names the schema version of a report it cannot read, in one sentence', async () => {
-    const target = temporary('bl-pull-old-report-')
+    const target = temporary('pdd-kit-pull-old-report-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
     const stale = { ...report, schemaVersion: '12.0.0' }
@@ -249,7 +249,7 @@ describe('pull', () => {
   })
 
   it('refuses a report published for a different Blueprint', async () => {
-    const target = temporary('bl-pull-mismatch-')
+    const target = temporary('pdd-kit-pull-mismatch-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const other = { ...report, id: 'something-else' }
     const fetch = release({
@@ -262,7 +262,7 @@ describe('pull', () => {
   })
 
   it('refuses a download redirected away from HTTPS', async () => {
-    const target = temporary('bl-pull-redirect-')
+    const target = temporary('pdd-kit-pull-redirect-')
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
     const fetch = vi.fn(async () => {
@@ -277,7 +277,7 @@ describe('pull', () => {
   })
 
   it('refuses a body over the 8 MiB safety limit', async () => {
-    const target = temporary('bl-pull-oversized-')
+    const target = temporary('pdd-kit-pull-oversized-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetch = release({
       'fixture-shop.json': () => new Response(JSON.stringify(report), {
@@ -290,7 +290,7 @@ describe('pull', () => {
   })
 
   it('rejects a name that is not a canonical slug', async () => {
-    const target = temporary('bl-pull-name-')
+    const target = temporary('pdd-kit-pull-name-')
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const fetch = vi.fn() as unknown as typeof globalThis.fetch
 

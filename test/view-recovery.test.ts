@@ -10,7 +10,7 @@ const directories: string[] = []
 const children: ChildProcess[] = []
 const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, stdio: 'pipe' })
 const scratch = () => {
-  const directory = mkdtempSync(join(tmpdir(), 'bl-view-recovery-'))
+  const directory = mkdtempSync(join(tmpdir(), 'pdd-kit-view-recovery-'))
   directories.push(directory)
   return directory
 }

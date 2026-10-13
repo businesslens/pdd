@@ -42,9 +42,9 @@ afterEach(() => {
 
 describe.skipIf(process.platform === 'win32')('isolated skill runners', () => {
   it.each(LINT_RUNNERS)('$name runs npm outside the target and scrubs the key during lint', ({ file }) => {
-    const repo = temporary('bl-runner-repo-')
-    const bin = temporary('bl-runner-bin-')
-    const capture = join(temporary('bl-runner-capture-'), 'npm.json')
+    const repo = temporary('pdd-kit-runner-repo-')
+    const bin = temporary('pdd-kit-runner-bin-')
+    const capture = join(temporary('pdd-kit-runner-capture-'), 'npm.json')
     const fakeNpm = join(bin, 'npm')
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
@@ -73,7 +73,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
-          PDD_KIT_DEV_BIN_DIR: temporary('bl-runner-no-dev-bin-'),
+          PDD_KIT_DEV_BIN_DIR: temporary('pdd-kit-runner-no-dev-bin-'),
           CAPTURE_FILE: capture,
           PDD_KIT_API_KEY: 'must-not-reach-lint'
         },
@@ -103,10 +103,10 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     // `@itai-gendler/pdd-kit@latest` would lint a model against whatever is published
     // rather than against the release these skills shipped with, reporting the
     // current format's frontmatter keys as unknown.
-    const skills = temporary('bl-runner-pinned-skills-')
-    const repo = temporary('bl-runner-pinned-repo-')
-    const bin = temporary('bl-runner-pinned-bin-')
-    const capture = join(temporary('bl-runner-pinned-capture-'), 'npm.json')
+    const skills = temporary('pdd-kit-runner-pinned-skills-')
+    const repo = temporary('pdd-kit-runner-pinned-repo-')
+    const bin = temporary('pdd-kit-runner-pinned-bin-')
+    const capture = join(temporary('pdd-kit-runner-pinned-capture-'), 'npm.json')
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
     writeFileSync(
@@ -138,7 +138,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
-          PDD_KIT_DEV_BIN_DIR: temporary('bl-runner-pinned-no-dev-bin-'),
+          PDD_KIT_DEV_BIN_DIR: temporary('pdd-kit-runner-pinned-no-dev-bin-'),
           CAPTURE_FILE: capture
         },
         stdio: 'pipe'
@@ -150,10 +150,10 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   })
 
   it.each(LINT_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
-    const repo = temporary('bl-runner-dev-repo-')
-    const developmentRoot = temporary('bl-runner-dev-pdd-')
-    const bin = temporary('bl-runner-dev-bin-')
-    const capture = join(temporary('bl-runner-dev-capture-'), 'cli.json')
+    const repo = temporary('pdd-kit-runner-dev-repo-')
+    const developmentRoot = temporary('pdd-kit-runner-dev-pdd-')
+    const bin = temporary('pdd-kit-runner-dev-bin-')
+    const capture = join(temporary('pdd-kit-runner-dev-capture-'), 'cli.json')
     const cli = join(developmentRoot, 'dist', 'cli.js')
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
@@ -168,13 +168,13 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 }))\n`
     )
     writeFileSync(
-      join(bin, 'bl'),
+      join(bin, 'pdd-kit-dev'),
       `#!/usr/bin/env node
 if (process.argv[2] !== '--dev-cli') process.exit(2)
 console.log(${JSON.stringify(cli)})
 `
     )
-    chmodSync(join(bin, 'bl'), 0o755)
+    chmodSync(join(bin, 'pdd-kit-dev'), 0o755)
 
     execFileSync(process.execPath, [file, '--root', repo, 'lint', '--json'], {
       env: {
@@ -193,7 +193,7 @@ console.log(${JSON.stringify(cli)})
     expect(recorded.apiKey).toBeNull()
   })
   it.each(LINT_RUNNERS)('$name rejects removed accounting commands', ({ file }) => {
-    const repo = temporary('bl-runner-repo-')
+    const repo = temporary('pdd-kit-runner-repo-')
     const result = spawnSync(process.execPath, [file, '--root', repo, 'coverage', 'start'], { encoding: 'utf8' })
     expect(result.status).toBe(2)
     expect(result.stderr).toContain('supports only lint')

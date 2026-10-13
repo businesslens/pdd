@@ -52,7 +52,7 @@ function git(cwd, ...gitArgs) {
 /* The generated folders are not part of the fixture; the copy grows its own. */
 const skip = (path) => /(^|\/)\product-model\/(build|cache)(\/|$)/.test(relative(source, path))
 
-const copy = mkdtempSync(join(tmpdir(), 'bl-view-'))
+const copy = mkdtempSync(join(tmpdir(), 'pdd-kit-view-'))
 cpSync(source, copy, { recursive: true, filter: path => !skip(path) })
 git(copy, 'init', '--quiet', '--initial-branch=main')
 git(copy, 'config', 'user.email', 'view@pdd-kit.local')

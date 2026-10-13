@@ -630,7 +630,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       <ReportTools in-header @search="searchOpen = true" @vocabulary="openVocabulary" />
     </Teleport>
 
-    <UDashboardGroup storage-key="pdd-kit-report" unit="px" class="relative min-h-0 flex-1">
+    <UDashboardGroup storage="local" storage-key="pdd-kit-report" :storage-options="{ initOnMounted: true }" unit="px" class="relative min-h-0 flex-1">
       <UDashboardSidebar
         :id="sidebarId"
         v-model:collapsed="sidebarCollapsed"

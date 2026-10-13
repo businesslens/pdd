@@ -76,7 +76,7 @@ describe('version discovery', () => {
 
 describe('update state', () => {
   let dir: string
-  beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'bl-update-')) })
+  beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'pdd-kit-update-')) })
   afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
 
   it('lives in the user configuration directory', () => {
@@ -164,7 +164,7 @@ describe('update prompt', () => {
   let refreshes: number
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'bl-update-'))
+    dir = mkdtempSync(join(tmpdir(), 'pdd-kit-update-'))
     statePath = join(dir, 'update-check.json')
     choices = []
     installs = []

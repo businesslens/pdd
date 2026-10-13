@@ -12,7 +12,7 @@ const TRACKED = ['README.md', 'src/routes/storefront.ts', 'src/routes/admin.ts',
   'src/services/catalog.ts', 'src/services/orders.ts', 'src/services/payments.ts',
   'src/models/product.ts', 'src/models/order.ts']
 const dirs: string[] = []
-function temp() { const path = mkdtempSync(join(tmpdir(), 'bl-border-')); dirs.push(path); return path }
+function temp() { const path = mkdtempSync(join(tmpdir(), 'pdd-kit-border-')); dirs.push(path); return path }
 function fixture() { const path = temp(); cpSync(join(__dirname, 'fixtures/fixture-shop'), path, { recursive: true }); return path }
 function edit(cwd: string, path: string, transform: (text: string) => string) {
   const file = join(cwd, 'product-model', path)
