@@ -39,7 +39,7 @@
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/core": "^1.48.2",
     "@vueuse/core": "^14.3.0",
-    "@vueuse/nuxt": "^14.3.0",
+    "@vueuse/nuxt": "^15.0.0",
     "elkjs": "^0.12.0",
     "h3": "^1.15.11",
     "hast-util-to-html": "^9.0.5",
