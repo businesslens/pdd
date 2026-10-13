@@ -13,6 +13,9 @@ jobs:
   publish:
     if: github.repository == 'itai-gendler/pdd-kit' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    # The npm environment admits only v* tags, and the trusted publisher on
+    # npmjs.com names it, so no other ref can mint a publishing token.
+    environment: npm
     permissions:
       contents: read
       id-token: write
