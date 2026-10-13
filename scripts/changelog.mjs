@@ -155,3 +155,17 @@ export function releaseFooter(label, url, contributors) {
     `**Full Changelog**: [${comparisonText(url)}][${label}]`
   ]
 }
+
+/**
+ * The body of one release's section as GitHub Release notes: the lines under
+ * its heading, trimmed, with `[text][label]` references turned into inline
+ * links, since the notes carry none of the file's link definitions.
+ */
+export function releaseNotes(markdown, version) {
+  const section = changelogSections(markdown).find(candidate => candidate.label === version)
+  if (!section) throw new Error(`CHANGELOG.md has no [${version}] section`)
+  const definitions = changelogDefinitions(markdown)
+  return section.lines.join('\n').trim()
+    .replace(/\[([^\]]+)\]\[([^\]]+)\]/g, (reference, text, label) =>
+      definitions.has(label) ? `[${text}](${definitions.get(label)})` : reference)
+}

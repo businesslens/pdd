@@ -188,3 +188,32 @@ jobs:
             exit 0
           fi
           npm publish "${{ steps.pack.outputs.tarball }}"
+
+  # Watching a repository's releases notifies on Releases, never on bare tags,
+  # so each version gets one once npm can install it, its notes taken from
+  # CHANGELOG.md. A separate job keeps write access out of the npm publisher.
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Create GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping."
+            exit 0
+          fi
+          node scripts/release-notes.mjs "${TAG#v}" > "$RUNNER_TEMP/release-notes.md"
+          gh release create "$TAG" --verify-tag --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" --latest
