@@ -11,7 +11,7 @@
 <p align="center">Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.</p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/pdd-kit"><img src="https://img.shields.io/npm/v/pdd-kit" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@itai-gendler/pdd-kit"><img src="https://img.shields.io/npm/v/@itai-gendler/pdd-kit" alt="npm version"></a>
   <a href="https://github.com/itai-gendler/pdd-kit/actions/workflows/check.yml"><img src="https://github.com/itai-gendler/pdd-kit/actions/workflows/check.yml/badge.svg" alt="Check"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
 </p>
