@@ -19,5 +19,8 @@ export default defineConfig({
   // Keep the CLI and library bundles within the release tarball's size budget.
   minify: true,
   dts: true,
+  // The package is `type: module`, so plain `.js` and `.d.ts` are ESM; the
+  // `bin` and `exports` paths name them.
+  fixedExtension: false,
   clean: true
 })
