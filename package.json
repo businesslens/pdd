@@ -2,6 +2,18 @@
   "name": "@itai-gendler/pdd-kit",
   "version": "0.34.1",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in product-model/, verified against implementation.",
+  "keywords": [
+    "product-driven-development",
+    "pdd",
+    "product-model",
+    "coding-agents",
+    "ai-agents",
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "specification",
+    "cli"
+  ],
   "type": "module",
   "license": "MIT",
   "repository": {
