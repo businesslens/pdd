@@ -8,8 +8,8 @@ covered:
     paths: [skills/]
   - description: The report viewer layer and the local viewer host.
     paths: [layers/nuxt/report-viewer/, viewer/]
-  - description: The Blueprint commands and the portable report code.
-    paths: [src/commands/, src/core/portable.ts]
+  - description: The Blueprint commands, the Blueprint release reader, and the portable report code.
+    paths: [src/commands/, src/core/blueprint-release.ts, src/core/portable.ts]
 unmapped: []
 exclusions:
   - description: The public Nuxt layers and package entry points that third-party hosts consume.
@@ -30,8 +30,8 @@ exclusions:
 limitations:
   - description: Provider detection and harness invocation behavior was inferred from the documented contracts and source; compatibility with the actual harnesses was not established.
     paths: [src/core/providers.ts, skills/]
-  - description: Compatibility of catalog and GitHub interactions with the remote services was not established from source inspection.
-    paths: [src/commands/pull.ts, src/commands/contribute.ts]
+  - description: Compatibility of the Blueprint release downloads and the GitHub CLI interactions with GitHub was not established from source inspection.
+    paths: [src/commands/list.ts, src/commands/pull.ts, src/core/blueprint-release.ts, src/commands/contribute.ts]
 ---
 
 # Coverage

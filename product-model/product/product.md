@@ -12,7 +12,7 @@ limitations:
   - pdd-kit never implements product behavior. Building is left to whatever plan, spec, or coding flow the harness already provides.
   - Structural linting is deterministic; deciding whether code and model agree is a separate semantic workflow that a person must approve.
   - Analysis never executes the repository it is looking at, so any claim that depends on running the product is out of reach.
-  - The Blueprint catalog is a separate service. This product reads it anonymously and proposes changes to it by pull request; it does not operate it.
+  - Published Blueprints live in the `blueprints/` folder of a GitHub repository, and merging a pull request there is what publishes one. This product lists and pulls them anonymously and proposes new ones by pull request; it never merges or hosts them.
 references:
   - kind: doc
     role: context

@@ -1,7 +1,7 @@
 ---
 entities:
   - { entity: product-model, shows: [Product, Coverage, Method] }
-  - { entity: product, shows: [Identity, Catalog identity, Limitations] }
+  - { entity: product, shows: [Identity, Publishing metadata, Limitations] }
 entryPoints:
   - local-report-web: /
 references:

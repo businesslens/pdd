@@ -3,20 +3,20 @@ kind: external-failure
 routes:
   terminal: Terminal
 steps:
-  - text: The Developer asks for a catalog entry by name
+  - text: The Developer asks to pull one by name
     kind: actor
     actor: developer
     entities: []
     contexts:
       terminal:
         place: pdd-kit-cli
-  - text: The catalog reports that there is no such entry, that it has been withdrawn, or that it is temporarily unavailable
+  - text: The release lists nothing of that name, publishes nothing for the report version the Product reads, lists a report it has not finished uploading, or cannot be reached
     kind: condition
     entities: []
     contexts:
       terminal:
         place: pdd-kit-cli
-  - text: The Product explains which of those happened, in its own words rather than by echoing whatever the response body contained
+  - text: The Product explains which of those happened in its own words, points a wrong name to the command that lists what is published, and writes nothing
     kind: product
     entities: []
     contexts:
@@ -28,9 +28,9 @@ steps:
 
 ## Trigger
 
-The named Blueprint is not something the catalog can serve right now.
+The named Blueprint is not something the Blueprint release can serve right now.
 
 ## Outcome
 
-The Developer can tell a wrong name from a withdrawn Blueprint from an outage,
-and knows whether trying again would help.
+The Developer can tell a wrong name from a release still being rebuilt from an
+outage, and knows whether trying again would help.

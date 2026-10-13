@@ -18,5 +18,5 @@ at all, and the target needs no Git repository.
 ## Intent
 
 Receiving a Blueprint should be a single, reversible step that either produces a
-sound model or produces nothing. What lands is what a pull from a catalog would
-have produced, so the two paths cannot drift apart.
+sound model or produces nothing. What lands is what pulling the published
+Blueprint would have produced, so the two paths cannot drift apart.

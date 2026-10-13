@@ -1,7 +1,7 @@
 ---
 entities:
   - { entity: product-model, shows: [Product] }
-  - { entity: product, shows: [Identity, Catalog identity, Limitations] }
+  - { entity: product, shows: [Identity, Publishing metadata, Limitations] }
   - { entity: interface, shows: [Type, Variation, Actors, Entry points, Languages] }
   - { entity: experience, shows: [Container, Variation, Audience, Entry points] }
   - { entity: screen, shows: [Container, Variation, Exposure, Presents, Addresses] }

@@ -8,18 +8,18 @@ references:
     title: Contribution flow
   - kind: doc
     role: context
-    target: https://github.com/itai-gendler/pdd-kit/blob/main/docs/cli-contribute.md
-    title: What makes a good Blueprint
+    target: docs/cli-contribute.md
 ---
 
 # Contribute a Blueprint
 
-Proposes the current Product Model for a public Blueprint catalog by opening a
-pull request against the catalog's source repository. The model is checked,
-exported, regenerated from the portable report, and submitted under the
-Product's own identifier as its catalog name. Everything is prepared in a
+Proposes the current Product Model as a Blueprint by opening a pull request
+that adds it to the `blueprints/` folder of the repository Blueprints are
+published from — pdd-kit's own, unless the Developer names a fork. The model is
+checked, exported, regenerated from the portable report, and submitted under the
+Product's own identifier as its Blueprint name. Everything is prepared in a
 temporary directory: the Developer's repository gains no branch, remote, commit,
-or catalog file.
+or Blueprint file, only the ignored export.
 
 ## Intent
 
@@ -32,5 +32,7 @@ byte-identical to what pulling the Blueprint would produce.
 
 Opening the pull request goes through the Developer's own GitHub identity using
 the GitHub CLI. That is a system this Product calls out to; the Product holds no
-account of its own and stores no credential. Merging approves a Blueprint;
-publishing and listing it stay with the catalog's maintainers.
+account of its own and stores no credential. Merging the pull request is what
+publishes the Blueprint: the repository rebuilds its release, and within minutes
+the Blueprint is listed and can be pulled by name. Merging stays with that
+repository's maintainers.

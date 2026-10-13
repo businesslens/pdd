@@ -49,6 +49,6 @@ implementation alignment still has to be verified there. Nothing outside
 
 ## Edge cases
 
-- A web address is refused with a pointer to the catalog pull, which is the supported way to fetch one.
+- A web address is refused with a pointer to pulling a published Blueprint by name, which is the supported way to fetch one.
 - The report path is read relative to the shell, while the chosen directory decides where the model lands.
 - A report from an earlier contract is refused by name rather than migrated; the repository that authored it re-exports.
