@@ -1,15 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Keep dependency updates for the pdd-kit package, its viewer and the pdd-kit.dev site predictable and reviewable.",
+  "description": "Keep dependency updates for the pdd-kit package, its viewer and the pdd-kit.dev site predictable and reviewable: one weekly batch, majors on request, security fixes at once.",
   "dependencyDashboard": true,
   "semanticCommits": "enabled",
   "semanticCommitType": "chore",
   "rangeStrategy": "bump",
   "minimumReleaseAge": "25 hours",
   "timezone": "Asia/Jerusalem",
-  "schedule": ["* 0-3 * * *"],
+  "schedule": ["* 0-3 * * 0"],
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "schedule": ["* 0-3 * * 0"]
   },
   "postUpdateOptions": ["pnpmDedupe"],
   "packageRules": [
@@ -20,8 +21,31 @@
       "groupSlug": "non-major"
     },
     {
+      "description": "Each major update can break on its own terms, so it waits on the Dependency Dashboard until it is requested. Security updates are not held.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "GitHub Actions updates, majors included, are low risk and exercised by CI, so they share one PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions",
+      "dependencyDashboardApproval": false
+    },
+    {
       "description": "Keep package-manager escape hatches manual.",
       "matchDepTypes": ["resolutions", "overrides", "pnpm.overrides"],
+      "enabled": false
+    },
+    {
+      "description": "The supported Node range is a promise to consumers, raised deliberately, never by a dependency update.",
+      "matchDepTypes": ["engines"],
+      "enabled": false
+    },
+    {
+      "description": "Workflows name a Node major and take its latest release; pinning the patch only adds churn, and a new major is a deliberate change.",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["node"],
       "enabled": false
     },
     {
