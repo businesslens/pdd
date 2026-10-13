@@ -36,10 +36,12 @@ Run from `site/`:
 
 `.github/workflows/site.yml` runs these on every pull request and push to
 `main` that touches the site or anything it renders (`docs/`, `CHANGELOG.md`,
-`blueprints/`, `layers/`, `src/`, `viewer/`): the `build` job runs everything
-up to `pnpm generate` and uploads the generated site and the CLI build, and the
-`e2e` job runs Playwright against them in the Playwright container image,
-split across three runners with two workers each. Keep that image's tag equal to `@playwright/test`; Renovate
+`blueprints/`, `layers/`, `src/`, `viewer/`). The `static` job runs the checks
+up to `pnpm test:integration`; beside it, the `build` job runs `pnpm generate`,
+reusing a cached CLI build (`dist/`) when none of its sources changed, and
+uploads the generated site and the CLI build; the `e2e` job runs Playwright
+against them in the Playwright container image, split across three runners
+with two workers each and scheduled test by test. Keep that image's tag equal to `@playwright/test`; Renovate
 updates both in one pull request. The required `site` check passes when the
 change cannot affect the site.
 

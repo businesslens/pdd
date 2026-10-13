@@ -12,7 +12,9 @@ const serverCommand = process.env.CI ? serve : `pnpm generate && ${serve}`
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false,
+  // Tests within a file share no state, so they are scheduled one by one:
+  // shards then split by test rather than by whole file, and come out even.
+  fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   outputDir: 'test-results/playwright',
   reporter: process.env.CI

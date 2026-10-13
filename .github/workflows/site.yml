@@ -57,18 +57,15 @@ jobs:
             echo "Nothing the site renders changed; skipping the build and tests."
           fi
 
-  # Static checks and the build. Its output is what the e2e job tests and
-  # what both deploy jobs publish, so nothing is built twice.
-  build:
+  # Static checks and unit tests, beside the build rather than ahead of it:
+  # neither the preview nor the e2e tests wait for them.
+  static:
     needs: changes
     if: needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-        with:
-          # Blueprint cards and the feed date each Blueprint from its Git history.
-          fetch-depth: 0
       # Installs the exact pnpm pinned by package.json's packageManager.
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -82,8 +79,41 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm knip
       - run: pnpm test:integration
-      # Also builds the CLI and its viewer into dist/, which the Blueprint
-      # build and the report-parity test run.
+
+  # The build. Its output is what the e2e job tests and what both deploy jobs
+  # publish, so nothing is built twice.
+  build:
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Blueprint cards and the feed date each Blueprint from its Git history.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # The CLI and its viewer (dist/) take about as long to build as the site,
+      # and most changes leave them alone. The key is every tracked file that
+      # goes into them, so any change to one rebuilds; prepare-blueprints only
+      # builds dist/ when it is missing.
+      - id: cli-key
+        name: Fingerprint the CLI's sources
+        working-directory: .
+        run: |
+          sum="$(git ls-files -s src layers viewer/app tsdown.config.ts tsconfig.json scripts/copy-viewer.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml | sha256sum | cut -c1-40)"
+          echo "key=cli-dist-${{ runner.os }}-node24-$sum" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: dist
+          key: ${{ steps.cli-key.outputs.key }}
+      # Builds dist/ when the cache missed, then the Blueprints and the site.
       - run: pnpm generate
       - name: Upload the generated site
         uses: actions/upload-artifact@v4
@@ -182,9 +212,10 @@ jobs:
           BRANCH: ${{ github.head_ref }}
           COMMIT: ${{ github.event.pull_request.head.sha }}
 
-  # main deploys to pdd-kit.dev only once the build and the e2e tests pass.
+  # main deploys to pdd-kit.dev only once the checks, the build and the e2e
+  # tests pass.
   production:
-    needs: [build, e2e]
+    needs: [static, build, e2e]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -213,7 +244,7 @@ jobs:
   # The check branch protection requires. Skipped jobs pass; anything that
   # ran and did not succeed fails it.
   site:
-    needs: [changes, build, e2e]
+    needs: [changes, static, build, e2e]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
