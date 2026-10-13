@@ -19,8 +19,9 @@ sub-brand.
 >
 > Product-Driven Development **for coding agents**
 >
-> Your AI agent is guessing what the product is. PDD gives agents and humans a
-> shared product model that is git-tracked, reviewable, and verifiable.
+> Every coding agent reconstructs your product from scratch, and differently
+> each time. PDD gives agents and humans a shared product model that is
+> git-tracked, reviewable, and verifiable.
 
 The eyebrow is `Open source`; the title accent is `for coding agents`. The
 problem opens the subhead rather than the headline.

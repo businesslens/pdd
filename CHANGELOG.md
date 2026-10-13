@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docs:** pdd-kit.dev, with the docs, the FAQ, the changelog and every Blueprint, is built from this repository, and the FAQ links to its Blueprints again.
 
+- **Docs:** The README and pdd-kit.dev open with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time.
+
 ## [0.34.1] - 2026-10-12
 
 ### Fixed

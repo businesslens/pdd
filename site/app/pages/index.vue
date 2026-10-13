@@ -36,7 +36,7 @@ if (import.meta.prerender) {
 useSiteSeo({
   title: 'pdd-kit | Product-Driven Development for coding agents',
   socialTitle: 'Product-Driven Development for coding agents',
-  description: 'Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.'
+  description: 'Every coding agent reconstructs your product from scratch, and differently each time. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.'
 })
 </script>
 
