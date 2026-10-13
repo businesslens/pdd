@@ -360,7 +360,7 @@ export interface LoopPhase {
  *
  * **Ideate comes first, and that is the whole claim.** Deciding what must be
  * true before the code exists is what separates this from documenting after the
- * fact; a loop that opened on Implement would be describing every team that already
+ * fact; a loop that opened on Implement would be describing every project that already
  * has no model. Verify then closes it, because a cycle whose output is never
  * checked against reality is a diagram rather than a practice.
  *
@@ -660,12 +660,15 @@ const today: HomeSection = {
    */
   title: 'Where is your product model today?',
   /**
-   * The description carries no count either, and for the same reason. It names
-   * where the pieces sit — information sources, systems, and people — rather
-   * than how many places they sit in, so growing the list below does not date
-   * the sentence above it.
+   * The description carries no count either, and for the same reason. It says
+   * what is wrong with the definition — unstructured, incomplete, scattered —
+   * and names kinds of places rather than how many, so growing the list below
+   * does not date the sentence above it. The hero already says what that costs
+   * an agent (it guesses), so this sentence stops at the state. It answers the
+   * title, so it opens on "It" (the product model) and stays inside the length
+   * cap.
    */
-  description: 'Scattered across your organization’s information sources, systems, and people, shared by none, checked by nothing.',
+  description: 'It already exists, just unstructured, incomplete and scattered across docs, code, tickets, chats and people.',
   columns: 4,
   /**
    * Each place is shown in the products it is actually kept in. A reader
@@ -839,7 +842,7 @@ const productModel: HomeSection = {
  * **Order matters, and it follows one ordinary change.** First, where the
  * product definition lives and what an agent receives. Then what *done* means,
  * how drift is found, where decisions travel, and what remains after the change
- * ships. Each row answers a question a team already asks; none requires the
+ * ships. Each row answers a question a developer already asks; none requires the
  * reader to decode a new concept before the comparison can make its point.
  *
  * **This is where the implementation is introduced.** The two sections above
@@ -860,7 +863,7 @@ const comparison: HomeComparison = {
   title: 'What changes with a product model.',
   /**
    * One sentence names the three jobs the rows unpack: guide the change, give
-   * the team one shared reference, and remain current afterwards. The wording
+   * you and your agent one shared reference, and remain current afterwards. The wording
    * stays at the level of the PDD concept rather than naming the implementation
    * skill that performs the check.
    */
@@ -965,7 +968,7 @@ const comparison: HomeComparison = {
  * information source focused on its own concern.
  *
  * Sits between Today and the comparison. Bring the existing definition together,
- * surface gaps for the team to resolve, and give each source a shared foundation.
+ * surface gaps to resolve, and give each source a shared foundation.
  * The FAQ explains the boundaries between product decisions, design, and code.
  *
  * The chosen volvelle illustration matches the five source rows. The product
@@ -1026,7 +1029,7 @@ const missingPiece: HomeMissingPiece = {
 const close: HomeClose = {
   title: 'AI agents and humans need a living product model.',
   description:
-    'pdd-kit is open source and MIT licensed. No account is required to use the format or pull a Blueprint.',
+    'pdd-kit is open source and MIT licensed.',
   action: { label: 'Get started', to: '#start' }
 }
 

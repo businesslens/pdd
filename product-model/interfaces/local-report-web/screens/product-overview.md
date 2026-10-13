@@ -1,13 +1,13 @@
 ---
 entities:
   - { entity: product-model, shows: [Product, Coverage, Method] }
-  - { entity: product, shows: [Identity, Catalog identity, Limitations] }
+  - { entity: product, shows: [Identity, Publishing metadata, Limitations] }
 entryPoints:
   - local-report-web: /
 references:
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrOverview.vue
+    target: layers/nuxt/report-viewer/app/components/ReportOverview.vue
 ---
 
 # Product overview

@@ -18,7 +18,7 @@ function sh(cwd: string, command: string, ...args: string[]): void {
 let repo: string
 
 beforeAll(() => {
-  repo = mkdtempSync(join(tmpdir(), 'bl-e2e-'))
+  repo = mkdtempSync(join(tmpdir(), 'pdd-kit-e2e-'))
   cpSync(FIXTURE, repo, { recursive: true })
   sh(repo, 'git', 'init', '--initial-branch=main')
   sh(repo, 'git', 'config', 'user.email', 'fixture@example.com')
@@ -131,7 +131,7 @@ describe('end to end on a real git repo', () => {
   })
 
   it('builds a planned model tied to no code, with empty coverage and no status', () => {
-    const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-planned-'))
+    const isolated = mkdtempSync(join(tmpdir(), 'pdd-kit-e2e-planned-'))
     try {
       cpSync(FIXTURE, isolated, { recursive: true })
       writeFileSync(
@@ -188,7 +188,7 @@ A model resource that does not exist at HEAD.
   })
 
   it('refuses to overwrite a generated-output symlink', () => {
-    const external = mkdtempSync(join(tmpdir(), 'bl-external-'))
+    const external = mkdtempSync(join(tmpdir(), 'pdd-kit-external-'))
     const target = join(external, 'do-not-overwrite.json')
     const output = join(repo, 'product-model/build/report.json')
     writeFileSync(target, 'keep me\n')
@@ -205,7 +205,7 @@ A model resource that does not exist at HEAD.
   })
 
   it('refuses to traverse a generated-output directory symlink', () => {
-    const external = mkdtempSync(join(tmpdir(), 'bl-external-dir-'))
+    const external = mkdtempSync(join(tmpdir(), 'pdd-kit-external-dir-'))
     const buildDir = join(repo, 'product-model/build')
     rmSync(buildDir, { recursive: true, force: true })
     symlinkSync(external, buildDir)

@@ -1,8 +1,9 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  // `report` is the published library entry consumed by pdd-kit Platform;
-  // it carries type declarations because it is a cross-repository contract.
+  // `report` is the published library entry the report viewer layer imports by
+  // package name; it carries type declarations because Nuxt hosts outside this
+  // repository compile against it.
   entry: {
     cli: 'src/cli.ts',
     // Run detached by the CLI to look for a newer release.

@@ -6,8 +6,8 @@ import { loadModel } from '../src/core/model.js'
 
 // Renderer utilities use Nuxt's bundler resolution, not root NodeNext imports.
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
-const matrixViewModule = '../layers/nuxt/report-viewer/app/composables/useBlrMatrixView.ts'
-const { useBlrMatrixView } = await import(matrixViewModule)
+const matrixViewModule = '../layers/nuxt/report-viewer/app/composables/useReportMatrixView.ts'
+const { useReportMatrixView } = await import(matrixViewModule)
 const { projectReportWorkspace } = await utility('reportWorkspace')
 const projections = await utility('topologyProjections')
 const { ruleAttachments } = await utility('topologyTargets')
@@ -32,7 +32,7 @@ describe('named topology semantics', () => {
     const workspace = shallowRef(workspaceOf(shopRoot))
     const kind = shallowRef('entity')
     const selections = shallowRef<string[]>([])
-    const view = useBlrMatrixView(workspace, kind, selections)
+    const view = useReportMatrixView(workspace, kind, selections)
     const original = view.value
     expect(original.mode).toBe('mutations')
     selections.value = [original.source.columns[0].key]

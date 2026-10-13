@@ -28,9 +28,13 @@ npx pdd-toolkit view [repository] [--branch <name> | --pr <number>] [--no-open] 
 ## What it does
 
 1. Starts a server on `127.0.0.1` only, and opens the report.
-2. Compiles the model in memory. It writes nothing (no
+2. Compiles the model in memory. It writes nothing to your repository (no
    `product-model/build/report.json`) and sends nothing to pdd-kit.
-3. Keeps running until you press Ctrl+C.
+3. Remembers how you set up the report (columns per collection, term tooltips,
+   the expanded resource panel) in `pdd-kit/viewer-preferences.json` in your
+   configuration folder (`$XDG_CONFIG_HOME` or `~/.config`, `%APPDATA%` on
+   Windows), so the next run opens the same way.
+4. Keeps running until you press Ctrl+C.
 
 If the [GitHub CLI](https://cli.github.com) is signed in, the report asks GitHub
 through `gh` whether you have starred pdd-kit, and a star beside the GitHub

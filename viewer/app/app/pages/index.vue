@@ -28,7 +28,7 @@ async function refreshLogo() {
   }
 }
 
-const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation()
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useReportNavigation()
 onMounted(() => {
   void refreshLogo()
   events = new EventSource('/_pdd-kit/events')

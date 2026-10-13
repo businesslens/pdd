@@ -21,5 +21,5 @@ else in the directory is an answer to something it claims.
 ## Information kept
 
 - **Identity** — its name, its one-paragraph description, and why it should exist
-- **Catalog identity** — the portable facts a catalog needs: summary, category, tags, authors, licence
+- **Publishing metadata** — the portable facts publishing it as a Blueprint needs: summary, category, tags, authors, licence
 - **Limitations** — what it does not attempt, recorded so a reader does not have to infer it

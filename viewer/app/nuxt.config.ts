@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createRequire } from 'node:module'
-import { defineEventHandler, setHeader } from 'h3'
+import { defineEventHandler, readBody, setHeader } from 'h3'
 
 const { version: pddVersion } = createRequire(import.meta.url)('../../package.json')
 
@@ -10,14 +10,15 @@ const { version: pddVersion } = createRequire(import.meta.url)('../../package.js
 // rich enough to exercise every element kind the Product Report has to render. They are
 // dev handlers, so nothing here reaches the generated viewer.
 //
-// `BLR_DEV_MODEL` points them at another `product-model/` instead — this
+// `PDD_KIT_DEV_MODEL` points them at another `product-model/` instead — this
 // repository's own model is the one case the catalog Blueprint cannot stand in
 // for, because a rendering bug in a kind it happens not to use is invisible
 // until someone opens the model that does.
-const fixtureRoot = resolve(process.env.BLR_DEV_MODEL || '../../blueprints/content-feed-reader/product-model')
+const fixtureRoot = resolve(process.env.PDD_KIT_DEV_MODEL || '../../blueprints/content-feed-reader/product-model')
 
 // The dev star remembers its state until `nuxt dev` restarts.
 let devStarred = false
+const devPreferences: Record<string, unknown> = {}
 
 const devHandlers = [
   {
@@ -47,6 +48,15 @@ const devHandlers = [
     })
   },
   {
+    // Keeps preferences for this dev server only; the CLI keeps them in a file.
+    route: '/_pdd-kit/preferences',
+    handler: defineEventHandler(async (event) => {
+      setHeader(event, 'cache-control', 'no-store')
+      if (event.method === 'PUT') Object.assign(devPreferences, await readBody(event))
+      return devPreferences
+    })
+  },
+  {
     // Shows the star button without touching GitHub; the CLI asks `gh`.
     route: '/_pdd-kit/github-star',
     handler: defineEventHandler((event) => {
@@ -61,9 +71,9 @@ const devHandlers = [
 export default defineNuxtConfig({
   extends: [
     // The report layer supplies the stable Product Report and approved identity;
-    // the shared lab keeps this host on the same background audition flow as
-    // the landing application. Keep the composition here so report-viewer
-    // stays neutral for consumers that want only the approved theme.
+    // the shared theme lab adds the background audition controls to this host
+    // only. Keep the composition here so report-viewer stays neutral for
+    // consumers, such as the site, that want only the approved theme.
     // `report-viewer-lab` extends `report-viewer` and remains the private hook
     // for future Product Report auditions.
     resolve('../../layers/nuxt/report-viewer-lab'),

@@ -16,7 +16,7 @@ afterEach(async () => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 function setup(target = 'src/main.ts#target', source = 'const targeted = 0;\nexport function target() {}\nconst html = "<script>globalThis.pwned = true</script>";\n') {
-  const root = mkdtempSync(join(tmpdir(), 'blr-code-preview-'))
+  const root = mkdtempSync(join(tmpdir(), 'report-code-preview-'))
   directories.push(root)
   mkdirSync(join(root, 'src'))
   writeFileSync(join(root, 'src/main.ts'), source)
@@ -90,7 +90,7 @@ describe('local code previews', () => {
 
   it('refuses undeclared files, traversal, symlinks, binaries, oversized files and missing files', async () => {
     const { root, report } = setup()
-    const outside = mkdtempSync(join(tmpdir(), 'blr-code-outside-'))
+    const outside = mkdtempSync(join(tmpdir(), 'report-code-outside-'))
     directories.push(outside)
     writeFileSync(join(outside, 'secret.ts'), 'secret source')
     writeFileSync(join(root, 'src/private.ts'), 'undeclared source')

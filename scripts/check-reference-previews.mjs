@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { setTimeout as delay } from 'node:timers/promises'
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const project = mkdtempSync(join(tmpdir(), 'blr-prose-browser-'))
+const project = mkdtempSync(join(tmpdir(), 'report-prose-browser-'))
 cpSync(join(repository, 'test/fixtures/fixture-shop'), project, { recursive: true, filter: path => !/\product-model\/(build|cache)(\/|$)/.test(path) })
 mkdirSync(join(project, 'docs'), { recursive: true })
 const markdown = '---\ntitle: Guide\nunsafe: <script>metadata</script>\n---\n# Reference guide\n\nA **formatted document** with [next steps](./next.md#next-steps), an [external link](https://example.com/guide), and a [later section](#later-section).\n\n| Resource | Meaning |\n|---|---|\n| Order | A confirmed purchase |\n\n```typescript [example.ts]\n// A comment\nconst message = "hello"\nexport function greet() { return message }\n```\n\n<script>window.previewExecuted = true</script>\n\n::u-button{onClick="window.previewExecuted = true"}\n\n![Local image](./diagram.svg)\n\n' + Array.from({ length: 24 }, (_, index) => 'Paragraph ' + index + '. The reader keeps your place while following related documents.\n\n').join('') + '## Later section\n\n[Continue](./next.md#next-steps)\n'
@@ -27,7 +27,7 @@ let log = ''
 viewer.stdout.on('data', data => { log += data })
 viewer.stderr.on('data', data => { log += data })
 const browser = await chromium.launch()
-const screenshots = process.env.BLR_NAV_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const errors = []
 try {
@@ -101,7 +101,7 @@ try {
     await panel.getByRole('link', { name: 'src/services/catalog.ts#CatalogService', exact: true }).click()
     await expect(reading.locator('.highlight')).toContainText('export class CatalogService')
     expect((await colors()).length).toBeGreaterThan(2)
-    await expect(reading.locator('pre')).toHaveClass(/blr-source-code/)
+    await expect(reading.locator('pre')).toHaveClass(/report-source-code/)
     await reading.getByRole('button', { name: 'Copy code to clipboard' }).click()
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(readFileSync(join(project, 'src/services/catalog.ts'), 'utf8'))
     await reading.getByRole('link', { name: 'Line 2', exact: true }).click()

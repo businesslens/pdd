@@ -51,8 +51,10 @@ to the documentation; Product is the whole and is not a card.
 
 ## Consequences
 
-- The social card (`public/product-model-open-graph.png`) carries a hook, not a
-  mirror of the h1, and is not redrawn when the headline changes.
+- The social card (`public/pdd-kit-social-card.png`) carries the hero's line,
+  *Product-Driven Development for coding agents* (the maintainer's call,
+  2026-10-13; it previously carried a separate hook). A redrawn card gets a new
+  file name, because link previews cache the image by its URL.
 - The header's **Get started** goes to `/docs`, the one destination that serves
   all three doors. The hero has no Get started of its own.
 - Door names are fixed in `CONTEXT.md`, because they appear on the home page, in

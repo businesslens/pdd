@@ -59,7 +59,7 @@ describe('fetchGithubSnapshot', () => {
     // A bare repository standing in for GitHub: a default branch, a feature
     // branch, and a `refs/pull/<n>/head` ref pointing at a commit that no
     // branch carries — the shape a fork's pull request has on the base.
-    work = realpathSync(mkdtempSync(join(tmpdir(), 'bl-gh-work-')))
+    work = realpathSync(mkdtempSync(join(tmpdir(), 'pdd-kit-gh-work-')))
     cpSync(FIXTURE, work, { recursive: true })
     git(work, 'init', '--initial-branch=main')
     git(work, 'config', 'user.email', 'fixture@example.com')
@@ -79,7 +79,7 @@ describe('fetchGithubSnapshot', () => {
     git(work, 'update-ref', 'refs/pull/7/head', pullCommit)
     git(work, 'checkout', '-q', 'main')
 
-    origin = realpathSync(mkdtempSync(join(tmpdir(), 'bl-gh-origin-')))
+    origin = realpathSync(mkdtempSync(join(tmpdir(), 'pdd-kit-gh-origin-')))
     git(work, 'clone', '-q', '--bare', '--no-local', work, origin)
     // A bare clone copies branches and tags only; the pull head has to be
     // fetched across, the way GitHub materializes it on the base.

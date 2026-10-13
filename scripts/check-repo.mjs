@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawnSync } from 'node:child_process'
 import { readFile, readdir, access } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
@@ -350,7 +351,7 @@ if (!modelReadmeMatch) {
   }
 }
 
-// Docs frontmatter contract, consumed by the landing repository's nav:
+// Docs frontmatter contract, consumed by the site's (`site/`) docs nav:
 // section = top-level tab, group = sidebar cluster, order = global within section.
 const DOC_SECTIONS = new Set(['open-source'])
 const DOC_GROUPS = new Set([
@@ -452,6 +453,21 @@ for (const file of ['README.md', ...docFiles.map(name => `docs/${name}`)]) {
       errors.push(`${file}:${line} links to missing local file "${href}"`)
     }
   }
+}
+
+// The project once had another name, and its initials prefixed the report
+// viewer. Neither belongs in the repository any more, history included. The
+// patterns are assembled from pieces so this file does not match them itself.
+// The lockfile is skipped: its integrity hashes are random base64. Word
+// boundaries are spelled out because `\b` means nothing to macOS's git grep.
+const retiredNames = [['business', 'lens'].join('[ _-]?'), ['(^|[^a-z0-9])b', 'lr'].join('')]
+const retired = spawnSync('git', ['grep', '-I', '-n', '-i', '-E', retiredNames.join('|'), '--', '.', ':!pnpm-lock.yaml'], { cwd: root, encoding: 'utf8' })
+if (retired.status === 0) {
+  for (const line of retired.stdout.trim().split('\n')) {
+    errors.push(`${line.split(':').slice(0, 2).join(':')} uses the retired product name`)
+  }
+} else if (retired.status !== 1) {
+  errors.push(`could not search for the retired product name: ${retired.stderr.trim()}`)
 }
 
 if (errors.length) {

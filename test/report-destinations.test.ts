@@ -41,11 +41,11 @@ describe('report destinations', () => {
       ['product', 'Overview'], ['entity', 'Entities'], ['interface', 'Interfaces'], ['domain', 'Domains'],
       ['capability', 'Capabilities'], ['journey', 'Journeys'], ['rule', 'Business Rules'], ['variation', 'Variations']
     ])
-    expect(source('app/components/BlrRail.vue')).toContain('REPORT_PAGES')
-    const palette = source('app/components/BlrSearchPalette.vue')
+    expect(source('app/components/ReportRail.vue')).toContain('REPORT_PAGES')
+    const palette = source('app/components/ReportSearchPalette.vue')
     expect(palette).toContain('REPORT_PAGES')
     expect(palette).toContain("label: 'Pages'")
-    const shell = source('app/components/BlrReportShell.vue')
+    const shell = source('app/components/ReportShell.vue')
     expect(shell).toContain('@kind="setKind"')
     expect(shell).toContain('@page="setKind"')
   })
@@ -164,6 +164,6 @@ describe('resource readings', () => {
     expect(scenario.references).toHaveLength(2)
     expect(tabsFor(workspace, parent).at(-1)).toMatchObject({ id: 'references', count: 1 })
     expect(tabsFor(workspace, scenario)).toEqual(tabsFor(workspace, parent))
-    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrRefs :references="scenario.references"')
+    expect(source('app/components/ReportScenarioSummary.vue')).toContain('<ReportRefs :references="scenario.references"')
   })
 })

@@ -50,7 +50,7 @@ const chip = computed(() => {
       type="button"
       data-local-problems
       :data-tone="chip.tone"
-      class="local-problems-chip blr-header-pill inline-flex items-center gap-1.5 border"
+      class="local-problems-chip report-header-pill inline-flex items-center gap-1.5 border"
       :aria-label="`${chip.label}. ${expanded ? 'Hide' : 'Show'} problems`"
       :aria-expanded="expanded"
       @click="emit('open')"

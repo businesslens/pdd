@@ -6,32 +6,20 @@ import {
   findPddKitBackground
 } from '../utils/pddKitThemeLabVariants'
 
-const LIGHT_COOKIE = 'bl-bg-light'
-const DARK_COOKIE = 'bl-bg-dark'
-
-const cookieOptions = {
-  sameSite: 'lax',
-  maxAge: 60 * 60 * 24 * 90
-} as const
+const asId = (stored: unknown) => typeof stored === 'string' ? stored : undefined
 
 export function usePddKitBackgroundVariant() {
-  const lightCookie = useCookie<string>(LIGHT_COOKIE, {
-    default: () => PDD_KIT_DEFAULT_LIGHT_BACKGROUND,
-    ...cookieOptions
-  })
-  const darkCookie = useCookie<string>(DARK_COOKIE, {
-    default: () => PDD_KIT_DEFAULT_DARK_BACKGROUND,
-    ...cookieOptions
-  })
+  const lightChoice = usePddKitStoredPreference<string>('pdd-kit:bg-light', () => PDD_KIT_DEFAULT_LIGHT_BACKGROUND, asId)
+  const darkChoice = usePddKitStoredPreference<string>('pdd-kit:bg-dark', () => PDD_KIT_DEFAULT_DARK_BACKGROUND, asId)
 
   const activeLight = computed(() => findPddKitBackground(
     PDD_KIT_LIGHT_BACKGROUNDS,
-    lightCookie.value,
+    lightChoice.value,
     PDD_KIT_DEFAULT_LIGHT_BACKGROUND
   ))
   const activeDark = computed(() => findPddKitBackground(
     PDD_KIT_DARK_BACKGROUNDS,
-    darkCookie.value,
+    darkChoice.value,
     PDD_KIT_DEFAULT_DARK_BACKGROUND
   ))
 
@@ -43,7 +31,7 @@ export function usePddKitBackgroundVariant() {
   })
 
   function selectLight(id: string) {
-    lightCookie.value = findPddKitBackground(
+    lightChoice.value = findPddKitBackground(
       PDD_KIT_LIGHT_BACKGROUNDS,
       id,
       PDD_KIT_DEFAULT_LIGHT_BACKGROUND
@@ -51,7 +39,7 @@ export function usePddKitBackgroundVariant() {
   }
 
   function selectDark(id: string) {
-    darkCookie.value = findPddKitBackground(
+    darkChoice.value = findPddKitBackground(
       PDD_KIT_DARK_BACKGROUNDS,
       id,
       PDD_KIT_DEFAULT_DARK_BACKGROUND

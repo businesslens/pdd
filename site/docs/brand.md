@@ -72,14 +72,19 @@ Variable" with `Unknown font format`, breaking `pnpm generate`. There is no
   the light drawing, and install icons sit on an opaque paper plate.
 - Site artwork lives in `public/brand/` (hero, door plates, resource-type
   plates, the missing-piece illustration). The social card is
-  `public/product-model-open-graph.png`.
+  `public/pdd-kit-social-card.png`; a redrawn card takes a new file name, since
+  link previews cache the image by URL.
 
 ## Voice
 
 - Say what the product does, in the reader's terms. Lead with the problem before
   naming the format.
 - Use [`CONTEXT.md`](../CONTEXT.md) vocabulary exactly.
-- No pricing, tiers, waitlists, sign-up or "request access".
+- No pricing, tiers, waitlists, sign-up or "request access", and no hint of
+  a future paid plan or hosted service.
+- pdd-kit is an open-source project by one maintainer and its contributors,
+  not a company. Address one developer and their coding agent, never a team
+  or an organization; the maintainer writes as "I", not "we".
 - Questions (FAQ, privacy) lead with the reader's concrete situation, keep
   jargon out of the question, and put the mechanism after the answer.
 - The blog argues; the docs define. Each post is written for one channel, so
@@ -138,12 +143,13 @@ See [ADR-0002](./adr/0002-the-home-page.md) for the hero, doors and collections.
 - **Blog cards** put the date in the byline at the foot, not above the title.
   The author links to their GitHub profile and is the one element lifted over
   the card's overlay.
-- **The changelog is rendered as-is**: never rewritten, summarized or copied,
-  and old entries keep the vocabulary of their release.
+- **The changelog is rendered as-is**: never summarized or copied. Old entries
+  use current names, and the retired product name never appears.
 - **404** is `app/error.vue` inside the site shell, generated as `404.html`, the
   same page for every unmatched path.
 - **Privacy** leads with the reader's question and says plainly that nothing
-  tracks them.
+  tracks them. The site sets no cookies; it lists what the browser's local and
+  session storage keep.
 - **Nuxt UI v4 first.** Reach for a Nuxt UI component before hand-rolling one.
 - **Accessibility.** Every Playwright page suite runs an axe WCAG 2.0/2.1 A/AA
   scan; new pages must be violation-free.

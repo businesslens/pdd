@@ -28,7 +28,7 @@ function symlinkTarget(link) {
 }
 
 function isPddKitLauncher(target) {
-  if (basename(target) !== 'bl-dev.mjs') return false
+  if (basename(target) !== 'pdd-kit-dev.mjs') return false
   try {
     const packageRoot = resolve(dirname(target), '..')
     const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
@@ -39,9 +39,9 @@ function isPddKitLauncher(target) {
 }
 
 export function activateDevelopmentLink(root, env = process.env) {
-  const launcher = join(resolve(root), 'scripts', 'bl-dev.mjs')
+  const launcher = join(resolve(root), 'scripts', 'pdd-kit-dev.mjs')
   const binDirectory = developmentBinDirectory(env)
-  const link = join(binDirectory, 'bl')
+  const link = join(binDirectory, 'pdd-kit-dev')
   const existing = pathState(link)
 
   if (existing && !existing.isSymbolicLink()) {
@@ -55,7 +55,7 @@ export function activateDevelopmentLink(root, env = process.env) {
   }
 
   mkdirSync(binDirectory, { recursive: true })
-  const temporary = join(binDirectory, `.bl.${process.pid}.${Date.now()}.tmp`)
+  const temporary = join(binDirectory, `.pdd-kit-dev.${process.pid}.${Date.now()}.tmp`)
   try {
     symlinkSync(launcher, temporary)
     renameSync(temporary, link)
@@ -66,8 +66,8 @@ export function activateDevelopmentLink(root, env = process.env) {
 }
 
 export function removeDevelopmentLink(root, env = process.env) {
-  const launcher = join(resolve(root), 'scripts', 'bl-dev.mjs')
-  const link = join(developmentBinDirectory(env), 'bl')
+  const launcher = join(resolve(root), 'scripts', 'pdd-kit-dev.mjs')
+  const link = join(developmentBinDirectory(env), 'pdd-kit-dev')
   const existing = pathState(link)
   if (!existing) return { link, removed: false }
   if (!existing.isSymbolicLink()) {

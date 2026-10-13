@@ -9,7 +9,7 @@ import { VOCABULARY_ITEMS, VOCABULARY_PAGES, termHref, vocabularyMatches, vocabu
 const temporaryDirectories = []
 
 async function read(terms, group = 'Product Model') {
-  const root = await mkdtemp(join(tmpdir(), 'bl-vocabulary-'))
+  const root = await mkdtemp(join(tmpdir(), 'pdd-kit-vocabulary-'))
   temporaryDirectories.push(root)
   await mkdir(join(root, 'docs'))
   const frontmatter = stringify({ title: 'Terms', group, order: 1, terms })

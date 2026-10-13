@@ -3,7 +3,6 @@ title: "Introducing pdd-kit: PDD for coding agents"
 description: PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable. Open source and MIT licensed.
 date: 2026-10-07
 image: /brand/heroes/product-model-wide.webp
-badge: Launch
 authors:
   - name: Itai Gendler
     description: "@itai-gendler"
@@ -19,8 +18,8 @@ is. So they guess, and the guesses ship. That problem is laid out in
 and why spec-driven development does not solve it in
 [SDD describes the change, not the product](/blog/pdd-and-spec-driven-development).
 
-**Today we are releasing pdd-kit, an open-source implementation of
-Product-Driven Development (PDD).** It gives your agent, and your team, one
+**Today I am releasing pdd-kit, an open-source implementation of
+Product-Driven Development (PDD).** It gives you and your agent one
 definition of the product to build from and check against.
 
 ## What you get
@@ -75,8 +74,8 @@ To see a real model first, run `npx pdd-toolkit view itai-gendler/pdd-kit`.
 pdd-kit is developed with pdd-kit, and that command opens its own
 Product Model.
 
-**It is MIT licensed and local-first**: no account, no hosted service, nothing to
-buy. The skills read your code and never run it.
+**It is MIT licensed and local-first.** The skills read your code and never
+run it.
 
 ## What comes next
 

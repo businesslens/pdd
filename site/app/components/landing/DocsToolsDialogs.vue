@@ -14,7 +14,7 @@ const { data: searchFiles } = useLazyAsyncData('docs-search', () =>
     and lazy, so on a heavy page the buttons exist before the dialogs they open.
     A marker lets a test wait for the tools instead of guessing. -->
   <span hidden data-docs-tools-ready />
-  <BlrVocabulary
+  <ReportVocabulary
     :context="vocabularyContext"
     docs-base="/docs"
     :state-key="vocabularyStateKey"

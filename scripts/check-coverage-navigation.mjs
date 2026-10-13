@@ -8,7 +8,7 @@ const expect = playwrightExpect.configure({ timeout: 30_000 })
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI report URL.')
 const report = await fetch(new URL('/_pdd-kit/report.json', origin)).then(response => response.json())
-const screenshots = process.env.BLR_COVERAGE_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_COVERAGE_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
 const errors = []

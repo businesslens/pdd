@@ -1,17 +1,13 @@
-const THEME_LAB_COOKIE = 'bl-preview-bar'
-
-const cookieOptions = {
-  sameSite: 'lax',
-  maxAge: 60 * 60 * 24 * 90
-} as const
+type ThemeLabVisibility = 'shown' | 'hidden'
 
 export function usePddKitThemeLab() {
-  const cookie = useCookie<string>(THEME_LAB_COOKIE, {
-    default: () => 'hidden',
-    ...cookieOptions
-  })
+  const preference = usePddKitStoredPreference<ThemeLabVisibility>(
+    'pdd-kit:preview-bar',
+    () => 'hidden',
+    stored => stored === 'shown' || stored === 'hidden' ? stored : undefined
+  )
 
-  const visible = computed(() => cookie.value === 'shown')
+  const visible = computed(() => preference.value === 'shown')
 
   useHead({
     htmlAttrs: {
@@ -20,7 +16,7 @@ export function usePddKitThemeLab() {
   })
 
   function toggle() {
-    cookie.value = visible.value ? 'hidden' : 'shown'
+    preference.value = visible.value ? 'hidden' : 'shown'
   }
 
   return { visible, toggle }

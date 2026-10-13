@@ -32,14 +32,14 @@ function installedPackageSpec() {
 
 /**
  * Maintainers can explicitly activate one local PDD worktree through
- * `~/.local/bin/bl`. Resolve only that fixed development command, outside the
+ * `~/.local/bin/pdd-kit-dev`. Resolve only that fixed development command, outside the
  * untrusted target repository; ordinary installations retain the pinned npm
  * fallback above.
  */
 function activeDevelopmentCli(runnerRoot, env) {
   const binDirectory = resolve(env.PDD_KIT_DEV_BIN_DIR || join(homedir(), '.local', 'bin'))
   try {
-    const cli = execFileSync(join(binDirectory, 'bl'), ['--dev-cli'], {
+    const cli = execFileSync(join(binDirectory, 'pdd-kit-dev'), ['--dev-cli'], {
       cwd: runnerRoot,
       env,
       encoding: 'utf8',

@@ -6,7 +6,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running fixture-shop report URL.')
-const screenshots = process.env.BLR_NAV_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
 const errors = []
@@ -21,7 +21,7 @@ try {
     const rows = panel.locator('[data-lifecycle-rows]')
     const viewport = () => panel.locator('.vue-flow__transformationpane').evaluate(element => {
       const matrix = new DOMMatrix(getComputedStyle(element).transform)
-      const shell = element.closest('.blr-flow-shell')
+      const shell = element.closest('.report-flow-shell')
       return { zoom: matrix.a, x: (shell.clientWidth / 2 - matrix.e) / matrix.a, y: (shell.clientHeight / 2 - matrix.f) / matrix.a }
     })
     await page.goto(`${origin}/?s=entity&t=graph&e=entity:order`)
@@ -43,7 +43,7 @@ try {
       await panel.getByRole('button', { name: 'Fit map to view', exact: true }).click()
       await expect.poll(async () => {
         const card = await stateCard.boundingBox()
-        const graph = await panel.locator('.blr-flow-shell').boundingBox()
+        const graph = await panel.locator('.report-flow-shell').boundingBox()
         return card.x >= graph.x && card.y >= graph.y && card.x + card.width <= graph.x + graph.width && card.y + card.height <= graph.y + graph.height
       }).toBe(true)
       const card = await stateCard.boundingBox()
@@ -91,7 +91,7 @@ try {
       await expect.poll(async () => (await viewport()).y).toBeCloseTo(graphBefore.y, 1)
       await expect(inspector.getByRole('heading', { name: 'Confirmed → Cancelled', exact: true })).toBeVisible()
       if (width >= 1000) {
-        const graphBox = await panel.locator('.blr-lifecycle-diagram').boundingBox()
+        const graphBox = await panel.locator('.report-lifecycle-diagram').boundingBox()
         const detailBox = await inspector.boundingBox()
         expect(detailBox.x).toBeGreaterThan(graphBox.x + graphBox.width)
       }
@@ -109,7 +109,7 @@ try {
     if (screenshots) await page.screenshot({ animations: 'disabled', path: join(screenshots, `${width}-lifecycle-inspector.png`) })
 
     await panel.getByRole('button', { name: 'Draw as rows', exact: true }).click()
-    await expect(panel.locator('.blr-lifecycle-diagram')).toHaveCount(0)
+    await expect(panel.locator('.report-lifecycle-diagram')).toHaveCount(0)
     await expect(inspector).toHaveCount(0)
     await expect(rows.locator('[data-lifecycle-group]')).toHaveCount(7)
     await expect(rows.locator('[data-lifecycle-change]')).toHaveCount(8)

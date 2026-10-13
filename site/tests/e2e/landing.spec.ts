@@ -27,7 +27,7 @@ test('renders the Product-Driven Development homepage', async ({ page, request }
     .toHaveAttribute('href', '/site.webmanifest')
   await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', 'https://pdd-kit.dev/')
   await expect(page.locator('meta[property="og:image"]'))
-    .toHaveAttribute('content', 'https://pdd-kit.dev/product-model-open-graph.png')
+    .toHaveAttribute('content', 'https://pdd-kit.dev/pdd-kit-social-card.png')
   await expect(page.locator('meta[name="description"]'))
     .toHaveAttribute('content', /^[^—–]*product model[^—–]*$/)
   const bodyText = await page.locator('body').innerText()
@@ -92,7 +92,7 @@ test('renders the Product-Driven Development homepage', async ({ page, request }
   const [desktopAsset, mobileAsset, socialAsset] = await Promise.all([
     request.get('/brand/heroes/product-model-wide.webp'),
     request.get('/brand/heroes/product-model-mobile.webp'),
-    request.get('/product-model-open-graph.png')
+    request.get('/pdd-kit-social-card.png')
   ])
   expect(desktopAsset.ok()).toBe(true)
   expect(desktopAsset.headers()['content-type']).toBe('image/webp')
@@ -244,7 +244,7 @@ test('the FAQ has no automatically detectable WCAG A/AA violations', async ({ pa
   // Answers are collapsed, so the scan above only saw the closed page. The
   // desktop suite opens one and scans again — an expanded panel is a tree this
   // page never otherwise renders.
-  await expect(page.getByRole('button', { name: 'Do I need an account?' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Is it fully open source?' })).toBeVisible()
   for (const name of ['Adopting it', 'What it is and isn\'t', 'Getting started', 'Trust and help']) {
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
   }

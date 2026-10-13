@@ -126,7 +126,7 @@ function staticViewer(): string {
   const directory = mkdtempSync(join(tmpdir(), 'pdd-kit-viewer-'))
   directories.push(directory)
   writeFileSync(join(directory, 'index.html'), '<!doctype html><title>Local Product Model</title>')
-  writeFileSync(join(directory, 'app.js'), 'globalThisproduct-model = true')
+  writeFileSync(join(directory, 'app.js'), 'globalThis.pddKit = true')
   writeFileSync(join(directory, 'site.webmanifest'), '{"name":"pdd-kit"}')
   return directory
 }
@@ -325,6 +325,49 @@ describe('local Product Report server', () => {
     // A request target that is not a URL is answered, never a crash.
     expect((await get(viewer.url, '//')).status).toBe(400)
     expect((await get(viewer.url)).status).toBe(200)
+  })
+
+  it('keeps display preferences in a file that only the report itself can change', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'pdd-kit-preferences-'))
+    directories.push(directory)
+    const preferencesFile = join(directory, 'pdd-kit', 'viewer-preferences.json')
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, preferencesFile })
+    viewers.push(viewer)
+    const path = `${viewer.url}/_pdd-kit/preferences`
+    const put = (body: unknown, headers: Record<string, string> = { origin: viewer.url, 'content-type': 'application/json' }) =>
+      fetch(path, { method: 'PUT', headers, body: JSON.stringify(body) })
+
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/preferences')).body)).toEqual({})
+
+    const saved = await put({ 'pdd-kit:columns': { entity: 3 } })
+    expect(saved.status).toBe(200)
+    expect((await put({ 'pdd-kit:tooltips': 'off' })).status).toBe(200)
+    const expected = { 'pdd-kit:columns': { entity: 3 }, 'pdd-kit:tooltips': 'off' }
+    expect(JSON.parse(readFileSync(preferencesFile, 'utf8'))).toEqual(expected)
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/preferences')).body)).toEqual(expected)
+
+    // Another page in the same browser cannot write the reader's file.
+    for (const origin of [undefined, 'https://example.com', 'null']) {
+      const headers: Record<string, string> = { 'content-type': 'application/json', ...(origin ? { origin } : {}) }
+      expect((await put({ 'pdd-kit:tooltips': 'on' }, headers)).status).toBe(403)
+    }
+    // Only known keys, in known shapes, as JSON, and small.
+    expect((await put({ 'pdd-kit:anything': 1 })).status).toBe(400)
+    expect((await put({ 'pdd-kit:columns': { entity: 9 } })).status).toBe(400)
+    expect((await put(['pdd-kit:tooltips'])).status).toBe(400)
+    expect((await put({ 'pdd-kit:tooltips': 'on' }, { origin: viewer.url, 'content-type': 'text/plain' })).status).toBe(415)
+    expect((await put({ 'pdd-kit:columns': Object.fromEntries(Array.from({ length: 1000 }, (_, index) => [`k${index}`, 1])) })).status).toBe(413)
+    expect(JSON.parse(readFileSync(preferencesFile, 'utf8'))).toEqual(expected)
+
+    // A file edited by hand keeps only what this version accepts.
+    writeFileSync(preferencesFile, JSON.stringify({ ...expected, 'pdd-kit:resource-expanded': 'yes', other: true }))
+    expect(JSON.parse((await get(viewer.url, '/_pdd-kit/preferences')).body)).toEqual(expected)
+  })
+
+  it('leaves preferences to the browser when no file is given', async () => {
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
+    viewers.push(viewer)
+    expect((await get(viewer.url, '/_pdd-kit/preferences')).status).toBe(404)
   })
 
   it('reports, adds and removes the GitHub star only from the report itself', async () => {

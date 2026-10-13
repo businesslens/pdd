@@ -154,9 +154,9 @@ afterEach(() => {
 // suite runs in parallel.
 describe('contribute', { timeout: 30_000 }, () => {
   it('opens a pull request whose Blueprint carries no workspace material', async () => {
-    const model = temporary('bl-contribute-model-')
-    const bin = temporary('bl-contribute-bin-')
-    const capture = join(temporary('bl-contribute-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-model-')
+    const bin = temporary('pdd-kit-contribute-bin-')
+    const capture = join(temporary('pdd-kit-contribute-capture-'), 'gh.json')
 
     // The fixture deliberately carries code references — that is the leak being tested.
     cpSync(FIXTURE, model, { recursive: true })
@@ -234,9 +234,9 @@ describe('contribute', { timeout: 30_000 }, () => {
     // GitHub refuses to let one account own both a parent and a fork, so a
     // maintainer contributing to their own repository cannot fork it. Found by
     // running the real flow against a scratch upstream.
-    const model = temporary('bl-contribute-own-model-')
-    const bin = temporary('bl-contribute-own-bin-')
-    const capture = join(temporary('bl-contribute-own-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-own-model-')
+    const bin = temporary('pdd-kit-contribute-own-bin-')
+    const capture = join(temporary('pdd-kit-contribute-own-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
@@ -266,9 +266,9 @@ describe('contribute', { timeout: 30_000 }, () => {
     // A fork left from an earlier contribution keeps whatever `main` it had
     // then. Branching off that stale history puts unrelated commits — or a
     // conflict — into the pull request.
-    const model = temporary('bl-contribute-sync-model-')
-    const bin = temporary('bl-contribute-sync-bin-')
-    const capture = join(temporary('bl-contribute-sync-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-sync-model-')
+    const bin = temporary('pdd-kit-contribute-sync-bin-')
+    const capture = join(temporary('pdd-kit-contribute-sync-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
@@ -305,9 +305,9 @@ describe('contribute', { timeout: 30_000 }, () => {
     // diverges from whatever the previous attempt left on `blueprint/<slug>`.
     // GitHub also rejects a second pull request for a branch that already has
     // one — and by then the push has already updated it.
-    const model = temporary('bl-contribute-again-model-')
-    const bin = temporary('bl-contribute-again-bin-')
-    const capture = join(temporary('bl-contribute-again-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-again-model-')
+    const bin = temporary('pdd-kit-contribute-again-bin-')
+    const capture = join(temporary('pdd-kit-contribute-again-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
@@ -342,9 +342,9 @@ describe('contribute', { timeout: 30_000 }, () => {
   })
 
   it('refuses rather than contributing from a fork it could not sync', async () => {
-    const model = temporary('bl-contribute-stale-model-')
-    const bin = temporary('bl-contribute-stale-bin-')
-    const capture = join(temporary('bl-contribute-stale-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-stale-model-')
+    const bin = temporary('pdd-kit-contribute-stale-bin-')
+    const capture = join(temporary('pdd-kit-contribute-stale-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
@@ -372,9 +372,9 @@ describe('contribute', { timeout: 30_000 }, () => {
   })
 
   it('refuses without an authenticated GitHub CLI, before touching anything', async () => {
-    const model = temporary('bl-contribute-unauth-model-')
-    const bin = temporary('bl-contribute-unauth-bin-')
-    const capture = join(temporary('bl-contribute-unauth-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-unauth-model-')
+    const bin = temporary('pdd-kit-contribute-unauth-bin-')
+    const capture = join(temporary('pdd-kit-contribute-unauth-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
@@ -400,9 +400,9 @@ describe('contribute', { timeout: 30_000 }, () => {
   })
 
   it('refuses to open a pull request unconfirmed in a non-interactive session', async () => {
-    const model = temporary('bl-contribute-tty-model-')
-    const bin = temporary('bl-contribute-tty-bin-')
-    const capture = join(temporary('bl-contribute-tty-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-tty-model-')
+    const bin = temporary('pdd-kit-contribute-tty-bin-')
+    const capture = join(temporary('pdd-kit-contribute-tty-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
@@ -429,9 +429,9 @@ describe('contribute', { timeout: 30_000 }, () => {
   })
 
   it('leaves no temporary working directory behind', async () => {
-    const model = temporary('bl-contribute-cleanup-model-')
-    const bin = temporary('bl-contribute-cleanup-bin-')
-    const capture = join(temporary('bl-contribute-cleanup-capture-'), 'gh.json')
+    const model = temporary('pdd-kit-contribute-cleanup-model-')
+    const bin = temporary('pdd-kit-contribute-cleanup-bin-')
+    const capture = join(temporary('pdd-kit-contribute-cleanup-capture-'), 'gh.json')
 
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)

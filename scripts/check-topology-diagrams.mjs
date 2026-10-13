@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Browser/geometry regressions against a running, built CLI report (no model writes).
  * node scripts/check-topology-diagrams.mjs http://127.0.0.1:4317 [more-report-urls]
- * Chromium is required. Optional BLR_DIAGRAM_SCREENSHOTS writes review PNGs outside the model.
+ * Chromium is required. Optional PDD_KIT_DIAGRAM_SCREENSHOTS writes review PNGs outside the model.
  */
 import { chromium, expect } from '@playwright/test'
 import { expectCollectionDrawing } from './report-view-controls.mjs'
@@ -29,13 +29,13 @@ const LOCATION = {
 const isMatrix = view => LOCATION[view][1] === 'matrix'
 const NAMES = { 'delivery-by-interface': 'Compare delivery', 'what-changes-what': 'What changes what', 'rule-attachments': 'Rule attachments' }
 const viewUrl = (origin, view, query = '') => `${origin}/?s=${LOCATION[view][0]}&t=${LOCATION[view][1]}${query}`
-const openTab = page => page.locator('.blr-surface-tab[data-current="true"]')
+const openTab = page => page.locator('.report-surface-tab[data-current="true"]')
 /* A collection Graph is chosen by the switch beside the filters, not a tab. */
 const expectOpen = async (page, view) => {
   if (isMatrix(view)) await expectCollectionDrawing(page, 'matrix')
   else await expectCollectionDrawing(page, 'graph')
 }
-const screenshotRoot = process.env.BLR_DIAGRAM_SCREENSHOTS
+const screenshotRoot = process.env.PDD_KIT_DIAGRAM_SCREENSHOTS
 if (screenshotRoot) mkdirSync(screenshotRoot, { recursive: true })
 
 async function flowReady(page) {
@@ -54,11 +54,11 @@ async function expectCentered(page) {
   })).toBeLessThanOrEqual(1)
 }
 async function checkBranchCentering(page) {
-  const branches = page.locator('.vue-flow__node:has(.blr-flow-node__count)')
+  const branches = page.locator('.vue-flow__node:has(.report-flow-node__count)')
   if (!await branches.count()) return
   const id = await branches.last().getAttribute('data-id')
   const branch = page.locator(`.vue-flow__node[data-id=${JSON.stringify(id)}]`)
-  const toggle = branch.locator('.blr-flow-node__count')
+  const toggle = branch.locator('.report-flow-node__count')
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
   await toggle.focus()
   const start = await branch.boundingBox()
@@ -104,7 +104,7 @@ async function checkCenterAnimation(page) {
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
   expect(await motionFrames(() => fit.click())).toBeGreaterThan(4)
   await expectCentered(page)
-  const rootToggle = page.locator('.vue-flow__node .blr-flow-node__count').first()
+  const rootToggle = page.locator('.vue-flow__node .report-flow-node__count').first()
   if (await rootToggle.count()) {
     for (let index = 0; index < 2; index++) {
       await rootToggle.focus()
@@ -148,7 +148,7 @@ async function checkTreeContext(page) {
   if (!path || path.length < 3) return
   const node = page.locator(`.vue-flow__node[data-id=${JSON.stringify(path[0])}]`)
   const undimmed = () => page.locator('.vue-flow__node').evaluateAll(nodes => nodes
-    .filter(node => Number(getComputedStyle(node.querySelector('.blr-flow-node-wrap')).opacity) > 0.99)
+    .filter(node => Number(getComputedStyle(node.querySelector('.report-flow-node-wrap')).opacity) > 0.99)
     .map(node => node.dataset.id).sort())
   const expectedEdges = graph.edges.filter(edge => path.includes(edge.ends[0]) && path.includes(edge.ends[1])).map(edge => edge.id).sort()
   const visibleEdges = () => page.locator('.vue-flow__edge').evaluateAll(edges => edges
@@ -158,7 +158,7 @@ async function checkTreeContext(page) {
   await expect.poll(undimmed).toEqual([...path].sort())
   await expect.poll(visibleEdges).toEqual(expectedEdges)
   await page.mouse.move(0, 0)
-  await node.locator('.blr-flow-node__main').focus()
+  await node.locator('.report-flow-node__main').focus()
   await expect.poll(undimmed).toEqual([...path].sort())
   await expect.poll(visibleEdges).toEqual(expectedEdges)
   await page.getByRole('button', { name: 'Fit map to view', exact: true }).focus()
@@ -166,7 +166,7 @@ async function checkTreeContext(page) {
 }
 async function geometry(page) {
   return page.locator('.vue-flow').evaluate(root => {
-    const boxes = [...root.querySelectorAll('.vue-flow__node, .blr-flow-edge-label')].map(item => ({ title: item.textContent, rect: item.getBoundingClientRect(), frame: Boolean(item.querySelector('[data-flow-group]')) }))
+    const boxes = [...root.querySelectorAll('.vue-flow__node, .report-flow-edge-label')].map(item => ({ title: item.textContent, rect: item.getBoundingClientRect(), frame: Boolean(item.querySelector('[data-flow-group]')) }))
     // A Variation's frame holds its alternatives: containment is its drawing, not a collision.
     const holds = (outer, inner) => outer.frame && outer.rect.left <= inner.rect.left + 1 && outer.rect.top <= inner.rect.top + 1 && outer.rect.right + 1 >= inner.rect.right && outer.rect.bottom + 1 >= inner.rect.bottom
     const overlaps = []
@@ -175,7 +175,7 @@ async function geometry(page) {
       const a = boxes[i].rect, b = boxes[j].rect
       if (a.right > b.left + 1 && b.right > a.left + 1 && a.bottom > b.top + 1 && b.bottom > a.top + 1) overlaps.push([boxes[i].title, boxes[j].title])
     }
-    const labels = [...root.querySelectorAll('.blr-flow-edge-label, .blr-flow-node__text')]
+    const labels = [...root.querySelectorAll('.report-flow-edge-label, .report-flow-node__text')]
     return { overlaps, clipped: labels.filter(item => item.scrollHeight > item.clientHeight + 1 || item.scrollWidth > item.clientWidth + 1).map(item => item.textContent) }
   })
 }
@@ -191,7 +191,7 @@ async function checkTree(page) {
       if (node.querySelector('[data-resource-key^="product:"]')) continue
       const incoming = edges.filter(edge => edge.dataset.id.endsWith(`->${node.dataset.id}`))
       if (incoming.length !== 1) { issues.push('Missing parent connector'); continue }
-      const edge = incoming[0], path = edge.querySelector('path.blr-flow-route'), box = node.getBoundingClientRect()
+      const edge = incoming[0], path = edge.querySelector('path.report-flow-route'), box = node.getBoundingClientRect()
       const end = path.getPointAtLength(path.getTotalLength()).matrixTransform(path.getScreenCTM())
       if (!near(end.x, box.left + box.width / 2) || !near(end.y, box.top)) issues.push('Detached child connector')
       const parent = nodes.find(item => edge.dataset.id === `${item.dataset.id}->${node.dataset.id}`)
@@ -205,16 +205,16 @@ async function checkTree(page) {
 }
 async function checkBounds(page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
-  await expect.poll(() => page.locator('.blr-topology-link').evaluateAll(items => items.filter(item => item.checkVisibility() && parseFloat(getComputedStyle(item).fontSize) < 12).map(item => ({ title: item.textContent, size: getComputedStyle(item).fontSize })))).toEqual([])
-  expect(await page.locator('.blr-report-shell').first().evaluate(item => item.clientHeight)).toBeGreaterThan(80)
+  await expect.poll(() => page.locator('.report-topology-link').evaluateAll(items => items.filter(item => item.checkVisibility() && parseFloat(getComputedStyle(item).fontSize) < 12).map(item => ({ title: item.textContent, size: getComputedStyle(item).fontSize })))).toEqual([])
+  expect(await page.locator('.report-shell').first().evaluate(item => item.clientHeight)).toBeGreaterThan(80)
 }
 async function selectView(page, view) {
   await page.goto(viewUrl(new URL(page.url()).origin, view))
-  await expect(page.locator('.blr-report-shell')).toBeVisible()
+  await expect(page.locator('.report-shell')).toBeVisible()
   await expectOpen(page, view)
   await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))) })
-  if (view === 'what-it-keeps' && await page.locator('.blr-diagram').count()) { await flowReady(page); expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] }) }
-  if (view === 'delivery-map' && await page.locator('.blr-diagram').count()) {
+  if (view === 'what-it-keeps' && await page.locator('.report-diagram').count()) { await flowReady(page); expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] }) }
+  if (view === 'delivery-map' && await page.locator('.report-diagram').count()) {
     await checkTree(page)
     if (page.viewportSize().width >= 1400) await expect.poll(() => page.locator('.vue-flow').evaluate(viewport => {
       const bounds = viewport.getBoundingClientRect()
@@ -256,7 +256,7 @@ try {
     await checkCenterAnimation(page)
     await checkTreeContext(page)
     const rootNode = page.locator('.vue-flow__node:has([data-resource-key^="product:"])')
-    const rootToggle = rootNode.locator('.blr-flow-node__count')
+    const rootToggle = rootNode.locator('.report-flow-node__count')
     const nodeCount = await page.locator('.vue-flow__node').count()
     if (await rootToggle.count()) {
       await rootToggle.focus()
@@ -270,17 +270,17 @@ try {
       await rootToggle.click()
       await expect(page.locator('.vue-flow__node')).toHaveCount(nodeCount)
       await checkTree(page)
-      await page.locator('.vue-flow__node:has([data-resource-key^="interface:"]) .blr-flow-node__main').first().click()
+      await page.locator('.vue-flow__node:has([data-resource-key^="interface:"]) .report-flow-node__main').first().click()
       await expect(page).toHaveURL(/e=interface/)
       await page.goBack()
       await checkTree(page)
     }
-    await rootNode.locator('.blr-flow-node__main').click()
+    await rootNode.locator('.report-flow-node__main').click()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
     await expect(page).not.toHaveURL(/[?&](?:s|e)=/)
     await page.goBack()
     await checkTree(page)
-    const deeper = page.locator('.vue-flow__node:has([data-resource-key^="experience:"]) .blr-flow-node__count[aria-expanded="false"]').first()
+    const deeper = page.locator('.vue-flow__node:has([data-resource-key^="experience:"]) .report-flow-node__count[aria-expanded="false"]').first()
     if (await deeper.count()) {
       const before = await page.locator('.vue-flow__node').count()
       await deeper.click()
@@ -298,7 +298,7 @@ try {
     for (const view of ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach']) {
       await page.goto(viewUrl(url, view))
       await checkTree(page)
-      const closed = page.locator('.vue-flow__node .blr-flow-node__count[aria-expanded="false"]').first()
+      const closed = page.locator('.vue-flow__node .report-flow-node__count[aria-expanded="false"]').first()
       if (await closed.count()) {
         await closed.click()
         await expect(page).toHaveURL(/tx=/)
@@ -307,7 +307,7 @@ try {
       const before = await page.locator('.vue-flow__node').count()
       const occurrence = page.locator('.vue-flow__node [data-resource-key*=":"]:not([data-resource-key^="product:"])').last()
       const key = await occurrence.getAttribute('data-resource-key')
-      await occurrence.locator('.blr-flow-node__main').focus()
+      await occurrence.locator('.report-flow-node__main').focus()
       await page.keyboard.press('Enter')
       await expect(page).toHaveURL(new RegExp(`e=${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
       await page.goBack()
@@ -332,7 +332,7 @@ try {
     await flowReady(page)
     const positions = await page.locator('.vue-flow__node').evaluateAll(items => items.map(item => item.style.cssText))
     const beforeViewport = await flowTransform(page)
-    await page.locator('.vue-flow__node:not(.vue-flow__node-blr-group)').first().hover()
+    await page.locator('.vue-flow__node:not(.vue-flow__node-report-group)').first().hover()
     await page.mouse.move(0, 0)
     expect(await page.locator('.vue-flow__node').evaluateAll(items => items.map(item => item.style.cssText))).toEqual(positions)
     expect(await flowTransform(page)).toBe(beforeViewport)
@@ -342,7 +342,7 @@ try {
     await page.mouse.move(paneBox.x + 30, paneBox.y + 30)
     await page.mouse.down(); await page.mouse.move(paneBox.x + 120, paneBox.y + 90, { steps: 8 }); await page.mouse.up()
     const changed = await flowTransform(page)
-    await page.locator('.vue-flow__node:not(.vue-flow__node-blr-group) .blr-flow-node__main').first().click()
+    await page.locator('.vue-flow__node:not(.vue-flow__node-report-group) .report-flow-node__main').first().click()
     await expect(page).toHaveURL(/e=entity/)
     await page.goBack(); await flowReady(page)
     await expect.poll(() => flowTransform(page)).toBe(changed)
@@ -356,7 +356,7 @@ try {
     await page.reload()
     await expect(page.getByRole('status')).toContainText('Diagram layout is unavailable', { timeout: 20000 })
     // An Entity Variation's frame is a node of the drawing too, so it is listed beside its alternatives.
-    await expect(page.locator('.blr-diagram-fallback li')).toHaveCount(report.model.entities.length + (report.model.variations ?? []).filter(item => item.of === 'entity').length)
+    await expect(page.locator('.report-diagram-fallback li')).toHaveCount(report.model.entities.length + (report.model.variations ?? []).filter(item => item.of === 'entity').length)
     await context.close()
   }
 
@@ -375,9 +375,9 @@ try {
   const started = performance.now()
   await page.goto(`${urls[0]}/?s=entity`)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Entities')
-  await expect(page.locator('.blr-resource-row')).toHaveCount(500)
+  await expect(page.locator('.report-resource-row')).toHaveCount(500)
   measurements.push({ report: stress.id, resources: 500, relations: 2000, ms: Math.round(performance.now() - started) })
-  await page.locator('.blr-resource-row').first().click()
+  await page.locator('.report-resource-row').first().click()
   await expect(page).toHaveURL(/e=entity/)
   await page.getByRole('tab', { name: 'Connections', exact: true }).click()
   await expect(page.locator('[data-resource-connections]')).toBeVisible()
@@ -405,7 +405,7 @@ try {
   // The readable mobile opening can extend beyond the canvas. Use its public
   // Fit action to reach an offscreen branch before expanding it.
   await page.getByRole('button', { name: 'Fit map to view', exact: true }).click()
-  const longBranch = page.locator('.vue-flow__node:has([data-resource-key^="experience:"]) .blr-flow-node__count[aria-expanded="false"]').first()
+  const longBranch = page.locator('.vue-flow__node:has([data-resource-key^="experience:"]) .report-flow-node__count[aria-expanded="false"]').first()
   if (await longBranch.count()) { await longBranch.click(); await expect(page).toHaveURL(/tx=/); await checkTree(page) }
   await checkBounds(page)
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
@@ -439,9 +439,9 @@ try {
     await selectView(page, view)
     await checkBounds(page)
     if (isMatrix(view) || view === 'what-it-keeps') await expect(page.locator('.vue-flow')).toHaveCount(0)
-    else if (await page.locator('.blr-diagram').count()) await checkTree(page)
+    else if (await page.locator('.report-diagram').count()) await checkTree(page)
     /* A tree with no subjects says so instead of drawing the Product root alone. */
-    else await expect(page.locator('.blr-topology-empty')).toBeVisible()
+    else await expect(page.locator('.report-topology-empty')).toBeVisible()
   }
   await context.close()
   expect(failures).toEqual([])

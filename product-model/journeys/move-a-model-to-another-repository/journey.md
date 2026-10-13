@@ -22,5 +22,5 @@ implementation alignment must be established there.
 
 ## Intent
 
-This is the plain, offline half of Blueprint movement. Proposing a model to a
-public catalog is a separate decision with a separate audience.
+This is the plain, offline half of Blueprint movement. Contributing a model to
+be published as a Blueprint is a separate decision with a separate audience.

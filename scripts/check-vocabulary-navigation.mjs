@@ -43,7 +43,7 @@ async function checkBreadcrumbDefinitions(page, touch = false) {
     const help = header.getByRole('button', { name: route.help, exact: true })
     await expect(help).toBeVisible()
     // Icons must be bundled in the static report, which has no icon API.
-    await expect(help.locator('.blr-term-mark')).toHaveCSS('mask-image', /url\(/)
+    await expect(help.locator('.report-term-mark')).toHaveCSS('mask-image', /url\(/)
     // The slideover slides in; read the title once it has settled inside the viewport.
     const viewport = page.viewportSize()
     await expect.poll(async () => {
@@ -273,7 +273,7 @@ try {
     ['Arcs', 'Arc'],
     ['Information kept', 'Information kept']
   ]) {
-    const buttons = page.locator('[data-resource-panel] button.blr-term').filter({ hasText: new RegExp(`^${label}$`) })
+    const buttons = page.locator('[data-resource-panel] button.report-term').filter({ hasText: new RegExp(`^${label}$`) })
     await expect(buttons.first()).toBeVisible()
     for (const button of await buttons.all()) await expect(button).toHaveAccessibleName(`${label} — what ${term} means`)
   }

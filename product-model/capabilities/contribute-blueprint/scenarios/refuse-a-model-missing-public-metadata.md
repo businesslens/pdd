@@ -11,7 +11,7 @@ steps:
     contexts:
       terminal:
         place: pdd-kit-cli
-  - text: The Product finds the model lacks something the catalog requires — a category, a tag, an author, a licence, a Capability, a logo, or Scenario coverage for a declared availability Context
+  - text: The Product finds the model lacks something publication requires — a category, a tag, an author, a licence, a Capability, a logo, or Scenario coverage for a declared availability Context
     kind: condition
     entities:
       - { entity: product-model, effect: reads, facts: [] }

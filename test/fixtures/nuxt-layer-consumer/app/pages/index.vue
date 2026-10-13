@@ -2,7 +2,7 @@
 import type { ProductReport } from 'pdd-toolkit/report'
 
 const route = useRoute()
-const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
 const report: ProductReport = {
   schemaVersion: '19.0.0',

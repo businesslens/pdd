@@ -226,8 +226,8 @@ costed already.
   change which set is on screen. Filter and control details belong in the
   [report viewer README](layers/nuxt/report-viewer/README.md).
 - **Row density is the reader's, per collection.** How many columns the Rows
-  drawing uses is a cookie keyed by collection, so the first paint is right;
-  nothing else about a drawing is configurable. Phones use one column and hide
+  drawing uses is kept in local storage, keyed by collection; nothing else
+  about a drawing is configurable. Phones use one column and hide
   the density control without changing the saved preference. Expand all and
   Collapse all sit beside the drawing controls on desktop and inside the view
   picker on phones.
@@ -308,8 +308,11 @@ costed already.
   accounts for, so every entry has a location; a model tied to no code yet has
   empty coverage, and its reading says so in one plain statement.
 - **A teaching affordance can be turned off, and never hides the way back.**
-  Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
-  so the first paint is right.
+  Term tooltips are restored from the Vocabulary panel; the choice is kept in
+  local storage. No host renders the report per request, so pdd-kit sets no
+  cookies; a prerendered page applies stored preferences after hydration.
+  `pdd-kit view` also keeps them in the reader's configuration folder, because
+  its port, and with it the browser's storage, changes every run.
 - **A section renders as more than prose only when four things align**: a
   recognized H2 in `spec/format.md`; a lint-enforced content shape; a typed
   field in `src/core/portable.ts`; and a component that reads it. Otherwise it

@@ -18,7 +18,7 @@ afterEach(() => {
 
 /** The fixture at the root of its own repository, as `pdd-kit view` finds it. */
 function repository(): string {
-  const root = mkdtempSync(join(tmpdir(), 'bl-viewer-build-'))
+  const root = mkdtempSync(join(tmpdir(), 'pdd-kit-viewer-build-'))
   directories.push(root)
   cpSync(FIXTURE, root, { recursive: true })
   execFileSync('git', ['init', '-q'], { cwd: root })

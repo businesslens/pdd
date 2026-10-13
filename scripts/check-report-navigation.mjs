@@ -9,7 +9,7 @@ if (!origin) throw new Error('Pass a running CLI report URL.')
 const report = await fetch(new URL('/_pdd-kit/report.json', origin)).then(response => response.json())
 const browser = await chromium.launch()
 const errors = []
-const screenshots = process.env.BLR_NAV_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 /* Graph and Matrix drawings share their collection navigation. */
 const graphs = ['Domains', 'Interfaces', 'Entities']
@@ -25,7 +25,7 @@ async function choose(page, name) {
     await expect(page.locator('[data-resource-panel]')).toHaveCount(0)
   }
   if (page.viewportSize().width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
-  await page.locator('.blr-navitem:visible').filter({ hasText: new RegExp(`^${name}`) }).click()
+  await page.locator('.report-navitem:visible').filter({ hasText: new RegExp(`^${name}`) }).click()
 }
 const capture = async (page, name) => { if (screenshots) await page.screenshot({ path: join(screenshots, `${name}.png`) }) }
 try {
@@ -34,7 +34,7 @@ try {
     const page = await context.newPage()
     page.on('pageerror', error => errors.push(error.message))
     await page.goto(origin)
-    await expect(page.locator('.blr-report-shell')).toBeVisible()
+    await expect(page.locator('.report-shell')).toBeVisible()
     /* Search offers the rail's pages and opens them as the rail does, history included. */
     await page.keyboard.press('ControlOrMeta+K')
     const palette = page.getByPlaceholder('Search pages and resources…')
@@ -58,21 +58,21 @@ try {
       /* The surface names itself once. A collection has no tabs: the same set
          is drawn as Rows or as Graph, and the switch sits beside the filters. */
       await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
-      await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
-      const count = await page.getByRole('heading', { level: 1 }).locator('.blr-meta').textContent()
+      await expect(page.locator('.report-surface-tab')).toHaveCount(0)
+      const count = await page.getByRole('heading', { level: 1 }).locator('.report-meta').textContent()
       await expectCollectionDrawing(page, 'rows')
       await selectCollectionDrawing(page, 'graph')
       await expect(page).toHaveURL(new RegExp(`[?&]t=graph(?:&|$)`))
       await expect(page).toHaveURL(new RegExp(`[?&]s=${section}(?:&|$)`))
       await expectCollectionDrawing(page, 'graph')
       /* The set is the same set: its count does not change with the drawing. */
-      await expect(page.getByRole('heading', { level: 1 }).locator('.blr-meta')).toHaveText(count)
+      await expect(page.getByRole('heading', { level: 1 }).locator('.report-meta')).toHaveText(count)
       await page.reload()
       await expectCollectionDrawing(page, 'graph')
       if (['interface', 'entity'].includes(section)) {
         await expect(page.locator('[data-flow-ready=true]')).toBeVisible({ timeout: 15000 })
       }
-      if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(collection)
+      if (width >= 1024) await expect(page.locator('.report-navitem[data-current=true]')).toContainText(collection)
       await capture(page, `${width}-${section}-graph`)
       await selectCollectionDrawing(page, 'rows')
       await expect(page).not.toHaveURL(/[?&]t=/)
@@ -80,22 +80,22 @@ try {
     }
     for (const [label, section, collection] of matrices) {
       await choose(page, collection)
-      const count = await page.getByRole('heading', { level: 1 }).locator('.blr-meta').textContent()
+      const count = await page.getByRole('heading', { level: 1 }).locator('.report-meta').textContent()
       await selectCollectionDrawing(page, 'matrix')
       await expect(page).toHaveURL(new RegExp(`[?&]s=${section}(?:&|$)`))
       await expect(page).toHaveURL(/[?&]t=matrix(?:&|$)/)
       await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
-      await expect(page.getByRole('heading', { level: 1 }).locator('.blr-meta')).toHaveText(count)
+      await expect(page.getByRole('heading', { level: 1 }).locator('.report-meta')).toHaveText(count)
       await expect(page.locator('[data-view-trigger]')).toBeVisible()
       await expect(page.getByRole('button', { name: 'About this matrix', exact: true })).toHaveCount(0)
       await expect(page.locator('[data-matrix-heading]')).toHaveCount(0)
-      await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
-      await expect(page.locator('.blr-navitem').filter({ hasText: new RegExp(`^${label}$`) })).toHaveCount(0)
+      await expect(page.locator('.report-surface-tab')).toHaveCount(0)
+      await expect(page.locator('.report-navitem').filter({ hasText: new RegExp(`^${label}$`) })).toHaveCount(0)
       await page.reload()
       await expectCollectionDrawing(page, 'matrix')
-      if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(collection)
+      if (width >= 1024) await expect(page.locator('.report-navitem[data-current=true]')).toContainText(collection)
       await capture(page, `${width}-${section}-matrix`)
-      const link = page.locator('.blr-topology-matrix [data-resource-key]').first()
+      const link = page.locator('.report-topology-matrix [data-resource-key]').first()
       if (await link.count()) {
         const matrixUrl = page.url()
         await link.click()
@@ -222,7 +222,7 @@ try {
       await expect(groups.first()).toHaveAttribute('aria-expanded', 'false')
       await page.reload()
       await expect(groups.first()).toHaveAttribute('aria-expanded', 'false')
-      const card = page.locator('.blr-resource-row:visible').first()
+      const card = page.locator('.report-resource-row:visible').first()
       if (await card.count()) {
         await card.click()
         await expect(page).toHaveURL(/e=capability/)
@@ -237,7 +237,7 @@ try {
     /* An address naming a view this report has no home for lands on Overview,
        which names itself with the Product's own title rather than guessing. */
     await page.goto(`${origin}/?s=topology&tv=sitemap`)
-    await expect(page.locator('.blr-report-shell')).toBeVisible()
+    await expect(page.locator('.report-shell')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
     await expect(tab(page, 'About').first()).toHaveAttribute('aria-selected', 'true')
     /* Overview in the shared rail is the way home at every width. */
@@ -313,7 +313,7 @@ try {
       const scenarioSet = report.model.variations.find(set => set.of === `${kind}-scenario` && set.alternatives.some(alt => alt.resourceId === scenario.id))
       const cardKey = scenarioSet ? `variation:${scenarioSet.id}` : `${kind}-scenario:${scenario.id}`
       const card = page.locator(`[data-row-key="${cardKey}"] [data-scenario-card]`)
-      const toggle = card.locator('.blr-summary-toggle')
+      const toggle = card.locator('.report-summary-toggle')
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
       await toggle.click()
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
@@ -335,9 +335,9 @@ try {
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
       await page.locator('[data-resource-panel]').getByRole('button', { name: 'Collapse all', exact: true }).click()
       await page.reload()
-      await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(0)
+      await expect(page.locator('.report-summary-toggle[aria-expanded=true]')).toHaveCount(0)
       await page.goto(resourceUrl(kind, scenario.id).replace(`e=${kind}%3A`, `e=${kind}-scenario%3A`))
-      await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(1)
+      await expect(page.locator('.report-summary-toggle[aria-expanded=true]')).toHaveCount(1)
     }
     const capability = report.model.capabilities[0]
     if (capability && journey) {
@@ -391,7 +391,7 @@ try {
     /* Every named view belongs to a resource collection; the Overview owns none. */
     await page.goto(origin)
     await expect(tab(page, 'All resources and connections')).toHaveCount(0)
-    if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
+    if (width >= 1024) await expect(page.locator('.report-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
     console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Delivery.`)

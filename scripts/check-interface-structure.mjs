@@ -5,7 +5,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running content-feed-reader report URL.')
-const screenshots = process.env.BLR_NAV_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
 const errors = []

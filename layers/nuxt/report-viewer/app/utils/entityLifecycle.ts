@@ -7,11 +7,11 @@ import { variationCondition, variationConditionNote, type VariationCondition } f
 
 interface LifecycleState { name: string, reached: boolean, terminal: 'start' | 'end' | null }
 
-export const LIFECYCLE_START = 'blr-lifecycle-start'
-export const LIFECYCLE_END = 'blr-lifecycle-end'
+export const LIFECYCLE_START = 'report-lifecycle-start'
+export const LIFECYCLE_END = 'report-lifecycle-end'
 
 function stateNodeId(entityId: string, state: string): string {
-  return `blr-state:${entityId}:${state}`
+  return `report-state:${entityId}:${state}`
 }
 
 function stateNode(entity: EntityView, data: LifecycleState): DiagramNode {
@@ -87,7 +87,7 @@ const FORBIDDEN_BADGE: DiagramEdgeBadge = { icon: 'i-lucide-ban', text: 'Forbidd
 
 /** The canvas edge drawn for one arc, so the list under the machine can tell a listed arc from a drawn one. */
 export function lifecycleArcEdgeId(entityId: string, arc: Pick<EntityArcView, 'key'>): string {
-  return `blr-arc:${entityId}:${arc.key}`
+  return `report-arc:${entityId}:${arc.key}`
 }
 
 export function lifecycleArcTitle(arc: Pick<EntityArcView, 'effect' | 'from' | 'to'>): string {
@@ -134,9 +134,9 @@ export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<Entit
     key: stateNodeId(entity.id, state.name), title: state.name, state, arcs: []
   }))
   const byName = new Map(states.map(group => [group.title, group]))
-  const creation: LifecycleRowGroup<T> = { key: `blr-creation:${entity.id}`, title: 'Creation', explanation: 'Creation has no starting state.', arcs: [] }
-  const unspecified: LifecycleRowGroup<T> = { key: `blr-unspecified:${entity.id}`, title: 'No specified state', explanation: 'These changes do not name a starting state.', arcs: [] }
-  const unresolved: LifecycleRowGroup<T> = { key: `blr-unresolved:${entity.id}`, title: 'Unknown starting state', explanation: 'These changes name a starting state that is not declared in this Entity.', arcs: [] }
+  const creation: LifecycleRowGroup<T> = { key: `report-creation:${entity.id}`, title: 'Creation', explanation: 'Creation has no starting state.', arcs: [] }
+  const unspecified: LifecycleRowGroup<T> = { key: `report-unspecified:${entity.id}`, title: 'No specified state', explanation: 'These changes do not name a starting state.', arcs: [] }
+  const unresolved: LifecycleRowGroup<T> = { key: `report-unresolved:${entity.id}`, title: 'Unknown starting state', explanation: 'These changes name a starting state that is not declared in this Entity.', arcs: [] }
   for (const arc of arcs) {
     const group = arc.effect === 'creates' ? creation : arc.from ? byName.get(arc.from) ?? unresolved : unspecified
     group.arcs.push(arc)
@@ -202,8 +202,8 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (target === LIFECYCLE_END) hasEnd = true
     edges.push({
       source, target, label: 'forbidden', badges: [FORBIDDEN_BADGE],
-      id: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
-      inspectionKey: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
+      id: `report-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
+      inspectionKey: `report-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
       inspectionLabel: `Forbidden: ${prohibition.from || 'Created'} → ${prohibition.to || 'Removed'}`,
       forbidden: true
     })

@@ -18,10 +18,10 @@ entryPoints:
 references:
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrReportShell.vue
+    target: layers/nuxt/report-viewer/app/components/ReportShell.vue
   - kind: code
     role: implementation
-    target: layers/nuxt/report-viewer/app/components/BlrProductTopology.vue
+    target: layers/nuxt/report-viewer/app/components/ReportProductTopology.vue
 ---
 
 # Resource collection

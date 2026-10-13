@@ -13,8 +13,8 @@ references:
 # Model data leaves only by explicit contribution
 
 Nothing sends a Product Model anywhere except the contribution command, which is
-named, confirmed, and reports exactly where it submitted. Reading a catalog is
-anonymous and one-way. The local report is served to the Developer's own machine
+named, confirmed, and reports exactly where it submitted. Listing and pulling
+published Blueprints is anonymous and one-way. The local report is served to the Developer's own machine
 only. No command publishes, tags, or pushes anything the Developer did not ask
 for by name.
 

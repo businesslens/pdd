@@ -10,7 +10,7 @@ if (!origin) throw new Error('Pass a running CLI viewer URL.')
 const report = await fetch(`${origin}/_pdd-kit/report.json`).then(response => response.json())
 const browser = await chromium.launch()
 const errors = []
-const screenshots = process.env.BLR_VIEW_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_VIEW_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const chosenEntity = report.model.entities.find(item => item.id === 'order') ?? report.model.entities[0]
 const cases = [
@@ -24,10 +24,12 @@ const cases = [
 try {
   for (const width of [1440, 640, 390, 320]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' })
-    // An old experiment preference must never restore a retired control.
-    await context.addCookies([{ name: 'bl-preview-bar', value: 'shown', url: origin }, { name: 'blr-drawing-controls-lab', value: 'action', url: origin }])
+    // Run with the theme lab bar open; the retired drawing-controls lab must stay gone.
+    await context.addInitScript(() => {
+      try { localStorage.setItem('pdd-kit:preview-bar', JSON.stringify('shown')) } catch { /* A blank document has no storage. */ }
+    })
     await context.addInitScript(({ id, key }) => {
-      const storageKey = `blr:collections:/:${id}`
+      const storageKey = `pdd-kit:collections:/:${id}`
       if (!sessionStorage.getItem(storageKey)) sessionStorage.setItem(storageKey, JSON.stringify({ selections: { entity: [key] } }))
     }, { id: report.id, key: `entity:${chosenEntity.id}` })
     const page = await context.newPage()
@@ -35,7 +37,7 @@ try {
     for (const [section, expectedCount, labels] of cases) {
       await page.goto(`${origin}/?s=${section}`)
       const chooser = page.locator('[data-drawing-switch]')
-      const count = page.getByRole('heading', { level: 1 }).locator('.blr-meta')
+      const count = page.getByRole('heading', { level: 1 }).locator('.report-meta')
       const trigger = page.locator('[data-view-trigger]')
       await expect(page.locator('[data-drawing-controls-lab-row]')).toHaveCount(0)
       let baseline
@@ -54,7 +56,7 @@ try {
         expect((await trigger.boundingBox()).height).toBe(28)
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
         await trigger.click()
-        const picker = page.locator('.blr-drawing-cards')
+        const picker = page.locator('.report-drawing-cards')
         const options = picker.getByRole('button', { name: /^Draw as / })
         await expect(options).toHaveCount(labels.length)
         await expect(picker.locator('details, summary')).toHaveCount(0)
@@ -79,19 +81,19 @@ try {
         await page.evaluate(() => Promise.allSettled(document.getAnimations().map(animation => animation.finished)))
         await page.screenshot({ path: join(screenshots, `${width}-${section}-picker.png`) })
         await page.keyboard.press('Escape')
-        await expect(page.locator('.blr-drawing-cards')).toHaveCount(0)
+        await expect(page.locator('.report-drawing-cards')).toHaveCount(0)
       }
       await page.reload()
       await expectCollectionDrawing(page, labels.length === 3 ? 'matrix' : 'graph')
       await expect(count).toHaveText(expectedCount)
-      if (section === 'entity') await expect(page.locator('.blr-topology-matrix tbody tr')).toHaveCount(1)
+      if (section === 'entity') await expect(page.locator('.report-topology-matrix tbody tr')).toHaveCount(1)
       await trigger.focus()
       await page.keyboard.press('Enter')
       const rows = page.getByRole('button', { name: 'Draw as rows', exact: true })
       await rows.focus()
       await page.keyboard.press('Enter')
       await expectCollectionDrawing(page, 'rows')
-      await expect(page.locator('.blr-drawing-cards')).toHaveCount(0)
+      await expect(page.locator('.report-drawing-cards')).toHaveCount(0)
     }
     await context.close()
     console.log(`Passed ${width}px: every collection with drawings, preview subtitles, no About or experiment controls, fixed position, legend, saved filters, refresh and keyboard.`)

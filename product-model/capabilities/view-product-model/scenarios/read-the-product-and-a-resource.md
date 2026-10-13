@@ -7,7 +7,7 @@ steps:
     kind: actor
     actor: developer
     entities:
-      - { entity: product, effect: reads, facts: [Identity, Catalog identity, Limitations] }
+      - { entity: product, effect: reads, facts: [Identity, Publishing metadata, Limitations] }
     contexts:
       local:
         place: local-report-web::product-overview

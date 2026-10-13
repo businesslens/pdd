@@ -66,8 +66,32 @@ test('public pages state one title, description and image across search and link
     expect(await meta(page, 'name="twitter:card"'), path).toBe('summary_large_image')
 
     const types = (await structuredData(page)).map(node => node['@type'])
-    expect(types, path).toEqual(expect.arrayContaining(['Organization', 'WebSite']))
+    expect(types, path).toEqual(expect.arrayContaining(['SoftwareSourceCode', 'WebSite']))
+    expect(types, path).not.toContain('Organization')
   }
+})
+
+test('the site describes an open-source project and its maintainer', async ({ page }) => {
+  await page.goto('/')
+  const graph = await structuredData(page)
+  const maintainer = { '@type': 'Person', 'name': 'Itai Gendler', 'url': 'https://github.com/itai-gendler' }
+  expect(graph.find(node => node['@type'] === 'SoftwareSourceCode')).toEqual({
+    '@type': 'SoftwareSourceCode',
+    '@id': `${ORIGIN}/#project`,
+    'name': 'pdd-kit',
+    'url': `${ORIGIN}/`,
+    'codeRepository': 'https://github.com/itai-gendler/pdd-kit',
+    'license': 'https://opensource.org/licenses/MIT',
+    'author': maintainer,
+    'sameAs': [
+      'https://github.com/itai-gendler/pdd-kit',
+      'https://www.npmjs.com/package/pdd-toolkit'
+    ]
+  })
+  expect(graph.find(node => node['@type'] === 'WebSite')).toMatchObject({
+    about: { '@id': `${ORIGIN}/#project` },
+    publisher: maintainer
+  })
 })
 
 test('a blog post is an article with its own image, date and breadcrumb', async ({ page }) => {
@@ -90,7 +114,7 @@ test('a blog post is an article with its own image, date and breadcrumb', async 
     url: `${ORIGIN}${path}`,
     image: image,
     datePublished: publishedTime,
-    publisher: { '@id': `${ORIGIN}/#organization` }
+    publisher: { '@type': 'Person', 'name': 'Itai Gendler' }
   })
   const breadcrumb = graph.find(node => node['@type'] === 'BreadcrumbList')
   expect(breadcrumb?.itemListElement).toEqual([
@@ -155,10 +179,10 @@ test.describe('client-side navigation', () => {
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `${ORIGIN}/faq`)
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'website')
     await expect(page.locator('meta[property="og:image"]'))
-      .toHaveAttribute('content', `${ORIGIN}/product-model-open-graph.png`)
+      .toHaveAttribute('content', `${ORIGIN}/pdd-kit-social-card.png`)
     await expect(page.locator('meta[property^="article:"]')).toHaveCount(0)
     const types = (await structuredData(page)).map(node => node['@type'])
-    expect(types.sort()).toEqual(['Organization', 'WebSite'])
+    expect(types.sort()).toEqual(['SoftwareSourceCode', 'WebSite'])
   })
 })
 

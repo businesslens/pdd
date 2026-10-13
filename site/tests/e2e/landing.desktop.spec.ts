@@ -175,19 +175,30 @@ test('an article carries its byline, reading time, share row, and heading rail',
   await expect(toc.getByRole('link', { name: 'What you get' })).toHaveAttribute('href', '#what-you-get')
 })
 
-test('the footer carries its product line, its links, and the creator credit', async ({ page }) => {
+test('the footer carries its license, its links, and the creator credit', async ({ page }) => {
   await page.goto('/')
   const footer = page.locator('footer')
 
-  await expect(footer.getByText(`© ${new Date().getFullYear()} pdd-kit`, { exact: true })).toBeVisible()
-  await expect(
-    footer.getByText('Living product models for software teams and coding agents.', { exact: true })
-  ).toBeVisible()
+  // The license sits beside the mark; there is no company copyright line.
+  await expect(footer.getByText('©')).toHaveCount(0)
+  await expect(footer.getByRole('link', { name: 'MIT licensed', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/itai-gendler/pdd-kit/blob/main/LICENSE'
+  )
+  await expect(footer.getByText(/software teams/)).toHaveCount(0)
   await expect(footer.getByRole('link', { name: 'Changelog', exact: true })).toHaveAttribute('href', '/changelog')
   await expect(footer.getByRole('link', { name: 'FAQ', exact: true })).toHaveAttribute('href', '/faq')
   await expect(footer.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute(
     'href',
     'https://github.com/itai-gendler/pdd-kit'
+  )
+  await expect(footer.getByRole('link', { name: 'Contributing', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md'
+  )
+  await expect(footer.getByRole('link', { name: 'Issues', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/itai-gendler/pdd-kit/issues'
   )
   await expect(footer.getByText('Created by Itai Gendler')).toBeVisible()
   // The personal accounts, distinct from the `GitHub` link above, which is the
@@ -265,9 +276,9 @@ test.describe('the marketing arrangements', () => {
     const prdReferencesLink = page.getByRole('link', { name: 'See how references work' })
     await expect(prdReferencesLink).toBeHidden()
 
-    await page.getByRole('button', { name: 'Do I need an account?' }).click()
+    await page.getByRole('button', { name: 'Is it fully open source?' }).click()
     await expect(
-      page.getByText('Listing and pulling Blueprints are anonymous', { exact: false })
+      page.getByText('There is no plan to build a commercial product on top of it.', { exact: false })
     ).toBeVisible()
 
     await page.getByRole('button', { name: 'My product spans multiple repositories — is that supported?' }).click()

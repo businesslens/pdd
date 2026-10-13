@@ -37,28 +37,28 @@ export const COVERAGE_KIND_META: Record<CoverageStatementKind, CoverageKindMeta>
     singular: 'Covered',
     blurb: 'Code the model describes',
     icon: 'i-lucide-circle-check',
-    tone: '[--coverage-accent:var(--blr-coverage-covered)]'
+    tone: '[--coverage-accent:var(--report-coverage-covered)]'
   },
   exclusions: {
     label: 'Exclusions',
     singular: 'Excluded',
     blurb: 'Code that is not product behavior',
     icon: 'i-lucide-square-minus',
-    tone: '[--coverage-accent:var(--blr-coverage-exclusions)]'
+    tone: '[--coverage-accent:var(--report-coverage-exclusions)]'
   },
   unmapped: {
     label: 'Unmapped',
     singular: 'Unmapped',
     blurb: 'Code with behavior not yet modeled',
     icon: 'i-lucide-circle-dashed',
-    tone: '[--coverage-accent:var(--blr-coverage-unmapped)]'
+    tone: '[--coverage-accent:var(--report-coverage-unmapped)]'
   },
   limitations: {
     label: 'Limitations',
     singular: 'Limitation',
     blurb: 'Code whose behavior could not be established',
     icon: 'i-lucide-triangle-alert',
-    tone: '[--coverage-accent:var(--blr-coverage-limitations)]'
+    tone: '[--coverage-accent:var(--report-coverage-limitations)]'
   }
 }
 

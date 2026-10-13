@@ -40,8 +40,8 @@ let source: string
 let target: string
 
 beforeAll(() => {
-  source = mkdtempSync(join(tmpdir(), 'bl-open-source-'))
-  target = mkdtempSync(join(tmpdir(), 'bl-open-target-'))
+  source = mkdtempSync(join(tmpdir(), 'pdd-kit-open-source-'))
+  target = mkdtempSync(join(tmpdir(), 'pdd-kit-open-target-'))
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
   initialize(target)
@@ -153,7 +153,7 @@ describe('open report', () => {
   })
 
   it('refuses a report whose Screen nests inside another Screen', async () => {
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-nested-'))
+    const fresh = mkdtempSync(join(tmpdir(), 'pdd-kit-open-nested-'))
     initialize(fresh)
     try {
       const report = structuredClone(buildProject(source).report)
@@ -179,7 +179,7 @@ describe('open report', () => {
   })
 
   it('opens with empty Coverage, since the origin repository\'s code says nothing about this one', async () => {
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-unmapped-'))
+    const fresh = mkdtempSync(join(tmpdir(), 'pdd-kit-open-unmapped-'))
     initialize(fresh)
     try {
       const report = structuredClone(buildProject(source).report)
@@ -205,7 +205,7 @@ describe('open report', () => {
   })
 
   it('round-trips direct Interface availability without creating Experiences', async () => {
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-direct-'))
+    const fresh = mkdtempSync(join(tmpdir(), 'pdd-kit-open-direct-'))
     initialize(fresh)
     try {
       const report = structuredClone(buildProject(source).report)
@@ -273,7 +273,7 @@ describe('open report', () => {
   it('writes the model README, because the model arrived from elsewhere', async () => {
     // A fresh repository: the suite's shared target already holds a model, and
     // `open` refuses a non-empty `product-model/` without --force.
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-readme-'))
+    const fresh = mkdtempSync(join(tmpdir(), 'pdd-kit-open-readme-'))
     initialize(fresh)
     try {
       const original = buildProject(source)
@@ -291,7 +291,7 @@ describe('open report', () => {
   it('writes nothing outside product-model/, including repository instructions', async () => {
     // The invariant in AGENTS.md "Installer standards" buys:
     // pdd-kit owns one directory, so repository instructions are untouched.
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-outside-'))
+    const fresh = mkdtempSync(join(tmpdir(), 'pdd-kit-open-outside-'))
     initialize(fresh)
     try {
       const original = buildProject(source)
@@ -380,7 +380,7 @@ describe('open report', () => {
   })
 
   it('rejects report fields that cannot be written as canonical resource Markdown', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-markdown-'))
+    const rejectedTarget = mkdtempSync(join(tmpdir(), 'pdd-kit-open-invalid-markdown-'))
     const original = buildProject(source)
     const report = structuredClone(original.report)
     report.model.entities[0]!.title = 'Injected entity\n## Extra'
@@ -397,7 +397,7 @@ describe('open report', () => {
   })
 
   it('rejects a portable report that exposes a local reference before writing files', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-reference-'))
+    const rejectedTarget = mkdtempSync(join(tmpdir(), 'pdd-kit-open-invalid-reference-'))
     const original = buildProject(source)
     const report = structuredClone(original.report)
     report.model.entities[0]!.references = [
@@ -416,7 +416,7 @@ describe('open report', () => {
   })
 
   it('rejects historical Product Reports instead of migrating them', async () => {
-    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v9-'))
+    const legacyTarget = mkdtempSync(join(tmpdir(), 'pdd-kit-open-v9-'))
     initialize(legacyTarget)
     try {
       const report = structuredClone(buildProject(source).report) as Record<string, any>
@@ -434,13 +434,13 @@ describe('open report', () => {
     }
   })
 
-  it('directs remote Hub users to pull instead of accepting a URL', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-remote-'))
+  it('directs a remote report URL to pull instead of accepting it', async () => {
+    const rejectedTarget = mkdtempSync(join(tmpdir(), 'pdd-kit-open-remote-'))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     expect(await runOpen(
       rejectedTarget,
-      'https://app.pdd-kit.dev/api/v1/hub/blueprints/acme/fixture-shop/report.json',
+      'https://pdd-kit.dev/blueprints/acme/fixture-shop/report.json',
       false
     )).toBe(2)
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('pdd-kit blueprint pull'))

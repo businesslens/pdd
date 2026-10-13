@@ -6,7 +6,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running fixture-shop report URL.')
-const screenshots = process.env.BLR_NAV_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
 const errors = []
@@ -24,19 +24,19 @@ try {
     page.on('pageerror', error => errors.push(error.message))
     const panel = panelOf(page)
     await page.goto(`${origin}/?s=entity&t=matrix`)
-    const source = page.locator('.blr-topology-matrix a[data-resource-key="entity:order"]').first()
+    const source = page.locator('.report-topology-matrix a[data-resource-key="entity:order"]').first()
     await expect(source).toBeVisible()
     await source.click()
     await title(page, 'Order')
     expect(urlValue(page, 's')).toBe('entity')
-    await expect(page.locator('.blr-topology-matrix')).toBeAttached()
-    await expect(page.locator('.blr-resource-overlay')).toBeVisible()
+    await expect(page.locator('.report-topology-matrix')).toBeAttached()
+    await expect(page.locator('.report-resource-overlay')).toBeVisible()
     // Focus stays inside the reading while the working view remains mounted.
     await page.keyboard.press('Shift+Tab')
     await expect.poll(() => panel.evaluate(element => element.contains(document.activeElement))).toBe(true)
     if (width >= 768) {
       await expect(page.getByRole('heading', { level: 1, includeHidden: true })).toContainText('Entities')
-      await expect(page.locator('.blr-navitem[data-current=true]')).toContainText('Entities')
+      await expect(page.locator('.report-navitem[data-current=true]')).toContainText('Entities')
       // A click over the rail dismisses the reading without navigating underneath.
       await page.mouse.click(24, 140)
       await expect(panel).toHaveCount(0)
@@ -123,9 +123,9 @@ try {
     // Return to the precise expanded Scenario and scroll after two linked-resource lookups.
     await page.goto(`${origin}/?s=journey&e=journey:browse-and-buy&rt=scenarios`)
     const scenario = panel.locator('[data-row-key="variation:order-confirmation"]')
-    const scenarioToggle = scenario.locator('.blr-summary-toggle')
+    const scenarioToggle = scenario.locator('.report-summary-toggle')
     if (await scenarioToggle.getAttribute('aria-expanded') !== 'true') await scenarioToggle.click()
-    const order = scenario.locator('.blr-steps-list a[data-resource-key="entity:order"]').last()
+    const order = scenario.locator('.report-steps-list a[data-resource-key="entity:order"]').last()
     await order.scrollIntoViewIfNeeded()
     const top = await panel.locator('[data-resource-scroll]').evaluate(item => item.scrollTop)
     await order.click()
@@ -140,7 +140,7 @@ try {
     await expect(panel.getByRole('tab', { name: 'Connections', exact: true })).toHaveAttribute('aria-selected', 'true')
     await panel.getByRole('button', { name: 'Back to Post-purchase', exact: true }).click()
     await title(page, 'Browse and buy')
-    await expect(scenario.locator('.blr-summary-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect(scenario.locator('.report-summary-toggle')).toHaveAttribute('aria-expanded', 'true')
     await expect.poll(() => panel.locator('[data-resource-scroll]').evaluate(item => item.scrollTop)).toBeCloseTo(top, 0)
     await page.goForward()
     await title(page, 'Order')

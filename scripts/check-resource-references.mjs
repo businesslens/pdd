@@ -7,7 +7,7 @@ import { join } from 'node:path'
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running fixture-shop report URL.')
 const report = await fetch(new URL('/_pdd-kit/report.json', origin)).then(response => response.json())
-const screenshots = process.env.BLR_NAV_SCREENSHOTS
+const screenshots = process.env.PDD_KIT_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
 const browser = await chromium.launch()
 const errors = []
@@ -148,7 +148,7 @@ try {
     await expect(panel.locator('[data-resource-heading]')).toHaveText('Catalog browsing')
     await expect(panel.getByRole('tab', { name: /^Scenarios/ })).toHaveAttribute('aria-selected', 'true')
     const card = panel.locator('[data-row-key="capability-scenario:browse-catalog"]')
-    await expect(card.locator('.blr-summary-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect(card.locator('.report-summary-toggle')).toHaveAttribute('aria-expanded', 'true')
     await expect(card.locator('[data-reference-target]')).toHaveCount(2)
     await expect(card.getByText('src/services/catalog.ts#CatalogService.list', { exact: true })).toBeVisible()
     await expect(card.getByText('src/services/catalog.ts#CatalogService', { exact: true })).toHaveCount(0)

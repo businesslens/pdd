@@ -6,7 +6,7 @@ group: Get started
 order: 1
 ---
 
-# pdd-kit: Product-Driven Development for coding agents
+# Product-Driven Development for coding agents
 
 pdd-kit is Product-Driven Development for coding agents. It keeps a
 durable Product contract in `product-model/`: what your product does, for whom,

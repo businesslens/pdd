@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Report:** **Breaking.** The report viewer's components, composables, CSS classes, custom properties and data attributes now share the `Report` prefix, such as `ReportShell`, `useReportNavigation`, `.report-*` and `data-report-*`. Nuxt hosts that use them by name need the new names.
+
+- **Report:** Display preferences (columns per collection, term tooltips, the expanded resource panel and the collapsed sidebar) are kept in the browser's local storage, and the report sets no cookies. `pdd-kit view` remembers your columns, tooltips and panel choice across runs in a file in your configuration folder.
+
+- **Skills:** In a pdd-kit development checkout, the skills run the `pdd-kit-dev` launcher; they no longer run a generically named program from `~/.local/bin`.
+
+- **Docs:** pdd-kit.dev reads as an open-source project: the footer names the MIT license and links to contributing and issues, and the site sets no cookies.
+
+- **Docs:** The README opens with the problem as it is: the product definition already exists, but unstructured, incomplete and scattered, so every coding agent reconstructs it differently each time. pdd-kit.dev's "Where is your product model today?" says the same.
+
+### Fixed
+
+- `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`.
+
 ## [0.35.0] - 2026-10-13
 
 ### Changed
@@ -43,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- BusinessLens is now **pdd-kit**: install and run it with `npx @itai-gendler/pdd-kit`. The Product Model lives in `product-model/` instead of `.businesslens/` (rename the directory to keep yours), the skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx @itai-gendler/pdd-kit install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
+- pdd-kit now installs from npm as `@itai-gendler/pdd-kit` (run it with `npx @itai-gendler/pdd-kit`), and the Product Model lives in `product-model/`. The skills are `pdd-map`, `pdd-ideate` and `pdd-verify` (run `npx @itai-gendler/pdd-kit install` again), and environment variables start with `PDD_KIT_`. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
 
 - **CLI:** Blueprints are published from the repository itself: a merged Blueprint can be pulled within minutes, without a CLI update and without a catalog server. ([e685cd0](https://github.com/itai-gendler/pdd-kit/commit/e685cd03990b9eb8201f9d3ff4104c54913a25ea))
 
@@ -59,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **CLI:** `blueprint pull --catalog`, `BUSINESSLENS_CATALOG_URL` and `BUSINESSLENS_CONTRIBUTE_UPSTREAM`. `PDD_KIT_BLUEPRINT_REPOSITORY` now points `list`, `pull` and `contribute` at a fork. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
+- **CLI:** `blueprint pull --catalog` and the catalog URL and contribution upstream environment variables. `PDD_KIT_BLUEPRINT_REPOSITORY` now points `list`, `pull` and `contribute` at a fork. ([9514989](https://github.com/itai-gendler/pdd-kit/commit/95149899b69f3f92b8d2e3443d00c612ece410aa))
 
 ### Contributors
 
@@ -71,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Report:** `businesslens view` opens a model with lint errors whenever it can still be built, and counts its problems in the header. A save that breaks the build keeps the last version on screen and says how old it is. ([#111](https://github.com/itai-gendler/pdd-kit/pull/111)) ([1afb13c](https://github.com/itai-gendler/pdd-kit/commit/1afb13c389749c2d137802324e0041dbacbfce96))
+- **Report:** `pdd-kit view` opens a model with lint errors whenever it can still be built, and counts its problems in the header. A save that breaks the build keeps the last version on screen and says how old it is. ([#111](https://github.com/itai-gendler/pdd-kit/pull/111)) ([1afb13c](https://github.com/itai-gendler/pdd-kit/commit/1afb13c389749c2d137802324e0041dbacbfce96))
 - **Report:** Problems are listed by file, link to the resource they affect, and can be copied as a request for your agent. A resource shown without part of its file says so. ([#111](https://github.com/itai-gendler/pdd-kit/pull/111)) ([1afb13c](https://github.com/itai-gendler/pdd-kit/commit/1afb13c389749c2d137802324e0041dbacbfce96))
 - **Report:** A model that doesn't build yet, or a report that fails to draw, shows a clear full-page explanation instead of a raw error. ([#111](https://github.com/itai-gendler/pdd-kit/pull/111)) ([1afb13c](https://github.com/itai-gendler/pdd-kit/commit/1afb13c389749c2d137802324e0041dbacbfce96))
 
@@ -192,7 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Report:** Clicking the local report's star again unstars BusinessLens on GitHub. ([#94](https://github.com/itai-gendler/pdd-kit/pull/94)) ([bbe82f8](https://github.com/itai-gendler/pdd-kit/commit/bbe82f8c05b8175dfc1c9374edc67a01d7ee6633))
+- **Report:** Clicking the local report's star again unstars pdd-kit on GitHub. ([#94](https://github.com/itai-gendler/pdd-kit/pull/94)) ([bbe82f8](https://github.com/itai-gendler/pdd-kit/commit/bbe82f8c05b8175dfc1c9374edc67a01d7ee6633))
 
 ### Contributors
 
@@ -204,7 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Report:** The local report can star BusinessLens on GitHub in one click, through your signed-in GitHub CLI. ([#92](https://github.com/itai-gendler/pdd-kit/pull/92)) ([a045b35](https://github.com/itai-gendler/pdd-kit/commit/a045b350e3267615d0313d0689a1081fba38d32f))
+- **Report:** The local report can star pdd-kit on GitHub in one click, through your signed-in GitHub CLI. ([#92](https://github.com/itai-gendler/pdd-kit/pull/92)) ([a045b35](https://github.com/itai-gendler/pdd-kit/commit/a045b350e3267615d0313d0689a1081fba38d32f))
 
 ### Changed
 
@@ -228,7 +244,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.25.0] - 2026-10-05
 
-- The README demo now tours BusinessLens's own Product Model, with the command to open it yourself. ([#82](https://github.com/itai-gendler/pdd-kit/pull/82)) ([04cef90](https://github.com/itai-gendler/pdd-kit/commit/04cef903858fa1626f857776b0674807141faf85))
+- The README demo now tours pdd-kit's own Product Model, with the command to open it yourself. ([#82](https://github.com/itai-gendler/pdd-kit/pull/82)) ([04cef90](https://github.com/itai-gendler/pdd-kit/commit/04cef903858fa1626f857776b0674807141faf85))
 - The README and the docs Introduction show in one table what the model holds and what it leaves to design. ([#81](https://github.com/itai-gendler/pdd-kit/pull/81)) ([d537e94](https://github.com/itai-gendler/pdd-kit/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
 - A Screen is now one place however it is drawn: tabs, panels and wizard stages belong to it, so a redesign no longer changes the model. Screens no longer nest. ([#81](https://github.com/itai-gendler/pdd-kit/pull/81)) ([d537e94](https://github.com/itai-gendler/pdd-kit/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
 - Interfaces and Experiences no longer list the Screens reachable from everywhere; menus are design. ([#81](https://github.com/itai-gendler/pdd-kit/pull/81)) ([d537e94](https://github.com/itai-gendler/pdd-kit/commit/d537e94b57ddae39da096fabd8faa2d4ad5ba91d))
@@ -254,7 +270,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.24.1] - 2026-10-05
 
-- A shorter README that says what BusinessLens does, why it matters and how to start, with an animated development loop. ([#74](https://github.com/itai-gendler/pdd-kit/pull/74)) ([2d92913](https://github.com/itai-gendler/pdd-kit/commit/2d9291301b6e1d816900635d1454e7c0ba66b034))
+- A shorter README that says what pdd-kit does, why it matters and how to start, with an animated development loop. ([#74](https://github.com/itai-gendler/pdd-kit/pull/74)) ([2d92913](https://github.com/itai-gendler/pdd-kit/commit/2d9291301b6e1d816900635d1454e7c0ba66b034))
 - The development loop now reads ideate → implement → verify, and says plainly that implementing stays in your own workflow. ([#74](https://github.com/itai-gendler/pdd-kit/pull/74)) ([2d92913](https://github.com/itai-gendler/pdd-kit/commit/2d9291301b6e1d816900635d1454e7c0ba66b034))
 
 ### Contributors
@@ -265,7 +281,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.24.0] - 2026-10-05
 
-- A globally installed CLI offers each newer release once, and updates itself only when you choose to. Turn the reminder off from the prompt or with `BUSINESSLENS_NO_UPDATE_CHECK=1`. ([#77](https://github.com/itai-gendler/pdd-kit/pull/77)) ([0784f6a](https://github.com/itai-gendler/pdd-kit/commit/0784f6a167f70c917bcabbe50efb92dc2d5c57fa))
+- A globally installed CLI offers each newer release once, and updates itself only when you choose to. Turn the reminder off from the prompt or with `PDD_KIT_NO_UPDATE_CHECK=1`. ([#77](https://github.com/itai-gendler/pdd-kit/pull/77)) ([0784f6a](https://github.com/itai-gendler/pdd-kit/commit/0784f6a167f70c917bcabbe50efb92dc2d5c57fa))
 
 ### Contributors
 
@@ -275,7 +291,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.23.1] - 2026-10-04
 
-- The report and every BusinessLens page show in light mode only for now; dark mode will return once it reads as well as light. ([#71](https://github.com/itai-gendler/pdd-kit/pull/71)) ([9a4506c](https://github.com/itai-gendler/pdd-kit/commit/9a4506c40d8da7156d7136b6a76166c514646bf7))
+- The report and every pdd-kit page show in light mode only for now; dark mode will return once it reads as well as light. ([#71](https://github.com/itai-gendler/pdd-kit/pull/71)) ([9a4506c](https://github.com/itai-gendler/pdd-kit/commit/9a4506c40d8da7156d7136b6a76166c514646bf7))
 
 ### Contributors
 
@@ -558,7 +574,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   typed facts, `actors/` as its own collection, permission on a Capability
   target, `transitions` on the Entity, the permission algebra's discarded
   spellings, and Blueprint provenance. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
-- BusinessLens now keeps a reviewed Product Model of itself. The Content Feed
+- pdd-kit now keeps a reviewed Product Model of itself. The Content Feed
   Reader Blueprint and golden Fixture Shop were expanded to exercise Entities,
   relations, lifecycles, unattended behavior, and permission Rules. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
 
@@ -584,19 +600,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A Business Rule governs at least two behaviors or an independent Context, and
   a Domain states what its Boundary excludes. Both are now linted. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
 - **The installer decides ownership by its manifest alone.** A directory that
-  merely names a skill and mentions BusinessLens is somebody else's; retired
+  merely names a skill and mentions pdd-kit is somebody else's; retired
   skills are removed only when the manifest recorded them; every harness is
   checked before any is written, so a refusal leaves nothing changed. This is
   visible on upgrade: an installation made before the marker existed carries no
   proof it is ours, so `install` and `update` refuse it with *Refusing to
   overwrite … Pass `--force`*. One `--force` re-adopts it, and every later run
   is marked. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
-- `businesslens-map`, `businesslens-ideate`, and the authoring branches of
-  `businesslens-verify` settle undetermined boundary, granularity, naming, and
+- `pdd-map`, `pdd-ideate`, and the authoring branches of
+  `pdd-verify` settle undetermined boundary, granularity, naming, and
   acceptance calls in rounds before writing. They attach the evidence they read
   and surface remaining judgment calls explicitly; ideate's proposed delta ends
   with a `Judgment calls` section, as map's already did. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
-- `businesslens-verify` re-derives findings from the current model and
+- `pdd-verify` re-derives findings from the current model and
   repository, verifies Entity facts, states, relations, composed transitions,
   Step effects, and Rule grants, and never persists a workflow ledger. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
 - The docs define each resource type on its owning page. Actor guidance moved
@@ -637,7 +653,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   else was a second encoding of containment — a report could validate under one
   Interface and expand under another. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
 - The stable viewer keeps the current page and its filters through a recompile,
-  so `businesslens view` can stay open while the model is edited. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
+  so `pdd-kit view` can stay open while the model is edited. ([#34](https://github.com/itai-gendler/pdd-kit/pull/34)) ([2a14ea1](https://github.com/itai-gendler/pdd-kit/commit/2a14ea12885ec012557aae33e4ee44b3e003a541))
 - The packed Nuxt Layer consumer, viewer documentation, and package manifest
   stay aligned with the current report major; generated Layer `node_modules`
   are excluded from the npm tarball; and `check-repo` pins both registers and
@@ -647,7 +663,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **The installer follows no name it did not write.** The installation manifest
-  is read out of the target repository, which BusinessLens treats as untrusted,
+  is read out of the target repository, which pdd-kit treats as untrusted,
   and every name it records reaches a recursive remove. A `skills` entry that is
   not a plain directory name now invalidates the marker, a recorded name this
   Product could not have written is left alone, and every removal must resolve
@@ -678,7 +694,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   authority. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - An optional ordered `screens:` list on an Interface or Experience declaring
   reading order over its own children. Reachability stays with the tree. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
-- `businesslens view` serves repository files from a read-only, extension-
+- `pdd-kit view` serves repository files from a read-only, extension-
   allowlisted mount, and the report viewer renders local `visual` references and
   co-located assets as thumbnails instead of inert text. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - **Every entity has a page**, at its own URL, with the authored body at full
@@ -692,7 +708,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with that mark in a chip that opens the Actor, rather than as prose. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - The open section and the open entity page live in the URL, so a report has
   deep links, a working browser back button, and a refresh that lands where it
-  left. `BusinessLensReportViewer` exposes both as bindable models. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
+  left. `PddKitReportViewer` exposes both as bindable models. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - Each collection states the question it answers and the derivation behind its
   reading order, in the vocabulary the named topology views already use. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - Every collection opens grouped by the containment the format declares for it,
@@ -702,7 +718,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   be a duplicate row. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - One entity's neighbourhood is drawn on the named Topology canvas, at a width
   that can render it, when the reader chooses the page's Neighbourhood action. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
-- The stable BusinessLens Product Report: an entity-first browse, search,
+- The stable pdd-kit Product Report: an entity-first browse, search,
   scenario, journey, and named-topology experience over one complete report
   projection. It renders every authored entity on its page while ranking
   collection and Overview readings for repeated human use. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
@@ -806,9 +822,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reference. The reference may be terser than the contract; it may not omit a
   name, because an agent cannot author a key it was never told about. It found
   the three missing Product keys above on its first run. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
-- A README for the `businesslens/nuxt/theme` layer, which shipped as a public
+- A README for the `@itai-gendler/pdd-kit/nuxt/theme` layer, which shipped as a public
   export with no documentation of its palette roles, type scale,
-  `<BusinessLensBrand>` lockup, or icon-family composable. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
+  `<PddKitBrand>` lockup, or icon-family composable. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - **Folder schema 5 — a breaking change with no compatibility reader.** An
   entity is compact as `<id>.md` until it owns an asset or typed child
   collection, then expands to `<id>/<type>.md`. Both shapes derive the same id
@@ -863,16 +879,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   triggered by a Reader-initiated refresh on the Source list Screen — a trigger
   the model previously never stated. Its catch-up failure variation no longer
   contradicts itself about whether the backlog was unchanged or caught up. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
-- **Breaking.** `businesslens/nuxt/report-viewer` accepts the canonical
+- **Breaking.** `@itai-gendler/pdd-kit/nuxt/report-viewer` accepts the canonical
   `ProductReportV10` directly and owns the complete Product Report projection
-  and topology engine. The lossy `businesslens/report/view-model` export and
+  and topology engine. The lossy report view-model export and
   the former whole-report audition layer are removed. The private,
   unpublished `report-viewer-lab` remains as an empty boundary for future
   experiments, while `theme-lab` continues to own background auditions. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - **Breaking.** Logo, lockup, and favicon selection are no longer theme-lab
   experiments. The approved mark, wordmark, brand renderer, favicon, and
-  install-icon family now live at canonical paths in `businesslens/nuxt/theme`;
-  `businesslens/theme-lab/variants` exposes background choices only. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
+  install-icon family now live at canonical paths in `@itai-gendler/pdd-kit/nuxt/theme`;
+  `@itai-gendler/pdd-kit/theme-lab/variants` exposes background choices only. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - The Product Report keeps entity identity collision-safe across collections,
   preserves focus across live recompiles, separates Capability and Journey
   Scenario readings, shows Screen-to-Journey derivation provenance, renders
@@ -933,7 +949,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blocking `site.webmanifest`. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - The Product Report light and dark page surfaces are part of the shared theme
   again. The warm base, top glow, and paper grain moved from the optional
-  theme-lab audition layer into `businesslens/nuxt/theme`, where the promoted
+  theme-lab audition layer into `@itai-gendler/pdd-kit/nuxt/theme`, where the promoted
   Product Report and the bundled local viewer inherit them without depending on a
   lab layer. ([#30](https://github.com/itai-gendler/pdd-kit/pull/30)) ([1a22915](https://github.com/itai-gendler/pdd-kit/commit/1a22915c144f334269c2602c85e5ff67d946d726))
 - Journey composition no longer implies a Screen is reached from a Step that
@@ -978,7 +994,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Compile the public `businesslens/theme-lab/variants` subpath into `dist` so
+- Compile the public `@itai-gendler/pdd-kit/theme-lab/variants` subpath into `dist` so
   plain Node consumers such as Playwright can import it from `node_modules`
   without relying on unsupported TypeScript stripping. ([5cf8b56](https://github.com/itai-gendler/pdd-kit/commit/5cf8b56c69028b474fe20b609072e73ab224f344))
 
@@ -992,17 +1008,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `businesslens view` renders the current Product Model privately on localhost,
+- `pdd-kit view` renders the current Product Model privately on localhost,
   recompiles automatically after debounced source edits, streams revisions to
   open browsers, retains the last valid report during lint errors, writes no
   generated report, and opens no network listener beyond `127.0.0.1`. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- Root `businesslens` exports for the pure Product Report view-model projection,
-  the shared Nuxt report renderer, and a sibling BusinessLens-wide theme Layer,
+- Root `@itai-gendler/pdd-kit` exports for the pure Product Report view-model projection,
+  the shared Nuxt report renderer, and a sibling pdd-kit-wide theme Layer,
   so hosts share UI without a second public npm package. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - An opt-in shared Nuxt theme-lab Layer for auditioning the same backgrounds,
   marks, lockups, and favicon families across the landing site and local report
   viewer without promoting undecided presentation into the stable theme. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- An optional `.businesslens/logo.svg` Product logo used by the local viewer and
+- An optional `product-model/product/logo.svg` Product logo used by the local viewer and
   Blueprint presentation. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - First-class Interface entities for supported Product interaction contracts,
   with exact Interface–Experience availability across Capabilities, Journeys,
@@ -1015,9 +1031,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kinds (`code|spec|proposal|doc|adr|visual|research`) and attachment roles
   (`intent|implementation|context`). Referenced content stays outside the
   Product Model and never replaces its prose or proves alignment. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- `businesslens-map` for initial adoption, scoped remapping, and deliberate
+- `pdd-map` for initial adoption, scoped remapping, and deliberate
   Product Model coverage expansion without executing target code. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- `businesslens-verify` as the single post-build invocation. It classifies
+- `pdd-verify` as the single post-build invocation. It classifies
   model/code gaps, negotiates only authority decisions, automatically runs
   internal intent-resolution or scoped-mapping phases, hands code corrections
   to a harness-injected builder, and re-verifies until aligned or blocked. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
@@ -1038,7 +1054,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking.** A catalog Blueprint has no separate `blueprint.yaml`. Product
   ID, title, summary, description, category, tags, authors, license, and report
   content come from `product.md`; visual identity comes only from
-  `.businesslens/logo.svg`, and catalog operational state remains outside the
+  `product-model/product/logo.svg`, and catalog operational state remains outside the
   Product Model. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - **Breaking.** Product Report v7 is the only accepted report contract. It
   carries portable Product identity and attribution, uses `summary` for the
@@ -1061,10 +1077,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The bundled Content & Feed Reader Blueprint now demonstrates the complete
   model, including cross-platform Screens, product states, mobile deep links,
   and external visual and research references. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- **Breaking.** The public skill set is exactly `businesslens-map`,
-  `businesslens-ideate`, and `businesslens-verify`. Ideate also handles a narrow
+- **Breaking.** The public skill set is exactly `pdd-map`,
+  `pdd-ideate`, and `pdd-verify`. Ideate also handles a narrow
   already-decided verification handoff without reopening broad brainstorming. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- **Breaking.** `businesslens validate` is now `businesslens lint`. The old
+- **Breaking.** `pdd-kit validate` is now `pdd-kit lint`. The old
   spelling is refused with exit code 2 and a replacement message; it is not an
   alias. Lint output contains only `ok`, `errors`, `warnings`, and `counts`—no
   branch situation or authority inference. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
@@ -1083,7 +1099,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from References. Blueprint open and pull preserve model breadth while
   removing repository-local Coverage source areas. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - Every model creation path carries canonical orientation in
-  `.businesslens/README.md`. BusinessLens still never writes target-root
+  `product-model/README.md`. pdd-kit still never writes target-root
   `AGENTS.md`, `CLAUDE.md`, or README files. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - Canonical report expansion now owns that orientation file for `open`, `pull`,
   and `contribute`; Blueprint contributions accept every valid model-breadth
@@ -1109,10 +1125,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `businesslens-init`, `businesslens-sync`, `businesslens-doctor`, and
-  `businesslens-deep-dive`. Their useful scopes now belong to map or verify. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
-- The `businesslens-contribute` skill. Catalog contribution remains the
-  deterministic `businesslens blueprint contribute` CLI command. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
+- The init, sync, doctor, and deep-dive skills. Their useful scopes now belong to map or verify. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
+- The contribute skill. Catalog contribution remains the deterministic
+  `pdd-kit blueprint contribute` CLI command. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 - Git branch-state routing from lint and the internal `branch-state` module. ([2339dd3](https://github.com/itai-gendler/pdd-kit/commit/2339dd369eaf459d2dce5f647c6a606e81517426))
 
 ### Contributors
@@ -1123,7 +1138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0] - 2026-07-31
 
-BusinessLens consolidates onto one site. The Platform is retired; the Blueprint
+pdd-kit consolidates onto one site. The Platform is retired; the Blueprint
 catalog moves to `pdd-kit.dev` and becomes anonymous to browse and to pull.
 
 The previous published npm version is `0.5.0`. An intermediate draft of this
@@ -1133,19 +1148,19 @@ pull-request contribution flow described below.
 
 ### Added
 
-- `businesslens open <report>` expands a local Product Report back into a
-  canonical `.businesslens/` Product Model, making `export` and `open`
+- `pdd-kit open <report>` expands a local Product Report back into a
+  canonical `product-model/` Product Model, making `export` and `open`
   semantic inverses. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `businesslens pull <blueprint-name>` anonymously retrieves a Blueprint and
+- `pdd-kit pull <blueprint-name>` anonymously retrieves a Blueprint and
   expands it without a user-facing `report.json` download. It writes a
   greenfield block into `AGENTS.md` and sends
-  `user-agent: businesslens/<version>` to the catalog. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
+  `user-agent: pdd-kit/<version>` to the catalog. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
 - **Features** and **business rules** are first-class product-model entities
   with their own directories, IDs, relationships, and validation rules. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- A `businesslens/report` library entry point exporting the Product Report
+- A `@itai-gendler/pdd-kit/report` library entry point exporting the Product Report
   schema, its cross-entity validator, and the canonical digest. It depends only
   on `zod` and never loads the CLI. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `redactSourceEvidence` in the `businesslens/report` contract strips every
+- `redactSourceEvidence` in the `@itai-gendler/pdd-kit/report` contract strips every
   repository reference from a report before it leaves its owning workspace —
   `codeRefs`, repository `entryPoints`, repository-relative `links`, and
   `coverage.sourceAreas`. Product-facing routes and HTTP(S) URLs are kept.
@@ -1153,11 +1168,11 @@ pull-request contribution flow described below.
   `coverage.evidenceRedacted` records both that those counts describe the
   origin repository and that validation must reject any repository path still
   present. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `businesslens-plan` and `businesslens-verify` skills for planning in the
+- Plan and verify skills for planning in the
   Product Model and verifying implementation evidence before merge. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `businesslens-implement` builds the software a Product Model describes, with
+- An implement skill builds the software a Product Model describes, with
   its scenarios as the acceptance contract. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `businesslens-ideate` proposes candidate product directions as a shortlist.
+- `pdd-ideate` proposes candidate product directions as a shortlist.
   It is the only skill that never writes to the model. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
 - Draft greenfield product models, with missing-evidence warnings during
   planning and support for exporting planned Product Model Versions before
@@ -1177,17 +1192,17 @@ pull-request contribution flow described below.
 
 ### Changed
 
-- **Breaking.** `businesslens publish` is now `businesslens contribute`, and
-  opens a pull request against `businesslens/pdd` through the `gh` CLI rather
+- **Breaking.** `pdd-kit publish` is now `pdd-kit contribute`, and
+  opens a pull request against `itai-gendler/pdd-kit` through the `gh` CLI rather
   than submitting to a Platform. No API key is involved. The model in the pull
   request is regenerated from a redacted report, so it carries no source paths
   and is byte-identical to what `pull` produces. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- **Breaking.** `businesslens build` is now `businesslens export`. `build` still
+- **Breaking.** `pdd-kit build` is now `pdd-kit export`. `build` still
   works and warns; it will be removed after 0.6.x. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
 - `export` emits a source-free **Product Report v4** at
-  `.businesslens/build/report.json`, replacing the portable v3 `project.json`.
+  `product-model/build/report.json`, replacing the portable v3 `project.json`.
   The report carries no repository URL, commit, branch, or workspace metadata. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- **Breaking.** `.businesslens/` is now called the **Product Model** throughout
+- **Breaking.** The model directory is now called the **Product Model** throughout
   the CLI, docs, and skills. "Product map" is reserved for a visual or
   navigable view of that model. Draft coverage is an evidence state and no
   longer implies a reusable Blueprint. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
@@ -1195,8 +1210,8 @@ pull-request contribution flow described below.
   canonical Markdown and inconsistent mapped-coverage counts. Product Model
   validation continues to reject non-draft behavioral claims without evidence. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
 - `--catalog` defaults to `https://pdd-kit.dev` and accepts any origin.
-  Precedence is `--catalog`, `BUSINESSLENS_CATALOG_URL`, then the default. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
-- `businesslens-publish` is now `businesslens-contribute`. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
+  Precedence is `--catalog`, the catalog URL environment variable, then the default. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
+- The publish skill is now the contribute skill. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
 - Skill runners pin the CLI to the version the skills were installed from rather
   than resolving the latest published version, which could validate a model
   against an older published format. ([#5](https://github.com/itai-gendler/pdd-kit/pull/5)) ([1b01308](https://github.com/itai-gendler/pdd-kit/commit/1b01308ccd92276683068761b7795c5029176b70))
@@ -1219,7 +1234,7 @@ pull-request contribution flow described below.
 
 ### Added
 
-- `build` and `publish` CLI commands, the `businesslens-publish` skill with its
+- `build` and `publish` CLI commands, the publish skill with its
   isolated runner, and the CI publishing recipe
   ([#1](https://github.com/itai-gendler/pdd-kit/pull/1)). ([cff997b](https://github.com/itai-gendler/pdd-kit/commit/cff997b7aa8c05f27a3efa16290c16b48f8f0448))
 
@@ -1236,10 +1251,8 @@ Initial public launch of the repository.
 ### Added
 
 - CLI: `install`, `update`, and `validate` commands. ([90ed7d1](https://github.com/itai-gendler/pdd-kit/commit/90ed7d1c040d6c78f0a88c40e061d78122f3afde))
-- Agent skills: `businesslens-init`, `businesslens-sync`,
-  `businesslens-deep-dive`, `businesslens-validate`, and
-  `businesslens-doctor`. ([90ed7d1](https://github.com/itai-gendler/pdd-kit/commit/90ed7d1c040d6c78f0a88c40e061d78122f3afde))
-- The `.businesslens/` product-map format and its contract in
+- Agent skills for init, sync, deep-dive, validate, and doctor. ([90ed7d1](https://github.com/itai-gendler/pdd-kit/commit/90ed7d1c040d6c78f0a88c40e061d78122f3afde))
+- The `product-model/` product-map format and its contract in
   `docs/format.md`. ([90ed7d1](https://github.com/itai-gendler/pdd-kit/commit/90ed7d1c040d6c78f0a88c40e061d78122f3afde))
 - Claude plugin manifest and marketplace entry. ([90ed7d1](https://github.com/itai-gendler/pdd-kit/commit/90ed7d1c040d6c78f0a88c40e061d78122f3afde))
 

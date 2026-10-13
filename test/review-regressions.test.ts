@@ -21,7 +21,7 @@ const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten
 
 describe('merge review regressions', () => {
   it('rejects a shared Screen whose qualified ID also names an Experience, with both authored locations', () => {
-    const cwd = mkdtempSync(join(tmpdir(), 'bl-place-collision-'))
+    const cwd = mkdtempSync(join(tmpdir(), 'pdd-kit-place-collision-'))
     try {
       cpSync(fixture, cwd, { recursive: true })
       const screen = join(cwd, 'product-model/interfaces/customer-web/screens/storefront.md')
@@ -46,7 +46,7 @@ describe('merge review regressions', () => {
   })
 
   it('writes set-valued fact lists in one order, whatever order they were authored in', () => {
-    const cwd = mkdtempSync(join(tmpdir(), 'bl-fact-order-'))
+    const cwd = mkdtempSync(join(tmpdir(), 'pdd-kit-fact-order-'))
     try {
       cpSync(fixture, cwd, { recursive: true })
       const scenario = join(cwd, 'product-model/capabilities/browse-catalog/scenarios/browse-catalog.md')
@@ -66,7 +66,7 @@ describe('merge review regressions', () => {
     expect(validateProductReport(input)).toEqual([
       expect.stringContaining('place id "customer-web::storefront": used by Experience "customer-web::storefront" and Screen "customer-web::storefront"')
     ])
-    const parent = mkdtempSync(join(tmpdir(), 'bl-reject-place-'))
+    const parent = mkdtempSync(join(tmpdir(), 'pdd-kit-reject-place-'))
     try {
       for (const existing of [false, true]) {
         const target = join(parent, existing ? 'existing' : 'empty')
@@ -85,8 +85,8 @@ describe('merge review regressions', () => {
   })
 
   it('preserves a shared Screen’s owner and location across export/import, and refuses a nested one', () => {
-    const cwd = mkdtempSync(join(tmpdir(), 'bl-shared-owner-'))
-    const target = mkdtempSync(join(tmpdir(), 'bl-shared-import-'))
+    const cwd = mkdtempSync(join(tmpdir(), 'pdd-kit-shared-owner-'))
+    const target = mkdtempSync(join(tmpdir(), 'pdd-kit-shared-import-'))
     try {
       cpSync(fixture, cwd, { recursive: true })
       const content = '---\nentities:\n  - { entity: catalog-product, shows: [Name and description, Price, Stock remaining] }\n---\n\n# Shared catalog\n\nThe shared catalog detail.\n'
@@ -207,11 +207,11 @@ describe('merge review regressions', () => {
    * its Order status Screen, and the Interface's shared catalog Screens vary.
    */
   const variedShop = () => {
-    const cwd = mkdtempSync(join(tmpdir(), 'bl-varied-shop-'))
+    const cwd = mkdtempSync(join(tmpdir(), 'pdd-kit-varied-shop-'))
     cpSync(fixture, cwd, { recursive: true })
-    const bl = join(cwd, 'product-model')
+    const productModel = join(cwd, 'product-model')
     const edit = (path: string, from: string, to: string) => {
-      const file = join(bl, path)
+      const file = join(productModel, path)
       const text = readFileSync(file, 'utf8')
       expect(text).toContain(from)
       writeFileSync(file, text.replaceAll(from, to))
@@ -223,7 +223,7 @@ describe('merge review regressions', () => {
       'place: customer-web::storefront::order-status', 'place: customer-web::storefront')
     edit('entities/shopper.md', '- **Checkout assignment**',
       '- **Catalog layout assignment** — whether the catalog layout experiment shows this shopper a grid\n- **Checkout assignment**')
-    writeFileSync(join(bl, 'interfaces/customer-web/screens/catalog-grid.md'), `---
+    writeFileSync(join(productModel, 'interfaces/customer-web/screens/catalog-grid.md'), `---
 entities:
   - { entity: catalog-product, shows: [Name and description, Price] }
 ---
@@ -232,7 +232,7 @@ entities:
 
 The catalog as a grid of product tiles.
 `)
-    writeFileSync(join(bl, 'capabilities/browse-catalog/scenarios/browse-the-catalog-grid.md'), `---
+    writeFileSync(join(productModel, 'capabilities/browse-catalog/scenarios/browse-the-catalog-grid.md'), `---
 kind: primary
 routes: { web: Web }
 steps:
@@ -257,7 +257,7 @@ A Shopper in the grid arm opens the storefront.
 
 The shopper opens a product from its tile.
 `)
-    writeFileSync(join(bl, 'variations/catalog-layout.md'), `---
+    writeFileSync(join(productModel, 'variations/catalog-layout.md'), `---
 kind: experiment
 of: screen
 assignmentUnit: { entity: shopper }

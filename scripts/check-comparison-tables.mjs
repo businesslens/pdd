@@ -20,14 +20,14 @@ const browser = await chromium.launch()
 const errors = []
 const observeErrors = page => page.on('pageerror', error => errors.push(error.message))
 const settled = async page => {
-  await expect(page.locator('.blr-topology-matrix')).not.toHaveAttribute('data-column-motion', 'true')
+  await expect(page.locator('.report-topology-matrix')).not.toHaveAttribute('data-column-motion', 'true')
 }
 async function closeFilterSheet(page) {
   const toolbar = page.locator('[data-collection-toolbar]')
   await toolbar.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
   // Clearing selections can make the controls fit inline again, which closes
   // the drawer automatically. Otherwise close it through its normal action.
-  if (await toolbar.locator('[data-blr-filter-bar]').getAttribute('data-filters-collapsed') === 'true') {
+  if (await toolbar.locator('[data-report-filter-bar]').getAttribute('data-filters-collapsed') === 'true') {
     await page.getByRole('button', { name: 'Show results', exact: true }).click()
   }
   await expect(page.locator('[data-mobile-filter-controls]')).toHaveCount(0)
@@ -59,18 +59,18 @@ try {
   observeErrors(page)
   for (const section of ['entity', 'capability', 'rule']) {
     await page.goto(`${origin}/?s=${section}&t=matrix`)
-    const badge = page.locator('td:not([inert]) .blr-matrix-badge').first()
+    const badge = page.locator('td:not([inert]) .report-matrix-badge').first()
     await expect(badge).toBeVisible()
     await badge.focus()
     await page.keyboard.press('Enter')
-    const popover = page.locator('.blr-matrix-popover[data-state="open"]')
+    const popover = page.locator('.report-matrix-popover[data-state="open"]')
     const resource = popover.locator('[data-resource-key]').first()
     await resource.focus()
     await page.keyboard.press('Enter')
-    await expect(page.locator('.blr-resource-slideover')).toBeVisible()
-    await expect(page.locator('.blr-matrix-popover')).toHaveCount(0)
+    await expect(page.locator('.report-resource-slideover')).toBeVisible()
+    await expect(page.locator('.report-matrix-popover')).toHaveCount(0)
     await page.keyboard.press('Escape')
-    await expect(page.locator('.blr-resource-slideover')).toHaveCount(0)
+    await expect(page.locator('.report-resource-slideover')).toHaveCount(0)
     await expect(badge).toBeFocused()
   }
   await page.close()
@@ -88,37 +88,37 @@ try {
       await scoped.goto(`${origin}/?s=${section}`)
       const selected = resources[0]
       const toolbar = scoped.locator('[data-collection-toolbar]')
-      const count = scoped.getByRole('heading', { level: 1 }).locator('.blr-meta')
+      const count = scoped.getByRole('heading', { level: 1 }).locator('.report-meta')
       await selectCollectionResource(scoped, label, selected.title)
       await expect(count).toHaveText(`1 / ${resources.length}`)
-      const selection = await toolbar.locator('.blr-chip').allTextContents()
+      const selection = await toolbar.locator('.report-chip').allTextContents()
       for (const drawing of ['matrix', 'graph', 'rows', 'matrix']) {
         await selectCollectionDrawing(scoped, drawing)
         await expect(count).toHaveText(`1 / ${resources.length}`)
-        expect(await toolbar.locator('.blr-chip').allTextContents()).toEqual(selection)
+        expect(await toolbar.locator('.report-chip').allTextContents()).toEqual(selection)
         if (drawing !== 'rows') await expect(scoped).toHaveURL(new RegExp(`[?&]t=${drawing}(?:&|$)`))
         if (drawing === 'matrix') {
-          await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(1)
-          await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band) th [data-resource-key]')).toHaveAttribute('data-resource-key', `${section}:${selected.id}`)
+          await expect(scoped.locator('.report-topology-matrix tbody tr:not(.report-matrix-band)')).toHaveCount(1)
+          await expect(scoped.locator('.report-topology-matrix tbody tr:not(.report-matrix-band) th [data-resource-key]')).toHaveAttribute('data-resource-key', `${section}:${selected.id}`)
         }
       }
       await expect(scoped).toHaveURL(/[?&]t=matrix(?:&|$)/)
       await scoped.reload()
       await expectCollectionDrawing(scoped, 'matrix')
       await expect(count).toHaveText(`1 / ${resources.length}`)
-      await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(1)
-      await toolbar.locator('.blr-chip').click()
+      await expect(scoped.locator('.report-topology-matrix tbody tr:not(.report-matrix-band)')).toHaveCount(1)
+      await toolbar.locator('.report-chip').click()
       await expect(count).toHaveText(String(resources.length))
-      await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(resources.length)
+      await expect(scoped.locator('.report-topology-matrix tbody tr:not(.report-matrix-band)')).toHaveCount(resources.length)
     }
     // A relation selects the same subjects in Rows, Graph and Matrix. Discover
     // a real cell so this works on any report with the named relationships.
     for (const [section, label] of [['entity', 'Changed by'], ['capability', 'Available in'], ['rule', 'Attached to']]) {
       await scoped.goto(`${origin}/?s=${section}&t=matrix`)
-      await expect(scoped.locator('[data-blr-filter-bar]')).toHaveCount(1)
+      await expect(scoped.locator('[data-report-filter-bar]')).toHaveCount(1)
       await expect(scoped.locator('[data-matrix-heading]')).toHaveCount(0)
-      const cell = scoped.locator('td[data-cell]:not([inert])').filter({ has: scoped.locator('.blr-matrix-badge') }).first()
-      await expect(scoped.locator('.blr-topology-matrix')).toBeVisible()
+      const cell = scoped.locator('td[data-cell]:not([inert])').filter({ has: scoped.locator('.report-matrix-badge') }).first()
+      await expect(scoped.locator('.report-topology-matrix')).toBeVisible()
       // The phone's first column can legitimately contain only empty cells.
       const nextColumns = scoped.getByRole('button', { name: 'Next columns', exact: true })
       while (!await cell.count() && await nextColumns.isEnabled()) {
@@ -127,27 +127,27 @@ try {
       }
       const target = (await cell.getAttribute('data-cell')).split('->')[1]
       const targetTitle = await scoped.locator(`thead [data-resource-key="${target}"]`).textContent()
-      const matching = await scoped.locator(`td[data-cell$="->${target}"]`).filter({ has: scoped.locator('.blr-matrix-badge') })
+      const matching = await scoped.locator(`td[data-cell$="->${target}"]`).filter({ has: scoped.locator('.report-matrix-badge') })
         .evaluateAll(cells => cells.map(cell => cell.getAttribute('data-cell').split('->')[0]))
       await selectCollectionResource(scoped, label, targetTitle.trim())
       const toolbar = scoped.locator('[data-collection-toolbar]')
-      const chips = await toolbar.locator('.blr-chip').allTextContents()
+      const chips = await toolbar.locator('.report-chip').allTextContents()
       const heading = await scoped.getByRole('heading', { level: 1 }).textContent()
       for (const drawing of ['rows', 'graph', 'matrix']) {
         await selectCollectionDrawing(scoped, drawing)
         await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
-        expect(await toolbar.locator('.blr-chip').allTextContents()).toEqual(chips)
+        expect(await toolbar.locator('.report-chip').allTextContents()).toEqual(chips)
         if (drawing === 'rows') {
-          const keys = await scoped.locator('.blr-resource-row[data-resource-key]').evaluateAll(rows => [...new Set(rows.map(row => row.dataset.resourceKey))])
+          const keys = await scoped.locator('.report-resource-row[data-resource-key]').evaluateAll(rows => [...new Set(rows.map(row => row.dataset.resourceKey))])
           expect(keys.sort()).toEqual(asRows(matching).sort())
         }
       }
-      expect(await scoped.locator('tbody tr:not(.blr-matrix-band) th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey).sort())).toEqual(matching.sort())
+      expect(await scoped.locator('tbody tr:not(.report-matrix-band) th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey).sort())).toEqual(matching.sort())
       await expect(scoped).toHaveURL(/[?&]t=matrix(?:&|$)/)
       await scoped.reload()
       await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
-      await expect(toolbar.locator('.blr-chip')).toHaveCount(1)
-      await toolbar.locator('.blr-chip').click()
+      await expect(toolbar.locator('.report-chip')).toHaveCount(1)
+      await toolbar.locator('.report-chip').click()
       if (section === 'rule') {
         // A whole type is a positive relation choice, with its own removable chip.
         const type = target.split(':')[0]
@@ -156,8 +156,8 @@ try {
         const typeCount = await scoped.locator('tbody tr').count()
         expect(typeCount).toBeGreaterThanOrEqual(matching.length)
         await selectCollectionDrawing(scoped, 'rows')
-        await expect(toolbar.locator('.blr-chip')).toContainText(`Any ${label}`)
-        await toolbar.locator('.blr-chip').click()
+        await expect(toolbar.locator('.report-chip')).toContainText(`Any ${label}`)
+        await toolbar.locator('.report-chip').click()
       }
       expect(await scoped.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
@@ -176,7 +176,7 @@ try {
       const selected = resources.find(item => item.title === location.title)
       await selectCollectionResource(scoped, 'Available in', selected.title)
       const heading = await scoped.getByRole('heading', { level: 1 }).textContent()
-      const rowKeys = await scoped.locator('.blr-resource-row[data-resource-key]').evaluateAll(rows => [...new Set(rows.map(row => row.dataset.resourceKey))].sort())
+      const rowKeys = await scoped.locator('.report-resource-row[data-resource-key]').evaluateAll(rows => [...new Set(rows.map(row => row.dataset.resourceKey))].sort())
       if (location === availableScreen) expect(rowKeys).toEqual(asRows(selected.capabilityIds.map(id => `capability:${id}`)).sort())
       for (const drawing of ['graph', 'matrix']) {
         await selectCollectionDrawing(scoped, drawing)
@@ -184,17 +184,17 @@ try {
         await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
       }
       // The matrix sets alternatives side by side; Rows draws them as their set.
-      expect(asRows(await scoped.locator('tbody tr:not(.blr-matrix-band) th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey))).sort()).toEqual(rowKeys)
+      expect(asRows(await scoped.locator('tbody tr:not(.report-matrix-band) th [data-resource-key]').evaluateAll(rows => rows.map(row => row.dataset.resourceKey))).sort()).toEqual(rowKeys)
       expect(await scoped.locator('thead [data-resource-key]').evaluateAll(columns => columns.every(column => column.dataset.resourceKey.startsWith('interface:')))).toBe(true)
       await scoped.reload()
       await expect(scoped.getByRole('heading', { level: 1 })).toHaveText(heading)
-      await capabilityToolbar.locator('.blr-chip').click()
+      await capabilityToolbar.locator('.report-chip').click()
       await selectCollectionDrawing(scoped, 'rows')
     }
     for (const type of ['Interface', 'Experience', 'Screen']) {
       await selectCollectionResource(scoped, 'Available in', `Any ${type}`)
-      await expect(capabilityToolbar.locator('.blr-chip')).toContainText(`Any ${type}`)
-      await capabilityToolbar.locator('.blr-chip').click()
+      await expect(capabilityToolbar.locator('.report-chip')).toContainText(`Any ${type}`)
+      await capabilityToolbar.locator('.report-chip').click()
     }
     // An Interface opens the same shared Available in scope.
     const iface = report.model.interfaces[0]
@@ -202,22 +202,22 @@ try {
     await scoped.locator('[data-resource-panel]').getByRole('button', { name: 'Compare delivery', exact: true }).click()
     await expect(scoped).toHaveURL(/[?&]s=capability(?:&|$)/)
     await expect(scoped).toHaveURL(/[?&]t=matrix(?:&|$)/)
-    await expect(scoped.locator('[data-collection-toolbar] .blr-chip')).toContainText(iface.title)
-    expect(await scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)').count()).toBeGreaterThan(0)
-    await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]')).toHaveAttribute('data-resource-key', `interface:${iface.id}`)
+    await expect(scoped.locator('[data-collection-toolbar] .report-chip')).toContainText(iface.title)
+    expect(await scoped.locator('.report-topology-matrix tbody tr:not(.report-matrix-band)').count()).toBeGreaterThan(0)
+    await expect(scoped.locator('.report-topology-matrix thead [data-resource-key]')).toHaveAttribute('data-resource-key', `interface:${iface.id}`)
     for (const drawing of ['rows', 'matrix']) await selectCollectionDrawing(scoped, drawing)
-    await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]')).toHaveAttribute('data-resource-key', `interface:${iface.id}`)
+    await expect(scoped.locator('.report-topology-matrix thead [data-resource-key]')).toHaveAttribute('data-resource-key', `interface:${iface.id}`)
     await selectCollectionResource(scoped, 'Capabilities', report.model.capabilities[0].title)
     const collectionFilters = scoped.locator('[data-collection-toolbar]')
     const inSheet = await collectionFilters.locator('[data-mobile-filters]').isVisible()
     if (inSheet) {
       await collectionFilters.locator('[data-mobile-filters]').click()
       await scoped.getByRole('button', { name: 'Clear all', exact: true }).click()
-      await expect(collectionFilters.locator('.blr-chip')).toHaveCount(0)
+      await expect(collectionFilters.locator('.report-chip')).toHaveCount(0)
       await closeFilterSheet(scoped)
     } else await collectionFilters.getByRole('button', { name: 'Clear every filter', exact: true }).click()
-    await expect(scoped.locator('.blr-topology-matrix tbody tr:not(.blr-matrix-band)')).toHaveCount(report.model.capabilities.length)
-    await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]:not([data-resource-key^="variation:"])')).toHaveCount(report.model.interfaces.length)
+    await expect(scoped.locator('.report-topology-matrix tbody tr:not(.report-matrix-band)')).toHaveCount(report.model.capabilities.length)
+    await expect(scoped.locator('.report-topology-matrix thead [data-resource-key]:not([data-resource-key^="variation:"])')).toHaveCount(report.model.interfaces.length)
     expect(await scoped.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await context.close()
   }
@@ -238,9 +238,9 @@ try {
   observeErrors(largePage)
   await largePage.route('**/_pdd-kit/report.json', route => route.fulfill({ json: large }))
   await largePage.goto(`${origin}/?s=rule&t=matrix`)
-  const matrix = largePage.locator('.blr-topology-matrix')
-  const range = largePage.locator('.blr-matrix-range')
-  const pane = largePage.locator('.blr-topology-reading')
+  const matrix = largePage.locator('.report-topology-matrix')
+  const range = largePage.locator('.report-matrix-range')
+  const pane = largePage.locator('.report-topology-reading')
   await expect(matrix.locator('tbody tr')).toHaveCount(count)
   async function checkWindow() {
     await settled(largePage)
@@ -261,7 +261,7 @@ try {
   await largePage.evaluate(() => {
     window.comparisonBodyUpdates = 0
     window.comparisonObserver = new MutationObserver(() => { window.comparisonBodyUpdates++ })
-    window.comparisonObserver.observe(document.querySelector('.blr-topology-matrix tbody'), { attributes: true, childList: true, subtree: true })
+    window.comparisonObserver.observe(document.querySelector('.report-topology-matrix tbody'), { attributes: true, childList: true, subtree: true })
   })
   await largePage.getByRole('button', { name: 'Next columns', exact: true }).click()
   await expect(range).toContainText(`Columns 2–${initial.end + 1}`)
@@ -281,8 +281,8 @@ try {
   }
   await settled(largePage)
   expect(await matrix.evaluate(element => Math.abs(
-    parseFloat(getComputedStyle(element).getPropertyValue('--blr-matrix-offset'))
-      - parseFloat(element.style.getPropertyValue('--blr-matrix-offset'))
+    parseFloat(getComputedStyle(element).getPropertyValue('--report-matrix-offset'))
+      - parseFloat(element.style.getPropertyValue('--report-matrix-offset'))
   ))).toBeLessThan(0.01)
   const subjectRight = await matrix.locator('tbody th').first().evaluate(element => element.getBoundingClientRect().right)
   expect(await matrix.locator('tbody tr').first().locator('td[data-cell]:not([inert])').first()

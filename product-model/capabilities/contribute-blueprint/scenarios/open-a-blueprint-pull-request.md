@@ -46,16 +46,17 @@ steps:
 ## Trigger
 
 The Developer has a model complete enough that someone else could build a
-recognizable product from it, and wants it in the catalog.
+recognizable product from it, and wants it published as a Blueprint.
 
 ## Outcome
 
 A public pull request exists containing only the portable expansion of the
-model. The Developer's own repository is unchanged, and the Blueprint is
-proposed, not published.
+model under `blueprints/`. The Developer's own repository is unchanged, and the
+Blueprint is proposed, not published: merging the pull request publishes it.
 
 ## Edge cases
 
 - Running it again revises the same proposal: the branch is replaced from current upstream and an already-open pull request is updated rather than duplicated.
+- A Developer who can push to the Blueprint repository directly gets a branch there rather than a fork.
 - A fork that cannot be brought up to date stops the run, rather than proposing unrelated changes alongside the Blueprint.
 - Without an interactive terminal, the confirmation must be given explicitly or the run refuses to open anything.

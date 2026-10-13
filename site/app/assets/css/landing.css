@@ -19,7 +19,7 @@
   color: transparent;
 }
 
-/* The Blueprints title's “already works.” — the one shimmering phrase left. */
+/* The Blueprints title's “yours to change.” — the one shimmering phrase left. */
 .landing-shimmer-text {
   animation: landing-shimmer 10s ease-in-out infinite alternate;
   background-image: var(--brand-shimmer);

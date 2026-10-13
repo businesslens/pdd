@@ -12,12 +12,12 @@ import type { MaybeRefOrGetter } from 'vue'
  */
 
 const DEFAULT_IMAGE = {
-  src: '/product-model-open-graph.png',
-  alt: 'pdd-kit — "AI agents need a Product Model", beside an illustrated map with the product at its centre and the parts of its model ringed around it.'
+  src: '/pdd-kit-social-card.png',
+  alt: 'pdd-kit — "Product-Driven Development for coding agents", beside an illustrated map with the product at its centre and the parts of its model ringed around it.'
 }
 
 const DEFAULT_TITLE = 'pdd-kit'
-const DEFAULT_DESCRIPTION = 'pdd-kit gives every software product a living, machine-readable Product Model shared by engineers, product teams, and coding agents.'
+const DEFAULT_DESCRIPTION = 'pdd-kit gives your software product a living, machine-readable Product Model that you and your coding agent build from and check against.'
 
 interface SiteSeoImage {
   /** A site path or an absolute URL. Social crawlers receive it absolute. */

@@ -2,6 +2,18 @@
   "name": "pdd-toolkit",
   "version": "0.35.0",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in product-model/, verified against implementation.",
+  "keywords": [
+    "product-driven-development",
+    "pdd",
+    "product-model",
+    "coding-agents",
+    "ai-agents",
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "specification",
+    "cli"
+  ],
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -62,7 +74,6 @@
     "dev": "node scripts/dev.mjs",
     "dev:unlink": "node scripts/dev.mjs --unlink",
     "view:fixture": "node scripts/view-fixture.mjs",
-    "demo:record": "node scripts/record-demo.mjs",
     "typecheck": "tsc --noEmit",
     "typecheck:viewer": "pnpm --filter @pdd-kit/local-report-viewer typecheck",
     "test": "vitest run",
