@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
+
 ## [0.36.0] - 2026-10-13
 
 ### Changed
@@ -36,8 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docs:** pdd-kit.dev's home page and link previews state the problem in the README's words, and Blueprint pages get their own link preview with title, summary and cover. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
 
 - **Docs:** The privacy page says pdd-kit.dev counts page views with Cloudflare Web Analytics, without cookies, and lists when the CLI contacts npm and GitHub. The site no longer loads icons from a third-party service. ([#129](https://github.com/itai-gendler/pdd-kit/pull/129)) ([4246cef](https://github.com/itai-gendler/pdd-kit/commit/4246cef5877c9e3e6241e3e64d2cf01aef9ff9b6))
-
-- **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
 
 ### Fixed
 
