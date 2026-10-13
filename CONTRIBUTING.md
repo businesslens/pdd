@@ -50,12 +50,3 @@ npm runner.
    `pnpm remove` and commit the updated `pnpm-lock.yaml`; CI installs with
    `--frozen-lockfile` and fails when it drifts.
 6. Do not add secrets, customer data, or private repository URLs.
-
-## Demo GIF
-
-`.github/demo.gif` tours this repository's own Product Model in the local
-report, opened with `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit` as the README
-invites readers to. That command reads the default branch on GitHub, so
-re-record after a model or report change has merged:
-`pnpm build && pnpm demo:record`. It needs Git access to GitHub,
-Playwright's Chromium and `ffmpeg`, and fails if the GIF exceeds 5 MB.
