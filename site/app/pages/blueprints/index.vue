@@ -5,7 +5,7 @@ import CatalogLayout from '~/components/landing/blueprints/CatalogLayout.vue'
 
 useSiteSeo({
   title: 'Blueprints · pdd-kit',
-  description: 'Reviewed Product Models of common products. Pull one into your repository with one command and hand it to your coding agent.'
+  description: 'Community-contributed Product Models of common products. Pull one into your repository with one command and hand it to your coding agent.'
 })
 
 useHead({

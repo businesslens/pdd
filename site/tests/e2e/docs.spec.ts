@@ -12,7 +12,7 @@ test('renders the docs with a grouped sidebar and TOC', async ({ page }) => {
 
   await expect(page.locator('header').getByRole('button', { name: 'Search' })).toBeVisible()
   await expect(page.locator('aside').getByRole('button', { name: 'Search' })).toHaveCount(0)
-  await expect(page.getByRole('heading', { level: 1, name: 'pdd-kit: Product-Driven Development for coding agents' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Product-Driven Development for coding agents' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Introduction' }).first()).toBeVisible()
 
   await page.locator('aside a[href="/docs/cli-lint"]').click()
@@ -90,7 +90,7 @@ test('the sidebar keeps its scroll position across docs pages', async ({ page })
 
   await aside.locator(`a[href="${href}"]`).click()
   await expect(page).toHaveURL(new RegExp(`${href}$`))
-  await expect(page.locator('main h1')).not.toHaveText('pdd-kit: Product-Driven Development for coding agents')
+  await expect(page.locator('main h1')).not.toHaveText('Product-Driven Development for coding agents')
   await expect.poll(() => aside.evaluate(el => el.scrollTop)).toBe(offset)
 })
 

@@ -306,29 +306,13 @@ progress.
 
 ## Trust and help
 
-What it costs, what leaves your machine, and where to get help.
+Whether it is open source, and where to get help.
 
-### What does it cost?
+### Is it fully open source?
 
-Nothing. pdd-kit is an open-source project: the format, the CLI, the skills, and the Blueprints
-are all MIT licensed, and everything runs in your own repository and coding-agent harness.
-
-### Does my code leave my machine?
-
-The pdd-kit CLI does not upload your code or Product Model. Linting, export, and expanding a
-pulled model run locally. The map, ideate, and verify skills run inside the coding-agent harness you
-chose, so that harness’s data handling and permissions still apply.
-
-The CLI reaches the network only for explicit operations: listing and pulling download Blueprints
-from a GitHub Release, contributing uses your own authenticated GitHub CLI to open a public pull
-request, and running the package through npx contacts the registry. Everything the CLI does is
-auditable in the [public source](https://github.com/itai-gendler/pdd-kit). What the site keeps is set out in the
-[privacy policy](https://pdd-kit.dev/privacy).
-
-### Do I need an account?
-
-No. Listing and pulling Blueprints are anonymous — no account, sign-in, or credential
-is involved at any point, and the site has no accounts at all.
+Yes. The format, the CLI, the skills, and the Blueprints are all MIT licensed and run in your own
+repository and coding-agent harness, with no account, and the CLI never uploads your code or
+Product Model. There is no plan to build a commercial product on top of it.
 
 ### How do I contribute a Blueprint?
 

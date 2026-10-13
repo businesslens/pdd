@@ -276,9 +276,9 @@ test.describe('the marketing arrangements', () => {
     const prdReferencesLink = page.getByRole('link', { name: 'See how references work' })
     await expect(prdReferencesLink).toBeHidden()
 
-    await page.getByRole('button', { name: 'Do I need an account?' }).click()
+    await page.getByRole('button', { name: 'Is it fully open source?' }).click()
     await expect(
-      page.getByText('Listing and pulling Blueprints are anonymous', { exact: false })
+      page.getByText('There is no plan to build a commercial product on top of it.', { exact: false })
     ).toBeVisible()
 
     await page.getByRole('button', { name: 'My product spans multiple repositories — is that supported?' }).click()

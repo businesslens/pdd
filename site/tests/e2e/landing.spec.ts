@@ -244,7 +244,7 @@ test('the FAQ has no automatically detectable WCAG A/AA violations', async ({ pa
   // Answers are collapsed, so the scan above only saw the closed page. The
   // desktop suite opens one and scans again — an expanded panel is a tree this
   // page never otherwise renders.
-  await expect(page.getByRole('button', { name: 'Do I need an account?' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Is it fully open source?' })).toBeVisible()
   for (const name of ['Adopting it', 'What it is and isn\'t', 'Getting started', 'Trust and help']) {
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
   }

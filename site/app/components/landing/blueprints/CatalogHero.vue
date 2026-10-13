@@ -44,11 +44,10 @@ const { enterMotion } = useLandingMotion()
     <Motion
       as="p"
       v-bind="enterMotion(0.35)"
-      class="mt-4 max-w-xl text-lg leading-relaxed text-default"
+      class="mt-4 max-w-2xl text-lg leading-relaxed text-default"
     >
-      Each Blueprint is a reviewed Product Model of a common product, open to
-      contributions. Pull one into your repository with one command and change
-      it freely.
+      Community-contributed Product Models of common products. Pull one into
+      your repository with one command and change it freely.
     </Motion>
   </header>
 </template>
