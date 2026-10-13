@@ -146,6 +146,20 @@ const { scrollMotion, staggerMotion } = useLandingMotion()
         </Motion>
       </ul>
     </div>
+
+    <!-- The rows take the argument apart claim by claim; the drawing puts it
+      back together as one pipeline, today and with a Product Model. -->
+    <div class="px-6 pb-6 sm:px-8 sm:pb-8">
+      <img
+        :src="comparison.image"
+        :alt="comparison.imageAlt"
+        class="w-full rounded-xl border border-default"
+        width="2000"
+        height="1117"
+        loading="lazy"
+        decoding="async"
+      >
+    </div>
   </Motion>
 </template>
 

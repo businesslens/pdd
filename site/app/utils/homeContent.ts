@@ -518,6 +518,10 @@ export interface HomeComparison {
   description: string
   beforeLabel: string
   afterLabel: string
+  /** The two pipelines drawn whole, today and with PDD, below the rows that
+   *  take them apart. Lives in `/brand/before-and-after/`. */
+  image: string
+  imageAlt: string
   rows: ComparisonRow[]
   /** See `HomeSection.more`. */
   more: HomeLink
@@ -870,6 +874,8 @@ const comparison: HomeComparison = {
    */
   beforeLabel: 'Without a product model',
   afterLabel: 'With a product model',
+  image: '/brand/before-and-after/today-and-pdd.webp',
+  imageAlt: 'Today, every stage of plan, code, review, deploy and operate reconstructs intent from tickets, PRDs, docs, tests, code, chats and people. With Product-Driven Development, those sources feed one defined, versioned, agreed product model, and every stage reads from it, with human approval at plan and review.',
   rows: [
     {
       icon: 'i-lucide-boxes',

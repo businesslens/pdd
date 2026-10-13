@@ -74,19 +74,19 @@ is made of:
 Bring knowledge from docs, designs, code, and people into one product model.
 Fill gaps, clarify uncertainty, and make every source leaner and more focused.
 
-<p align="center">
-  <img src="./.github/readme/product-knowledge.webp" alt="An engraved wheel with the product model at its center, connecting user-facing documentation, internal documentation, design and architecture, code and tests, and tickets, chats, and people." width="420">
-</p>
+<img src="./.github/readme/product-knowledge.webp" alt="An engraved wheel with the product model at its center, connecting user-facing documentation, internal documentation, design and architecture, code and tests, and tickets, chats, and people." width="360" align="left">
 
 *Each information source’s purpose, supported by a shared product model*
 
 | Information source | Purpose |
 | --- | --- |
 | **User docs** | Teaches people to use the product |
-| **Internal docs** | Records architecture, design decisions, and onboarding |
+| **Internal docs** | Records architecture, design<br>decisions, and onboarding |
 | **Design & architecture** | Describes how it should look and work |
 | **Code & tests** | Implements and verifies how it is built |
-| **Tickets, chats & people** | Carry context, requests, and undocumented knowledge |
+| **Tickets, chats & people** | Carry context, requests, and<br>undocumented knowledge |
+
+<br clear="left">
 
 More in the FAQ: [Why a Product Model](docs/faq.md#why-a-product-model).
 
@@ -100,6 +100,10 @@ They fill the gaps by guessing, and the guesses ship.
 3. **Done means it matches the product.** Verify checks the code against the approved model.
 4. **Drift is easy to spot.** The model stays a clear reference as behavior changes.
 5. **Decisions travel with the code.** Model and code changes are reviewed in one pull request.
+
+<p align="center">
+  <img src="./.github/readme/today-and-pdd.webp" alt="Today, every stage of plan, code, review, deploy and operate reconstructs intent from tickets, PRDs, docs, tests, code, chats and people. With Product-Driven Development, those sources feed one defined, versioned, agreed product model, and every stage reads from it, with human approval at plan and review." width="800">
+</p>
 
 ## Example: the Product Model of a kanban board
 
