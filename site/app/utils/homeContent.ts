@@ -526,8 +526,8 @@ export interface HomeComparison {
   description: string
   beforeLabel: string
   afterLabel: string
-  /** The two pipelines drawn whole, today and with PDD, above the rows that
-   *  unpack them. Lives in `/brand/before-and-after/`. */
+  /** The two pipelines drawn whole, today and with PDD, below the rows that
+   *  take them apart. Lives in `/brand/before-and-after/`. */
   image: string
   imageAlt: string
   rows: ComparisonRow[]
