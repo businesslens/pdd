@@ -1,26 +1,17 @@
 /**
- * Every word on the home page, in one place.
- *
- * The five arrangements in `components/landing/home/` all render this object, so
- * they cannot drift into saying different things — which is the whole basis of
- * the comparison they exist to support. Change the copy here and all five change
- * together.
- *
- * The page is deliberately short: a hero, then two sections that mirror each
- * other. **Today** — where the product is defined now, and what that costs.
- * **With a Product Model** — what the artifact contains, and what follows from
- * having it. Both read left to right, state then result, which is the one shape
- * the whole body commits to.
+ * Every word on the home page, in one place. The components in
+ * `components/landing/home/` render this object and never reword it, so the
+ * copy stays reviewable on its own. The section order is set in
+ * `docs/brand.md` and drawn by `HomeLayout`.
  *
  * The three ways in are hero buttons rather than a section, and the PDD/SDD
  * comparison lives in `/faq`, `content/blog/pdd-and-spec-driven-development.md`
  * rather than here — a page this size cannot afford to
  * argue against a neighbouring category. See `docs/brand.md`.
  *
- * The two sections are the distilled form of
- * `content/blog/your-agent-is-guessing.md`, whose title is this hero's h1. The
- * two must agree: the post is where the argument is made at length, this is
- * where it is made quickly.
+ * The body is the distilled form of `content/blog/your-agent-is-guessing.md`.
+ * The two must agree: the post is where the argument is made at length, this
+ * is where it is made quickly.
  *
  * **Documentation links must resolve to a page in the repository's `docs/`.**
  * The docs collection is built from the same checkout as this page, so a link
@@ -386,11 +377,12 @@ export interface HomeLoop {
   /**
    * The two lines stacked inside the ring, set identically.
    *
-   * Together they name the practice and whose implementation of it this is — the
-   * wheel is a diagram of PDD, and without the centre it is a diagram of nothing
-   * in particular. Not a wordmark: ADR-0002 rules out giving PDD its own mark,
-   * and equal weight with the name above it is what keeps this a two-line label
-   * rather than one.
+   * Together they name what every phase turns on: Ideate writes the Product
+   * Model, your agent implements from it, and Verify checks the code against
+   * it. The centre used to read *pdd-kit / PDD*, which set in uppercase mono
+   * repeated itself (PDD-KIT, PDD) and named the toolkit rather than the
+   * artifact the loop is about. Two short words keep the plate as narrow as
+   * the phone's compass needs.
    *
    * There is no eyebrow over the figure any more. *The working loop* named a
    * wheel that a heading two lines above already called a loop, and a figure
@@ -428,14 +420,14 @@ const loop: HomeLoop = {
    */
   title: 'One loop, run on every change.',
   /**
-   * The ownership boundary, said in words. The wheel is signed pdd-kit/PDD
-   * all the way round, so the dashed chip alone left a reader free to assume
-   * the middle phase came with a tool of ours as well. The reader's own agent implements when asked and verify checks each part, so
+   * The ownership boundary, said in words. Two of the three runners are
+   * pdd-kit skills, so the dashed chip alone left a reader free to assume the
+   * middle phase came with a tool of ours as well. The reader's own agent implements when asked and verify checks each part, so
    * the sentence names who writes the code rather than a workflow.
    */
   description: 'Ideate and verify with pdd-kit. Your own agent implements, your way.',
-  centerLabel: 'pdd-kit',
-  centerMark: 'PDD',
+  centerLabel: 'Product',
+  centerMark: 'Model',
   /**
    * Deliberately not the section description reworded. That sentence says who
    * runs each phase; this one says which station the next change starts at,
@@ -572,9 +564,12 @@ const hero = {
   /**
    * The problem first, then the answer and its three most important properties.
    * It has to state the value before the reader knows what a Product Model is.
+   * The README opens on the same two sentences, after the one *Where is your
+   * product model today?* already says, so the hero does not repeat that
+   * section's line.
    */
   description:
-    'Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.',
+    'Every coding agent reconstructs your product\'s definition from scratch, and differently each time. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.',
   /**
    * The three ways in, as buttons rather than a section. Labels are verbs because
    * they are actions; two of the three continue in the documentation, which the

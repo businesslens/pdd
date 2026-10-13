@@ -5,17 +5,17 @@
     "url": "https://github.com/itai-gendler"
   },
   "metadata": {
-    "description": "pdd-kit PDD: the git-tracked Product Model for coding agents."
+    "description": "Product-Driven Development for coding agents: map an existing product into a git-tracked Product Model, change what it should do, implement it, and verify the code against it."
   },
   "plugins": [
     {
       "name": "pdd-kit",
       "source": "./",
-      "description": "Product-Driven Development skills to map established behavior, decide intended behavior, and verify the product-model/ Product Model against code.",
+      "description": "Product-Driven Development skills to map established behavior into the product-model/ Product Model, change intended behavior, implement it in phases, and verify the code against it.",
       "category": "engineering",
       "keywords": [
         "pdd",
-        "product-driven-design",
+        "product-driven-development",
         "product-model",
         "repository-analysis"
       ]

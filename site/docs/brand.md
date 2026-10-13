@@ -147,9 +147,10 @@ See [ADR-0002](./adr/0002-the-home-page.md) for the hero, doors and collections.
   use current names, and the retired product name never appears.
 - **404** is `app/error.vue` inside the site shell, generated as `404.html`, the
   same page for every unmatched path.
-- **Privacy** leads with the reader's question and says plainly that nothing
-  tracks them. The site sets no cookies; it lists what the browser's local and
-  session storage keep.
+- **Privacy** leads with the reader's question and says plainly what is
+  collected: hosting logs and Cloudflare Web Analytics' cookie-free page views.
+  The site sets no cookies; it lists what the browser's local and session
+  storage keep.
 - **Nuxt UI v4 first.** Reach for a Nuxt UI component before hand-rolling one.
 - **Accessibility.** Every Playwright page suite runs an axe WCAG 2.0/2.1 A/AA
   scan; new pages must be violation-free.

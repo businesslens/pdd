@@ -24,8 +24,8 @@ product-model/
 ├── product.md                    # or product/product.md beside logo.svg (and an optional cover.webp)
 ├── interfaces/<id>/
 │   ├── interface.md
-│   ├── screens/<id>.md                       # when no Experience divides it
-│   ├── screens/<id>/screen.md               # expanded; may hold screens/ of its own
+│   ├── screens/<id>.md                       # undivided, or shared by every Experience
+│   ├── screens/<id>/screen.md               # expanded: holds assets, never screens/
 │   └── experiences/<id>/
 │       ├── experience.md
 │       └── screens/<id>.md
@@ -156,10 +156,12 @@ Lead and section-body fragments do not contain another H1 or H2.
 - `config.yaml`: exactly `schema: 11` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, `languages`, H1, lead description, and optional
-  `## Intent`. `summary` is one line of at most 400 characters, `category` is
-  lowercase kebab-case, `authors` are `{ name, url? }` records, and `license`
-  is an SPDX identifier. Report hosts read those four as portable Product
-  identity and attribution, so a model intended for a Blueprint authors them.
+  `## Intent`. `id` is lowercase kebab-case of at most 64 characters.
+  `summary` is one line of at most 400 characters, `category` is lowercase
+  kebab-case, `authors` are `{ name, url? }` records, and `license` is an SPDX
+  identifier. Report hosts read them as portable Product identity and
+  attribution. A public Blueprint requires `category`, at least one tag, at
+  least one author, `license` and `product/logo.svg`; `summary` stays optional.
   `limitations` are deliberate constraints of the Product, written as product
   facts ("Comments are never edited"), including what it leaves to other
   systems ("People sign in with their existing account"); a sentence about the
@@ -187,7 +189,8 @@ Lead and section-body fragments do not contain another H1 or H2.
   optional `languages`, a subset of the Product's (listing any while the
   Product declares none is an error); H1, lead description, and optional
   `## Intent`. `## Capability boundary` is an error: `availability` on
-  Capabilities already says what an Interface offers. Nothing about
+  Capabilities already says what an Interface offers. A model with no
+  Interface is an error. Nothing about
   navigation is authored — menus, what they hold, sitemaps, back links: Steps
   say movement and entry points say arrival. An outbound
   connection the Product opens is not an Interface: model it in the calling
@@ -400,8 +403,9 @@ Lead and section-body fragments do not contain another H1 or H2.
   `entities`, Interface-keyed `entryPoints`, H1, lead and optional `## Intent`;
   no authored `capabilities` or `availability`. Capabilities derive from Steps
   placed exactly here (the owner for a Capability Scenario, the Step's
-  `capability` for a Journey Scenario); at least one is required. Parent and
-  Each Entity entry is a bare id only for an Entity
+  `capability` for a Journey Scenario); at least one is required, and each
+  must be available in the Screen's Interface or Experience (every Experience
+  for a shared Screen). Each Entity entry is a bare id only for an Entity
   without named facts, or `{ entity, shows?, collects? }` with at least one
   non-empty list of unique exact fact names. `shows` is disclosure; `collects`
   is Actor input, not read permission. Both may name a prefilled editable value.
@@ -457,13 +461,15 @@ Lead and section-body fragments do not contain another H1 or H2.
   with `permits` targets Entities only. Every grant names a who — one of
   `actors` (Entities that act), `related` (a path of `{ verb, entity }`
   segments from the Rule's one Entity target, walking relations and their
-  inverses, ending on an Entity that acts; a Rule using it, a defaulted `fact`
+  inverses, ending on an Entity that acts; never `[]`, which is `self: true`;
+  a Rule using it, a defaulted `fact`
   or a `state` condition has exactly one Entity target, so split a Rule that
   needs more), `self: true` (the instance itself), `unattended: true` (the
   Product's own schedule), `configuredBy` (an Entity holding customer
   configuration) — plus optional `when`, a list of AND-ed conditions, each
   `{ fact, <operator>: value }` with one of
-  `over|under|at-least|at-most|is|is-not|present|absent`, optionally `entity`
+  `over|under|at-least|at-most|is|is-not|present|absent` (`present` and
+  `absent` take only `true`), optionally `entity`
   to read another Entity's fact (always one instance of it, resolved as
   described with Actors above), or `{ state: X }` for the instance's current
   state (valid on every target but `creates`, needed because reads and
@@ -512,7 +518,8 @@ Lead and section-body fragments do not contain another H1 or H2.
 - Journey Scenario: taxonomy `kind`, `result: achieved|not-achieved`, named
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`
-  effect. An achieved Scenario traverses at least two distinct Capabilities.
+  effect. Every Journey Scenario, `not-achieved` included, has a Step naming a
+  Capability; an achieved one traverses at least two distinct Capabilities.
 - `coverage.md`: frontmatter with exactly `scope`, `method`, `covered`,
   `exclusions`, `unmapped` and `limitations`, and a body of only `# Coverage`.
   There is no status. **Coverage records which of the repository's code the
@@ -588,10 +595,11 @@ makes for it; reading the log is an ordinary read.
 Each entry is `{ entity, as?, effect, from?, to?, facts?, with? }`: `effect` is
 `creates|changes|removes|reads`, defaulting to `changes`; `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither. Every
-state resolves. `facts` is required on reads, changes and creation: the
-exhaustive unique list of named Product facts affected, including defaults on
-creation, never inferred from form fields or padded with incidental
-implementation data; `[]` names no facts, never unspecified. Removal has no
+state resolves; creating or removing an Entity with `## States` requires its
+`to` or `from`, and an Entity without States takes neither. `facts` is required
+on reads, changes and creation: the exhaustive unique list of named Product
+facts affected, including defaults on creation, never inferred from form fields
+or padded with incidental implementation data; `[]` names no facts, never unspecified. Removal has no
 `facts`. A creation or removal that happens because another of the same Step
 and effect does — a card's comments going with the card, a new board's first
 membership (its creator's, as Admin) going with the board, a new page's first
@@ -601,10 +609,13 @@ relation to the dependent's (itself, for two of the same Entity), so `comment`
 goes `with: card`, never the reverse. Put a thing created only because another
 is in that creation's Step. The creation or removal it goes with is what needs
 permission, so no grant is written for the dependent; two creations or two
-removals where one holds the other with no `with` are a warning, and each entry's `as`-or-`entity` reference is unique
-in its Step. An Actor read on a Screen must occur in that Screen's `shows`; Product
-and condition Steps may consult undisplayed facts. A Step lists every thing it
-moves, one entry per `(entity, as)` pair; `as` is a scenario-local alias for two
+removals where one holds the other with no `with` are a warning, a `with` chain
+that loops back to where it started is an error, and each entry's
+`as`-or-`entity` reference is unique in its Step. An `actor` Step reading facts
+on a Screen must find each in that Screen's `shows`, and a presence-only read
+(`facts: []`) needs the Entity in the Screen's `entities` unless that Entity
+acts; Product and condition Steps may consult undisplayed facts. A Step lists
+every thing it moves, one entry per `(entity, as)` pair; `as` is a scenario-local alias for two
 instances of one Entity, and once used, used everywhere in the Scenario. Where
 an earlier Step left a pair in a state, a later Step's `from` for it must
 match. `reads` is a bare mention: no state, never a change, never enough to
@@ -613,7 +624,11 @@ performs them. After drafting, re-read every Step's `text` against the Entity
 list: a Step whose text names an Entity title it does not declare is an error,
 exempting its own `actor` and the phrase "The Product". A Step performing an
 operation a Business Rule governs must have an actor with a possible grant,
-and a Step performing one a Rule closes with `permits: []` is an error.
+and a Step performing one a Rule closes with `permits: []` is an error; an
+unattended Step needs an `unattended` grant. A Screen presenting what a read
+permission Rule governs (collected inputs aside) needs an Actor of its
+Interface or Experience with a possible grant, and presenting what a Rule
+closes with `permits: []` is an error.
 
 A Capability Scenario in full. One route still declares `routes`; Steps carry
 `text`, `kind` and `entities`, an `actor` Step names its Actor, and each Step
@@ -793,6 +808,7 @@ consecutive placed Steps is a Context place transition.
 Scenario Actors, Entities, availability places, Screen participation,
 transitions and backlinks derive from Steps; Screens never author Scenario ids.
 Every Actor must be supported by at least one selected Context place, every
+Step's `actor` by each Context place that Step names, every
 derived availability place must support a Scenario Actor, and a
 Capability-bearing Context place must be inside that Capability's
 availability. A Capability need not have a Screen. Every Journey route begins

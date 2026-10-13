@@ -25,20 +25,30 @@ import { FOLDER_SCHEMA, loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
 import { UsageError } from '../core/usage-error.js'
 import { validateProductCover, validateProductLogo } from '../logo.js'
+import { cliCommand } from '../core/invocation.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
     throw new UsageError(
-      '`open` accepts local Product Report files. Use `pdd-kit blueprint pull <blueprint>` for a published Blueprint.'
+      `\`blueprint open\` accepts local Product Report files. Use \`${cliCommand('blueprint pull <blueprint>')}\` for a published Blueprint.`
     )
   }
   const file = isAbsolute(source) ? source : resolve(process.cwd(), source)
+  if (!existsSync(file) && !isSymbolicLink(file)) throw new Error(`No report file at ${file}.`)
   const stat = lstatSync(file)
   if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('The report source must be a regular file, not a symbolic link.')
   if (stat.size > MAX_REPORT_BYTES) throw new Error('The report exceeds the 8 MiB safety limit.')
   return JSON.parse(readFileSync(file, 'utf8'))
+}
+
+function isSymbolicLink(file: string): boolean {
+  try {
+    return lstatSync(file).isSymbolicLink()
+  } catch {
+    return false
+  }
 }
 
 /** Resources with no frontmatter fields get no frontmatter block, not `{}`. */

@@ -17,7 +17,7 @@ const DEFAULT_IMAGE = {
 }
 
 const DEFAULT_TITLE = 'pdd-kit'
-const DEFAULT_DESCRIPTION = 'pdd-kit gives your software product a living, machine-readable Product Model that you and your coding agent build from and check against.'
+const DEFAULT_DESCRIPTION = 'Product-Driven Development for coding agents. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.'
 
 interface SiteSeoImage {
   /** A site path or an absolute URL. Social crawlers receive it absolute. */

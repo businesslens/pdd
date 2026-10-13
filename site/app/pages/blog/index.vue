@@ -89,8 +89,8 @@ const split = computed(() => splitFeatured((posts.value ?? []) as BlogPostSummar
 
     <UPageCTA
       variant="naked"
-      title="Help turn an idea into a standard."
-      description="Star the repository to follow the framework, or build a product model and tell us where the emerging language needs to grow."
+      title="Try it on your own product."
+      description="Star the repository to follow the project, or map your own product and open an issue wherever the model falls short."
       :links="[
         { label: 'Star on GitHub', to: 'https://github.com/itai-gendler/pdd-kit', external: true, target: '_blank', icon: 'i-simple-icons-github', color: 'neutral', variant: 'outline', size: 'lg' },
         { label: 'Read the docs', to: '/docs', trailingIcon: 'i-lucide-arrow-right', size: 'lg' }

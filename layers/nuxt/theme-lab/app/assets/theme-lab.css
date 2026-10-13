@@ -1,7 +1,7 @@
 /*
   Shared pdd-kit presentation variants, still under evaluation.
 
-  The stable palette, type, and identity come from pdd-kit/nuxt/theme.
+  The stable palette, type, and identity come from pdd-toolkit/nuxt/theme.
   This optional lab chooses only the page background. The light and dark treatments are
   selected independently via `<html data-bg-light="…" data-bg-dark="…">`,
   both restored from local storage before the client-only viewer's first

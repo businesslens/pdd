@@ -152,7 +152,7 @@ function manifest() {
   return `${JSON.stringify({
     name: 'pdd-kit',
     short_name: 'pdd-kit',
-    description: 'Living, machine-readable Product Models for developers and their coding agents.',
+    description: 'Product-Driven Development for coding agents: a git-tracked, reviewable, verifiable Product Model.',
     start_url: '/',
     display: 'standalone',
     background_color: PAGE,

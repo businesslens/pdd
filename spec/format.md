@@ -749,6 +749,7 @@ scenarioKinds:
 
 An Interface is a supported way for Actors to interact with the Product.
 Product behavior can be independently required and verified for each Interface.
+Every model has at least one: a model with no Interface is a `lint` error.
 A customer web application, mobile application, operator CLI, partner API, and
 inbound webhook endpoint are Interfaces. Frameworks, internal adapters, and
 private component APIs are not.
@@ -1729,6 +1730,9 @@ when:
 | `present` | the fact has a value |
 | `absent` | it does not |
 
+`present` and `absent` take only `true` (`{ fact: Coupon code, present: true }`);
+any other value is a `lint` error.
+
 **The operator implies the comparison; the fact declares no type.** `at-least`
 and `at-most` exist because the off-by-one argument holds only for integers and
 facts are untyped: `over: 99.99` is the wrong rule for money and for time.
@@ -2037,10 +2041,11 @@ optional. Consumers derive Domains and Interface/Experience contexts from
 Journey Scenario Capability-bearing steps. A Journey has no `entryPoints`; concrete Product
 routes remain on Interfaces, Experiences, and Screens.
 
-A consumer that presents a Journey entry route starts with the first
-Capability-bearing step of each achieved Journey Scenario route, then resolves
-that exact Interface or Experience entry point. This is derived navigation, not
-authored Journey data.
+A consumer that presents a Journey entry route starts with the first placed
+`actor` Step of each achieved Journey Scenario, then resolves the entry points
+of that Step's Experience, or of its Interface when the place is undivided or
+the Experience declares none. This is derived navigation, not authored Journey
+data.
 
 Consumers derive the Journey's primary Capability set from achieved Scenarios
 and mark Capabilities observed only in not-achieved Scenarios as failure-only.

@@ -14,6 +14,7 @@ import { UsageError } from '../core/usage-error.js'
 import { viewerPreferencesPath } from '../core/viewer-preferences.js'
 import { existsSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import { cliCommand } from '../core/invocation.js'
 
 export interface ViewOptions {
   port?: number
@@ -55,7 +56,7 @@ function requestedRef(options: ViewOptions, embedded: GithubRef | undefined): Gi
 function resolveSource(cwd: string, options: ViewOptions): ViewSource {
   if (options.repository === undefined) {
     if (options.branch !== undefined || options.pr !== undefined) {
-      throw new UsageError('--branch and --pr apply to a GitHub repository. Pass one: pdd-kit view owner/repo --pr 12')
+      throw new UsageError(`--branch and --pr apply to a GitHub repository. Pass one: ${cliCommand('view owner/repo --pr 12')}`)
     }
     // Only a missing model is worth waiting for; a directory that does not
     // exist never gains one.
@@ -143,7 +144,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     } else if (!viewer.status().ready) {
       console.log('The Product Model does not build yet; the report lists why and appears on the first save that fixes it.')
     } else if (viewer.status().state === 'degraded') {
-      console.log('The Product Model has lint errors; the report shows them beside the model. Run pdd-kit lint for the full list.')
+      console.log(`The Product Model has lint errors; the report shows them beside the model. Run ${cliCommand('lint')} for the full list.`)
     }
     console.log('Press Ctrl+C to stop.')
     if (options.open) openBrowser(viewer.url)

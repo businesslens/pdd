@@ -66,7 +66,7 @@ is made of:
 - **[Domains](https://pdd-kit.dev/docs/domains):** the subject areas the product is split into (Ordering, Catalog, Billing).
 - **[Capabilities](https://pdd-kit.dev/docs/capabilities):** what the product lets someone do (Check out, Cancel order, Refund).
 - **[Journeys](https://pdd-kit.dev/docs/journeys):** one goal, carried across several capabilities (Browse and buy, Sign up, Reorder).
-- **[Business rules](https://pdd-kit.dev/docs/business-rules):** what must always hold, and who may do what (Max 3 per order, Only managers refund, Total includes tax).
+- **[Business Rules](https://pdd-kit.dev/docs/business-rules):** what must always hold, and who may do what (Max 3 per order, Only managers refund, Total includes tax).
 - **[Variations](https://pdd-kit.dev/docs/variations):** where the product works in more than one way (Feature flag, Plan tier, A/B test).
 
 ## Clear product model. Focused sources.
@@ -233,11 +233,11 @@ with `npx pdd-toolkit view itai-gendler/pdd-kit`.
 
 * 📝 **Markdown-native:** every resource is a plain `.md` file in your repo, reviewed in pull requests
 
-* ✅ **Lint and verify:** `pdd-kit lint` checks the files; `pdd-verify` checks the code against them
+* ✅ **Lint and verify:** `npx pdd-toolkit lint` checks the files; `pdd-verify` checks the code against them
 
 * 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
 
-* 🖥️ **Local report:** `pdd-kit view` opens the model in your browser and follows your edits
+* 🖥️ **Local report:** `npx pdd-toolkit view` opens the model in your browser and follows your edits
 
 * 📦 **Blueprints:** start from a reviewed model for a common product instead of a blank page
 
@@ -253,9 +253,13 @@ with `npx pdd-toolkit view itai-gendler/pdd-kit`.
 npx pdd-toolkit install
 ```
 
-This adds the skills to Claude Code, Codex, Cursor, Gemini CLI and GitHub
-Copilot. Then start from where you are, inside your agent (Codex uses `$`
-instead of `/`):
+The npm package is `pdd-toolkit`; it installs the `pdd-kit` command, so
+after `npm install --global pdd-toolkit` you can run `pdd-kit install` instead.
+
+This adds the skills to the coding agents it detects (Claude Code, Codex,
+Cursor, Gemini CLI or GitHub Copilot), or to Claude Code and Codex when it
+detects none; you can change the selection. Then start from where you are,
+inside your agent (Codex uses `$` instead of `/`):
 
 ### Map existing repo (recommended)
 
@@ -308,7 +312,7 @@ npx pdd-toolkit blueprint pull <name>
 - **Implement:** your agent builds it your way, in phases, with plan mode, an
   SDD tool, or freestyle.
 - **Verify** (`/pdd-verify`): the agent checks the code against the
-  model and fixes either one until they agree.
+  model and, with your approval, fixes either one until they agree.
 
 ## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI
 

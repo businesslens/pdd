@@ -161,7 +161,20 @@ test('a Blueprint record states its own title, description and canonical URL', a
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${ORIGIN}${path}`)
   expect(await meta(page, 'property="og:url"')).toBe(`${ORIGIN}${path}`)
   expect(await page.title()).toBe('Kanban Board · Blueprints · pdd-kit')
-  expect(await meta(page, 'name="description"')).toBeTruthy()
+  expect(await meta(page, 'property="og:title"')).toBe('Kanban Board · Blueprints · pdd-kit')
+  const description = await meta(page, 'name="description"')
+  expect(description).toBeTruthy()
+  expect(description).not.toMatch(/\n/)
+  expect(await meta(page, 'property="og:description"')).toBe(description)
+  expect(await meta(page, 'property="og:image"')).toBe(`${ORIGIN}/_blueprints/kanban-board.cover.webp`)
+  expect(await meta(page, 'property="og:image:alt"')).toBeTruthy()
+})
+
+test('the generated 404 shell has a title before any script runs', async ({ page }) => {
+  const response = await page.goto('/no-such-page')
+  expect(response?.status()).toBe(404)
+  expect(await page.title()).toBe('Page not found · pdd-kit')
+  expect(await meta(page, 'name="robots"')).toBe('noindex')
 })
 
 test.describe('client-side navigation', () => {

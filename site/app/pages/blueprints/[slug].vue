@@ -34,9 +34,14 @@ const products = computed(() => (catalog.value?.blueprints ?? []).map(product =>
   active: product.slug === slug.value
 })))
 
-useSeoMeta({
+// The summary, not the description: it is the one-sentence line the catalog
+// card shows, where the description is Markdown that can run to paragraphs.
+useSiteSeo({
   title: () => blueprint.value ? `${blueprint.value.report.title} · Blueprints · pdd-kit` : 'Blueprint · pdd-kit',
-  description: () => blueprint.value?.report.description ?? ''
+  description: () => blueprint.value?.report.summary.replace(/\s+/g, ' ').trim(),
+  image: () => blueprint.value?.cover
+    ? { src: blueprint.value.cover, alt: `The ${blueprint.value.report.title} Blueprint's engraved cover.` }
+    : undefined
 })
 
 // Preserve the catalog's public section key while sharing all report reading state.
@@ -134,7 +139,7 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
         <p class="mt-4 text-dimmed">
           Blueprints are curated in
           <ULink to="https://github.com/itai-gendler/pdd-kit/tree/main/blueprints" target="_blank" class="text-primary">itai-gendler/pdd-kit</ULink>.
-          Propose one with <code class="font-mono text-xs">pdd-kit blueprint contribute</code>.
+          Propose one with <code class="font-mono text-xs">npx pdd-toolkit blueprint contribute</code>.
         </p>
       </template>
     </PddKitReportViewer>

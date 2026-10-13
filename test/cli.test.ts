@@ -267,12 +267,27 @@ describe('cli dispatch', () => {
     try {
       const file = join(empty, 'notes.txt')
       writeFileSync(file, 'not a directory\n')
-      for (const target of [join(empty, 'missing'), file]) {
+      for (const [target, reason] of [[join(empty, 'missing'), 'does not exist'], [file, 'is not a directory']] as const) {
         const result = cli(empty, process.env, 'view', '--no-open', '--cwd', target)
         expect(result.status, target).toBe(2)
-        expect(result.stderr, target).toContain('is not a directory')
+        expect(result.stderr, target).toContain(`${target} ${reason}. Pass an existing directory to --cwd.`)
         expect(result.stdout, target).not.toContain('Waiting for')
       }
+    } finally {
+      rmSync(empty, { recursive: true, force: true })
+    }
+  })
+
+  it('names a missing --cwd directory for every command instead of failing inside it', () => {
+    const empty = mkdtempSync(join(tmpdir(), 'pdd-kit-cwd-'))
+    try {
+      const missing = join(empty, 'missing')
+      for (const args of [['lint'], ['install', '--yes', '--providers', 'claude', '--scope', 'project'], ['blueprint', 'export']]) {
+        const result = cli(empty, process.env, '--cwd', missing, ...args)
+        expect(result.status, args.join(' ')).toBe(2)
+        expect(result.stderr, args.join(' ')).toBe(`error: ${missing} does not exist. Pass an existing directory to --cwd.\n`)
+      }
+      expect(existsSync(missing)).toBe(false)
     } finally {
       rmSync(empty, { recursive: true, force: true })
     }

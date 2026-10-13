@@ -12,6 +12,10 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
+const PACKAGE_VERSION: string = JSON.parse(
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf8')
+).version
+
 const LINT_RUNNERS = [
   {
     name: 'map',
@@ -40,8 +44,42 @@ afterEach(() => {
   }
 })
 
+/** Copy `file` to `<root>/<skillPath>/scripts/run-pdd-kit.mjs` and return the copy. */
+function copyRunner(file: string, root: string, skillPath: string): string {
+  const runnerDir = join(root, skillPath, 'scripts')
+  mkdirSync(runnerDir, { recursive: true })
+  const copy = join(runnerDir, 'run-pdd-kit.mjs')
+  writeFileSync(copy, readFileSync(file, 'utf8'))
+  return copy
+}
+
+/** Run `runner` against a fresh repository with a fake npm; return npm's arguments. */
+function npmArgsFor(runner: string): string[] {
+  const repo = temporary('pdd-kit-runner-layout-repo-')
+  const bin = temporary('pdd-kit-runner-layout-bin-')
+  const capture = join(temporary('pdd-kit-runner-layout-capture-'), 'npm.json')
+  execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
+  writeFileSync(
+    join(bin, 'npm'),
+    `#!/usr/bin/env node
+require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify(process.argv.slice(2)))
+`
+  )
+  chmodSync(join(bin, 'npm'), 0o755)
+  execFileSync(process.execPath, [runner, '--root', repo, 'lint'], {
+    env: {
+      ...process.env,
+      PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
+      PDD_KIT_DEV_BIN_DIR: temporary('pdd-kit-runner-layout-no-dev-bin-'),
+      CAPTURE_FILE: capture
+    },
+    stdio: 'pipe'
+  })
+  return JSON.parse(readFileSync(capture, 'utf8'))
+}
+
 describe.skipIf(process.platform === 'win32')('isolated skill runners', () => {
-  it.each(LINT_RUNNERS)('$name runs npm outside the target and scrubs the key during lint', ({ file }) => {
+  it.each(LINT_RUNNERS)('$name runs npm outside the target, pinned to its own package', ({ file }) => {
     const repo = temporary('pdd-kit-runner-repo-')
     const bin = temporary('pdd-kit-runner-bin-')
     const capture = join(temporary('pdd-kit-runner-capture-'), 'npm.json')
@@ -59,8 +97,7 @@ describe.skipIf(process.platform === 'win32')('isolated skill runners', () => {
 const fs = require('node:fs')
 fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   cwd: process.cwd(),
-  args: process.argv.slice(2),
-  apiKey: process.env.PDD_KIT_API_KEY || null
+  args: process.argv.slice(2)
 }))
 `
     )
@@ -74,8 +111,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
           PDD_KIT_DEV_BIN_DIR: temporary('pdd-kit-runner-no-dev-bin-'),
-          CAPTURE_FILE: capture,
-          PDD_KIT_API_KEY: 'must-not-reach-lint'
+          CAPTURE_FILE: capture
         },
         stdio: 'pipe'
       }
@@ -88,7 +124,8 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       'exec',
       '--yes',
       '--ignore-scripts',
-      '--package=pdd-toolkit@latest',
+      // The skill sits inside this checkout, whose package.json names the release.
+      `--package=pdd-toolkit@${PACKAGE_VERSION}`,
       '--',
       'pdd-kit',
       '--cwd',
@@ -96,7 +133,6 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       'lint',
       '--json'
     ])
-    expect(recorded.apiKey).toBeNull()
   })
 
   it.each(LINT_RUNNERS)('$name pins the CLI to the version the skills were installed from', ({ name, file }) => {
@@ -163,8 +199,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       cli,
       `require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
   cwd: process.cwd(),
-  args: process.argv.slice(2),
-  apiKey: process.env.PDD_KIT_API_KEY || null
+  args: process.argv.slice(2)
 }))\n`
     )
     writeFileSync(
@@ -180,7 +215,6 @@ console.log(${JSON.stringify(cli)})
       env: {
         ...process.env,
         PDD_KIT_DEV_BIN_DIR: bin,
-        PDD_KIT_API_KEY: 'must-not-reach-lint',
         CAPTURE_FILE: capture
       },
       stdio: 'pipe'
@@ -190,7 +224,54 @@ console.log(${JSON.stringify(cli)})
     expect(recorded.cwd).not.toBe(repo)
     expect(recorded.cwd).toContain('pdd-kit-cli-')
     expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'lint', '--json'])
-    expect(recorded.apiKey).toBeNull()
+  })
+
+  it.each(LINT_RUNNERS)('$name pins a Claude plugin install to the plugin package version', ({ name, file }) => {
+    // A plugin installs the whole package, with no `.pdd-kit-install.json`:
+    // the skill sits at `<package>/skills/<name>/` beside the package manifest.
+    const plugin = temporary('pdd-kit-runner-plugin-')
+    writeFileSync(join(plugin, 'package.json'), JSON.stringify({ name: 'pdd-toolkit', version: '7.7.7' }))
+    const runner = copyRunner(file, plugin, join('skills', `pdd-${name}`))
+    expect(npmArgsFor(runner)).toContain('--package=pdd-toolkit@7.7.7')
+  })
+
+  it.each(LINT_RUNNERS)('$name prefers the install marker over a package manifest', ({ name, file }) => {
+    const plugin = temporary('pdd-kit-runner-marker-')
+    writeFileSync(join(plugin, 'package.json'), JSON.stringify({ name: 'pdd-toolkit', version: '7.7.7' }))
+    mkdirSync(join(plugin, 'skills'))
+    writeFileSync(
+      join(plugin, 'skills', '.pdd-kit-install.json'),
+      JSON.stringify({ schema: 1, package: 'pdd-toolkit', version: '9.9.9' })
+    )
+    const runner = copyRunner(file, plugin, join('skills', `pdd-${name}`))
+    expect(npmArgsFor(runner)).toContain('--package=pdd-toolkit@9.9.9')
+  })
+
+  it.each(LINT_RUNNERS)('$name ignores a package manifest that is not pdd-toolkit', ({ name, file }) => {
+    const project = temporary('pdd-kit-runner-foreign-')
+    writeFileSync(join(project, 'package.json'), JSON.stringify({ name: 'someone-else', version: '1.2.3' }))
+    const runner = copyRunner(file, project, join('skills', `pdd-${name}`))
+    expect(npmArgsFor(runner)).toContain('--package=pdd-toolkit@latest')
+  })
+
+  it.each(LINT_RUNNERS)('$name explains a missing npm instead of crashing', ({ file }) => {
+    const repo = temporary('pdd-kit-runner-no-npm-repo-')
+    const bin = temporary('pdd-kit-runner-no-npm-bin-')
+    execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
+    // PATH holds git and nothing else, so npm cannot be found.
+    const git = execFileSync('git', ['--exec-path'], { encoding: 'utf8' }).trim()
+    writeFileSync(join(bin, 'git'), `#!/bin/sh\nexec "${join(git, 'git')}" "$@"\n`)
+    chmodSync(join(bin, 'git'), 0o755)
+    const result = spawnSync(process.execPath, [file, '--root', repo, 'lint'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: bin,
+        PDD_KIT_DEV_BIN_DIR: temporary('pdd-kit-runner-no-npm-dev-bin-')
+      }
+    })
+    expect(result.status).toBe(127)
+    expect(result.stderr).toContain('npm was not found on PATH')
   })
   it.each(LINT_RUNNERS)('$name rejects removed accounting commands', ({ file }) => {
     const repo = temporary('pdd-kit-runner-repo-')

@@ -27,4 +27,4 @@ export const BLOG_FEED_URL = `${SITE_ORIGIN}${BLOG_FEED_PATH}`
 export const BLOG_FEED_TITLE = 'pdd-kit Blog'
 
 /** Shared by the blog index's meta description and the feed's channel description. */
-export const BLOG_DESCRIPTION = 'Ideas and field notes on Product-Driven Development, machine-readable product knowledge, coding agents, and the emerging pdd-kit standard.'
+export const BLOG_DESCRIPTION = 'Ideas and field notes on Product-Driven Development, coding agents, and building pdd-kit in the open.'
