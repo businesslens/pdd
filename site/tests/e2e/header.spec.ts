@@ -14,6 +14,8 @@ test('the header and mobile menu fit phone widths', async ({ page }) => {
 test('search and Vocabulary are available across the site', async ({ page }) => {
   for (const path of ['/', '/blog', '/faq', '/docs/entities']) {
     await page.goto(path)
+    // The buttons are server-rendered; the dialogs they open arrive after.
+    await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
     const header = page.locator('[data-site-header]')
     await expect(header.getByRole('button', { name: 'Search documentation' })).toBeVisible()
     const trigger = header.getByRole('button', { name: 'Vocabulary', exact: true })
@@ -37,13 +39,15 @@ test('desktop navigation stays centered when entering docs without overlapping t
     const nav = page.locator('[data-site-header] [data-primary-navigation]')
     const firstLink = nav.getByRole('link').first()
     await expect(firstLink).toBeInViewport()
-    await expect.poll(async () => (await firstLink.boundingBox())?.x ?? 0).toBeGreaterThan(0)
-    const homeX = (await firstLink.boundingBox())!.x
+    // Hydration can re-render the link, so read its position in the same poll
+    // that waits for it rather than in a second call that may find nothing.
+    let homeX = 0
+    await expect.poll(async () => (homeX = (await firstLink.boundingBox())?.x ?? 0)).toBeGreaterThan(0)
     await nav.getByRole('link', { name: 'Docs', exact: true }).click()
     await expect(page).toHaveURL(/\/docs$/)
     await expect.poll(async () => (await firstLink.boundingBox())?.x ?? -1).toBeCloseTo(homeX, 0)
 
-    const boxes = await page.locator('[data-site-header]').evaluate((el) => {
+    const measure = () => page.locator('[data-site-header]').evaluate((el) => {
       const nav = el.querySelector('[data-primary-navigation]')!.getBoundingClientRect()
       const left = el.querySelector('[data-slot="left"]')!.getBoundingClientRect()
       const right = el.querySelector('[data-slot="right"]')!
@@ -57,7 +61,13 @@ test('desktop navigation stays centered when entering docs without overlapping t
         viewport: innerWidth
       }
     })
-    expect((boxes.navLeft + boxes.navRight) / 2).toBeCloseTo(boxes.viewport / 2, 0)
+    // The docs page swaps its layout in after navigation; until it has, the
+    // navigation can measure as an empty box, so wait for it to be laid out.
+    await expect.poll(async () => {
+      const box = await measure()
+      return box.navRight > box.navLeft ? Math.abs((box.navLeft + box.navRight) / 2 - box.viewport / 2) : Infinity
+    }).toBeLessThan(0.5)
+    const boxes = await measure()
     expect(boxes.brandRight).toBeLessThanOrEqual(boxes.navLeft)
     expect(boxes.navRight).toBeLessThanOrEqual(boxes.toolsLeft)
     expect(boxes.toolsRight).toBeLessThanOrEqual(boxes.viewport)
@@ -72,6 +82,7 @@ test('header and Vocabulary fit narrow screens and pass WCAG A/AA checks', async
   const headerAudit = await new AxeBuilder({ page }).include('[data-site-header]')
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
   expect(headerAudit.violations).toEqual([])
+  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
   await header.getByRole('button', { name: 'Vocabulary', exact: true }).click()
   const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await expect(panel).toBeVisible()
@@ -85,6 +96,9 @@ test('site tools work alongside report search and Vocabulary', async ({ page, is
   await page.goto('/')
   const header = page.locator('[data-site-header]')
   const search = page.getByRole('dialog')
+  // The tool dialogs are client-only and arrive after the header that opens
+  // them; on a busy machine a click before then does nothing.
+  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
   await header.getByRole('button', { name: 'Search documentation' }).click()
   await expect(search).toBeVisible()
   await page.keyboard.press('Escape')

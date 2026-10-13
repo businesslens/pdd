@@ -97,6 +97,8 @@ test('handles a same-page heading and falls back to Product on pages without ter
 test('fits narrow screens and has no automatically detectable WCAG A/AA violations', async ({ page, isMobile }) => {
   if (isMobile) await page.setViewportSize({ width: 320, height: 740 })
   await page.goto('/docs/interfaces')
+  // The Vocabulary dialog is client-only and arrives after the header button.
+  await page.locator('[data-docs-tools-ready]').waitFor({ state: 'attached' })
   await page.locator('header').getByRole('button', { name: 'Vocabulary', exact: true }).click()
   const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await expect(panel).toBeVisible()
