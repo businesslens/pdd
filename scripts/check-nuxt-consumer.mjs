@@ -28,12 +28,28 @@ const work = mkdtempSync(join(tmpdir(), 'pdd-kit-nuxt-consumer-'))
 const quiet = ['--no-audit', '--no-fund', '--loglevel=error']
 const run = (args, cwd) => execFileSync('npm', args, { cwd, stdio: 'inherit' })
 
+// The fixture has no lockfile, so it resolves the newest versions, and a
+// version the registry lists minutes before its tarball is served fails the
+// install (ETARGET). A required check must not go red for that, so the
+// registry install gets three tries, a minute apart.
+function installFromRegistry(cwd) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return run(['install', '--ignore-scripts', ...quiet], cwd)
+    } catch (error) {
+      if (attempt === 3) throw error
+      console.warn(`npm install failed (attempt ${attempt} of 3); retrying in 60s.`)
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 60_000)
+    }
+  }
+}
+
 try {
   run(['pack', '--ignore-scripts', '--pack-destination', work, ...quiet], root)
   const tarball = join(work, readdirSync(work).find(name => name.endsWith('.tgz')))
   const app = join(work, 'app')
   cpSync(fixture, app, { recursive: true })
-  run(['install', '--ignore-scripts', ...quiet], app)
+  installFromRegistry(app)
   run(['install', '--ignore-scripts', '--no-save', ...quiet, tarball], app)
   run(['run', 'prepare:nuxt'], app)
   run(['run', 'typecheck'], app)
