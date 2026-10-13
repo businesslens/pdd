@@ -95,7 +95,7 @@
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "comark": "^0.7.0",
-    "commander": "^14.0.3",
+    "commander": "^15.0.0",
     "saxes": "^6.0.0",
     "shiki": "^4.4.3",
     "yaml": "^2.6.0",
