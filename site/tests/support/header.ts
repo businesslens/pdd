@@ -28,15 +28,15 @@ export async function expectHeaderFits(page: Page) {
 
 async function expectChromeFits(chrome: Locator, width: number) {
   await expect(chrome.locator('[data-pdd-version]')).toBeVisible()
-  // The name is live text that the site hides below `sm`, keeping the mark.
-  const name = chrome.locator('[data-logo-wordmark]').getByText('pdd-kit', { exact: true })
+  // The site hides the wordmark below `sm`, keeping the mark.
+  const name = chrome.locator('[data-logo-wordmark] img[alt="pdd-kit"]')
   if (width >= 640) await expect(name).toBeVisible()
   else await expect(name).toBeHidden()
 
-  // Measure the artwork and the name themselves: a shrinking link can conceal
-  // an overflowing name while both its parent and the header report no overflow.
+  // Measure the mark and the wordmark themselves: a shrinking link can conceal
+  // an overflowing wordmark while both its parent and the header report no overflow.
   const boxes = await chrome.evaluate(element => [...element.querySelectorAll(
-    '[data-logo-mark], [data-logo-wordmark] > span, [data-pdd-version], button, a[aria-label]:not(.site-brand)'
+    '[data-logo-mark], [data-logo-wordmark] > img, [data-pdd-version], button, a[aria-label]:not(.site-brand)'
   )].map((node) => {
     const { left, right, width } = node.getBoundingClientRect()
     return { left, right, width, name: node.getAttribute('aria-label') || node.getAttribute('alt') || node.textContent }

@@ -25,10 +25,10 @@ export default defineNuxtConfig({
   identity moves.
 - **Type**: Archivo and Inter variable faces plus IBM Plex Mono at 400 and 500,
   loaded through `@fontsource`, with `app/assets/theme.css` carrying the scale.
-- **`<PddKitBrand>`** — the approved mark beside the name, set as live text
-  in the heading face. It requests only the mark for the active color mode;
-  painting both twins and hiding one with CSS downloads both on every page.
-  `compactOnMobile` drops the name on narrow viewports and keeps the mark
+- **`<PddKitBrand>`** — the approved mark beside the PDD-KIT wordmark. It
+  requests only the assets for the active color mode; painting both twins and
+  hiding one with CSS downloads both on every page.
+  `compactOnMobile` drops the wordmark on narrow viewports and keeps the mark
   as the home link. `wordmarkHeight` scales the complete lockup proportionally
   for compact hosts, defaulting to 26 pixels. `markOnly` keeps just the mark
   when the host navigation is collapsed.

@@ -2,16 +2,15 @@
 /**
  * The pdd-kit lockup, as every host renders it.
  *
- * This is the selected brand, not an audition: the approved mark and the name
+ * This is the selected brand, not an audition: the approved mark and wordmark
  * live here beside the palette and type, so every host gets identical chrome
- * from the stable theme alone. The name is live text in the heading face, so
- * it needs no asset of its own.
+ * from the stable theme alone.
  *
- * The mark for the active colour mode is the only one requested. Painting
+ * The assets for the active colour mode are the only ones requested. Painting
  * light and dark twins and hiding one with CSS downloads both on every page.
  */
 const props = withDefaults(defineProps<{
-  /** Drop the name on narrow viewports, keeping the mark as the home link. */
+  /** Drop the wordmark on narrow viewports, keeping the mark as the home link. */
   compactOnMobile?: boolean
   /** Scale the lockup proportionally to fit its host. */
   wordmarkHeight?: number
@@ -25,8 +24,8 @@ const props = withDefaults(defineProps<{
 
 const BRAND_BASE = '/brand/logo'
 
-/* Stamp geometry: the name sets the scale and the mark rides slightly
-   taller than the letters so the two optically align. */
+/* Stamp geometry: the wordmark sets the scale and the mark rides slightly
+   taller than its rules so the two optically align. */
 const MARK_SCALE = 1.31
 const GAP_RATIO = 0.25
 
@@ -34,6 +33,7 @@ const colorMode = useColorMode()
 const suffix = computed(() => colorMode.value === 'dark' ? '-dark' : '')
 
 const markSrc = computed(() => `${BRAND_BASE}/mark${suffix.value}.svg`)
+const wordmarkSrc = computed(() => `${BRAND_BASE}/wordmark${suffix.value}.svg`)
 
 const metrics = computed(() => ({
   gap: `${Math.round(props.wordmarkHeight * GAP_RATIO)}px`,
@@ -56,10 +56,12 @@ const metrics = computed(() => ({
       data-logo-wordmark
       :class="compactOnMobile ? 'hidden min-[400px]:contents' : 'contents'"
     >
-      <span
-        :style="{ fontSize: metrics.wordmarkHeight, lineHeight: 1 }"
-        class="shrink-0 font-[family-name:var(--pdd-kit-font-heading)] font-semibold tracking-tight text-highlighted"
-      >pdd-kit</span>
+      <img
+        :src="wordmarkSrc"
+        alt="pdd-kit"
+        :style="{ height: metrics.wordmarkHeight }"
+        class="w-auto shrink-0"
+      >
     </span>
   </span>
 </template>

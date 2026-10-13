@@ -20,8 +20,8 @@ const ICON_SET = [
 ]
 
 describe('approved pdd-kit identity', () => {
-  it('ships one light/dark mark from the stable theme', () => {
-    for (const file of ['mark.svg', 'mark-dark.svg']) {
+  it('ships one light/dark mark and wordmark from the stable theme', () => {
+    for (const file of ['mark.svg', 'mark-dark.svg', 'wordmark.svg', 'wordmark-dark.svg']) {
       expect(existsSync(resolve(theme, 'public/brand/logo', file)), file).toBe(true)
     }
 
