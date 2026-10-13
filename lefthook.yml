@@ -1,0 +1,46 @@
+# Git hooks, installed by `pnpm install`. They run the same gates CI runs, so a
+# mistake fails in seconds on your machine instead of minutes later in a pull
+# request. Do not skip them with --no-verify; fix the cause.
+#
+# pre-commit runs the fast gates, each only when a staged file can affect it.
+# pre-push builds the package and its viewer, as the release does.
+
+pre-commit:
+  parallel: false
+  commands:
+    check:
+      priority: 1
+      run: pnpm check
+    typecheck:
+      priority: 2
+      glob: "*.{ts,mts,cts,vue}"
+      run: pnpm typecheck
+    site-editorconfig:
+      priority: 3
+      root: site/
+      run: pnpm editorconfig
+    site-lint:
+      priority: 4
+      glob:
+        - "site/**"
+        - "layers/**"
+      run: pnpm --dir site lint
+    site-typecheck:
+      priority: 5
+      glob:
+        - "site/**"
+        - "layers/**"
+      run: pnpm --dir site typecheck
+    site-knip:
+      priority: 6
+      glob:
+        - "site/**"
+        - "layers/**"
+      run: pnpm --dir site knip
+
+pre-push:
+  parallel: false
+  commands:
+    build:
+      priority: 1
+      run: pnpm build

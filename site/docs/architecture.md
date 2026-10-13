@@ -160,9 +160,10 @@ Plus `/sitemap.xml`, `/404.html`, and the build internals `/_data/**` and
 
 ## Hosting
 
-- Cloudflare Pages serves `.output/public`. `.github/workflows/site.yml` runs
-  the checks, then deploys the tested build: a pull request from this
-  repository to a preview URL, and `main` to pdd-kit.dev.
+- Cloudflare Pages serves `.output/public`. `.github/workflows/site.yml` builds
+  it once: a pull request from this repository deploys to a preview URL as soon
+  as the build passes, while the e2e tests run, and `main` deploys to
+  pdd-kit.dev only after they pass.
 - `public/_headers` sets response headers: security headers on every path, a
   year's immutable cache on content-hashed `/_nuxt/*`, and a no-script,
   sandboxed policy on `/_blueprints/*` so a contributed logo or cover opened

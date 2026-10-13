@@ -339,6 +339,10 @@ costed already.
   and pnpm consumers, and installed skill runners keep using npm to run the
   published package in target repositories.
 - Run `pnpm verify` after any change.
+- Lefthook (`lefthook.yml`) runs the fast gates before each commit and
+  `pnpm build` before each push; do not bypass them with `--no-verify`.
+- Dependencies are updated by Renovate (`renovate.json`), not Dependabot. The
+  e2e job's Playwright image tag must equal `@playwright/test`.
 - Inspect `pnpm pack --dry-run` before a release.
 - Prepare a release in its own pull request that only rolls the changelog and
   bumps the version: `pnpm version <version> --no-git-tag-version`, fetch, then

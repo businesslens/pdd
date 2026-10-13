@@ -46,9 +46,11 @@ npm runner.
    list new skills in `.claude-plugin/plugin.json`. pdd-kit analysis never
    executes target code; verify delegates implementation to a harness-supplied
    builder and then inspects again.
-5. Run `pnpm verify` before opening a PR. Change dependencies with `pnpm add` or
-   `pnpm remove` and commit the updated `pnpm-lock.yaml`; CI installs with
-   `--frozen-lockfile` and fails when it drifts.
+5. `pnpm install` sets up Git hooks (`lefthook.yml`): fast checks before each
+   commit and the package build before each push. Do not skip them with
+   `--no-verify`. Run `pnpm verify` before opening a PR. Change dependencies
+   with `pnpm add` or `pnpm remove` and commit the updated `pnpm-lock.yaml`; CI
+   installs with `--frozen-lockfile` and fails when it drifts.
 6. Do not add secrets, customer data, or private repository URLs.
 
 ## Contributing a Blueprint
