@@ -43,16 +43,24 @@
       "enabled": false
     },
     {
-      "description": "@types/node describes the oldest Node the code must run on, its engines floor, never the newest release or the Node CI installs. Its major is raised by hand along with that floor.",
-      "matchPackageNames": ["@types/node"],
-      "matchFileNames": ["package.json"],
-      "allowedVersions": "<21"
+      "description": "Peer ranges tell Nuxt hosts which versions the layers work with. Raising a floor to the newest release would narrow that promise for no reason, so a peer range only widens, when a new major falls outside it.",
+      "matchDepTypes": ["peerDependencies"],
+      "rangeStrategy": "widen"
     },
     {
-      "description": "The site's engines floor is Node 22, so its @types/node stays on 22 for the same reason.",
+      "description": "@types/node describes the oldest Node the code must run on, its engines floor, never the newest release or the Node CI installs. The package and the site both have a Node 22 floor; the major is raised by hand along with that floor.",
       "matchPackageNames": ["@types/node"],
-      "matchFileNames": ["site/package.json"],
       "allowedVersions": "<23"
+    },
+    {
+      "description": "TypeScript 7 waits until vue-tsc, typescript-eslint and tsdown's declaration build support it.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    },
+    {
+      "description": "h3 2 is the Nitro 3 server layer; the site stays on h3 1 until Nuxt runs on Nitro 3.",
+      "matchPackageNames": ["h3"],
+      "allowedVersions": "<2"
     },
     {
       "description": "Workflows name a Node major and take its latest release; pinning the patch only adds churn, and a new major is a deliberate change.",
@@ -67,10 +75,11 @@
       "groupSlug": "playwright"
     },
     {
-      "description": "Playwright image tags are a v-prefixed version with an Ubuntu suffix.",
+      "description": "Playwright image tags are a v-prefixed version with an Ubuntu suffix. The registry publishes no release dates, and an update without one never passes minimumReleaseAge, so the image follows @playwright/test, which does.",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["mcr.microsoft.com/playwright"],
-      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-noble$"
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-noble$",
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     }
   ],
   "customManagers": [

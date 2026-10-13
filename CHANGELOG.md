@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CLI:** **Breaking.** pdd-kit requires Node.js 22.12 or later; Node.js 20 has reached end of life.
+
 - **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
 
 ## [0.36.0] - 2026-10-13
