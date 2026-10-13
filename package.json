@@ -102,6 +102,7 @@
     "zod": "^4.0.0"
   },
   "peerDependencies": {
+    "@comark/vue": "^0.7.0",
     "@fontsource-variable/archivo": "^5.3.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource/ibm-plex-mono": "^5.3.0",
@@ -112,8 +113,7 @@
     "elkjs": "^0.12.0",
     "nuxt": "^4.4.0",
     "tailwindcss": "^4.3.0",
-    "vue": "^3.5.0",
-    "@comark/vue": "^0.7.0"
+    "vue": "^3.5.0"
   },
   "peerDependenciesMeta": {
     "@fontsource-variable/archivo": {
@@ -156,6 +156,7 @@
   "devDependencies": {
     "@playwright/test": "1.61.1",
     "@types/node": "^22.10.0",
+    "lefthook": "^2.2.1",
     "tsdown": "^0.12.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
