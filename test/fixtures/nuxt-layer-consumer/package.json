@@ -22,7 +22,7 @@
     "@comark/vue": "^0.7.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vue-tsc": "^3.3.13"
   }
 }
