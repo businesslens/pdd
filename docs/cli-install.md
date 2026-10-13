@@ -53,11 +53,9 @@ It installs skills only: no `product-model/`, no hooks, no account.
 marker does not list is someone else's, so it stops the run unless you pass
 `--force`.
 
-**A marker written by another package is not pdd-kit's.** Skills installed by
-the old `@itai-gendler/pdd-kit` package carry that package's name in their
-marker, so `install` refuses them and prints the command to replace them once
-with `--force`. A marker that is not valid JSON is refused the same way, naming
-the file.
+**A marker pdd-kit cannot read is not trusted.** A marker that is not valid
+JSON, or that another package wrote, is refused, naming the file and the
+command that replaces it once with `--force`.
 
 **A refusal changes nothing.** Every harness is checked before any is written,
 and the message names the directory that blocked the run.

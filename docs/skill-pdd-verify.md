@@ -147,5 +147,5 @@ code as they are now.
 ## Related
 
 - [Development loop](./index.md#the-development-loop)
-- [Lint in CI](./cli-lint.md#run-it-in-ci): lint checks structure; only verify
+- [Lint in CI (optional)](./cli-lint.md#run-it-in-ci-optional): lint checks structure; only verify
   checks meaning.

@@ -34,9 +34,9 @@ npx pdd-toolkit update --providers claude,codex --scope project
 
 1. Finds every skills directory with a valid `.pdd-kit-install.json`
    marker. Unmarked installations are never found or touched. When none is
-   found, it names what it saw instead: skills installed by another package
-   (such as the old `@itai-gendler/pdd-kit`), a marker that is not valid JSON,
-   or Codex skills left in `~/.codex/skills`, each with the command to run.
+   found, it names what it saw instead: a marker that is not valid JSON or
+   that another package wrote, or Codex skills left in `~/.codex/skills`, each
+   with the command to run.
 2. Writes the current three skills into each, and removes any `pdd-*`
    skill the marker recorded that this release no longer ships.
 3. Refreshes the marker, keeping its original install time.

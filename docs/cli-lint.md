@@ -8,8 +8,8 @@ order: 23
 
 # `pdd-kit lint`
 
-Check that the Product Model is structurally sound, after every edit and
-[in CI](#run-it-in-ci).
+Check that the Product Model is structurally sound after every edit. The
+skills run it for you; adding it to [CI](#run-it-in-ci-optional) is optional.
 
 ```bash
 npx pdd-toolkit lint [--json]
@@ -64,14 +64,14 @@ Each error and warning is one string, prefixed with the file it concerns
 Exits 0 when there are no errors (warnings never fail lint), 1 when there are
 errors or no model is found, and 2 for an unknown option.
 
-## Run it in CI
+## Run it in CI (optional)
 
-Run lint on every pull request, not only when `product-model/` changes: a code
-rename can break a code Reference. Add the `pdd-toolkit` package as a
-devDependency at the version your skills were installed from (recorded in
-`.pdd-kit-install.json` beside the skills), so CI and your agent agree. It
-installs the `pdd-kit` command, so a `package.json` script can call
-`pdd-kit lint` directly:
+Nothing requires CI. The skills run lint on the developer's machine whenever
+they change the model, and that is enough to keep it valid.
+
+If you also want pull requests checked, run lint on every pull request, not
+only when `product-model/` changes: a code rename can break a code Reference.
+`npx pdd-toolkit lint` needs no setup:
 
 ```yaml [.github/workflows/pdd-kit.yml]
 name: pdd-kit
@@ -85,8 +85,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22 # any version from 20.12
-          cache: npm
-      - run: npm ci
       - run: npx pdd-toolkit lint
 ```
 

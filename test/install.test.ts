@@ -302,13 +302,13 @@ describe('installations this version does not manage', () => {
   it('names the other package and the one command that replaces its install', async () => {
     const project = temporary('pdd-kit-previous-package-')
     const skillsDir = join(project, '.claude', 'skills')
-    plantInstallation(skillsDir, otherPackageMarker('@itai-gendler/pdd-kit'))
+    plantInstallation(skillsDir, otherPackageMarker('another-skills-package'))
     const errors: string[] = []
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     expect(await runUpdate(project, { scope: 'project' })).toBe(1)
-    expect(errors.join('\n')).toContain('installed by another package, @itai-gendler/pdd-kit,')
+    expect(errors.join('\n')).toContain('installed by another package, another-skills-package,')
     expect(errors.join('\n')).toContain('`pdd-kit install --providers claude --scope project --force` once')
     expect(errors.join('\n')).not.toContain('Run `pdd-kit install` first')
 
@@ -316,7 +316,7 @@ describe('installations this version does not manage', () => {
       project,
       { provider: providerById('claude'), scope: 'project' },
       '9.9.9'
-    )).toThrow(/installed by another package, @itai-gendler\/pdd-kit,.*`pdd-kit install --providers claude --scope project --force` once/)
+    )).toThrow(/installed by another package, another-skills-package,.*`pdd-kit install --providers claude --scope project --force` once/)
     // Nothing migrates on its own: the old skills are untouched until --force.
     expect(readFileSync(join(skillsDir, 'pdd-map', 'SKILL.md'), 'utf8')).toContain('Old.')
 

@@ -96,9 +96,8 @@ export type SkillsDirMarker =
   | { kind: 'none' }
   | { kind: 'managed', manifest: InstallationManifest }
   /**
-   * Well formed, but written by another package — an earlier name of this one,
-   * such as `@itai-gendler/pdd-kit`. Named so the reader knows; it grants no
-   * ownership, and a reinstall over it takes an explicit `--force`.
+   * Well formed, but written by another package. Named so the reader knows; it
+   * grants no ownership, and a reinstall over it takes an explicit `--force`.
    */
   | { kind: 'other-package', file: string, packageName: string, skills: string[] }
   /** Present, but not JSON, or not a shape any pdd-kit release wrote. */
