@@ -55,7 +55,7 @@
     "@nuxt/eslint": "^1.15.2",
     "@playwright/test": "^1.61.1",
     "@types/hast": "^3.0.5",
-    "@types/node": "^25.9.1",
+    "@types/node": "^24.19.2",
     "editorconfig-checker": "^6.1.1",
     "eslint": "^10.4.1",
     "fast-xml-parser": "^5.10.1",

@@ -43,6 +43,18 @@
       "enabled": false
     },
     {
+      "description": "@types/node describes the oldest Node the code must run on, never the newest release, so its major is raised by hand along with that Node.",
+      "matchPackageNames": ["@types/node"],
+      "matchFileNames": ["package.json"],
+      "allowedVersions": "<23"
+    },
+    {
+      "description": "The site builds and deploys on the Node 24 its workflows install.",
+      "matchPackageNames": ["@types/node"],
+      "matchFileNames": ["site/package.json"],
+      "allowedVersions": "<25"
+    },
+    {
       "description": "Workflows name a Node major and take its latest release; pinning the patch only adds churn, and a new major is a deliberate change.",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["node"],

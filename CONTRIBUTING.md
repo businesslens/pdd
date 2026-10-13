@@ -9,7 +9,7 @@ The repository is a pnpm workspace: the package itself plus the private local
 viewer in `viewer/app`. `package.json` pins the pnpm version in
 `packageManager`; with Corepack (`corepack enable`) or pnpm 9.7 or later, that
 exact version runs. It needs Node.js 22.13 or later, newer than the published
-package's own floor: consumers still install `pdd-toolkit` on Node.js 20.12
+package's own floor: consumers still install `pdd-toolkit` on Node.js 22.12
 or later, with any package manager.
 
 Activate the current pdd-kit worktree as the machine-wide development CLI and keep
