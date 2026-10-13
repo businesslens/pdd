@@ -4,7 +4,7 @@ import { BLUEPRINT_FEED_PATH } from '~~/shared/utils/blueprintFeed'
 
 /**
  * The catalog masthead from the design mock: eyebrow, a two-line title with
- * the noun highlighted, and one sentence of promise. Left-aligned because
+ * the closing phrase highlighted, and a plain statement of what a Blueprint is. Left-aligned because
  * every arrangement sets the listing directly beneath it — a centered hero
  * over a left-ragged grid reads as two pages.
  */
@@ -38,7 +38,7 @@ const { enterMotion } = useLandingMotion()
     <h1 class="mt-4 max-w-2xl text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.045em] text-highlighted sm:text-5xl">
       <Motion as="span" v-bind="enterMotion(0.2)" class="inline-block">
         Start from a Product Model<br>
-        that <span class="landing-shimmer-text">already works.</span>
+        that is <span class="landing-shimmer-text">yours to change.</span>
       </Motion>
     </h1>
     <Motion
@@ -46,8 +46,9 @@ const { enterMotion } = useLandingMotion()
       v-bind="enterMotion(0.35)"
       class="mt-4 max-w-xl text-lg leading-relaxed text-default"
     >
-      Each Blueprint is a complete, production-ready Product Model you can
-      pull with one command, customize, and extend.
+      Each Blueprint is a reviewed Product Model of a common product, open to
+      contributions. Pull one into your repository with one command and change
+      it freely.
     </Motion>
   </header>
 </template>

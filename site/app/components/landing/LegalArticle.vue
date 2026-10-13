@@ -1,8 +1,8 @@
 <script setup lang="ts">
+// Plain page title: the page name as the h1, no eyebrow or subtitle, like the
+// FAQ, blog and changelog.
 defineProps<{
-  headline: string
   title: string
-  description: string
   updated: string
 }>()
 </script>
@@ -11,14 +11,10 @@ defineProps<{
   <div class="landing-page">
     <UContainer class="max-w-3xl py-12 sm:py-16">
       <UPageHeader
-        :headline="headline"
         :title="title"
-        :description="description"
         :ui="{
           root: 'border-b-0 py-0',
-          headline: 'font-mono font-medium text-xs text-primary uppercase tracking-[0.12em]',
-          title: 'text-balance tracking-[-0.035em]',
-          description: 'text-pretty leading-relaxed'
+          title: 'text-balance text-primary tracking-[-0.035em]'
         }"
       />
       <p class="mt-4 text-sm text-dimmed">

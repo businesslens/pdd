@@ -26,8 +26,10 @@ adds what is specific to `site/`.
   (open a pull request with `pdd-kit blueprint contribute`), **publish** (merge
   it), **pull** (download it from the Blueprint release).
 - The product is **pdd-kit**; the practice is Product-Driven Development,
-  written out on first use on a page. Do not reintroduce `BusinessLens`,
-  `Hub`, `Platform`, `Explore`, `Product Model Version` or `Blueprint Revision`.
+  written out on first use on a page. The retired product name must not
+  reappear anywhere in the repository; `pnpm check` (`scripts/check-repo.mjs`)
+  fails if it does. Do not reintroduce `Hub`, `Platform`, `Explore`,
+  `Product Model Version` or `Blueprint Revision` either.
 
 ## Locations
 

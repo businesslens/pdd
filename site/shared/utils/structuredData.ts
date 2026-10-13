@@ -11,26 +11,41 @@ import { SITE_ORIGIN } from './site'
  * so nothing here invents a value the page does not show.
  */
 
-const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`
+const PROJECT_ID = `${SITE_ORIGIN}/#project`
 const WEBSITE_ID = `${SITE_ORIGIN}/#website`
+const REPOSITORY_URL = 'https://github.com/itai-gendler/pdd-kit'
 
 type JsonLdNode = Record<string, unknown>
 
-/** The publisher and the site, emitted once on every public page. */
+/** The maintainer, who publishes the site and its posts. */
+const MAINTAINER: JsonLdNode = {
+  '@type': 'Person',
+  'name': 'Itai Gendler',
+  'url': 'https://github.com/itai-gendler'
+}
+
+/**
+ * The project and the site, emitted once on every public page. pdd-kit is an
+ * open-source project with one maintainer, not a company, so the site is
+ * published by its source code's author rather than by an Organization.
+ */
 export function siteGraph(): JsonLdNode[] {
   return [{
-    '@type': 'Organization',
-    '@id': ORGANIZATION_ID,
+    '@type': 'SoftwareSourceCode',
+    '@id': PROJECT_ID,
     'name': 'pdd-kit',
     'url': `${SITE_ORIGIN}/`,
-    'logo': `${SITE_ORIGIN}/brand/icons/icon-512.png`,
-    'sameAs': ['https://github.com/pdd-kit']
+    'codeRepository': REPOSITORY_URL,
+    'license': 'https://opensource.org/licenses/MIT',
+    'author': MAINTAINER,
+    'sameAs': [REPOSITORY_URL, 'https://www.npmjs.com/package/@itai-gendler/pdd-kit']
   }, {
     '@type': 'WebSite',
     '@id': WEBSITE_ID,
     'name': 'pdd-kit',
     'url': `${SITE_ORIGIN}/`,
-    'publisher': { '@id': ORGANIZATION_ID }
+    'about': { '@id': PROJECT_ID },
+    'publisher': MAINTAINER
   }]
 }
 
@@ -76,7 +91,7 @@ export function blogPosting(post: BlogPostingInput): JsonLdNode {
       'name': author.name,
       ...(author.to ? { url: author.to } : {})
     })),
-    'publisher': { '@id': ORGANIZATION_ID },
+    'publisher': MAINTAINER,
     'isPartOf': { '@id': WEBSITE_ID }
   }
 }

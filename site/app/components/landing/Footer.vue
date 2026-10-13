@@ -4,8 +4,14 @@ const links = [
   { label: 'Changelog', to: '/changelog' },
   { label: 'FAQ', to: '/faq' },
   { label: 'Privacy', to: '/privacy' },
-  { label: 'GitHub', to: 'https://github.com/itai-gendler/pdd-kit', external: true }
+  { label: 'GitHub', to: 'https://github.com/itai-gendler/pdd-kit', external: true },
+  { label: 'Contributing', to: 'https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md', external: true },
+  { label: 'Issues', to: 'https://github.com/itai-gendler/pdd-kit/issues', external: true }
 ]
+
+// An open-source project, credited to its maintainer and contributors rather
+// than to a company.
+const license = 'https://github.com/itai-gendler/pdd-kit/blob/main/LICENSE'
 
 // Two personal accounts, not the project's. The `GitHub` link in the row above
 // goes to `itai-gendler/pdd-kit`; these are the human behind it, which is why they
@@ -43,8 +49,13 @@ const year = new Date().getFullYear()
               <PddKitBrand />
             </NuxtLink>
             <p class="max-w-sm text-sm leading-5 text-dimmed">
-              <span class="block">© {{ year }} pdd-kit</span>
-              <span class="block xl:whitespace-nowrap">Living product models for software teams and coding agents.</span>
+              <NuxtLink
+                :to="license"
+                external
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline underline-offset-2 transition-colors hover:text-highlighted"
+              >MIT licensed</NuxtLink> · © {{ year }} Itai Gendler and contributors
             </p>
           </div>
 

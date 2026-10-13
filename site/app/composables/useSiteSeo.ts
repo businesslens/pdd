@@ -17,7 +17,7 @@ const DEFAULT_IMAGE = {
 }
 
 const DEFAULT_TITLE = 'pdd-kit'
-const DEFAULT_DESCRIPTION = 'pdd-kit gives every software product a living, machine-readable Product Model shared by engineers, product teams, and coding agents.'
+const DEFAULT_DESCRIPTION = 'pdd-kit gives your software product a living, machine-readable Product Model that you and your coding agent build from and check against.'
 
 interface SiteSeoImage {
   /** A site path or an absolute URL. Social crawlers receive it absolute. */

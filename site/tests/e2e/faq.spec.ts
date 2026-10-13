@@ -73,7 +73,7 @@ test('renders every authored question in order with answers initially collapsed'
 test('keeps the source comparison, boundary lists and commands readable', async ({ page }) => {
   await page.goto('/faq')
   await page.waitForLoadState('networkidle')
-  await page.getByRole('button', { name: 'We already have documentation. Why do we need a Product Model?', exact: true }).click()
+  await page.getByRole('button', { name: 'I already have documentation. Why do I need a Product Model?', exact: true }).click()
   const sources = page.getByRole('table').filter({ has: page.getByRole('columnheader', { name: 'Information source' }) })
   await expect(sources).toBeVisible()
   await expect(sources.getByRole('rowheader', { name: 'Product Model', exact: true })).toBeVisible()
@@ -155,7 +155,7 @@ test('fits answer tables to a phone without sideways scrolling', async ({ page }
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/faq')
   await page.waitForLoadState('networkidle')
-  await page.getByRole('button', { name: 'We already have documentation. Why do we need a Product Model?', exact: true }).click()
+  await page.getByRole('button', { name: 'I already have documentation. Why do I need a Product Model?', exact: true }).click()
   const frame = page.getByRole('region', { name: /source of information/i })
   await expect(frame).toBeVisible()
   expect(await frame.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)

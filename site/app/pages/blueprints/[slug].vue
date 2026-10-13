@@ -90,7 +90,7 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
             Pull this Blueprint
           </h2>
           <p class="mt-1 text-sm text-muted">
-            One command, no account. It expands into a canonical <code class="font-mono text-xs">product-model/</code> directory without touching repository-owned files.
+            One command. It expands into a canonical <code class="font-mono text-xs">product-model/</code> directory without touching repository-owned files.
           </p>
           <CommandBlock
             class="mt-4"

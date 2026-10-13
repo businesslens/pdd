@@ -67,7 +67,7 @@ Splitting the product from the implementation changes that. **The product lives
 in one place**, so a product decision is written once, not restated in every spec
 it touches. A purely technical change, like a refactor or a new library, never
 has to touch it. And that one record serves every change, every agent and every
-person on the team.
+person who works on the product.
 
 ## Draw the line
 

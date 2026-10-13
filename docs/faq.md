@@ -11,7 +11,7 @@ description: Where to start from an existing repo, an idea, or a Blueprint — a
 
 How the model relates to the documentation, agent instructions, and knowledge you already have.
 
-### We already have documentation. Why do we need a Product Model?
+### I already have documentation. Why do I need a Product Model?
 
 With the model as the foundation, each source focuses on what it is good at.
 
@@ -39,7 +39,7 @@ what its audience needs, and carries material that is not product definition at 
 style systems, deployment configuration, onboarding). It also **makes uncovered aspects visible**:
 if something is not in the model, nobody decided it.
 
-### We already have AGENTS.md and docs. Isn't that enough?
+### I already have AGENTS.md and docs. Isn't that enough?
 
 It can, and they help. But user docs hold the user subset, and even internal docs are free-form:
 each written its own way, with no common structure, **mixing product decisions with design and
@@ -63,9 +63,8 @@ makes the model useful.
 A well-defined format means agents achieve greater accuracy because they know exactly where to find
 each decision and how the pieces connect. It means humans can review the entire product in a rich,
 visual report using the [view command](./cli-view.md) instead of piecing it together from scattered
-sources. And it means different roles in the organization, from product to engineering to design,
-finally **see the same definition and evolve it together** in the most structured way they have ever
-had.
+sources. And it means you and your agent finally **see the same definition and evolve it together**,
+in the most structured way you have ever had.
 
 The format is still in its early phases. It will evolve as adoption grows and feedback comes in, and
 it is open source precisely so that evolution is shared.
@@ -74,9 +73,9 @@ it is open source precisely so that evolution is shared.
 
 ## Adopting it
 
-What changes for your team, your workflow, and your reviews — and what does not.
+What changes in your workflow and your reviews — and what does not.
 
-### Why should we add yet another tool to our stack?
+### Why add yet another tool to my stack?
 
 PDD is not a standard tool you add to your workflow. It is a format, and the tooling around it just
 helps maintain it. The product definition **already exists**, scattered across docs, code, tickets,
@@ -112,13 +111,14 @@ visualization issue](https://github.com/itai-gendler/pdd-kit/issues/19).
 
 ### Can I share the report without running it locally?
 
-Local only today, but one command opens the model of any PR without cloning:
+The report runs on your machine, not on a hosted page. Anyone can open the model of any PR with one
+command, without cloning:
 
 ```sh
 npx @itai-gendler/pdd-kit view <owner>/<repo> --pr <n>
 ```
 
-A hosted, shareable link is something we are considering, but we do not see it as a blocker.
+Share that command alongside the pull request.
 
 <a name="what-it-is"></a>
 
@@ -166,7 +166,7 @@ approved to do. [See how references work](https://pdd-kit.dev/docs/references).
 ### Why doesn't the product model have a user story resource type?
 
 A user story can describe one ability, one acceptance case, or an entire multi-ability goal,
-depending on how a team sizes its backlog. It therefore has no single Product Model equivalent.
+depending on how a backlog is sized. It therefore has no single Product Model equivalent.
 
 pdd-kit maps its lasting meaning instead: the Entity that acts, a Capability and its Capability
 Scenarios for one ability, or a Journey and its Journey Scenarios for a broader goal. The original
@@ -310,11 +310,8 @@ What it costs, what leaves your machine, and where to get help.
 
 ### What does it cost?
 
-Nothing, and there is nothing to buy. The format, the CLI, the skills, and the Blueprints are all
-MIT licensed. There is no pricing page, no plan, and no billing.
-
-The framework is useful entirely on its own, with no account and no hosted service. If that ever
-changes, it will not change what the MIT licensed framework already gives you.
+Nothing. pdd-kit is an open-source project: the format, the CLI, the skills, and the Blueprints
+are all MIT licensed, and everything runs in your own repository and coding-agent harness.
 
 ### Does my code leave my machine?
 
@@ -325,8 +322,8 @@ chose, so that harness’s data handling and permissions still apply.
 The CLI reaches the network only for explicit operations: listing and pulling download Blueprints
 from a GitHub Release, contributing uses your own authenticated GitHub CLI to open a public pull
 request, and running the package through npx contacts the registry. Everything the CLI does is
-auditable in the [public source](https://github.com/itai-gendler/pdd-kit). What we collect is set out in the [privacy
-policy](https://pdd-kit.dev/privacy).
+auditable in the [public source](https://github.com/itai-gendler/pdd-kit). What the site keeps is set out in the
+[privacy policy](https://pdd-kit.dev/privacy).
 
 ### Do I need an account?
 

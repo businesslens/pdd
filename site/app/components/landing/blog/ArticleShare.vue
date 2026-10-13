@@ -5,7 +5,7 @@
  * Three circular buttons, matching the rhythm of the header this is modelled on,
  * but Facebook is replaced by a copy-link button: nobody shares a Product Model
  * essay to Facebook, and a link on the clipboard is what actually gets pasted
- * into a team channel.
+ * into a chat.
  *
  * The circles stay neutral rather than taking each network's brand colour. A row
  * of saturated blue against parchment is the one thing that would read as

@@ -175,19 +175,33 @@ test('an article carries its byline, reading time, share row, and heading rail',
   await expect(toc.getByRole('link', { name: 'What you get' })).toHaveAttribute('href', '#what-you-get')
 })
 
-test('the footer carries its product line, its links, and the creator credit', async ({ page }) => {
+test('the footer carries its license line, its links, and the creator credit', async ({ page }) => {
   await page.goto('/')
   const footer = page.locator('footer')
 
-  await expect(footer.getByText(`© ${new Date().getFullYear()} pdd-kit`, { exact: true })).toBeVisible()
-  await expect(
-    footer.getByText('Living product models for software teams and coding agents.', { exact: true })
-  ).toBeVisible()
+  // An open-source project credits its maintainer and contributors, not a company.
+  await expect(footer.getByText(
+    `MIT licensed · © ${new Date().getFullYear()} Itai Gendler and contributors`,
+    { exact: true }
+  )).toBeVisible()
+  await expect(footer.getByRole('link', { name: 'MIT licensed', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/itai-gendler/pdd-kit/blob/main/LICENSE'
+  )
+  await expect(footer.getByText(/software teams/)).toHaveCount(0)
   await expect(footer.getByRole('link', { name: 'Changelog', exact: true })).toHaveAttribute('href', '/changelog')
   await expect(footer.getByRole('link', { name: 'FAQ', exact: true })).toHaveAttribute('href', '/faq')
   await expect(footer.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute(
     'href',
     'https://github.com/itai-gendler/pdd-kit'
+  )
+  await expect(footer.getByRole('link', { name: 'Contributing', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/itai-gendler/pdd-kit/blob/main/CONTRIBUTING.md'
+  )
+  await expect(footer.getByRole('link', { name: 'Issues', exact: true })).toHaveAttribute(
+    'href',
+    'https://github.com/itai-gendler/pdd-kit/issues'
   )
   await expect(footer.getByText('Created by Itai Gendler')).toBeVisible()
   // The personal accounts, distinct from the `GitHub` link above, which is the
