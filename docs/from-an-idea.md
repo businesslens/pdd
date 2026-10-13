@@ -28,7 +28,7 @@ Use this door when there is no code yet, or none worth describing.
    well-formed:
 
    ```bash
-   npx @itai-gendler/pdd-kit lint
+   npx pdd-toolkit lint
    ```
 
 4. Ask your agent to implement it: "implement it", or "implement our PDD".

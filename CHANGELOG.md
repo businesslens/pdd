@@ -9,10 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- pdd-kit has a new logo, an engraved compass rose beside a PDD-KIT wordmark, in the report, the README and the browser and app icons.
-
-- **Docs:** pdd-kit.dev, with the docs, the FAQ, the changelog and every Blueprint, is built from this repository, and the FAQ links to its Blueprints again.
-
 - **Report:** **Breaking.** The report viewer's components, composables, CSS classes, custom properties and data attributes now share the `Report` prefix, such as `ReportShell`, `useReportNavigation`, `.report-*` and `data-report-*`. Nuxt hosts that use them by name need the new names.
 
 - **Report:** Display preferences (columns per collection, term tooltips, the expanded resource panel and the collapsed sidebar) are kept in the browser's local storage, and the report sets no cookies. `pdd-kit view` remembers your columns, tooltips and panel choice across runs in a file in your configuration folder.
@@ -24,6 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `pdd-kit view itai-gendler/pdd-kit` opens pdd-kit's own Product Model again, which now also covers `blueprint list`.
+
+## [0.35.0] - 2026-10-13
+
+### Changed
+
+- **CLI:** The npm package is now `pdd-toolkit`: run it with `npx pdd-toolkit`. The command it installs is still `pdd-kit`. Skills installed from the old package are not updated in place; run `npx pdd-toolkit install --force` once to replace them. ([#127](https://github.com/itai-gendler/pdd-kit/pull/127)) ([42233c3](https://github.com/itai-gendler/pdd-kit/commit/42233c3ffad9eacc3ea4760b111ba09a521dacb4))
+
+- pdd-kit has a new logo, an engraved compass rose beside a PDD-KIT wordmark, in the report, the README and the browser and app icons. ([#123](https://github.com/itai-gendler/pdd-kit/pull/123)) ([a00b2be](https://github.com/itai-gendler/pdd-kit/commit/a00b2beae654ea021dbc73f936dd44cefd7a1389))
+
+- **Docs:** pdd-kit.dev, with the docs, the FAQ, the changelog and every Blueprint, is built from this repository, and the FAQ links to its Blueprints again. ([#121](https://github.com/itai-gendler/pdd-kit/pull/121)) ([1e1fc7c](https://github.com/itai-gendler/pdd-kit/commit/1e1fc7c5fe83b6f4698eabf08941dab80780d2fe))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.34.1...v0.35.0][0.35.0]
 
 ## [0.34.1] - 2026-10-12
 
@@ -1248,7 +1260,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.1...HEAD
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.32.0...v0.33.0

@@ -64,13 +64,13 @@ Ideate and verify with pdd-kit. Your own agent implements, your way.
 ## Get started
 
 ```bash
-npx @itai-gendler/pdd-kit install
+npx pdd-toolkit install
 ```
 
 Then start from where you are: [existing code](/docs/from-your-repo),
 [an idea](/docs/from-an-idea), or [a Blueprint](/docs/from-a-blueprint).
 
-To see a real model first, run `npx @itai-gendler/pdd-kit view itai-gendler/pdd-kit`.
+To see a real model first, run `npx pdd-toolkit view itai-gendler/pdd-kit`.
 pdd-kit is developed with pdd-kit, and that command opens its own
 Product Model.
 

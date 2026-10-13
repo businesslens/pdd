@@ -28,7 +28,7 @@ describe('FAQ Markdown projection', () => {
   it('preserves emphasis, commands, group anchors and link destinations', () => {
     const faq = readFaqContent(document([
       ['p', {}, 'Use ', ['strong', {}, 'your agent'], ' and ', ['a', { href: './cli-view.md#usage' }, 'view'], '.'],
-      ['pre', { code: 'npx @itai-gendler/pdd-kit view\n', language: 'sh' }],
+      ['pre', { code: 'npx pdd-toolkit view\n', language: 'sh' }],
       ['p', {}, ['a', { href: 'https://pdd-kit.dev/docs/references' }, 'References']],
       ['p', {}, ['a', { href: 'https://github.com/itai-gendler/pdd-kit/issues' }, 'Help']],
       ['p', {}, ['a', { href: './index' }, 'Introduction']]
@@ -36,7 +36,7 @@ describe('FAQ Markdown projection', () => {
     expect(faq.groups[0]?.id).toBe('getting-started')
     expect(faq.groups[0]?.questions[0]?.answer).toEqual([
       [{ text: 'Use ' }, { text: 'your agent', bold: true }, { text: ' and ' }, { text: 'view', to: '/docs/cli-view#usage' }, { text: '.' }],
-      [{ text: 'npx @itai-gendler/pdd-kit view', code: true }],
+      [{ text: 'npx pdd-toolkit view', code: true }],
       [{ text: 'References', to: '/docs/references', external: true }],
       [{ text: 'Help', to: 'https://github.com/itai-gendler/pdd-kit/issues', external: true }],
       [{ text: 'Introduction', to: '/docs' }]

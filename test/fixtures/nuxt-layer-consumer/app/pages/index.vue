@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReport } from '@itai-gendler/pdd-kit/report'
+import type { ProductReport } from 'pdd-toolkit/report'
 
 const route = useRoute()
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })

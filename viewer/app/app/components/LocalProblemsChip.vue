@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReport } from '@itai-gendler/pdd-kit/report'
+import type { ProductReport } from 'pdd-toolkit/report'
 
 /**
  * The header's answer to "can I trust what's on screen?".

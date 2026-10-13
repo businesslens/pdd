@@ -16,5 +16,5 @@ export const BLUEPRINT_STAT_LABELS: Array<{ key: keyof BlueprintStats, label: st
 ]
 
 export function pullCommand(slug: string): string {
-  return `npx @itai-gendler/pdd-kit@latest blueprint pull ${slug}`
+  return `npx pdd-toolkit@latest blueprint pull ${slug}`
 }

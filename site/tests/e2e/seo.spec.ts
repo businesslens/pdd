@@ -85,7 +85,7 @@ test('the site describes an open-source project and its maintainer', async ({ pa
     'author': maintainer,
     'sameAs': [
       'https://github.com/itai-gendler/pdd-kit',
-      'https://www.npmjs.com/package/@itai-gendler/pdd-kit'
+      'https://www.npmjs.com/package/pdd-toolkit'
     ]
   })
   expect(graph.find(node => node['@type'] === 'WebSite')).toMatchObject({

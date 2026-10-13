@@ -12,7 +12,7 @@ layout, or a pattern shared across pages.
 
 ## Colour
 
-Three ramps come from the `@itai-gendler/pdd-kit/nuxt/theme` Layer
+Three ramps come from the `pdd-toolkit/nuxt/theme` Layer
 (`../layers/nuxt/theme`). The site loads last in the cascade, so it can override
 any token locally.
 

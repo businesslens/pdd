@@ -20,7 +20,7 @@ test('stays light, supports the hero command, and the routes out of the body', a
   await page.getByRole('button', { name: 'Copy command' }).click()
   await expect(page.getByRole('button', { name: 'Command copied' })).toBeVisible()
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(
-    'npx @itai-gendler/pdd-kit install'
+    'npx pdd-toolkit install'
   )
 
   // The hero offers the three ways in and nothing broader. A Get started of its

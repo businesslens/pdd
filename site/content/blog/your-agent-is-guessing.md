@@ -92,7 +92,7 @@ the missing ones.
 Over the past few weeks, I have been working on an open standard for product
 definitions and an open-source implementation of it. Both are out now as
 [pdd-kit](/blog/introducing-pdd-kit): [start with the docs](/docs), or install
-it with `npx @itai-gendler/pdd-kit install`.
+it with `npx pdd-toolkit install`.
 
 Where does your product definition live today? Have you run into this problem?
 How do you handle it?

@@ -14,10 +14,10 @@ product definition.
   lands.
 - **To change what the product should do**, use `pdd-ideate`. To
   model established code the model does not cover, use `pdd-map`.
-- If those skills are not installed, run `npx @itai-gendler/pdd-kit install`.
+- If those skills are not installed, run `npx pdd-toolkit install`.
 - Do not edit this directory while implementing. If the model is ambiguous or
   seems wrong, stop and ask; never settle a product question in code.
-- Never edit `cache/`. Run `npx @itai-gendler/pdd-kit lint` for structural checks.
+- Never edit `cache/`. Run `npx pdd-toolkit lint` for structural checks.
 
 ## What the code must honor
 

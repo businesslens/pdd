@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ReportReference } from '@itai-gendler/pdd-kit/report'
+import type { ReportReference } from 'pdd-toolkit/report'
 
 const props = defineProps<{ kind?: ReportReference['kind'] }>()
 

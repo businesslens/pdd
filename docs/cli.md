@@ -11,13 +11,13 @@ order: 20
 Run the current package without a global install:
 
 ```bash
-npx @itai-gendler/pdd-kit <command> [options]
+npx pdd-toolkit <command> [options]
 ```
 
 Or install it once; the command it adds is `pdd-kit`:
 
 ```bash
-npm install --global @itai-gendler/pdd-kit
+npm install --global pdd-toolkit
 pdd-kit <command> [options]
 ```
 
@@ -48,8 +48,8 @@ The `blueprint` commands move a Product Model between repositories as a
 Each command's help lists only what that command accepts:
 
 ```bash
-npx @itai-gendler/pdd-kit help view
-npx @itai-gendler/pdd-kit blueprint pull --help
+npx pdd-toolkit help view
+npx pdd-toolkit blueprint pull --help
 ```
 
 ## Choosing the Product Model
@@ -66,10 +66,10 @@ out. Point it at the directory that contains `product-model/`, not at
 
 ```bash
 # A nested Blueprint in the current repository
-npx @itai-gendler/pdd-kit view --cwd ./blueprints/example-product
+npx pdd-toolkit view --cwd ./blueprints/example-product
 
 # A model in another directory or repository
-npx @itai-gendler/pdd-kit lint --cwd ../fixture-shop --json
+npx pdd-toolkit lint --cwd ../fixture-shop --json
 ```
 
 `view` can instead take a GitHub repository, branch, or pull request, and then
@@ -96,7 +96,7 @@ in a terminal may offer a newer stable release before it starts:
 
 ```text
 ◆  A newer pdd-kit CLI is available: 0.23.1 → 0.24.0
-│  ● Update now (npm install --global @itai-gendler/pdd-kit@0.24.0)
+│  ● Update now (npm install --global pdd-toolkit@0.24.0)
 │  ○ Not now
 │  ○ Do not remind me again
 ```

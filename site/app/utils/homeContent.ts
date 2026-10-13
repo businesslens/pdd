@@ -531,7 +531,7 @@ export interface HomeComparison {
   more: HomeLink
 }
 
-const INSTALL_COMMAND = 'npx @itai-gendler/pdd-kit install'
+const INSTALL_COMMAND = 'npx pdd-toolkit install'
 
 /**
  * Every way in opens and closes the same way, so both steps are written once.
@@ -596,7 +596,7 @@ const hero = {
       steps: [
         INSTALL_STEP,
         { command: '/pdd-map', text: 'Reads the code without running it, asks what the code can\'t answer, and writes the model once you approve.' },
-        { command: 'npx @itai-gendler/pdd-kit view', text: 'Opens your product model as a report in the browser.' }
+        { command: 'npx pdd-toolkit view', text: 'Opens your product model as a report in the browser.' }
       ] satisfies WayStep[],
       label: 'Map existing repo',
       shortLabel: 'Existing repo',

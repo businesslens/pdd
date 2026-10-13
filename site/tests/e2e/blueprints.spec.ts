@@ -18,7 +18,7 @@ interface BlueprintIndex {
 
 const slug = 'kanban-board'
 const title = 'Kanban Board'
-const pull = (target: string) => `npx @itai-gendler/pdd-kit@latest blueprint pull ${target}`
+const pull = (target: string) => `npx pdd-toolkit@latest blueprint pull ${target}`
 
 const isNarrow = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024
 

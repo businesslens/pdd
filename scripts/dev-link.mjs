@@ -32,7 +32,7 @@ function isPddKitLauncher(target) {
   try {
     const packageRoot = resolve(dirname(target), '..')
     const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
-    return manifest.name === '@itai-gendler/pdd-kit'
+    return manifest.name === 'pdd-toolkit'
   } catch {
     return false
   }

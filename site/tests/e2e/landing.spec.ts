@@ -154,7 +154,7 @@ test('the hero pull picker lists every Blueprint with its Product logo', async (
   await menu.getByRole('menuitem', { name: new RegExp(chosen.title) }).click()
   await expect(menu).toHaveCount(0)
   await expect(trigger).toHaveAccessibleName(`Choose a Blueprint, currently ${chosen.title}`)
-  await expect(dialog.getByText(`@itai-gendler/pdd-kit blueprint pull ${chosen.slug}`)).toBeVisible()
+  await expect(dialog.getByText(`pdd-toolkit blueprint pull ${chosen.slug}`)).toBeVisible()
 })
 
 test('public SEO endpoints stay available', async ({ request }) => {

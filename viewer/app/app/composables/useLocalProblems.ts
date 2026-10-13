@@ -1,4 +1,4 @@
-import type { ProductReport } from '@itai-gendler/pdd-kit/report'
+import type { ProductReport } from 'pdd-toolkit/report'
 
 /** One problem with the authored model, as the CLI serves it. */
 export interface LocalIssue {

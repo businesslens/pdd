@@ -13,7 +13,7 @@ given into a `product-model/` Product Model. For a published Blueprint, use
 [`blueprint pull`](./cli-pull.md) instead.
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint open <report> [--force]
+npx pdd-toolkit blueprint open <report> [--force]
 ```
 
 ## Options
@@ -27,7 +27,7 @@ npx @itai-gendler/pdd-kit blueprint open <report> [--force]
 repository:
 
 ```bash
-npx @itai-gendler/pdd-kit --cwd ./new-product blueprint open ./report.json
+npx pdd-toolkit --cwd ./new-product blueprint open ./report.json
 ```
 
 ## What it does

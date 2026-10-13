@@ -38,7 +38,7 @@ export function siteGraph(): JsonLdNode[] {
     'codeRepository': REPOSITORY_URL,
     'license': 'https://opensource.org/licenses/MIT',
     'author': MAINTAINER,
-    'sameAs': [REPOSITORY_URL, 'https://www.npmjs.com/package/@itai-gendler/pdd-kit']
+    'sameAs': [REPOSITORY_URL, 'https://www.npmjs.com/package/pdd-toolkit']
   }, {
     '@type': 'WebSite',
     '@id': WEBSITE_ID,

@@ -38,7 +38,7 @@ describe.skipIf(process.platform === 'win32')('pdd-kit development link', () => 
     const other = temporary('pdd-kit-dev-other-root-')
     const env = { ...process.env, PDD_KIT_DEV_BIN_DIR: bin }
     mkdirSync(join(other, 'scripts'), { recursive: true })
-    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: '@itai-gendler/pdd-kit' }))
+    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'pdd-toolkit' }))
     writeFileSync(join(other, 'scripts', 'pdd-kit-dev.mjs'), '#!/usr/bin/env node\n')
 
     activateDevelopmentLink(other, env)
@@ -59,7 +59,7 @@ describe.skipIf(process.platform === 'win32')('pdd-kit development link', () => 
     const other = temporary('pdd-kit-dev-unlink-root-')
     const env = { ...process.env, PDD_KIT_DEV_BIN_DIR: bin }
     mkdirSync(join(other, 'scripts'), { recursive: true })
-    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: '@itai-gendler/pdd-kit' }))
+    writeFileSync(join(other, 'package.json'), JSON.stringify({ name: 'pdd-toolkit' }))
     writeFileSync(join(other, 'scripts', 'pdd-kit-dev.mjs'), '#!/usr/bin/env node\n')
     symlinkSync(join(other, 'scripts', 'pdd-kit-dev.mjs'), join(bin, 'pdd-kit-dev'))
 

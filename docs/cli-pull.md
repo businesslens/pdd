@@ -13,7 +13,7 @@ into `product-model/`, to start a product from a reviewed model.
 [`blueprint list`](./cli-list.md) shows the names.
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint pull <name> [--force]
+npx pdd-toolkit blueprint pull <name> [--force]
 ```
 
 ## Options

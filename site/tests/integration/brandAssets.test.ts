@@ -3,7 +3,7 @@ import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const pddKitRoot = dirname(createRequire(import.meta.url).resolve('@itai-gendler/pdd-kit/package.json'))
+const pddKitRoot = dirname(createRequire(import.meta.url).resolve('pdd-toolkit/package.json'))
 const theme = resolve(pddKitRoot, 'layers/nuxt/theme')
 
 const ICON_SET = [

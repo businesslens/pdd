@@ -54,7 +54,7 @@ describe('version discovery', () => {
     const fetchImpl = registryResponse({ latest: '0.8.0', next: '0.9.0-beta.1' })
     expect(await fetchLatestVersion({}, fetchImpl)).toBe('0.8.0')
     expect(fetchImpl).toHaveBeenCalledWith(
-      'https://registry.npmjs.org/-/package/@itai-gendler%2Fpdd-kit/dist-tags',
+      'https://registry.npmjs.org/-/package/pdd-toolkit/dist-tags',
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
   })
@@ -62,7 +62,7 @@ describe('version discovery', () => {
   it('uses the configured npm registry', async () => {
     const fetchImpl = registryResponse({ latest: '0.8.0' })
     await fetchLatestVersion({ npm_config_registry: 'https://npm.example.com/' }, fetchImpl)
-    expect(fetchImpl).toHaveBeenCalledWith('https://npm.example.com/-/package/@itai-gendler%2Fpdd-kit/dist-tags', expect.anything())
+    expect(fetchImpl).toHaveBeenCalledWith('https://npm.example.com/-/package/pdd-toolkit/dist-tags', expect.anything())
   })
 
   it('finds nothing when the registry fails, answers oddly, or tags a prerelease latest', async () => {
@@ -123,34 +123,34 @@ describe('package manager detection', () => {
   const exists = (paths: string[]) => (path: string) => paths.includes(path.replace(/\\/g, '/'))
 
   it('finds global npm installations, including a configured prefix', () => {
-    expect(packageManagerFor('/usr/local/lib/node_modules/@itai-gendler/pdd-kit', 'darwin', exists(['/usr/local/bin/pdd-kit'])))
+    expect(packageManagerFor('/usr/local/lib/node_modules/pdd-toolkit', 'darwin', exists(['/usr/local/bin/pdd-kit'])))
       .toBe('npm')
-    expect(packageManagerFor('/home/a/.npm-global/lib/node_modules/@itai-gendler/pdd-kit', 'linux', exists(['/home/a/.npm-global/bin/pdd-kit'])))
+    expect(packageManagerFor('/home/a/.npm-global/lib/node_modules/pdd-toolkit', 'linux', exists(['/home/a/.npm-global/bin/pdd-kit'])))
       .toBe('npm')
-    expect(packageManagerFor('C:\\Users\\a\\AppData\\Roaming\\npm\\node_modules\\@itai-gendler\\pdd-kit', 'win32', exists(['C:/Users/a/AppData/Roaming/npm/pdd-kit.cmd'])))
+    expect(packageManagerFor('C:\\Users\\a\\AppData\\Roaming\\npm\\node_modules\\pdd-toolkit', 'win32', exists(['C:/Users/a/AppData/Roaming/npm/pdd-kit.cmd'])))
       .toBe('npm')
   })
 
   it('finds global pnpm, Yarn and Bun installations', () => {
-    expect(packageManagerFor('/Users/a/Library/pnpm/global/5/.pnpm/@itai-gendler+pdd-kit@0.7.1/node_modules/@itai-gendler/pdd-kit', 'darwin', exists([])))
+    expect(packageManagerFor('/Users/a/Library/pnpm/global/5/.pnpm/pdd-toolkit@0.7.1/node_modules/pdd-toolkit', 'darwin', exists([])))
       .toBe('pnpm')
-    expect(packageManagerFor('/home/a/.config/yarn/global/node_modules/@itai-gendler/pdd-kit', 'linux', exists([]))).toBe('yarn')
-    expect(packageManagerFor('C:/Users/a/AppData/Local/Yarn/Data/global/node_modules/@itai-gendler/pdd-kit', 'win32', exists([]))).toBe('yarn')
-    expect(packageManagerFor('/home/a/.bun/install/global/node_modules/@itai-gendler/pdd-kit', 'linux', exists([]))).toBe('bun')
+    expect(packageManagerFor('/home/a/.config/yarn/global/node_modules/pdd-toolkit', 'linux', exists([]))).toBe('yarn')
+    expect(packageManagerFor('C:/Users/a/AppData/Local/Yarn/Data/global/node_modules/pdd-toolkit', 'win32', exists([]))).toBe('yarn')
+    expect(packageManagerFor('/home/a/.bun/install/global/node_modules/pdd-toolkit', 'linux', exists([]))).toBe('bun')
   })
 
   it('leaves npx runs, project dependencies and checkouts alone', () => {
-    expect(packageManagerFor('/home/a/.npm/_npx/0123456789abcdef/node_modules/@itai-gendler/pdd-kit', 'linux', exists([]))).toBeUndefined()
-    expect(packageManagerFor('/work/shop/node_modules/@itai-gendler/pdd-kit', 'linux', exists([]))).toBeUndefined()
-    expect(packageManagerFor('/work/lib/node_modules/@itai-gendler/pdd-kit', 'linux', exists([]))).toBeUndefined()
+    expect(packageManagerFor('/home/a/.npm/_npx/0123456789abcdef/node_modules/pdd-toolkit', 'linux', exists([]))).toBeUndefined()
+    expect(packageManagerFor('/work/shop/node_modules/pdd-toolkit', 'linux', exists([]))).toBeUndefined()
+    expect(packageManagerFor('/work/lib/node_modules/pdd-toolkit', 'linux', exists([]))).toBeUndefined()
     expect(packageManagerFor('/work/pdd', 'linux', exists([]))).toBeUndefined()
   })
 
   it('installs exactly the offered version with the owning package manager', () => {
-    expect(installCommand('npm', '0.8.0')).toEqual({ command: 'npm', args: ['install', '--global', '@itai-gendler/pdd-kit@0.8.0'] })
-    expect(installCommand('pnpm', '0.8.0')).toEqual({ command: 'pnpm', args: ['add', '--global', '@itai-gendler/pdd-kit@0.8.0'] })
-    expect(installCommand('yarn', '0.8.0')).toEqual({ command: 'yarn', args: ['global', 'add', '@itai-gendler/pdd-kit@0.8.0'] })
-    expect(installCommand('bun', '0.8.0')).toEqual({ command: 'bun', args: ['add', '--global', '@itai-gendler/pdd-kit@0.8.0'] })
+    expect(installCommand('npm', '0.8.0')).toEqual({ command: 'npm', args: ['install', '--global', 'pdd-toolkit@0.8.0'] })
+    expect(installCommand('pnpm', '0.8.0')).toEqual({ command: 'pnpm', args: ['add', '--global', 'pdd-toolkit@0.8.0'] })
+    expect(installCommand('yarn', '0.8.0')).toEqual({ command: 'yarn', args: ['global', 'add', 'pdd-toolkit@0.8.0'] })
+    expect(installCommand('bun', '0.8.0')).toEqual({ command: 'bun', args: ['add', '--global', 'pdd-toolkit@0.8.0'] })
   })
 })
 
@@ -206,7 +206,7 @@ describe('update prompt', () => {
     await run({ choose })
     expect(choose).toHaveBeenCalledWith('0.7.1', '0.8.0', {
       command: 'npm',
-      args: ['install', '--global', '@itai-gendler/pdd-kit@0.8.0']
+      args: ['install', '--global', 'pdd-toolkit@0.8.0']
     })
   })
 
@@ -241,7 +241,7 @@ describe('update prompt', () => {
     known('0.8.0')
     choices = ['update']
     expect(await run()).toBe(0)
-    expect(installs).toEqual([{ command: 'npm', args: ['install', '--global', '@itai-gendler/pdd-kit@0.8.0'] }])
+    expect(installs).toEqual([{ command: 'npm', args: ['install', '--global', 'pdd-toolkit@0.8.0'] }])
     expect(output.join('\n')).toContain('Updated the pdd-kit CLI to 0.8.0')
   })
 
@@ -252,7 +252,7 @@ describe('update prompt', () => {
     expect(await run()).toBeUndefined()
     const message = output.join('\n')
     expect(message).toContain('continuing with 0.7.1')
-    expect(message).toContain('npm install --global @itai-gendler/pdd-kit@0.8.0')
+    expect(message).toContain('npm install --global pdd-toolkit@0.8.0')
     expect(await run()).toBeUndefined()
     expect(installs).toHaveLength(1)
   })

@@ -3,10 +3,10 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 /**
- * The npm package. npm refuses the bare name `pdd-kit` as too close to `pdfkit`,
- * so the package is scoped; the command it installs is still `pdd-kit`.
+ * The npm package. npm refuses the name `pdd-kit` as too close to `pdfkit`, so
+ * the package is `pdd-toolkit`; the command it installs is still `pdd-kit`.
  */
-export const PACKAGE_NAME = '@itai-gendler/pdd-kit'
+export const PACKAGE_NAME = 'pdd-toolkit'
 
 /** The command the package installs. */
 export const CLI_NAME = 'pdd-kit'

@@ -27,7 +27,7 @@ file you were given.
 
 ## Steps
 
-1. Find one with `npx @itai-gendler/pdd-kit blueprint list`, or browse
+1. Find one with `npx pdd-toolkit blueprint list`, or browse
    [`blueprints/`](https://github.com/itai-gendler/pdd-kit/tree/main/blueprints)
    on GitHub. Create the project, [install the skills](./installation.md) into
    it, and pull the Blueprint by name:
@@ -35,8 +35,8 @@ file you were given.
    ```bash
    mkdir my-product && cd my-product
    git init
-   npx @itai-gendler/pdd-kit install
-   npx @itai-gendler/pdd-kit blueprint pull kanban-board
+   npx pdd-toolkit install
+   npx pdd-toolkit blueprint pull kanban-board
    ```
 
    It writes only `product-model/`; nothing else in the repo changes.
@@ -45,7 +45,7 @@ file you were given.
    the Blueprint has no logo), then skim the rest with:
 
    ```bash
-   npx @itai-gendler/pdd-kit view
+   npx pdd-toolkit view
    ```
 
 3. If you want something more or different, ask your agent for the change,

@@ -27,5 +27,5 @@ body:
     id: lint-output
     attributes:
       label: Lint output (optional)
-      description: Output of `npx @itai-gendler/pdd-kit lint` if relevant. Redact anything private.
+      description: Output of `npx pdd-toolkit lint` if relevant. Redact anything private.
       render: shell

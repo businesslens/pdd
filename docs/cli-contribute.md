@@ -12,7 +12,7 @@ Propose your Product Model as a
 [Blueprint](./from-a-blueprint.md#what-a-blueprint-is), by opening a pull request.
 
 ```bash
-npx @itai-gendler/pdd-kit blueprint contribute [--yes]
+npx pdd-toolkit blueprint contribute [--yes]
 ```
 
 ## Options

@@ -1,4 +1,4 @@
-import type { ReportBusinessRuleTarget } from '@itai-gendler/pdd-kit/report'
+import type { ReportBusinessRuleTarget } from 'pdd-toolkit/report'
 import type { AnyResourceView, ReportWorkspace, RuleView } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
 

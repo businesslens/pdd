@@ -77,7 +77,7 @@ back to you; it is never decided in code.
 At any point in the loop, open the model as a local report in your browser:
 
 ```bash
-npx @itai-gendler/pdd-kit view
+npx pdd-toolkit view
 ```
 
 ![The local report open on a Blueprint's overview page](./images/report-overview.webp)
