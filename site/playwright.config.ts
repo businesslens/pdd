@@ -4,14 +4,17 @@ import { applyTestServerEnvironment } from './tests/support/environment'
 const environment = applyTestServerEnvironment()
 
 // The suites run against what ships: the generated site, served as static files
-// the way a static host serves them (`/faq` from `faq.html`). CI generates once
-// before the run; locally the server step generates first.
+// the way a static host serves them (`/faq` from `faq.html`). CI generates once,
+// in the build job, and hands the output to the e2e job; locally the server step
+// generates first.
 const serve = `serve --no-clipboard --listen ${environment.port} .output/public`
 const serverCommand = process.env.CI ? serve : `pnpm generate && ${serve}`
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false,
+  // Tests within a file share no state, so they are scheduled one by one:
+  // shards then split by test rather than by whole file, and come out even.
+  fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   outputDir: 'test-results/playwright',
   reporter: process.env.CI
@@ -35,7 +38,11 @@ export default defineConfig({
     timeout: 600_000,
     url: environment.appURL
   }],
-  workers: 1,
+  // The site is static, so tests share nothing but the file server and run
+  // side by side. CI splits the suite across four runners (`--shard`) with
+  // two browsers each, since four on one four-core runner starve each other;
+  // locally, Playwright's default.
+  workers: process.env.CI ? 2 : undefined,
   projects: [{
     name: 'desktop-chromium',
     testMatch: ['**/faq.spec.ts', '**/landing.spec.ts', '**/landing.desktop.spec.ts', '**/header.spec.ts', '**/blueprints.spec.ts', '**/catalog-index.spec.ts', '**/blueprint-feed.spec.ts', '**/blog-feed.spec.ts', '**/docs.spec.ts', '**/docs-vocabulary.spec.ts', '**/seo.spec.ts', '**/changelog.spec.ts', '**/report-parity.spec.ts', '**/production-theme.spec.ts'],

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Keep dependency updates for the pdd-kit package, its viewer and the pdd-kit.dev site predictable and reviewable.",
+  "dependencyDashboard": true,
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "rangeStrategy": "bump",
+  "minimumReleaseAge": "25 hours",
+  "timezone": "Asia/Jerusalem",
+  "schedule": ["* 0-3 * * *"],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "postUpdateOptions": ["pnpmDedupe"],
+  "packageRules": [
+    {
+      "description": "Group patch and minor dependency updates into one PR.",
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "non-major dependencies",
+      "groupSlug": "non-major"
+    },
+    {
+      "description": "Keep package-manager escape hatches manual.",
+      "matchDepTypes": ["resolutions", "overrides", "pnpm.overrides"],
+      "enabled": false
+    },
+    {
+      "description": "The e2e job's container image must match @playwright/test, so they update together, in their own PR.",
+      "matchPackageNames": ["@playwright/test", "playwright", "mcr.microsoft.com/playwright"],
+      "groupName": "Playwright",
+      "groupSlug": "playwright"
+    },
+    {
+      "description": "Playwright image tags are a v-prefixed version with an Ubuntu suffix.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-noble$"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The deploy jobs run a pinned Wrangler through npx.",
+      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      "matchStrings": ["npx --yes wrangler@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "wrangler",
+      "datasourceTemplate": "npm"
+    }
+  ]
+}

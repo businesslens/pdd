@@ -5,6 +5,8 @@ packages:
 allowBuilds:
   core-js: false
   esbuild: true
+  # Installs the Git hooks in lefthook.yml.
+  lefthook: true
   unrs-resolver: false
   vue-demi: true
 
