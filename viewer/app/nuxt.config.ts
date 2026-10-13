@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createRequire } from 'node:module'
-import { defineEventHandler, setHeader } from 'h3'
+import { defineEventHandler, readBody, setHeader } from 'h3'
 
 const { version: pddVersion } = createRequire(import.meta.url)('../../package.json')
 
@@ -18,6 +18,7 @@ const fixtureRoot = resolve(process.env.PDD_KIT_DEV_MODEL || '../../blueprints/c
 
 // The dev star remembers its state until `nuxt dev` restarts.
 let devStarred = false
+const devPreferences: Record<string, unknown> = {}
 
 const devHandlers = [
   {
@@ -44,6 +45,15 @@ const devHandlers = [
       setHeader(event, 'content-type', 'text/event-stream')
       setHeader(event, 'cache-control', 'no-store')
       return ': pdd-kit dev viewer\n\n'
+    })
+  },
+  {
+    // Keeps preferences for this dev server only; the CLI keeps them in a file.
+    route: '/_pdd-kit/preferences',
+    handler: defineEventHandler(async (event) => {
+      setHeader(event, 'cache-control', 'no-store')
+      if (event.method === 'PUT') Object.assign(devPreferences, await readBody(event))
+      return devPreferences
     })
   },
   {

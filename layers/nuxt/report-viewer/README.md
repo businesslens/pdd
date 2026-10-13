@@ -383,7 +383,12 @@ start at one, tree cards at three), `pdd-kit:resource-expanded` (whether the
 resource slideover fills the window) and the sidebar's collapsed rail. No host
 renders the report per request, so a prerendered page draws the defaults and
 applies the stored choices once hydration finishes; the client-only local
-viewer reads them before its first paint. Without storage, as in some private
+viewer reads them before its first paint. A browser keys local storage by
+origin, port included, and `pdd-kit view` listens on a new port each run, so
+the CLI also keeps the first three in the reader's configuration folder: the
+local viewer copies them into storage before the report reads them, and saves
+each change, which the theme Layer passes to `onPddKitPreferenceChange`
+listeners. Without storage, as in some private
 windows, a choice lasts as long as the page. Nothing else is kept, because
 nothing else is configurable: the reading and its grouping are decided by the
 report rather than auditioned on every visit.

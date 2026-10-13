@@ -11,6 +11,7 @@ import {
   type GithubSnapshot
 } from '../core/github-repository.js'
 import { UsageError } from '../core/usage-error.js'
+import { viewerPreferencesPath } from '../core/viewer-preferences.js'
 import { existsSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 
@@ -132,6 +133,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     const viewer = await startLocalViewer({
       port: options.port,
       initialReport,
+      preferencesFile: viewerPreferencesPath(),
       waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use pdd-map for established code or pdd-ideate for a new product.`,
       ...(resolved ? bindingFor(resolved, !snapshot) : {})
     })

@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Report:** **Breaking.** The report viewer's components, composables, CSS classes, custom properties and data attributes now share the `Report` prefix, such as `ReportShell`, `useReportNavigation`, `.report-*` and `data-report-*`. Nuxt hosts that use them by name need the new names.
 
-- **Report:** Display preferences (columns per collection, term tooltips, the expanded resource panel and the collapsed sidebar) are kept in the browser's local storage, and the report sets no cookies.
+- **Report:** Display preferences (columns per collection, term tooltips, the expanded resource panel and the collapsed sidebar) are kept in the browser's local storage, and the report sets no cookies. `pdd-kit view` remembers your columns, tooltips and panel choice across runs in a file in your configuration folder.
 
 - **Skills:** In a pdd-kit development checkout, the skills run the `pdd-kit-dev` launcher; they no longer run a generically named program from `~/.local/bin`.
 

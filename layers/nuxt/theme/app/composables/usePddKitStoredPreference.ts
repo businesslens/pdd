@@ -3,6 +3,19 @@ import { effectScope, watch, type Ref } from 'vue'
 /* Keys this page has already read from storage and is now writing back. */
 const restored = new Set<string>()
 
+type PreferenceListener = (key: string, value: unknown) => void
+const listeners = new Set<PreferenceListener>()
+
+/**
+ * Calls `listener` with every preference the reader changes, so a host whose
+ * origin changes between visits, like the local viewer's port, can keep the
+ * choice somewhere that outlives it. Returns the function that stops it.
+ */
+export function onPddKitPreferenceChange(listener: PreferenceListener): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
 /**
  * A reader's preference, kept in this browser's local storage and shared by
  * every caller on the page.
@@ -17,6 +30,7 @@ const restored = new Set<string>()
  * `parse` receives the stored JSON and returns `undefined` for anything it
  * does not recognize, which keeps the fallback. Storage that throws (a private
  * window, blocked site data) leaves the preference lasting as long as the page.
+ * Every change is also passed to `onPddKitPreferenceChange` listeners.
  */
 export function usePddKitStoredPreference<T>(
   key: string,
@@ -43,6 +57,7 @@ export function usePddKitStoredPreference<T>(
       } catch {
         // Without storage the choice lasts as long as the page.
       }
+      for (const listener of listeners) listener(key, value)
     }, { deep: true }))
   }
 

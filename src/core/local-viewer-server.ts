@@ -10,6 +10,7 @@ import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
 import { ghStarClient, type GithubStarClient, type GithubStarState } from './github-star.js'
+import { viewerPreferencesRoute } from './viewer-preferences.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
 const REPORT_PATH = '/_pdd-kit/report.json'
@@ -20,6 +21,7 @@ const LOGO_PATH = '/_pdd-kit/logo.svg'
 const ASSET_PREFIX = '/_pdd-kit/file/'
 const CODE_PATH = '/_pdd-kit/code'
 const GITHUB_STAR_PATH = '/_pdd-kit/github-star'
+const PREFERENCES_PATH = '/_pdd-kit/preferences'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
 const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('@itai-gendler/pdd-kit/package.json'), '../layers/nuxt/theme/public/brand')
 
@@ -137,6 +139,11 @@ export interface LocalViewerOptions {
   assetRoot?: string
   /** Stars or unstars pdd-kit on the reader's behalf. Defaults to the reader's own `gh` sign-in. */
   githubStar?: GithubStarClient
+  /**
+   * The file that keeps the reader's display preferences across runs, whose
+   * port changes. Omit it and the report keeps them in the browser alone.
+   */
+  preferencesFile?: string
 }
 
 interface ReportSnapshot {
@@ -570,7 +577,9 @@ function requestHandler(
       return
     }
     const pathname = url.pathname
-    const methods = pathname === GITHUB_STAR_PATH ? ['GET', 'HEAD', 'POST', 'DELETE'] : ['GET', 'HEAD']
+    const methods = pathname === GITHUB_STAR_PATH
+      ? ['GET', 'HEAD', 'POST', 'DELETE']
+      : pathname === PREFERENCES_PATH ? ['GET', 'HEAD', 'PUT'] : ['GET', 'HEAD']
     if (!methods.includes(request.method ?? '')) {
       response.setHeader('allow', methods.join(', '))
       json(response, 405, { message: 'Method not allowed.' }, false)
@@ -594,6 +603,10 @@ function requestHandler(
     }
     if (pathname === GITHUB_STAR_PATH) {
       githubStar(request, response, options.githubStar ?? ghStarClient, port, head)
+      return
+    }
+    if (pathname === PREFERENCES_PATH) {
+      viewerPreferencesRoute(request, response, options.preferencesFile, sameOrigin(request, port), head)
       return
     }
     if (pathname === LOGO_PATH) {

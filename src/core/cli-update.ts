@@ -96,15 +96,23 @@ export function updateCheckSuppressed(env: NodeJS.ProcessEnv): boolean {
   return enabled(env.PDD_KIT_NO_UPDATE_CHECK) || CI_VARIABLES.some(name => enabled(env[name]))
 }
 
+/** The reader's configuration folder, which holds pdd-kit's own `pdd-kit/` folder. */
+export function configHome(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  home: string = homedir()
+): string {
+  return env.XDG_CONFIG_HOME?.trim()
+    || (platform === 'win32' ? env.APPDATA?.trim() || join(home, 'AppData', 'Roaming') : join(home, '.config'))
+}
+
 /** Where the update check keeps its state, including "Do not remind me again". */
 export function updateStatePath(
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
   home: string = homedir()
 ): string {
-  const configHome = env.XDG_CONFIG_HOME?.trim()
-    || (platform === 'win32' ? env.APPDATA?.trim() || join(home, 'AppData', 'Roaming') : join(home, '.config'))
-  return join(configHome, 'pdd-kit', 'update-check.json')
+  return join(configHome(env, platform, home), 'pdd-kit', 'update-check.json')
 }
 
 export function readUpdateState(path: string): UpdateState {

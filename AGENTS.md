@@ -311,6 +311,8 @@ costed already.
   Term tooltips are restored from the Vocabulary panel; the choice is kept in
   local storage. No host renders the report per request, so pdd-kit sets no
   cookies; a prerendered page applies stored preferences after hydration.
+  `pdd-kit view` also keeps them in the reader's configuration folder, because
+  its port, and with it the browser's storage, changes every run.
 - **A section renders as more than prose only when four things align**: a
   recognized H2 in `spec/format.md`; a lint-enforced content shape; a typed
   field in `src/core/portable.ts`; and a component that reads it. Otherwise it

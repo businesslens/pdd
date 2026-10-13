@@ -40,6 +40,9 @@ export default defineNuxtConfig({
   cookies: a prerendered page hydrates with `fallback` and applies the stored
   value once hydration finishes, while a client-only host reads it before the
   first paint. `parse` rejects stored values it does not recognize.
+- **`onPddKitPreferenceChange(listener)`** — called with each preference the
+  reader changes, for a host whose origin changes between visits. The local
+  viewer uses it to keep preferences across runs on new ports.
 - **Nuxt UI defaults**: `size: 'sm'` and `color: 'primary'`.
 - **Dark mode is off.** The `darkMode` constant in `nuxt.config.ts` is `false`
   until dark mode reads as well as light
