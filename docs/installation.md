@@ -11,7 +11,7 @@ order: 2
 pdd-kit is installed once per repository (or once per machine) with the
 `pdd-kit` CLI. Its npm package is named `pdd-toolkit` and installs the
 `pdd-kit` command, so run it with `npx pdd-toolkit …`, or install the package
-globally and run `pdd-kit …`. It requires Node.js 22.12 or newer.
+globally and run `pdd-kit …`. It requires Node.js 20.12 or newer.
 
 ```bash
 npx pdd-toolkit install

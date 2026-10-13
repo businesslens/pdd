@@ -90,7 +90,7 @@
     "prepack": "pnpm build"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=20.12.0"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
@@ -155,7 +155,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
-    "@types/node": "^22.10.0",
+    "@types/node": "^20.12.0",
     "lefthook": "^2.2.1",
     "tsdown": "^0.12.0",
     "typescript": "^5.7.0",

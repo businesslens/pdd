@@ -84,7 +84,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22 # any version from 22.12
+          node-version: 22 # any version from 20.12
       - run: npx pdd-toolkit lint
 ```
 
