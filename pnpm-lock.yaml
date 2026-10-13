@@ -329,8 +329,8 @@ importers:
         specifier: ^22.10.0
         version: 22.20.1
       editorconfig-checker:
-        specifier: ^6.1.1
-        version: 6.2.0
+        specifier: ^7.0.0
+        version: 7.0.0
       eslint:
         specifier: ^10.4.1
         version: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
@@ -4204,9 +4204,9 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
-  editorconfig-checker@6.2.0:
-    resolution: {integrity: sha512-5zrNwlxUWyOvAcrSK4mPIGNYrf1KK5pH2D3VXDB1AcDsDdBfLNPOjBL5jHgYh+JykOIuXlQHMeYvXPrZwGNmHA==}
-    engines: {node: '>=20.11.0'}
+  editorconfig-checker@7.0.0:
+    resolution: {integrity: sha512-bqTCyzjz6Qbah4hBO032mQiwGstrHL/jwsnlFvlqrDcpv8rv2pSgLo00Fnji1u6PGtSdY6uydzVLUdHupbpNBQ==}
+    engines: {node: '>=24.14.0'}
     hasBin: true
 
   ee-first@1.1.1:
@@ -12934,7 +12934,7 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  editorconfig-checker@6.2.0: {}
+  editorconfig-checker@7.0.0: {}
 
   ee-first@1.1.1: {}
 
