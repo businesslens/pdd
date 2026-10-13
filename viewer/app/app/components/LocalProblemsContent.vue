@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReport } from '@itai-gendler/pdd-kit/report'
+import type { ProductReport } from 'pdd-toolkit/report'
 import type { LocalIssue } from '~/composables/useLocalProblems'
 
 /**

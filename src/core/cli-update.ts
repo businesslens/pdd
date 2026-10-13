@@ -144,7 +144,7 @@ export function packageManagerFor(
   if (/\/\.bun\/install\/global\/node_modules\//i.test(path)) return 'bun'
   if (/\/yarn\/(?:data\/)?global\/node_modules\//i.test(path)) return 'yarn'
 
-  // npm installs globally to <prefix>/lib/node_modules/<scope>/<name> with its
+  // npm installs globally to <prefix>/lib/node_modules/<name> with its
   // bin in <prefix>/bin, or to <prefix>/node_modules beside <prefix>/pdd-kit.cmd
   // on Windows. Matching that shape covers a configured prefix as well.
   const modules = path.slice(0, -PACKAGE.length - 1)
@@ -182,7 +182,7 @@ export async function fetchLatestVersion(
   fetchImpl: typeof fetch = fetch
 ): Promise<string | undefined> {
   try {
-    const response = await fetchImpl(`${registry(env)}/-/package/${PACKAGE.replace('/', '%2F')}/dist-tags`, {
+    const response = await fetchImpl(`${registry(env)}/-/package/${PACKAGE}/dist-tags`, {
       headers: { accept: 'application/json' },
       signal: AbortSignal.timeout(10_000)
     })

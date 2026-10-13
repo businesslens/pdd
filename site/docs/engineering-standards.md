@@ -10,7 +10,7 @@ here runs per request.
 ## Runtime and packages
 
 - The site is the pnpm workspace member `pdd-kit-site`. It depends on
-  `@itai-gendler/pdd-kit` as `workspace:*`, and its report viewer and theme
+  `pdd-toolkit` as `workspace:*`, and its report viewer and theme
   Layers resolve to that checkout's source.
 - Node.js `>=22.12.0`. CI uses Node 24.
 - The root `packageManager` pins pnpm. Do not touch the lockfile with another

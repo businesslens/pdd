@@ -10,7 +10,7 @@
  * on the second row, so the control line stays a fixed, scannable width however
  * much is selected, and every value keeps its own way out.
  */
-import type { ReportInterface } from '@itai-gendler/pdd-kit/report'
+import type { ReportInterface } from 'pdd-toolkit/report'
 import type { ActingSide, EntityFacet, ReportResourceKind } from '../utils/reportWorkspace'
 
 export interface BlrFilterChip {

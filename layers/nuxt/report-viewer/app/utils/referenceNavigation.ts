@@ -1,5 +1,5 @@
 import type { InjectionKey, Ref } from 'vue'
-import type { ReportReference } from '@itai-gendler/pdd-kit/report'
+import type { ReportReference } from 'pdd-toolkit/report'
 
 export const isExternalReference = (target: string) => /^https?:\/\//i.test(target)
 

@@ -12,7 +12,7 @@ Install the three `pdd-*` agent skills into your AI harnesses, once per
 project or once for your user, before you map, ideate or verify.
 
 ```bash
-npx @itai-gendler/pdd-kit install [--providers <list>] [--scope project|global] [--yes] [--force]
+npx pdd-toolkit install [--providers <list>] [--scope project|global] [--yes] [--force]
 ```
 
 ## Options
@@ -28,7 +28,7 @@ Without a terminal (in CI, for example), pass `--providers` and `--scope`, or
 `--yes` to take the defaults:
 
 ```bash
-npx @itai-gendler/pdd-kit install --providers claude,codex --scope project
+npx pdd-toolkit install --providers claude,codex --scope project
 ```
 
 See [Installation](./installation.md) for each harness's directories and how to

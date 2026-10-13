@@ -15,7 +15,7 @@ import { expectReportHydrated } from '../support/report'
  * CLI, and require both to read the same.
  */
 const slug = 'kanban-board'
-const cli = resolve('node_modules/@itai-gendler/pdd-kit/dist/cli.js')
+const cli = resolve('node_modules/pdd-toolkit/dist/cli.js')
 
 test('the site and the local viewer render one Product Report contract', async ({ page, request }) => {
   test.setTimeout(120_000)

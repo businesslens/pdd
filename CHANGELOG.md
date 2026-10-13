@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CLI:** The npm package is now `pdd-toolkit`: run it with `npx pdd-toolkit`. The command it installs is still `pdd-kit`. Skills installed from the old package are not updated in place; run `npx pdd-toolkit install --force` once to replace them.
+
 - pdd-kit has a new logo, an engraved compass rose beside a PDD-KIT wordmark, in the report, the README and the browser and app icons.
 
 - **Docs:** pdd-kit.dev, with the docs, the FAQ, the changelog and every Blueprint, is built from this repository, and the FAQ links to its Blueprints again.

@@ -6,12 +6,12 @@ import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 
 /** The npm package that installs the `pdd-kit` command. */
-const PACKAGE = '@itai-gendler/pdd-kit'
+const PACKAGE = 'pdd-toolkit'
 
 /**
  * Pin the CLI to the version these skills were installed from.
  *
- * `@itai-gendler/pdd-kit@latest` is wrong here: the skills and the CLI are one release,
+ * `pdd-toolkit@latest` is wrong here: the skills and the CLI are one release,
  * and a skill installed from version X must lint with version X. Resolving
  * `latest` at run time means a model authored against a newer format gets
  * linted by an older published CLI, which reports the new frontmatter keys as

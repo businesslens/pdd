@@ -12,7 +12,7 @@ import { destinationForLocation } from '../utils/reportDestinations'
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReport } from '@itai-gendler/pdd-kit/report'
+import type { ProductReport } from 'pdd-toolkit/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 import { RESOURCE_NOTICES, type ReportResourceNotice } from '../utils/resourceNotices'

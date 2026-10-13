@@ -135,7 +135,7 @@ test('Brand Warm code stays readable and matches between docs and landing', asyn
 
   const docsTokenColors = async () => {
     await page.goto('/docs/installation')
-    const block = page.locator('.docs-prose pre.shiki').filter({ hasText: 'npx @itai-gendler/pdd-kit install' })
+    const block = page.locator('.docs-prose pre.shiki').filter({ hasText: 'npx pdd-toolkit install' })
     await expect(block).toBeVisible()
 
     return {

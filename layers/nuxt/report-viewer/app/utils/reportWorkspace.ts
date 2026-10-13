@@ -21,8 +21,8 @@ import type {
   ReportScreen,
   ReportSupportingSection,
   ReportVariation
-} from '@itai-gendler/pdd-kit/report'
-import { operationPlaces, permissionTargetSelectsOperation, reportVariationMembership } from '@itai-gendler/pdd-kit/report/selectors'
+} from 'pdd-toolkit/report'
+import { operationPlaces, permissionTargetSelectsOperation, reportVariationMembership } from 'pdd-toolkit/report/selectors'
 
 /** Split an authored `cardinality` into its two ends. */
 export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {

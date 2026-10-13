@@ -51,7 +51,7 @@ watch(blueprints, (list) => {
 }, { immediate: true })
 
 const current = computed(() => blueprints.value.find(item => item.slug === chosen.value))
-const prefix = ' @itai-gendler/pdd-kit blueprint pull '
+const prefix = ' pdd-toolkit blueprint pull '
 const command = computed(() => `npx${prefix}${chosen.value}`)
 
 const open = ref(false)
