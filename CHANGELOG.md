@@ -7,23 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-10-14
+
 ### Added
 
-- Each version is published as a GitHub Release with its changelog, so watching the repository's releases announces it.
+- Each version is published as a GitHub Release with its changelog, so watching the repository's releases announces it. ([#137](https://github.com/itai-gendler/pdd-kit/pull/137)) ([5b07e79](https://github.com/itai-gendler/pdd-kit/commit/5b07e790fbdeed268c3ee716982a5b92acbc0f4e))
 
-- **CLI:** `install` asks how pdd-kit should fit into implementation: check on request, or orchestrated, where it splits the work into phases and checks each one. Your agent implements your usual way either way. `install` and `update` take `--orchestrate`; it is off by default, and `update` keeps your choice.
+- **CLI:** `install` asks how pdd-kit should fit into implementation: check on request, or orchestrated, where it splits the work into phases and checks each one. Your agent implements your usual way either way. `install` and `update` take `--orchestrate`; it is off by default, and `update` keeps your choice. ([#160](https://github.com/itai-gendler/pdd-kit/pull/160)) ([88126ed](https://github.com/itai-gendler/pdd-kit/commit/88126edba6bb062238f5b8200eef37b5489edc36))
 
 ### Changed
 
-- **CLI:** **Breaking.** pdd-kit requires Node.js 22.12 or later; Node.js 20 has reached end of life.
+- **CLI:** **Breaking.** pdd-kit requires Node.js 22.12 or later; Node.js 20 has reached end of life. ([#153](https://github.com/itai-gendler/pdd-kit/pull/153)) ([53cb2df](https://github.com/itai-gendler/pdd-kit/commit/53cb2df3846fc9dfc376d25c6fd2ea41a471a5fd))
 
-- **Skills:** **Breaking.** pdd-kit no longer takes over implementing. Asking your agent to implement works your usual way, and `pdd-verify` runs when you ask for a check: it reports every gap first and fixes only the ones you choose. To have verify plan and check implementation in phases as before, opt in to **implement with verify** at install, in your `AGENTS.md`, or for one request.
+- **Skills:** **Breaking.** pdd-kit no longer takes over implementing. Asking your agent to implement works your usual way, and `pdd-verify` runs when you ask for a check: it reports every gap first and fixes only the ones you choose. To have verify plan and check implementation in phases as before, opt in to **implement with verify** at install, in your `AGENTS.md`, or for one request. ([#160](https://github.com/itai-gendler/pdd-kit/pull/160)) ([88126ed](https://github.com/itai-gendler/pdd-kit/commit/88126edba6bb062238f5b8200eef37b5489edc36))
 
-- **CLI:** The README in every Product Model tells agents to implement your usual way and recommend a check when they finish, unless you opted in to implementing with `pdd-verify`.
+- **CLI:** The README in every Product Model tells agents to implement your usual way and recommend a check when they finish, unless you opted in to implementing with `pdd-verify`. ([#160](https://github.com/itai-gendler/pdd-kit/pull/160)) ([88126ed](https://github.com/itai-gendler/pdd-kit/commit/88126edba6bb062238f5b8200eef37b5489edc36))
 
-- **Docs:** The development loop, the Get started guides, the FAQ and the README describe implementing as your own workflow and explain how to opt in to implement with verify.
+- **Docs:** The development loop, the Get started guides, the FAQ and the README describe implementing as your own workflow and explain how to opt in to implement with verify. ([#160](https://github.com/itai-gendler/pdd-kit/pull/160)) ([88126ed](https://github.com/itai-gendler/pdd-kit/commit/88126edba6bb062238f5b8200eef37b5489edc36))
 
-- **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
+- **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era". ([#131](https://github.com/itai-gendler/pdd-kit/pull/131)) ([fde1ddf](https://github.com/itai-gendler/pdd-kit/commit/fde1ddf5259ad16461b1ce3b26bc3ba8e4ef1c2d))
+
+### Contributors
+
+- [@itai-gendler](https://github.com/itai-gendler)
+
+**Full Changelog**: [v0.36.0...v0.37.0][0.37.0]
 
 ## [0.36.0] - 2026-10-13
 
@@ -1312,7 +1320,8 @@ Initial public launch of the repository.
 
 **Full Changelog**: [v0.4.0][0.4.0]
 
-[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.36.0...HEAD
+[Unreleased]: https://github.com/itai-gendler/pdd-kit/compare/v0.37.0...HEAD
+[0.37.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/itai-gendler/pdd-kit/compare/v0.34.0...v0.34.1
