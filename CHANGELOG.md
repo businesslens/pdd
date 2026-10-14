@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Restored the landing page hero's original opening sentence.
+
 ## [0.37.0] - 2026-10-14
 
 ### Added

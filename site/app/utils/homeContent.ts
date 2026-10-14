@@ -604,12 +604,9 @@ const hero = {
   /**
    * The problem first, then the answer and its three most important properties.
    * It has to state the value before the reader knows what a Product Model is.
-   * The README opens on the same two sentences, after the one *Where is your
-   * product model today?* already says, so the hero does not repeat that
-   * section's line.
    */
   description:
-    'Every coding agent reconstructs your product\'s definition from scratch, and differently each time. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.',
+    'Your AI agent is guessing what the product is. PDD gives agents and humans a shared product model that is git-tracked, reviewable, and verifiable.',
   /**
    * The three ways in, as buttons rather than a section. Labels are verbs because
    * they are actions; two of the three continue in the documentation, which the
