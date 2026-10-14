@@ -24,7 +24,7 @@ if (import.meta.prerender) {
  * `docs/brand.md` sets. Its copy lives in `utils/homeContent.ts` rather than in
  * any template, so the words stay reviewable on their own.
  *
- * The description is the hero's subhead, word for word; the social card carries
+ * The description uses the README's problem statement; the social card carries
  * the h1. See docs/adr/0002-the-home-page.md.
  */
 useSiteSeo({
