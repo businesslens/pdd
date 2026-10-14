@@ -368,7 +368,7 @@ costed already.
   `pnpm build` before each push; do not bypass them with `--no-verify`.
 - Dependencies are updated by Renovate (`renovate.json`), not Dependabot. The
   e2e job's Playwright image tag must equal `@playwright/test`.
-- Inspect `pnpm pack --dry-run` before a release.
+- Inspect `npm pack --dry-run` before a release; pnpm 12 has no `pack --dry-run`.
 - Prepare a release in its own pull request that only rolls the changelog and
   bumps the version: `pnpm version <version> --no-git-tag-version`, fetch, then
   `pnpm changelog:release`. It blames each `[Unreleased]` entry at
