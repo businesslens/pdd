@@ -20,12 +20,14 @@ interface InstallCliOptions {
   scope?: string
   yes?: boolean
   force?: boolean
+  orchestrate?: 'on' | 'off'
 }
 
 interface UpdateCliOptions {
   providers?: string
   scope?: string
   force?: boolean
+  orchestrate?: 'on' | 'off'
 }
 
 interface LintCliOptions {
@@ -75,6 +77,14 @@ function scope(value: string): 'project' | 'global' {
   const normalized = value.trim().toLowerCase()
   if (normalized !== 'project' && normalized !== 'global') {
     throw new InvalidArgumentError('expected "project" or "global"')
+  }
+  return normalized
+}
+
+function orchestrate(value: string): 'on' | 'off' {
+  const normalized = value.trim().toLowerCase()
+  if (normalized !== 'on' && normalized !== 'off') {
+    throw new InvalidArgumentError('expected "on" or "off"')
   }
   return normalized
 }
@@ -139,8 +149,9 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .description('Install pdd-kit skills for detected AI harnesses.')
     .option('--providers <list>', 'Comma-separated providers: claude,codex,cursor,gemini,github')
     .option('--scope <scope>', 'Installation scope: project or global', scope)
-    .option('--yes', 'Accept detected providers and default to project scope')
+    .option('--yes', 'Accept detected providers, project scope and the current orchestration')
     .option('--force', 'Replace an unmarked colliding pdd-kit skill directory')
+    .option('--orchestrate <state>', 'Let pdd-verify orchestrate implementation: on or off', orchestrate)
     .action(async (options: InstallCliOptions, command: Command) => {
       setExitCode(await runInstall(cwdFor(command), options))
     })
@@ -152,6 +163,7 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .option('--providers <list>', 'Limit discovery to: claude,codex,cursor,gemini,github')
     .option('--scope <scope>', 'Installation scope: project or global', scope)
     .option('--force', 'Replace an unmarked collision inside a managed installation')
+    .option('--orchestrate <state>', 'Turn orchestration on or off; omitted keeps each installation\'s setting', orchestrate)
     .action(async (options: UpdateCliOptions, command: Command) => {
       setExitCode(await runUpdate(cwdFor(command), options))
     })

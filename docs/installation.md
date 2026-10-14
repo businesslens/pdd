@@ -26,16 +26,23 @@ pdd-kit skills. It never creates `product-model/`; the skills do that.
 | --- | --- |
 | [`pdd-map`](./skill-pdd-map.md) | Reads an existing repository and drafts its Product Model |
 | [`pdd-ideate`](./skill-pdd-ideate.md) | Turns an idea or a change into an approved model change |
-| [`pdd-verify`](./skill-pdd-verify.md) | Implements the model in phases, checks the code against it, and resolves what disagrees |
+| [`pdd-verify`](./skill-pdd-verify.md) | Checks the code against the model and fixes the gaps you choose; or, if you opt in, plans implementation in phases ([implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in)) |
 
 They run inside your coding agent, not in the terminal. Usually you just ask
-("add guest checkout to the product", "implement it") and your agent picks the
-skill. To run one by name, use
+("add guest checkout to the product", "check the code against the model")
+and your agent picks the skill. To run one by name, use
 `/pdd-map` in Claude Code and most agents, `$pdd-map` in
 Codex. These pages show the `/` form.
 
 Check it worked: in your agent type `/pdd-` and the three skills
 appear (Codex: `$pdd-`).
+
+Installing changes nothing about how you implement: your agent keeps working
+your usual way, and verify runs when you ask for a check. To let pdd-kit
+orchestrate implementation instead (verify plans the work in phases and checks
+each part before the next), answer yes when install asks, or pass
+`--orchestrate=on`. See
+[Implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in).
 
 ## Supported agents
 
@@ -73,7 +80,10 @@ adding this repository as a marketplace:
 The plugin and the CLI installer deliver the same skills; use one or the other,
 not both. Claude Code namespaces plugin skills by the plugin's name, so with
 the plugin you run them as `/pdd-kit:pdd-map`, `/pdd-kit:pdd-ideate` and
-`/pdd-kit:pdd-verify`.
+`/pdd-kit:pdd-verify`. The plugin installs with orchestration off and has no
+option to change it; turn it on with
+[the sentence in your `AGENTS.md`](./skill-pdd-verify.md#implement-with-verify-opt-in)
+instead, or run `/pdd-kit:pdd-verify implement …` for one request.
 
 Next:
 

@@ -23,3 +23,4 @@ carrying a skill's name is somebody else's, and the Product leaves it alone.
 - **Version** — the pdd-kit command that wrote it, which an update brings current
 - **Skills** — the names of the skills it holds, so a retired one can be removed
 - **Installed at** — when it was first written, kept across every refresh
+- **Orchestration** — whether verify takes over implementing when the Developer asks for it, off unless the Developer turned it on

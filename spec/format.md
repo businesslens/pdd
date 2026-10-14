@@ -19,12 +19,13 @@ defined here. `pdd-kit lint` checks whether this folder is structurally
 sound; it does not claim that the model and implementation agree.
 
 Planning uses the same files: approved intended behavior is written into the
-model before implementation. `pdd-verify` performs the separate,
-semantic comparison with the implementation and owns any resolution loop,
-including implementation: what the model describes that the code does not do
-yet is a gap it closes in phases, through the agent the user asked to
-implement, checking each slice. Git
-may narrow that inspection to a branch, but a diff never decides which side is
+model before implementation. Implementing is the user's own workflow.
+`pdd-verify` performs the separate, semantic comparison with the
+implementation and owns the resolution of the findings the user chooses. Only
+when the user opts in does it own implementation too: what the model
+describes that the code does not do yet is then a gap it closes in phases,
+through the agent the user asked to implement, checking each slice. Git may
+narrow that inspection to a branch, but a diff never decides which side is
 authoritative. The technical *how* of a change (specs, designs, task lists)
 still belongs to your SDD tool of choice and may be attached through
 `references`.
@@ -265,8 +266,9 @@ Contexts are closed to unknown keys; Context is not a metadata bag.
 
 - **`README.md` is the canonical orientation, owned by pdd-kit.** It is
   for an agent that opens `product-model/` without a pdd-kit skill
-  running: it routes implementation to `pdd-verify` and product
-  changes to `pdd-ideate`, says how to install them, and states which
+  running: it leaves implementation to the user's usual way unless they
+  opted in to `pdd-verify` orchestrating it, routes checks to `pdd-verify`
+  and product changes to `pdd-ideate`, says how to install them, and states which
   parts of the model bind the code and which do not. It is not a second
   explanation of the format. Its text is `MODEL_README` in `src/core/model-readme.ts`, embedded
   verbatim in every skill's format reference.

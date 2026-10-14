@@ -108,9 +108,18 @@ test('renders the Product-Driven Development homepage', async ({ page, request }
     ['Start from a Blueprint', '/blueprints'],
     ['Start from an idea', '/docs/from-an-idea']
   ]
+  // Orchestration is offered, unnumbered, only where the reader implements.
+  const orchestration = '/docs/skill-pdd-verify#implement-with-verify-opt-in'
   for (const [label, href] of ways) {
     await page.locator('#start').getByRole('button', { name: label, exact: true }).click()
-    await expect(page.getByRole('dialog').locator(`a[href="${href}"]`).first()).toBeVisible()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.locator(`a[href="${href}"]`).first()).toBeVisible()
+    if (label === 'Map existing repo') {
+      await expect(dialog.locator(`a[href="${orchestration}"]`)).toHaveCount(0)
+    } else {
+      await expect(dialog.locator('ol > li')).toHaveCount(4)
+      await expect(dialog.getByRole('link', { name: 'How to turn it on', exact: true })).toHaveAttribute('href', orchestration)
+    }
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toHaveCount(0)
   }

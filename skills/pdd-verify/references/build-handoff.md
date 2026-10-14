@@ -3,9 +3,10 @@
 Give the builder one self-contained packet: yourself, working in the user's
 usual way, or the subagent the user asked for.
 
-- **Scope:** the slices this handoff covers (one slice, a phase, or the
-  whole plan, as the pace says), in order, and the implemented slices they
-  depend on.
+- **Scope:** in check mode, the findings the user chose to fix; when
+  implementing with verify, the slices this handoff covers (one slice, a
+  phase, or the whole plan, as the pace says), in order, and the implemented
+  slices they depend on.
 - **Expected behavior:** the exact approved model contract.
 - **Affected model resources:** IDs of relevant Interfaces, Experiences,
   Screens, Entities, Capabilities, Capability Scenarios, Rules, Journeys,

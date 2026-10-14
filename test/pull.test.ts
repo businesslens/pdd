@@ -157,6 +157,7 @@ describe('pull', () => {
     const readme = readFileSync(join(target, 'product-model', 'README.md'), 'utf8')
     expect(readme).toBe(MODEL_README)
     expect(readme).toContain('**To implement it**')
+    expect(readme).toContain('do not run the check unless asked')
     expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
   })
 

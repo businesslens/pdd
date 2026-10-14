@@ -127,9 +127,11 @@ Read before authoring:
     model before approval** list again; a fix that changes product behavior
     goes back to the user for approval before it is written.
 12. Report the approved delta and its acceptance contract, then end with one
-    line offering to implement it: the user can say *implement it*, and
-    `pdd-verify` implements the change in phases in the user's own way
-    of working, checking each part. Do not implement from this skill.
+    line on what comes next, the same however the user works: implement it,
+    then ask to check the code against the model, which `pdd-verify` does;
+    when pdd-kit orchestrates implementation, saying *implement it* is enough,
+    because `pdd-verify` then checks each part as it goes.
+    Do not implement from this skill.
 
 ## Guardrails
 

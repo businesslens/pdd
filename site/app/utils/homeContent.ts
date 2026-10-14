@@ -61,6 +61,21 @@ export interface HeroAction {
    * path before committing to it.
    */
   steps: WayStep[]
+  /**
+   * An opt-in that changes how the last steps run, shown under them rather
+   * than as another step. Numbering it would tell every reader to do it; it is
+   * a choice a reader makes once, so it is set apart and says it is optional.
+   */
+  aside?: WayAside
+}
+
+/** See `HeroAction.aside`. */
+export interface WayAside {
+  /** The option, named outright: the reader must not have to infer it. */
+  title: string
+  /** Which steps it replaces, what runs instead, and how it is turned on. */
+  text: string
+  link: { label: string, to: string }
 }
 
 export interface WayStep {
@@ -422,8 +437,9 @@ const loop: HomeLoop = {
   /**
    * The ownership boundary, said in words. Two of the three runners are
    * pdd-kit skills, so the dashed chip alone left a reader free to assume the
-   * middle phase came with a tool of ours as well. The reader's own agent implements when asked and verify checks each part, so
-   * the sentence names who writes the code rather than a workflow.
+   * middle phase came with a tool of ours as well. The reader's own agent
+   * implements, and verify checks when asked, so the sentence names who writes
+   * the code rather than a workflow.
    */
   description: 'Ideate and verify with pdd-kit. Your own agent implements, your way.',
   centerLabel: 'Product',
@@ -440,8 +456,9 @@ const loop: HomeLoop = {
    * The middle runner is the only one that names nothing this product ships,
    * and it is written as the reader's rather than as an absence: *your agent,
    * your way* is a real answer to "what runs this", where "none" would read as
-   * a hole in the loop. Its note says the work arrives in phases, which
-   * is verify's doing, and names the usual ways an agent implements; the section
+   * a hole in the loop. Its note names the usual ways an agent implements and
+   * nothing more: phases are verify's pace, and only for a reader who opted in
+   * to implement with verify, so they are not the loop's; the section
    * description says outright that the agent is the reader's, so the handoff
    * does not depend on reading a dashed border.
    *
@@ -469,13 +486,13 @@ const loop: HomeLoop = {
       id: 'implement',
       name: 'Implement',
       runner: { kind: 'yours', label: 'your agent, your way' },
-      note: 'In phases, with plan mode, an SDD tool, or freestyle.'
+      note: 'With plan mode, an SDD tool, or freestyle.'
     },
     {
       id: 'verify',
       name: 'Verify',
       runner: { kind: 'skill', label: '/pdd-verify' },
-      note: 'Check and improve the code and product model until they agree.'
+      note: 'Check the code against the product model; fix what you choose.'
     }
   ],
   /** The docs draw this same wheel on their Introduction, under its own heading. */
@@ -544,15 +561,38 @@ const INSTALL_STEP: WayStep = {
 }
 
 /**
- * The two ways in that start without code end the same way: the reader asks
- * for the build, their own agent implements it in phases, and verify checks
- * each phase before the next. There is no separate verify step to remember —
- * since pdd 0.28 asking to implement is what starts it. The ways it names are
- * the loop's implement note, word for word, so the two never drift apart.
+ * The two ways in that start without code end the same way, in two steps:
+ * the reader's own agent implements, then verify checks. They are two steps
+ * because they are two asks, and implementing is not pdd-kit's: folding the
+ * check into the implement step read as if pdd-kit ran both. The ways it
+ * names are the loop's implement note's — plan mode, an SDD tool, or
+ * freestyle — so the two never disagree.
  */
 const IMPLEMENT_STEP: WayStep = {
   ask: 'implement it',
-  text: 'Your own agent implements it in phases, with plan mode, an SDD tool, or freestyle. Verify checks each phase before the next starts.'
+  text: 'Your own agent implements it your usual way: plan mode, an SDD tool, or freestyle.'
+}
+
+/**
+ * Named as its skill, like ideate in step 2, rather than as an ask: the step
+ * after "implement it" is where a reader new to pdd-kit needs to see which
+ * part of it runs, and asking the agent to check works just as well once they
+ * know.
+ */
+const CHECK_STEP: WayStep = {
+  command: '/pdd-verify',
+  text: 'Checks the code against the product model, reports every gap, and fixes the ones you choose.'
+}
+
+/**
+ * Implement with verify, offered where it applies: under the step it saves the
+ * reader. It is opt-in, so it is never a numbered step. It says what changes —
+ * pdd-kit calls verify for you — and what does not: how the reader implements.
+ */
+const IMPLEMENT_WITH_VERIFY: WayAside = {
+  title: 'Optional: let pdd-kit orchestrate implementation',
+  text: 'Instead of running /pdd-verify yourself, let pdd-kit call it at the right points while your agent implements. How you implement stays exactly as it is today.',
+  link: { label: 'How to turn it on', to: '/docs/skill-pdd-verify#implement-with-verify-opt-in' }
 }
 
 const hero = {
@@ -608,8 +648,10 @@ const hero = {
       steps: [
         INSTALL_STEP,
         { command: '/pdd-ideate a booking app for dog walkers', text: 'Proposes distinct product shapes, then writes the one you pick once you approve it.' },
-        IMPLEMENT_STEP
+        IMPLEMENT_STEP,
+        CHECK_STEP
       ] satisfies WayStep[],
+      aside: IMPLEMENT_WITH_VERIFY,
       label: 'Start from an idea',
       shortLabel: 'From an idea',
       to: '/docs/from-an-idea'
@@ -621,8 +663,10 @@ const hero = {
       steps: [
         INSTALL_STEP,
         { blueprint: 'content-feed-reader', text: 'Pulls the Blueprint you pick into product-model/.' },
-        IMPLEMENT_STEP
+        IMPLEMENT_STEP,
+        CHECK_STEP
       ] satisfies WayStep[],
+      aside: IMPLEMENT_WITH_VERIFY,
       label: 'Start from a Blueprint',
       shortLabel: 'From a Blueprint',
       to: '/blueprints'

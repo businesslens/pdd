@@ -281,7 +281,7 @@ describe('open report', () => {
 
       const readme = readFileSync(join(fresh, 'product-model', 'README.md'), 'utf8')
       expect(readme).toBe(MODEL_README)
-      expect(readme).toContain('use the `pdd-verify`')
+      expect(readme).toContain('recommend checking the code against the model')
       expect(readme).toContain('Capability Scenarios are acceptance tests')
     } finally {
       rmSync(fresh, { recursive: true, force: true })

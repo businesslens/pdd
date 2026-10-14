@@ -1,6 +1,6 @@
 ---
 title: From a Blueprint
-description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then ask your agent to implement it.
+description: Pull a reviewed Product Model for a common kind of product instead of starting blank, adapt it if needed, then implement it your way and check it against the model.
 section: open-source
 group: Get started
 order: 5
@@ -51,11 +51,11 @@ file you were given.
 3. If you want something more or different, ask your agent for the change,
    such as "add due dates to cards", and approve it first.
 
-4. Ask your agent to implement it: "implement the Product Model".
-   [Verify](./skill-pdd-verify.md) plans the work in phases: your agent
-   implements each phase your usual way, and verify checks it before the next.
-   Say "in one go" to skip phases, or "one slice at a time" to go slower; see
-   [Choose the pace](./skill-pdd-verify.md#choose-the-pace).
-   Ask your agent to check the code against the model whenever you want to be
-   sure, or run `/pdd-verify` by name.
+4. Implement it your usual way: ask your agent to "implement the Product
+   Model" with plan mode, an SDD tool, or freestyle. The model's README tells
+   your agent what the code must honor.
+5. Ask your agent to check the code against the model, or run `/pdd-verify`.
+   [Verify](./skill-pdd-verify.md) reports every gap and fixes the ones you
+   choose. To have verify plan the work in phases and check each one as it
+   lands instead, [opt in to implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in).
 

@@ -18,8 +18,15 @@ import {
 import {
   PDD_KIT_SKILLS,
   assertInstallTargets,
-  installSkillsToTarget
+  currentOrchestration,
+  installSkillsToTarget,
+  type InstallTarget
 } from '../core/skill-installation.js'
+import {
+  orchestrationSummary,
+  resolveOrchestration,
+  type Orchestration
+} from '../core/orchestration.js'
 import { cliVersion } from '../version.js'
 import { UsageError } from '../core/usage-error.js'
 
@@ -28,6 +35,7 @@ export interface InstallOptions {
   scope?: string
   yes?: boolean
   force?: boolean
+  orchestrate?: string
 }
 
 function canPrompt(options: InstallOptions): boolean {
@@ -138,8 +146,49 @@ async function selectScope(options: InstallOptions): Promise<InstallScope | unde
   return selected as InstallScope
 }
 
+/*
+ * Asked last, once the targets are known to be writable, so nobody answers a
+ * question for an install that is then refused. Without a terminal, or with
+ * `--yes`, each target keeps what it has, which for a first install is off.
+ */
+async function selectOrchestration(
+  cwd: string,
+  targets: InstallTarget[],
+  options: InstallOptions,
+  explicit: Orchestration | undefined
+): Promise<Orchestration | undefined | null> {
+  if (explicit) return explicit
+  if (!canPrompt(options)) return undefined
+
+  const current = new Set(targets.map(target => currentOrchestration(cwd, target)))
+  const selected = await select({
+    // The second line answers the misreading the choice invites: orchestration
+    // changes when the code is checked, never how the agent implements it.
+    message: 'How should pdd-kit fit into implementation?\nYour agent implements your usual way either way.',
+    options: [
+      {
+        value: 'off',
+        label: 'Check on request',
+        hint: 'you run /pdd-verify when you want'
+      },
+      {
+        value: 'on',
+        label: 'Orchestrated',
+        hint: 'pdd-kit splits the work into phases and pdd-verify checks each before the next'
+      }
+    ],
+    initialValue: current.size === 1 ? [...current][0] : 'off'
+  })
+  if (isCancel(selected)) {
+    cancel('Installation cancelled.')
+    return null
+  }
+  return selected as Orchestration
+}
+
 export async function runInstall(cwd: string, options: InstallOptions = {}): Promise<number> {
   try {
+    const explicitOrchestration = resolveOrchestration(options.orchestrate)
     const providerIds = await selectProviders(cwd, options)
     if (!providerIds) return 1
     const scope = await selectScope(options)
@@ -149,6 +198,8 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     // directory that blocked the run and nothing on disk has changed.
     const targets = providerIds.map(id => ({ provider: providerById(id), scope }))
     assertInstallTargets(cwd, targets, { force: options.force })
+    const orchestrate = await selectOrchestration(cwd, targets, options, explicitOrchestration)
+    if (orchestrate === null) return 1
 
     const progress = process.stdout.isTTY ? spinner() : undefined
     progress?.start('Installing pdd-kit skills...')
@@ -156,7 +207,7 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
       cwd,
       { provider: providerById(id), scope },
       cliVersion(),
-      { force: options.force }
+      { force: options.force, orchestrate }
     ))
     progress?.stop('pdd-kit skills installed.')
 
@@ -165,6 +216,10 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     )
     console.log(`Installed pdd-kit into: ${roots.join(', ')} (${scope}).`)
     console.log(`Installed skills: ${PDD_KIT_SKILLS.join(', ')}.`)
+    console.log(orchestrationSummary(results.map(result => ({
+      orchestrate: result.orchestrate,
+      location: formatDisplayPath(dirname(result.skillsDir))
+    })), { providers: providerIds, scope }))
     return 0
   } catch (error) {
     console.error((error as Error).message)

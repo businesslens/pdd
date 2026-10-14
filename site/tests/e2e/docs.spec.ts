@@ -222,3 +222,20 @@ test('keeps the FAQ on its dedicated route, outside normal docs', async ({ page,
   expect(sitemap).not.toContain('/docs/faq</loc>')
   expect(sitemap.match(/\/faq<\/loc>/g)).toHaveLength(1)
 })
+
+// Every code block offers a copy button: a wrapper once cast the missing prop
+// to false and removed it from every block on the site, and nothing failed.
+// A block marked `wrap` wraps; every other block keeps its lines and scrolls.
+test('code blocks copy, and only a block marked wrap wraps', async ({ page }) => {
+  await page.goto('/docs/installation')
+  await expect(page.locator('.docs-prose pre').first().locator('xpath=..').getByRole('button', { name: 'Copy code to clipboard' })).toHaveCount(1)
+
+  await page.goto('/docs/skill-pdd-verify')
+  const sentence = page.locator('.docs-prose pre', { hasText: 'Implement with pdd-verify: plan the work' })
+  await expect(sentence).toHaveCSS('white-space', 'pre-wrap')
+  await expect(sentence.locator('xpath=..').getByRole('button', { name: 'Copy code to clipboard' })).toHaveCount(1)
+
+  await page.goto('/docs/journeys')
+  const example = page.locator('.docs-prose pre', { hasText: '---' }).first()
+  await expect(example).toHaveCSS('white-space', 'pre')
+})

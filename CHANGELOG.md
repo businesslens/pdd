@@ -11,9 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Each version is published as a GitHub Release with its changelog, so watching the repository's releases announces it.
 
+- **CLI:** `install` asks how pdd-kit should fit into implementation: check on request, or orchestrated, where it splits the work into phases and checks each one. Your agent implements your usual way either way. `install` and `update` take `--orchestrate`; it is off by default, and `update` keeps your choice.
+
 ### Changed
 
 - **CLI:** **Breaking.** pdd-kit requires Node.js 22.12 or later; Node.js 20 has reached end of life.
+
+- **Skills:** **Breaking.** pdd-kit no longer takes over implementing. Asking your agent to implement works your usual way, and `pdd-verify` runs when you ask for a check: it reports every gap first and fixes only the ones you choose. To have verify plan and check implementation in phases as before, opt in to **implement with verify** at install, in your `AGENTS.md`, or for one request.
+
+- **CLI:** The README in every Product Model tells agents to implement your usual way and recommend a check when they finish, unless you opted in to implementing with `pdd-verify`.
+
+- **Docs:** The development loop, the Get started guides, the FAQ and the README describe implementing as your own workflow and explain how to opt in to implement with verify.
 
 - **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
 

@@ -235,7 +235,7 @@ with `npx pdd-toolkit view itai-gendler/pdd-kit`.
 
 * ✅ **Lint and verify:** `npx pdd-toolkit lint` checks the files; `pdd-verify` checks the code against them
 
-* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; PDD checks the code against the model as you go
+* 🔁 **Fits your workflow:** implement with plan mode, an SDD tool or freestyle; check the code against the model when you choose
 
 * 🖥️ **Local report:** `npx pdd-toolkit view` opens the model in your browser and follows your edits
 
@@ -304,15 +304,21 @@ npx pdd-toolkit blueprint pull <name>
 ## The development loop
 
 <p align="center">
-  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /pdd-ideate, implement in phases with your own agent, verify each part with /pdd-verify" width="600">
+  <img src="./.github/readme/development-loop.svg" alt="The development loop: ideate with /pdd-ideate, implement your way with your own agent, check the code against the model with /pdd-verify" width="600">
 </p>
 
 - **Ideate** (`/pdd-ideate`): the agent records the change in the model
   first, and nothing is written until you approve it.
-- **Implement:** your agent builds it your way, in phases, with plan mode, an
-  SDD tool, or freestyle.
+- **Implement:** your agent builds it your way, with plan mode, an SDD tool,
+  or freestyle. pdd-kit doesn't change how you implement.
 - **Verify** (`/pdd-verify`): the agent checks the code against the
-  model and, with your approval, fixes either one until they agree.
+  model, reports every gap, and fixes the ones you choose.
+
+Optionally, let pdd-kit orchestrate the implementation and verification loop:
+verify plans the work in phases, your agent implements each phase, and verify
+checks it before the next. Turn it on with `npx pdd-toolkit install --orchestrate=on`
+or one sentence in your `AGENTS.md`; see
+[Implement with verify](https://pdd-kit.dev/docs/skill-pdd-verify#implement-with-verify-opt-in).
 
 ## <img src="./.github/readme/square-terminal.svg" alt="" width="28" height="28" align="top"> CLI
 

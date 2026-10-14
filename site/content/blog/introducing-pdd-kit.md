@@ -55,7 +55,7 @@ ideate → implement ⇄ verify
   ▲                     │
   └──── next change ────┘
 
-implement: your agent, your way, in phases
+implement: your agent, your way
 ```
 ::
 

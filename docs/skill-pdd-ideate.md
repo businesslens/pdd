@@ -37,10 +37,12 @@ behavior nobody has described.
    questions.
 3. **Files written after you approve**, only inside `product-model/`.
 4. **Lint**, fixed until clean.
-5. **An offer to implement**: the approved change and its Scenarios are what
-   the code must satisfy. Say *implement it*, and
-   [`pdd-verify`](./skill-pdd-verify.md) has your agent
-   implement it in phases and checks each part.
+5. **What comes next**: the approved change and its Scenarios are what the
+   code must satisfy. Implement it your usual way, then ask to check the code
+   against the model with [`pdd-verify`](./skill-pdd-verify.md). If you
+   [let pdd-kit orchestrate implementation](./skill-pdd-verify.md#implement-with-verify-opt-in),
+   saying *implement it* is enough: verify plans the work in phases and checks
+   each part.
 
 Ideate never writes code. Implementation happens through your own agent, your
 usual way.

@@ -1,20 +1,40 @@
 ---
 name: pdd-verify
-description: Implement a product-model/ Product Model (PDD) in code, in phases by default, or check that code and model agree, resolving every gap until the requested scope is aligned or explicitly blocked. Use when asked to implement, build or develop the product or any part of it in a repository that has a product-model/ folder, even when the request names only a feature (“implement guest checkout”, “build the invite flow”); when asked to build from the Product Model, the PDD or a pulled Blueprint, including “implement it” or “build it” after ideate; and after implementation, refactors, suspected drift, before release, for a branch-scoped change, or for a named/full current-state audit. Use “report only” when no writes or code changes are allowed.
+description: Check that a product-model/ Product Model (PDD) and the code agree, report every gap, and resolve the ones the user chooses until they are aligned or explicitly blocked; implement the model in phases only when the user opted in. Use when the user asks to check, verify or audit the code against the Product Model or PDD — after a change they implemented, after refactors, on suspected drift, before release, for a branch-scoped change, or for a named/full current-state audit. Use to implement or build the product only when the user invokes this skill by name for it, or the repository's agent instructions or the request say “Implement with pdd-verify”; otherwise implementing is the user's own workflow and this skill does not run. Use “report only” when no writes or code changes are allowed.
 ---
 
-# Implement and verify alignment
+# Verify alignment, and implement when opted in
 
 Own one invocation from inspection through resolution. The user must not have to
-invoke map or ideate manually after a finding. Child agents may run the
-bounded analysis phases — lint, inspection, classification — when the harness
-supports them; otherwise run the same protocols as internal phase transitions
-without losing context. Implementing is not such a phase: you are the builder
-unless the user asks for a subagent (step 8).
+invoke map or ideate manually after a finding.
 
-Implementing is resolution from a larger gap: what the model describes that
-the code does not do yet is model-right, and implementation closes it in
-phases.
+Implementing is the user's own workflow. This skill takes it over only when the
+user opted in, in one of these ways:
+
+- turned orchestration on when installing pdd-kit (`--orchestrate=on`), which
+  applies to every conversation with this install and is recorded in the line
+  below;
+- wrote this exact sentence in the repository's agent instructions (AGENTS.md,
+  CLAUDE.md, GEMINI.md or the like), to apply always;
+- for one request: invoked this skill by name to implement (`/pdd-verify
+  implement checkout`, `$pdd-verify …`, "use pdd-verify to implement …"), or
+  wrote the sentence in the request.
+
+```text
+Implement with pdd-verify: plan the work from `product-model/` in phases and check each part before the next.
+```
+
+Orchestration for this install: off.
+
+Child agents may run the bounded analysis phases — lint, inspection,
+classification — when the harness supports them; otherwise run the same
+protocols as internal phase transitions without losing context. Implementing
+is not such a phase: you are the builder unless the user asks for a subagent
+(step 8).
+
+Implementing with verify is resolution from a larger gap: what the model
+describes that the code does not do yet is model-right, and implementation
+closes it in phases.
 
 Verification itself is semantically read-only: do not change product meaning or
 implementation while classifying findings. Approved intent resolution may edit
@@ -31,17 +51,30 @@ Read before work:
 
 ## 1. Establish scope and mode
 
-1. Require an existing Product Model. If none exists and repository behavior is
+1. Parse mode, before anything else:
+   - `report only` → inspect and report; prohibit every write, code change and
+     delegation;
+   - a request to implement (or build) from the model, with an opt-in — the
+     user named this skill to do the implementing (`/pdd-verify implement …`,
+     `$pdd-verify …`, "use pdd-verify to implement …"), the sentence is in the
+     repository's agent instructions or the request, or orchestration is on
+     for this install — and no request to implement without pdd-verify →
+     implement-with-verify mode: the request authorizes code changes within
+     its scope; follow section 4. Your own choice of this skill from its
+     description is not the user naming it, and neither is a request that
+     mentions pdd-verify only to opt out or for a later check;
+   - any other request to implement → not this skill's work, and the user
+     still asked for code: leave this skill and implement the request the
+     user's usual way, as if it had not been invoked, without running any of
+     its steps or guardrails. When done, mention once that the user can ask to
+     check the code against the model;
+   - otherwise → check mode: report every finding first, then resolve only
+     the ones the user chooses (step 7).
+2. Require an existing Product Model. If none exists and repository behavior is
    established, run the scoped-map protocol in step 7 for the necessary scope;
    do not tell the user to invoke another skill. If both model and implementation
    are absent, stop: there is nothing to verify or implement until the product
    is decided.
-2. Parse mode:
-   - `report only` → inspect and report; prohibit every write, code change and
-     delegation;
-   - a request to implement (or build) from the model → implement mode: the
-     request authorizes code changes within its scope; follow section 4;
-   - otherwise → resolution mode.
 3. Resolve scope:
    - `this branch` → use merge-base, committed, staged, and working-tree diffs
      only to choose the inspection worklist;
@@ -52,8 +85,8 @@ Read before work:
      availability Context, or path → inspect it and behaviorally necessary
      dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
-     useful diff exists, inspect the current modeled product. In implement mode,
-     no explicit scope means the whole model.
+     useful diff exists, inspect the current modeled product. In
+     implement-with-verify mode, no explicit scope means the whole model.
 
 Git never decides whether model or code is right. A Blueprint or approved model
 committed before a feature branch remains a plan even when only code changed in
@@ -87,20 +120,28 @@ the diff.
      untrusted model area;
    - **unverifiable** — source inspection cannot establish the claim safely.
 
-   Group findings that share one authority decision. Ask only the root decision,
-   with exact model claim, observed code behavior, inspected files, downstream
-   effects, and a recommendation. Never infer authority from Git.
+   Group findings that share one authority decision. Present only the root
+   decision, with exact model claim, observed code behavior, inspected files,
+   downstream effects, and a recommendation. Never infer authority from Git.
 
-## 3. Resolve automatically
+## 3. Resolve
 
-7. Route each group without asking the user to invoke another skill:
+7. Route each group to resolve without asking the user to invoke another
+   skill. In check mode, report before resolving anything: present every
+   group, its label and recommendation, and ask which to fix. Resolve only the
+   groups the user chooses; choosing none ends the run with the report (step
+   14). A choice to fix a model-right or neither-right group authorizes the
+   resulting code change. After each fix, step 9 inspects again; present only
+   the groups not presented before or changed since, and let the user choose
+   again. In implement-with-verify mode, resolve each group as it comes,
+   asking a root decision only where section 4 says to.
 
    **Model-right**
 
    - Keep model meaning unchanged.
    - Prepare the exact packet from `references/build-handoff.md`.
    - Ask for authorization to change implementation when not already explicit;
-     implement mode is explicit.
+     implement-with-verify mode and a check-mode choice to fix are explicit.
    - Hand the packet to the builder (step 8), then return directly to step 4.
 
    Three of the branches below re-author product meaning, and authoring faces
@@ -134,7 +175,8 @@ the diff.
      negotiate only material decisions, present the exact model delta, and get
      approval.
    - Write the approved model, prepare the resulting build packet, obtain code
-     authorization, hand it to the builder, then return to step 4.
+     authorization unless already explicit (step 7), hand it to the builder,
+     then return to step 4.
 
    **Unmapped**
 
@@ -153,10 +195,11 @@ the diff.
      and what could resolve it. Mark the run blocked for that scope.
 
 8. A pdd-kit analysis phase never implements or executes target code. The
-   builder is the agent the user asked to implement: in implement mode, or once
-   the user authorizes a code change, that is you, implementing the packet in
-   the user's usual way of working (their plan mode, SDD tool, repository
-   conventions and tests) under your normal permissions. That implementation
+   builder is the agent the user asked to implement: in implement-with-verify
+   mode, or once the user chooses or authorizes a code change, that is you,
+   implementing the packet in the user's usual way of working (their plan
+   mode, SDD tool, repository conventions and tests) under your normal
+   permissions. That implementation
    work is the user's workflow, not pdd-kit analysis; when it ends,
    return to step 4 and inspect from source again. Hand the packet to a subagent instead
    only when the user asks for one and the harness can start it. The builder
@@ -166,15 +209,18 @@ the diff.
    another tool or session, stop with the complete handoff packet instead of
    asking the user to invoke a pdd-kit skill.
 9. After every mutation, discard the earlier findings and inspect again. Keep
-   only an in-memory signature of build-directed gaps during this invocation.
+   only an in-memory signature of build-directed gaps during this invocation,
+   and, in check mode, of the groups the user already declined, so they are
+   not asked again.
    If the same gap returns unchanged after a build attempt, stop and report it;
    do not loop. Persist no receipt, ledger, or lifecycle state.
 
-## 4. Implement in phases
+## 4. Implement with verify (opt-in)
 
-In implement mode, the model-right findings are the plan. Behavior the model
-describes and the code lacks is model-right without asking; ask an authority
-question only where existing code contradicts the model.
+Only in implement-with-verify mode, which needs an opt-in (step 1). The
+model-right findings are the plan. Behavior the model describes and the code
+lacks is model-right without asking; ask an authority question only where
+existing code contradicts the model.
 
 10. Cut the plan into slices and group them into phases as the rubric's
     **Slices and phases** section says. Take the pace from the request:
@@ -211,8 +257,10 @@ question only where existing code contradicts the model.
     report-only mode.
 14. Run final lint. Report:
     - requested and inspected scope;
-    - in implement mode, the pace, the phases and slices implemented in order,
-      and any left blocked;
+    - in check mode, the findings the user chose to fix and those left as
+      found;
+    - in implement-with-verify mode, the pace, the phases and slices
+      implemented in order, and any left blocked;
     - aligned contracts;
     - resulting authority decisions and approvals, without replaying settled
       alternatives or unchanged deliberation;
@@ -226,7 +274,14 @@ question only where existing code contradicts the model.
 
 ## Guardrails
 
+These bind this skill's own steps. A request step 1 hands back is the user's
+own workflow, and none of them applies to it.
+
 - Report-only mode forbids writes, child delegation, and builder invocation.
+- Never enter implement-with-verify mode without an opt-in, nor when the request
+  asks to implement without pdd-verify, and in check mode never fix a finding
+  the user did not choose. Without an opt-in, never refuse a request to
+  implement: leave this skill and implement it the user's usual way.
 - Never change product meaning without explicit approval.
 - Approval is explicit and covers the delta you presented. A reply that hands
   you the open questions ("take your recommendation", "you decide") settles
@@ -248,5 +303,6 @@ question only where existing code contradicts the model.
   model-resolution writes must leave target `AGENTS.md`, `CLAUDE.md`, and root
   README byte-identical. Implementation (step 8) writes only the user's code,
   under the repository's own instructions, and never `product-model/`.
-- Never stage, commit, publish, submit, or contribute.
+- Never stage, commit, publish, submit, or contribute. The builder (step 8)
+  follows the user's usual way of working, including whether it commits.
 - Never ask the user to manually invoke map or ideate to continue this run.
