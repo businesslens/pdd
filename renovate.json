@@ -1,15 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Keep dependency updates for the pdd-kit package, its viewer and the pdd-kit.dev site predictable and reviewable.",
+  "description": "Keep dependency updates for the pdd-kit package, its viewer and the pdd-kit.dev site predictable and reviewable: one weekly batch, majors on request, security fixes at once.",
   "dependencyDashboard": true,
   "semanticCommits": "enabled",
   "semanticCommitType": "chore",
   "rangeStrategy": "bump",
   "minimumReleaseAge": "25 hours",
   "timezone": "Asia/Jerusalem",
-  "schedule": ["* 0-3 * * *"],
+  "schedule": ["* 0-3 * * 0"],
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "schedule": ["* 0-3 * * 0"]
   },
   "postUpdateOptions": ["pnpmDedupe"],
   "packageRules": [
@@ -20,8 +21,56 @@
       "groupSlug": "non-major"
     },
     {
+      "description": "Each major update can break on its own terms, so it waits on the Dependency Dashboard until it is requested. Security updates are not held.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "GitHub Actions updates, majors included, are low risk and exercised by CI, so they share one PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions",
+      "dependencyDashboardApproval": false
+    },
+    {
       "description": "Keep package-manager escape hatches manual.",
       "matchDepTypes": ["resolutions", "overrides", "pnpm.overrides"],
+      "enabled": false
+    },
+    {
+      "description": "The supported Node range is a promise to consumers, raised deliberately, never by a dependency update.",
+      "matchDepTypes": ["engines"],
+      "enabled": false
+    },
+    {
+      "description": "Peer ranges tell Nuxt hosts which versions the layers work with. Raising a floor to the newest release would narrow that promise for no reason, so a peer range only widens, when a new major falls outside it.",
+      "matchDepTypes": ["peerDependencies"],
+      "rangeStrategy": "widen"
+    },
+    {
+      "description": "@types/node describes the oldest Node the code must run on, its engines floor, never the newest release or the Node CI installs. The package and the site both have a Node 22 floor; the major is raised by hand along with that floor.",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<23"
+    },
+    {
+      "description": "TypeScript 7 waits until vue-tsc, typescript-eslint and tsdown's declaration build support it.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    },
+    {
+      "description": "h3 2 is the Nitro 3 server layer; the site stays on h3 1 until Nuxt runs on Nitro 3.",
+      "matchPackageNames": ["h3"],
+      "allowedVersions": "<2"
+    },
+    {
+      "description": "Nuxt 4.5 drops the query from a prerendered page's address once it hydrates, so a Blueprint report on pdd-kit.dev loses its reading on refresh, Back and shared links (nuxt/nuxt#34651). Nuxt stays on 4.4 until that is fixed upstream; the advisories that 4.5.1 fixes need a running Nuxt server, and every host we ship is static.",
+      "matchPackageNames": ["nuxt"],
+      "allowedVersions": "<4.5"
+    },
+    {
+      "description": "Workflows name a Node major and take its latest release; pinning the patch only adds churn, and a new major is a deliberate change.",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["node"],
       "enabled": false
     },
     {
@@ -31,10 +80,11 @@
       "groupSlug": "playwright"
     },
     {
-      "description": "Playwright image tags are a v-prefixed version with an Ubuntu suffix.",
+      "description": "Playwright image tags are a v-prefixed version with an Ubuntu suffix. The registry publishes no release dates, and an update without one never passes minimumReleaseAge, so the image follows @playwright/test, which does.",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["mcr.microsoft.com/playwright"],
-      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-noble$"
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-noble$",
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     }
   ],
   "customManagers": [

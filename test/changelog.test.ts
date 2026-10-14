@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { annotateEntries, changelogProblems, rollUnreleased } from '../scripts/changelog.mjs'
+import { annotateEntries, changelogProblems, releaseNotes, rollUnreleased } from '../scripts/changelog.mjs'
 
 const SHA = '0784f6a3c1d2e5f60718293a4b5c6d7e8f901234'
 
@@ -121,5 +121,21 @@ describe('changelogProblems', () => {
 
   it('accepts the repository changelog', () => {
     expect(changelogProblems(readFileSync(join(__dirname, '..', 'CHANGELOG.md'), 'utf8'))).toEqual([])
+  })
+})
+
+describe('releaseNotes', () => {
+  const markdown = readFileSync(join(__dirname, '..', 'CHANGELOG.md'), 'utf8')
+
+  it('is the section body with its comparison as an inline link', () => {
+    const notes = releaseNotes(markdown, '0.35.0')
+    expect(notes.startsWith('### Changed')).toBe(true)
+    expect(notes).toContain('### Contributors')
+    expect(notes).toMatch(/\*\*Full Changelog\*\*: \[v0\.34\.1\.\.\.v0\.35\.0\]\(https:\/\/github\.com\/itai-gendler\/pdd-kit\/compare\/v0\.34\.1\.\.\.v0\.35\.0\)$/)
+    expect(notes).not.toContain('## [')
+  })
+
+  it('refuses a version the changelog does not release', () => {
+    expect(() => releaseNotes(markdown, '9.9.9')).toThrow('CHANGELOG.md has no [9.9.9] section')
   })
 })

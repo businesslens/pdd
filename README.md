@@ -74,17 +74,17 @@ is made of:
 Bring knowledge from docs, designs, code, and people into one product model.
 Fill gaps, clarify uncertainty, and make every source leaner and more focused.
 
-<img src="./.github/readme/product-knowledge.webp" alt="An engraved wheel with the product model at its center, connecting user-facing documentation, internal documentation, design and architecture, code and tests, and tickets, chats, and people." width="360" align="left">
+<img src="./.github/readme/product-knowledge.webp" alt="An engraved wheel with the product model at its center, connecting user-facing documentation, internal documentation, design and architecture, code and tests, and tickets, chats, and people." width="380" align="left">
 
 *Each information source’s purpose, supported by a shared product model*
 
 | Information source | Purpose |
 | --- | --- |
-| **User docs** | Teaches people to use the product |
+| **User docs** | Teaches people to use<br>the product |
 | **Internal docs** | Records architecture, design<br>decisions, and onboarding |
-| **Design & architecture** | Describes how it should look and work |
-| **Code & tests** | Implements and verifies how it is built |
-| **Tickets, chats & people** | Carry context, requests, and<br>undocumented knowledge |
+| **Design &<br>architecture** | Describes how it should<br>look and work |
+| **Code & tests** | Implements and verifies<br>how it is built |
+| **Tickets, chats<br>& people** | Carry context, requests,<br>and undocumented knowledge |
 
 <br clear="left">
 

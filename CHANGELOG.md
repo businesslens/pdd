@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Each version is published as a GitHub Release with its changelog, so watching the repository's releases announces it.
+
 - **CLI:** `install` asks whether pdd-kit should orchestrate implementation, and `install` and `update` take `--orchestrate`. It is off by default, and `update` keeps your choice.
 
 ### Changed
+
+- **CLI:** **Breaking.** pdd-kit requires Node.js 22.12 or later; Node.js 20 has reached end of life.
 
 - **Skills:** **Breaking.** pdd-kit no longer takes over implementing. Asking your agent to implement works your usual way, and `pdd-verify` runs when you ask for a check: it reports every gap first and fixes only the ones you choose. To have verify plan and check implementation in phases as before, opt in to **implement with verify** at install, in your `AGENTS.md`, or for one request.
 
