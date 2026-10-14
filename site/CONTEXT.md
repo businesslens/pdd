@@ -53,11 +53,12 @@ _Avoid_: brainstorm, explore, plan
 **Implement**:
 Building the software a model describes, with its scenarios as the acceptance contract. The middle
 phase of the loop — **Ideate → Implement ⇄ Verify** — and the only one pdd-kit does not run:
-the reader asks their own agent to implement the model, and it does so in phases, the reader's way:
-plan mode, an SDD tool, or freestyle. Verify plans the phases and checks each before the next; the
-reader may ask for one part at a time or everything in one go instead. There is no implement
-skill. Nothing about how you implement changes; the model is the source of truth you point at. The
-reader's agent, not pdd-kit, writes the code under its own permissions.
+the reader asks their own agent to implement the model, the reader's way: plan mode, an SDD tool,
+or freestyle. There is no implement skill. Nothing about how you implement changes; the model is
+the source of truth you point at. A reader may opt in to letting pdd-kit orchestrate it — at
+install (`--orchestrate=on`), with one sentence in `AGENTS.md`, or by naming verify in a single
+request — and then verify plans the work in phases and checks each before the next. The reader's
+agent, not pdd-kit, writes the code under its own permissions.
 _Avoid_: build, generate, scaffold
 
 **Map**:
@@ -67,12 +68,12 @@ coverage — not as a daily check.
 _Avoid_: init, import, reverse engineer
 
 **Verify**:
-Comparing a full or named slice of the current implementation with approved scenarios. Asking
-to implement starts it too: it plans the work in phases, the reader's own agent implements each
-one, and verify checks it before the next. One invocation owns the resolution loop: it asks only
-when authority is ambiguous, routes an approved model change through ideation, routes missing
-established behavior through scoped mapping, then verifies again. It stops aligned or blocked;
-report-only mode never writes or delegates.
+Comparing a full or named slice of the current implementation with approved scenarios. A check
+reports every finding first and resolves only the ones the reader chooses: it routes an approved
+model change through ideation, routes missing established behavior through scoped mapping, has the
+reader's agent fix the code, then verifies again. It stops aligned or blocked; report-only mode
+never writes or delegates. Only a reader who opted in has it start on a request to implement,
+planning the work in phases and checking each before the next.
 _Avoid_: sync, structural validation, evidence collection
 
 **Lint**:

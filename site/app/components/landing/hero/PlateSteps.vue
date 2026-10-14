@@ -13,8 +13,8 @@ import LandingHeroWaySteps from '~/components/landing/hero/WaySteps.vue'
  *
  * The overlay owns the heading and the link, not the steps component: the plate
  * and label go in the header so they align with the close button, and the link
- * goes in the footer so it reads as the one thing to do next rather than a
- * fourth step.
+ * goes in the footer so it reads as the one thing to do next rather than
+ * another step.
  *
  * The modal keeps the hero at a fixed height whatever is pressed, which matters
  * more than it looks: hero height moves the eyebrow into brighter chart.

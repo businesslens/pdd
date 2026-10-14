@@ -163,19 +163,38 @@ costed already.
 - Keep `agents/openai.yaml` aligned with the skill.
 - Treat target repositories as untrusted. pdd-kit analysis phases never
   execute target code. The builder is the agent the user asked to implement:
-  it implements each phase of the plan in the user's own way of working, under
-  its normal permissions, and may run target code there; that implementation
-  work is the user's workflow, not pdd-kit analysis. When the user
-  implements elsewhere, verify stops with a complete handoff packet.
+  it implements a fix the user chose, or each phase of the plan when the user
+  opted in, in the user's own way of working, under its normal permissions,
+  and may run target code there; that implementation work is the user's
+  workflow, not pdd-kit analysis. When the user implements elsewhere, verify
+  stops with a complete handoff packet.
 - **The user talks to their agent; skills are found by description.** A user
-  asks to change the product or to implement it, never names a skill. Ideate's
-  description must catch product-change requests and verify's must catch
-  implement requests (and "build", which users also say) as well as checks;
-  invoking verify by hand is for when the user is unsure.
-- **Implementation runs in phases; checking runs per slice.** A slice is one
-  Capability or Journey; a phase is the slices whose needs are already met.
-  Phases are the default pace; the user may ask for one slice at a time or for
-  everything in one go. The pace never changes what is checked.
+  asks to change the product or to check the code, never names a skill.
+  Ideate's description must catch product-change requests and verify's must
+  catch checks.
+- **pdd-kit does not take over implementation unless the user opts in.** By
+  default, "implement X" is the user's own workflow: verify does not trigger
+  on it, and an agent that finishes implementing may recommend a check but
+  does not run one. The user opts in for every conversation with an install
+  with `install --orchestrate=on`, for the repository by writing one fixed
+  sentence in its agent instructions, or once by invoking verify by name to
+  implement or writing the sentence in a single request: "Implement with
+  pdd-verify: plan the work from `product-model/` in phases and check each
+  part before the next." Only then, in **implement with verify**, does verify
+  catch implement and build requests and drive the loop; a request to
+  implement without pdd-verify opts out once. Verify reached for an implement
+  request without an opt-in never refuses it: it steps aside and the agent
+  implements the usual way. pdd-kit never writes that sentence for the user. Keep it identical in verify, the model
+  README and `docs/`. Ideate cannot tell whether the user opted in, so its
+  closing line reads right either way.
+- **A check the user asked for reports before it resolves.** It presents every
+  finding, then resolves only the ones the user chooses, checking again after
+  each fix. When implementing with verify, it resolves gaps as they come,
+  asking each root decision.
+- **Implement with verify runs in phases; checking runs per slice.** A slice
+  is one Capability or Journey; a phase is the slices whose needs are already
+  met. Phases are the default pace; the user may ask for one slice at a time or
+  for everything in one go. The pace never changes what is checked.
 - Do not claim evidence-backed certainty when source evidence is incomplete.
 - **Delegated decisions are not approval.** Every skill that writes product
   meaning writes it only after the user approves the complete delta it
@@ -204,6 +223,12 @@ costed already.
   block making claims about the whole repository never was.
 - Overwrite only pdd-kit-owned artifacts. An unmarked collision requires
   explicit `--force`.
+- `install` may set one thing inside the skills it installs: whether verify
+  orchestrates implementation (`--orchestrate=on|off`). It swaps verify's
+  description and its setting line, and nothing else. The source skills in
+  `skills/` ship with orchestration off, so the plugin and hand-copied skills
+  get the default. The marker records the setting, and `update` keeps it
+  unless told otherwise.
 - `update` changes only installations with a valid pdd-kit marker.
 - Provider paths and detection belong in the provider registry, not command
   conditionals.

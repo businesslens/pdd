@@ -3,7 +3,12 @@ import UProsePre, { type ProsePreProps } from '@nuxt/ui/runtime/components/prose
 import { pddKitAgentCommandLines } from '~/utils/syntaxCommandTokens'
 import { BRAND_WARM_COMMAND_TOKEN_COLORS } from '~/utils/syntaxTheme'
 
-const props = defineProps<ProsePreProps>()
+/*
+ * `copy` defaults to true here as it does in Nuxt UI. Declared through
+ * `ProsePreProps`, an absent boolean prop is cast to `false` and passed on by
+ * `v-bind="props"`, which silently removed the copy button from every block.
+ */
+const props = withDefaults(defineProps<ProsePreProps>(), { copy: true })
 
 const agentCommandLines = computed(() =>
   pddKitAgentCommandLines(props.code, props.language)
@@ -40,12 +45,31 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => resizeObserver?.disconnect())
+
+/*
+ * A block marked `wrap` in its fence (```md [AGENTS.md] wrap) wraps. The site
+ * scrolls long lines rather than wrapping them (see `app.config.ts`) because
+ * most blocks are figures whose meaning is in their columns: commands, and
+ * example files whose indentation is their structure. A sentence a reader
+ * copies into a file of their own is the exception: cut off at the edge, it
+ * cannot be read before it is copied. The end padding keeps the first line
+ * clear of the copy button, which sits over the block on phones.
+ */
+const wraps = computed(() => props.meta?.split(/\s+/).includes('wrap') ?? false)
+
+const ui = computed(() => {
+  const base = props.ui?.base
+  // A replacer function owns its classes outright, so it is left alone.
+  if (!wraps.value || typeof base === 'function') return props.ui
+  return { ...props.ui, base: ['whitespace-pre-wrap wrap-break-word pe-12', base] }
+})
 </script>
 
 <template>
   <UProsePre
     ref="block"
     v-bind="props"
+    :ui="ui"
     :data-pdd-kit-agent-command="agentCommandLines ? '' : undefined"
   >
     <code v-if="agentCommandLines"><span

@@ -11,22 +11,28 @@ references:
 # Verify model alignment
 
 Compares what the model says against what the repository currently does, for a
-requested scope — a branch, a named resource, or the whole current product — and
-then owns the resolution. Asked to implement, it treats everything the model
-describes and the code lacks as the plan and implements it in phases. Every contract is checked, including what a Step says
-it does to a thing and who a Rule says may do it. Each finding is classified by
-which side should change, findings that share one decision are grouped, and the
-Developer is asked the root question once. Approved model changes are written,
-implementation changes are made by the agent the Developer asked to implement,
-working the Developer's usual way, and every change is followed by a fresh
-inspection.
+requested scope — a branch, a named resource, or the whole current product.
+Every contract is checked, including what a Step says it does to a thing and
+who a Rule says may do it. Each finding is classified by which side should
+change, and findings that share one decision are grouped. A check the
+Developer asks for reports every finding first and then resolves the ones the
+Developer chooses. Only when the Developer opts in, when installing the
+skills, in the repository's agent instructions or in one request, does it also
+take over implementation: it treats everything the model describes and the
+code lacks as the plan, implements it in phases, and resolves each gap as it
+comes. Approved model
+changes are written, implementation changes are made by the agent the
+Developer asked to implement, working the Developer's usual way, and every
+change is followed by a fresh inspection.
 
 ## Intent
 
-One invocation should be enough. A person should not have to notice that a gap
-needs new product meaning and then go invoke a different workflow themselves,
-and should not have to name this workflow to implement: asking the agent to
-implement the model is enough.
+pdd-kit must not change how anyone implements. Implementing stays the
+Developer's own workflow unless the Developer opts in, and a check reports
+before it changes anything, so the Developer decides what is worth fixing.
+Once a fix is chosen, one invocation should be enough: a person should not
+have to notice that a gap needs new product meaning and then go invoke a
+different workflow themselves.
 Current semantic findings are re-derived on every pass: a stored verdict
 would survive the code, runtime assumptions, and inspection method that produced
 it, and would imply a certainty the next commit has already ended.

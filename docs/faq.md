@@ -90,7 +90,10 @@ update the model before initiating new work as a best practice.
 ### Doesn't this lock me into a new development lifecycle?
 
 No. **PDD does not touch how you implement**. You keep your current workflow, your coding agent,
-your planning tools. What PDD adds is a structured home, the Product Model, for the product
+your planning tools: asking your agent to implement something works as it always has, and
+[verify](./skill-pdd-verify.md) runs when you ask it to check the result. Having verify run
+implementation in phases is something you opt into, with an install option or one sentence in your
+AGENTS.md, and can turn off again at any time. What PDD adds is a structured home, the Product Model, for the product
 definition you already have, informally scattered across docs, code, tickets, and people. You are not adopting a new
 paradigm; you are giving a home to decisions that today live nowhere in particular.
 
@@ -309,10 +312,10 @@ Map is for adoption, a deliberately untrusted area, or expanding model coverage.
 command. Verify is for normal product changes, refactors, suspected drift, pre-release checks, and
 full or named current-state audits.
 
-You rarely name either. Ask your agent to implement a change and verify plans it in phases: your
-agent implements each phase, and verify checks it before the next. Ask whether the code still
-matches the model whenever you want to be sure, for example before a release. [Read the verification
-loop](./skill-pdd-verify.md).
+You rarely name either. Implement a change your usual way, then ask your agent whether the code
+matches the model: verify reports every gap and fixes the ones you choose. Ask again whenever you
+want to be sure, for example before a release. To have verify plan implementation in phases and
+check each one as it lands, [opt in to implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in).
 
 ### Is this meant for open-source projects or also closed-source commercial ones?
 

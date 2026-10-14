@@ -1,5 +1,10 @@
+import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { homeContent } from '../../app/utils/homeContent'
+
+const pddKitRoot = dirname(createRequire(import.meta.url).resolve('pdd-toolkit/package.json'))
 
 /**
  * The home page is three sections with one job each, and two of them are
@@ -418,6 +423,37 @@ describe('the home page argument', () => {
       expect(head.title.length, `title wraps: "${head.title}"`).toBeLessThanOrEqual(48)
       expect(head.description.length, `description too long: "${head.description}"`)
         .toBeLessThanOrEqual(head === today ? 120 : 96)
+    }
+  })
+})
+
+/**
+ * The two ways in that start without code end on two asks, implement and then
+ * check, and offer orchestration as an aside rather than another step. Its link
+ * names a heading in the verify docs, which a rename would break silently.
+ */
+describe('the hero ways in', () => {
+  const ways = Object.fromEntries(homeContent.hero.actions.map(action => [action.id, action]))
+
+  it('ends the ways without code on implement, then the check', () => {
+    for (const id of ['from-an-idea', 'from-a-blueprint']) {
+      const steps = ways[id]!.steps
+      expect(steps.at(-2)?.ask, id).toBe('implement it')
+      expect(steps.at(-1)?.command, id).toBe('/pdd-verify')
+    }
+  })
+
+  it('offers orchestration only where the reader implements, at a heading that exists', () => {
+    expect(ways['from-your-repo']!.aside).toBeUndefined()
+    const headings = readFileSync(resolve(pddKitRoot, 'docs/skill-pdd-verify.md'), 'utf8')
+      .split('\n')
+      .filter(line => line.startsWith('## '))
+      .map(line => line.slice(3).toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/\s+/g, '-'))
+    for (const id of ['from-an-idea', 'from-a-blueprint']) {
+      const link = ways[id]!.aside!.link.to
+      const [path, anchor] = link.split('#')
+      expect(path, id).toBe('/docs/skill-pdd-verify')
+      expect(headings, id).toContain(anchor)
     }
   })
 })

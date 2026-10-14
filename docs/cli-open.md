@@ -57,5 +57,5 @@ and 2 when given a URL or invalid options.
 
 ## Next
 
-- [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt and
-  implement it.
+- [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt,
+  implement and check it.

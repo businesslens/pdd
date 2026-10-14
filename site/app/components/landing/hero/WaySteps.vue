@@ -5,10 +5,11 @@ import CommandBlock from '~/components/landing/CommandBlock.vue'
 /**
  * The numbered path for one way in.
  *
- * Steps only — no heading and no link out. The overlay that shows this owns
- * both: the plate and label sit in its header so they line up with the close
- * button, and the link sits in its footer so it reads as the one thing to do
- * after reading, rather than a fourth step.
+ * Steps, and an optional aside under them — no heading and no main link out.
+ * The overlay that shows this owns both: the plate and label sit in its header
+ * so they line up with the close button, and the link sits in its footer so it
+ * reads as the one thing to do after reading, rather than another step. The
+ * aside's own link is part of the option it explains, not a way onward.
  *
  * A step's command is an offer — the reader is here to run it — so it gets the
  * site's command treatment, copy control and all. Copying it out of the overlay
@@ -34,42 +35,59 @@ function promptFor(command: string) {
 </script>
 
 <template>
-  <ol class="grid list-none gap-4 p-0 text-left">
-    <li
-      v-for="(step, index) in action.steps"
-      :key="step.text"
-      class="grid grid-cols-[auto_minmax(0,1fr)] gap-3"
-    >
-      <span
-        class="mt-0.5 flex size-5 items-center justify-center rounded-full border border-primary/40 font-mono text-[10px] text-primary"
-        aria-hidden="true"
-      >{{ index + 1 }}</span>
-      <!-- A block element, not a `span`: `CommandBlock` is a `div`, and a `div`
+  <div class="grid gap-4">
+    <ol class="grid list-none gap-4 p-0 text-left">
+      <li
+        v-for="(step, index) in action.steps"
+        :key="step.text"
+        class="grid grid-cols-[auto_minmax(0,1fr)] gap-3"
+      >
+        <span
+          class="mt-0.5 flex size-5 items-center justify-center rounded-full border border-primary/40 font-mono text-[10px] text-primary"
+          aria-hidden="true"
+        >{{ index + 1 }}</span>
+        <!-- A block element, not a `span`: `CommandBlock` is a `div`, and a `div`
         inside a `span` is invalid markup the parser reshapes, which breaks
         hydration rather than merely offending a validator. -->
-      <div class="min-w-0">
-        <CommandBlock
-          v-if="step.command"
-          :command="step.command"
-          :prompt="promptFor(step.command)"
-          size="sm"
-        />
-        <BlueprintPullStep
-          v-else-if="step.blueprint"
-          :fallback="step.blueprint"
-        />
-        <p
-          v-else-if="step.ask"
-          class="flex items-start gap-2 rounded-lg rounded-bl-sm border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-sm"
-        >
-          <UIcon name="i-lucide-message-square" class="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-          <span><span class="sr-only">Ask your agent: </span>“{{ step.ask }}”</span>
-        </p>
-        <span
-          class="block text-sm leading-relaxed text-dimmed"
-          :class="step.command || step.ask || step.blueprint ? 'mt-1.5' : ''"
-        >{{ step.text }}</span>
-      </div>
-    </li>
-  </ol>
+        <div class="min-w-0">
+          <CommandBlock
+            v-if="step.command"
+            :command="step.command"
+            :prompt="promptFor(step.command)"
+            size="sm"
+          />
+          <BlueprintPullStep
+            v-else-if="step.blueprint"
+            :fallback="step.blueprint"
+          />
+          <p
+            v-else-if="step.ask"
+            class="flex items-start gap-2 rounded-lg rounded-bl-sm border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-sm"
+          >
+            <UIcon name="i-lucide-message-square" class="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+            <span><span class="sr-only">Ask your agent: </span>“{{ step.ask }}”</span>
+          </p>
+          <span
+            class="block text-sm leading-relaxed text-dimmed"
+            :class="step.command || step.ask || step.blueprint ? 'mt-1.5' : ''"
+          >{{ step.text }}</span>
+        </div>
+      </li>
+    </ol>
+    <!-- An opt-in is not a step, so it is unnumbered and set apart: dashed, like
+    every choice on this site that is the reader's to make. -->
+    <p
+      v-if="action.aside"
+      class="rounded-lg border border-dashed border-primary/40 px-3 py-2 text-left text-sm leading-relaxed text-dimmed"
+    >
+      <span class="mb-0.5 block font-medium text-highlighted">{{ action.aside.title }}</span>
+      {{ action.aside.text }}
+      <!-- The same visible focus ring as the plates: the browser default is a
+        blue that belongs to nothing on this site. -->
+      <NuxtLink
+        :to="action.aside.link.to"
+        class="rounded-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >{{ action.aside.link.label }}<span aria-hidden="true">&nbsp;→</span></NuxtLink>
+    </p>
+  </div>
 </template>

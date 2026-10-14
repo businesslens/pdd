@@ -45,7 +45,7 @@ ideate → implement ⇄ verify
    ▲                     │
    └──── next change ────┘
 
-implement: your agent, your way, in phases
+implement: your agent, your way
 ```
 ::
 
@@ -53,21 +53,22 @@ Ideate and verify with pdd-kit. Your own agent implements, your way.
 
 - **Ideate** with [`/pdd-ideate`](./skill-pdd-ideate.md):
   Decide the next change and record it in the product model.
-- **Implement** with your agent, your way: In phases, with plan mode, an SDD
-  tool, or freestyle.
+- **Implement** with your agent, your way: With plan mode, an SDD tool, or freestyle.
 - **Verify** with [`/pdd-verify`](./skill-pdd-verify.md):
-  Check the code against the product model and, with your approval, fix
-  either one until they agree.
+  Check the code against the product model; fix what you choose.
 
 You don't have to name a skill. Ask your agent for a change, such as "add
-guest checkout to the product", and ideate decides it with you. Ask it to
-implement the change, and verify plans the work in phases: your agent
-implements each phase, and verify checks every part of it before the next
-starts. You can also
-[choose the pace](./skill-pdd-verify.md#choose-the-pace): one part at
-a time, or everything in one go without phases. Ask your agent to check the
-code against the model whenever you want to be sure, for example before a
-release.
+guest checkout to the product", and ideate decides it with you. Then implement
+it the way you already do; your agent may recommend a check when it's done.
+Ask it to check the code against the model, after implementing or whenever you
+want to be sure, such as before a release: verify reports every gap and fixes
+the ones you choose.
+
+If you want verify to drive implementation too, planning the work in phases and
+checking each one before the next, turn it on with
+`npx pdd-toolkit install --orchestrate=on` or one sentence in your
+`AGENTS.md`, or run `/pdd-verify implement …` for a single request. See
+[Implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in).
 
 Ideate changes the model only with your approval. Your agent changes the code
 and never the model. A product question that comes up while implementing comes

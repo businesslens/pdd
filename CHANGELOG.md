@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CLI:** `install` asks whether pdd-kit should orchestrate implementation, and `install` and `update` take `--orchestrate`. It is off by default, and `update` keeps your choice.
+
 ### Changed
+
+- **Skills:** **Breaking.** pdd-kit no longer takes over implementing. Asking your agent to implement works your usual way, and `pdd-verify` runs when you ask for a check: it reports every gap first and fixes only the ones you choose. To have verify plan and check implementation in phases as before, opt in to **implement with verify** at install, in your `AGENTS.md`, or for one request.
+
+- **CLI:** The README in every Product Model tells agents to implement your usual way and recommend a check when they finish, unless you opted in to implementing with `pdd-verify`.
+
+- **Docs:** The development loop, the Get started guides, the FAQ and the README describe implementing as your own workflow and explain how to opt in to implement with verify.
 
 - **Docs:** A diagram of the development pipeline today and with Product-Driven Development closes pdd-kit.dev's "What changes with a product model" and follows the README's "Why a Product Model in the AI era".
 

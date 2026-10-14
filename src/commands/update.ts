@@ -13,6 +13,7 @@ import {
   installSkillsToTarget
 } from '../core/skill-installation.js'
 import { cliCommand } from '../core/invocation.js'
+import { orchestrationSummary, resolveOrchestration } from '../core/orchestration.js'
 import { cliVersion } from '../version.js'
 import { UsageError } from '../core/usage-error.js'
 
@@ -20,6 +21,7 @@ export interface UpdateOptions {
   providers?: string
   scope?: string
   force?: boolean
+  orchestrate?: string
 }
 
 function resolveScopes(options: UpdateOptions): InstallScope[] {
@@ -31,6 +33,7 @@ function resolveScopes(options: UpdateOptions): InstallScope[] {
 
 export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promise<number> {
   try {
+    const orchestrate = resolveOrchestration(options.orchestrate)
     const requested = parseProviderIds(options.providers)
     const providers = requested ? requested.map(providerById) : PROVIDERS
     const scopes = resolveScopes(options)
@@ -53,11 +56,16 @@ export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promi
       cwd,
       { provider: installation.provider, scope: installation.scope },
       cliVersion(),
-      { force: options.force }
+      { force: options.force, orchestrate }
     ))
     progress?.stop('pdd-kit skills updated.')
 
-    console.log(`Updated pdd-kit in: ${results.map(result => formatDisplayPath(dirname(result.skillsDir))).join(', ')}.`)
+    const locations = results.map(result => formatDisplayPath(dirname(result.skillsDir)))
+    console.log(`Updated pdd-kit in: ${locations.join(', ')}.`)
+    console.log(orchestrationSummary(results.map((result, index) => ({
+      orchestrate: result.orchestrate,
+      location: locations[index]!
+    })), { providers: requested, scope: options.scope ? scopes[0] : undefined }))
     for (const item of unmanaged) console.log(`Note: ${item.message}`)
     return 0
   } catch (error) {

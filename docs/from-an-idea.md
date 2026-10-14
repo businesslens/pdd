@@ -1,6 +1,6 @@
 ---
 title: From an idea
-description: Decide what a new product does, approve its Product Model, then ask your agent to implement it while verify checks each part.
+description: Decide what a new product does, approve its Product Model, then implement it your way and check it against the model.
 section: open-source
 group: Get started
 order: 4
@@ -40,16 +40,14 @@ Use this door when there is no code yet, or none worth describing.
    npx pdd-toolkit lint
    ```
 
-4. Ask your agent to implement it: "implement it", or "implement the Product
-   Model".
-   [Verify](./skill-pdd-verify.md) plans the work in phases, your
-   agent implements each phase your usual way (plan mode, an SDD tool, or
-   freestyle), and verify checks it before the next. Say "in one go" to skip
-   phases, or "one slice at a time" to go slower; see
-   [Choose the pace](./skill-pdd-verify.md#choose-the-pace). Questions
-   the model doesn't answer come back to you. pdd-kit never writes code
-   itself.
-5. Ask your agent to check the code against the model whenever you want to be
-   sure, for example before a release.
+4. Implement it your usual way: ask your agent to "implement it" with plan
+   mode, an SDD tool, or freestyle. The model's README tells your agent what
+   the code must honor, and to bring product questions back to you rather
+   than settle them in code. pdd-kit never writes code itself.
+5. Ask your agent to check the code against the model, or run `/pdd-verify`.
+   [Verify](./skill-pdd-verify.md) reports every gap and fixes the ones you
+   choose. Check again whenever you want to be sure, for example before a
+   release. To have verify plan the work in phases and check each one as it
+   lands instead, [opt in to implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in).
 
 Next: [Development loop](./index.md#the-development-loop)

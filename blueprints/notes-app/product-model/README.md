@@ -8,12 +8,18 @@ product definition.
 
 ## If you are an agent working in this repository
 
-- **To implement it**, all of it or a part, use the `pdd-verify`
-  skill. It works out what the model describes that the code does not do yet,
-  has you implement it in phases in your usual way, and checks each part as it
-  lands.
-- **To change what the product should do**, use `pdd-ideate`. To
-  model established code the model does not cover, use `pdd-map`.
+- **To implement it**, all of it or a part, work the way you and the user
+  normally do. The model is the acceptance contract: see *What the code must
+  honor* below. When you finish, recommend checking the code against the model
+  with the `pdd-verify` skill; do not run the check unless asked.
+- If the repository's agent instructions or the request say "Implement with
+  pdd-verify: plan the work from `product-model/` in phases and check each
+  part before the next.", or the installed `pdd-verify` skill says this
+  install orchestrates implementation, implement with `pdd-verify` instead,
+  unless the request says to implement without it.
+- **To check the code against it**, use `pdd-verify`. **To change
+  what the product should do**, use `pdd-ideate`. To model established
+  code the model does not cover, use `pdd-map`.
 - If those skills are not installed, run `npx pdd-toolkit install`.
 - Do not edit this directory while implementing. If the model is ambiguous or
   seems wrong, stop and ask; never settle a product question in code.

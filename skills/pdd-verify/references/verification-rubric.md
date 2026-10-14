@@ -135,7 +135,9 @@ coverage and necessary relationships, and get approval before writing.
 
 ## Slices and phases
 
-A slice is the unit verify checks and reports: what one inspection can confirm.
+Phases apply only when implementing with verify, which the user opts into. A
+slice is the unit verify checks and reports in either mode: what one
+inspection can confirm.
 
 - One Capability with its Capability Scenarios, the Entity facts and states its
   Steps touch, the Screens placing it, and the Business Rules targeting it.

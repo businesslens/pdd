@@ -59,5 +59,5 @@ refuses it, and 2 for an invalid name, repository or option.
 
 ## Next
 
-- [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt and
-  implement it.
+- [Start from a Blueprint](./from-a-blueprint.md#steps) to review, adapt,
+  implement and check it.

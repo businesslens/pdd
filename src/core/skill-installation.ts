@@ -16,6 +16,7 @@ import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
 import { PACKAGE_NAME } from '../version.js'
 import { cliCommand } from './invocation.js'
+import { isOrchestration, orchestratedVerifySkill, type Orchestration } from './orchestration.js'
 
 export const PDD_KIT_SKILLS = [
   'pdd-map',
@@ -35,6 +36,8 @@ export interface InstallationManifest {
   skills: string[]
   installedAt: string
   updatedAt?: string
+  /** Absent in markers written before the setting existed, which means off. */
+  orchestrate?: Orchestration
 }
 
 export interface ManagedInstallation {
@@ -53,6 +56,7 @@ export interface InstallResult {
   provider: Provider
   scope: InstallScope
   skillsDir: string
+  orchestrate: Orchestration
 }
 
 export function bundledSkillsDir(): string | undefined {
@@ -111,6 +115,7 @@ function isMarkerShape(parsed: unknown): parsed is InstallationManifest {
     && typeof candidate!.version === 'string'
     && Array.isArray(candidate!.skills)
     && candidate!.skills.every(isSkillDirectoryName)
+    && (candidate!.orchestrate === undefined || isOrchestration(candidate!.orchestrate))
 }
 
 export function inspectSkillsDir(skillsDir: string): SkillsDirMarker {
@@ -136,6 +141,15 @@ export function inspectSkillsDir(skillsDir: string): SkillsDirMarker {
 function readManifest(skillsDir: string): InstallationManifest | undefined {
   const marker = inspectSkillsDir(skillsDir)
   return marker.kind === 'managed' ? marker.manifest : undefined
+}
+
+/** The orchestration setting a harness target already has: off when it has none. */
+export function currentOrchestration(
+  cwd: string,
+  target: InstallTarget,
+  home?: string
+): Orchestration {
+  return readManifest(providerSkillsDir(target.provider, target.scope, cwd, home))?.orchestrate ?? 'off'
 }
 
 /** The command that reinstalls one harness and scope, for a hint. */
@@ -200,7 +214,8 @@ function writeManifest(skillsDir: string, manifest: InstallationManifest): void 
   renameSync(temporary, file)
 }
 
-function installSkill(sourceRoot: string, skillsDir: string, name: PddKitSkill): void {
+/** `skillFile`, when given, replaces the copied SKILL.md before the skill is moved into place. */
+function installSkill(sourceRoot: string, skillsDir: string, name: PddKitSkill, skillFile?: string): void {
   const source = join(sourceRoot, name)
   const target = join(skillsDir, name)
   const temporary = join(skillsDir, `.${name}.${randomUUID()}.tmp`)
@@ -209,6 +224,7 @@ function installSkill(sourceRoot: string, skillsDir: string, name: PddKitSkill):
 
   try {
     cpSync(source, temporary, { recursive: true })
+    if (skillFile !== undefined) writeFileSync(join(temporary, 'SKILL.md'), skillFile)
     if (existsSync(target)) {
       renameSync(target, backup)
       movedExisting = true
@@ -228,7 +244,7 @@ export function installSkillsToTarget(
   cwd: string,
   target: InstallTarget,
   version: string,
-  options: { force?: boolean, home?: string } = {}
+  options: { force?: boolean, home?: string, orchestrate?: Orchestration } = {}
 ): InstallResult {
   const sourceRoot = bundledSkillsDir()
   if (!sourceRoot) {
@@ -240,6 +256,12 @@ export function installSkillsToTarget(
   const marker = inspectSkillsDir(skillsDir)
   assertSafeTargets(skillsDir, marker, target, Boolean(options.force))
   const existing = marker.kind === 'managed' ? marker.manifest : undefined
+  // A reinstall or an update keeps the setting unless it is asked to change.
+  const orchestrate = options.orchestrate ?? existing?.orchestrate ?? 'off'
+  const verifySource = join(sourceRoot, 'pdd-verify', 'SKILL.md')
+  const verifySkill = orchestrate === 'on'
+    ? orchestratedVerifySkill(readFileSync(verifySource, 'utf8'), verifySource)
+    : undefined
 
   // A skill the manifest recorded that this version no longer ships is ours to
   // remove; the manifest is the only proof of that. The proof extends to the
@@ -252,7 +274,9 @@ export function installSkillsToTarget(
     .map(previous => ownedChildPath(skillsDir, previous))
     .filter((stale): stale is string => stale !== undefined && existsSync(stale))
 
-  for (const name of PDD_KIT_SKILLS) installSkill(sourceRoot, skillsDir, name)
+  for (const name of PDD_KIT_SKILLS) {
+    installSkill(sourceRoot, skillsDir, name, name === 'pdd-verify' ? verifySkill : undefined)
+  }
   for (const stale of staleSkills) {
     if (existsSync(stale)) rmSync(stale, { recursive: true, force: true })
   }
@@ -266,10 +290,11 @@ export function installSkillsToTarget(
     scope: target.scope,
     skills: [...PDD_KIT_SKILLS],
     installedAt: existing?.installedAt ?? now,
-    updatedAt: now
+    updatedAt: now,
+    orchestrate
   })
 
-  return { ...target, skillsDir }
+  return { ...target, skillsDir, orchestrate }
 }
 
 export function findManagedInstallations(

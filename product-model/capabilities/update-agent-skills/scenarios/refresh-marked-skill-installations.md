@@ -13,14 +13,14 @@ steps:
   - text: The Product finds every installation carrying a valid pdd-kit marker, in the repository and in the personal configuration
     kind: product
     entities:
-      - { entity: skill-installation, effect: reads, facts: [Provider, Scope, Version, Skills, Installed at] }
+      - { entity: skill-installation, effect: reads, facts: [Provider, Scope, Version, Skills, Installed at, Orchestration] }
     contexts:
       terminal:
         place: pdd-kit-cli
-  - text: The Product replaces the skills in each one and refreshes its marker while keeping the original installation date
+  - text: The Product replaces the skills in each one and refreshes its marker while keeping the original installation date, and the orchestration setting unless a new one was asked for
     kind: product
     entities:
-      - { entity: skill-installation, effect: changes, facts: [Version, Skills] }
+      - { entity: skill-installation, effect: changes, facts: [Version, Skills, Orchestration] }
     contexts:
       terminal:
         place: pdd-kit-cli
@@ -48,3 +48,4 @@ directory was discovered, adopted, or changed unless the Developer passed
 ## Edge cases
 
 - Asking for only some harnesses, or only one scope, narrows the search without changing what counts as eligible.
+- Asking to turn orchestration on or off sets it in every installation the update finds.

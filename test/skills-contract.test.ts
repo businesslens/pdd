@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { ORCHESTRATED_VERIFY_DESCRIPTION, orchestrationLine } from '../src/core/orchestration.js'
 
 const ROOT = join(__dirname, '..')
 const SKILLS = join(ROOT, 'skills')
@@ -11,6 +12,14 @@ function skill(name: string): string {
 
 function normalizedSkill(name: string): string {
   return skill(name).replace(/\s+/g, ' ').trim()
+}
+
+// The one sentence that opts a user in to implement with verify. It
+// must read the same wherever a user or an agent meets it.
+const OPT_IN = 'Implement with pdd-verify: plan the work from `product-model/` in phases and check each part before the next.'
+
+function normalized(path: string): string {
+  return readFileSync(join(ROOT, path), 'utf8').replace(/\s+/g, ' ').replace(/\\`/g, '`')
 }
 
 function publicSkills(): string[] {
@@ -41,19 +50,54 @@ describe('public workflow contract', () => {
     expect(source).toContain('Do not implement from this skill')
   })
 
-  it('hands an approved change to verify\'s implementation in the user\'s own words', () => {
+  it('leaves implementing to the user unless they opted in', () => {
+    // Ideate cannot know whether the user opted in, so its closing line reads
+    // right either way and implementing stays out of it.
     const source = normalizedSkill('pdd-ideate')
-    expect(source).toContain('the user can say *implement it*')
-    expect(source).toContain('implements the change in phases in the user\'s own way of working')
+    expect(source).toContain('the same however the user works: implement it, then ask to check the code against the model')
+    expect(source).toContain('when pdd-kit orchestrates implementation, saying *implement it* is enough')
+  })
+
+  it('ships verify with orchestration off, in one line install can switch', () => {
+    const source = skill('pdd-verify')
+    expect(source.split(orchestrationLine('off')).length).toBe(2)
+    expect(source).not.toContain(orchestrationLine('on'))
+    expect(normalizedSkill('pdd-verify')).toContain('turned orchestration on when installing pdd-kit (`--orchestrate=on`), which applies to every conversation with this install and is recorded in the line below')
+  })
+
+  it('keeps every check request in the orchestrated description', () => {
+    const description = skill('pdd-verify').match(/^description: (.*)$/m)![1]!
+    // What both descriptions catch, apart from implement requests.
+    const checks = description.slice(description.indexOf('Use when the user asks to check'), description.indexOf(' Use to implement'))
+    expect(checks.length).toBeGreaterThan(100)
+    expect(ORCHESTRATED_VERIFY_DESCRIPTION).toContain(checks)
+    expect(ORCHESTRATED_VERIFY_DESCRIPTION).toContain('Use “report only” when no writes or code changes are allowed.')
+    expect(ORCHESTRATED_VERIFY_DESCRIPTION).toContain('Use when asked to implement or build any part of the product')
+    expect(ORCHESTRATED_VERIFY_DESCRIPTION).toContain('unless the request says to implement without pdd-verify')
+    // A plain YAML scalar, short enough for every harness.
+    expect(ORCHESTRATED_VERIFY_DESCRIPTION).not.toMatch(/: |#/)
+    expect(ORCHESTRATED_VERIFY_DESCRIPTION.length).toBeLessThanOrEqual(1024)
+  })
+
+  it('spells the opt-in sentence identically everywhere', () => {
+    for (const path of [
+      'AGENTS.md',
+      'skills/pdd-verify/SKILL.md',
+      'src/core/model-readme.ts',
+      'docs/skill-pdd-verify.md'
+    ]) {
+      expect(normalized(path), path).toContain(OPT_IN)
+    }
   })
 
   it('lets a user reach each workflow by asking, not by naming a skill', () => {
     const description = (name: string) => skill(name).match(/^description: (.*)$/m)![1]!
     expect(description('pdd-ideate')).toContain('“make a PDD change”')
     expect(description('pdd-ideate')).toContain('do not use to map established code, implement the model in code')
-    // "Implement" is the loop's word; "build" is what users also say.
-    expect(description('pdd-verify')).toContain('Use when asked to implement, build or develop the product')
-    expect(description('pdd-verify')).toContain('“implement it” or “build it” after ideate')
+    expect(description('pdd-verify')).toContain('Use when the user asks to check, verify or audit the code against the Product Model')
+    // Implementing is the user's own workflow until they opt in.
+    expect(description('pdd-verify')).toContain('Use to implement or build the product only when the user invokes this skill by name for it, or the repository\'s agent instructions or the request say “Implement with pdd-verify”')
+    expect(description('pdd-verify')).toContain('otherwise implementing is the user\'s own workflow and this skill does not run')
   })
 
   it('makes one verify invocation own resolution and reinspection', () => {
@@ -67,10 +111,26 @@ describe('public workflow contract', () => {
     expect(source).toContain('Persist no receipt')
   })
 
-  it('implements in phases with the requesting agent as the builder', () => {
+  it('reports a requested check before fixing only what the user chooses', () => {
     const source = normalizedSkill('pdd-verify')
-    expect(source).toContain('a request to implement (or build) from the model → implement mode')
-    expect(source).toContain('In implement mode, the model-right findings are the plan')
+    expect(source).toContain('otherwise → check mode: report every finding first, then resolve only the ones the user chooses')
+    expect(source).toContain('In check mode, report before resolving anything')
+    expect(source).toContain('choosing none ends the run with the report')
+    expect(source).toContain('in check mode never fix a finding the user did not choose')
+  })
+
+  it('implements in phases, when opted in, with the requesting agent as the builder', () => {
+    const source = normalizedSkill('pdd-verify')
+    expect(source).toContain('a request to implement (or build) from the model, with an opt-in — the user named this skill to do the implementing')
+    expect(source).toContain('Your own choice of this skill from its description is not the user naming it, and neither is a request that mentions pdd-verify only to opt out or for a later check')
+    expect(source).toContain('and no request to implement without pdd-verify → implement-with-verify mode')
+    // Mode comes first, so a request handed back is never stopped for a missing model.
+    expect(source.indexOf('1. Parse mode, before anything else')).toBeLessThan(source.indexOf('2. Require an existing Product Model'))
+    // A request that reaches verify without an opt-in still gets its code.
+    expect(source).toContain('any other request to implement → not this skill\'s work, and the user still asked for code: leave this skill and implement the request the user\'s usual way')
+    expect(source).toContain('Without an opt-in, never refuse a request to implement')
+    expect(source).toContain('Never enter implement-with-verify mode without an opt-in, nor when the request asks to implement without pdd-verify')
+    expect(source).toContain('The model-right findings are the plan')
     expect(source).toContain('slices not yet handed over are the plan, not findings')
     // Three paces, phases by default; checking is per slice at every pace.
     expect(source).toContain('**in phases**, the default')

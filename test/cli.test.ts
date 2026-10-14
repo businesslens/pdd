@@ -246,6 +246,14 @@ describe('cli dispatch', () => {
     )
     expect(invalidScope.status).toBe(2)
     expect(invalidScope.stderr).toContain('expected "project" or "global"')
+
+    for (const command of ['install', 'update']) {
+      const invalidOrchestration = cli(repo, process.env, command, '--orchestrate=maybe')
+      expect(invalidOrchestration.status, command).toBe(2)
+      expect(invalidOrchestration.stderr, command).toContain('expected "on" or "off"')
+      const help = cli(repo, process.env, command, '--help')
+      expect(help.stdout, command).toContain('--orchestrate <state>')
+    }
   })
 
   it('rejects invalid viewer ports as usage errors before loading the model', () => {

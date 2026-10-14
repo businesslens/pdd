@@ -13,7 +13,7 @@ after upgrading it. Upgrading the CLI itself is separate; see
 [Updating the CLI](./cli.md#updating-the-cli).
 
 ```bash
-npx pdd-toolkit update [--providers <list>] [--scope project|global] [--force]
+npx pdd-toolkit update [--providers <list>] [--scope project|global] [--orchestrate=on|off] [--force]
 ```
 
 ## Options
@@ -22,6 +22,7 @@ npx pdd-toolkit update [--providers <list>] [--scope project|global] [--force]
 | --- | --- |
 | `--providers <list>` | Look only in these harnesses: `claude,codex,cursor,gemini,github` |
 | `--scope project\|global` | Look only in one scope |
+| `--orchestrate=on\|off` | Turn [orchestration](./cli-install.md#orchestration) on or off in every installation found. Omitted, each keeps its setting |
 | `--force` | Replace a colliding `pdd-*` directory pdd-kit does not own inside a managed installation |
 
 With no options it looks in every harness, in both scopes:
@@ -39,12 +40,15 @@ npx pdd-toolkit update --providers claude,codex --scope project
    with the command to run.
 2. Writes the current three skills into each, and removes any `pdd-*`
    skill the marker recorded that this release no longer ships.
-3. Refreshes the marker, keeping its original install time.
+3. Refreshes the marker, keeping its original install time and, unless you
+   pass `--orchestrate`, its orchestration setting.
+4. Says whether orchestration is on or off, and the command that changes it.
 
 It never changes your `product-model/` Product Model.
 
 Exits 0 when at least one installation is updated, 1 when none is found or a
-collision stops it, and 2 for an unknown harness, scope or option.
+collision stops it, and 2 for an unknown harness, scope, orchestration setting
+or option.
 
 ## Next
 
