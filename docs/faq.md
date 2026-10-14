@@ -92,8 +92,9 @@ update the model before initiating new work as a best practice.
 No. **PDD does not touch how you implement**. You keep your current workflow, your coding agent,
 your planning tools: asking your agent to implement something works as it always has, and
 [verify](./skill-pdd-verify.md) runs when you ask it to check the result. Having verify run
-implementation in phases is something you opt into, with an install option or one sentence in your
-AGENTS.md, and can turn off again at any time. What PDD adds is a structured home, the Product Model, for the product
+implementation in phases is [something you opt into](./skill-pdd-verify.md#implement-with-verify-opt-in),
+with an install option, one sentence in your AGENTS.md, or for a single request, and can turn off
+again at any time. What PDD adds is a structured home, the Product Model, for the product
 definition you already have, informally scattered across docs, code, tickets, and people. You are not adopting a new
 paradigm; you are giving a home to decisions that today live nowhere in particular.
 
