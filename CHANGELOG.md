@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Each version is published as a GitHub Release with its changelog, so watching the repository's releases announces it.
 
-- **CLI:** `install` asks whether pdd-kit should orchestrate implementation, and `install` and `update` take `--orchestrate`. It is off by default, and `update` keeps your choice.
+- **CLI:** `install` asks how pdd-kit should fit into implementation: check on request, or orchestrated, where it splits the work into phases and checks each one. Your agent implements your usual way either way. `install` and `update` take `--orchestrate`; it is off by default, and `update` keeps your choice.
 
 ### Changed
 

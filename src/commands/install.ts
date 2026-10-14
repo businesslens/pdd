@@ -162,17 +162,19 @@ async function selectOrchestration(
 
   const current = new Set(targets.map(target => currentOrchestration(cwd, target)))
   const selected = await select({
-    message: 'Let pdd-kit orchestrate implementation?',
+    // The second line answers the misreading the choice invites: orchestration
+    // changes when the code is checked, never how the agent implements it.
+    message: 'How should pdd-kit fit into implementation?\nYour agent implements your usual way either way.',
     options: [
       {
         value: 'off',
-        label: 'No, I implement my own way',
-        hint: 'ask for a check when you want one'
+        label: 'Check on request',
+        hint: 'you run /pdd-verify when you want'
       },
       {
         value: 'on',
-        label: 'Yes, orchestrate it',
-        hint: 'pdd-verify plans in phases and checks each part'
+        label: 'Orchestrated',
+        hint: 'pdd-kit splits the work into phases and pdd-verify checks each before the next'
       }
     ],
     initialValue: current.size === 1 ? [...current][0] : 'off'

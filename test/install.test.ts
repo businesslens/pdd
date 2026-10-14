@@ -413,7 +413,14 @@ describe('orchestration', () => {
 
     expect(await runInstall(project, { providers: 'claude', scope: 'project' })).toBe(0)
     expect(vi.mocked(select)).toHaveBeenCalledOnce()
-    expect(vi.mocked(select).mock.calls[0]![0]).toMatchObject({ initialValue: 'on' })
+    const prompt = vi.mocked(select).mock.calls[0]![0]
+    expect(prompt).toMatchObject({ initialValue: 'on' })
+    // Either answer leaves implementing to the user's agent, and the question says so.
+    expect(prompt.message).toContain('Your agent implements your usual way either way.')
+    expect(prompt.options.map(option => [option.value, option.label])).toEqual([
+      ['off', 'Check on request'],
+      ['on', 'Orchestrated']
+    ])
     expect(changedLines(project, 'pdd-verify')).toEqual([])
     expect(marker(project).orchestrate).toBe('off')
   })

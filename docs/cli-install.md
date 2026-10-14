@@ -40,8 +40,9 @@ choose a scope.
 1. Detects which harnesses you use. Interactively, you keep that selection or
    customize it, then choose project or global scope.
 2. Checks every selected skills directory before writing to any of them.
-   Interactively, it then asks whether pdd-kit should orchestrate
-   implementation, defaulting to the current setting.
+   Interactively, it then asks how pdd-kit should fit into implementation:
+   **Check on request** (orchestration off) or **Orchestrated** (on),
+   defaulting to the current setting.
 3. Writes the three skills, removing any `pdd-*` skill an earlier
    install recorded that this release no longer ships.
 4. Writes `.pdd-kit-install.json` in each skills directory, recording the
@@ -53,11 +54,13 @@ It installs skills only: no `product-model/`, no hooks, no account.
 
 ## Orchestration
 
-Off, the default, implementing is yours: your agent implements your usual way,
-and you ask for a check when you want one. On, asking your agent to implement
-starts [implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in):
-verify plans the work in phases, your agent implements each one your usual way,
-and verify checks each part before the next.
+Your agent implements your usual way either way; orchestration decides when
+the code is checked. Off, the default, is **check on request**: you run
+`/pdd-verify`, or ask for a check, when you want one. On is **orchestrated**:
+asking your agent to implement starts
+[implement with verify](./skill-pdd-verify.md#implement-with-verify-opt-in),
+which splits the work into phases, has your agent implement each one, and
+checks each before the next.
 
 ```bash
 npx pdd-toolkit install --orchestrate=on

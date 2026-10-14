@@ -84,6 +84,6 @@ export function orchestrationSummary(
       + `Set it for all of them with \`${flip('on')}\` or \`${flip('off')}\`.`
   }
   return on.length > 0
-    ? `Orchestration: on. When you ask your agent to implement, pdd-verify plans the work in phases and checks each part before the next. Turn it off with \`${flip('off')}\`.`
-    : `Orchestration: off. Implement your usual way, then ask your agent to check the code against the model. Turn orchestration on with \`${flip('on')}\`.`
+    ? `Orchestration: on. Your agent implements your usual way; pdd-kit splits the work into phases and pdd-verify checks each before the next. Turn it off with \`${flip('off')}\`.`
+    : `Orchestration: off. Your agent implements your usual way, and you run /pdd-verify when you want a check. Turn orchestration on with \`${flip('on')}\`.`
 }
